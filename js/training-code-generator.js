@@ -350,7 +350,19 @@ class TrainingCodeGenerator {
 
         const projectType = this.projectManager.currentProject?.type || 'detection';
         const projectName = this.projectManager.currentProject?.name || 'mi_proyecto';
-        const numClasses = this.canvasManager?.classes?.length || this.projectManager.currentProject?.classes?.length || 2;
+
+        // Fix: Use window.app.canvasManager as fallback if this.canvasManager is null/stale
+        const canvasManager = this.canvasManager || (window.app && window.app.canvasManager);
+        const numClasses = canvasManager?.classes?.length || this.projectManager.currentProject?.classes?.length || 2;
+
+        console.log('Generating code for:', {
+            projectType,
+            projectName,
+            numClasses,
+            framework,
+            modality: this.getProjectModality(projectType)
+        });
+
         const modality = this.getProjectModality(projectType);
 
         let code = '';
@@ -525,15 +537,15 @@ ${projectType === 'detection' || projectType === 'obb' || projectType === 'bbox'
 print(f"mAP50-95:  {metrics.box.map:.4f}")
 print(f"Precision: {metrics.box.mp:.4f}")
 print(f"Recall:    {metrics.box.mr:.4f}")` :
-projectType === 'segmentation' || projectType === 'instanceSeg' || projectType === 'mask' ? `print(f"mAP50 (box):  {metrics.box.map50:.4f}")
+                    projectType === 'segmentation' || projectType === 'instanceSeg' || projectType === 'mask' ? `print(f"mAP50 (box):  {metrics.box.map50:.4f}")
 print(f"mAP50 (mask): {metrics.seg.map50:.4f}")
 print(f"mAP50-95 (box):  {metrics.box.map:.4f}")
 print(f"mAP50-95 (mask): {metrics.seg.map:.4f}")` :
-projectType === 'classification' || projectType === 'multiLabel' ? `print(f"Top-1 Accuracy: {metrics.top1:.4f}")
+                        projectType === 'classification' || projectType === 'multiLabel' ? `print(f"Top-1 Accuracy: {metrics.top1:.4f}")
 print(f"Top-5 Accuracy: {metrics.top5:.4f}")` :
-projectType === 'keypoints' ? `print(f"mAP50 (box):  {metrics.box.map50:.4f}")
+                            projectType === 'keypoints' ? `print(f"mAP50 (box):  {metrics.box.map50:.4f}")
 print(f"mAP50 (pose): {metrics.pose.map50:.4f}")` :
-`print(f"mAP50: {metrics.box.map50:.4f}")`}
+                                `print(f"mAP50: {metrics.box.map50:.4f}")`}
 print("-" * 40)
 
 ${saveMetricsCsv ? `# ============================================
@@ -1357,7 +1369,7 @@ print(f"Device: {DEVICE}")
 df = pd.read_csv('path/to/your/timeseries.csv')
 
 # ${t('export.code.template.prepareData')}
-${isClassification ? `# Para clasificación: última columna debe ser la clase (0 a ${numClasses-1})
+${isClassification ? `# Para clasificación: última columna debe ser la clase (0 a ${numClasses - 1})
 features = df.iloc[:, :-1].values
 labels = df.iloc[:, -1].values` : isForecasting ? `# Para pronóstico: todas las columnas son features, predeciremos la primera
 features = df.values` : `# Para detección de anomalías: todas las columnas son features

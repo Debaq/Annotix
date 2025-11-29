@@ -99,7 +99,7 @@ class YOLOAnnotator {
                 this.setTool(tool);
             });
         });
-        
+
         // Image loading
         document.getElementById('imageInput')?.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
@@ -125,10 +125,10 @@ class YOLOAnnotator {
 
         // Save current image
         document.getElementById('btnSave')?.addEventListener('click', () => this.saveCurrentImage());
-        
+
         // Download dataset
         document.getElementById('btnDownloadZip')?.addEventListener('click', () => this.downloadDataset());
-        
+
         // Class management
         document.getElementById('btnAddClass')?.addEventListener('click', () => this.addClass());
 
@@ -220,7 +220,7 @@ class YOLOAnnotator {
         // Navigation
         document.getElementById('btnPrevImage')?.addEventListener('click', () => this.navigatePrevious());
         document.getElementById('btnNextImage')?.addEventListener('click', () => this.navigateNext());
-        
+
         // Gallery filters
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -832,20 +832,20 @@ class YOLOAnnotator {
             return `
                 <div class="project-type-grid">
                     ${modality.types.map((type, index) => {
-                        const name = window.i18n.t(`project.types.${type.key}.name`) || type.key;
-                        const description = window.i18n.t(`project.types.${type.key}.description`) || 'Descripción pendiente';
-                        const difficulty = window.i18n.t(`project.types.${type.key}.difficulty`) || 'Intermedio';
-                        const useCases = window.i18n.t(`project.types.${type.key}.useCases`) || 'Casos de uso pendientes';
-                        const models = window.i18n.t(`project.types.${type.key}.models`) || 'Modelos pendientes';
+                const name = window.i18n.t(`project.types.${type.key}.name`) || type.key;
+                const description = window.i18n.t(`project.types.${type.key}.description`) || 'Descripción pendiente';
+                const difficulty = window.i18n.t(`project.types.${type.key}.difficulty`) || 'Intermedio';
+                const useCases = window.i18n.t(`project.types.${type.key}.useCases`) || 'Casos de uso pendientes';
+                const models = window.i18n.t(`project.types.${type.key}.models`) || 'Modelos pendientes';
 
-                        const difficultyColor =
-                            difficulty === 'Principiante' || difficulty === 'Beginner' ? '#10b981' :
-                            difficulty === 'Intermedio' || difficulty === 'Intermediate' ? '#f59e0b' : '#ef4444';
+                const difficultyColor =
+                    difficulty === 'Principiante' || difficulty === 'Beginner' ? '#10b981' :
+                        difficulty === 'Intermedio' || difficulty === 'Intermediate' ? '#f59e0b' : '#ef4444';
 
-                        // Auto-select first type of images (detection for backwards compatibility)
-                        const isChecked = modalityKey === 'images' && type.id === 'detection';
+                // Auto-select first type of images (detection for backwards compatibility)
+                const isChecked = modalityKey === 'images' && type.id === 'detection';
 
-                        return `
+                return `
                             <label class="project-type-card-compact" data-type-color="${type.color}">
                                 <input type="radio" name="projectType" value="${type.id}" ${isChecked ? 'checked' : ''}>
                                 <div class="type-card-icon" style="color: ${type.color};">
@@ -870,7 +870,7 @@ class YOLOAnnotator {
                                 </div>
                             </label>
                         `;
-                    }).join('')}
+            }).join('')}
                 </div>
             `;
         };
@@ -1664,56 +1664,56 @@ class YOLOAnnotator {
                             `;
 
                             this.ui.showModal(window.i18n.t('project.deleteWarning.confirmTitle'), deleteContent, [
-                            {
-                                text: window.i18n.t('actions.cancel'),
-                                type: 'secondary',
-                                action: 'cancel',
-                                handler: (deleteModal, closeDelete) => {
-                                    closeDelete();
-                                    setTimeout(() => this.showManageProjectsModal(), 100);
-                                }
-                            },
-                            {
-                                text: window.i18n.t('actions.deleteConfirm'),
-                                type: 'danger',
-                                icon: 'fas fa-trash',
-                                action: 'delete',
-                                handler: async (deleteModal, closeDelete) => {
-                                    try {
-                                        await this.projectManager.deleteProject(projectId);
-
-                                        // If deleted project was current, clear it
-                                        if (this.projectManager.currentProject?.id === projectId) {
-                                            this.projectManager.currentProject = null;
-                                            if (this.canvasManager) {
-                                                this.canvasManager.clearCanvas();
-                                            }
-                                            if (this.classificationManager && this.classificationManager.classificationUI) {
-                                                this.classificationManager.clear();
-                                            }
-                                            // Clear gallery
-                                            this.galleryManager.images = [];
-                                            this.galleryManager.cleanupBlobUrls();
-                                            this.galleryManager.render();
-                                            // Update UI
-                                            this.updateStats();
-                                            this.updateButtonStates();
-                                        }
-
-                                        await this.loadProjects();
+                                {
+                                    text: window.i18n.t('actions.cancel'),
+                                    type: 'secondary',
+                                    action: 'cancel',
+                                    handler: (deleteModal, closeDelete) => {
                                         closeDelete();
+                                        setTimeout(() => this.showManageProjectsModal(), 100);
+                                    }
+                                },
+                                {
+                                    text: window.i18n.t('actions.deleteConfirm'),
+                                    type: 'danger',
+                                    icon: 'fas fa-trash',
+                                    action: 'delete',
+                                    handler: async (deleteModal, closeDelete) => {
+                                        try {
+                                            await this.projectManager.deleteProject(projectId);
 
-                                        // Show manage modal again if there are still projects
-                                        const remainingProjects = await this.db.getAllProjects();
-                                        if (remainingProjects.length > 0) {
-                                            setTimeout(() => this.showManageProjectsModal(), 100);
+                                            // If deleted project was current, clear it
+                                            if (this.projectManager.currentProject?.id === projectId) {
+                                                this.projectManager.currentProject = null;
+                                                if (this.canvasManager) {
+                                                    this.canvasManager.clearCanvas();
+                                                }
+                                                if (this.classificationManager && this.classificationManager.classificationUI) {
+                                                    this.classificationManager.clear();
+                                                }
+                                                // Clear gallery
+                                                this.galleryManager.images = [];
+                                                this.galleryManager.cleanupBlobUrls();
+                                                this.galleryManager.render();
+                                                // Update UI
+                                                this.updateStats();
+                                                this.updateButtonStates();
+                                            }
+
+                                            await this.loadProjects();
+                                            closeDelete();
+
+                                            // Show manage modal again if there are still projects
+                                            const remainingProjects = await this.db.getAllProjects();
+                                            if (remainingProjects.length > 0) {
+                                                setTimeout(() => this.showManageProjectsModal(), 100);
+                                            }
+                                        } catch (error) {
+                                            console.error('Error deleting project:', error);
                                         }
-                                    } catch (error) {
-                                        console.error('Error deleting project:', error);
                                     }
                                 }
-                            }
-                        ]);
+                            ]);
                         }, 200);
                     });
                 });
@@ -1917,12 +1917,12 @@ class YOLOAnnotator {
             let hasChanges = false;
             if (this.annotationMode === 'classification') {
                 hasChanges = this.classificationManager.hasUnsavedChanges &&
-                            this.classificationManager.imageId &&
-                            this.projectManager.currentProject;
+                    this.classificationManager.imageId &&
+                    this.projectManager.currentProject;
             } else {
                 hasChanges = this.canvasManager.hasUnsavedChanges &&
-                            this.canvasManager.imageId &&
-                            this.projectManager.currentProject;
+                    this.canvasManager.imageId &&
+                    this.projectManager.currentProject;
             }
 
             if (hasChanges) {
@@ -3474,7 +3474,7 @@ class YOLOAnnotator {
     updateNavigationButtons() {
         const btnPrev = document.getElementById('btnPrevImage');
         const btnNext = document.getElementById('btnNextImage');
-        
+
         if (btnPrev) btnPrev.disabled = !this.galleryManager.canNavigatePrevious();
         if (btnNext) btnNext.disabled = !this.galleryManager.canNavigateNext();
     }
@@ -3555,8 +3555,8 @@ class YOLOAnnotator {
                 this.classificationManager.hasUnsavedChanges) {
                 return this.classificationManager.labels.length > 0;
             } else if (this.canvasManager &&
-                       this.canvasManager.imageId === img.id &&
-                       this.canvasManager.hasUnsavedChanges) {
+                this.canvasManager.imageId === img.id &&
+                this.canvasManager.hasUnsavedChanges) {
                 return this.canvasManager.annotations.length > 0;
             }
             // Otherwise use saved data
@@ -4280,19 +4280,19 @@ class YOLOAnnotator {
 
             // Code generation controls - basic
             ['codeFramework', 'codeModel', 'codeDevice', 'codeEpochs', 'codeBatch', 'codeImgsz',
-             'codeSeqLength', 'codeForecastHorizon', 'codeHiddenSize'].forEach(id => {
-                document.getElementById(id)?.addEventListener('change', () => this.trainingCodeGenerator.generateTrainingCode());
-                document.getElementById(id)?.addEventListener('input', () => this.trainingCodeGenerator.generateTrainingCode());
-            });
+                'codeSeqLength', 'codeForecastHorizon', 'codeHiddenSize'].forEach(id => {
+                    document.getElementById(id)?.addEventListener('change', () => this.trainingCodeGenerator.generateTrainingCode());
+                    document.getElementById(id)?.addEventListener('input', () => this.trainingCodeGenerator.generateTrainingCode());
+                });
 
             // Code generation controls - advanced
             ['codeOptimizer', 'codeLr', 'codePatience', 'codeValSplit',
-             'augMosaic', 'augMixup', 'augHsv', 'augFlip', 'augRotate', 'augScale',
-             'savePlots', 'saveConfMatrix', 'savePrCurves', 'savePredictions', 'saveMetricsCsv',
-             'exportOnnx', 'exportTorchscript', 'exportTflite', 'exportOpenvino', 'exportCoreml', 'exportTensorrt'].forEach(id => {
-                document.getElementById(id)?.addEventListener('change', () => this.trainingCodeGenerator.generateTrainingCode());
-                document.getElementById(id)?.addEventListener('input', () => this.trainingCodeGenerator.generateTrainingCode());
-            });
+                'augMosaic', 'augMixup', 'augHsv', 'augFlip', 'augRotate', 'augScale',
+                'savePlots', 'saveConfMatrix', 'savePrCurves', 'savePredictions', 'saveMetricsCsv',
+                'exportOnnx', 'exportTorchscript', 'exportTflite', 'exportOpenvino', 'exportCoreml', 'exportTensorrt'].forEach(id => {
+                    document.getElementById(id)?.addEventListener('change', () => this.trainingCodeGenerator.generateTrainingCode());
+                    document.getElementById(id)?.addEventListener('input', () => this.trainingCodeGenerator.generateTrainingCode());
+                });
 
             // Code actions
             document.getElementById('btnCopyCode')?.addEventListener('click', () => this.trainingCodeGenerator.copyCode());
@@ -4311,7 +4311,7 @@ class YOLOAnnotator {
                     appendTo: () => document.body,  // Append to body so tooltips appear above modal
                 });
             }
-        }, 100);
+        }, 300);
     }
 
     getAvailableFormats() {
