@@ -311,80 +311,76 @@ class TrainingCodeGenerator {
     }
 
     generateTrainingCode() {
-        // Read basic parameters
-        const framework = document.getElementById('codeFramework')?.value || 'yolov8';
-        const model = document.getElementById('codeModel')?.value || 'm';
-        const device = document.getElementById('codeDevice')?.value || 'cuda:0';
-        const epochs = document.getElementById('codeEpochs')?.value || '100';
-        const batch = document.getElementById('codeBatch')?.value || '16';
-        const imgsz = document.getElementById('codeImgsz')?.value || '640';
+        try {
+            // Read basic parameters
+            const framework = document.getElementById('codeFramework')?.value || 'yolov8';
+            const model = document.getElementById('codeModel')?.value || 'n';
+            const device = document.getElementById('codeDevice')?.value || 'cuda:0';
+            const epochs = document.getElementById('codeEpochs')?.value || '100';
+            const batch = document.getElementById('codeBatch')?.value || '16';
+            const imgsz = document.getElementById('codeImgsz')?.value || '640';
 
-        // Read advanced parameters
-        const optimizer = document.getElementById('codeOptimizer')?.value || 'Adam';
-        const lr = document.getElementById('codeLr')?.value || '0.001';
-        const patience = document.getElementById('codePatience')?.value || '50';
-        const valSplit = document.getElementById('codeValSplit')?.value || '20';
+            // Read advanced parameters
+            const optimizer = document.getElementById('codeOptimizer')?.value || 'Adam';
+            const lr = document.getElementById('codeLr')?.value || '0.001';
+            const patience = document.getElementById('codePatience')?.value || '50';
+            const valSplit = document.getElementById('codeValSplit')?.value || '20';
 
-        // Read augmentation options
-        const augMosaic = document.getElementById('augMosaic')?.checked || false;
-        const augMixup = document.getElementById('augMixup')?.checked || false;
-        const augHsv = document.getElementById('augHsv')?.checked || false;
-        const augFlip = document.getElementById('augFlip')?.checked || false;
-        const augRotate = document.getElementById('augRotate')?.checked || false;
-        const augScale = document.getElementById('augScale')?.checked || false;
+            // Read augmentation parameters
+            const augMosaic = document.getElementById('augMosaic')?.checked || false;
+            const augMixup = document.getElementById('augMixup')?.checked || false;
+            const augHsv = document.getElementById('augHsv')?.checked || false;
+            const augFlip = document.getElementById('augFlip')?.checked || false;
+            const augRotate = document.getElementById('augRotate')?.checked || false;
+            const augScale = document.getElementById('augScale')?.checked || false;
 
-        // Read metrics/plots options
-        const savePlots = document.getElementById('savePlots')?.checked || false;
-        const saveConfMatrix = document.getElementById('saveConfMatrix')?.checked || false;
-        const savePrCurves = document.getElementById('savePrCurves')?.checked || false;
-        const savePredictions = document.getElementById('savePredictions')?.checked || false;
-        const saveMetricsCsv = document.getElementById('saveMetricsCsv')?.checked || false;
+            // Read metrics & export parameters
+            const savePlots = document.getElementById('savePlots')?.checked || false;
+            const saveConfMatrix = document.getElementById('saveConfMatrix')?.checked || false;
+            const savePrCurves = document.getElementById('savePrCurves')?.checked || false;
+            const savePredictions = document.getElementById('savePredictions')?.checked || false;
+            const saveMetricsCsv = document.getElementById('saveMetricsCsv')?.checked || false;
 
-        // Read export options
-        const exportOnnx = document.getElementById('exportOnnx')?.checked || false;
-        const exportTorchscript = document.getElementById('exportTorchscript')?.checked || false;
-        const exportTflite = document.getElementById('exportTflite')?.checked || false;
-        const exportOpenvino = document.getElementById('exportOpenvino')?.checked || false;
-        const exportCoreml = document.getElementById('exportCoreml')?.checked || false;
-        const exportTensorrt = document.getElementById('exportTensorrt')?.checked || false;
+            const exportOnnx = document.getElementById('exportOnnx')?.checked || false;
+            const exportTorchscript = document.getElementById('exportTorchscript')?.checked || false;
+            const exportTflite = document.getElementById('exportTflite')?.checked || false;
+            const exportOpenvino = document.getElementById('exportOpenvino')?.checked || false;
+            const exportCoreml = document.getElementById('exportCoreml')?.checked || false;
+            const exportTensorrt = document.getElementById('exportTensorrt')?.checked || false;
 
-        const projectType = this.projectManager.currentProject?.type || 'detection';
-        const projectName = this.projectManager.currentProject?.name || 'mi_proyecto';
+            // Time Series specific
+            const seqLength = document.getElementById('codeSeqLength')?.value || '50';
+            const forecastHorizon = document.getElementById('codeForecastHorizon')?.value || '10';
+            const hiddenSize = document.getElementById('codeHiddenSize')?.value || '128';
 
-        // Fix: Use window.app.canvasManager as fallback if this.canvasManager is null/stale
-        const canvasManager = this.canvasManager || (window.app && window.app.canvasManager);
-        const numClasses = canvasManager?.classes?.length || this.projectManager.currentProject?.classes?.length || 2;
+            const projectType = this.projectManager.currentProject?.type || 'detection';
+            const projectName = this.projectManager.currentProject?.name || 'mi_proyecto';
 
-        console.log('Generating code for:', {
-            projectType,
-            projectName,
-            numClasses,
-            framework,
-            modality: this.getProjectModality(projectType)
-        });
+            // Fix: Use window.app.canvasManager as fallback if this.canvasManager is null/stale
+            const canvasManager = this.canvasManager || (window.app && window.app.canvasManager);
+            const numClasses = canvasManager?.classes?.length || this.projectManager.currentProject?.classes?.length || 2;
 
-        const modality = this.getProjectModality(projectType);
+            const modality = this.getProjectModality(projectType);
 
-        let code = '';
+            let code = '';
 
-        // Read modality-specific parameters
-        const seqLength = document.getElementById('codeSeqLength')?.value || '50';
-        const forecastHorizon = document.getElementById('codeForecastHorizon')?.value || '10';
-        const hiddenSize = document.getElementById('codeHiddenSize')?.value || '128';
+            // Route to appropriate code generator based on modality and framework
+            if (modality === 'timeSeries') {
+                code = this._generateTimeSeriesCode(framework, projectName, projectType, device, numClasses, batch, epochs, lr, optimizer, saveMetricsCsv, savePlots, seqLength, forecastHorizon, hiddenSize);
+            } else if (modality === 'images') {
+                // Existing image-based frameworks
+                code = this._generateImageCode(framework, projectName, projectType, model, device, epochs, batch, imgsz, optimizer, lr, patience, valSplit, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, savePlots, saveConfMatrix, savePrCurves, savePredictions, saveMetricsCsv, exportOnnx, exportTorchscript, exportTflite, exportOpenvino, exportCoreml, exportTensorrt, numClasses);
+            } else {
+                code = `# ${this.t('export.code.template.important')}: ${modality} ${this.t('export.code.template.important').toLowerCase()}\n# Coming soon...`;
+            }
 
-        // Route to appropriate code generator based on modality and framework
-        if (modality === 'timeSeries') {
-            code = this._generateTimeSeriesCode(framework, projectName, projectType, device, numClasses, batch, epochs, lr, optimizer, saveMetricsCsv, savePlots, seqLength, forecastHorizon, hiddenSize);
-        } else if (modality === 'images') {
-            // Existing image-based frameworks
-            code = this._generateImageCode(framework, projectName, projectType, model, device, epochs, batch, imgsz, optimizer, lr, patience, valSplit, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, savePlots, saveConfMatrix, savePrCurves, savePredictions, saveMetricsCsv, exportOnnx, exportTorchscript, exportTflite, exportOpenvino, exportCoreml, exportTensorrt, numClasses);
-        } else {
-            code = `# ${this.t('export.code.template.important')}: ${modality} ${this.t('export.code.template.important').toLowerCase()}\n# Coming soon...`;
-        }
-
-        const codePreview = document.getElementById('codePreview');
-        if (codePreview) {
-            codePreview.textContent = code;
+            const codePreview = document.getElementById('codePreview');
+            if (codePreview) {
+                codePreview.textContent = code;
+            }
+        } catch (error) {
+            console.error('Error generating training code:', error);
+            alert('Error generating code: ' + error.message);
         }
     }
 
@@ -602,10 +598,7 @@ print(f"🏆 ${t('export.code.template.bestModel')}: {best_model_path}")
             code = this._generateSMPCode(projectName, projectType, device, numClasses, batch, epochs, lr, imgsz, model, optimizer, augFlip, augRotate, augScale, augHsv, saveMetricsCsv);
         }
 
-        const codePreview = document.getElementById('codePreview');
-        if (codePreview) {
-            codePreview.textContent = code;
-        }
+        return code;
     }
 
     _generateYOLOv5Code(projectName, projectType, epochs, batch, imgsz, device, model, optimizer, patience, augMosaic, augMixup, augHsv, augFlip, augRotate, augScale, saveConfMatrix) {

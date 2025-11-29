@@ -591,6 +591,12 @@ class YOLOAnnotator {
                 }
             }
 
+            // Update training code generator with new canvas manager
+            if (this.trainingCodeGenerator) {
+                this.trainingCodeGenerator.canvasManager = this.canvasManager;
+                this.trainingCodeGenerator.projectManager = this.projectManager; // Ensure project manager is also up to date
+            }
+
             // Update UI visibility based on mode
             this.updateUIForMode();
 
@@ -4184,16 +4190,16 @@ class YOLOAnnotator {
                             <div class="code-preview-container">
                                 <div class="code-preview-header">
                                     <span class="code-preview-title">
-                                        <i class="fas fa-terminal"></i> ${window.i18n.t('export.code.preview') || 'Vista Previa'}
+                                        <i class="fas fa-terminal"></i> <span data-i18n="export.code.preview">${window.i18n.t('export.code.preview') || 'Vista Previa'}</span>
                                     </span>
                                     <div class="code-preview-actions">
-                                        <button class="btn-icon" id="btnCopyCode" title="${window.i18n.t('export.code.copy') || 'Copiar'}">
+                                        <button class="btn-icon" id="btnCopyCode" title="${window.i18n.t('export.code.copy') || 'Copiar'}" data-i18n-title="export.code.copy">
                                             <i class="fas fa-copy"></i>
                                         </button>
-                                        <button class="btn-icon" id="btnDownloadPy" title="${window.i18n.t('export.code.downloadPy') || 'Descargar .py'}">
+                                        <button class="btn-icon" id="btnDownloadPy" title="${window.i18n.t('export.code.downloadPy') || 'Descargar .py'}" data-i18n-title="export.code.downloadPy">
                                             <i class="fas fa-file-code"></i>
                                         </button>
-                                        <button class="btn-icon" id="btnDownloadIpynb" title="${window.i18n.t('export.code.downloadIpynb') || 'Descargar .ipynb'}">
+                                        <button class="btn-icon" id="btnDownloadIpynb" title="${window.i18n.t('export.code.downloadIpynb') || 'Descargar .ipynb'}" data-i18n-title="export.code.downloadIpynb">
                                             <i class="fas fa-book"></i>
                                         </button>
                                     </div>
@@ -4222,96 +4228,97 @@ class YOLOAnnotator {
         this.initTooltips();
 
         // Setup event listeners for buttons in modal
-        setTimeout(() => {
-            document.getElementById('btnExportProjectTix')?.addEventListener('click', () => this.exportProjectTix());
-            document.getElementById('btnExportTraining')?.addEventListener('click', () => this.exportForTraining());
+        // No setTimeout needed as elements are already in DOM
+        const modalElement = document.querySelector('.modal'); // Or use the returned modal if we captured it, but this works for IDs
 
-            // Tab switching
-            document.querySelectorAll('.export-tab').forEach(tab => {
-                tab.addEventListener('click', (e) => {
-                    const tabName = e.currentTarget.dataset.tab;
+        document.getElementById('btnExportProjectTix')?.addEventListener('click', () => this.exportProjectTix());
+        document.getElementById('btnExportTraining')?.addEventListener('click', () => this.exportForTraining());
 
-                    // Update tabs
-                    document.querySelectorAll('.export-tab').forEach(t => t.classList.remove('active'));
-                    e.currentTarget.classList.add('active');
+        // Tab switching
+        document.querySelectorAll('.export-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = e.currentTarget.dataset.tab;
 
-                    // Update content
-                    document.querySelectorAll('.export-tab-content').forEach(c => c.classList.remove('active'));
-                    document.getElementById(`tab-${tabName}`)?.classList.add('active');
+                // Update tabs
+                document.querySelectorAll('.export-tab').forEach(t => t.classList.remove('active'));
+                e.currentTarget.classList.add('active');
 
-                    // Show/hide project card and adjust training card width
-                    const projectCard = document.querySelector('.export-card:not(.export-card-training)');
-                    const trainingCard = document.querySelector('.export-card-training');
-                    const modal = document.querySelector('.modal');
+                // Update content
+                document.querySelectorAll('.export-tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`tab-${tabName}`)?.classList.add('active');
 
-                    if (tabName === 'code') {
-                        // Hide project card and expand training card to full width
-                        if (projectCard) projectCard.style.display = 'none';
-                        if (trainingCard) trainingCard.classList.add('full-width');
+                // Show/hide project card and adjust training card width
+                const projectCard = document.querySelector('.export-card:not(.export-card-training)');
+                const trainingCard = document.querySelector('.export-card-training');
+                const modal = document.querySelector('.modal');
 
-                        // Expand modal to full screen mode
-                        if (modal) modal.classList.add('code-mode');
+                if (tabName === 'code') {
+                    // Hide project card and expand training card to full width
+                    if (projectCard) projectCard.style.display = 'none';
+                    if (trainingCard) trainingCard.classList.add('full-width');
 
-                        this.trainingCodeGenerator.updateConfigUI();
-                        this.trainingCodeGenerator.generateTrainingCode();
-                    } else {
-                        // Show project card and restore normal width
-                        if (projectCard) projectCard.style.display = 'flex';
-                        if (trainingCard) trainingCard.classList.remove('full-width');
+                    // Expand modal to full screen mode
+                    if (modal) modal.classList.add('code-mode');
 
-                        // Restore normal modal size
-                        if (modal) modal.classList.remove('code-mode');
-                    }
-                });
-            });
-
-            // Advanced options accordion
-            document.getElementById('toggleAdvanced')?.addEventListener('click', (e) => {
-                const content = document.getElementById('advancedOptions');
-                const icon = e.currentTarget.querySelector('i');
-                if (content.style.maxHeight) {
-                    content.style.maxHeight = null;
-                    icon.style.transform = 'rotate(0deg)';
+                    this.trainingCodeGenerator.updateConfigUI();
+                    this.trainingCodeGenerator.generateTrainingCode();
                 } else {
-                    content.style.maxHeight = content.scrollHeight + 'px';
-                    icon.style.transform = 'rotate(180deg)';
+                    // Show project card and restore normal width
+                    if (projectCard) projectCard.style.display = 'flex';
+                    if (trainingCard) trainingCard.classList.remove('full-width');
+
+                    // Restore normal modal size
+                    if (modal) modal.classList.remove('code-mode');
                 }
             });
+        });
 
-            // Code generation controls - basic
-            ['codeFramework', 'codeModel', 'codeDevice', 'codeEpochs', 'codeBatch', 'codeImgsz',
-                'codeSeqLength', 'codeForecastHorizon', 'codeHiddenSize'].forEach(id => {
-                    document.getElementById(id)?.addEventListener('change', () => this.trainingCodeGenerator.generateTrainingCode());
-                    document.getElementById(id)?.addEventListener('input', () => this.trainingCodeGenerator.generateTrainingCode());
-                });
-
-            // Code generation controls - advanced
-            ['codeOptimizer', 'codeLr', 'codePatience', 'codeValSplit',
-                'augMosaic', 'augMixup', 'augHsv', 'augFlip', 'augRotate', 'augScale',
-                'savePlots', 'saveConfMatrix', 'savePrCurves', 'savePredictions', 'saveMetricsCsv',
-                'exportOnnx', 'exportTorchscript', 'exportTflite', 'exportOpenvino', 'exportCoreml', 'exportTensorrt'].forEach(id => {
-                    document.getElementById(id)?.addEventListener('change', () => this.trainingCodeGenerator.generateTrainingCode());
-                    document.getElementById(id)?.addEventListener('input', () => this.trainingCodeGenerator.generateTrainingCode());
-                });
-
-            // Code actions
-            document.getElementById('btnCopyCode')?.addEventListener('click', () => this.trainingCodeGenerator.copyCode());
-            document.getElementById('btnDownloadPy')?.addEventListener('click', () => this.trainingCodeGenerator.downloadCode('py'));
-            document.getElementById('btnDownloadIpynb')?.addEventListener('click', () => this.trainingCodeGenerator.downloadCode('ipynb'));
-
-            // Initialize Tippy.js tooltips
-            if (typeof tippy !== 'undefined') {
-                tippy('[data-tippy-content]', {
-                    theme: 'light',
-                    arrow: true,
-                    placement: 'top',
-                    maxWidth: 320,
-                    animation: 'scale',
-                    duration: [200, 150],
-                    appendTo: () => document.body,  // Append to body so tooltips appear above modal
-                });
+        // Advanced options accordion
+        document.getElementById('toggleAdvanced')?.addEventListener('click', (e) => {
+            const content = document.getElementById('advancedOptions');
+            const icon = e.currentTarget.querySelector('i');
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null;
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.style.maxHeight = content.scrollHeight + 'px';
+                icon.style.transform = 'rotate(180deg)';
             }
-        }, 300);
+        });
+
+        // Code generation controls - basic
+        ['codeFramework', 'codeModel', 'codeDevice', 'codeEpochs', 'codeBatch', 'codeImgsz',
+            'codeSeqLength', 'codeForecastHorizon', 'codeHiddenSize'].forEach(id => {
+                document.getElementById(id)?.addEventListener('change', () => this.trainingCodeGenerator.generateTrainingCode());
+                document.getElementById(id)?.addEventListener('input', () => this.trainingCodeGenerator.generateTrainingCode());
+            });
+
+        // Code generation controls - advanced
+        ['codeOptimizer', 'codeLr', 'codePatience', 'codeValSplit',
+            'augMosaic', 'augMixup', 'augHsv', 'augFlip', 'augRotate', 'augScale',
+            'savePlots', 'saveConfMatrix', 'savePrCurves', 'savePredictions', 'saveMetricsCsv',
+            'exportOnnx', 'exportTorchscript', 'exportTflite', 'exportOpenvino', 'exportCoreml', 'exportTensorrt'].forEach(id => {
+                document.getElementById(id)?.addEventListener('change', () => this.trainingCodeGenerator.generateTrainingCode());
+                document.getElementById(id)?.addEventListener('input', () => this.trainingCodeGenerator.generateTrainingCode());
+            });
+
+        // Code actions
+        document.getElementById('btnCopyCode')?.addEventListener('click', () => this.trainingCodeGenerator.copyCode());
+        document.getElementById('btnDownloadPy')?.addEventListener('click', () => this.trainingCodeGenerator.downloadCode('py'));
+        document.getElementById('btnDownloadIpynb')?.addEventListener('click', () => this.trainingCodeGenerator.downloadCode('ipynb'));
+
+        // Initialize Tippy.js tooltips
+        if (typeof tippy !== 'undefined') {
+            tippy('[data-tippy-content]', {
+                theme: 'light',
+                arrow: true,
+                placement: 'top',
+                maxWidth: 320,
+                animation: 'scale',
+                duration: [200, 150],
+                appendTo: () => document.body,  // Append to body so tooltips appear above modal
+            });
+        }
     }
 
     getAvailableFormats() {
