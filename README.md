@@ -1,4 +1,28 @@
-# 🏷️ Annotix - Sistema Profesional de Anotación
+# 🏷️ Annotix - Sistema Profesional de Anotación Multimodal
+
+**Plataforma de anotación de datos para Machine Learning con soporte multi-modalidad y multi-formato**
+
+## 📊 Estado de Implementación
+
+**18/62 sistemas implementados** (29%)
+
+### ✅ **Implementados y Funcionales:**
+
+**Imágenes (9/13):**
+- Classification, Multi-Label, Detection, Segmentation, Instance Seg
+- Keypoints/Pose, Polygon, Landmarks, OBB (Oriented Bounding Boxes)
+
+**Series Temporales (9/9):** ✓ Todos implementados
+- Classification, Forecasting, Anomaly Detection, Segmentation, Pattern Recognition, Event Detection, Regression, Clustering, Imputation
+
+### 🚧 **En Desarrollo:**
+- Semantic Segmentation, Panoptic Segmentation, OCR, Depth Estimation (Imágenes)
+
+### 📋 **Roadmap (44 sistemas pendientes):**
+- **Audio (0/10):** Classification, Speech Recognition, Sound Event Detection, etc.
+- **Video (0/9):** Action Recognition, Object Tracking, Activity Detection, etc.
+- **3D (0/9):** Object Detection, Point Cloud, Mesh Segmentation, SLAM, etc.
+- **Texto/NLP (0/12):** NER, Sentiment Analysis, Intent Classification, etc.
 
 ## 📦 Archivos del Sistema
 
@@ -52,17 +76,22 @@ annotix/
 
 ## ✨ Características Principales
 
-### 1. **Sistema de Proyectos**
-- Múltiples proyectos en IndexedDB.
-- Tipos: Bounding Box o Segmentación (Mask).
-- **Import/Export de proyectos completos** (`.tix`).
-- **Import/Export configuración** (`.tixconfig`) para trabajo en equipo.
+### 1. **Sistema de Proyectos Multi-Modalidad**
+- Múltiples proyectos en IndexedDB
+- **6 modalidades:** Imágenes, Audio, Video, Series Temporales, 3D, Texto/NLP
+- **62 tipos de proyectos** definidos (18 implementados)
+- Import/Export de proyectos completos (`.tix`)
+- Import/Export configuración (`.tixconfig`) para trabajo en equipo
 
-### 2. **Herramientas de Anotación**
-- **Bbox**: Dibujar rectángulos (Bounding Boxes).
-- **Mask**: Pintar máscaras de segmentación.
-- **Select**: Seleccionar y editar anotaciones.
-- **Pan**: Mover la vista del canvas.
+### 2. **Herramientas de Anotación (Imágenes)**
+- **Bbox**: Bounding boxes rectangulares
+- **OBB**: Oriented bounding boxes (rotados)
+- **Mask**: Máscaras pixel-perfect para segmentación
+- **Polygon**: Segmentación punto-a-punto
+- **Keypoints**: Esqueletos y pose estimation
+- **Landmarks**: Puntos independientes
+- **Classification**: Etiquetas globales (single/multi-label)
+- **Select/Pan**: Edición y navegación
 
 ### 3. **Edición Avanzada**
 - Redimensionar boxes arrastrando esquinas.
@@ -87,29 +116,40 @@ annotix/
 - Controles de zoom (+, -, reset).
 - Mostrar/ocultar etiquetas.
 
-### 7. **Exportación**
-- **Dataset ZIP** completo en formato YOLO:
-  - Carpeta `images/` con todas las imágenes.
-  - Carpeta `labels/` con archivos .txt (formato YOLO).
-  - Archivo `classes.txt` con lista de clases.
-- **Proyecto completo** (`.tix`) - Portabilidad total.
-- **Configuración** (`.tixconfig`) - Para compartir estructura de clases.
+### 7. **Exportación Multi-Formato**
+- **YOLO:** Detection, Segmentation, Pose (estructura estándar)
+- **COCO JSON:** Detection, Segmentation, Polygon, Keypoints
+- **Pascal VOC XML:** Object detection
+- **PNG Masks:** Segmentación semántica (U-Net compatible)
+- **CSV:** Classification, Landmarks, genérico
+- **Proyecto completo** (`.tix`) - Portabilidad total
+- **Configuración** (`.tixconfig`) - Para compartir clases
+
+### 8. **Generación de Código de Entrenamiento**
+- Código Python completo para entrenar modelos
+- Soporte frameworks: YOLOv8/v11, Detectron2, TensorFlow, PyTorch, SMP
+- Configuración automática según tipo de proyecto
+- Exportación de modelos: ONNX, TorchScript, TFLite, OpenVINO, CoreML, TensorRT
 
 ## ⌨️ Atajos de Teclado
 
-| Tecla | Acción |
-|-------|--------|
-| **1-9** | Seleccionar clase 1-9 |
-| **B** | Herramienta Bbox |
-| **M** | Herramienta Mask |
-| **V** | Herramienta Select |
-| **H** | Herramienta Pan |
-| **Ctrl+S** | Guardar imagen actual |
-| **Ctrl+Z** | Deshacer última anotación |
-| **Delete** | Eliminar anotación seleccionada |
-| **Esc** | Deseleccionar |
-| **←** | Imagen anterior |
-| **→** | Imagen siguiente |
+| Tecla | Acción | Contexto |
+|-------|--------|----------|
+| **1-9** | Seleccionar clase 1-9 | General |
+| **B** | Herramienta Bbox | Detection |
+| **O** | Herramienta OBB | OBB projects |
+| **M** | Herramienta Mask | Segmentation |
+| **P** | Herramienta Polygon | Polygon |
+| **K** | Herramienta Keypoint | Pose |
+| **L** | Herramienta Landmark | Landmarks |
+| **V** | Herramienta Select | General |
+| **H** | Herramienta Pan | General |
+| **Ctrl+S** | Guardar imagen actual | General |
+| **Ctrl+Z** | Deshacer última anotación | General |
+| **Delete** | Eliminar seleccionada | General |
+| **Esc** | Deseleccionar | General |
+| **←/→** | Navegar imágenes | General |
+| **R/Shift+R** | Rotar ±15° | OBB |
 
 ## 📊 Flujo de Trabajo Recomendado
 
@@ -140,32 +180,34 @@ annotix/
 2. Combinar carpetas images/ y labels/.
 3. Usar el dataset completo para entrenar.
 
-## 🎯 Formato YOLO
+## 🎯 Formatos de Exportación
 
-Los archivos generados siguen el formato estándar YOLO:
-
-### Estructura del archivo .txt:
+### YOLO Detection:
 ```
 <class_id> <x_center> <y_center> <width> <height>
 ```
+Coordenadas normalizadas 0-1
 
-Donde:
-- `class_id`: ID de la clase (0, 1, 2, ...)
-- `x_center`, `y_center`: Centro del bbox (normalizado 0-1)
-- `width`, `height`: Dimensiones del bbox (normalizado 0-1)
+### YOLO Segmentation:
+```
+<class_id> <x1> <y1> <x2> <y2> ... <xn> <yn>
+```
+Puntos del polígono normalizados
 
-### Ejemplo:
+### YOLO Pose:
 ```
-0 0.501953 0.532407 0.117188 0.237037
-1 0.714844 0.654630 0.156250 0.287037
+<class_id> <bbox> <x1> <y1> <v1> <x2> <y2> <v2> ...
 ```
+Bbox + keypoints con visibilidad
 
-### classes.txt:
-```
-person
-car
-dog
-```
+### COCO JSON:
+Formato completo con imágenes, anotaciones, categorías y metadata
+
+### Pascal VOC XML:
+Archivos XML individuales por imagen con bboxes
+
+### PNG Masks:
+Máscaras de segmentación como imágenes PNG
 
 ## 💾 Almacenamiento
 
@@ -208,6 +250,38 @@ dog
 - **Sin tracking**: No se envía información a servidores externos.
 - **Sin cuentas**: No requiere registro ni login.
 - **Datos locales**: Todo se almacena en el navegador del usuario.
+
+## 🛣️ Hoja de Ruta de Desarrollo
+
+### **Fase 1 - Imágenes Avanzadas** (Q2 2025)
+- Semantic Segmentation completa
+- Panoptic Segmentation
+- OCR con bounding boxes de texto
+- Depth Estimation visualization
+
+### **Fase 2 - Audio** (Q3 2025)
+- Espectrograma canvas para anotación
+- Audio Classification
+- Speech Recognition (transcripción + timestamps)
+- Sound Event Detection
+
+### **Fase 3 - Video** (Q4 2025)
+- Timeline-based annotation
+- Object Tracking multi-frame
+- Action Recognition
+- Video Segmentation
+
+### **Fase 4 - 3D** (Q1 2026)
+- Point Cloud viewer (Three.js)
+- 3D Bounding Boxes
+- Mesh Segmentation
+- SLAM Annotation
+
+### **Fase 5 - Texto/NLP** (Q2 2026)
+- Named Entity Recognition (NER)
+- Sentiment Analysis
+- Intent Classification
+- Relation Extraction
 
 ## 📄 Licencia
 

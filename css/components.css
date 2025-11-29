@@ -958,6 +958,36 @@ color: white;
     line-height: 1.4;
 }
 
+/* Disabled project type styles */
+.project-type-card-compact.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--gray-lighter);
+}
+
+.project-type-card-compact.disabled:hover {
+    border-color: var(--gray-light);
+    transform: none;
+    box-shadow: none;
+}
+
+.project-type-card-compact.disabled:hover::before {
+    opacity: 0;
+}
+
+.project-type-card-compact.disabled input[type="radio"] {
+    cursor: not-allowed;
+}
+
+.project-type-card-compact.disabled .type-card-icon {
+    opacity: 0.3;
+}
+
+.project-type-card-compact.disabled .type-name,
+.project-type-card-compact.disabled .type-description-compact {
+    color: var(--gray);
+}
+
 /* Dimension Mode Options */
 .dimension-mode-option {
     display: flex;

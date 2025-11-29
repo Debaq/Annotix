@@ -848,18 +848,22 @@ class YOLOAnnotator {
                     difficulty === 'Principiante' || difficulty === 'Beginner' ? '#10b981' :
                         difficulty === 'Intermedio' || difficulty === 'Intermediate' ? '#f59e0b' : '#ef4444';
 
-                // Auto-select first type of images (detection for backwards compatibility)
-                const isChecked = modalityKey === 'images' && type.id === 'detection';
+                // Auto-select first implemented type of images (detection for backwards compatibility)
+                const isChecked = modalityKey === 'images' && type.id === 'detection' && type.implemented !== false;
+                const isDisabled = type.implemented === false;
+                const disabledClass = isDisabled ? 'disabled' : '';
+                const disabledAttr = isDisabled ? 'disabled' : '';
+                const disabledLabel = isDisabled ? '(Próximamente)' : '';
 
                 return `
-                            <label class="project-type-card-compact" data-type-color="${type.color}">
-                                <input type="radio" name="projectType" value="${type.id}" ${isChecked ? 'checked' : ''}>
+                            <label class="project-type-card-compact ${disabledClass}" data-type-color="${type.color}">
+                                <input type="radio" name="projectType" value="${type.id}" ${isChecked ? 'checked' : ''} ${disabledAttr}>
                                 <div class="type-card-icon" style="color: ${type.color};">
                                     <i class="fas ${type.icon}"></i>
                                 </div>
                                 <div class="type-card-compact-content">
                                     <div class="type-card-compact-header">
-                                        <strong class="type-name">${name}</strong>
+                                        <strong class="type-name">${name} ${disabledLabel}</strong>
                                         <button type="button"
                                                 class="project-type-info-btn"
                                                 data-type-key="${type.key}"
@@ -868,7 +872,8 @@ class YOLOAnnotator {
                                                 data-difficulty-color="${difficultyColor}"
                                                 data-use-cases="${useCases}"
                                                 data-models="${models}"
-                                                title="Más información">
+                                                title="Más información"
+                                                ${disabledAttr}>
                                             <i class="fas fa-question"></i>
                                         </button>
                                     </div>
