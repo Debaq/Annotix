@@ -1,0 +1,48 @@
+/* ============================================
+   BASE CSS
+   Reset, tipografía y estilos base
+   ============================================ */
+
+/* Reset y Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--light);
+    color: var(--dark);
+}
+
+/* Scrollbar personalizado */
+.sidebar::-webkit-scrollbar,
+.right-panel::-webkit-scrollbar,
+.gallery-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track,
+.right-panel::-webkit-scrollbar-track,
+.gallery-grid::-webkit-scrollbar-track {
+    background: var(--gray-light);
+}
+
+.sidebar::-webkit-scrollbar-thumb,
+.right-panel::-webkit-scrollbar-thumb,
+.gallery-grid::-webkit-scrollbar-thumb {
+    background: var(--gray);
+    border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover,
+.right-panel::-webkit-scrollbar-thumb:hover,
+.gallery-grid::-webkit-scrollbar-thumb:hover {
+    background: var(--dark);
+}

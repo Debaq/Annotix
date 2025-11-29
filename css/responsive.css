@@ -1,0 +1,55 @@
+/* ============================================
+   RESPONSIVE CSS
+   Media queries para diferentes tamaños
+   ============================================ */
+
+@media (max-width: 1200px) {
+    .main-layout {
+        grid-template-columns: 220px 1fr 260px;
+    }
+}
+
+@media (max-width: 992px) {
+    .main-layout {
+        grid-template-columns: 200px 1fr 240px;
+    }
+    
+    .app-title {
+        font-size: 1.2em;
+    }
+    
+    .header-branding {
+        font-size: 0.8em;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+    }
+    
+    .sidebar, .right-panel {
+        display: none;
+    }
+    
+    .sidebar.mobile-show,
+    .right-panel.mobile-show {
+        display: block;
+        position: fixed;
+        top: 56px;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 999;
+        max-height: calc(100vh - 56px);
+    }
+    
+    .header-branding {
+        display: none;
+    }
+    
+    .project-selector {
+        min-width: 150px;
+    }
+}

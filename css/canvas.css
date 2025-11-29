@@ -1,0 +1,827 @@
+/* ============================================
+   CANVAS CSS
+   Canvas principal, controles y navegación
+   ============================================ */
+
+/* Canvas Central - FULLSCREEN FIX */
+.canvas-container {
+    position: relative;
+    background: var(--gray-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    height: 100%; /* CRITICAL: Use all available space */
+}
+
+/* Global Watermark - Always on top like Windows unauthenticated */
+.global-watermark {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    color: rgba(0, 0, 0, 0.18);
+    font-size: 0.85em;
+    font-weight: 600;
+    pointer-events: none;
+    user-select: none;
+    z-index: 9999;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.canvas-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+}
+
+#canvas {
+    display: block;
+    width: 100%; /* Use full container width */
+    height: 100%; /* Use full container height */
+    max-width: 100%;
+    max-height: 100%;
+    cursor: crosshair;
+    box-shadow: 0 4px 20px var(--shadow-strong);
+}
+
+#canvas.cursor-move {
+    cursor: move;
+}
+
+#canvas.cursor-grab {
+    cursor: grab;
+}
+
+#canvas.cursor-grabbing {
+    cursor: grabbing;
+}
+
+#canvas.cursor-paint {
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><circle cx="12" cy="12" r="8" fill="rgba(102,126,234,0.5)" stroke="white" stroke-width="2"/></svg>') 12 12, crosshair;
+}
+
+/* Controles de Canvas */
+.canvas-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 100;
+}
+
+.control-group {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px var(--shadow);
+    padding: 8px;
+    display: flex;
+    gap: 4px;
+}
+
+.control-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: var(--white);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark);
+}
+
+.control-btn:hover {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.control-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.control-btn.active {
+    background: var(--success);
+    color: var(--white);
+}
+
+.zoom-level {
+    background: transparent;
+    padding: 4px 0;
+    font-size: 0.75em;
+    font-weight: 700;
+    text-align: center;
+    color: var(--primary);
+}
+
+/* Navegación de Imágenes */
+.image-navigation {
+    position: absolute;
+    top: 50%;
+    left: 20px;
+    right: 20px;
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 50;
+}
+
+.nav-btn {
+    width: 48px;
+    height: 48px;
+    background: var(--white);
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px var(--shadow);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    color: var(--dark);
+    transition: var(--transition);
+    pointer-events: auto;
+}
+
+.nav-btn:hover:not(:disabled) {
+    background: var(--primary);
+    color: var(--white);
+    transform: scale(1.1);
+}
+
+.nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Información de Imagen */
+.image-info {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px var(--shadow);
+    padding: 10px 15px;
+    font-size: 0.85em;
+    z-index: 100;
+}
+
+.image-info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.image-info-item:last-child {
+    margin-bottom: 0;
+}
+
+.image-info-item i {
+    color: var(--primary);
+}
+
+.image-info-value {
+    font-weight: 600;
+}
+
+/* Rotation Controls */
+.rotation-controls {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px var(--shadow);
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 100;
+    font-size: 0.9em;
+}
+
+.rotation-controls i {
+    color: var(--primary);
+}
+
+.rotation-controls span {
+    font-weight: 600;
+    min-width: 35px;
+    text-align: center;
+}
+
+/* ============================================
+   ANNOTATIONS BAR (Bottom)
+   Lista de anotaciones con miniaturas
+   ============================================ */
+
+.annotations-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -2px 6px var(--shadow);
+    z-index: 200;
+    transition: var(--transition);
+}
+
+.annotations-bar.collapsed {
+    height: 26px;
+}
+
+.annotations-bar.collapsed .annotations-list {
+    display: none;
+}
+
+.annotations-bar.collapsed .btn-collapse-vertical i {
+    transform: rotate(180deg);
+}
+
+.annotations-bar-content {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    gap: 2px;
+}
+
+.btn-collapse-vertical {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: var(--gray-light);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    color: var(--dark);
+    flex-shrink: 0;
+    padding: 0;
+    margin: 1px 3px;
+    border-radius: 3px;
+}
+
+.btn-collapse-vertical:hover {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.btn-collapse-vertical i {
+    transition: transform 0.3s ease;
+    font-size: 0.9em;
+}
+
+.annotations-list {
+    display: flex;
+    gap: 6px;
+    padding: 4px 6px;
+    overflow-x: auto;
+    max-height: 110px;
+    scrollbar-width: thin;
+    flex: 1;
+}
+
+.annotations-list::-webkit-scrollbar {
+    height: 6px;
+}
+
+.annotations-list::-webkit-scrollbar-track {
+    background: var(--gray-light);
+}
+
+.annotations-list::-webkit-scrollbar-thumb {
+    background: var(--gray);
+    border-radius: 3px;
+}
+
+.annotations-list::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+.empty-annotations {
+    color: var(--gray-dark);
+    font-size: 0.75em;
+    font-style: italic;
+    padding: 4px;
+    text-align: center;
+    width: 100%;
+}
+
+.annotation-card {
+    min-width: 100px;
+    max-width: 100px;
+    background: var(--white);
+    border: 2px solid var(--gray);
+    border-radius: 6px;
+    padding: 0;
+    cursor: pointer;
+    transition: var(--transition);
+    overflow: hidden;
+}
+
+.annotation-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px var(--shadow);
+    transform: translateY(-2px);
+}
+
+.annotation-card.selected {
+    border-color: var(--primary);
+    border-width: 3px;
+    box-shadow: 0 2px 12px var(--shadow-strong);
+}
+
+.annotation-thumbnail {
+    width: 100%;
+    height: 75px;
+    overflow: hidden;
+    background: var(--gray-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.annotation-thumbnail canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.annotation-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 3px;
+    pointer-events: none;
+}
+
+.annotation-class-label {
+    display: inline-block;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 0.65em;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    align-self: flex-start;
+    backdrop-filter: blur(4px);
+}
+
+.annotation-type-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.6em;
+    font-weight: 500;
+    color: white;
+    background: rgba(0, 0, 0, 0.6);
+    align-self: flex-start;
+    margin-top: 2px;
+    backdrop-filter: blur(4px);
+}
+
+.annotation-delete-btn {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: rgba(231, 76, 60, 0.9);
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75em;
+    transition: var(--transition);
+    pointer-events: auto;
+    backdrop-filter: blur(4px);
+}
+
+.annotation-delete-btn:hover {
+    background: var(--danger);
+    transform: scale(1.1);
+}
+
+.annotation-range-label {
+    padding: 2px 4px;
+    font-size: 0.65em;
+    color: var(--dark);
+    background: var(--gray-light);
+    text-align: center;
+    font-weight: 500;
+    border-top: 1px solid var(--border);
+}
+
+/* Annotation item - compatible with annotation-card */
+.annotation-item {
+    min-width: 100px;
+    max-width: 100px;
+    background: var(--white);
+    border: 2px solid var(--gray);
+    border-radius: 6px;
+    padding: 0;
+    cursor: pointer;
+    transition: var(--transition);
+    overflow: hidden;
+}
+
+.annotation-item:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px var(--shadow);
+    transform: translateY(-2px);
+}
+
+.annotation-item.selected {
+    border-color: var(--primary);
+    border-width: 3px;
+    box-shadow: 0 2px 12px var(--shadow-strong);
+}
+
+/* ============================================
+   FLOATING TOOLS MENU
+   Menú flotante de herramientas en el lado izquierdo
+   ============================================ */
+
+.floating-tools {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 100;
+}
+
+.floating-section {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px var(--shadow);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.floating-section h4 {
+    font-size: 0.7em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray);
+    margin: 0 0 4px 0;
+    font-weight: 600;
+}
+
+.floating-tools .tool-btn {
+    width: 42px;
+    height: 42px;
+    border: 2px solid var(--border);
+    background: var(--white);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark);
+}
+
+.floating-tools .tool-btn i {
+    font-size: 1.3em;
+}
+
+.floating-tools .tool-btn:hover:not(.active) {
+    border-color: var(--primary);
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.floating-tools .tool-btn.active {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: var(--white);
+}
+
+.floating-tools #btnEraseMode.active {
+    border-color: var(--danger);
+    background: var(--danger);
+    color: var(--white);
+}
+
+.floating-zoom {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.floating-zoom-display {
+    font-size: 0.75em;
+    font-weight: 700;
+    text-align: center;
+    color: var(--primary);
+    padding: 4px 0;
+}
+
+.floating-zoom-btn {
+    width: 42px;
+    height: 36px;
+    border: none;
+    background: var(--white);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark);
+    font-size: 1em;
+}
+
+.floating-zoom-btn:hover:not(:disabled) {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.floating-zoom-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.floating-view-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.floating-view-btn {
+    width: 42px;
+    height: 36px;
+    border: 2px solid var(--border);
+    background: var(--white);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark);
+    font-size: 0.95em;
+}
+
+.floating-view-btn:hover:not(.active) {
+    border-color: var(--primary);
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.floating-view-btn.active {
+    border-color: var(--success);
+    background: var(--success);
+    color: var(--white);
+}
+
+.floating-mask-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+}
+
+.floating-brush-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--gray-light);
+    border-radius: 2px;
+    outline: none;
+}
+
+.floating-brush-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.floating-brush-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.floating-brush-value {
+    font-size: 0.75em;
+    font-weight: 600;
+    color: var(--gray);
+}
+
+.floating-erase-btn {
+    width: 42px;
+    height: 36px;
+    border: 2px solid var(--border);
+    background: var(--white);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark);
+    font-size: 0.95em;
+}
+
+.floating-erase-btn:hover:not(.active) {
+    border-color: var(--danger);
+    background: rgba(231, 76, 60, 0.1);
+}
+
+.floating-erase-btn.active {
+    border-color: var(--danger);
+    background: var(--danger);
+    color: var(--white);
+}
+
+/* Vertical Slider for Brush Size */
+.vertical-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 50px;
+    height: 6px;
+    background: var(--gray-light);
+    border-radius: 3px;
+    outline: none;
+    transform: rotate(-90deg);
+    margin: 35px 0;
+}
+
+.vertical-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.vertical-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Rotation Slider */
+.rotation-section {
+    min-width: 200px;
+}
+
+.rotation-slider {
+    width: 150px;
+    height: 4px;
+    background: var(--gray-light);
+    border-radius: 2px;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.rotation-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.rotation-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.rotation-slider:hover::-webkit-slider-thumb {
+    background: var(--primary-dark);
+}
+
+.rotation-slider:hover::-moz-range-thumb {
+    background: var(--primary-dark);
+}
+
+.control-btn-small {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: var(--gray-light);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--dark);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75em;
+    transition: var(--transition);
+}
+
+.control-btn-small:hover {
+    background: var(--primary);
+    color: var(--white);
+    border-color: var(--primary);
+}
+
+/* ============================================
+   TIMELINE NAVIGATOR (Time Series)
+   Barra de navegación temporal para series temporales
+   ============================================ */
+
+.timeline-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.95);
+    border-top: 2px solid var(--border);
+    box-shadow: 0 -2px 8px var(--shadow);
+    z-index: 50;
+    backdrop-filter: blur(4px);
+}
+
+#timelineCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.timeline-viewport {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: rgba(102, 126, 234, 0.2);
+    border-left: 2px solid var(--primary);
+    border-right: 2px solid var(--primary);
+    cursor: grab;
+    pointer-events: auto;
+    transition: background 0.15s ease;
+}
+
+.timeline-viewport:hover {
+    background: rgba(102, 126, 234, 0.3);
+}
+
+.timeline-viewport:active {
+    cursor: grabbing;
+    background: rgba(102, 126, 234, 0.4);
+}
+
+/* Adjust annotations-bar when timeline is visible */
+.canvas-container:has(.timeline-container:not([style*="display: none"])) .annotations-bar {
+    bottom: 60px;
+}
+
+/* Adjust canvas height when timeline is visible */
+.canvas-container:has(.timeline-container:not([style*="display: none"])) {
+    padding-bottom: 60px;
+}

@@ -1,0 +1,35 @@
+/* ============================================
+   VARIABLES CSS
+   Design tokens y variables globales
+   ============================================ */
+
+:root {
+    /* Colores principales */
+    --primary: #667eea;
+    --primary-dark: #5568d3;
+    --secondary: #764ba2;
+    
+    /* Colores de estado */
+    --success: #27ae60;
+    --success-dark: #229954;
+    --danger: #e74c3c;
+    --danger-dark: #c0392b;
+    --warning: #f39c12;
+    --info: #3498db;
+    --info-dark: #2980b9;
+    
+    /* Colores neutros */
+    --dark: #2c3e50;
+    --light: #f8f9fa;
+    --gray: #95a5a6;
+    --gray-light: #ecf0f1;
+    --white: #ffffff;
+    --border: #e0e0e0;
+    
+    /* Sombras */
+    --shadow: rgba(0, 0, 0, 0.1);
+    --shadow-strong: rgba(0, 0, 0, 0.3);
+    
+    /* Transiciones */
+    --transition: all 0.3s ease;
+}

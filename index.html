@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Annotix - TecMedHub</title>
+
+    <!-- PWA Manifest and Meta Tags -->
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Annotix">
+    <meta name="description" content="Professional image annotation tool for machine learning training datasets">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+    <!-- External Libraries -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css">
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/light.css">
+
+    <!-- Custom CSS - Modular -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/canvas.css">
+    <link rel="stylesheet" href="css/modals.css">
+    <link rel="stylesheet" href="css/gallery.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/utilities.css">
+
+    <!-- External Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="appLoader" class="app-loader">
+        <div class="loader-content">
+            <div class="loader-logo">
+                <i class="fas fa-tag fa-3x"></i>
+            </div>
+            <h2 class="loader-title">Annotix</h2>
+            <div class="loader-spinner">
+                <div class="spinner"></div>
+            </div>
+            <p class="loader-text">Cargando aplicación...</p>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <!-- Left Side: Logos -->
+                <div class="header-left">
+                    <a href="https://www.uach.cl" target="_blank" class="header-logo-link" title="Universidad Austral de Chile">
+                        <img src="https://www.uach.cl/uach/_imag/uach/logo-v2.png" alt="Universidad Austral de Chile" class="header-logo">
+                    </a>
+
+                    <div class="header-divider-vertical"></div>
+
+                    <h1 class="app-title">
+                        <i class="fas fa-tag"></i>
+                        <span data-i18n="app.title">Annotix</span>
+                    </h1>
+                </div>
+
+                <!-- Project Controls -->
+                <div class="header-center">
+                    <div id="projectSelectorContainer" style="display: flex; align-items: center; gap: 12px;">
+                        <select id="projectSelector" class="project-selector">
+                            <option value="" data-i18n="header.selectProject">Seleccionar proyecto...</option>
+                        </select>
+
+                        <!-- IndexedDB Storage Indicator -->
+                        <div id="storageIndicator" class="storage-indicator" style="display: none;" data-i18n-title="storage.used">
+                            <i class="fas fa-database"></i>
+                            <span id="storageSize">0 MB</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-header btn-icon-only" id="btnNewProject" data-i18n-title="header.newProject">
+                        <i class="fas fa-plus"></i>
+                    </button>
+
+                    <button class="btn-header btn-icon-only" id="btnOpenProject" data-i18n-title="header.openProject">
+                        <i class="fas fa-folder-open"></i>
+                    </button>
+
+                    <button class="btn-header btn-icon-only" id="btnManageProjects" data-i18n-title="header.manageProjects">
+                        <i class="fas fa-folder-tree"></i>
+                    </button>
+
+                    <div class="header-divider"></div>
+
+                    <button class="btn-header btn-icon-only" id="btnSave" data-i18n-title="actions.save" disabled>
+                        <i class="fas fa-save"></i>
+                    </button>
+
+                    <button class="btn-header btn-icon-only" id="btnExport" data-i18n-title="header.export">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+
+                <!-- Right Side: Help, Language, GitHub -->
+                <div class="header-right">
+                    <button class="btn-header btn-icon-ghost" id="btnHelp" data-i18n-title="header.help">
+                        <i class="fas fa-question-circle"></i>
+                    </button>
+
+                    <button class="btn-header btn-icon-ghost" id="btnShowShortcuts" data-i18n-title="shortcuts.title">
+                        <i class="fas fa-keyboard"></i>
+                    </button>
+
+                    <div class="header-divider"></div>
+
+                    <!-- PWA Install Button (shown only if installable) -->
+                    <button class="btn-header btn-icon-ghost" id="btnInstallPWA" style="display: none;" data-i18n-title="pwa.installButton">
+                        <i class="fas fa-hand-spock"></i>
+                    </button>
+
+                    <!-- Language Selector (will be injected here) -->
+                    <div id="languageSelectorContainer"></div>
+
+                    <a href="https://github.com/debaq/Annotix" target="_blank" class="btn-header btn-icon-ghost" data-tippy-content="GitHub Repository">
+                        <i class="fab fa-github"></i>
+                    </a>
+                </div>
+
+                <!-- Hidden file input for importing projects -->
+                <input type="file" id="projectImportInput" accept=".tix,.tixconfig,.yoloproject,.yoloconfig" style="display: none;">
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Left Sidebar - Image Gallery Only -->
+            <aside class="sidebar">
+                <!-- Image Upload Button -->
+                <div class="panel-section" style="padding-bottom: 8px;">
+                    <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
+                    <button class="btn btn-primary btn-block" id="btnLoadImages">
+                        <i class="fas fa-folder-open"></i> <span data-i18n="images.load">Cargar Imágenes</span>
+                    </button>
+                    <button class="btn btn-outline btn-block" id="btnBatchAugmentation" style="margin-top: 8px;" disabled>
+                        <i class="fas fa-wand-magic-sparkles"></i> <span data-i18n="augmentation.batchButton">Data Augmentation</span>
+                    </button>
+                </div>
+
+                <!-- Gallery Filters -->
+                <div class="panel-section" style="padding-top: 0; padding-bottom: 8px;">
+                    <div class="gallery-filters">
+                        <button class="filter-btn active" data-filter="all" data-i18n="gallery.all">Todas</button>
+                        <button class="filter-btn" data-filter="annotated" data-i18n="gallery.annotated">Anotadas</button>
+                        <button class="filter-btn" data-filter="unannotated" data-i18n="gallery.unannotated">Sin anotar</button>
+                    </div>
+                </div>
+
+                <!-- Image Gallery (Expanded) -->
+                <div class="panel-section" style="flex: 1; display: flex; flex-direction: column; padding-top: 0;">
+                    <div class="gallery-container-full">
+                        <div class="gallery-grid" id="galleryGrid">
+                            <div class="empty-gallery" data-i18n="gallery.empty">No hay imágenes</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Canvas Area -->
+            <main class="canvas-container">
+                <canvas id="canvas"></canvas>
+
+                <!-- Image Info -->
+                <div class="image-info" id="imageInfo" style="display: none;">
+                    <div class="image-info-item">
+                        <i class="fas fa-image"></i>
+                        <span class="image-info-value" id="imageName" data-i18n="imageInfo.noName">-</span>
+                    </div>
+                    <div class="image-info-item">
+                        <i class="fas fa-ruler-combined"></i>
+                        <span class="image-info-value" id="imageDimensions">-</span>
+                    </div>
+                    <div class="image-info-item">
+                        <i class="fas fa-tags"></i>
+                        <span class="image-info-value" id="annotationCount">0</span>
+                    </div>
+                </div>
+
+                <!-- Rotation Controls -->
+                <div class="rotation-controls" id="rotationControls" style="display: none;">
+                    <i class="fas fa-rotate"></i>
+                    <input type="range" id="rotationSlider" min="0" max="360" value="0" step="1" class="rotation-slider">
+                    <span id="rotationValue">0°</span>
+                    <button class="control-btn-small" id="btnResetRotation" title="Reset">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                </div>
+
+                <!-- Floating Tools Menu -->
+                <div class="floating-tools">
+                    <!-- Tools Section -->
+                    <div class="floating-section">
+                        <div class="tool-btn active" data-tool="bbox" data-i18n-title="tools.tooltips.bbox">
+                            <i class="fas fa-vector-square"></i>
+                        </div>
+                        <div class="tool-btn" data-tool="obb" data-i18n-title="tools.tooltips.obb" style="display: none;">
+                            <i class="fas fa-vector-square"></i>
+                        </div>
+                        <div class="tool-btn" data-tool="mask" data-i18n-title="tools.tooltips.mask" style="display: none;">
+                            <i class="fas fa-paint-brush"></i>
+                        </div>
+                        <div class="tool-btn" id="btnEraseMode" data-i18n-title="tools.eraseMode" title="Borrador" style="display: none;">
+                            <i class="fas fa-eraser"></i>
+                        </div>
+                        <!-- Time Series Tools -->
+                        <div class="tool-btn" data-tool="point" data-i18n-title="tools.tooltips.point" title="Punto" style="display: none;">
+                            <i class="fas fa-circle"></i>
+                        </div>
+                        <div class="tool-btn" data-tool="range" data-i18n-title="tools.tooltips.range" title="Rango" style="display: none;">
+                            <i class="fas fa-arrows-alt-h"></i>
+                        </div>
+                        <div class="tool-btn" data-tool="select" data-i18n-title="tools.tooltips.select">
+                            <i class="fas fa-mouse-pointer"></i>
+                        </div>
+                        <div class="tool-btn" data-tool="pan" data-i18n-title="tools.tooltips.pan">
+                            <i class="fas fa-hand-paper"></i>
+                        </div>
+                    </div>
+
+                    <!-- Scale Section (Time Series) -->
+                    <div class="floating-section" id="scaleControls" style="display: none;">
+                        <div style="font-size: 0.65em; font-weight: 600; text-align: center; margin-bottom: 4px;">Escala X</div>
+                        <button class="control-btn control-btn-small" id="btnScaleXIn" title="Aumentar escala X">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="control-btn control-btn-small" id="btnScaleXOut" title="Disminuir escala X">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <div style="font-size: 0.65em; font-weight: 600; text-align: center; margin: 8px 0 4px;">Escala Y</div>
+                        <button class="control-btn control-btn-small" id="btnScaleYIn" title="Aumentar escala Y">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="control-btn control-btn-small" id="btnScaleYOut" title="Disminuir escala Y">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button class="control-btn" id="btnScaleReset" title="Resetear escalas">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+
+                    <!-- Zoom Section (Images) -->
+                    <div class="floating-section" id="zoomControls">
+                        <div class="zoom-level" id="zoomLevel">100%</div>
+                        <button class="control-btn" id="btnZoomIn" data-i18n-title="canvas.zoomIn">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                        <button class="control-btn" id="btnZoomOut" data-i18n-title="canvas.zoomOut">
+                            <i class="fas fa-search-minus"></i>
+                        </button>
+                        <button class="control-btn" id="btnZoomReset" data-i18n-title="canvas.resetZoom">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+
+                    <!-- View Section (Images only) -->
+                    <div class="floating-section" id="viewControls">
+                        <button class="control-btn" id="btnToggleLabels" data-i18n-title="canvas.toggleLabels">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="control-btn" id="btnToggleGrid" data-i18n-title="canvas.toggleGrid">
+                            <i class="fas fa-th"></i>
+                        </button>
+                    </div>
+
+                    <!-- Mask Controls (shown only when mask tool active) -->
+                    <div id="maskControls" class="floating-section" style="display: none;">
+                        <button class="control-btn" id="btnNewInstance" data-i18n-title="tools.newInstance" title="Nueva Instancia">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <div style="font-size: 0.7em; text-align: center; margin: 4px 0;">
+                            <span id="brushSizeValue">20px</span>
+                        </div>
+                        <input type="range" id="brushSizeSlider" min="5" max="100" value="20" class="vertical-slider">
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="image-navigation">
+                    <button class="nav-btn" id="btnPrevImage" disabled data-i18n-title="canvas.prevImage">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="nav-btn" id="btnNextImage" disabled data-i18n-title="canvas.nextImage">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <!-- Timeline Navigator (Time Series) -->
+                <div class="timeline-container" id="timelineContainer" style="display: none;">
+                    <canvas id="timelineCanvas"></canvas>
+                    <div class="timeline-viewport" id="timelineViewport"></div>
+                </div>
+
+                <!-- Bottom Bar - Annotations List -->
+                <div class="annotations-bar collapsed" id="annotationsBar">
+                    <div class="annotations-bar-content">
+                        <button class="btn-collapse-vertical" id="btnCollapseAnnotations" title="Colapsar">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="annotations-list" id="annotationsList">
+                            <div class="empty-annotations" data-i18n="annotations.empty">No hay anotaciones en esta imagen</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Right Panel -->
+            <aside class="right-panel">
+                <!-- Project Stats -->
+                <div class="panel-section">
+                    <h3><i class="fas fa-chart-bar"></i> <span data-i18n="stats.title">Estadísticas</span></h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="statTotalImages">0</div>
+                            <div class="stat-label" data-i18n="stats.images">Imágenes</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statAnnotated">0</div>
+                            <div class="stat-label" data-i18n="stats.annotated">Anotadas</div>
+                        </div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="statLabels">0</div>
+                            <div class="stat-label" data-i18n="stats.labels">Etiquetas</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statClasses">0</div>
+                            <div class="stat-label" data-i18n="stats.classes">Clases</div>
+                        </div>
+                    </div>
+
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">
+                            <span id="progressCount">0/0</span> <span data-i18n="stats.progress">imágenes anotadas</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Class Manager -->
+                <div class="panel-section">
+                    <h3><i class="fas fa-palette"></i> <span data-i18n="classes.manage">Gestionar Clases</span></h3>
+                    <div class="class-manager">
+                        <div class="class-input-group">
+                            <input type="text" id="newClassName" class="class-input" data-i18n="classes.placeholder" placeholder="Nombre de clase">
+                            <input type="color" id="newClassColor" class="color-input" value="#e74c3c">
+                        </div>
+                        <button class="btn btn-primary btn-block" id="btnAddClass">
+                            <i class="fas fa-plus"></i> <span data-i18n="classes.add">Agregar Clase</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Active Classes -->
+                <div class="panel-section">
+                    <h3><i class="fas fa-tags"></i> <span data-i18n="classes.active">Clases Activas</span></h3>
+                    <div class="class-list" id="classList">
+                        <div class="empty-message" data-i18n="classes.empty">No hay clases definidas</div>
+                    </div>
+                </div>
+
+                <!-- Keypoints Progress Panel (shown only for keypoints projects) -->
+                <div class="panel-section" id="keypointProgressPanel" style="display: none;">
+                    <div class="keypoint-progress-header">
+                        <h3><i class="fas fa-braille"></i> <span>Keypoints Progress</span></h3>
+                        <button class="btn btn-sm btn-primary" id="btnNewKeypointInstance" title="New Instance (N)">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+
+                    <div id="keypointProgressContent">
+                        <div class="empty-message">No instance selected</div>
+                    </div>
+                </div>
+
+            </aside>
+        </div>
+
+        <!-- Global Watermark (always on top) -->
+        <div class="global-watermark" data-i18n="app.branding.fablab">TecMedHub</div>
+    </div>
+
+    <!-- Load i18n FIRST -->
+    <script src="js/i18n.js"></script>
+
+    <!-- Event Bus - Global event system -->
+    <script src="js/event-bus.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script src="js/database-manager.js"></script>
+    <script src="js/ui-manager.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/shortcuts-manager.js"></script>
+    <script src="js/tool-manager.js"></script>
+
+    <!-- Skeleton Presets for Keypoints -->
+    <script src="js/skeleton-presets.js"></script>
+
+    <!-- New Canvas Architecture -->
+    <script src="js/canvas/canvas-base.js"></script>
+    <script src="js/canvas/canvas-bbox.js"></script>
+    <script src="js/canvas/canvas-obb.js"></script>
+    <script src="js/canvas/canvas-mask.js"></script>
+    <script src="js/canvas/canvas-keypoints.js"></script>
+    <script src="js/canvas/canvas-polygon.js"></script>
+    <script src="js/canvas/canvas-landmarks.js"></script>
+    <script src="js/canvas/canvas-timeseries.js"></script>
+    <script src="js/canvas/canvas-factory.js"></script>
+
+    <script src="js/image-preprocessor.js"></script>
+    <script src="js/project-types-config.js"></script>
+    <script src="js/project-manager.js"></script>
+    <script src="js/csv-parser.js"></script>
+    <script src="js/timeseries-wizard-manager.js"></script>
+    <script src="js/export-manager.js"></script>
+    <script src="js/training-code-generator.js"></script>
+    <script src="js/canvas-manager.js"></script><!-- Deprecated - kept for backward compatibility -->
+    <script src="js/classification-manager.js"></script>
+    <script src="js/gallery-manager.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- Initialize App Loader -->
+    <script>
+        // Hide loader when app is fully initialized
+        async function hideAppLoader() {
+            // Wait for i18n to be available and initialized
+            let attempts = 0;
+            while ((!window.i18n || !window.i18n.isInitialized) && attempts < 50) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+
+            // Wait for app to be initialized
+            attempts = 0;
+            while (!window.app && attempts < 50) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+
+            // Extra delay to ensure everything is rendered
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            // Hide loader with fade out animation
+            const loader = document.getElementById('appLoader');
+            if (loader) {
+                loader.classList.add('loaded');
+                // Remove from DOM after animation completes
+                setTimeout(() => {
+                    loader.remove();
+                }, 500);
+            }
+        }
+
+        // Start hiding loader when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', hideAppLoader);
+        } else {
+            hideAppLoader();
+        }
+    </script>
+
+    <!-- Initialize Tour and additional features -->
+    <script>
+        // Wait for i18n to load
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Wait a bit for i18n to initialize
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Inject language selector
+            const container = document.getElementById('languageSelectorContainer');
+            if (container && window.i18n) {
+                const selector = window.i18n.createLanguageSelector();
+                container.appendChild(selector);
+            }
+
+            // Tour configuration with i18n
+            window.startAppTour = function() {
+                if (!window.i18n || !window.i18n.translations) {
+                    console.error('i18n not loaded');
+                    return;
+                }
+
+                const intro = introJs();
+                intro.setOptions({
+                    steps: [
+                        {
+                            intro: window.i18n.t('tour.welcome')
+                        },
+                        {
+                            element: document.querySelector('#projectSelector'),
+                            intro: window.i18n.t('tour.project'),
+                            position: 'bottom'
+                        },
+                        {
+                            element: document.querySelector('.sidebar'),
+                            intro: window.i18n.t('tour.tools'),
+                            position: 'right'
+                        },
+                        {
+                            element: document.querySelector('#classList').parentElement,
+                            intro: window.i18n.t('tour.classes'),
+                            position: 'right'
+                        },
+                        {
+                            element: document.querySelector('.canvas-container'),
+                            intro: window.i18n.t('tour.workspace'),
+                            position: 'left'
+                        },
+                        {
+                            element: document.querySelector('.right-panel'),
+                            intro: window.i18n.t('tour.management'),
+                            position: 'left'
+                        }
+                    ],
+                    nextLabel: window.i18n.t('tour.next'),
+                    prevLabel: window.i18n.t('tour.prev'),
+                    doneLabel: window.i18n.t('tour.done'),
+                    skipLabel: window.i18n.t('tour.skip'),
+                    showProgress: true,
+                    showBullets: false,
+                    exitOnOverlayClick: false,
+                    disableInteraction: true
+                });
+
+                intro.start();
+            };
+
+            // Add tour to help button
+            const helpBtn = document.getElementById('btnHelp');
+            if (helpBtn) {
+                helpBtn.addEventListener('click', window.startAppTour);
+            }
+
+            // Listen for language changes to update tour
+            window.addEventListener('languageChanged', () => {
+                // Tour will use updated translations when started
+            });
+        });
+
+        // Update button states based on current state
+function updateUIState() {
+    if (window.app && window.app.canvasManager) {
+        const hasImage = window.app.canvasManager.image !== null && window.app.canvasManager.image !== undefined;
+        const hasAnnotations = window.app.canvasManager.annotations && window.app.canvasManager.annotations.length > 0;
+        const hasProject = window.app.projectManager.currentProject !== null;
+
+        // Update button states - con verificación de existencia
+        const btnSave = document.getElementById('btnSave');
+        const btnUndo = document.getElementById('btnUndo');
+        const btnClear = document.getElementById('btnClear');
+        const btnDownloadZip = document.getElementById('btnDownloadZip');
+        const btnBatchAugmentation = document.getElementById('btnBatchAugmentation');
+
+        if (btnSave) {
+            btnSave.disabled = !hasImage || !hasAnnotations || !hasProject;
+
+            // Highlight save button if there are unsaved changes
+            if (window.app.canvasManager.hasUnsavedChanges) {
+                btnSave.classList.add('btn-pulse');
+                btnSave.style.background = '#f39c12';
+            } else {
+                btnSave.classList.remove('btn-pulse');
+                btnSave.style.background = '';
+            }
+        }
+        if (btnUndo) btnUndo.disabled = !hasAnnotations;
+        if (btnClear) btnClear.disabled = !hasAnnotations;
+        if (btnDownloadZip) btnDownloadZip.disabled = !hasProject;
+        if (btnBatchAugmentation) btnBatchAugmentation.disabled = !hasProject;
+
+        // Update image info
+        const imageInfo = document.getElementById('imageInfo');
+        if (imageInfo) {
+            if (hasImage) {
+                imageInfo.style.display = 'block';
+                const nameElement = document.getElementById('imageName');
+                const dimensionsElement = document.getElementById('imageDimensions');
+                const countElement = document.getElementById('annotationCount');
+
+                if (nameElement) {
+                    nameElement.textContent = window.app.canvasManager.imageName ||
+                        (window.i18n ? window.i18n.t('imageInfo.noName') : 'No name');
+                }
+                if (dimensionsElement && window.app.canvasManager.image) {
+                    dimensionsElement.textContent =
+                        `${window.app.canvasManager.image.width}x${window.app.canvasManager.image.height}`;
+                }
+                if (countElement) {
+                    countElement.textContent = hasAnnotations ?
+                        (window.app.countAnnotations ? window.app.countAnnotations(window.app.canvasManager.annotations) : window.app.canvasManager.annotations.length) : 0;
+                }
+            } else {
+                imageInfo.style.display = 'none';
+            }
+        }
+
+        // Update stat classes
+        if (hasProject && window.app.canvasManager.classes) {
+            const statClasses = document.getElementById('statClasses');
+            if (statClasses) {
+                statClasses.textContent = window.app.canvasManager.classes.length;
+            }
+        }
+
+        // Update progress text
+        const images = window.app.galleryManager.images;
+        const annotated = images.filter(img => img.annotations && img.annotations.length > 0).length;
+        const progressCount = document.getElementById('progressCount');
+        if (progressCount) {
+            progressCount.textContent = `${annotated}/${images.length}`;
+        }
+    }
+}
+
+        // Poll for UI updates
+        setInterval(updateUIState, 500);
+
+        // Download classes.txt
+        document.getElementById('btnDownloadClasses')?.addEventListener('click', () => {
+            if (window.app && window.app.canvasManager.classes.length > 0) {
+                const sortedClasses = [...window.app.canvasManager.classes].sort((a, b) => a.id - b.id);
+                const classesContent = sortedClasses.map(cls => cls.name).join('\n');
+
+                const blob = new Blob([classesContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'classes.txt';
+                a.click();
+                URL.revokeObjectURL(url);
+
+                window.app.ui.showToast(window.i18n.t('notifications.classesDownloaded'), 'success');
+            } else {
+                window.app.ui.showToast(window.i18n.t('notifications.noClasses'), 'warning');
+            }
+        });
+
+        // Undo button
+        document.getElementById('btnUndo')?.addEventListener('click', () => {
+            if (window.app) {
+                window.app.undo();
+            }
+        });
+
+        // Clear button
+        document.getElementById('btnClear')?.addEventListener('click', () => {
+            if (window.app && confirm(window.i18n.t('actions.clearConfirm'))) {
+                window.app.canvasManager.annotations = [];
+                window.app.canvasManager.redraw();
+            }
+        });
+    </script>
+    <script>
+// Mask Controls Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const brushSizeSlider = document.getElementById('brushSizeSlider');
+    const brushSizeValue = document.getElementById('brushSizeValue');
+    const btnEraseMode = document.getElementById('btnEraseMode');
+    const eraseModeText = document.getElementById('eraseModeText');
+    const btnClearMask = document.getElementById('btnClearMask');
+
+    // Brush size slider
+    if (brushSizeSlider && brushSizeValue) {
+        brushSizeSlider.addEventListener('input', (e) => {
+            const size = e.target.value;
+            brushSizeValue.textContent = size + 'px';
+
+            if (window.app && window.app.canvasManager) {
+                window.app.canvasManager.toolManager.setBrushSize(parseInt(size));
+            }
+        });
+    }
+
+    // Note: Erase mode toggle is now handled in app.js setupUI()
+
+    // Clear current mask
+    if (btnClearMask) {
+        btnClearMask.addEventListener('click', () => {
+            if (window.app && window.app.canvasManager) {
+                if (confirm('Clear the current mask being drawn?')) {
+                    window.app.canvasManager.toolManager.clearMask();
+                    window.app.canvasManager.redraw();
+                }
+            }
+        });
+    }
+
+    // Annotations bar collapse/expand
+    const btnCollapseAnnotations = document.getElementById('btnCollapseAnnotations');
+    const annotationsBar = document.getElementById('annotationsBar');
+    if (btnCollapseAnnotations && annotationsBar) {
+        btnCollapseAnnotations.addEventListener('click', () => {
+            annotationsBar.classList.toggle('collapsed');
+        });
+    }
+});
+</script>
+</body>
+</html>
