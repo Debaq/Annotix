@@ -1,814 +1,1210 @@
 {
-  "language": "English",
-  "code": "en",
-  "app": {
-    "title": "Annotix",
-    "subtitle": "Professional annotation tool",
-    "branding": {
-      "fablab": "TecMedHub",
-      "university": "Universidad Austral de Chile - Puerto Montt Campus"
-    }
-  },
-  "header": {
-    "selectProject": "Select project...",
-    "newProject": "New Project",
-    "openProject": "Open Project",
-    "manageProjects": "Manage Projects",
-    "exportProject": "Export Complete Project",
-    "exportConfig": "Export Configuration",
-    "importConfig": "Import Configuration",
-    "help": "Help"
-  },
-  "tools": {
-    "title": "Tools",
-    "bbox": "Box",
-    "obb": "OBB",
-    "mask": "Mask",
-    "select": "Select",
-    "pan": "Pan",
-    "newInstance": "New Instance",
-    "tooltips": {
-      "bbox": "Bounding Box (B)",
-      "obb": "Oriented Box (O)",
-      "mask": "Mask (M)",
-      "select": "Select (V)",
-      "pan": "Pan (H)"
-    }
-  },
-  "classes": {
-    "title": "Active Classes",
-    "manage": "Manage Classes",
-    "add": "Add Class",
-    "placeholder": "Class name",
-    "empty": "Create a project first",
-    "deleteConfirm": "There are annotations with this class. Delete anyway?",
-    "exists": "A class with that name already exists",
-    "enterName": "Enter a name for the class"
-  },
-  "images": {
-    "title": "Load Image",
-    "select": "Select images",
-    "upload": "Select images",
-    "noImages": "No images"
-  },
-  "actions": {
-    "title": "Actions",
-    "save": "Save",
-    "undo": "Undo",
-    "clear": "Clear",
-    "delete": "Delete",
-    "cancel": "Cancel",
-    "create": "Create",
-    "confirm": "Confirm",
-    "close": "Close",
-    "duplicate": "Duplicate",
-    "rename": "Rename",
-    "exportBackup": "Export Backup",
-    "deleteConfirm": "Yes, delete",
-    "clearConfirm": "Clear all annotations from this image?"
-  },
-  "shortcuts": {
-    "title": "Shortcuts",
-    "save": "Save",
-    "undo": "Undo",
-    "delete": "Delete",
-    "navigation": "Navigation",
-    "bbox": "Bbox",
-    "mask": "Mask",
-    "select": "Select",
-    "pan": "Pan",
-    "classes": "Class 1-9"
-  },
-  "canvas": {
-    "zoomIn": "Zoom In",
-    "zoomOut": "Zoom Out",
-    "resetZoom": "Reset Zoom",
-    "toggleLabels": "Show/Hide Labels",
-    "toggleGrid": "Show/Hide Grid",
-    "prevImage": "Previous Image (←)",
-    "nextImage": "Next Image (→)"
-  },
-  "stats": {
-    "title": "Statistics",
-    "images": "Images",
-    "annotated": "Annotated",
-    "labels": "Labels",
-    "classes": "Classes",
-    "progress": "images annotated"
-  },
-  "gallery": {
-    "title": "Gallery",
-    "all": "All",
-    "annotated": "Annotated",
-    "unannotated": "Unannotated",
-    "empty": "No images",
-    "deleteConfirm": "Delete this image?"
-  },
-  "export": {
-    "title": "Export Project",
+    "language": "English",
+    "code": "en",
+    "app": {
+        "title": "Annotix",
+        "subtitle": "Professional annotation tool",
+        "branding": {
+            "fablab": "TecMedHub",
+            "university": "Universidad Austral de Chile - Puerto Montt Campus"
+        }
+    },
+    "header": {
+        "selectProject": "Select project...",
+        "newProject": "New Project",
+        "openProject": "Open Project",
+        "manageProjects": "Manage Projects",
+        "export": "Export",
+        "help": "Help"
+    },
+    "tools": {
+        "title": "Tools",
+        "bbox": "Box",
+        "obb": "OBB",
+        "mask": "Mask",
+        "select": "Select",
+        "pan": "Pan",
+        "eraseMode": "Eraser",
+        "newInstance": "New Instance",
+        "tooltips": {
+            "bbox": "Bounding Box (B)",
+            "obb": "Oriented Box (O)",
+            "mask": "Mask (M)",
+            "point": "Point (P)",
+            "range": "Range (R)",
+            "select": "Select (V)",
+            "pan": "Pan (H)"
+        }
+    },
+    "classes": {
+        "title": "Active Classes",
+        "active": "Active Classes",
+        "manage": "Manage Classes",
+        "add": "Add Class",
+        "placeholder": "Class name",
+        "deleteConfirm": "There are annotations with this class. Delete anyway?",
+        "exists": "A class with that name already exists",
+        "enterName": "Enter a name for the class",
+        "edit": "Edit",
+        "delete": "Delete",
+        "rename": "Rename Class",
+        "editTitle": "Edit Class",
+        "deleteTitle": "Delete Class",
+        "deleteQuestion": "What do you want to do with this class?",
+        "deleteWarning": "This class has",
+        "annotations": "annotations",
+        "deleteAll": "Delete Class and Annotations",
+        "name": "Name",
+        "namePlaceholder": "Class name",
+        "color": "Color",
+        "nameRequired": "Class name is required",
+        "empty": "No classes"
+    },
+    "annotations": {
+        "title": "Annotations",
+        "empty": "No annotations",
+        "addClassFirst": "Add at least one class before annotating"
+    },
+    "polygon": {
+        "toolName": "Polygon",
+        "clickToAdd": "Click to add points. Double click or Enter to close.",
+        "needMinPoints": "You need at least {min} points to create a polygon",
+        "created": "Polygon created",
+        "cancelled": "Drawing cancelled",
+        "cannotDeletePoint": "Cannot delete point. Minimum {min} points required.",
+        "pointDeleted": "Point deleted"
+    },
+    "landmarks": {
+        "toolName": "Landmark",
+        "placed": "Landmark \"{name}\" placed",
+        "selectFirst": "Select a landmark first",
+        "enterName": "Please enter a name",
+        "renamed": "Landmark renamed",
+        "renumbered": "{count} landmarks renumbered",
+        "renameLandmark": "Rename Landmark",
+        "landmarkName": "Landmark Name:",
+        "namePlaceholder": "e.g., Center, Top-Left, Entrance"
+    },
+    "skeleton": {
+        "addKeypointClass": "Add Keypoint Class",
+        "step1": "Step 1: Basic Information",
+        "step2": "Step 2: Select Skeleton Preset",
+        "className": "Class Name",
+        "classNamePlaceholder": "e.g., Person, Hand, Face",
+        "classColor": "Class Color",
+        "selectPreset": "Select a skeleton preset for this class:",
+        "presetInfo": "Each class can have its own skeleton. This allows you to annotate different types of objects in the same project.",
+        "points": "points",
+        "connections": "connections",
+        "previous": "Previous",
+        "next": "Next",
+        "finish": "Finish",
+        "presets": {
+            "coco17": "COCO 17 Keypoints",
+            "coco17Desc": "Full human skeleton (COCO dataset)",
+            "mediapipePose": "MediaPipe Pose 33",
+            "mediapipePoseDesc": "Detailed full body pose",
+            "mediapipeHand": "MediaPipe Hand 21",
+            "mediapipeHandDesc": "Detailed hand joints",
+            "openpose25": "OpenPose 25",
+            "openpose25Desc": "OpenPose skeleton with hands",
+            "facial68": "Facial Landmarks 68",
+            "facial68Desc": "Detailed facial points",
+            "facial5": "Facial 5 Points",
+            "facial5Desc": "Basic facial points (eyes, nose, mouth)",
+            "animalQuad": "Animal Quadruped",
+            "animalQuadDesc": "Skeleton for 4-legged animals",
+            "custom": "Custom",
+            "customDesc": "Define your own skeleton"
+        }
+    },
+    "images": {
+        "load": "Load images",
+        "title": "Title",
+        "select": "Select images",
+        "upload": "Select images",
+        "noImages": "No images"
+    },
+    "actions": {
+        "title": "Actions",
+        "save": "Save",
+        "undo": "Undo",
+        "clear": "Clear",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "create": "Create",
+        "confirm": "Confirm",
+        "close": "Close",
+        "duplicate": "Duplicate",
+        "rename": "Rename",
+        "exportBackup": "Export Backup",
+        "deleteConfirm": "Yes, delete",
+        "clearConfirm": "Clear all annotations from this image?"
+    },
+    "shortcuts": {
+        "title": "Shortcuts",
+        "save": "Save",
+        "undo": "Undo",
+        "delete": "Delete",
+        "navigation": "Navigation",
+        "bbox": "Bbox",
+        "mask": "Mask",
+        "select": "Select",
+        "pan": "Pan",
+        "classes": "Class 1-9"
+    },
+    "canvas": {
+        "zoomIn": "Zoom In",
+        "zoomOut": "Zoom Out",
+        "resetZoom": "Reset Zoom",
+        "toggleLabels": "Show/Hide Labels",
+        "toggleGrid": "Show/Hide Grid",
+        "prevImage": "Previous Image (←)",
+        "nextImage": "Next Image (→)"
+    },
+    "stats": {
+        "title": "Statistics",
+        "images": "Images",
+        "annotated": "Annotated",
+        "labels": "Labels",
+        "classes": "Classes",
+        "progress": "images annotated"
+    },
+    "gallery": {
+        "title": "Gallery",
+        "all": "All",
+        "annotated": "Annotated",
+        "unannotated": "Unannotated",
+        "empty": "No images",
+        "deleteConfirm": "Delete this image?"
+    },
+    "export": {
+        "title": "Export Project",
+        "project": {
+            "title": "Export Project (.tix)",
+            "description": "To continue working later or share with your team",
+            "withImages": "Include images (complete project)",
+            "button": "Export Project"
+        },
+        "training": {
+            "title": "Export for Training",
+            "description": "Dataset ready to train your model (always includes images)",
+            "tabExport": "Export",
+            "tabCode": "Generate Code",
+            "selectFormat": "Select format:",
+            "button": "Export Dataset"
+        },
+        "code": {
+            "framework": "Framework",
+            "model": "Model",
+            "device": "Device",
+            "epochs": "Epochs",
+            "batch": "Batch Size",
+            "imgsz": "Image Size",
+            "preview": "Preview",
+            "copy": "Copy Code",
+            "downloadPy": "Download .py",
+            "downloadIpynb": "Download .ipynb",
+            "labels": {
+                "model": "Model",
+                "device": "Device",
+                "epochs": "Epochs",
+                "batchSize": "Batch Size",
+                "imageSize": "Image Size",
+                "sequenceLength": "Sequence Length",
+                "forecastHorizon": "Forecast Horizon",
+                "hiddenSize": "Hidden Size",
+                "advancedOptions": "Advanced Options",
+                "training": "Training",
+                "optimizer": "Optimizer",
+                "learningRate": "Learning Rate",
+                "patience": "Patience (Early Stop)",
+                "validationSplit": "Validation Split (%)",
+                "dataAugmentation": "Data Augmentation",
+                "metricsAndPlots": "Metrics and Plots",
+                "modelExport": "Model Export"
+            },
+            "modelSizes": {
+                "nano": "Nano (fastest)",
+                "small": "Small",
+                "medium": "Medium",
+                "large": "Large",
+                "xlarge": "XLarge (most accurate)"
+            },
+            "devices": {
+                "cpu": "🖥️ CPU",
+                "gpu": "🎮 GPU (CUDA)",
+                "mps": "🍎 Apple Silicon (MPS)"
+            },
+            "optimizers": {
+                "adam": "Adam (recommended for beginners)",
+                "adamw": "AdamW (Adam improved with weight decay)",
+                "sgd": "SGD (classic, requires more tuning)",
+                "rmsprop": "RMSprop (good for recurrent networks)"
+            },
+            "augmentation": {
+                "mosaic": "Mosaic (combines 4 images)",
+                "mixup": "Mixup (blends transparencies)",
+                "hsv": "HSV (color jitter)",
+                "flip": "Flips (horizontal/vertical)",
+                "rotate": "Rotation",
+                "scale": "Scale/Crop"
+            },
+            "metrics": {
+                "savePlots": "Save training plots",
+                "saveMetricsCsv": "Export metrics to CSV",
+                "saveConfMatrix": "Confusion matrix",
+                "savePrCurves": "Precision-Recall curves",
+                "savePredictions": "Visualize predictions"
+            },
+            "exportFormats": {
+                "onnx": "ONNX (recommended)",
+                "torchscript": "TorchScript",
+                "tflite": "TensorFlow Lite",
+                "openvino": "OpenVINO",
+                "coreml": "CoreML",
+                "tensorrt": "TensorRT"
+            },
+            "template": {
+                "generatedBy": "Automatically generated by Annotix",
+                "projectType": "Project type",
+                "important": "IMPORTANT",
+                "installDeps": "Install dependencies before running",
+                "importantCLI": "IMPORTANT: YOLOv5 uses CLI, not Python API",
+                "importantDetectron2": "IMPORTANT: Detectron2 is more advanced but complex",
+                "importantClassification": "IMPORTANT: Classification with modern architectures",
+                "importantSegmentation": "IMPORTANT: Semantic segmentation with modern architectures",
+                "cloneYOLOv5": "Clone YOLOv5 repository (first time only)",
+                "trainCLI": "TRAIN WITH CLI",
+                "trainingScript": "Training Script",
+                "registerCOCO": "Register your dataset in COCO format",
+                "modelConfiguration": "MODEL CONFIGURATION",
+                "approxEpochs": "Approx epochs",
+                "model": "MODEL",
+                "lossOptimizer": "LOSS AND OPTIMIZER",
+                "training": "Training",
+                "metrics": "Metrics",
+                "saveBestModelSection": "Save best model",
+                "evaluatingModel": "Evaluating model",
+                "validateBestModel": "Validate with best model",
+                "printMetrics": "Print key metrics",
+                "predictValidation": "Predict on validation images",
+                "changeToValFolder": "Change to your validation folder",
+                "saveImagesWithPredictions": "Save images with predictions",
+                "minConfidence": "Minimum confidence",
+                "dontSaveLabels": "Don't save labels",
+                "dontCropDetections": "Don't crop detections",
+                "exportingProduction": "Exporting model to production formats",
+                "exportProduction": "EXPORT MODEL FOR PRODUCTION",
+                "yolov5Completed": "YOLOv5 training completed",
+                "yolonasCompleted": "YOLO-NAS training completed",
+                "unetLoaded": "U-Net model loaded",
+                "availableArchitectures": "Available architectures",
+                "calculateIoU": "Calculate IoU",
+                "bestModelSaved": "Best model saved",
+                "plotsSaved": "Plots saved in",
+                "loadDataset": "Load dataset (structure: train/class1, train/class2, ...)",
+                "trainTransforms": "Training transforms",
+                "valTransforms": "Validation transforms",
+                "options": "Options",
+                "initialLearningRate": "Initial learning rate",
+                "finalLearningRate": "Final learning rate (as fraction of lr0)",
+                "momentumSGD": "Momentum for SGD",
+                "weightDecay": "Weight decay (L2 regularization)",
+                "earlyStoppingPatience": "Early stopping patience",
+                "saveCheckpoints": "Save checkpoints",
+                "savePeriod": "Save every N epochs",
+                "generatePlots": "Generate training plots",
+                "minConfidenceMatrix": "Minimum confidence for confusion matrix",
+                "cacheImages": "Cache images (uses more RAM)",
+                "numWorkers": "Number of workers for DataLoader",
+                "resultsFolder": "Results folder",
+                "experimentName": "Experiment name",
+                "overwriteExperiments": "Overwrite existing experiments",
+                "validateDuringTraining": "Validate during training",
+                "valPercentage": "Validation percentage if no val split exists",
+                "verboseMode": "Verbose mode",
+                "executeCmds": "Run these commands in your terminal",
+                "configuration": "TRAINING CONFIGURATION",
+                "modelAndDevice": "Model and device",
+                "basicHyperparams": "Basic hyperparameters",
+                "dataAugmentation": "Data Augmentation",
+                "loadPretrainedModel": "LOAD PRETRAINED MODEL",
+                "trainModel": "TRAIN THE MODEL",
+                "evaluateModel": "EVALUATE THE MODEL",
+                "exportMetrics": "EXPORT METRICS TO CSV",
+                "visualizePredictions": "VISUALIZE PREDICTIONS",
+                "exportForProduction": "EXPORT MODEL FOR PRODUCTION",
+                "dataset": "Dataset",
+                "basics": "Basics",
+                "optimization": "Optimization",
+                "callbacks": "Callbacks and saving",
+                "visualization": "Visualization and metrics",
+                "performance": "Performance",
+                "validation": "Validation",
+                "modelLoaded": "Model loaded",
+                "parameters": "Parameters",
+                "trainingCompleted": "TRAINING COMPLETED",
+                "evaluating": "Evaluating model...",
+                "finalMetrics": "FINAL METRICS",
+                "metricsSaved": "Metrics saved in",
+                "predictionsSaved": "Predictions saved in",
+                "exportingModel": "Exporting model to production formats...",
+                "onnxExported": "ONNX exported",
+                "torchscriptExported": "TorchScript exported",
+                "tfliteExported": "TFLite exported",
+                "openvinoExported": "OpenVINO exported",
+                "coremlExported": "CoreML exported",
+                "tensorrtExported": "TensorRT exported",
+                "allDone": "All done!",
+                "resultsIn": "Results in",
+                "bestModel": "Best model",
+                "yoloUsesCli": "YOLOv5 uses CLI, not Python API",
+                "cloneRepo": "Clone YOLOv5 repository (first time only)",
+                "trainWithCli": "TRAIN WITH CLI",
+                "validate": "VALIDATE",
+                "yoloTrainingCompleted": "YOLOv5 training completed!",
+                "prepareTrainer": "Prepare trainer",
+                "configureDataset": "Configure dataset",
+                "loadModel": "Load model",
+                "train": "Train",
+                "trainingCompletedShort": "Training completed!",
+                "registerDataset": "REGISTER DATASET",
+                "modelConfig": "MODEL CONFIGURATION",
+                "datasets": "Datasets",
+                "pretrainedModel": "Pretrained model",
+                "hyperparameters": "Hyperparameters",
+                "numClasses": "Number of classes",
+                "output": "Output",
+                "evaluate": "EVALUATE",
+                "advancedButComplex": "is more advanced but complex",
+                "customDataset": "Custom dataset",
+                "lossAndOptimizer": "LOSS AND OPTIMIZER",
+                "trainingLoop": "TRAINING",
+                "saveBestModelAcc": "Best model saved (accuracy",
+                "saveBestModelIoU": "Best model saved (IoU",
+                "saveMetrics": "Save metrics",
+                "plotResults": "Plot results",
+                "bestAccuracy": "Best accuracy",
+                "bestIoU": "Best IoU",
+                "modernArchitectures": "with modern architectures",
+                "semanticSegmentation": "Semantic segmentation with modern architectures",
+                "forVisualization": "For visualizations",
+                "forExportMetrics": "To export metrics",
+                "trainingSamples": "Train samples",
+                "valSamples": "Val samples",
+                "classes": "Classes",
+                "torchvisionModels": "TorchVision models",
+                "timmModels": "timm models (more models available)",
+                "lossOptimizerTitle": "Loss and Optimizer",
+                "architecturesAvailable": "Available architectures",
+                "trainSamples": "Training samples",
+                "testSamples": "Test samples",
+                "sequenceLength": "Sequence length",
+                "numFeatures": "Number of features",
+                "trainEpoch": "Training",
+                "testEpoch": "Testing",
+                "trainLoss": "Train Loss",
+                "testLoss": "Test Loss",
+                "trainAcc": "Train Acc",
+                "testAcc": "Test Acc",
+                "dataLoading": "DATA LOADING",
+                "modelArchitecture": "MODEL ARCHITECTURE",
+                "prepareData": "Prepare data",
+                "trainTest": "TRAIN AND EVALUATE",
+                "forecasting": "FORECASTING",
+                "makePredictions": "Make predictions",
+                "forecastHorizon": "Forecast horizon",
+                "predictionsMade": "Predictions made",
+                "trainingData": "Training data",
+                "testingData": "Testing data",
+                "scaler": "Data scaling",
+                "sequences": "sequences",
+                "timeSteps": "time steps",
+                "features": "features"
+            },
+            "tooltips": {
+                "framework": "Deep learning library to use. Adapts according to your project type.",
+                "model": "Model size: Nano is fast but less accurate, XLarge is slow but more precise.",
+                "device": "Where to train: CPU is slow but always works, GPU (CUDA) is very fast if you have NVIDIA.",
+                "epochs": "How many times the model sees the entire dataset. More epochs = more learning but more time.",
+                "batch": "How many images to process at once. Higher values use more memory but train faster.",
+                "imgsz": "Resolution of images during training. Larger = more detail but slower.",
+                "seqLength": "Number of time steps to use as input. E.g., use 50 past values to predict the future.",
+                "forecastHorizon": "How many future steps to predict (forecasting only). E.g., predict next 10 values.",
+                "hiddenSize": "Size of the neural network hidden layer (LSTM). Larger = more capacity but slower.",
+                "optimizer": "Algorithm that adjusts model weights during training. Adam: balanced and popular. AdamW: Adam with improved weight decay. SGD: classic, slower but sometimes better final result. RMSprop: good for RNNs.",
+                "lr": "How fast the model learns. High values = learns fast but can be unstable. 0.001 is a good starting point.",
+                "patience": "How many epochs to wait without improvement before stopping. If model doesn't improve in 50 epochs, stops automatically.",
+                "valSplit": "What percentage of your images to use for validation. 20% is standard: 80% trains, 20% validates.",
+                "augmentationTitle": "Techniques to create variations of your images and prevent the model from memorizing. Helps generalize better.",
+                "augMosaic": "Combines 4 random images into one. Very effective for improving small object detection.",
+                "augMixup": "Mixes two images with transparency. Helps model be more robust against occlusions.",
+                "augHsv": "Changes image colors (hue, saturation, brightness). Useful for different lighting conditions.",
+                "augFlip": "Flips images horizontally or vertically. Doubles your data effortlessly.",
+                "augRotate": "Rotates images slightly. Useful if your objects can appear at different angles.",
+                "augScale": "Zooms in/out and randomly crops. Simulates objects at different distances.",
+                "metricsTitle": "What information to save during training to analyze model performance.",
+                "savePlots": "Saves loss and accuracy plots during training. Very useful to see if the model is learning.",
+                "saveConfMatrix": "Table showing which classes are confused with each other. Ideal for understanding model errors.",
+                "savePrCurves": "Graphs showing the balance between precision and recall. Important for evaluating detection quality.",
+                "savePredictions": "Saves images with model predictions drawn on top. Perfect for visually seeing how well it works.",
+                "saveMetricsCsv": "Exports all metrics to a CSV file for analysis in Excel or creating your own graphs.",
+                "exportTitle": "Formats for deploying your trained model in production.",
+                "exportOnnx": "ONNX: universal format, works with TensorFlow, PyTorch, and almost any library. Ideal for production.",
+                "exportTorchscript": "TorchScript: PyTorch native format, very fast but only works with PyTorch.",
+                "exportTflite": "TensorFlow Lite: for mobile and embedded devices (Android, iOS, Raspberry Pi).",
+                "exportOpenvino": "OpenVINO: optimized for Intel CPUs. Very fast on Intel hardware.",
+                "exportCoreml": "CoreML: for native iOS/macOS apps. Takes advantage of Apple chips.",
+                "exportTensorrt": "TensorRT: maximum acceleration on NVIDIA GPUs. For high-performance production."
+            },
+            "codeCopied": "Code copied to clipboard",
+            "copyError": "Error copying code",
+            "pyDownloaded": "File .py downloaded",
+            "ipynbDownloaded": "Notebook .ipynb downloaded",
+            "trainingNotebook": "Training Notebook"
+        },
+        "formats": {
+            "csvTimeSeries": {
+                "name": "CSV for Time Series",
+                "description": "Standard CSV format with timestamp, features and target columns"
+            },
+            "jsonTimeSeries": {
+                "name": "Structured JSON",
+                "description": "JSON format with metadata and structured time series"
+            },
+            "numpyTimeSeries": {
+                "name": "NumPy Arrays (.npz)",
+                "description": "Compressed NumPy arrays for efficient Python processing"
+            },
+            "csvAudio": {
+                "name": "CSV for Audio",
+                "description": "Audio metadata with file paths and labels"
+            },
+            "jsonAudio": {
+                "name": "JSON for Audio",
+                "description": "JSON format with audio configuration and annotations"
+            },
+            "csvVideo": {
+                "name": "CSV for Video",
+                "description": "Video metadata with timestamps and per-frame labels"
+            },
+            "jsonVideo": {
+                "name": "JSON for Video",
+                "description": "JSON format with video information and temporal annotations"
+            },
+            "csvText": {
+                "name": "CSV for Text",
+                "description": "CSV format with text and labels for NLP"
+            },
+            "jsonText": {
+                "name": "JSON for Text",
+                "description": "Structured JSON format for language processing tasks"
+            },
+            "yolo": {
+                "name": "YOLO Detection",
+                "description": "Bounding boxes in YOLO format (.txt) with data.yaml"
+            },
+            "yoloSeg": {
+                "name": "YOLO Segmentation",
+                "description": "Polygons in YOLO format (.txt) with data.yaml"
+            },
+            "yoloPose": {
+                "name": "YOLO Pose",
+                "description": "Keypoints in YOLO format (.txt) with skeleton configuration"
+            },
+            "coco": {
+                "name": "COCO JSON",
+                "description": "COCO format for Mask R-CNN, RetinaNet, etc."
+            },
+            "masksPng": {
+                "name": "PNG Masks (U-Net)",
+                "description": "PNG mask images for semantic segmentation"
+            },
+            "voc": {
+                "name": "Pascal VOC XML",
+                "description": "XML format with pixel coordinates"
+            },
+            "csv": {
+                "name": "Simple CSV",
+                "description": "CSV format for pandas processing"
+            },
+            "folders": {
+                "name": "Folders by Class",
+                "description": "Images organized in folders by class"
+            },
+            "json": {
+                "name": "Complete JSON",
+                "description": "JSON export with all annotations"
+            }
+        },
+        "preparing": "Preparing export...",
+        "success": "Dataset exported successfully",
+        "downloadDataheaderset": "Download Dataset"
+    },
+    "projectTypes": {
+        "classification": "Simple Classification",
+        "multiLabel": "Multi-Label Classification",
+        "detection": "Object Detection",
+        "segmentation": "Semantic Segmentation",
+        "instanceSeg": "Instance Segmentation",
+        "keypoints": "Keypoints",
+        "obb": "Oriented Bounding Boxes (OBB)"
+    },
     "project": {
-      "title": "Export Project (.tix)",
-      "description": "To continue working later or share with your team",
-      "withImages": "Include images (complete project)",
-      "button": "Export Project"
-    },
-    "training": {
-      "title": "Export for Training",
-      "description": "Dataset ready to train your model (always includes images)",
-      "tabExport": "Export",
-      "tabCode": "Generate Code",
-      "selectFormat": "Select the format:",
-      "button": "Export Dataset"
-    },
-    "code": {
-      "framework": "Framework",
-      "model": "Model",
-      "device": "Device",
-      "epochs": "Epochs",
-      "batch": "Batch Size",
-      "imgsz": "Image Size",
-      "preview": "Preview",
-      "copy": "Copy Code",
-      "downloadPy": "Download .py",
-      "downloadIpynb": "Download .ipynb",
-      "labels": {
-        "model": "Model",
-        "device": "Device",
-        "epochs": "Epochs",
-        "batchSize": "Batch Size",
-        "imageSize": "Image Size",
-        "sequenceLength": "Sequence Length",
-        "forecastHorizon": "Forecast Horizon",
-        "hiddenSize": "Hidden Size",
-        "advancedOptions": "Advanced Options",
-        "training": "Training",
-        "optimizer": "Optimizer",
-        "learningRate": "Learning Rate",
-        "patience": "Patience (Early Stop)",
-        "validationSplit": "Validation Split (%)",
-        "dataAugmentation": "Data Augmentation",
-        "metricsAndPlots": "Metrics & Plots",
-        "modelExport": "Model Export"
-      },
-      "modelSizes": {
-        "nano": "Nano (fastest)",
-        "small": "Small",
-        "medium": "Medium",
-        "large": "Large",
-        "xlarge": "XLarge (most accurate)"
-      },
-      "devices": {
-        "cpu": "🖥️ CPU",
-        "gpu": "🎮 GPU (CUDA)",
-        "mps": "🍎 Apple Silicon (MPS)"
-      },
-      "optimizers": {
-        "adam": "Adam (recommended for beginners)",
-        "adamw": "AdamW (Adam with improved weight decay)",
-        "sgd": "SGD (classic, requires more tuning)",
-        "rmsprop": "RMSprop (good for recurrent networks)"
-      },
-      "augmentation": {
-        "mosaic": "Mosaic (combines 4 images)",
-        "mixup": "Mixup (blends transparencies)",
-        "hsv": "HSV (color jitter)",
-        "flip": "Flips (horizontal/vertical)",
-        "rotate": "Rotation",
-        "scale": "Scale/Crop"
-      },
-      "metrics": {
-        "savePlots": "Save training plots",
-        "saveMetricsCsv": "Export metrics to CSV",
-        "saveConfMatrix": "Confusion matrix",
-        "savePrCurves": "Precision-Recall curves",
-        "savePredictions": "Visualize predictions"
-      },
-      "exportFormats": {
-        "onnx": "ONNX (recommended)",
-        "torchscript": "TorchScript",
-        "tflite": "TensorFlow Lite",
-        "openvino": "OpenVINO",
-        "coreml": "CoreML",
-        "tensorrt": "TensorRT"
-      },
-      "template": {
-        "generatedBy": "Automatically generated by Annotix",
-        "projectType": "Project type",
-        "important": "IMPORTANT",
-        "installDeps": "Install dependencies before running",
-        "importantCLI": "IMPORTANT: YOLOv5 uses CLI, not Python API",
-        "importantDetectron2": "IMPORTANT: Detectron2 is more advanced but complex",
-        "importantClassification": "IMPORTANT: Classification with modern architectures",
-        "importantSegmentation": "IMPORTANT: Semantic segmentation with modern architectures",
-        "installation": "INSTALL DEPENDENCIES",
-        "cloneYOLOv5": "Clone YOLOv5 repository (first time only)",
-        "trainCLI": "TRAIN WITH CLI",
-        "trainingScript": "Training Script",
-        "registerCOCO": "Register your dataset in COCO format",
-        "modelConfiguration": "MODEL CONFIGURATION",
-        "approxEpochs": "Approx epochs",
-        "model": "MODEL",
-        "lossOptimizer": "LOSS AND OPTIMIZER",
-        "training": "Training",
-        "validation": "Validation",
-        "metrics": "Metrics",
-        "saveBestModel": "Save best model",
-        "evaluatingModel": "Evaluating model",
-        "validateBestModel": "Validate with best model",
-        "printMetrics": "Print key metrics",
-        "predictValidation": "Predict on validation images",
-        "changeToValFolder": "Change to your validation folder",
-        "saveImagesWithPredictions": "Save images with predictions",
-        "minConfidence": "Minimum confidence",
-        "dontSaveLabels": "Don't save labels",
-        "dontCropDetections": "Don't crop detections",
-        "exportingProduction": "Exporting model to production formats",
-        "exportProduction": "EXPORT MODEL FOR PRODUCTION",
-        "yolov5Completed": "YOLOv5 training completed",
-        "yolonasCompleted": "YOLO-NAS training completed",
-        "unetLoaded": "U-Net model loaded",
-        "availableArchitectures": "Available architectures",
-        "calculateIoU": "Calculate IoU",
-        "bestModelSaved": "Best model saved",
-        "bestAccuracy": "Best accuracy",
-        "bestIoU": "Best IoU",
-        "saveMetrics": "Save metrics",
-        "plotResults": "Plot results",
-        "plotsSaved": "Plots saved in",
-        "loadDataset": "Load dataset (structure: train/class1, train/class2, ...)",
-        "trainTransforms": "Training transforms",
-        "valTransforms": "Validation transforms",
-        "trainSamples": "Train samples",
-        "valSamples": "Val samples",
-        "classes": "Classes",
-        "torchvisionModels": "TorchVision models",
-        "options": "Options",
-        "timmModels": "timm models (more models available)",
-        "lossOptimizerTitle": "Loss and Optimizer",
-        "customDataset": "Custom dataset",
-        "initialLearningRate": "Initial learning rate",
-        "finalLearningRate": "Final learning rate (as fraction of lr0)",
-        "momentumSGD": "Momentum for SGD",
-        "weightDecay": "Weight decay (L2 regularization)",
-        "callbacks": "Callbacks and saving",
-        "earlyStoppingPatience": "Early stopping patience",
-        "saveCheckpoints": "Save checkpoints",
-        "savePeriod": "Save every N epochs",
-        "generatePlots": "Generate training plots",
-        "minConfidenceMatrix": "Minimum confidence for confusion matrix",
-        "cacheImages": "Cache images (uses more RAM)",
-        "numWorkers": "Number of workers for DataLoader",
-        "resultsFolder": "Results folder",
-        "experimentName": "Experiment name",
-        "overwriteExperiments": "Overwrite existing experiments",
-        "validateDuringTraining": "Validate during training",
-        "valPercentage": "Validation percentage if no val split exists",
-        "verboseMode": "Verbose mode",
-        "forVisualization": "For visualizations",
-        "forExportMetrics": "To export metrics",
-        "pretrainedModel": "Pretrained model",
-        "hyperparameters": "Hyperparameters",
-        "numClasses": "Number of classes",
-        "registerDataset": "REGISTER DATASET",
-        "installation": "INSTALL DEPENDENCIES",
-        "executeCmds": "Run these commands in your terminal",
-        "configuration": "TRAINING CONFIGURATION",
-        "modelAndDevice": "Model and device",
-        "basicHyperparams": "Basic hyperparameters",
-        "dataAugmentation": "Data Augmentation",
-        "loadPretrainedModel": "LOAD PRETRAINED MODEL",
-        "trainModel": "TRAIN THE MODEL",
-        "evaluateModel": "EVALUATE THE MODEL",
-        "exportMetrics": "EXPORT METRICS TO CSV",
-        "visualizePredictions": "VISUALIZE PREDICTIONS",
-        "exportForProduction": "EXPORT MODEL FOR PRODUCTION",
-        "dataset": "Dataset",
-        "basics": "Basics",
-        "optimization": "Optimization",
-        "callbacks": "Callbacks and saving",
-        "visualization": "Visualization and metrics",
-        "performance": "Performance",
-        "validation": "Validation",
-        "modelLoaded": "Model loaded",
-        "parameters": "Parameters",
-        "trainingCompleted": "TRAINING COMPLETED",
-        "evaluating": "Evaluating model...",
-        "finalMetrics": "FINAL METRICS",
-        "metricsSaved": "Metrics saved in",
-        "predictionsSaved": "Predictions saved in",
-        "exportingModel": "Exporting model to production formats...",
-        "onnxExported": "ONNX exported",
-        "torchscriptExported": "TorchScript exported",
-        "tfliteExported": "TFLite exported",
-        "openvinoExported": "OpenVINO exported",
-        "coremlExported": "CoreML exported",
-        "tensorrtExported": "TensorRT exported",
-        "allDone": "All done!",
-        "resultsIn": "Results in",
-        "bestModel": "Best model",
-        "yoloUsesCli": "YOLOv5 uses CLI, not Python API",
-        "cloneRepo": "Clone YOLOv5 repository (first time only)",
-        "trainWithCli": "TRAIN WITH CLI",
-        "validate": "VALIDATE",
-        "yoloTrainingCompleted": "YOLOv5 training completed!",
-        "prepareTrainer": "Prepare trainer",
-        "configureDataset": "Configure dataset",
-        "loadModel": "Load model",
-        "train": "Train",
-        "trainingCompletedShort": "Training completed!",
-        "registerDataset": "REGISTER DATASET",
-        "modelConfig": "MODEL CONFIGURATION",
-        "datasets": "Datasets",
-        "pretrainedModel": "Pretrained model",
-        "hyperparameters": "Hyperparameters",
-        "numClasses": "Number of classes",
-        "output": "Output",
-        "evaluate": "EVALUATE",
-        "advancedButComplex": "is more advanced but complex",
-        "customDataset": "Custom dataset",
-        "lossAndOptimizer": "LOSS AND OPTIMIZER",
-        "trainingLoop": "TRAINING",
-        "saveBestModel": "Best model saved (accuracy",
-        "saveBestModelIoU": "Best model saved (IoU",
-        "saveMetrics": "Save metrics",
-        "plotResults": "Plot results",
-        "bestAccuracy": "Best accuracy",
-        "bestIoU": "Best IoU",
-        "modernArchitectures": "with modern architectures",
-        "semanticSegmentation": "Semantic segmentation with modern architectures",
-        "forVisualization": "For visualizations",
-        "forExportMetrics": "To export metrics",
-        "trainingSamples": "Train samples",
-        "valSamples": "Val samples",
-        "classes": "Classes",
-        "torchvisionModels": "TorchVision models",
-        "timmModels": "timm models (more models available)",
-        "lossOptimizerTitle": "Loss and Optimizer",
-        "architecturesAvailable": "Available architectures",
-        "trainSamples": "Training samples",
-        "testSamples": "Test samples",
-        "sequenceLength": "Sequence length",
-        "numFeatures": "Number of features",
-        "trainEpoch": "Training",
-        "testEpoch": "Testing",
-        "trainLoss": "Train Loss",
-        "testLoss": "Test Loss",
-        "trainAcc": "Train Acc",
-        "testAcc": "Test Acc",
-        "dataLoading": "DATA LOADING",
-        "modelArchitecture": "MODEL ARCHITECTURE",
-        "prepareData": "Prepare data",
-        "trainTest": "TRAIN AND EVALUATE",
-        "forecasting": "FORECASTING",
-        "makePredictions": "Make predictions",
-        "forecastHorizon": "Forecast horizon",
-        "predictionsMade": "Predictions made",
-        "trainingData": "Training data",
-        "testingData": "Testing data",
-        "scaler": "Data scaling",
-        "sequences": "sequences",
-        "timeSteps": "time steps",
-        "features": "features"
-      },
-      "tooltips": {
-        "framework": "Deep learning library to use. Adapts according to your project type.",
-        "model": "Model size: Nano is fast but less accurate, XLarge is slow but more precise.",
-        "device": "Where to train: CPU is slow but always works, GPU (CUDA) is very fast if you have NVIDIA.",
-        "epochs": "How many times the model sees the entire dataset. More epochs = more learning but more time.",
-        "batch": "How many images to process at once. Higher values use more memory but train faster.",
-        "imgsz": "Resolution of images during training. Larger = more detail but slower.",
-        "seqLength": "Number of time steps to use as input. E.g., use 50 past values to predict the future.",
-        "forecastHorizon": "How many future steps to predict (forecasting only). E.g., predict next 10 values.",
-        "hiddenSize": "Size of the neural network hidden layer (LSTM). Larger = more capacity but slower.",
-        "optimizer": "Algorithm that adjusts model weights during training. Adam: balanced and popular. AdamW: Adam with improved weight decay. SGD: classic, slower but sometimes better final result. RMSprop: good for RNNs.",
-        "lr": "How fast the model learns. High values = learns fast but can be unstable. 0.001 is a good starting point.",
-        "patience": "How many epochs to wait without improvement before stopping. If model doesn't improve in 50 epochs, stops automatically.",
-        "valSplit": "What percentage of your images to use for validation. 20% is standard: 80% trains, 20% validates.",
-        "augmentationTitle": "Techniques to create variations of your images and prevent the model from memorizing. Helps generalize better.",
-        "augMosaic": "Combines 4 random images into one. Very effective for improving small object detection.",
-        "augMixup": "Mixes two images with transparency. Helps model be more robust against occlusions.",
-        "augHsv": "Changes image colors (hue, saturation, brightness). Useful for different lighting conditions.",
-        "augFlip": "Flips images horizontally or vertically. Doubles your data effortlessly.",
-        "augRotate": "Rotates images slightly. Useful if your objects can appear at different angles.",
-        "augScale": "Zooms in/out and randomly crops. Simulates objects at different distances.",
-        "metricsTitle": "What information to save during training to analyze model performance.",
-        "savePlots": "Saves loss and accuracy plots during training. Very useful to see if the model is learning.",
-        "saveConfMatrix": "Table showing which classes are confused with each other. Ideal for understanding model errors.",
-        "savePrCurves": "Graphs showing the balance between precision and recall. Important for evaluating detection quality.",
-        "savePredictions": "Saves images with model predictions drawn on top. Perfect for visually seeing how well it works.",
-        "saveMetricsCsv": "Exports all metrics to a CSV file for analysis in Excel or creating your own graphs.",
-        "exportTitle": "Formats for deploying your trained model in production.",
-        "exportOnnx": "ONNX: universal format, works with TensorFlow, PyTorch, and almost any library. Ideal for production.",
-        "exportTorchscript": "TorchScript: PyTorch native format, very fast but only works with PyTorch.",
-        "exportTflite": "TensorFlow Lite: for mobile and embedded devices (Android, iOS, Raspberry Pi).",
-        "exportOpenvino": "OpenVINO: optimized for Intel CPUs. Very fast on Intel hardware.",
-        "exportCoreml": "CoreML: for native iOS/macOS apps. Takes advantage of Apple chips.",
-        "exportTensorrt": "TensorRT: maximum acceleration on NVIDIA GPUs. For high-performance production."
-      },
-      "codeCopied": "Code copied to clipboard",
-      "copyError": "Error copying code",
-      "pyDownloaded": "File .py downloaded",
-      "ipynbDownloaded": "Notebook .ipynb downloaded",
-      "trainingNotebook": "Training Notebook"
-    },
-    "formats": {
-      "csvTimeSeries": {
-        "name": "CSV for Time Series",
-        "description": "Standard CSV format with timestamp, features and target columns"
-      },
-      "jsonTimeSeries": {
-        "name": "Structured JSON",
-        "description": "JSON format with metadata and structured time series"
-      },
-      "numpyTimeSeries": {
-        "name": "NumPy Arrays (.npz)",
-        "description": "Compressed NumPy arrays for efficient Python processing"
-      },
-      "csvAudio": {
-        "name": "CSV for Audio",
-        "description": "Audio metadata with file paths and labels"
-      },
-      "jsonAudio": {
-        "name": "JSON for Audio",
-        "description": "JSON format with audio configuration and annotations"
-      },
-      "csvVideo": {
-        "name": "CSV for Video",
-        "description": "Video metadata with timestamps and per-frame labels"
-      },
-      "jsonVideo": {
-        "name": "JSON for Video",
-        "description": "JSON format with video information and temporal annotations"
-      },
-      "csvText": {
-        "name": "CSV for Text",
-        "description": "CSV format with text and labels for NLP"
-      },
-      "jsonText": {
-        "name": "JSON for Text",
-        "description": "Structured JSON format for language processing tasks"
-      },
-      "yolo": {
-        "name": "YOLO Detection",
-        "description": "Bounding boxes in YOLO format (.txt) with data.yaml"
-      },
-      "yoloSeg": {
-        "name": "YOLO Segmentation",
-        "description": "Polygons in YOLO format (.txt) with data.yaml"
-      },
-      "yoloPose": {
-        "name": "YOLO Pose",
-        "description": "Keypoints in YOLO format (.txt) with skeleton configuration"
-      },
-      "coco": {
-        "name": "COCO JSON",
-        "description": "COCO format for Mask R-CNN, RetinaNet, etc."
-      },
-      "masksPng": {
-        "name": "PNG Masks (U-Net)",
-        "description": "PNG mask images for semantic segmentation"
-      },
-      "voc": {
-        "name": "Pascal VOC XML",
-        "description": "XML format with pixel coordinates"
-      },
-      "csv": {
-        "name": "Simple CSV",
-        "description": "CSV format for pandas processing"
-      },
-      "folders": {
-        "name": "Folders by Class",
-        "description": "Images organized in folders by class"
-      },
-      "json": {
-        "name": "Complete JSON",
-        "description": "JSON export with all annotations"
-      }
-    },
-    "preparing": "Preparing export...",
-    "success": "Dataset exported successfully",
-    "downloadDataset": "Download Dataset"
-  },
-  "projectTypes": {
-    "classification": "Simple Classification",
-    "multiLabel": "Multi-Label Classification",
-    "detection": "Object Detection",
-    "segmentation": "Semantic Segmentation",
-    "instanceSeg": "Instance Segmentation",
-    "keypoints": "Keypoints",
-    "obb": "Oriented Bounding Boxes (OBB)"
-  },
-  "project": {
-    "new": "New Project",
-    "name": "Project Name",
-    "namePlaceholder": "My Annotix Project",
-    "type": "Annotation Type",
-    "typeSelectHelper": "Select the annotation type based on your training goal",
-    "types": {
-      "classification": {
-        "name": "Simple Classification",
-        "description": "Assign a single label to each complete image",
-        "useCases": "Identify what the image contains (e.g., cat, dog, car)",
-        "models": "ResNet, VGG, EfficientNet, MobileNet",
-        "difficulty": "Beginner"
-      },
-      "multiLabel": {
-        "name": "Multi-Label Classification",
-        "description": "Assign multiple labels to each image",
-        "useCases": "Image with several elements (e.g., park + dog + sky)",
-        "models": "ResNet, VGG with multi-label output",
-        "difficulty": "Beginner"
-      },
-      "detection": {
-        "name": "Object Detection",
-        "description": "Locate objects with rectangular boxes (bounding boxes)",
-        "useCases": "Find and locate specific objects in the image",
-        "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
-        "difficulty": "Intermediate"
-      },
-      "segmentation": {
-        "name": "Semantic Segmentation",
-        "description": "Classify each pixel of the image by class",
-        "useCases": "Separate regions (e.g., road, sky, buildings)",
-        "models": "U-Net, DeepLab, FCN",
-        "difficulty": "Advanced"
-      },
-      "instanceSeg": {
-        "name": "Instance Segmentation",
-        "description": "Outline each individual object",
-        "useCases": "Separate individual objects at pixel level",
-        "models": "Mask R-CNN, YOLACT, YOLOv8-seg",
-        "difficulty": "Advanced"
-      },
-      "keypoints": {
-        "name": "Keypoints",
-        "description": "Mark specific points on objects",
-        "useCases": "Pose estimation, facial recognition, anatomy",
-        "models": "OpenPose, HRNet, MediaPipe",
-        "difficulty": "Intermediate"
-      },
-      "polygon": {
-        "name": "Polygon Segmentation",
-        "description": "Draw polygons point-by-point for precise segmentation",
-        "useCases": "Precise object boundaries, geometric shapes, lighter than masks",
-        "models": "YOLOv8-seg, Mask R-CNN, SOLO",
-        "difficulty": "Intermediate"
-      },
-      "landmarks": {
-        "name": "Landmark Points",
-        "description": "Place independent points without connections",
-        "useCases": "Object centers, reference points, counting, locations",
-        "models": "Detection models, custom point detectors",
-        "difficulty": "Beginner"
-      },
-      "obb": {
-        "name": "Oriented Boxes (OBB)",
-        "description": "Bounding boxes with free rotation",
-        "useCases": "Angled text, aerial objects, satellites",
-        "models": "Rotated-YOLO, RRPN",
-        "difficulty": "Advanced"
-      }
-    },
-    "initialClasses": "Initial Classes (optional)",
-    "classesPlaceholder": "class1, class2, class3",
-    "classesHelp": "Comma separated. You can add more later.",
-    "imageDimensions": "Image Dimensions",
-    "dimensionsAuto": "Automatic - Accept any size",
-    "dimensionsFixed": "Fixed - All images will be resized",
-    "targetSize": "Target size",
-    "resizeStrategy": "Strategy",
-    "enterName": "Enter a name for the project",
-    "created": "Project \"{name}\" created",
-    "updated": "Updated",
-    "loaded": "Project \"{name}\" loaded",
-    "deleted": "Project deleted",
-    "duplicated": "Project \"{name}\" duplicated",
-    "renamed": "Project renamed",
-    "imported": "Project \"{name}\" imported",
-    "exported": "Project exported",
-    "configExported": "Configuration exported",
-    "selectFirst": "Select a project first",
-    "noProjects": "No projects available",
-    "manageProjects": "Manage Projects",
-    "renameProject": "Rename Project",
-    "newName": "New name",
-    "images": "images",
-    "annotations": "annotations",
-    "exportBackup": "Download .tix backup before deleting",
-    "deleteWarning": {
-      "title": "⚠️ WARNING: PERMANENT DELETION",
-      "confirmTitle": "Confirm Deletion?",
-      "projectName": "Project:",
-      "message": "You are about to PERMANENTLY delete this project.",
-      "permanent": "This action CANNOT be undone",
-      "allData": "ALL images and annotations will be deleted",
-      "noUndo": "There is no way to recover deleted data",
-      "recommendation": "💡 Recommendation: Export the project in .tix format as a backup BEFORE deleting it"
-    }
-  },
-  "notifications": {
-    "imageSaved": "Image saved",
-    "datasetDownloaded": "Dataset downloaded",
-    "classesDownloaded": "classes.txt downloaded",
-    "noClasses": "No classes to download",
-    "noImages": "No images in project",
-    "noAnnotations": "No annotations to download",
-    "appStarted": "Application started",
-    "error": {
-      "createProject": "Error creating project",
-      "loadProject": "Error loading project",
-      "updateProject": "Error updating project",
-      "deleteProject": "Error deleting project",
-      "duplicateProject": "Error duplicating project",
-      "renameProject": "Error renaming project",
-      "loadProjects": "Error loading projects",
-      "exportProject": "Error exporting project",
-      "exportConfig": "Error exporting configuration",
-      "importConfig": "Error importing configuration",
-      "importProject": "Error importing project",
-      "loadImage": "Error loading image",
-      "saveImage": "Error saving image",
-      "deleteImage": "Error deleting image",
-      "loadImages": "Error loading images",
-      "downloadDataset": "Error downloading dataset",
-      "initApp": "Error starting application"
-    }
-  },
-  "tour": {
-    "welcome": "Welcome to <strong>Annotix</strong>. This tool allows you to annotate images for training machine learning models.",
-    "project": "First, create a new project or select an existing one. Each project can be <strong>Bounding Box</strong> or <strong>Segmentation</strong> type.",
-    "tools": "Here you'll find the annotation <strong>tools</strong>: Box for rectangles, Mask for paintable masks, Select for editing, and Pan to move the view.",
-    "classes": "Define your annotation <strong>classes</strong>. Each class has a name and color. You can add, edit or delete classes.",
-    "workspace": "The main <strong>workspace</strong>. Here you'll load your images and create annotations. Use the mouse to draw and wheel to zoom.",
-    "management": "Management panel where you'll see project <strong>statistics</strong>, image <strong>gallery</strong> and can <strong>export</strong> your dataset in YOLO format.",
-    "next": "Next →",
-    "prev": "← Previous",
-    "done": "Done!",
-    "skip": "Skip"
-  },
-  "imageInfo": {
-    "noName": "No name",
-    "dimensions": "Dimensions"
-  },
-  "polygon": {
-    "toolName": "Polygon",
-    "clickToAdd": "Click to add points. Double-click or press Enter to close.",
-    "needMinPoints": "Need at least {min} points to create a polygon",
-    "created": "Polygon created",
-    "cancelled": "Drawing cancelled",
-    "cannotDeletePoint": "Cannot delete point. Minimum {min} points required.",
-    "pointDeleted": "Point deleted"
-  },
-  "landmarks": {
-    "toolName": "Landmark",
-    "placed": "Landmark \"{name}\" placed",
-    "selectFirst": "Select a landmark first",
-    "enterName": "Please enter a name",
-    "renamed": "Landmark renamed",
-    "renumbered": "Renumbered {count} landmarks",
-    "renameLandmark": "Rename Landmark",
-    "landmarkName": "Landmark Name:",
-    "namePlaceholder": "e.g., Center, Top-Left, Entrance"
-  },
-  "skeleton": {
-    "addKeypointClass": "Add Keypoint Class",
-    "step1": "Step 1: Basic Information",
-    "step2": "Step 2: Select Skeleton Preset",
-    "className": "Class Name",
-    "classNamePlaceholder": "e.g., Person, Hand, Face",
-    "classColor": "Class Color",
-    "selectPreset": "Select a skeleton preset for this class:",
-    "presetInfo": "Each class can have its own skeleton. This allows you to annotate different types of objects in the same project.",
-    "points": "points",
-    "connections": "connections",
-    "previous": "Previous",
-    "next": "Next",
-    "finish": "Finish",
-    "presets": {
-      "coco17": "COCO 17 Keypoints",
-      "coco17Desc": "Full body human skeleton (COCO dataset)",
-      "mediapipePose": "MediaPipe Pose 33",
-      "mediapipePoseDesc": "Detailed full body pose",
-      "mediapipeHand": "MediaPipe Hand 21",
-      "mediapipeHandDesc": "Detailed hand joints",
-      "openpose25": "OpenPose 25",
-      "openpose25Desc": "OpenPose skeleton with hands",
-      "facial68": "Facial Landmarks 68",
-      "facial68Desc": "Detailed facial points",
-      "facial5": "Facial 5 Points",
-      "facial5Desc": "Basic facial points (eyes, nose, mouth)",
-      "animalQuad": "Animal Quadruped",
-      "animalQuadDesc": "Skeleton for 4-legged animals",
-      "custom": "Custom",
-      "customDesc": "Define your own skeleton"
-    }
-  },
-  "preprocessing": {
-    "title": "Preprocess Images",
-    "detected": "Detected {count} non-square images",
-    "description": "Images will be adjusted to a square size to optimize training. Choose the resizing strategy:",
-    "targetSize": "Target size (pixels)",
-    "recommended": "Recommended: {size}px",
-    "strategy": "Resizing strategy",
-    "strategies": {
-      "resize": {
-        "name": "Resize + Padding",
-        "description": "Scales down the image and adds padding (optimizes space and memory)"
-      },
-      "padding": {
-        "name": "Padding Only",
-        "description": "Keeps original size and adds padding (better quality)"
-      }
-    },
-    "options": {
-      "apply": "Apply preprocessing",
-      "skip": "Upload without preprocessing"
-    },
-    "progress": "Processing image {current} of {total}...",
-    "complete": "{count} images preprocessed successfully",
-    "preview": "Preview",
-    "original": "Original",
-    "processed": "Processed",
-    "aspectRatio": "Original aspect ratio preserved",
-    "paddingInfo": "Symmetric black padding will be added"
-  },
-  "classification": {
-    "selectOne": "Select the correct label",
-    "selectMultiple": "Select all labels that apply",
-    "singleHint": "You can only select one label",
-    "multiHint": "You can select multiple labels",
-    "noLabels": "No labels assigned",
-    "labeled": "Labeled"
-  },
-  "augmentation": {
-    "title": "Data Augmentation",
-    "batchButton": "Data Augmentation",
-    "augmentImage": "Apply augmentation",
-    "variationsCount": "Number of variations",
-    "variationsCountHelp": "How many augmented images to create? (1-20)",
-    "generationMode": "Generation mode",
-    "modeManual": "Manual (fixed configuration)",
-    "modeRandom": "Random (configurable ranges)",
-    "modeManualHelp": "Apply the same configuration N times",
-    "modeRandomHelp": "Generate N variations with random values within specified ranges",
-    "geometricTransforms": "Geometric Transformations",
-    "flipHorizontal": "Flip Horizontal",
-    "flipVertical": "Flip Vertical",
-    "rotation": "Rotation",
-    "noRotation": "No rotation",
-    "customRotation": "Custom rotation",
-    "colorAdjustments": "Color Adjustments",
-    "brightness": "Brightness",
-    "contrast": "Contrast",
-    "saturation": "Saturation",
-    "randomOptions": "Random Options",
-    "randomFlip": "Random flip (horizontal/vertical)",
-    "randomRotation": "Random rotation",
-    "randomColor": "Random color adjustments",
-    "rotationRange": "Rotation range (degrees)",
-    "brightnessRange": "Brightness range",
-    "contrastRange": "Contrast range",
-    "saturationRange": "Saturation range",
-    "min": "Min",
-    "max": "Max",
-    "keepAnnotations": "Keep transformed annotations",
-    "keepAnnotationsHelp": "Bounding boxes will be automatically transformed with the image",
-    "maskProjectWarning": "Mask Project",
-    "maskProjectWarningText": "Annotations will NOT be preserved. You'll need to manually paint masks on each augmented image.",
-    "apply": "Apply",
-    "processing": "Processing augmentation...",
-    "generatingVariations": "Generating {count} variations...",
-    "variationsSuccess": "{count} variations created successfully",
-    "success": "Augmented image created successfully",
-    "error": "Error applying augmentation",
-    "batchProcessing": "Applying augmentation to {count} images...",
-    "batchRandomProcessing": "Generating {variations} variations for {images} images ({total} total)...",
-    "batchSuccess": "{count} augmented images created successfully",
-    "batchRandomSuccess": "{count} random variations created successfully",
-    "batchError": "Error applying batch augmentation"
-  },
-  "pwa": {
-    "installButton": "Install App",
-    "modal": {
-      "title": "🚀 Install Annotix as an app",
-      "benefits": "Benefits of installing:",
-      "benefit1": "✅ Desktop shortcut access",
-      "benefit2": "✅ Works offline",
-      "benefit3": "✅ Faster and smoother",
-      "benefit4": "✅ No browser bar",
-      "benefit5": "✅ Your data always private",
-      "benefit6": "✅ Automatic updates",
-      "cancelButton": "Not now",
-      "installButtonModal": "📥 Install App"
+        "new": "New Project",
+        "name": "Project Name",
+        "namePlaceholder": "My Annotix Project",
+        "type": "Annotation Type",
+        "typeSelectHelper": "Select the annotation type based on your training goal",
+        "types": {
+            "classification": {
+                "name": "Simple Classification",
+                "description": "Assign a single label to each complete image",
+                "useCases": "Identify what the image contains (e.g., cat, dog, car)",
+                "models": "ResNet, VGG, EfficientNet, MobileNet",
+                "difficulty": "Beginner"
+            },
+            "multiLabel": {
+                "name": "Multi-Label Classification",
+                "description": "Assign multiple labels to each image",
+                "useCases": "Image with several elements (e.g., park + dog + sky)",
+                "models": "ResNet, VGG with multi-label output",
+                "difficulty": "Beginner"
+            },
+            "detection": {
+                "name": "Object Detection",
+                "description": "Locate objects with rectangular boxes (bounding boxes)",
+                "useCases": "Find and locate specific objects in the image",
+                "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+                "difficulty": "Intermediate"
+            },
+            "segmentation": {
+                "name": "Semantic Segmentation",
+                "description": "Classify each pixel of the image by class",
+                "useCases": "Separate regions (e.g., road, sky, buildings)",
+                "models": "U-Net, DeepLab, FCN",
+                "difficulty": "Advanced"
+            },
+            "instanceSeg": {
+                "name": "Instance Segmentation",
+                "description": "Outline each individual object",
+                "useCases": "Separate individual objects at pixel level",
+                "models": "Mask R-CNN, YOLACT, YOLOv8-seg",
+                "difficulty": "Advanced"
+            },
+            "keypoints": {
+                "name": "Keypoints",
+                "description": "Mark specific points on objects",
+                "useCases": "Pose estimation, facial recognition, anatomy",
+                "models": "OpenPose, HRNet, MediaPipe",
+                "difficulty": "Intermediate"
+            },
+            "polygon": {
+                "name": "Polygon Segmentation",
+                "description": "Draw polygons point-by-point for precise segmentation",
+                "useCases": "Precise object boundaries, geometric shapes, lighter than masks",
+                "models": "YOLOv8-seg, Mask R-CNN, SOLO",
+                "difficulty": "Intermediate"
+            },
+            "landmarks": {
+                "name": "Landmark Points",
+                "description": "Place independent points without connections",
+                "useCases": "Object centers, reference points, counting, locations",
+                "models": "Detection models, custom point detectors",
+                "difficulty": "Beginner"
+            },
+            "obb": {
+                "name": "Oriented Boxes (OBB)",
+                "description": "Bounding boxes with free rotation",
+                "useCases": "Angled text, aerial objects, satellites",
+                "models": "Rotated-YOLO, RRPN",
+                "difficulty": "Advanced"
+            },
+            "semanticSeg": {
+                "name": "Pure Semantic Segmentation",
+                "description": "Classify each pixel without distinguishing instances",
+                "useCases": "Segmentation maps, landscapes, urban scenes",
+                "models": "U-Net, DeepLabV3+, SegFormer",
+                "difficulty": "Advanced"
+            },
+            "panopticSeg": {
+                "name": "Panoptic Segmentation",
+                "description": "Combines semantic and instance segmentation",
+                "useCases": "Autonomous driving, full scene analysis",
+                "models": "Panoptic-FPN, DETR, MaskFormer",
+                "difficulty": "Advanced"
+            },
+            "ocr": {
+                "name": "OCR (Text Recognition)",
+                "description": "Detect and recognize text in images",
+                "useCases": "Documents, signs, posters, invoices",
+                "models": "CRAFT, EasyOCR, Tesseract, PaddleOCR",
+                "difficulty": "Intermediate"
+            },
+            "depthEstimation": {
+                "name": "Depth Estimation",
+                "description": "Predict distance of each pixel to the camera",
+                "useCases": "Robotics, AR/VR, 3D reconstruction",
+                "models": "MiDaS, DPT, Depth Anything",
+                "difficulty": "Advanced"
+            },
+            "audioClassification": {
+                "name": "Audio Classification",
+                "description": "Assign label to audio clips",
+                "useCases": "Music classification, environmental sounds",
+                "models": "AudioSet, PANNs, YAMNet",
+                "difficulty": "Intermediate"
+            },
+            "speechRecognition": {
+                "name": "Speech Recognition",
+                "description": "Transcribe audio to text",
+                "useCases": "Subtitles, voice assistants, transcription",
+                "models": "Whisper, Wav2Vec2, DeepSpeech",
+                "difficulty": "Advanced"
+            },
+            "soundEventDetection": {
+                "name": "Sound Event Detection",
+                "description": "Identify and locate events in audio",
+                "useCases": "Security monitoring, urban analysis",
+                "models": "CRNN, CNN14, SED-CRNN",
+                "difficulty": "Advanced"
+            },
+            "speakerIdentification": {
+                "name": "Speaker Identification",
+                "description": "Recognize who is speaking",
+                "useCases": "Security, meeting diarization",
+                "models": "x-vector, ECAPA-TDNN, SpeakerNet",
+                "difficulty": "Advanced"
+            },
+            "audioTagging": {
+                "name": "Audio Tagging",
+                "description": "Assign multiple labels to audio",
+                "useCases": "Acoustic scene analysis",
+                "models": "VGGish, PANNs, AudioSet",
+                "difficulty": "Intermediate"
+            },
+            "musicGenreClassification": {
+                "name": "Music Genre Classification",
+                "description": "Identify musical genre of a song",
+                "useCases": "Music library organization",
+                "models": "MusiCNN, CNN-Spectrograms",
+                "difficulty": "Intermediate"
+            },
+            "emotionRecognition": {
+                "name": "Emotion Recognition",
+                "description": "Detect emotion in voice",
+                "useCases": "Customer service, sentiment analysis",
+                "models": "OpenSMILE, EmotiW, SER-CNN",
+                "difficulty": "Advanced"
+            },
+            "voiceActivityDetection": {
+                "name": "Voice Activity Detection (VAD)",
+                "description": "Detect when there is voice in audio",
+                "useCases": "Audio preprocessing, telephone systems",
+                "models": "WebRTC VAD, Silero VAD",
+                "difficulty": "Beginner"
+            },
+            "keywordSpotting": {
+                "name": "Keyword Spotting",
+                "description": "Detect specific words in audio",
+                "useCases": "Voice assistants (Hey Siri, OK Google)",
+                "models": "CNN-KWS, Depthwise Separable CNNs",
+                "difficulty": "Intermediate"
+            },
+            "environmentalSound": {
+                "name": "Environmental Sound Classification",
+                "description": "Classify environmental sounds",
+                "useCases": "Urban monitoring, wildlife conservation",
+                "models": "ESC-CNN, UrbanSound8K models",
+                "difficulty": "Intermediate"
+            },
+            "actionRecognition": {
+                "name": "Action Recognition",
+                "description": "Identify actions in video",
+                "useCases": "Sports analysis, surveillance, human interaction",
+                "models": "C3D, I3D, SlowFast, X3D",
+                "difficulty": "Advanced"
+            },
+            "objectTracking": {
+                "name": "Object Tracking",
+                "description": "Track objects across frames",
+                "useCases": "Surveillance, traffic analysis, sports",
+                "models": "SORT, DeepSORT, ByteTrack, BoT-SORT",
+                "difficulty": "Advanced"
+            },
+            "temporalActionLocalization": {
+                "name": "Temporal Action Localization",
+                "description": "Detect when actions occur in video",
+                "useCases": "Video analysis, automatic summaries",
+                "models": "BMN, TSN, ActionFormer",
+                "difficulty": "Advanced"
+            },
+            "videoClassification": {
+                "name": "Video Classification",
+                "description": "Assign category to entire video",
+                "useCases": "Content organization, recommendations",
+                "models": "3D-CNN, Two-Stream Networks, TimeSformer",
+                "difficulty": "Intermediate"
+            },
+            "videoSegmentation": {
+                "name": "Video Segmentation",
+                "description": "Segment objects in video frame by frame",
+                "useCases": "Video editing, special effects",
+                "models": "STM, XMem, SAM-Track",
+                "difficulty": "Advanced"
+            },
+            "activityDetection": {
+                "name": "Activity Detection",
+                "description": "Detect specific human activities",
+                "useCases": "Elderly monitoring, security",
+                "models": "ActivityNet models, TSM",
+                "difficulty": "Advanced"
+            },
+            "poseTracking": {
+                "name": "Pose Tracking",
+                "description": "Track body keypoints in video",
+                "useCases": "Movement analysis, fitness, sports",
+                "models": "AlphaPose, OpenPose, MMPose",
+                "difficulty": "Advanced"
+            },
+            "videoAnomalyDetection": {
+                "name": "Video Anomaly Detection",
+                "description": "Detect unusual events in video",
+                "useCases": "Surveillance, industrial quality control",
+                "models": "AnomalyNet, Future Frame Prediction",
+                "difficulty": "Advanced"
+            },
+            "spatiotemporalAction": {
+                "name": "Spatiotemporal Action Detection",
+                "description": "Detect actions in space and time",
+                "useCases": "Detailed video analysis, YOLO-Act",
+                "models": "AVA models, SlowFast, YOLO-Act",
+                "difficulty": "Advanced"
+            },
+            "timeSeriesClassification": {
+                "name": "Time Series Classification",
+                "description": "Assign a class to each complete time series (global classification mode)",
+                "useCases": "Medical diagnosis, gesture recognition, ECG classification",
+                "models": "InceptionTime, ROCKET, ResNet",
+                "difficulty": "Intermediate"
+            },
+            "timeSeriesForecasting": {
+                "name": "Time Series Forecasting",
+                "description": "Mark historical windows and prediction horizon using ranges",
+                "useCases": "Sales prediction, weather, energy demand",
+                "models": "LSTM, Transformer, N-BEATS, Prophet",
+                "difficulty": "Advanced"
+            },
+            "anomalyDetection": {
+                "name": "Anomaly Detection",
+                "description": "Mark anomalous points in time series",
+                "useCases": "Fraud detection, equipment failure, health monitoring",
+                "models": "AutoEncoder, Isolation Forest, LSTM-AE",
+                "difficulty": "Advanced"
+            },
+            "timeSeriesSegmentation": {
+                "name": "Time Series Segmentation",
+                "description": "Divide series into segments with classes using ranges",
+                "useCases": "Behavior analysis, regime change, activity states",
+                "models": "ClaSP, FLUSS, Seasonal-Trend Decomposition",
+                "difficulty": "Advanced"
+            },
+            "patternRecognition": {
+                "name": "Pattern Recognition",
+                "description": "Mark repetitive patterns/motifs using ranges",
+                "useCases": "Stock analysis, biomedical signals, cycle detection",
+                "models": "Matrix Profile, STOMP, SAX",
+                "difficulty": "Intermediate"
+            },
+            "eventDetection": {
+                "name": "Event Detection",
+                "description": "Mark discrete events in time using points",
+                "useCases": "Sensor monitoring, alerts, state changes",
+                "models": "Change Point Detection, Event Detection CNN",
+                "difficulty": "Intermediate"
+            },
+            "timeSeriesRegression": {
+                "name": "Time Series Regression",
+                "description": "Mark points with numeric target values",
+                "useCases": "Demand estimation, dynamic pricing, value prediction",
+                "models": "XGBoost, Random Forest, Neural Networks",
+                "difficulty": "Intermediate"
+            },
+            "clustering": {
+                "name": "Series Clustering",
+                "description": "Assign cluster to each complete time series (global classification mode)",
+                "useCases": "Customer segmentation, pattern analysis, behavior grouping",
+                "models": "K-Shape, DTW-KMeans, K-Means",
+                "difficulty": "Intermediate"
+            },
+            "imputation": {
+                "name": "Missing Value Imputation",
+                "description": "Mark missing data sections to impute using ranges",
+                "useCases": "Sensor data cleaning, filling measurement gaps",
+                "models": "MICE, KNN, Interpolation, BRITS",
+                "difficulty": "Intermediate"
+            },
+            "object3DDetection": {
+                "name": "3D Object Detection",
+                "description": "Detect objects in 3D point clouds",
+                "useCases": "Autonomous driving, robotics",
+                "models": "PointNet++, VoxelNet, PointPillars",
+                "difficulty": "Advanced"
+            },
+            "semantic3DSegmentation": {
+                "name": "3D Semantic Segmentation",
+                "description": "Classify points in 3D clouds",
+                "useCases": "Urban mapping, BIM, building scanning",
+                "models": "PointNet, MinkowskiNet, KPConv",
+                "difficulty": "Advanced"
+            },
+            "instance3DSegmentation": {
+                "name": "3D Instance Segmentation",
+                "description": "Separate individual objects in 3D",
+                "useCases": "Robotics, object manipulation",
+                "models": "PointGroup, SoftGroup, Mask3D",
+                "difficulty": "Advanced"
+            },
+            "pointCloudClassification": {
+                "name": "Point Cloud Classification",
+                "description": "Classify complete point clouds",
+                "useCases": "3D object recognition",
+                "models": "PointNet, DGCNN, PointTransformer",
+                "difficulty": "Advanced"
+            },
+            "meshSegmentation": {
+                "name": "Mesh Segmentation",
+                "description": "Segment 3D polygonal meshes",
+                "useCases": "3D modeling, geometric analysis",
+                "models": "MeshCNN, TextureNet",
+                "difficulty": "Advanced"
+            },
+            "pose3DEstimation": {
+                "name": "3D Pose Estimation",
+                "description": "Estimate human poses in 3D",
+                "useCases": "Motion capture, animation",
+                "models": "VideoPose3D, VoxelPose",
+                "difficulty": "Advanced"
+            },
+            "keypoint3DDetection": {
+                "name": "3D Keypoint Detection",
+                "description": "Detect points of interest in 3D",
+                "useCases": "Point cloud registration, SLAM",
+                "models": "D3Feat, FCGF, Predator",
+                "difficulty": "Advanced"
+            },
+            "surfaceReconstruction": {
+                "name": "Surface Reconstruction",
+                "description": "Reconstruct surfaces from points",
+                "useCases": "3D scanning, cultural heritage",
+                "models": "Poisson Surface Reconstruction, COLMAP",
+                "difficulty": "Advanced"
+            },
+            "slamAnnotation": {
+                "name": "SLAM Annotation",
+                "description": "Annotate data for localization and mapping",
+                "useCases": "Mobile robotics, autonomous navigation",
+                "models": "ORB-SLAM, LiDAR-SLAM",
+                "difficulty": "Advanced"
+            },
+            "textClassification": {
+                "name": "Text Classification",
+                "description": "Assign category to text",
+                "useCases": "News classification, spam detection",
+                "models": "BERT, RoBERTa, DistilBERT",
+                "difficulty": "Intermediate"
+            },
+            "namedEntityRecognition": {
+                "name": "Named Entity Recognition (NER)",
+                "description": "Identify names, places, organizations",
+                "useCases": "Information extraction, document analysis",
+                "models": "SpaCy, Flair, BERT-NER",
+                "difficulty": "Intermediate"
+            },
+            "sentimentAnalysis": {
+                "name": "Sentiment Analysis",
+                "description": "Detect sentiment (positive/negative/neutral)",
+                "useCases": "Opinion analysis, social media",
+                "models": "VADER, TextBlob, RoBERTa-Sentiment",
+                "difficulty": "Intermediate"
+            },
+            "intentClassification": {
+                "name": "Intent Classification",
+                "description": "Identify user intent",
+                "useCases": "Chatbots, virtual assistants",
+                "models": "DIET, Rasa NLU, BERT-Intent",
+                "difficulty": "Intermediate"
+            },
+            "relationExtraction": {
+                "name": "Relation Extraction",
+                "description": "Identify relationships between entities",
+                "useCases": "Knowledge graphs, text analysis",
+                "models": "SpanBERT, LUKE, Relation Extraction BERT",
+                "difficulty": "Advanced"
+            },
+            "posTagging": {
+                "name": "Part-of-Speech Tagging (POS)",
+                "description": "Identify grammatical categories",
+                "useCases": "Linguistic analysis, NLP preprocessing",
+                "models": "SpaCy, NLTK, Flair",
+                "difficulty": "Beginner"
+            },
+            "dependencyParsing": {
+                "name": "Dependency Parsing",
+                "description": "Analyze syntactic structure",
+                "useCases": "Language understanding, translation",
+                "models": "SpaCy, Stanford Parser",
+                "difficulty": "Advanced"
+            },
+            "questionAnswering": {
+                "name": "Question Answering",
+                "description": "Answer questions about text",
+                "useCases": "QA assistants, information retrieval",
+                "models": "BERT-QA, RoBERTa-QA, T5",
+                "difficulty": "Advanced"
+            },
+            "keyphraseExtraction": {
+                "name": "Keyphrase Extraction",
+                "description": "Identify important phrases",
+                "useCases": "Summaries, document indexing",
+                "models": "YAKE, KeyBERT, RAKE",
+                "difficulty": "Intermediate"
+            },
+            "entityLinking": {
+                "name": "Entity Linking",
+                "description": "Link entities to knowledge bases",
+                "useCases": "Data enrichment, knowledge graphs",
+                "models": "BLINK, ELQ, GENRE",
+                "difficulty": "Advanced"
+            },
+            "toxicityClassification": {
+                "name": "Toxicity Classification",
+                "description": "Detect toxic or offensive content",
+                "useCases": "Content moderation, filters",
+                "models": "Perspective API, Detoxify, RoBERTa-Toxicity",
+                "difficulty": "Intermediate"
+            },
+            "languageIdentification": {
+                "name": "Language Identification",
+                "description": "Detect text language",
+                "useCases": "Multilingual processing, translation",
+                "models": "langdetect, fastText, XLM-RoBERTa",
+                "difficulty": "Beginner"
+            },
+            "useCasesLabel": "Use cases",
+            "modelsLabel": "Recommended models",
+            "difficultyLabel": "Difficulty"
+        },
+        "modality": "Modality",
+        "initialClasses": "Initial Classes (optional)",
+        "classesPlaceholder": "class1, class2, class3",
+        "classesHelp": "Comma separated. You can add more later.",
+        "imageDimensions": "Image Dimensions",
+        "dimensionsAuto": "Automatic - Accept any size",
+        "dimensionsFixed": "Fixed - All images will be resized",
+        "targetSize": "Target size",
+        "resizeStrategy": "Strategy",
+        "enterName": "Enter a name for the project",
+        "created": "Project \"{name}\" created",
+        "updated": "Updated",
+        "loaded": "Project \"{name}\" loaded",
+        "deleted": "Project deleted",
+        "duplicated": "Project \"{name}\" duplicated",
+        "renamed": "Project renamed",
+        "imported": "Project \"{name}\" imported",
+        "exported": "Project exported",
+        "configExported": "Configuration exported",
+        "selectFirst": "Select a project first",
+        "noProjects": "No projects available",
+        "manageProjects": "Manage Projects",
+        "renameProject": "Rename Project",
+        "newName": "New name",
+        "images": "images",
+        "annotations": "annotations",
+        "exportBackup": "Download .tix backup before deleting",
+        "deleteWarning": {
+            "title": "⚠️ WARNING: PERMANENT DELETION",
+            "confirmTitle": "Confirm Deletion?",
+            "projectName": "Project:",
+            "message": "You are about to PERMANENTLY delete this project.",
+            "permanent": "This action CANNOT be undone",
+            "allData": "ALL images and annotations will be deleted",
+            "noUndo": "There is no way to recover deleted data",
+            "recommendation": "💡 Recommendation: Export the project in .tix format as a backup BEFORE deleting it"
+        }
     },
     "notifications": {
-      "installed": "Annotix installed successfully!",
-      "installFailed": "Error installing application",
-      "updateAvailable": "Update available. Reload to update.",
-      "offline": "Offline mode activated. App works without connection."
+        "imageSaved": "Image saved",
+        "imagesLoaded": "{count} images loaded",
+        "datasetDownloaded": "Dataset downloaded",
+        "classesDownloaded": "classes.txt downloaded",
+        "noClasses": "No classes to download",
+        "noImages": "No images in project",
+        "noAnnotations": "No annotations to download",
+        "appStarted": "Application started",
+        "classDeleted": "Class and all its annotations deleted",
+        "error": {
+            "createProject": "Error creating project",
+            "loadProject": "Error loading project",
+            "updateProject": "Error updating project",
+            "deleteProject": "Error deleting project",
+            "duplicateProject": "Error duplicating project",
+            "renameProject": "Error renaming project",
+            "loadProjects": "Error loading projects",
+            "exportProject": "Error exporting project",
+            "exportConfig": "Error exporting configuration",
+            "importConfig": "Error importing configuration",
+            "importProject": "Error importing project",
+            "loadImage": "Error loading image",
+            "saveImage": "Error saving image",
+            "deleteImage": "Error deleting image",
+            "loadImages": "Error loading images",
+            "downloadDataset": "Error downloading dataset",
+            "initApp": "Error starting application"
+        }
+    },
+    "tour": {
+        "welcome": "Welcome to <strong>Annotix</strong>! 🎯<br><br>A professional tool for annotating images and time series for machine learning model training. Supports multiple annotation types: <strong>Bounding Boxes</strong>, <strong>OBB</strong>, <strong>Segmentation</strong>, <strong>Keypoints</strong>, <strong>Polygons</strong>, <strong>Landmarks</strong>, <strong>Time Series</strong> and <strong>Classification</strong>.",
+        "installation": "📦 <strong>Local installation</strong><br><br>Annotix installs completely on your <strong>PC as a Progressive Web App (PWA)</strong>. It doesn't require internet connection after initial installation. Works offline and runs directly from your browser.",
+        "dataStorage": "💾 <strong>Data storage</strong><br><br><strong>IMPORTANT:</strong> All your data is saved in the browser's <strong>IndexedDB</strong>, not on a server. This means:<br>• ✅ Total privacy: your data never leaves your PC<br>• ✅ Works without internet<br>• ⚠️ Risk: if you clear browser data, everything will be lost",
+        "projectBackup": "💼 <strong>Project backup</strong><br><br>To avoid data loss:<br>• Export your projects in <strong>.tix</strong> format (contains everything: images, annotations, classes)<br>• You can reload the .tix file at any time<br>• Share .tix projects with other users<br>• Also export <strong>.tixconfig</strong> files to share only class configuration",
+        "createProjectButton": "Click <strong>New Project</strong> to begin. The creation modal will open for you to choose the project type.",
+        "projectTypeSelection": "📋 <strong>Project types</strong><br><br>In the modal you can choose from <strong>8 different types</strong>:<br>• <strong>Bounding Box</strong>: Rectangular boxes (object detection)<br>• <strong>OBB</strong>: Oriented rotated boxes<br>• <strong>Mask</strong>: Pixel segmentation<br>• <strong>Keypoints</strong>: Key points (pose estimation)<br>• <strong>Polygon</strong>: Free-form polygons<br>• <strong>Landmarks</strong>: Facial points<br>• <strong>Time Series</strong>: Temporal series<br>• <strong>Classification</strong>: Image classification",
+        "projectName": "✏️ <strong>Project name</strong><br><br>In the modal, enter a <strong>descriptive name</strong> for your project. For example: 'Car Detection 2024' or 'Cell Segmentation'.<br><br>The project type will determine which tools are available in the canvas.",
+        "classesPanel": "This is the <strong>class management panel</strong>. Here you define the categories you'll annotate.",
+        "classesInWorkflow": "🏷️ <strong>Class management</strong><br><br>Classes can be added in <strong>two ways</strong>:<br><br>1. <strong>In the project creation modal:</strong> Define your main classes from the start<br><br>2. <strong>In the right panel (current):</strong> Add, edit or delete classes at any time during work<br><br>Each class has a <strong>unique name</strong>, a <strong>distinctive color</strong> and a <strong>sequential ID</strong>. Use number keys <strong>1-9</strong> to quickly select classes.",
+        "gallery": "The <strong>image gallery</strong> displays all images in your project. You can filter by all, annotated or unannotated. Thumbnails show the status of each image.",
+        "loadImages": "Press <strong>Load Images</strong> to import images to your project. Supports multiple formats: JPG, PNG, WEBP. You can also use <strong>Data Augmentation</strong> to automatically generate variations of your images.",
+        "workspace": "The main <strong>workspace</strong> where you visualize and annotate your images or time series. Use the mouse to draw, wheel to zoom, and hold middle button or use Pan tool to move the view.",
+        "tools": "The <strong>floating tools</strong> change according to project type. Include: Box (B), OBB (O), Mask (M), Select (V) and Pan (H). Each tool has specific controls like brush size for masks or zoom controls.",
+        "stats": "The <strong>statistics</strong> panel shows your project progress: total images, annotated images, total labels and number of classes. The progress bar helps you visualize how much work you've completed.",
+        "exportButton": "The <strong>Export</strong> button allows you to download your dataset. Let's see the available options...",
+        "exportFormats": "📦 <strong>Export formats</strong><br><br>In the export modal you'll find multiple options:<br><br>• <strong>YOLO Detection</strong>: .txt with normalized bounding boxes<br>• <strong>YOLO Segmentation</strong>: .txt with mask polygons<br>• <strong>YOLO OBB</strong>: .txt with oriented boxes<br>• <strong>COCO JSON</strong>: Standard COCO format<br>• <strong>U-Net Masks</strong>: PNG images for segmentation<br>• <strong>Pascal VOC XML</strong>: Pascal VOC format<br>• <strong>CSV</strong>: Data table",
+        "trainingCode": "🐍 <strong>Training code</strong><br><br>In the export modal, you'll find the option <strong>'Generate Python training code'</strong>.<br><br>This creates a <strong>complete example script</strong> to train your model with <strong>YOLOv8</strong> using Ultralytics:<br>• Automatic path configuration<br>• Training script with optimal hyperparameters<br>• Ready to run: just install dependencies and train",
+        "shortcuts": "Press the <strong>keyboard</strong> button or use F1 to see all available <strong>keyboard shortcuts</strong>. Include Ctrl+S to save, Ctrl+Z to undo, number keys to select classes, and more.",
+        "finish": "Ready to start! 🚀<br><br>Remember:<br>• Save frequently with <strong>Ctrl+S</strong><br>• Export backups in <strong>.tix</strong> format<br>• Your data is <strong>only in your browser</strong><br><br>If you need help, press the <strong>?</strong> button to see this tour again.",
+        "next": "Next →",
+        "prev": "← Previous",
+        "done": "Got it!",
+        "skip": "Skip tour"
+    },
+    "imageInfo": {
+        "noName": "No name",
+        "dimensions": "Dimensions"
+    },
+    "preprocessing": {
+        "title": "Preprocess Images",
+        "detected": "Detected {count} non-square images",
+        "description": "Images will be adjusted to a square size to optimize training. Choose the resizing strategy:",
+        "targetSize": "Target size (pixels)",
+        "recommended": "Recommended: {size}px",
+        "strategy": "Resizing strategy",
+        "strategies": {
+            "resize": {
+                "name": "Resize + Padding",
+                "description": "Scales down the image and adds padding (optimizes space and memory)"
+            },
+            "padding": {
+                "name": "Padding Only",
+                "description": "Keeps original size and adds padding (better quality)"
+            }
+        },
+        "options": {
+            "apply": "Apply preprocessing",
+            "skip": "Upload without preprocessing"
+        },
+        "progress": "Processing image {current} of {total}...",
+        "complete": "{count} images preprocessed successfully",
+        "preview": "Preview",
+        "original": "Original",
+        "processed": "Processed",
+        "aspectRatio": "Original aspect ratio preserved",
+        "paddingInfo": "Symmetric black padding will be added"
+    },
+    "classification": {
+        "selectOne": "Select the correct label",
+        "selectMultiple": "Select all labels that apply",
+        "singleHint": "You can only select one label",
+        "multiHint": "You can select multiple labels",
+        "noLabels": "No labels assigned",
+        "labeled": "Labeled"
+    },
+    "augmentation": {
+        "title": "Data Augmentation",
+        "batchButton": "Data Augmentation",
+        "augmentImage": "Apply augmentation",
+        "variationsCount": "Number of variations",
+        "variationsCountHelp": "How many augmented images to create? (1-20)",
+        "generationMode": "Generation mode",
+        "modeManual": "Manual (fixed configuration)",
+        "modeRandom": "Random (configurable ranges)",
+        "modeManualHelp": "Apply the same configuration N times",
+        "modeRandomHelp": "Generate N variations with random values within specified ranges",
+        "geometricTransforms": "Geometric Transformations",
+        "flipHorizontal": "Flip Horizontal",
+        "flipVertical": "Flip Vertical",
+        "rotation": "Rotation",
+        "noRotation": "No rotation",
+        "customRotation": "Custom rotation",
+        "colorAdjustments": "Color Adjustments",
+        "brightness": "Brightness",
+        "contrast": "Contrast",
+        "saturation": "Saturation",
+        "randomOptions": "Random Options",
+        "randomFlip": "Random flip (horizontal/vertical)",
+        "randomRotation": "Random rotation",
+        "randomColor": "Random color adjustments",
+        "rotationRange": "Rotation range (degrees)",
+        "brightnessRange": "Brightness range",
+        "contrastRange": "Contrast range",
+        "saturationRange": "Saturation range",
+        "min": "Min",
+        "max": "Max",
+        "keepAnnotations": "Keep transformed annotations",
+        "keepAnnotationsHelp": "Bounding boxes will be automatically transformed with the image",
+        "maskProjectWarning": "Mask Project",
+        "maskProjectWarningText": "Annotations will NOT be preserved. You'll need to manually paint masks on each augmented image.",
+        "apply": "Apply",
+        "processing": "Processing augmentation...",
+        "generatingVariations": "Generating {count} variations...",
+        "variationsSuccess": "{count} variations created successfully",
+        "success": "Augmented image created successfully",
+        "error": "Error applying augmentation",
+        "batchProcessing": "Applying augmentation to {count} images...",
+        "batchRandomProcessing": "Generating {variations} for {images} images ({total} total)...",
+        "batchSuccess": "{count} augmented images created successfully",
+        "batchRandomSuccess": "{count} random variations created successfully",
+        "batchError": "Error applying batch augmentation"
+    },
+    "pwa": {
+        "installButton": "Install App",
+        "modal": {
+            "title": "🚀 Install Annotix as an app",
+            "benefits": "Benefits of installing:",
+            "benefit1": "✅ Desktop shortcut access",
+            "benefit2": "✅ Works offline",
+            "benefit3": "✅ Faster and smoother",
+            "benefit4": "✅ No browser bar",
+            "benefit5": "✅ Your data always private",
+            "benefit6": "✅ Automatic updates",
+            "platformCompatibility": "Platform compatibility:",
+            "androidInfo": "<strong>Android:</strong> Works excellent. Full native installation, behaves like a Play Store app.",
+            "iosInfo": "<strong>iOS/iPadOS:</strong> Works well, but Safari may clear cache periodically. <strong>Important:</strong> Save your progress frequently by exporting your projects.",
+            "linuxInfo": "<strong>Linux:</strong> Works perfectly. Full support in Chrome, Firefox and Edge.",
+            "windowsInfo": "<strong>Windows:</strong> Should work without issues in Chrome and Edge, although we haven't tested it extensively.",
+            "generalTip": "💡 <strong>Recommendation:</strong> Export your projects regularly as .tix backup, regardless of your operating system.",
+            "cancelButton": "Not now",
+            "installButtonModal": "🖖 Install App"
+        },
+        "notifications": {
+            "installed": "Annotix installed successfully!",
+            "installFailed": "Error installing application",
+            "updateAvailable": "Update available. Reload to update.",
+            "offline": "Offline mode activated. App works without connection."
+        }
+    },
+    "storage": {
+        "used": "Storage used in IndexedDB"
     }
-  },
-  "storage": {
-    "used": "Storage used in IndexedDB"
-  }
 }

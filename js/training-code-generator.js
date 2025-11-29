@@ -997,7 +997,7 @@ for epoch in range(EPOCHS):
           f"Val Loss: {val_loss/len(val_loader):.4f}, "
           f"Val Acc: {val_acc:.2f}%")
 
-    # ${t('export.code.template.saveBestModel')}
+    # ${t('export.code.template.saveBestModelSection')}
     if val_acc > best_acc:
         best_acc = val_acc
         torch.save(model.state_dict(), 'best_model.pth')
@@ -1519,7 +1519,7 @@ for epoch in range(EPOCHS):
     if avg_test_loss < best_loss:
         best_loss = avg_test_loss
         torch.save(model.state_dict(), 'best_model.pth')
-        print(f"💾 ${t('export.code.template.saveBestModel')}: {best_loss:.4f})")
+        print(f"💾 ${t('export.code.template.bestModelSaved')} (loss: {best_loss:.4f})")
 
     scheduler.step(avg_test_loss)
 

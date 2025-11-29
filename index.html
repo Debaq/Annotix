@@ -502,24 +502,54 @@
                 }
 
                 const intro = introJs();
+
+                // Variable para rastrear modales abiertos por el tour
+                let tourModals = {
+                    newProjectOpen: false,
+                    exportOpen: false
+                };
+
                 intro.setOptions({
                     steps: [
                         {
                             intro: window.i18n.t('tour.welcome')
                         },
                         {
-                            element: document.querySelector('#projectSelector'),
-                            intro: window.i18n.t('tour.project'),
+                            intro: window.i18n.t('tour.installation')
+                        },
+                        {
+                            intro: window.i18n.t('tour.dataStorage')
+                        },
+                        {
+                            intro: window.i18n.t('tour.projectBackup')
+                        },
+                        {
+                            element: document.querySelector('#btnNewProject'),
+                            intro: window.i18n.t('tour.createProjectButton'),
                             position: 'bottom'
                         },
                         {
-                            element: document.querySelector('.sidebar'),
-                            intro: window.i18n.t('tour.tools'),
-                            position: 'right'
+                            intro: window.i18n.t('tour.projectTypeSelection')
+                        },
+                        {
+                            intro: window.i18n.t('tour.projectName')
                         },
                         {
                             element: document.querySelector('#classList').parentElement,
-                            intro: window.i18n.t('tour.classes'),
+                            intro: window.i18n.t('tour.classesPanel'),
+                            position: 'left'
+                        },
+                        {
+                            intro: window.i18n.t('tour.classesInWorkflow')
+                        },
+                        {
+                            element: document.querySelector('.sidebar'),
+                            intro: window.i18n.t('tour.gallery'),
+                            position: 'right'
+                        },
+                        {
+                            element: document.querySelector('#btnLoadImages'),
+                            intro: window.i18n.t('tour.loadImages'),
                             position: 'right'
                         },
                         {
@@ -528,19 +558,98 @@
                             position: 'left'
                         },
                         {
-                            element: document.querySelector('.right-panel'),
-                            intro: window.i18n.t('tour.management'),
+                            element: document.querySelector('.floating-tools'),
+                            intro: window.i18n.t('tour.tools'),
                             position: 'left'
+                        },
+                        {
+                            element: document.querySelector('.right-panel .stats-grid'),
+                            intro: window.i18n.t('tour.stats'),
+                            position: 'left'
+                        },
+                        {
+                            element: document.querySelector('#btnExport'),
+                            intro: window.i18n.t('tour.exportButton'),
+                            position: 'bottom'
+                        },
+                        {
+                            intro: window.i18n.t('tour.exportFormats')
+                        },
+                        {
+                            intro: window.i18n.t('tour.trainingCode')
+                        },
+                        {
+                            element: document.querySelector('#btnShowShortcuts'),
+                            intro: window.i18n.t('tour.shortcuts'),
+                            position: 'bottom'
+                        },
+                        {
+                            intro: window.i18n.t('tour.finish')
                         }
                     ],
                     nextLabel: window.i18n.t('tour.next'),
                     prevLabel: window.i18n.t('tour.prev'),
                     doneLabel: window.i18n.t('tour.done'),
-                    skipLabel: window.i18n.t('tour.skip'),
+                    skipLabel: '<i class="fas fa-times"></i>',
                     showProgress: true,
                     showBullets: false,
                     exitOnOverlayClick: false,
-                    disableInteraction: true
+                    disableInteraction: false
+                });
+
+                // Callback para ejecutar código al cambiar de paso
+                intro.onbeforechange(function(targetElement) {
+                    const currentStep = this._currentStep;
+
+                    // Paso 4: Mostrar modal de nuevo proyecto
+                    if (currentStep === 4 && !tourModals.newProjectOpen) {
+                        tourModals.newProjectOpen = true;
+                        // Simular click en nuevo proyecto
+                        setTimeout(() => {
+                            const btnNewProject = document.getElementById('btnNewProject');
+                            if (btnNewProject && window.app) {
+                                btnNewProject.click();
+                            }
+                        }, 300);
+                    }
+
+                    // Paso 7: Cerrar modal de nuevo proyecto si está abierto
+                    if (currentStep === 7 && tourModals.newProjectOpen) {
+                        const modalOverlay = document.querySelector('.modal-overlay');
+                        if (modalOverlay) {
+                            modalOverlay.remove();
+                        }
+                        tourModals.newProjectOpen = false;
+                    }
+
+                    // Paso 14: Mostrar modal de exportación
+                    if (currentStep === 14 && !tourModals.exportOpen) {
+                        tourModals.exportOpen = true;
+                        setTimeout(() => {
+                            const btnExport = document.getElementById('btnExport');
+                            if (btnExport && window.app) {
+                                btnExport.click();
+                            }
+                        }, 300);
+                    }
+
+                    // Paso 17: Cerrar modal de exportación si está abierto
+                    if (currentStep === 17 && tourModals.exportOpen) {
+                        const modalOverlay = document.querySelector('.modal-overlay');
+                        if (modalOverlay) {
+                            modalOverlay.remove();
+                        }
+                        tourModals.exportOpen = false;
+                    }
+                });
+
+                // Limpiar modales al salir del tour
+                intro.onexit(function() {
+                    const modalOverlay = document.querySelector('.modal-overlay');
+                    if (modalOverlay) {
+                        modalOverlay.remove();
+                    }
+                    tourModals = { newProjectOpen: false, exportOpen: false };
                 });
 
                 intro.start();
