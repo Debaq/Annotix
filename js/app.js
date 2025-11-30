@@ -15,6 +15,7 @@ class YOLOAnnotator {
         this.classificationManager = null;
         this.galleryManager = null;
         this.timeSeriesWizard = null;
+        this.inferenceManager = null;
 
         // Active annotation mode ('canvas' or 'classification')
         this.annotationMode = 'canvas';
@@ -36,6 +37,7 @@ class YOLOAnnotator {
             this.exportManager = new ExportManager(this.db, this.ui);
             this.timeSeriesWizard = new TimeSeriesWizardManager(this.ui);
             this.shortcutsManager = new ShortcutsManager(this.ui);
+            this.inferenceManager = new InferenceManager(this.db, this.ui);
 
             // Canvas will be created dynamically when project is loaded (using CanvasFactory)
             const canvas = document.getElementById('canvas');
@@ -229,6 +231,23 @@ class YOLOAnnotator {
                 this.galleryManager.setFilter(btn.dataset.filter);
             });
         });
+
+        // Inference UI
+        document.getElementById('btnInference')?.addEventListener('click', () => this.showInferenceModal());
+        document.getElementById('btnCloseInferenceModal')?.addEventListener('click', () => this.closeInferenceModal());
+        document.getElementById('modelUploadArea')?.addEventListener('click', () => {
+            document.getElementById('modelFileInput')?.click();
+        });
+        document.getElementById('modelFileInput')?.addEventListener('change', (e) => this.handleModelUpload(e));
+        document.getElementById('confidenceSlider')?.addEventListener('input', (e) => this.updateConfidenceThreshold(e));
+        document.getElementById('autoInferenceToggle')?.addEventListener('change', (e) => {
+            this.inferenceManager.setAutoInference(e.target.checked);
+        });
+        document.getElementById('btnRunInference')?.addEventListener('click', () => this.runInferenceOnCurrentImage());
+        document.getElementById('btnClearPredictions')?.addEventListener('click', () => this.clearCurrentPredictions());
+        document.getElementById('btnConvertAllPredictions')?.addEventListener('click', () => this.convertAllPredictions());
+        document.getElementById('btnTogglePredictions')?.addEventListener('click', () => this.togglePredictionsVisibility());
+        document.getElementById('btnConvertSelected')?.addEventListener('click', () => this.convertSelectedPrediction());
 
         // Setup EventBus listeners for automatic UI updates
         this.setupEventBusListeners();
@@ -4417,6 +4436,186 @@ class YOLOAnnotator {
         const images = await this.db.getProjectImages(project.id);
 
         await this.exportManager.exportDataset(format, project, images);
+    }
+
+    // ============================================
+    // INFERENCE METHODS
+    // ============================================
+
+    showInferenceModal() {
+        const modal = document.getElementById('inferenceModal');
+        if (modal) {
+            modal.classList.add('active');
+            this.updateInferenceUI();
+        }
+    }
+
+    closeInferenceModal() {
+        const modal = document.getElementById('inferenceModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    }
+
+    async handleModelUpload(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const success = await this.inferenceManager.loadModel(file);
+        if (success) {
+            // Update UI to show model info
+            const modelInfo = this.inferenceManager.getModelInfo();
+            document.getElementById('modelInfoName').textContent = modelInfo.name;
+            document.getElementById('modelInfoType').textContent = modelInfo.type;
+            document.getElementById('modelInfoSize').textContent = `${modelInfo.inputSize}x${modelInfo.inputSize}`;
+
+            document.getElementById('modelUploadArea')?.classList.add('has-model');
+            document.getElementById('modelInfo')?.classList.add('active');
+            document.getElementById('btnRunInference')?.removeAttribute('disabled');
+        }
+    }
+
+    updateConfidenceThreshold(event) {
+        const value = parseFloat(event.target.value);
+        this.inferenceManager.setConfidenceThreshold(value);
+
+        // Update display
+        document.getElementById('confidenceValue').textContent = value.toFixed(2);
+
+        // Update canvas confidence threshold and redraw if there are predictions
+        if (this.canvasManager) {
+            this.canvasManager.confidenceThreshold = value;
+            if (this.canvasManager.predictions && this.canvasManager.predictions.length > 0) {
+                this.canvasManager.redraw();
+            }
+        }
+    }
+
+    async runInferenceOnCurrentImage() {
+        if (!this.canvasManager || !this.canvasManager.imageId || !this.canvasManager.originalImageBlob) {
+            this.ui.showToast('No image loaded', 'warning');
+            return;
+        }
+
+        const predictions = await this.inferenceManager.runInference(
+            this.canvasManager.imageId,
+            this.canvasManager.originalImageBlob,
+            this.projectManager.currentProject.type
+        );
+
+        // Load predictions into canvas
+        this.canvasManager.predictions = predictions;
+        this.canvasManager.redraw();
+
+        // Show prediction controls
+        document.getElementById('predictionControls')?.classList.add('active');
+
+        // Update results UI
+        this.updateInferenceResults(predictions);
+    }
+
+    async clearCurrentPredictions() {
+        if (!this.canvasManager || !this.canvasManager.imageId) return;
+
+        await this.db.clearPredictions(this.canvasManager.imageId);
+        this.canvasManager.predictions = [];
+        this.canvasManager.redraw();
+
+        document.getElementById('predictionControls')?.classList.remove('active');
+        this.ui.showToast('Predictions cleared', 'success');
+    }
+
+    async convertAllPredictions() {
+        if (!this.canvasManager || !this.canvasManager.imageId) return;
+
+        const count = await this.db.convertAllPredictions(this.canvasManager.imageId);
+        if (count > 0) {
+            // Reload image to get updated annotations
+            await this.galleryManager.loadImage(this.canvasManager.imageId);
+            this.ui.showToast(`Converted ${count} predictions to annotations`, 'success');
+        }
+    }
+
+    togglePredictionsVisibility() {
+        if (!this.canvasManager) return;
+
+        this.canvasManager.showPredictions = !this.canvasManager.showPredictions;
+        this.canvasManager.redraw();
+
+        const btn = document.getElementById('btnTogglePredictions');
+        if (btn) {
+            btn.classList.toggle('active');
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-eye');
+                icon.classList.toggle('fa-eye-slash');
+            }
+        }
+    }
+
+    async convertSelectedPrediction() {
+        // TODO: Implement selection of specific predictions
+        this.ui.showToast('Select a prediction first (feature coming soon)', 'info');
+    }
+
+    updateInferenceUI() {
+        const hasModel = this.inferenceManager.isModelLoaded();
+        const hasImage = this.canvasManager && this.canvasManager.imageId;
+
+        // Update button states
+        const btnRun = document.getElementById('btnRunInference');
+        if (btnRun) {
+            btnRun.disabled = !hasModel || !hasImage;
+        }
+
+        const btnClear = document.getElementById('btnClearPredictions');
+        if (btnClear) {
+            btnClear.disabled = !hasImage || !this.canvasManager?.predictions?.length;
+        }
+
+        const btnConvert = document.getElementById('btnConvertAllPredictions');
+        if (btnConvert) {
+            btnConvert.disabled = !hasImage || !this.canvasManager?.predictions?.length;
+        }
+    }
+
+    updateInferenceResults(predictions) {
+        if (!predictions || predictions.length === 0) {
+            document.getElementById('inferenceResults').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('inferenceResults').style.display = 'block';
+        document.getElementById('predictionCount').textContent = predictions.length;
+
+        // Count high confidence predictions (>0.7)
+        const highConf = predictions.filter(p => p.confidence > 0.7).length;
+        document.getElementById('highConfCount').textContent = highConf;
+
+        // Show class distribution
+        const classCounts = {};
+        predictions.forEach(p => {
+            classCounts[p.class] = (classCounts[p.class] || 0) + 1;
+        });
+
+        const classDistList = document.getElementById('classDistList');
+        if (classDistList && Object.keys(classCounts).length > 0) {
+            classDistList.innerHTML = '';
+            Object.entries(classCounts).forEach(([classId, count]) => {
+                const cls = this.canvasManager.classes.find(c => c.id === parseInt(classId));
+                if (cls) {
+                    const item = document.createElement('div');
+                    item.className = 'class-dist-item';
+                    item.innerHTML = `
+                        <div class="class-dist-color" style="background: ${cls.color}"></div>
+                        <span>${cls.name}</span>
+                        <span class="class-dist-count">${count}</span>
+                    `;
+                    classDistList.appendChild(item);
+                }
+            });
+            document.getElementById('classDistribution').style.display = 'block';
+        }
     }
 }
 

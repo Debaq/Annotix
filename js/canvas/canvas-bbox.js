@@ -260,6 +260,47 @@ class CanvasBbox extends CanvasBase {
         }
     }
 
+    drawPrediction(prediction) {
+        if (prediction.type === 'bbox') {
+            this.drawPredictionBbox(prediction);
+        }
+    }
+
+    drawPredictionBbox(prediction) {
+        const cls = this.classes.find(c => c.id === prediction.class);
+        const { x, y, width, height } = prediction.data;
+
+        // Prediction style: green dashed border
+        this.ctx.strokeStyle = '#00ff00';
+        this.ctx.lineWidth = 2 / this.zoom;
+        this.ctx.setLineDash([5 / this.zoom, 5 / this.zoom]);
+        this.ctx.globalAlpha = 0.8;
+        this.ctx.strokeRect(x, y, width, height);
+        this.ctx.setLineDash([]);
+        this.ctx.globalAlpha = 1.0;
+
+        // Draw confidence label
+        if (this.showLabels) {
+            const confidencePercent = Math.round(prediction.confidence * 100);
+            const className = cls?.name || `Class ${prediction.class}`;
+            const labelText = `${className} ${confidencePercent}%`;
+
+            this.ctx.fillStyle = '#00ff00';
+            this.ctx.font = `${12 / this.zoom}px Arial`;
+            const textWidth = this.ctx.measureText(labelText).width;
+            this.ctx.fillRect(x, y - 18 / this.zoom, textWidth + 8 / this.zoom, 18 / this.zoom);
+            this.ctx.fillStyle = '#000';
+            this.ctx.fillText(labelText, x + 4 / this.zoom, y - 4 / this.zoom);
+        }
+
+        // Optional: draw small icon to indicate this is a prediction
+        this.ctx.save();
+        this.ctx.fillStyle = '#00ff00';
+        this.ctx.font = `${10 / this.zoom}px Arial`;
+        this.ctx.fillText('AI', x + width - 18 / this.zoom, y + 12 / this.zoom);
+        this.ctx.restore();
+    }
+
     drawResizeHandles(annotation) {
         const { x, y, width, height } = annotation.data;
         const handleSize = 6 / this.zoom;

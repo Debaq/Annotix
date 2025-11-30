@@ -30,6 +30,11 @@ class CanvasBase {
         this.selectedAnnotation = null;
         this.originalImageBlob = null;
 
+        // Predictions (for inference)
+        this.predictions = [];
+        this.showPredictions = true;
+        this.confidenceThreshold = 0.5;
+
         // Transform state
         this.zoom = 1;
         this.panX = 0;
@@ -102,6 +107,10 @@ class CanvasBase {
 
     drawAnnotation(annotation) {
         throw new Error("drawAnnotation() must be implemented by child class");
+    }
+
+    drawPrediction(prediction) {
+        throw new Error("drawPrediction() must be implemented by child class");
     }
 
     handleDrawStart(x, y) {
@@ -495,6 +504,16 @@ class CanvasBase {
         this.annotations.forEach(ann => {
             this.drawAnnotation(ann);
         });
+
+        // Draw predictions if enabled (after annotations, so they appear on top)
+        if (this.showPredictions && this.predictions.length > 0) {
+            this.predictions.forEach(pred => {
+                // Only draw predictions that meet confidence threshold
+                if (pred.confidence >= this.confidenceThreshold) {
+                    this.drawPrediction(pred);
+                }
+            });
+        }
 
         this.ctx.restore();
     }

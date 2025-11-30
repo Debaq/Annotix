@@ -157,6 +157,15 @@ class GalleryManager {
                 </button>
             ` : '';
 
+            // Check if inference button should be shown (only if model is loaded)
+            const showInferenceButton = this.app.inferenceManager && this.app.inferenceManager.isModelLoaded();
+            const hasPredictions = imageData.predictions && imageData.predictions.length > 0;
+            const inferenceButtonHTML = showInferenceButton ? `
+                <button class="gallery-item-inference ${hasPredictions ? 'has-predictions' : ''}" data-id="${imageData.id}" data-i18n-title="inference.runInference" title="Run Inference">
+                    <i class="fas fa-brain"></i>
+                </button>
+            ` : '';
+
             item.innerHTML = `
                 ${imageContent}
                 <div class="gallery-item-overlay">
@@ -249,6 +258,40 @@ class GalleryManager {
                 this.app.canvasManager.imageId = imageId;
                 this.app.canvasManager.imageName = imageData.name;
                 this.app.canvasManager.annotations = imageData.annotations || [];
+
+                // Load predictions from database
+                this.app.canvasManager.predictions = imageData.predictions || [];
+
+                // Show prediction controls if there are predictions
+                const predictionControls = document.getElementById('predictionControls');
+                if (predictionControls) {
+                    if (this.app.canvasManager.predictions.length > 0) {
+                        predictionControls.classList.add('active');
+                    } else {
+                        predictionControls.classList.remove('active');
+                    }
+                }
+
+                // Auto-inference if enabled and no predictions exist
+                if (this.app.inferenceManager &&
+                    this.app.inferenceManager.autoInference &&
+                    this.app.inferenceManager.isModelLoaded() &&
+                    (!imageData.predictions || imageData.predictions.length === 0)) {
+                    // Run inference asynchronously (don't block UI)
+                    this.app.inferenceManager.runInference(
+                        imageId,
+                        blob,
+                        this.app.projectManager.currentProject.type
+                    ).then(predictions => {
+                        this.app.canvasManager.predictions = predictions;
+                        this.app.canvasManager.redraw();
+                        if (predictions.length > 0) {
+                            predictionControls?.classList.add('active');
+                        }
+                    }).catch(err => {
+                        console.error('Auto-inference failed:', err);
+                    });
+                }
 
                 this.app.canvasManager.clearUnsavedChanges();
                 this.app.canvasManager.redraw();

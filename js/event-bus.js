@@ -10,11 +10,21 @@
  * - classAdded: When a new class is created → updates stats
  * - classModified: When a class name/color is edited → updates stats, gallery
  * - classDeleted: When a class is removed → updates stats, gallery
+ * - modelLoaded: When an ONNX model is loaded → { modelName, modelType, inputShape }
+ * - modelUnloaded: When a model is unloaded → { modelName }
+ * - modelError: When model loading/inference fails → { error, stage }
+ * - inferenceStarted: When inference begins → { imageId, modelName }
+ * - inferenceCompleted: When inference finishes → { imageId, predictions, duration }
+ * - batchInferenceProgress: Progress during batch inference → { current, total, imageId }
+ * - predictionsUpdated: When predictions are saved → { imageId, count }
+ * - predictionConverted: When a prediction becomes annotation → { imageId, predictionIndex }
+ * - allPredictionsCleared: When all predictions are cleared → { imageId }
  *
  * UI components auto-updated:
  * - Statistics panel (image count, annotation count, class distribution)
  * - Gallery thumbnails (annotation counts, class badges)
  * - Annotations bar (list of annotations for current image)
+ * - Inference UI (model status, predictions count, progress)
  */
 
 class EventBus {

@@ -1,0 +1,681 @@
+/**
+ * INFERENCE CSS
+ * Styles for model inference UI components
+ */
+
+/* ============================================
+   INFERENCE BUTTON (Header)
+   ============================================ */
+
+.btn-inference {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-inference:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-inference i {
+    font-size: 16px;
+}
+
+.btn-inference.model-loaded {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.btn-inference.model-loaded::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: #00ff00;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #00ff00;
+    animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* ============================================
+   INFERENCE MODAL
+   ============================================ */
+
+.inference-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    backdrop-filter: blur(4px);
+}
+
+.inference-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.inference-modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.inference-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.inference-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+}
+
+.inference-modal-title i {
+    color: #667eea;
+    font-size: 24px;
+}
+
+.inference-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.inference-modal-close:hover {
+    background: #f5f5f5;
+    color: #333;
+}
+
+.inference-modal-body {
+    padding: 24px;
+}
+
+/* ============================================
+   MODEL UPLOAD SECTION
+   ============================================ */
+
+.model-upload-section {
+    margin-bottom: 24px;
+}
+
+.section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+}
+
+.model-upload-area {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.model-upload-area:hover {
+    border-color: #667eea;
+    background: #f8f9ff;
+}
+
+.model-upload-area.has-model {
+    border-color: #00ff00;
+    background: #f0fff4;
+    border-style: solid;
+}
+
+.model-upload-icon {
+    font-size: 48px;
+    color: #ccc;
+    margin-bottom: 12px;
+}
+
+.model-upload-area.has-model .model-upload-icon {
+    color: #00ff00;
+}
+
+.model-upload-text {
+    font-size: 14px;
+    color: #666;
+}
+
+.model-upload-hint {
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
+}
+
+.model-info {
+    display: none;
+    margin-top: 16px;
+    padding: 12px;
+    background: #f5f5f5;
+    border-radius: 6px;
+}
+
+.model-info.active {
+    display: block;
+}
+
+.model-info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 13px;
+}
+
+.model-info-label {
+    color: #666;
+    font-weight: 500;
+}
+
+.model-info-value {
+    color: #333;
+    font-family: monospace;
+}
+
+/* ============================================
+   SETTINGS SECTION
+   ============================================ */
+
+.inference-settings {
+    margin-bottom: 24px;
+}
+
+.setting-item {
+    margin-bottom: 16px;
+}
+
+.setting-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.setting-value {
+    font-weight: 600;
+    color: #667eea;
+}
+
+.confidence-slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #e0e0e0;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.confidence-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.confidence-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.auto-inference-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 48px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: #667eea;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(24px);
+}
+
+/* ============================================
+   ACTIONS SECTION
+   ============================================ */
+
+.inference-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.btn-inference-action {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-inference-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-run-inference {
+    background: #667eea;
+    color: white;
+}
+
+.btn-run-inference:hover:not(:disabled) {
+    background: #5568d3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-clear-predictions {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.btn-clear-predictions:hover:not(:disabled) {
+    background: #e0e0e0;
+}
+
+.btn-convert-all {
+    background: #00c853;
+    color: white;
+}
+
+.btn-convert-all:hover:not(:disabled) {
+    background: #00b248;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 200, 83, 0.3);
+}
+
+.btn-view-model {
+    background: #764ba2;
+    color: white;
+}
+
+.btn-view-model:hover:not(:disabled) {
+    background: #5e3a82;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(118, 75, 162, 0.3);
+}
+
+/* ============================================
+   INFO SECTION
+   ============================================ */
+
+.inference-info-section {
+    margin-top: 24px;
+    padding: 16px;
+    background: #f0f7ff;
+    border-left: 4px solid #667eea;
+    border-radius: 6px;
+}
+
+.inference-help-text {
+    margin: 0;
+    font-size: 14px;
+    color: #333;
+    line-height: 1.6;
+}
+
+.inference-help-text i {
+    color: #667eea;
+    margin-right: 8px;
+}
+
+.inference-help-text strong {
+    color: #667eea;
+    font-family: monospace;
+}
+
+/* ============================================
+   RESULTS SECTION
+   ============================================ */
+
+.inference-results {
+    padding: 16px;
+    background: #f8f9ff;
+    border-radius: 8px;
+    border: 1px solid #e0e7ff;
+}
+
+.results-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.stat-card {
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.class-distribution {
+    margin-top: 12px;
+}
+
+.class-dist-title {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.class-dist-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.class-dist-item {
+    background: white;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.class-dist-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.class-dist-count {
+    font-weight: 600;
+    color: #667eea;
+}
+
+/* ============================================
+   PREDICTION CONTROLS (Floating on Canvas)
+   ============================================ */
+
+.prediction-controls {
+    position: absolute;
+    top: 80px;
+    right: 16px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 8px;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 100;
+}
+
+.prediction-controls.active {
+    display: flex;
+}
+
+.prediction-control-btn {
+    padding: 8px 12px;
+    border: none;
+    background: #f5f5f5;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.prediction-control-btn:hover {
+    background: #e0e0e0;
+}
+
+.prediction-control-btn i {
+    color: #667eea;
+}
+
+.prediction-control-btn.active {
+    background: #667eea;
+    color: white;
+}
+
+.prediction-control-btn.active i {
+    color: white;
+}
+
+/* ============================================
+   LOADING SPINNER (Inference in progress)
+   ============================================ */
+
+.inference-loading {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    gap: 12px;
+}
+
+.inference-loading.active {
+    display: flex;
+}
+
+.inference-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.inference-loading-text {
+    font-size: 14px;
+    color: #666;
+}
+
+/* ============================================
+   BATCH PROGRESS MODAL
+   ============================================ */
+
+.batch-progress-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10001;
+    align-items: center;
+    justify-content: center;
+}
+
+.batch-progress-modal.active {
+    display: flex;
+}
+
+.batch-progress-content {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    width: 400px;
+    max-width: 90%;
+}
+
+.batch-progress-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.batch-progress-bar-container {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.batch-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transition: width 0.3s ease;
+}
+
+.batch-progress-text {
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .inference-modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .inference-actions {
+        flex-direction: column;
+    }
+
+    .results-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .prediction-controls {
+        right: 8px;
+        top: 70px;
+    }
+}
