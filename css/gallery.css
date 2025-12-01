@@ -120,7 +120,8 @@
 }
 
 .gallery-item-delete,
-.gallery-item-augment {
+.gallery-item-augment,
+.gallery-item-inference {
     width: 28px;
     height: 28px;
     border: none;
@@ -151,6 +152,20 @@
 .gallery-item-augment:hover {
     background: linear-gradient(135deg, #5a67d8 0%, #6a3f8f 100%);
     transform: scale(1.1);
+}
+
+.gallery-item-inference {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.gallery-item-inference:hover {
+    background: linear-gradient(135deg, #0f8a7f 0%, #2dd86b 100%);
+    transform: scale(1.1);
+}
+
+.gallery-item-inference.has-predictions {
+    background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
 }
 
 .empty-gallery {

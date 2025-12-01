@@ -1,0 +1,11 @@
+# Annotix Connector - Motor Base
+# Dependencias mínimas para el servidor Flask y gestión de módulos
+
+Flask==3.0.0
+Flask-CORS==4.0.0
+requests==2.31.0
+PyYAML==6.0.1
+
+# NOTA: Las dependencias de entrenamiento (torch, ultralytics, etc.)
+# se instalan DENTRO de cada módulo descargado, no en el motor base.
+# Esto mantiene el .exe base ligero (~50MB) y permite actualizaciones modulares.

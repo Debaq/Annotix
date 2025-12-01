@@ -1,0 +1,13 @@
+# Ultralytics YOLO Module - Dependencies
+
+ultralytics>=8.0.0
+torch>=2.0.0
+torchvision>=0.15.0
+opencv-python>=4.8.0
+PyYAML>=6.0
+numpy>=1.24.0
+pillow>=10.0.0
+
+# Optional (for better performance)
+# onnx>=1.15.0
+# onnxruntime>=1.16.0

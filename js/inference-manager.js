@@ -12,6 +12,7 @@ class InferenceManager {
         // ONNX Runtime session
         this.session = null;
         this.modelInfo = null;
+        this.modelFile = null;
 
         // Settings
         this.confidenceThreshold = 0.5;
@@ -61,6 +62,9 @@ class InferenceManager {
         try {
             this.isLoading = true;
             this.ui.showToast(window.i18n.t('inference.loadingModel'), 'info');
+
+            // Store the model file for later use (e.g., Netron viewer)
+            this.modelFile = file;
 
             // Read file as ArrayBuffer
             const arrayBuffer = await file.arrayBuffer();
@@ -187,6 +191,7 @@ class InferenceManager {
                 // ONNX Runtime Web doesn't have explicit dispose yet
                 this.session = null;
                 this.modelInfo = null;
+                this.modelFile = null;
 
                 window.eventBus.emit('modelUnloaded', {
                     modelName: this.modelInfo?.name
@@ -540,6 +545,14 @@ class InferenceManager {
      */
     getModelInfo() {
         return this.modelInfo;
+    }
+
+    /**
+     * Get the loaded model file
+     * @returns {File|null} - The model file or null if not loaded
+     */
+    getModelFile() {
+        return this.modelFile;
     }
 
     /**

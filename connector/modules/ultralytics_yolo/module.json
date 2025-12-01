@@ -1,0 +1,24 @@
+{
+  "id": "ultralytics_yolo",
+  "name": "Ultralytics YOLO",
+  "version": "1.0.0",
+  "description": "Módulo de entrenamiento con Ultralytics YOLO (v8, v9, v10, v11)",
+  "author": "TecMedHub - Universidad Austral de Chile",
+  "frameworks": ["ultralytics"],
+  "supported_types": ["bbox", "mask", "classification", "keypoints"],
+  "requirements": [
+    "ultralytics>=8.0.0",
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "opencv-python>=4.8.0",
+    "pyyaml>=6.0"
+  ],
+  "models": {
+    "detection": ["yolov8n", "yolov8s", "yolov8m", "yolov8l", "yolov8x", "yolov9c", "yolov10n", "yolov11n"],
+    "segmentation": ["yolov8n-seg", "yolov8s-seg", "yolov8m-seg", "yolov8l-seg", "yolov8x-seg"],
+    "classification": ["yolov8n-cls", "yolov8s-cls", "yolov8m-cls"],
+    "pose": ["yolov8n-pose", "yolov8s-pose", "yolov8m-pose", "yolov8l-pose"]
+  },
+  "install_size_mb": 500,
+  "download_url": "ultralytics_yolo.zip"
+}

@@ -74,6 +74,9 @@ class YOLOAnnotator {
             // Setup PWA installation functionality
             this.setupPWA();
 
+            // Setup Connector status check
+            this.setupConnector();
+
             this.ui.showToast(window.i18n.t('notifications.appStarted'), 'success');
         } catch (error) {
             console.error('Error initializing app:', error);
@@ -243,6 +246,8 @@ class YOLOAnnotator {
         document.getElementById('autoInferenceToggle')?.addEventListener('change', (e) => {
             this.inferenceManager.setAutoInference(e.target.checked);
         });
+        document.getElementById('btnViewModel')?.addEventListener('click', () => this.viewModelArchitecture());
+        document.getElementById('btnCloseArchitectureViewer')?.addEventListener('click', () => this.closeArchitectureViewer());
         document.getElementById('btnRunInference')?.addEventListener('click', () => this.runInferenceOnCurrentImage());
         document.getElementById('btnClearPredictions')?.addEventListener('click', () => this.clearCurrentPredictions());
         document.getElementById('btnConvertAllPredictions')?.addEventListener('click', () => this.convertAllPredictions());
@@ -3885,6 +3890,269 @@ class YOLOAnnotator {
         ]);
     }
 
+    setupConnector() {
+        // Setup Connector status indicator and periodic checks
+        const connectorStatus = document.getElementById('connectorStatus');
+
+        if (!connectorStatus || !window.AnnotixConnector) {
+            console.warn('Connector status indicator or AnnotixConnector module not found');
+            return;
+        }
+
+        // Start periodic status check
+        window.AnnotixConnector.startStatusCheck((isConnected) => {
+            this.updateConnectorStatus(isConnected);
+        });
+
+        // Handle click on connector status (show info or download link)
+        connectorStatus.addEventListener('click', () => {
+            if (window.AnnotixConnector.isConnected) {
+                this.ui.showToast(
+                    window.i18n.t('connector.connectedMessage') || 'Connector en línea - Puerto 5000',
+                    'success'
+                );
+            } else {
+                this.showConnectorDownloadModal();
+            }
+        });
+    }
+
+    updateConnectorStatus(isConnected) {
+        const connectorStatus = document.getElementById('connectorStatus');
+
+        if (!connectorStatus) return;
+
+        // Show/hide indicator
+        connectorStatus.style.display = 'flex';
+
+        const icon = connectorStatus.querySelector('i');
+        if (!icon) return;
+
+        // Update icon and status
+        if (isConnected) {
+            connectorStatus.classList.remove('disconnected');
+            icon.className = 'fas fa-plug';
+            connectorStatus.title = window.i18n.t('connector.connected') || 'Connector conectado';
+        } else {
+            connectorStatus.classList.add('disconnected');
+            icon.className = 'fas fa-plug-circle-xmark';
+            connectorStatus.title = window.i18n.t('connector.disconnected') || 'Connector desconectado';
+        }
+    }
+
+    showConnectorDownloadModal() {
+        const content = `
+            <div style="text-align: center; padding: 20px;">
+                <div style="font-size: 64px; color: #e74c3c; margin-bottom: 20px;">
+                    <i class="fas fa-plug-circle-xmark"></i>
+                </div>
+                <h3 style="margin-bottom: 16px; color: #333;">${window.i18n.t('connector.downloadTitle') || 'Motor Acompañante No Detectado'}</h3>
+                <p style="font-size: 1em; margin-bottom: 24px; color: #666; line-height: 1.6;">
+                    ${window.i18n.t('connector.downloadMessage') || 'Para entrenar modelos localmente, necesitas descargar e instalar el Motor Acompañante de Annotix.'}
+                </p>
+                
+                <!-- IP Configuration Section -->
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 24px; text-align: left;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9em; color: #555;">
+                        <i class="fas fa-network-wired"></i> Configuración Manual (IP)
+                    </label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="connectorIpInput" class="form-control" placeholder="Ej: 127.0.0.1 o 192.168.x.x" value="${window.AnnotixConnector.SERVER_URL.split('//')[1].split(':')[0]}">
+                        <button class="btn btn-secondary" id="btnUpdateIp" style="white-space: nowrap;">
+                            Actualizar
+                        </button>
+                    </div>
+                    <small style="display: block; margin-top: 5px; color: #888;">
+                        Si el servidor está en otra PC, ingresa su IP aquí.
+                    </small>
+                </div>
+
+                <div style="background: rgba(102, 126, 234, 0.1); padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+                    <p style="font-size: 0.9em; color: #555; margin: 0;">
+                        <i class="fas fa-info-circle" style="color: #667eea; margin-right: 8px;"></i>
+                        ${window.i18n.t('connector.downloadHint') || 'El Motor Acompañante se ejecutará en segundo plano en tu PC y permitirá entrenar modelos con tus datos anotados.'}
+                    </p>
+                </div>
+            </div>
+        `;
+
+        this.ui.showModal(
+            window.i18n.t('connector.downloadTitle') || 'Descargar Motor Acompañante',
+            content,
+            [
+                {
+                    text: window.i18n.t('actions.cancel') || 'Cancelar',
+                    type: 'secondary',
+                    action: 'cancel',
+                    handler: (modal, close) => close()
+                },
+                {
+                    text: window.i18n.t('connector.download') || 'Descargar',
+                    type: 'primary',
+                    icon: 'fas fa-download',
+                    action: 'download',
+                    handler: (modal, close) => {
+                        window.open(window.AnnotixConnector.DOWNLOAD_URL, '_blank');
+                        close();
+                        this.ui.showToast(
+                            window.i18n.t('connector.downloadStarted') || 'Descarga iniciada. Ejecuta el instalador cuando termine.',
+                            'info'
+                        );
+                    }
+                }
+            ]
+        );
+
+        // Add event listener for IP update button
+        setTimeout(() => {
+            const btnUpdateIp = document.getElementById('btnUpdateIp');
+            const ipInput = document.getElementById('connectorIpInput');
+
+            if (btnUpdateIp && ipInput) {
+                btnUpdateIp.addEventListener('click', () => {
+                    const ip = ipInput.value.trim();
+                    if (ip) {
+                        window.AnnotixConnector.setServerUrl(ip);
+                        this.ui.showToast('IP actualizada. Verificando conexión...', 'info');
+                    }
+                });
+            }
+        }, 100);
+    }
+
+    async checkConnectorForTraining() {
+        const connectorCheck = document.getElementById('connectorCheckTrain');
+        const trainConfigPanel = document.getElementById('trainConfigPanel');
+
+        if (!connectorCheck || !trainConfigPanel) return;
+
+        // Show checking message
+        connectorCheck.style.display = 'flex';
+        trainConfigPanel.style.display = 'none';
+
+        const icon = connectorCheck.querySelector('.connector-check-icon');
+        const message = connectorCheck.querySelector('.connector-check-message span');
+
+        // Check connection
+        const isConnected = await window.AnnotixConnector.checkStatus();
+
+        if (isConnected) {
+            // Show success and then config panel
+            icon.classList.add('success');
+            icon.innerHTML = '<i class="fas fa-check-circle"></i>';
+            message.textContent = window.i18n.t('connector.connectedReady') || 'Conectado - Listo para entrenar';
+
+            setTimeout(() => {
+                connectorCheck.style.display = 'none';
+                trainConfigPanel.style.display = 'block';
+
+                // Populate framework and model dropdowns (similar to code tab)
+                this.populateTrainingConfigDropdowns();
+            }, 1000);
+        } else {
+            // Show error with download button
+            icon.classList.add('error');
+            icon.innerHTML = '<i class="fas fa-times-circle"></i>';
+            message.innerHTML = `
+                ${window.i18n.t('connector.notConnected') || 'No se pudo conectar con el Motor Acompañante'}<br>
+                <small>${window.i18n.t('connector.notConnectedHint') || 'Asegúrate de que esté ejecutándose'}</small>
+            `;
+
+            // Add download button if not exists
+            let actionDiv = connectorCheck.querySelector('.connector-check-action');
+            if (!actionDiv) {
+                actionDiv = document.createElement('div');
+                actionDiv.className = 'connector-check-action';
+                actionDiv.innerHTML = `
+                    <button class="btn btn-primary" id="btnDownloadConnectorFromModal">
+                        <i class="fas fa-download"></i> ${window.i18n.t('connector.download') || 'Descargar Motor Acompañante'}
+                    </button>
+                `;
+                connectorCheck.appendChild(actionDiv);
+
+                // Add event listener
+                document.getElementById('btnDownloadConnectorFromModal')?.addEventListener('click', () => {
+                    window.open(window.AnnotixConnector.DOWNLOAD_URL, '_blank');
+                });
+            }
+        }
+    }
+
+    populateTrainingConfigDropdowns() {
+        // Get current project type
+        const projectType = this.projectManager.currentProject?.type;
+        if (!projectType) return;
+
+        const projectConfig = window.ProjectTypesConfig[projectType];
+        if (!projectConfig) return;
+
+        // Populate framework dropdown
+        const trainFramework = document.getElementById('trainFramework');
+        if (trainFramework) {
+            trainFramework.innerHTML = '';
+            projectConfig.frameworks.forEach(fw => {
+                const option = document.createElement('option');
+                option.value = fw.id;
+                option.textContent = fw.name;
+                if (fw.default) option.selected = true;
+                trainFramework.appendChild(option);
+            });
+        }
+
+        // Populate model dropdown
+        const trainModel = document.getElementById('trainModel');
+        if (trainModel && projectConfig.frameworks[0]) {
+            trainModel.innerHTML = '';
+            projectConfig.frameworks[0].models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.id;
+                option.textContent = model.name;
+                if (model.default) option.selected = true;
+                trainModel.appendChild(option);
+            });
+        }
+    }
+
+    async handleStartTraining() {
+        // Collect configuration
+        const config = {
+            framework: document.getElementById('trainFramework')?.value || 'ultralytics',
+            model: document.getElementById('trainModel')?.value || 'yolov8n',
+            device: document.getElementById('trainDevice')?.value || 'auto',
+            epochs: parseInt(document.getElementById('trainEpochs')?.value) || 100,
+            batch: parseInt(document.getElementById('trainBatch')?.value) || 16,
+            imgsz: parseInt(document.getElementById('trainImgsz')?.value) || 640,
+            lr: parseFloat(document.getElementById('trainLr')?.value) || 0.001,
+            optimizer: document.getElementById('trainOptimizer')?.value || 'Adam',
+            projectType: this.projectManager.currentProject?.type,
+            projectName: this.projectManager.currentProject?.name,
+            classes: this.canvasManager?.classes || []
+        };
+
+        console.log('Sending training config:', config);
+
+        // Send to connector
+        const result = await window.AnnotixConnector.entrenar(config);
+
+        if (result.success) {
+            this.ui.showToast(
+                `${window.i18n.t('connector.trainingStarted') || 'Entrenamiento iniciado'}: ${result.dataset}`,
+                'success'
+            );
+        } else if (result.error === 'CONNECTOR_OFFLINE') {
+            this.ui.showToast(
+                window.i18n.t('connector.notConnected') || 'Connector desconectado',
+                'error'
+            );
+            this.checkConnectorForTraining();
+        } else {
+            this.ui.showToast(
+                `Error: ${result.error}`,
+                'error'
+            );
+        }
+    }
+
     showExportModal() {
         if (!this.projectManager.currentProject) {
             this.ui.showToast(window.i18n.t('project.selectFirst'), 'warning');
@@ -3926,6 +4194,9 @@ class YOLOAnnotator {
                         </button>
                         <button class="export-tab" data-tab="code">
                             <i class="fas fa-code"></i> ${window.i18n.t('export.training.tabCode') || 'Generar Código'}
+                        </button>
+                        <button class="export-tab" data-tab="train">
+                            <i class="fas fa-rocket"></i> ${window.i18n.t('export.training.tabTrain') || 'Entrenar con Connector'}
                         </button>
                     </div>
 
@@ -4232,6 +4503,127 @@ class YOLOAnnotator {
                             </div>
                         </div>
                     </div>
+
+                    <!-- Tab Content: Train with Connector -->
+                    <div class="export-tab-content" id="tab-train">
+                        <div class="code-generator">
+                            <!-- Connector Status Check -->
+                            <div class="connector-check" id="connectorCheckTrain">
+                                <div class="connector-check-icon">
+                                    <i class="fas fa-plug"></i>
+                                </div>
+                                <div class="connector-check-message">
+                                    <span data-i18n="connector.checking">Verificando conexión con Connector...</span>
+                                </div>
+                            </div>
+
+                            <!-- Training Configuration (same as code tab) -->
+                            <div class="code-config" id="trainConfigPanel" style="display: none;">
+                                <!-- Basic Configuration -->
+                                <div class="config-row">
+                                    <div class="config-item">
+                                        <label class="form-label">
+                                            Framework
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.framework">
+                                                <i class="fas fa-question-circle"></i>
+                                            </span>
+                                        </label>
+                                        <select class="form-control form-select" id="trainFramework">
+                                            <!-- Populated dynamically -->
+                                        </select>
+                                    </div>
+                                    <div class="config-item modality-images">
+                                        <label class="form-label">
+                                            <span data-i18n="export.code.labels.model">Modelo</span>
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.model">
+                                                <i class="fas fa-question-circle"></i>
+                                            </span>
+                                        </label>
+                                        <select class="form-control form-select" id="trainModel">
+                                            <!-- Options populated dynamically -->
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="config-row">
+                                    <div class="config-item">
+                                        <label class="form-label">
+                                            <span data-i18n="export.code.labels.device">Dispositivo</span>
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.device">
+                                                <i class="fas fa-question-circle"></i>
+                                            </span>
+                                        </label>
+                                        <select class="form-control form-select" id="trainDevice">
+                                            <option value="auto">Auto</option>
+                                            <option value="cuda">CUDA (GPU)</option>
+                                            <option value="cpu">CPU</option>
+                                        </select>
+                                    </div>
+                                    <div class="config-item">
+                                        <label class="form-label">
+                                            <span data-i18n="export.code.labels.epochs">Epochs</span>
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.epochs">
+                                                <i class="fas fa-question-circle"></i>
+                                            </span>
+                                        </label>
+                                        <input type="number" class="form-control" id="trainEpochs" value="100" min="1">
+                                    </div>
+                                </div>
+                                <div class="config-row">
+                                    <div class="config-item">
+                                        <label class="form-label">
+                                            <span data-i18n="export.code.labels.batchSize">Batch Size</span>
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.batch">
+                                                <i class="fas fa-question-circle"></i>
+                                            </span>
+                                        </label>
+                                        <input type="number" class="form-control" id="trainBatch" value="16" min="1">
+                                    </div>
+                                    <div class="config-item modality-images">
+                                        <label class="form-label">
+                                            <span data-i18n="export.code.labels.imageSize">Tamaño Imagen</span>
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.imgsz">
+                                                <i class="fas fa-question-circle"></i>
+                                            </span>
+                                        </label>
+                                        <select class="form-control form-select" id="trainImgsz">
+                                            <option value="416">416</option>
+                                            <option value="640" selected>640</option>
+                                            <option value="1280">1280</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="config-row">
+                                    <div class="config-item">
+                                        <label class="form-label">
+                                            <span data-i18n="export.code.labels.learningRate">Learning Rate</span>
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.lr">
+                                                <i class="fas fa-question-circle"></i>
+                                            </span>
+                                        </label>
+                                        <input type="number" class="form-control" id="trainLr" value="0.001" min="0.0001" step="0.0001">
+                                    </div>
+                                    <div class="config-item">
+                                        <label class="form-label">
+                                            <span data-i18n="export.code.labels.optimizer">Optimizer</span>
+                                            <span class="help-icon" data-i18n-title="export.code.tooltips.optimizer">
+                                                <i class="fas fa-question-circle"></i>
+                                            </span>
+                                        </label>
+                                        <select class="form-control form-select" id="trainOptimizer">
+                                            <option value="Adam" selected>Adam</option>
+                                            <option value="SGD">SGD</option>
+                                            <option value="AdamW">AdamW</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Start Training Button -->
+                                <button class="btn btn-success btn-block" id="btnStartTraining" style="margin-top: 16px;">
+                                    <i class="fas fa-play"></i> ${window.i18n.t('connector.startTraining') || 'Iniciar Entrenamiento'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -4257,6 +4649,7 @@ class YOLOAnnotator {
 
         document.getElementById('btnExportProjectTix')?.addEventListener('click', () => this.exportProjectTix());
         document.getElementById('btnExportTraining')?.addEventListener('click', () => this.exportForTraining());
+        document.getElementById('btnStartTraining')?.addEventListener('click', () => this.handleStartTraining());
 
         // Tab switching
         document.querySelectorAll('.export-tab').forEach(tab => {
@@ -4286,6 +4679,16 @@ class YOLOAnnotator {
 
                     this.trainingCodeGenerator.updateConfigUI();
                     this.trainingCodeGenerator.generateTrainingCode();
+                } else if (tabName === 'train') {
+                    // Hide project card and expand training card to full width
+                    if (projectCard) projectCard.style.display = 'none';
+                    if (trainingCard) trainingCard.classList.add('full-width');
+
+                    // Expand modal to code mode
+                    if (modal) modal.classList.add('code-mode');
+
+                    // Check connector status and show config panel
+                    this.checkConnectorForTraining();
                 } else {
                     // Show project card and restore normal width
                     if (projectCard) projectCard.style.display = 'flex';
@@ -4461,6 +4864,26 @@ class YOLOAnnotator {
         const file = event.target.files?.[0];
         if (!file) return;
 
+        // Validate model naming convention: projectname_v1.onnx (if enforcement is enabled)
+        const enforceNaming = document.getElementById('enforceNamingToggle')?.checked ?? true;
+
+        if (enforceNaming && this.projectManager.currentProject) {
+            const projectName = this.projectManager.currentProject.name;
+            const expectedPrefix = `${projectName}_v`;
+            const fileName = file.name;
+
+            if (!fileName.startsWith(expectedPrefix) || !fileName.endsWith('.onnx')) {
+                this.ui.showToast(
+                    window.i18n.t('inference.invalidModelName', {
+                        expected: `${projectName}_v1.onnx`
+                    }),
+                    'error'
+                );
+                event.target.value = ''; // Clear file input
+                return;
+            }
+        }
+
         const success = await this.inferenceManager.loadModel(file);
         if (success) {
             // Update UI to show model info
@@ -4472,6 +4895,518 @@ class YOLOAnnotator {
             document.getElementById('modelUploadArea')?.classList.add('has-model');
             document.getElementById('modelInfo')?.classList.add('active');
             document.getElementById('btnRunInference')?.removeAttribute('disabled');
+            document.getElementById('btnViewModel')?.removeAttribute('disabled');
+
+            // Update gallery to show inference buttons
+            if (this.galleryManager) {
+                this.galleryManager.render();
+            }
+        }
+    }
+
+    async viewModelArchitecture() {
+        if (!this.inferenceManager || !this.inferenceManager.isModelLoaded()) {
+            this.ui.showToast(window.i18n.t('inference.noModelLoaded'), 'warning');
+            return;
+        }
+
+        const modelFile = this.inferenceManager.getModelFile();
+        const modelInfo = this.inferenceManager.getModelInfo();
+
+        if (!modelFile || !modelInfo) {
+            this.ui.showToast(window.i18n.t('inference.noModelLoaded'), 'error');
+            return;
+        }
+
+        try {
+            this.ui.showToast(window.i18n.t('inference.loadingArchitecture') || 'Loading architecture...', 'info');
+
+            // Show the architecture viewer and hide canvas
+            document.getElementById('canvas').style.display = 'none';
+            document.getElementById('imageInfo').style.display = 'none';
+            const viewer = document.getElementById('modelArchitectureViewer');
+            viewer.style.display = 'block';
+
+            // Parse ONNX model
+            const parser = new ONNXParser();
+            let parsedModel = null;
+            try {
+                parsedModel = await parser.parseModel(modelFile);
+                console.log('Parsed ONNX model:', parsedModel);
+            } catch (error) {
+                console.warn('Could not parse ONNX model:', error);
+            }
+
+            // Create blob URL for Netron
+            const modelBlob = new Blob([await modelFile.arrayBuffer()], {
+                type: 'application/octet-stream'
+            });
+            const blobUrl = URL.createObjectURL(modelBlob);
+            this.currentArchitectureBlobUrl = blobUrl;
+
+            // Build viewer with tabs
+            const content = document.getElementById('architectureContent');
+            content.innerHTML = this.buildArchitectureViewerHTML(modelInfo, parsedModel, blobUrl);
+
+            // Setup tab switching
+            this.setupArchitectureTabs();
+
+            // Close inference modal if open
+            this.closeInferenceModal();
+
+        } catch (error) {
+            console.error('Error loading model architecture:', error);
+            this.ui.showToast('Error loading model architecture', 'error');
+            this.closeArchitectureViewer();
+        }
+    }
+
+    buildArchitectureHTML(modelInfo) {
+        const inputShape = modelInfo.inputShape || [1, 3, 640, 640];
+        const outputShape = modelInfo.outputShape || [1, 25200, 85];
+        const totalParams = modelInfo.totalParams || '~';
+
+        return `
+            <div style="max-width: 1200px; margin: 0 auto;">
+                <!-- Model Info Card -->
+                <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <h3 style="margin: 0 0 20px 0; color: #333; font-size: 20px; display: flex; align-items: center;">
+                        <i class="fas fa-info-circle" style="color: #667eea; margin-right: 10px;"></i>
+                        ${window.i18n.t('inference.modelInformation') || 'Model Information'}
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                        <div>
+                            <div style="font-size: 13px; color: #666; margin-bottom: 4px;">${window.i18n.t('inference.modelName')}</div>
+                            <div style="font-size: 16px; color: #333; font-weight: 600;">${modelInfo.name}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; color: #666; margin-bottom: 4px;">${window.i18n.t('inference.modelType')}</div>
+                            <div style="font-size: 16px; color: #333; font-weight: 600; text-transform: capitalize;">${modelInfo.type}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; color: #666; margin-bottom: 4px;">${window.i18n.t('inference.inputSize')}</div>
+                            <div style="font-size: 16px; color: #333; font-weight: 600;">${modelInfo.inputSize} × ${modelInfo.inputSize}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Architecture Diagram -->
+                <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <h3 style="margin: 0 0 30px 0; color: #333; font-size: 20px; text-align: center;">
+                        ${window.i18n.t('inference.dataFlow') || 'Data Flow'}
+                    </h3>
+
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 40px; flex-wrap: wrap;">
+                        <!-- Input -->
+                        <div style="text-align: center;">
+                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                        color: white; padding: 30px 40px; border-radius: 12px;
+                                        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3); min-width: 180px;">
+                                <i class="fas fa-image" style="font-size: 32px; margin-bottom: 12px;"></i>
+                                <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">INPUT</div>
+                                <div style="font-size: 14px; opacity: 0.9;">${inputShape[0]} × ${inputShape[1]} × ${inputShape[2]} × ${inputShape[3]}</div>
+                                <div style="font-size: 12px; opacity: 0.8; margin-top: 4px;">Batch × Channels × Height × Width</div>
+                            </div>
+                            <div style="margin-top: 12px; font-size: 13px; color: #666;">${window.i18n.t('inference.inputTensor') || 'Input Tensor'}</div>
+                        </div>
+
+                        <!-- Arrow -->
+                        <div style="color: #667eea; font-size: 32px;">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+
+                        <!-- Processing -->
+                        <div style="text-align: center;">
+                            <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+                                        color: white; padding: 30px 40px; border-radius: 12px;
+                                        box-shadow: 0 4px 16px rgba(17, 153, 142, 0.3); min-width: 180px;">
+                                <i class="fas fa-microchip" style="font-size: 32px; margin-bottom: 12px;"></i>
+                                <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">YOLO</div>
+                                <div style="font-size: 14px; opacity: 0.9;">${modelInfo.type.toUpperCase()}</div>
+                                <div style="font-size: 12px; opacity: 0.8; margin-top: 4px;">Neural Network</div>
+                            </div>
+                            <div style="margin-top: 12px; font-size: 13px; color: #666;">${window.i18n.t('inference.processing') || 'Processing'}</div>
+                        </div>
+
+                        <!-- Arrow -->
+                        <div style="color: #667eea; font-size: 32px;">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+
+                        <!-- Output -->
+                        <div style="text-align: center;">
+                            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                                        color: white; padding: 30px 40px; border-radius: 12px;
+                                        box-shadow: 0 4px 16px rgba(245, 87, 108, 0.3); min-width: 180px;">
+                                <i class="fas fa-cube" style="font-size: 32px; margin-bottom: 12px;"></i>
+                                <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">OUTPUT</div>
+                                <div style="font-size: 14px; opacity: 0.9;">${outputShape.join(' × ')}</div>
+                                <div style="font-size: 12px; opacity: 0.8; margin-top: 4px;">${this.getOutputDescription(modelInfo.type)}</div>
+                            </div>
+                            <div style="margin-top: 12px; font-size: 13px; color: #666;">${window.i18n.t('inference.outputTensor') || 'Output Tensor'}</div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Info -->
+                    <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #e0e0e0;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                            <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                                <i class="fas fa-layer-group" style="font-size: 24px; color: #667eea; margin-bottom: 8px;"></i>
+                                <div style="font-size: 14px; color: #666; margin-bottom: 4px;">${window.i18n.t('inference.inputs') || 'Inputs'}</div>
+                                <div style="font-size: 20px; font-weight: 600; color: #333;">${modelInfo.inputNames?.length || 1}</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                                <i class="fas fa-project-diagram" style="font-size: 24px; color: #11998e; margin-bottom: 8px;"></i>
+                                <div style="font-size: 14px; color: #666; margin-bottom: 4px;">${window.i18n.t('inference.outputs') || 'Outputs'}</div>
+                                <div style="font-size: 20px; font-weight: 600; color: #333;">${modelInfo.outputNames?.length || 1}</div>
+                            </div>
+                            <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                                <i class="fas fa-hashtag" style="font-size: 24px; color: #f5576c; margin-bottom: 8px;"></i>
+                                <div style="font-size: 14px; color: #666; margin-bottom: 4px;">${window.i18n.t('inference.format') || 'Format'}</div>
+                                <div style="font-size: 20px; font-weight: 600; color: #333;">ONNX</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- External Netron Link -->
+                    <div style="margin-top: 30px; padding: 20px; background: #f0f7ff; border-left: 4px solid #667eea; border-radius: 6px;">
+                        <p style="margin: 0 0 12px 0; font-size: 14px; color: #333;">
+                            <i class="fas fa-info-circle" style="color: #667eea; margin-right: 8px;"></i>
+                            ${window.i18n.t('inference.advancedVisualization') || 'For advanced layer-by-layer visualization, use Netron:'}
+                        </p>
+                        <a href="https://netron.app" target="_blank"
+                           style="display: inline-flex; align-items: center; gap: 8px; color: #667eea;
+                                  text-decoration: none; font-weight: 500; font-size: 14px;">
+                            <i class="fas fa-external-link-alt"></i>
+                            <span>netron.app</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    getOutputDescription(type) {
+        switch (type.toLowerCase()) {
+            case 'detection':
+                return 'Boxes + Scores + Classes';
+            case 'segmentation':
+                return 'Masks + Boxes + Classes';
+            case 'classification':
+                return 'Class Probabilities';
+            default:
+                return 'Predictions';
+        }
+    }
+
+    buildArchitectureViewerHTML(modelInfo, parsedModel, blobUrl) {
+        const hasFullParsing = parsedModel && !parsedModel.fallback;
+
+        return `
+            <div style="width: 100%; height: 100%; display: flex; flex-direction: column; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+                <!-- Header with Tabs -->
+                <div style="padding: 20px; border-bottom: 2px solid #e0e0e0; background: #f8f9fa;">
+                    <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+                        <button class="arch-tab active" data-tab="overview" style="flex: 1; padding: 12px 20px; border: none; background: #667eea; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+                            <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                            ${window.i18n.t('inference.overview') || 'Overview'}
+                        </button>
+                        <button class="arch-tab" data-tab="netron" style="flex: 1; padding: 12px 20px; border: none; background: #e0e0e0; color: #666; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+                            <i class="fas fa-project-diagram" style="margin-right: 8px;"></i>
+                            ${window.i18n.t('inference.interactive') || 'Interactive (Netron)'}
+                        </button>
+                    </div>
+
+                    <!-- Model Info Summary -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                        <div>
+                            <div style="font-size: 11px; color: #666; margin-bottom: 2px; text-transform: uppercase; font-weight: 600;">${window.i18n.t('inference.modelName')}</div>
+                            <div style="font-size: 13px; color: #333; font-weight: 500;">${modelInfo.name}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #666; margin-bottom: 2px; text-transform: uppercase; font-weight: 600;">${window.i18n.t('inference.modelType')}</div>
+                            <div style="font-size: 13px; color: #333; font-weight: 500; text-transform: capitalize;">${modelInfo.type}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #666; margin-bottom: 2px; text-transform: uppercase; font-weight: 600;">${window.i18n.t('inference.inputSize')}</div>
+                            <div style="font-size: 13px; color: #333; font-weight: 500;">${modelInfo.inputSize} × ${modelInfo.inputSize}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #666; margin-bottom: 2px; text-transform: uppercase; font-weight: 600;">${window.i18n.t('inference.totalLayers') || 'Layers'}</div>
+                            <div style="font-size: 13px; color: #333; font-weight: 500;">${parsedModel ? parsedModel.totalLayers : '~'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Content -->
+                <div style="flex: 1; overflow: auto; position: relative;">
+                    <!-- Overview Tab -->
+                    <div class="arch-tab-content" data-tab="overview" style="height: 100%; padding: 30px; overflow: auto;">
+                        ${this.buildOverviewTabHTML(modelInfo, parsedModel)}
+                    </div>
+
+                    <!-- Netron Tab -->
+                    <div class="arch-tab-content" data-tab="netron" style="display: none; height: 100%; position: relative;">
+                        ${this.buildNetronTabHTML(blobUrl)}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    buildOverviewTabHTML(modelInfo, parsedModel) {
+        if (!parsedModel) {
+            return `
+                <div style="text-align: center; padding: 60px 20px;">
+                    <i class="fas fa-exclamation-circle" style="font-size: 48px; color: #f5576c; margin-bottom: 16px;"></i>
+                    <h3 style="margin: 0 0 8px 0; color: #333;">${window.i18n.t('inference.parsingFailed') || 'Could not parse model'}</h3>
+                    <p style="color: #666; margin: 0;">${window.i18n.t('inference.useNetron') || 'Use the Interactive tab to view full architecture'}</p>
+                </div>
+            `;
+        }
+
+        let layersHTML = '';
+        if (parsedModel.layers && parsedModel.layers.length > 0) {
+            const maxLayersToShow = 50;
+            const layersToShow = parsedModel.layers.slice(0, maxLayersToShow);
+
+            layersHTML = layersToShow.map((layer, index) => `
+                <div style="background: white; padding: 16px; border-radius: 8px; border-left: 4px solid ${ONNXParser.getOpColor(layer.type)};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="${ONNXParser.getOpIcon(layer.type)}" style="color: ${ONNXParser.getOpColor(layer.type)}; font-size: 18px;"></i>
+                            <span style="font-weight: 600; color: #333; font-size: 14px;">${layer.type}</span>
+                            <span style="color: #999; font-size: 12px;">#${index}</span>
+                        </div>
+                        <span style="font-size: 12px; color: #666; font-family: monospace;">${layer.name}</span>
+                    </div>
+                    ${layer.inputs.length > 0 ? `
+                        <div style="font-size: 12px; color: #666; margin-top: 8px;">
+                            <strong>In:</strong> ${layer.inputs.join(', ')}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+
+            if (parsedModel.layers.length > maxLayersToShow) {
+                layersHTML += `
+                    <div style="text-align: center; padding: 20px; color: #666; font-size: 13px;">
+                        <i class="fas fa-ellipsis-h"></i>
+                        ${window.i18n.t('inference.showingLayers', { shown: maxLayersToShow, total: parsedModel.layers.length }) || `Showing ${maxLayersToShow} of ${parsedModel.layers.length} layers`}
+                    </div>
+                `;
+            }
+        } else if (parsedModel.fallback) {
+            // Fallback mode - show operation counts
+            layersHTML = Object.entries(parsedModel.opCounts).map(([opType, count]) => `
+                <div style="background: white; padding: 16px; border-radius: 8px; border-left: 4px solid ${ONNXParser.getOpColor(opType)}; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="${ONNXParser.getOpIcon(opType)}" style="color: ${ONNXParser.getOpColor(opType)}; font-size: 18px;"></i>
+                        <span style="font-weight: 600; color: #333; font-size: 14px;">${opType}</span>
+                    </div>
+                    <span style="font-size: 18px; font-weight: 700; color: ${ONNXParser.getOpColor(opType)};">${count}</span>
+                </div>
+            `).join('');
+        }
+
+        return `
+            <div style="max-width: 1000px; margin: 0 auto;">
+                <!-- Operation Statistics -->
+                ${parsedModel.opCounts && Object.keys(parsedModel.opCounts).length > 0 ? `
+                    <div style="background: white; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 20px 0; color: #333; font-size: 18px; display: flex; align-items: center;">
+                            <i class="fas fa-chart-bar" style="color: #667eea; margin-right: 10px;"></i>
+                            ${window.i18n.t('inference.operationStats') || 'Operation Statistics'}
+                        </h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px;">
+                            ${Object.entries(parsedModel.opCounts).map(([op, count]) => `
+                                <div style="background: linear-gradient(135deg, ${ONNXParser.getOpColor(op)}22 0%, ${ONNXParser.getOpColor(op)}44 100%); padding: 16px; border-radius: 8px; text-align: center;">
+                                    <i class="${ONNXParser.getOpIcon(op)}" style="font-size: 24px; color: ${ONNXParser.getOpColor(op)}; margin-bottom: 8px;"></i>
+                                    <div style="font-size: 24px; font-weight: 700; color: ${ONNXParser.getOpColor(op)}; margin-bottom: 4px;">${count}</div>
+                                    <div style="font-size: 12px; color: #666; font-weight: 600;">${op}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- Layer List -->
+                ${layersHTML ? `
+                    <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 20px 0; color: #333; font-size: 18px; display: flex; align-items: center;">
+                            <i class="fas fa-layer-group" style="color: #667eea; margin-right: 10px;"></i>
+                            ${parsedModel.fallback ? (window.i18n.t('inference.detectedOps') || 'Detected Operations') : (window.i18n.t('inference.layerList') || 'Layer List')}
+                        </h3>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            ${layersHTML}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${parsedModel.fallback ? `
+                    <div style="margin-top: 20px; padding: 16px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 6px;">
+                        <p style="margin: 0; font-size: 13px; color: #856404;">
+                            <i class="fas fa-info-circle"></i>
+                            ${parsedModel.note || 'Limited parsing - use Interactive tab for full detail'}
+                        </p>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    buildNetronTabHTML(blobUrl) {
+        return `
+            <div style="width: 100%; height: 100%; position: relative;">
+                <iframe id="netronViewer"
+                        src="https://netron.app/"
+                        style="width: 100%; height: 100%; border: none;"
+                        sandbox="allow-scripts allow-same-origin allow-downloads allow-forms">
+                </iframe>
+
+                <!-- Instructions Overlay -->
+                <div id="netronInstructions" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                            background: rgba(255,255,255,0.98); padding: 40px; border-radius: 16px;
+                            box-shadow: 0 8px 32px rgba(0,0,0,0.15); text-align: center; max-width: 500px;
+                            border: 2px solid #667eea; z-index: 10; pointer-events: auto;">
+                    <i class="fas fa-hand-pointer" style="font-size: 48px; color: #667eea; margin-bottom: 16px;"></i>
+                    <h3 style="margin: 0 0 12px 0; color: #333; font-size: 18px;">${window.i18n.t('inference.netronInstructionsTitle') || 'View Interactive Architecture'}</h3>
+                    <p style="margin: 0 0 20px 0; color: #666; font-size: 14px; line-height: 1.6;">
+                        ${window.i18n.t('inference.netronInstructionsText') || 'Drag and drop your model file onto the Netron window below to see the complete layer-by-layer architecture.'}
+                    </p>
+                    <button onclick="window.open('${blobUrl}', '_blank')"
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;
+                                   border: none; padding: 14px 28px; border-radius: 8px; cursor: pointer;
+                                   font-size: 14px; font-weight: 600; margin-bottom: 12px;
+                                   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+                                   transition: transform 0.2s;"
+                            onmouseover="this.style.transform='translateY(-2px)'"
+                            onmouseout="this.style.transform='translateY(0)'">
+                        <i class="fas fa-download" style="margin-right: 8px;"></i>
+                        ${window.i18n.t('inference.downloadForNetron') || 'Download Model File'}
+                    </button>
+                    <div style="font-size: 12px; color: #999; margin-top: 12px;">
+                        <i class="fas fa-info-circle"></i>
+                        ${window.i18n.t('inference.netronBrowserNote') || 'Or drag your model file directly onto Netron below'}
+                    </div>
+                    <button onclick="document.getElementById('netronInstructions').style.display='none'"
+                            style="background: #f5f5f5; color: #666; border: none; padding: 8px 16px;
+                                   border-radius: 6px; cursor: pointer; font-size: 13px; margin-top: 16px;">
+                        ${window.i18n.t('common.understand') || 'Got it'}
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    setupArchitectureTabs() {
+        const tabs = document.querySelectorAll('.arch-tab');
+        const contents = document.querySelectorAll('.arch-tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetTab = tab.dataset.tab;
+
+                // Update tab buttons
+                tabs.forEach(t => {
+                    if (t.dataset.tab === targetTab) {
+                        t.style.background = '#667eea';
+                        t.style.color = 'white';
+                        t.classList.add('active');
+                    } else {
+                        t.style.background = '#e0e0e0';
+                        t.style.color = '#666';
+                        t.classList.remove('active');
+                    }
+                });
+
+                // Update tab content
+                contents.forEach(content => {
+                    if (content.dataset.tab === targetTab) {
+                        content.style.display = 'block';
+                    } else {
+                        content.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Setup Netron overlay auto-hide on drag
+        this.setupNetronOverlayHide();
+    }
+
+    setupNetronOverlayHide() {
+        // Wait for Netron tab to be in DOM
+        setTimeout(() => {
+            const netronTab = document.querySelector('[data-tab="netron"]');
+            const netronInstructions = document.getElementById('netronInstructions');
+
+            if (!netronTab || !netronInstructions) return;
+
+            // Detect drag over the Netron area
+            let dragCounter = 0;
+
+            netronTab.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                dragCounter++;
+                if (dragCounter === 1 && netronInstructions) {
+                    netronInstructions.style.transition = 'opacity 0.3s ease';
+                    netronInstructions.style.opacity = '0';
+                    setTimeout(() => {
+                        netronInstructions.style.display = 'none';
+                    }, 300);
+                }
+            });
+
+            netronTab.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dragCounter--;
+            });
+
+            netronTab.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+
+            netronTab.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dragCounter = 0;
+                if (netronInstructions) {
+                    netronInstructions.style.display = 'none';
+                }
+            });
+
+            // Also hide on click anywhere in the Netron tab
+            netronTab.addEventListener('click', (e) => {
+                if (e.target !== netronInstructions && !netronInstructions.contains(e.target)) {
+                    netronInstructions.style.transition = 'opacity 0.3s ease';
+                    netronInstructions.style.opacity = '0';
+                    setTimeout(() => {
+                        netronInstructions.style.display = 'none';
+                    }, 300);
+                }
+            });
+        }, 100);
+    }
+
+    closeArchitectureViewer() {
+        document.getElementById('modelArchitectureViewer').style.display = 'none';
+        document.getElementById('canvas').style.display = 'block';
+
+        // Clear content
+        const content = document.getElementById('architectureContent');
+        if (content) {
+            content.innerHTML = '';
+        }
+
+        // Cleanup blob URL
+        if (this.currentArchitectureBlobUrl) {
+            URL.revokeObjectURL(this.currentArchitectureBlobUrl);
+            this.currentArchitectureBlobUrl = null;
+        }
+
+        // Restore image info if there's an image loaded
+        if (this.canvasManager && this.canvasManager.imageId) {
+            document.getElementById('imageInfo').style.display = 'flex';
         }
     }
 

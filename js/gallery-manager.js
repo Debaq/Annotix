@@ -172,6 +172,7 @@ class GalleryManager {
                     ${overlayContent}
                 </div>
                 <div class="gallery-item-actions">
+                    ${inferenceButtonHTML}
                     ${augmentButtonHTML}
                     <button class="gallery-item-delete" data-id="${imageData.id}" data-i18n-title="actions.delete" title="Delete">
                         <i class="fas fa-times"></i>
@@ -184,6 +185,9 @@ class GalleryManager {
                 if (e.target.closest('.gallery-item-delete')) {
                     e.stopPropagation();
                     this.deleteImage(imageData.id);
+                } else if (e.target.closest('.gallery-item-inference')) {
+                    e.stopPropagation();
+                    this.runInferenceOnImage(imageData.id);
                 } else if (e.target.closest('.gallery-item-augment')) {
                     e.stopPropagation();
                     this.augmentImage(imageData.id);
@@ -198,6 +202,11 @@ class GalleryManager {
 
     async loadImage(imageId) {
         try {
+            // Close architecture viewer if it's open
+            if (this.app.closeArchitectureViewer) {
+                this.app.closeArchitectureViewer();
+            }
+
             // IMPORTANT: Save current image before loading a new one
             // This prevents losing unsaved changes when navigating between images
             if (this.app.annotationMode === 'classification') {
@@ -455,6 +464,47 @@ class GalleryManager {
             }
         } catch (error) {
             console.error('Error updating thumbnail:', error);
+        }
+    }
+
+    async runInferenceOnImage(imageId) {
+        try {
+            if (!this.app.inferenceManager || !this.app.inferenceManager.isModelLoaded()) {
+                this.ui.showToast('No model loaded', 'warning');
+                return;
+            }
+
+            // Get image data
+            const imageData = await this.db.getImage(imageId);
+            if (!imageData) {
+                this.ui.showToast('Image not found', 'error');
+                return;
+            }
+
+            // Run inference
+            const predictions = await this.app.inferenceManager.runInference(
+                imageId,
+                imageData.image,
+                this.app.projectManager.currentProject.type
+            );
+
+            // If this is the currently loaded image, update canvas
+            if (this.app.canvasManager && this.app.canvasManager.imageId === imageId) {
+                this.app.canvasManager.predictions = predictions;
+                this.app.canvasManager.redraw();
+
+                // Show prediction controls
+                const predictionControls = document.getElementById('predictionControls');
+                if (predictionControls && predictions.length > 0) {
+                    predictionControls.classList.add('active');
+                }
+            }
+
+            // Re-render gallery to update button state
+            this.render();
+        } catch (error) {
+            console.error('Error running inference on image:', error);
+            this.ui.showToast(`Inference error: ${error.message}`, 'error');
         }
     }
 }

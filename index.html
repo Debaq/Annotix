@@ -42,6 +42,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js"></script>
 </head>
 <body>
     <!-- Loading Screen -->
@@ -117,6 +118,11 @@
                     <button class="btn-header btn-icon-only" id="btnInference" data-i18n-title="inference.title">
                         <i class="fas fa-brain"></i>
                     </button>
+
+                    <!-- Connector Status Indicator -->
+                    <div id="connectorStatus" class="connector-status" style="display: none;">
+                        <i class="fas fa-plug"></i>
+                    </div>
                 </div>
 
                 <!-- Right Side: Help, Language, GitHub -->
@@ -186,6 +192,23 @@
             <!-- Canvas Area -->
             <main class="canvas-container">
                 <canvas id="canvas"></canvas>
+
+                <!-- Model Architecture Viewer (replaces canvas when viewing model) -->
+                <div id="modelArchitectureViewer" style="display: none; width: 100%; height: 100%; background: #f8f9fa; position: absolute; top: 0; left: 0; overflow: auto;">
+                    <div style="display: flex; flex-direction: column; height: 100%; padding: 40px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                            <h2 style="margin: 0; color: #333; font-size: 28px;">
+                                <i class="fas fa-project-diagram" style="color: #667eea; margin-right: 12px;"></i>
+                                <span data-i18n="inference.modelArchitecture">Model Architecture</span>
+                            </h2>
+                            <button class="btn-inference-action" id="btnCloseArchitectureViewer" style="background: #f5f5f5; color: #666;">
+                                <i class="fas fa-times"></i>
+                                <span data-i18n="common.close">Close</span>
+                            </button>
+                        </div>
+                        <div id="architectureContent" style="flex: 1;"></div>
+                    </div>
+                </div>
 
                 <!-- Image Info -->
                 <div class="image-info" id="imageInfo" style="display: none;">
@@ -461,7 +484,7 @@
                             <span class="model-info-value" id="modelInfoSize">-</span>
                         </div>
                         <div class="model-info-item" style="margin-top: 12px;">
-                            <button class="btn-inference-action btn-view-model" id="btnViewModel" style="width: 100%;">
+                            <button class="btn-inference-action btn-view-model" id="btnViewModel" style="width: 100%;" disabled>
                                 <i class="fas fa-project-diagram"></i>
                                 <span data-i18n="inference.viewModel">View Model Architecture</span>
                             </button>
@@ -491,13 +514,23 @@
                             </label>
                         </label>
                     </div>
+
+                    <div class="setting-item">
+                        <label class="auto-inference-toggle">
+                            <span data-i18n="inference.enforceNaming">Enforce naming convention</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="enforceNamingToggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- Info Section -->
                 <div class="inference-info-section">
                     <p class="inference-help-text">
                         <i class="fas fa-info-circle"></i>
-                        <span data-i18n="inference.helpText">Upload a model with the format: <strong>projectname_v1.onnx</strong>. Use the brain button on each image to run inference.</span>
+                        <span data-i18n-html="inference.helpText"></span>
                     </p>
                 </div>
             </div>
@@ -553,7 +586,9 @@
     <script src="js/classification-manager.js"></script>
     <script src="js/gallery-manager.js"></script>
     <script src="js/preprocessing.js"></script>
+    <script src="js/onnx-parser.js"></script>
     <script src="js/inference-manager.js"></script>
+    <script src="js/companion_integration.js"></script>
     <script src="js/app.js"></script>
 
     <!-- Initialize App Loader -->

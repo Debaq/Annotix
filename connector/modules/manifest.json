@@ -1,0 +1,76 @@
+{
+  "version": "1.0",
+  "updated": "2025-01-30",
+  "repository": "http://tmeduca.org/annotix/modules/",
+  "modules": [
+    {
+      "id": "ultralytics_yolo",
+      "name": "Ultralytics YOLO",
+      "version": "1.0.0",
+      "description": "Entrenamiento con Ultralytics YOLO (YOLOv8, YOLOv9, YOLOv10, YOLOv11) para detección, segmentación, clasificación y pose estimation",
+      "author": "TecMedHub",
+      "frameworks": ["ultralytics"],
+      "supported_types": ["bbox", "mask", "classification", "keypoints"],
+      "install_size_mb": 500,
+      "download_url": "ultralytics_yolo.zip",
+      "checksum": "sha256:placeholder",
+      "requirements": [
+        "ultralytics>=8.0.0",
+        "torch>=2.0.0",
+        "torchvision>=0.15.0"
+      ]
+    },
+    {
+      "id": "pytorch_custom",
+      "name": "PyTorch Custom",
+      "version": "1.0.0",
+      "description": "Entrenamiento personalizado con PyTorch para arquitecturas custom (ResNet, EfficientNet, etc.)",
+      "author": "TecMedHub",
+      "frameworks": ["pytorch"],
+      "supported_types": ["bbox", "classification"],
+      "install_size_mb": 300,
+      "download_url": "pytorch_custom.zip",
+      "checksum": "sha256:placeholder",
+      "requirements": [
+        "torch>=2.0.0",
+        "torchvision>=0.15.0",
+        "timm>=0.9.0"
+      ],
+      "status": "coming_soon"
+    },
+    {
+      "id": "tensorflow_unet",
+      "name": "TensorFlow U-Net",
+      "version": "1.0.0",
+      "description": "Entrenamiento de segmentación con TensorFlow/Keras U-Net",
+      "author": "TecMedHub",
+      "frameworks": ["tensorflow", "keras"],
+      "supported_types": ["mask"],
+      "install_size_mb": 600,
+      "download_url": "tensorflow_unet.zip",
+      "checksum": "sha256:placeholder",
+      "requirements": [
+        "tensorflow>=2.13.0",
+        "keras>=2.13.0"
+      ],
+      "status": "coming_soon"
+    },
+    {
+      "id": "sklearn_classifier",
+      "name": "Scikit-Learn Classifier",
+      "version": "1.0.0",
+      "description": "Clasificación con Random Forest, SVM, XGBoost para datasets tabulares/features",
+      "author": "TecMedHub",
+      "frameworks": ["scikit-learn", "xgboost"],
+      "supported_types": ["classification"],
+      "install_size_mb": 100,
+      "download_url": "sklearn_classifier.zip",
+      "checksum": "sha256:placeholder",
+      "requirements": [
+        "scikit-learn>=1.3.0",
+        "xgboost>=2.0.0"
+      ],
+      "status": "coming_soon"
+    }
+  ]
+}

@@ -49,6 +49,52 @@
     font-family: 'Courier New', monospace;
 }
 
+/* Connector Status Indicator */
+.connector-status {
+    background: rgba(46, 204, 113, 0.15);
+    border: 1px solid rgba(46, 204, 113, 0.4);
+    color: #2ecc71;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.connector-status.disconnected {
+    background: rgba(231, 76, 60, 0.15);
+    border: 1px solid rgba(231, 76, 60, 0.4);
+    color: #e74c3c;
+}
+
+.connector-status.disconnected:hover {
+    background: rgba(231, 76, 60, 0.25);
+    border-color: rgba(231, 76, 60, 0.5);
+}
+
+.connector-status:hover {
+    background: rgba(46, 204, 113, 0.25);
+    border-color: rgba(46, 204, 113, 0.5);
+}
+
+.connector-status i {
+    animation: pulse 2s infinite;
+}
+
+.connector-status.disconnected i {
+    animation: none;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
 /* Botones Header - VSCode Flat Style */
 .btn-header {
     background: rgba(255, 255, 255, 0.08);
@@ -1297,6 +1343,45 @@ color: white;
     display: flex;
     flex-direction: column;
     gap: 16px;
+}
+
+/* Connector Check */
+.connector-check {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.connector-check-icon {
+    font-size: 48px;
+    color: #667eea;
+    margin-bottom: 16px;
+    animation: pulse 2s infinite;
+}
+
+.connector-check-icon.success {
+    color: #2ecc71;
+    animation: none;
+}
+
+.connector-check-icon.error {
+    color: #e74c3c;
+    animation: none;
+}
+
+.connector-check-message {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+}
+
+.connector-check-action {
+    margin-top: 16px;
 }
 
 /* Three column layout in code mode: config spans 2 cols, code takes 1 col */
