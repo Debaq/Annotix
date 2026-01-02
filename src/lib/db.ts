@@ -159,6 +159,71 @@ export interface Prediction {
 }
 
 // ============================================================================
+// TIME SERIES TABLE (Fase 3)
+// ============================================================================
+
+export interface TimeSeries {
+  id?: number;
+  projectId: number;           // Indexed
+  name: string;
+  data: TimeSeriesData;
+  annotations: TimeSeriesAnnotation[];
+  metadata: {
+    uploaded: number;
+    annotated?: number;
+    status: 'pending' | 'annotated' | 'reviewed';  // Indexed
+  };
+}
+
+export interface TimeSeriesData {
+  timestamps: number[];        // X-axis values (ms timestamps or sequential)
+  values: number[] | number[][];  // Y-axis values (univariate or multivariate)
+  columns?: string[];          // Column names for multivariate data
+}
+
+export interface TimeSeriesAnnotation {
+  id: string;                  // UUID v4
+  type: 'point' | 'range' | 'classification' | 'event' | 'anomaly';
+  classId?: number;            // Optional class ID
+  data: TimeSeriesAnnotationData;
+}
+
+export type TimeSeriesAnnotationData =
+  | PointAnnotation
+  | RangeAnnotation
+  | ClassificationAnnotation
+  | EventAnnotation
+  | AnomalyAnnotation;
+
+export interface PointAnnotation {
+  timestamp: number;           // X coordinate
+  value?: number;              // Y coordinate (optional)
+  label?: string;              // Optional label
+}
+
+export interface RangeAnnotation {
+  startTimestamp: number;      // Start X
+  endTimestamp: number;        // End X
+  label?: string;              // Optional label
+}
+
+export interface ClassificationAnnotation {
+  classId: number;             // Global classification for entire series
+}
+
+export interface EventAnnotation {
+  timestamp: number;
+  eventType: string;
+  confidence?: number;
+}
+
+export interface AnomalyAnnotation {
+  timestamp: number;
+  score: number;               // Anomaly score
+  threshold?: number;
+}
+
+// ============================================================================
 // TRAINING JOBS TABLE (Fase 5)
 // ============================================================================
 
@@ -201,6 +266,7 @@ export interface TrainingMetrics {
 class AnnotixDB extends Dexie {
   projects!: Table<Project>;
   images!: Table<Image>;
+  timeseries!: Table<TimeSeries>;
   inferenceCache!: Table<InferenceCache>;
   trainingJobs!: Table<TrainingJob>;
 
@@ -210,6 +276,7 @@ class AnnotixDB extends Dexie {
     this.version(1).stores({
       projects: '++id, name, type, metadata.created',
       images: '++id, projectId, metadata.status, metadata.uploaded',
+      timeseries: '++id, projectId, metadata.status, metadata.uploaded',
       inferenceCache: '++id, imageId, modelHash',
       trainingJobs: '++id, projectId, status, createdAt',
     });

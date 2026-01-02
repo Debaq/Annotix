@@ -189,5 +189,36 @@
   },
   "storage": {
     "used": "Stockage utilisé dans IndexedDB"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "creating": "Création...",
+    "importing": "Importation...",
+    "saving": "Enregistrement...",
+    "cancel": "Annuler",
+    "create": "Créer",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "duplicate": "Dupliquer",
+    "rename": "Renommer",
+    "exportBackup": "Exporter la sauvegarde",
+    "deleteConfirm": "Oui, supprimer",
+    "clearConfirm": "Effacer toutes les annotations de cette image?",
+    "clear": "Effacer",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "undo": "Annuler",
+    "actions": "Actions",
+    "exportDataset": "Exporter le dataset",
+    "backToProjects": "Retour aux projets",
+    "classes": "Classes",
+    "selectImageToStart": "Sélectionnez une image pour commencer à annoter",
+    "missingTranslations": "Traductions manquantes",
+    "hide": "Masquer",
+    "totalKeys": "Total des clés:",
+    "totalUsages": "Total des utilisations:",
+    "oneToNine": "1-9",
+    "ctrlS": "Ctrl+S",
+    "arrowKeys": "← →"
   }
 }

@@ -21,9 +21,9 @@ export function ProjectTypeSelector({ value, onChange }: ProjectTypeSelectorProp
               <i className="fas fa-vector-square"></i>
             </div>
             <div>
-              <p className="font-medium">{t('project.type.bbox')}</p>
+              <p className="font-medium">{t('project.types.bbox.name')}</p>
               <p className="text-xs text-muted-foreground">
-                {t('project.type.bboxDescription')}
+                {t('project.types.bbox.description')}
               </p>
             </div>
           </div>
@@ -38,9 +38,9 @@ export function ProjectTypeSelector({ value, onChange }: ProjectTypeSelectorProp
               <i className="fas fa-paintbrush"></i>
             </div>
             <div>
-              <p className="font-medium">{t('project.type.mask')}</p>
+              <p className="font-medium">{t('project.types.mask.name')}</p>
               <p className="text-xs text-muted-foreground">
-                {t('project.type.maskDescription')}
+                {t('project.types.mask.description')}
               </p>
             </div>
           </div>

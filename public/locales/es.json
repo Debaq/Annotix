@@ -9,6 +9,25 @@
       "university": "Universidad Austral de Chile - Sede Puerto Montt"
     }
   },
+  "common": {
+    "loading": "Cargando...",
+    "creating": "Creando...",
+    "importing": "Importando...",
+    "saving": "Guardando...",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "confirm": "Confirmar",
+    "close": "Cerrar",
+    "duplicate": "Duplicar",
+    "rename": "Renombrar",
+    "exportBackup": "Exportar Backup",
+    "deleteConfirm": "Sí, eliminar",
+    "clearConfirm": "¿Limpiar todas las anotaciones de esta imagen?",
+    "clear": "Limpiar",
+    "delete": "Eliminar",
+    "save": "Guardar",
+    "undo": "Deshacer"
+  },
   "header": {
     "selectProject": "Seleccionar proyecto...",
     "newProject": "Nuevo Proyecto",
@@ -16,6 +35,35 @@
     "manageProjects": "Gestionar Proyectos",
     "export": "Exportar",
     "help": "Ayuda"
+  },
+  "projects": {
+    "title": "Proyectos",
+    "subtitle": "Gestiona tus proyectos de anotación",
+    "create": "Crear Proyecto",
+    "createDescription": "Comienza un nuevo proyecto de anotación",
+    "name": "Nombre del Proyecto",
+    "namePlaceholder": "Mi Proyecto Annotix",
+    "type": {
+      "label": "Tipo de Proyecto",
+      "bbox": "Bounding Box",
+      "bboxDescription": "Detección de objetos con cajas delimitadoras",
+      "mask": "Máscara",
+      "maskDescription": "Segmentación de instancias con máscaras"
+    },
+    "typeSelectHelper": "Selecciona el tipo de anotación según tu objetivo de entrenamiento",
+    "classes": "Clases",
+    "open": "Abrir",
+    "delete": "Eliminar",
+    "stats": {
+      "classes": "clases"
+    },
+    "empty": {
+      "title": "No hay proyectos",
+      "description": "Crea tu primer proyecto para comenzar a anotar"
+    },
+    "createDescription": "Comienza un nuevo proyecto de anotación",
+    "name": "Nombre del Proyecto",
+    "namePlaceholder": "Mi Proyecto Annotix"
   },
   "tools": {
     "title": "Herramientas",
@@ -41,6 +89,23 @@
       "select": "Seleccionar (V)",
       "pan": "Pan (H)"
     }
+  },
+  "gallery": {
+    "imageCount": "{{count}} imágenes",
+    "imageCount_plural": "{{count}} imágenes",
+    "empty": {
+      "title": "No hay imágenes",
+      "description": "Sube imágenes para comenzar a anotar",
+      "upload": "Subir imágenes"
+    },
+    "title": "Galería",
+    "all": "Todas",
+    "annotated": "Anotadas",
+    "unannotated": "Sin anotar",
+    "deleteConfirm": "¿Eliminar esta imagen?",
+    "annotate": "Anotar",
+    "upload": "Seleccionar imágenes",
+    "noImages": "No hay imágenes"
   },
   "classes": {
     "title": "Clases Activas",
@@ -163,6 +228,7 @@
     "zoomIn": "Zoom In",
     "zoomOut": "Zoom Out",
     "resetZoom": "Restablecer Zoom",
+    "fitScreen": "Ajustar a pantalla",
     "toggleLabels": "Mostrar/Ocultar Etiquetas",
     "toggleGrid": "Mostrar/Ocultar Grilla",
     "prevImage": "Imagen Anterior (←)",
@@ -520,6 +586,14 @@
         "name": "YOLO Pose",
         "description": "Keypoints en formato YOLO (.txt) con configuración de esqueleto"
       },
+      "yoloDetection": {
+        "name": "YOLO Detection",
+        "description": "Bounding boxes en formato YOLO (.txt) con data.yaml"
+      },
+      "yoloSegmentation": {
+        "name": "YOLO Segmentation",
+        "description": "Polígonos en formato YOLO (.txt) con data.yaml"
+      },
       "coco": {
         "name": "COCO JSON",
         "description": "Formato COCO para Mask R-CNN, RetinaNet, etc."
@@ -571,6 +645,20 @@
         "useCases": "Identificar qué contiene la imagen (ej: gato, perro, coche)",
         "models": "ResNet, VGG, EfficientNet, MobileNet",
         "difficulty": "Principiante"
+      },
+      "bbox": {
+        "name": "Bounding Box",
+        "description": "Detección de objetos con cajas delimitadoras",
+        "useCases": "Detectar y localizar objetos en imágenes",
+        "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+        "difficulty": "Principiante"
+      },
+      "mask": {
+        "name": "Máscara",
+        "description": "Segmentación de instancias con máscaras de píxeles",
+        "useCases": "Separar objetos a nivel de píxel",
+        "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+        "difficulty": "Intermedio"
       },
       "multiLabel": {
         "name": "Clasificación Multi-Etiqueta",
@@ -1135,7 +1223,15 @@
     "singleHint": "Solo puedes seleccionar una etiqueta",
     "multiHint": "Puedes seleccionar múltiples etiquetas",
     "noLabels": "Sin etiquetas asignadas",
-    "labeled": "Etiquetada"
+    "labeled": "Etiquetada",
+    "selectLabel": "Selecciona una etiqueta",
+    "selectLabels": "Selecciona etiquetas",
+    "selected": "seleccionadas",
+    "multiLabel": "Clasificación Multi-Etiqueta",
+    "singleLabel": "Clasificación Simple",
+    "noImageSelected": "No hay imagen seleccionada. Por favor, selecciona una imagen de la galería.",
+    "multiLabelInstructions": "Selecciona una o más etiquetas que se apliquen a esta imagen. Presiona Ctrl+S para guardar.",
+    "singleLabelInstructions": "Selecciona la etiqueta que mejor describa esta imagen. Presiona Ctrl+S para guardar."
   },
   "augmentation": {
     "title": "Data Augmentation",
@@ -1297,5 +1393,60 @@
     "downloadStarted": "Descarga iniciada. Ejecuta el instalador cuando termine.",
     "startTraining": "Iniciar Entrenamiento",
     "trainingStarted": "Entrenamiento iniciado correctamente"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "creating": "Creando...",
+    "importing": "Importando...",
+    "saving": "Guardando...",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "confirm": "Confirmar",
+    "close": "Cerrar",
+    "duplicate": "Duplicar",
+    "rename": "Renombrar",
+    "exportBackup": "Exportar Backup",
+    "deleteConfirm": "Sí, eliminar",
+    "clearConfirm": "¿Limpiar todas las anotaciones de esta imagen?",
+    "clear": "Limpiar",
+    "delete": "Eliminar",
+    "save": "Guardar",
+    "undo": "Deshacer",
+    "actions": "Acciones",
+    "exportDataset": "Exportar Dataset",
+    "backToProjects": "Volver a Proyectos",
+    "classes": "Clases",
+    "selectImageToStart": "Selecciona una imagen para comenzar a anotar",
+    "missingTranslations": "Traducciones Faltantes",
+    "hide": "Ocultar",
+    "totalKeys": "Total de Claves:",
+    "totalUsages": "Total de Usos:",
+    "oneToNine": "1-9",
+    "ctrlS": "Ctrl+S",
+    "arrowKeys": "← →"
+  },
+  "timeseries": {
+    "noProjectSelected": "No hay proyecto seleccionado. Por favor, selecciona un proyecto de series temporales.",
+    "importCSV": "Importar Archivo CSV",
+    "importSuccess": "¡CSV importado exitosamente!",
+    "selectCSV": "Seleccionar Archivo CSV",
+    "hasHeader": "La primera fila contiene encabezados",
+    "timestampColumn": "Columna de Timestamp (índice base 0)",
+    "timestampColumnHelp": "Índice de columna para timestamps (por defecto: 0 = primera columna)",
+    "import": "Importar",
+    "csvFormatInfo": "Formato CSV: La primera columna debe ser timestamps, las columnas restantes son valores. Ejemplo: tiempo,valor1,valor2",
+    "noSeriesSelected": "No hay serie temporal seleccionada. Por favor, selecciona una serie de la galería.",
+    "dataPoints": "puntos de datos",
+    "series": "series",
+    "annotations": "Anotaciones",
+    "annotationsCount": "anotaciones",
+    "addAnnotation": "Agregar Anotación",
+    "totalSeries": "Series Totales",
+    "annotated": "Anotadas",
+    "pending": "Pendientes",
+    "seriesList": "Lista de Series Temporales",
+    "noSeriesYet": "Aún no hay series temporales",
+    "importCSVToStart": "Importa un archivo CSV para comenzar",
+    "deleteConfirm": "¿Estás seguro de que deseas eliminar esta serie temporal?"
   }
 }

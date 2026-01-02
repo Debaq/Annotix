@@ -2,9 +2,21 @@ import { useTranslation } from 'react-i18next';
 import { useCanvasTransform } from '../hooks/useCanvasTransform';
 import { Button } from '@/components/ui/button';
 
-export function ZoomControls() {
+interface ZoomControlsProps {
+  onFit?: () => void;
+}
+
+export function ZoomControls({ onFit }: ZoomControlsProps) {
   const { t } = useTranslation();
   const { zoom, zoomIn, zoomOut, resetZoom } = useCanvasTransform();
+
+  const handleReset = () => {
+    if (onFit) {
+      onFit();
+    } else {
+      resetZoom();
+    }
+  };
 
   return (
     <div className="flex items-center gap-2">
@@ -20,7 +32,7 @@ export function ZoomControls() {
         <i className="fas fa-plus"></i>
       </Button>
 
-      <Button variant="outline" size="sm" onClick={resetZoom}>
+      <Button variant="outline" size="sm" onClick={handleReset} title={onFit ? t('canvas.fitScreen') : t('canvas.resetZoom')}>
         <i className="fas fa-expand"></i>
       </Button>
     </div>

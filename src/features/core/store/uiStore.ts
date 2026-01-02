@@ -29,8 +29,10 @@ interface UIState {
   // Current project & image
   currentProjectId: number | null;
   currentImageId: number | null;
+  currentTimeSeriesId: number | null;
   setCurrentProjectId: (id: number | null) => void;
   setCurrentImageId: (id: number | null) => void;
+  setCurrentTimeSeriesId: (id: number | null) => void;
 
   // Gallery filter
   galleryFilter: GalleryFilterType;
@@ -76,8 +78,10 @@ export const useUIStore = create<UIState>((set) => ({
   // Current project & image
   currentProjectId: null,
   currentImageId: null,
-  setCurrentProjectId: (id) => set({ currentProjectId: id, currentImageId: null }),
+  currentTimeSeriesId: null,
+  setCurrentProjectId: (id) => set({ currentProjectId: id, currentImageId: null, currentTimeSeriesId: null }),
   setCurrentImageId: (id) => set({ currentImageId: id }),
+  setCurrentTimeSeriesId: (id) => set({ currentTimeSeriesId: id }),
 
   // Gallery filter
   galleryFilter: 'all',

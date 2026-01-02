@@ -67,7 +67,7 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl" closeLabel={t('common.close')}>
         <DialogHeader>
           <DialogTitle>{t('projects.create')}</DialogTitle>
           <DialogDescription>{t('projects.createDescription')}</DialogDescription>
