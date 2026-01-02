@@ -1,0 +1,193 @@
+{
+  "language": "Deutsch",
+  "code": "de",
+  "app": {
+    "title": "YOLO Annotator",
+    "subtitle": "Professionelles Annotationswerkzeug",
+    "branding": {
+      "fablab": "TecMedHub",
+      "university": "Universidad Austral de Chile - Campus Puerto Montt"
+    }
+  },
+  "header": {
+    "selectProject": "Projekt auswählen...",
+    "newProject": "Neu",
+    "exportProject": "Vollständiges Projekt exportieren",
+    "exportConfig": "Konfiguration exportieren",
+    "importConfig": "Konfiguration importieren",
+    "help": "Hilfe"
+  },
+  "tools": {
+    "title": "Werkzeuge",
+    "bbox": "Box",
+    "mask": "Maske",
+    "polygon": "Polygon",
+    "keypoints": "Schlüsselpunkte",
+    "landmarks": "Orientierungspunkte",
+    "obb": "Gedrehte Box",
+    "select": "Auswählen",
+    "pan": "Verschieben",
+    "tooltips": {
+      "bbox": "Begrenzungsrahmen (B)",
+      "mask": "Maske (M)",
+      "polygon": "Polygon (P)",
+      "keypoints": "Schlüsselpunkte (K)",
+      "landmarks": "Orientierungspunkte (L)",
+      "obb": "Gedrehte Box (O)",
+      "select": "Auswählen (V)",
+      "pan": "Verschieben (H)"
+    }
+  },
+  "classes": {
+    "title": "Aktive Klassen",
+    "manage": "Klassen verwalten",
+    "add": "Klasse hinzufügen",
+    "placeholder": "Klassenname",
+    "empty": "Erstellen Sie zuerst ein Projekt",
+    "deleteConfirm": "Es gibt Annotationen mit dieser Klasse. Trotzdem löschen?",
+    "exists": "Eine Klasse mit diesem Namen existiert bereits",
+    "enterName": "Geben Sie einen Namen für die Klasse ein"
+  },
+  "images": {
+    "title": "Bild laden",
+    "select": "Bilder auswählen",
+    "upload": "Bilder auswählen",
+    "noImages": "Keine Bilder"
+  },
+  "actions": {
+    "title": "Aktionen",
+    "save": "Speichern",
+    "undo": "Rückgängig",
+    "clear": "Löschen",
+    "delete": "Entfernen",
+    "cancel": "Abbrechen",
+    "create": "Erstellen",
+    "confirm": "Bestätigen",
+    "clearConfirm": "Alle Annotationen von diesem Bild löschen?"
+  },
+  "shortcuts": {
+    "title": "Tastenkombinationen",
+    "save": "Speichern",
+    "undo": "Rückgängig",
+    "delete": "Entfernen",
+    "navigation": "Navigation",
+    "bbox": "Box",
+    "mask": "Maske",
+    "select": "Auswählen",
+    "pan": "Verschieben",
+    "classes": "Klasse 1-9"
+  },
+  "canvas": {
+    "zoomIn": "Vergrößern",
+    "zoomOut": "Verkleinern",
+    "resetZoom": "Zoom zurücksetzen",
+    "toggleLabels": "Beschriftungen ein-/ausblenden",
+    "toggleGrid": "Raster ein-/ausblenden",
+    "prevImage": "Vorheriges Bild (←)",
+    "nextImage": "Nächstes Bild (→)"
+  },
+  "stats": {
+    "title": "Statistiken",
+    "images": "Bilder",
+    "annotated": "Annotiert",
+    "labels": "Beschriftungen",
+    "classes": "Klassen",
+    "progress": "Bilder annotiert"
+  },
+  "gallery": {
+    "title": "Galerie",
+    "all": "Alle",
+    "annotated": "Annotiert",
+    "unannotated": "Nicht annotiert",
+    "empty": "Keine Bilder",
+    "deleteConfirm": "Dieses Bild löschen?"
+  },
+  "export": {
+    "title": "Exportieren",
+    "downloadDataset": "Datensatz ZIP herunterladen",
+    "downloadClasses": "classes.txt herunterladen"
+  },
+  "project": {
+    "new": "Neues Projekt",
+    "name": "Projektname",
+    "namePlaceholder": "Mein YOLO Projekt",
+    "type": "Annotationstyp",
+    "typeBbox": "Begrenzungsrahmen",
+    "typeMask": "Segmentierung (Maske)",
+    "initialClasses": "Anfangsklassen (optional)",
+    "classesPlaceholder": "klasse1, klasse2, klasse3",
+    "classesHelp": "Durch Kommas getrennt. Sie können später weitere hinzufügen.",
+    "enterName": "Geben Sie einen Namen für das Projekt ein",
+    "created": "Projekt \"{name}\" erstellt",
+    "updated": "Updated",
+    "loaded": "Projekt \"{name}\" geladen",
+    "deleted": "Projekt gelöscht",
+    "exported": "Projekt exportiert",
+    "configExported": "Konfiguration exportiert",
+    "selectFirst": "Wählen Sie zuerst ein Projekt aus"
+  },
+  "notifications": {
+    "imageSaved": "Bild gespeichert",
+    "datasetDownloaded": "Datensatz heruntergeladen",
+    "classesDownloaded": "classes.txt heruntergeladen",
+    "noClasses": "Keine Klassen zum Herunterladen",
+    "noImages": "Keine Bilder im Projekt",
+    "noAnnotations": "Keine Annotationen zum Herunterladen",
+    "appStarted": "Anwendung gestartet",
+    "error": {
+      "createProject": "Fehler beim Erstellen des Projekts",
+      "loadProject": "Fehler beim Laden des Projekts",
+      "updateProject": "Fehler beim Aktualisieren des Projekts",
+      "deleteProject": "Fehler beim Löschen des Projekts",
+      "exportProject": "Fehler beim Exportieren des Projekts",
+      "exportConfig": "Fehler beim Exportieren der Konfiguration",
+      "importConfig": "Fehler beim Importieren der Konfiguration",
+      "loadImage": "Fehler beim Laden des Bildes",
+      "saveImage": "Fehler beim Speichern des Bildes",
+      "deleteImage": "Fehler beim Löschen des Bildes",
+      "loadImages": "Fehler beim Laden der Bilder",
+      "downloadDataset": "Fehler beim Herunterladen des Datensatzes",
+      "initApp": "Fehler beim Starten der Anwendung"
+    }
+  },
+  "tour": {
+    "welcome": "Willkommen bei <strong>YOLO Annotator</strong>. Dieses Tool ermöglicht es Ihnen, Bilder zu annotieren, um YOLO-Modelle zu trainieren.",
+    "project": "Erstellen Sie zunächst ein neues Projekt oder wählen Sie ein vorhandenes aus. Jedes Projekt kann vom Typ <strong>Begrenzungsrahmen</strong> oder <strong>Segmentierung</strong> sein.",
+    "tools": "Hier finden Sie die Annotations-<strong>Werkzeuge</strong>: Box für Rechtecke, Maske für bemalbare Masken, Auswählen zum Bearbeiten und Verschieben zum Bewegen der Ansicht.",
+    "classes": "Definieren Sie Ihre Annotations-<strong>Klassen</strong>. Jede Klasse hat einen Namen und eine Farbe. Sie können Klassen hinzufügen, bearbeiten oder löschen.",
+    "workspace": "Der Haupt-<strong>Arbeitsbereich</strong>. Hier laden Sie Ihre Bilder und erstellen Annotationen. Verwenden Sie die Maus zum Zeichnen und das Mausrad zum Zoomen.",
+    "management": "Verwaltungspanel, in dem Sie Projekt-<strong>Statistiken</strong>, Bild-<strong>Galerie</strong> sehen und Ihren Datensatz im YOLO-Format <strong>exportieren</strong> können.",
+    "next": "Weiter →",
+    "prev": "← Zurück",
+    "done": "Fertig!",
+    "skip": "Überspringen"
+  },
+  "imageInfo": {
+    "noName": "Kein Name",
+    "dimensions": "Abmessungen"
+  },
+  "pwa": {
+    "installButton": "App installieren",
+    "modal": {
+      "title": "🚀 Annotix als App installieren",
+      "benefits": "Vorteile der Installation:",
+      "benefit1": "✅ Direkter Zugriff vom Desktop",
+      "benefit2": "✅ Funktioniert offline",
+      "benefit3": "✅ Schneller und flüssiger",
+      "benefit4": "✅ Ohne Browserleiste",
+      "benefit5": "✅ Ihre Daten immer privat",
+      "benefit6": "✅ Automatische Updates",
+      "cancelButton": "Nicht jetzt",
+      "installButtonModal": "📥 App installieren"
+    },
+    "notifications": {
+      "installed": "Annotix erfolgreich installiert!",
+      "installFailed": "Fehler bei der Installation",
+      "updateAvailable": "Update verfügbar. Neu laden zum Aktualisieren.",
+      "offline": "Offline-Modus aktiviert. App funktioniert ohne Verbindung."
+    }
+  },
+  "storage": {
+    "used": "Speicher in IndexedDB verwendet"
+  }
+}

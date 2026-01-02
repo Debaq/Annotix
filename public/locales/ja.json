@@ -1,0 +1,193 @@
+{
+  "language": "日本語",
+  "code": "ja",
+  "app": {
+    "title": "YOLOアノテーター",
+    "subtitle": "プロフェッショナルアノテーションツール",
+    "branding": {
+      "fablab": "TecMedHub",
+      "university": "チリ南大学 - プエルトモント校"
+    }
+  },
+  "header": {
+    "selectProject": "プロジェクトを選択...",
+    "newProject": "新規",
+    "exportProject": "完全なプロジェクトをエクスポート",
+    "exportConfig": "設定をエクスポート",
+    "importConfig": "設定をインポート",
+    "help": "ヘルプ"
+  },
+  "tools": {
+    "title": "ツール",
+    "bbox": "ボックス",
+    "mask": "マスク",
+    "polygon": "ポリゴン",
+    "keypoints": "キーポイント",
+    "landmarks": "ランドマーク",
+    "obb": "回転ボックス",
+    "select": "選択",
+    "pan": "パン",
+    "tooltips": {
+      "bbox": "バウンディングボックス (B)",
+      "mask": "マスク (M)",
+      "polygon": "ポリゴン (P)",
+      "keypoints": "キーポイント (K)",
+      "landmarks": "ランドマーク (L)",
+      "obb": "回転ボックス (O)",
+      "select": "選択 (V)",
+      "pan": "パン (H)"
+    }
+  },
+  "classes": {
+    "title": "アクティブクラス",
+    "manage": "クラスを管理",
+    "add": "クラスを追加",
+    "placeholder": "クラス名",
+    "empty": "まずプロジェクトを作成してください",
+    "deleteConfirm": "このクラスのアノテーションがあります。それでも削除しますか？",
+    "exists": "その名前のクラスはすでに存在します",
+    "enterName": "クラス名を入力してください"
+  },
+  "images": {
+    "title": "画像を読み込む",
+    "select": "画像を選択",
+    "upload": "画像を選択",
+    "noImages": "画像がありません"
+  },
+  "actions": {
+    "title": "アクション",
+    "save": "保存",
+    "undo": "元に戻す",
+    "clear": "クリア",
+    "delete": "削除",
+    "cancel": "キャンセル",
+    "create": "作成",
+    "confirm": "確認",
+    "clearConfirm": "この画像のすべてのアノテーションをクリアしますか？"
+  },
+  "shortcuts": {
+    "title": "ショートカット",
+    "save": "保存",
+    "undo": "元に戻す",
+    "delete": "削除",
+    "navigation": "ナビゲーション",
+    "bbox": "ボックス",
+    "mask": "マスク",
+    "select": "選択",
+    "pan": "パン",
+    "classes": "クラス 1-9"
+  },
+  "canvas": {
+    "zoomIn": "ズームイン",
+    "zoomOut": "ズームアウト",
+    "resetZoom": "ズームをリセット",
+    "toggleLabels": "ラベルの表示/非表示",
+    "toggleGrid": "グリッドの表示/非表示",
+    "prevImage": "前の画像 (←)",
+    "nextImage": "次の画像 (→)"
+  },
+  "stats": {
+    "title": "統計",
+    "images": "画像",
+    "annotated": "アノテーション済み",
+    "labels": "ラベル",
+    "classes": "クラス",
+    "progress": "枚アノテーション済み"
+  },
+  "gallery": {
+    "title": "ギャラリー",
+    "all": "すべて",
+    "annotated": "アノテーション済み",
+    "unannotated": "未アノテーション",
+    "empty": "画像がありません",
+    "deleteConfirm": "この画像を削除しますか？"
+  },
+  "export": {
+    "title": "エクスポート",
+    "downloadDataset": "データセットZIPをダウンロード",
+    "downloadClasses": "classes.txtをダウンロード"
+  },
+  "project": {
+    "new": "新規プロジェクト",
+    "name": "プロジェクト名",
+    "namePlaceholder": "私のYOLOプロジェクト",
+    "type": "アノテーションタイプ",
+    "typeBbox": "バウンディングボックス",
+    "typeMask": "セグメンテーション（マスク）",
+    "initialClasses": "初期クラス（オプション）",
+    "classesPlaceholder": "クラス1, クラス2, クラス3",
+    "classesHelp": "カンマ区切り。後で追加できます。",
+    "enterName": "プロジェクト名を入力してください",
+    "created": "プロジェクト \"{name}\" が作成されました",
+    "updated": "Updated",
+    "loaded": "プロジェクト \"{name}\" が読み込まれました",
+    "deleted": "プロジェクトが削除されました",
+    "exported": "プロジェクトがエクスポートされました",
+    "configExported": "設定がエクスポートされました",
+    "selectFirst": "まずプロジェクトを選択してください"
+  },
+  "notifications": {
+    "imageSaved": "画像が保存されました",
+    "datasetDownloaded": "データセットがダウンロードされました",
+    "classesDownloaded": "classes.txtがダウンロードされました",
+    "noClasses": "ダウンロードするクラスがありません",
+    "noImages": "プロジェクトに画像がありません",
+    "noAnnotations": "ダウンロードするアノテーションがありません",
+    "appStarted": "アプリケーションが起動しました",
+    "error": {
+      "createProject": "プロジェクトの作成エラー",
+      "loadProject": "プロジェクトの読み込みエラー",
+      "updateProject": "プロジェクトの更新エラー",
+      "deleteProject": "プロジェクトの削除エラー",
+      "exportProject": "プロジェクトのエクスポートエラー",
+      "exportConfig": "設定のエクスポートエラー",
+      "importConfig": "設定のインポートエラー",
+      "loadImage": "画像の読み込みエラー",
+      "saveImage": "画像の保存エラー",
+      "deleteImage": "画像の削除エラー",
+      "loadImages": "画像の読み込みエラー",
+      "downloadDataset": "データセットのダウンロードエラー",
+      "initApp": "アプリケーションの起動エラー"
+    }
+  },
+  "tour": {
+    "welcome": "<strong>YOLOアノテーター</strong>へようこそ。このツールを使用すると、YOLOモデルをトレーニングするために画像にアノテーションを付けることができます。",
+    "project": "まず、新しいプロジェクトを作成するか、既存のプロジェクトを選択します。各プロジェクトは<strong>バウンディングボックス</strong>または<strong>セグメンテーション</strong>タイプにできます。",
+    "tools": "ここにアノテーション<strong>ツール</strong>があります：矩形用のボックス、ペイント可能なマスク用のマスク、編集用の選択、ビューを移動するためのパン。",
+    "classes": "アノテーション<strong>クラス</strong>を定義します。各クラスには名前と色があります。クラスの追加、編集、削除ができます。",
+    "workspace": "メイン<strong>ワークスペース</strong>。ここで画像を読み込み、アノテーションを作成します。マウスで描画し、ホイールでズームします。",
+    "management": "プロジェクトの<strong>統計</strong>、画像<strong>ギャラリー</strong>を表示し、YOLO形式でデータセットを<strong>エクスポート</strong>できる管理パネル。",
+    "next": "次へ →",
+    "prev": "← 前へ",
+    "done": "完了！",
+    "skip": "スキップ"
+  },
+  "imageInfo": {
+    "noName": "名前なし",
+    "dimensions": "寸法"
+  },
+  "pwa": {
+    "installButton": "アプリをインストール",
+    "modal": {
+      "title": "🚀 Annotix をアプリとしてインストール",
+      "benefits": "インストールのメリット：",
+      "benefit1": "✅ デスクトップからの直接アクセス",
+      "benefit2": "✅ オフラインで動作",
+      "benefit3": "✅ より高速でスムーズ",
+      "benefit4": "✅ ブラウザバーなし",
+      "benefit5": "✅ データは常にプライベート",
+      "benefit6": "✅ 自動更新",
+      "cancelButton": "今はしない",
+      "installButtonModal": "📥 アプリをインストール"
+    },
+    "notifications": {
+      "installed": "Annotix のインストールに成功しました！",
+      "installFailed": "アプリのインストールエラー",
+      "updateAvailable": "アップデートが利用可能です。更新するにはリロードしてください。",
+      "offline": "オフラインモードが有効化されました。アプリは接続なしで動作します。"
+    }
+  },
+  "storage": {
+    "used": "IndexedDB で使用されているストレージ"
+  }
+}
