@@ -1,0 +1,185 @@
+{
+  "language": "한국어",
+  "code": "ko",
+  "app": {
+    "title": "YOLO 주석 도구",
+    "subtitle": "전문 주석 도구",
+    "branding": {
+      "fablab": "TecMedHub",
+      "university": "칠레 남부대학교 - 푸에르토 몬트 캠퍼스"
+    }
+  },
+  "header": {
+    "selectProject": "프로젝트 선택...",
+    "newProject": "새로 만들기",
+    "exportProject": "전체 프로젝트 내보내기",
+    "exportConfig": "설정 내보내기",
+    "importConfig": "설정 가져오기",
+    "help": "도움말"
+  },
+  "tools": {
+    "title": "도구",
+    "bbox": "박스",
+    "mask": "마스크",
+    "select": "선택",
+    "pan": "이동",
+    "tooltips": {
+      "bbox": "경계 상자 (B)",
+      "mask": "마스크 (M)",
+      "select": "선택 (V)",
+      "pan": "이동 (H)"
+    }
+  },
+  "classes": {
+    "title": "활성 클래스",
+    "manage": "클래스 관리",
+    "add": "클래스 추가",
+    "placeholder": "클래스 이름",
+    "empty": "먼저 프로젝트를 생성하세요",
+    "deleteConfirm": "이 클래스로 주석이 있습니다. 그래도 삭제하시겠습니까?",
+    "exists": "해당 이름의 클래스가 이미 존재합니다",
+    "enterName": "클래스 이름을 입력하세요"
+  },
+  "images": {
+    "title": "이미지 로드",
+    "select": "이미지 선택",
+    "upload": "이미지 선택",
+    "noImages": "이미지 없음"
+  },
+  "actions": {
+    "title": "작업",
+    "save": "저장",
+    "undo": "실행 취소",
+    "clear": "지우기",
+    "delete": "삭제",
+    "cancel": "취소",
+    "create": "만들기",
+    "confirm": "확인",
+    "clearConfirm": "이 이미지의 모든 주석을 지우시겠습니까?"
+  },
+  "shortcuts": {
+    "title": "단축키",
+    "save": "저장",
+    "undo": "실행 취소",
+    "delete": "삭제",
+    "navigation": "탐색",
+    "bbox": "박스",
+    "mask": "마스크",
+    "select": "선택",
+    "pan": "이동",
+    "classes": "클래스 1-9"
+  },
+  "canvas": {
+    "zoomIn": "확대",
+    "zoomOut": "축소",
+    "resetZoom": "확대/축소 재설정",
+    "toggleLabels": "레이블 표시/숨기기",
+    "toggleGrid": "격자 표시/숨기기",
+    "prevImage": "이전 이미지 (←)",
+    "nextImage": "다음 이미지 (→)"
+  },
+  "stats": {
+    "title": "통계",
+    "images": "이미지",
+    "annotated": "주석 완료",
+    "labels": "레이블",
+    "classes": "클래스",
+    "progress": "개 주석 완료"
+  },
+  "gallery": {
+    "title": "갤러리",
+    "all": "전체",
+    "annotated": "주석 완료",
+    "unannotated": "주석 미완료",
+    "empty": "이미지 없음",
+    "deleteConfirm": "이 이미지를 삭제하시겠습니까?"
+  },
+  "export": {
+    "title": "내보내기",
+    "downloadDataset": "데이터셋 ZIP 다운로드",
+    "downloadClasses": "classes.txt 다운로드"
+  },
+  "project": {
+    "new": "새 프로젝트",
+    "name": "프로젝트 이름",
+    "namePlaceholder": "내 YOLO 프로젝트",
+    "type": "주석 유형",
+    "typeBbox": "경계 상자",
+    "typeMask": "세그멘테이션 (마스크)",
+    "initialClasses": "초기 클래스 (선택사항)",
+    "classesPlaceholder": "클래스1, 클래스2, 클래스3",
+    "classesHelp": "쉼표로 구분. 나중에 더 추가할 수 있습니다.",
+    "enterName": "프로젝트 이름을 입력하세요",
+    "created": "프로젝트 \"{name}\"이(가) 생성되었습니다",
+    "updated": "Updated",
+    "loaded": "프로젝트 \"{name}\"이(가) 로드되었습니다",
+    "deleted": "프로젝트가 삭제되었습니다",
+    "exported": "프로젝트가 내보내졌습니다",
+    "configExported": "설정이 내보내졌습니다",
+    "selectFirst": "먼저 프로젝트를 선택하세요"
+  },
+  "notifications": {
+    "imageSaved": "이미지가 저장되었습니다",
+    "datasetDownloaded": "데이터셋이 다운로드되었습니다",
+    "classesDownloaded": "classes.txt가 다운로드되었습니다",
+    "noClasses": "다운로드할 클래스가 없습니다",
+    "noImages": "프로젝트에 이미지가 없습니다",
+    "noAnnotations": "다운로드할 주석이 없습니다",
+    "appStarted": "애플리케이션이 시작되었습니다",
+    "error": {
+      "createProject": "프로젝트 생성 오류",
+      "loadProject": "프로젝트 로드 오류",
+      "updateProject": "프로젝트 업데이트 오류",
+      "deleteProject": "프로젝트 삭제 오류",
+      "exportProject": "프로젝트 내보내기 오류",
+      "exportConfig": "설정 내보내기 오류",
+      "importConfig": "설정 가져오기 오류",
+      "loadImage": "이미지 로드 오류",
+      "saveImage": "이미지 저장 오류",
+      "deleteImage": "이미지 삭제 오류",
+      "loadImages": "이미지 로드 오류",
+      "downloadDataset": "데이터셋 다운로드 오류",
+      "initApp": "애플리케이션 시작 오류"
+    }
+  },
+  "tour": {
+    "welcome": "<strong>YOLO 주석 도구</strong>에 오신 것을 환영합니다. 이 도구를 사용하면 YOLO 모델을 훈련하기 위해 이미지에 주석을 달 수 있습니다.",
+    "project": "먼저 새 프로젝트를 만들거나 기존 프로젝트를 선택하세요. 각 프로젝트는 <strong>경계 상자</strong> 또는 <strong>세그멘테이션</strong> 유형일 수 있습니다.",
+    "tools": "여기에서 주석 <strong>도구</strong>를 찾을 수 있습니다: 사각형용 박스, 페인트 가능한 마스크용 마스크, 편집용 선택, 뷰 이동용 이동.",
+    "classes": "주석 <strong>클래스</strong>를 정의하세요. 각 클래스에는 이름과 색상이 있습니다. 클래스를 추가, 편집 또는 삭제할 수 있습니다.",
+    "workspace": "메인 <strong>작업 공간</strong>입니다. 여기에서 이미지를 로드하고 주석을 생성합니다. 마우스로 그리고 휠로 확대/축소하세요.",
+    "management": "프로젝트 <strong>통계</strong>, 이미지 <strong>갤러리</strong>를 보고 YOLO 형식으로 데이터셋을 <strong>내보낼</strong> 수 있는 관리 패널입니다.",
+    "next": "다음 →",
+    "prev": "← 이전",
+    "done": "완료!",
+    "skip": "건너뛰기"
+  },
+  "imageInfo": {
+    "noName": "이름 없음",
+    "dimensions": "크기"
+  },
+  "pwa": {
+    "installButton": "앱 설치",
+    "modal": {
+      "title": "🚀 Annotix를 앱으로 설치",
+      "benefits": "설치의 이점:",
+      "benefit1": "✅ 바탕화면에서 직접 액세스",
+      "benefit2": "✅ 오프라인에서 작동",
+      "benefit3": "✅ 더 빠르고 부드럽게",
+      "benefit4": "✅ 브라우저 바 없음",
+      "benefit5": "✅ 데이터는 항상 비공개",
+      "benefit6": "✅ 자동 업데이트",
+      "cancelButton": "나중에",
+      "installButtonModal": "📥 앱 설치"
+    },
+    "notifications": {
+      "installed": "Annotix가 성공적으로 설치되었습니다!",
+      "installFailed": "앱 설치 오류",
+      "updateAvailable": "업데이트 사용 가능. 업데이트하려면 새로고침하세요.",
+      "offline": "오프라인 모드 활성화. 앱이 연결 없이 작동합니다."
+    }
+  },
+  "storage": {
+    "used": "IndexedDB에서 사용된 저장공간"
+  }
+}
