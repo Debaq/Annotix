@@ -1,11 +1,11 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslationWithLogging } from '../../../hooks/useTranslationWithLogging';
 import { useImages } from '../hooks/useImages';
 import { ImageGrid } from './ImageGrid';
 import { ImageUploader } from './ImageUploader';
 import { GalleryFilters } from './GalleryFilters';
 
 export function ImageGallery() {
-  const { t } = useTranslation();
+  const { t } = useTranslationWithLogging();
   const { images, isLoading } = useImages();
 
   if (isLoading) {

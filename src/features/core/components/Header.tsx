@@ -1,9 +1,9 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslationWithLogging } from '../../../hooks/useTranslationWithLogging';
 import { LanguageSelector } from './LanguageSelector';
 import { StorageIndicator } from './StorageIndicator';
 
 export function Header() {
-  const { t } = useTranslation();
+  const { t } = useTranslationWithLogging();
 
   return (
     <header className="flex h-14 items-center justify-between border-b bg-card px-6">

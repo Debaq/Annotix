@@ -68,7 +68,7 @@ export function ExportDialog({ trigger }: ExportDialogProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent closeLabel={t('common.close')}>
         <DialogHeader>
           <DialogTitle>{t('export.title')}</DialogTitle>
           <DialogDescription>{t('export.description')}</DialogDescription>

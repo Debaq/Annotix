@@ -189,5 +189,36 @@
   },
   "storage": {
     "used": "Speicher in IndexedDB verwendet"
+  },
+  "common": {
+    "loading": "Laden...",
+    "creating": "Erstellen...",
+    "importing": "Importieren...",
+    "saving": "Speichern...",
+    "cancel": "Abbrechen",
+    "create": "Erstellen",
+    "confirm": "Bestätigen",
+    "close": "Schließen",
+    "duplicate": "Duplizieren",
+    "rename": "Umbenennen",
+    "exportBackup": "Sicherung exportieren",
+    "deleteConfirm": "Ja, löschen",
+    "clearConfirm": "Alle Annotationen von diesem Bild löschen?",
+    "clear": "Löschen",
+    "delete": "Entfernen",
+    "save": "Speichern",
+    "undo": "Rückgängig",
+    "actions": "Aktionen",
+    "exportDataset": "Datensatz exportieren",
+    "backToProjects": "Zurück zu Projekten",
+    "classes": "Klassen",
+    "selectImageToStart": "Wählen Sie ein Bild, um mit der Annotation zu beginnen",
+    "missingTranslations": "Fehlende Übersetzungen",
+    "hide": "Verbergen",
+    "totalKeys": "Gesamtanzahl der Schlüssel:",
+    "totalUsages": "Gesamtanzahl der Verwendungen:",
+    "oneToNine": "1-9",
+    "ctrlS": "Strg+S",
+    "arrowKeys": "← →"
   }
 }

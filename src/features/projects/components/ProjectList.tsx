@@ -1,11 +1,11 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslationWithLogging } from '../../../hooks/useTranslationWithLogging';
 import { useProjects } from '../hooks/useProjects';
 import { ProjectCard } from './ProjectCard';
 import { CreateProjectDialog } from './CreateProjectDialog';
 import { Button } from '@/components/ui/button';
 
 export function ProjectList() {
-  const { t } = useTranslation();
+  const { t } = useTranslationWithLogging();
   const { projects, isLoading } = useProjects();
 
   if (isLoading) {
