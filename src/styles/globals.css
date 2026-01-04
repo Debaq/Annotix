@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    /* Shadcn UI Variables (HSL format for Tailwind) */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -33,6 +34,45 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
+
+    /* ============================================
+       ANNOTIX LEGACY VARIABLES (HEX format)
+       Colores y tokens del diseño original
+       ============================================ */
+
+    /* Colores principales */
+    --annotix-primary: #667eea;
+    --annotix-primary-dark: #5568d3;
+    --annotix-secondary: #764ba2;
+
+    /* Colores de estado */
+    --annotix-success: #27ae60;
+    --annotix-success-dark: #229954;
+    --annotix-danger: #e74c3c;
+    --annotix-danger-dark: #c0392b;
+    --annotix-warning: #f39c12;
+    --annotix-info: #3498db;
+    --annotix-info-dark: #2980b9;
+
+    /* Colores neutros */
+    --annotix-dark: #2c3e50;
+    --annotix-light: #f8f9fa;
+    --annotix-gray: #95a5a6;
+    --annotix-gray-light: #ecf0f1;
+    --annotix-white: #ffffff;
+    --annotix-border: #e0e0e0;
+
+    /* Sombras */
+    --annotix-shadow: rgba(0, 0, 0, 0.1);
+    --annotix-shadow-strong: rgba(0, 0, 0, 0.3);
+
+    /* Transiciones */
+    --annotix-transition: all 0.3s ease;
+
+    /* Layout dimensions */
+    --sidebar-width: 200px;
+    --right-panel-width: 240px;
+    --header-height: 48px;
   }
 
   .dark {
@@ -72,5 +112,358 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
   }
+}
+
+/* ============================================
+   ANNOTIX LEGACY STYLES
+   Estilos globales del diseño original
+   ============================================ */
+
+/* Layout principal de 3 columnas */
+.annotix-layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr var(--right-panel-width);
+  height: calc(100vh - var(--header-height));
+  overflow: hidden;
+}
+
+/* Header con gradiente característico */
+.annotix-header {
+  height: var(--header-height);
+  background: linear-gradient(135deg, var(--annotix-primary) 0%, var(--annotix-secondary) 100%);
+  color: var(--annotix-white);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  box-shadow: 0 2px 10px var(--annotix-shadow);
+  z-index: 1000;
+}
+
+/* Canvas container */
+.annotix-canvas-container {
+  position: relative;
+  background: var(--annotix-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* Panel sections */
+.annotix-panel {
+  background: var(--annotix-white);
+  border-right: 1px solid var(--annotix-border);
+  overflow-y: auto;
+  height: 100%;
+}
+
+.annotix-panel-section {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--annotix-border);
+}
+
+.annotix-panel-section h3 {
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--annotix-dark);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+/* Botones estilo legacy */
+.annotix-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: var(--annotix-transition);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.annotix-btn-primary {
+  background: var(--annotix-primary);
+  color: var(--annotix-white);
+}
+
+.annotix-btn-primary:hover {
+  background: var(--annotix-primary-dark);
+}
+
+.annotix-btn-outline {
+  background: transparent;
+  color: var(--annotix-primary);
+  border: 1px solid var(--annotix-primary);
+}
+
+.annotix-btn-outline:hover {
+  background: var(--annotix-primary);
+  color: var(--annotix-white);
+}
+
+/* Tool buttons */
+.annotix-tool-btn {
+  width: 42px;
+  height: 42px;
+  border: 2px solid var(--annotix-border);
+  background: var(--annotix-white);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--annotix-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--annotix-dark);
+}
+
+.annotix-tool-btn:hover:not(.active) {
+  border-color: var(--annotix-primary);
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.annotix-tool-btn.active {
+  border-color: var(--annotix-primary);
+  background: var(--annotix-primary);
+  color: var(--annotix-white);
+}
+
+/* Floating controls */
+.annotix-floating {
+  position: absolute;
+  background: var(--annotix-white);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px var(--annotix-shadow);
+  padding: 8px;
+  z-index: 100;
+}
+
+/* Gallery grid */
+.annotix-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+}
+
+.annotix-gallery-item {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  overflow: hidden;
+  transition: var(--annotix-transition);
+}
+
+.annotix-gallery-item:hover {
+  border-color: var(--annotix-primary);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.annotix-gallery-item.active {
+  border-color: var(--annotix-success);
+  box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.2);
+}
+
+.annotix-gallery-item.no-annotations {
+  border-color: var(--annotix-warning);
+}
+
+/* ============================================
+   ANNOTATIONS BAR (Barra inferior)
+   ============================================ */
+
+.annotix-annotations-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--annotix-white);
+  border-top: 1px solid var(--annotix-border);
+  box-shadow: 0 -2px 6px var(--annotix-shadow);
+  z-index: 200;
+  transition: var(--annotix-transition);
+}
+
+.annotix-annotations-bar.collapsed {
+  height: 26px;
+}
+
+.annotix-annotations-bar.collapsed .annotix-annotations-list {
+  display: none;
+}
+
+/* Botón de colapsar */
+.annotix-collapse-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: var(--annotix-gray-light);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--annotix-transition);
+  color: var(--annotix-dark);
+  flex-shrink: 0;
+  padding: 0;
+  margin: 1px 3px;
+  border-radius: 3px;
+}
+
+.annotix-collapse-btn:hover {
+  background: var(--annotix-primary);
+  color: white;
+}
+
+.annotix-collapse-btn i {
+  transition: transform 0.3s ease;
+  font-size: 0.9em;
+}
+
+/* Lista de anotaciones */
+.annotix-annotations-list {
+  display: flex;
+  gap: 6px;
+  padding: 4px 6px;
+  overflow-x: auto;
+  max-height: 110px;
+  scrollbar-width: thin;
+  flex: 1;
+}
+
+.annotix-annotations-list::-webkit-scrollbar {
+  height: 6px;
+}
+
+.annotix-annotations-list::-webkit-scrollbar-track {
+  background: var(--annotix-gray-light);
+}
+
+.annotix-annotations-list::-webkit-scrollbar-thumb {
+  background: var(--annotix-gray);
+  border-radius: 3px;
+}
+
+.annotix-annotations-list::-webkit-scrollbar-thumb:hover {
+  background: var(--annotix-primary);
+}
+
+/* Tarjeta de anotación individual */
+.annotix-annotation-card {
+  min-width: 100px;
+  max-width: 100px;
+  background: var(--annotix-white);
+  border: 2px solid var(--annotix-gray);
+  border-radius: 6px;
+  padding: 0;
+  cursor: pointer;
+  transition: var(--annotix-transition);
+  overflow: hidden;
+  position: relative;
+}
+
+.annotix-annotation-card:hover {
+  border-color: var(--annotix-primary);
+  box-shadow: 0 2px 8px var(--annotix-shadow);
+  transform: translateY(-2px);
+}
+
+.annotix-annotation-card.selected {
+  border-color: var(--annotix-primary);
+  border-width: 3px;
+  box-shadow: 0 2px 12px var(--annotix-shadow-strong);
+}
+
+/* Thumbnail con canvas */
+.annotix-annotation-thumbnail {
+  width: 100%;
+  height: 75px;
+  overflow: hidden;
+  background: var(--annotix-gray-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.annotix-annotation-thumbnail canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Overlay con información */
+.annotix-annotation-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3px;
+  pointer-events: none;
+}
+
+/* Badge de clase */
+.annotix-annotation-class-label {
+  display: inline-block;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 0.65em;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  align-self: flex-start;
+  backdrop-filter: blur(4px);
+}
+
+/* Badge de tipo */
+.annotix-annotation-type-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.6em;
+  font-weight: 500;
+  color: white;
+  background: rgba(0,0,0,0.6);
+  align-self: flex-start;
+  margin-top: 2px;
+  backdrop-filter: blur(4px);
+}
+
+/* Botón eliminar */
+.annotix-annotation-delete-btn {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: rgba(231, 76, 60, 0.9);
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.75em;
+  transition: var(--annotix-transition);
+  pointer-events: auto;
+  backdrop-filter: blur(4px);
+}
+
+.annotix-annotation-delete-btn:hover {
+  background: var(--annotix-danger);
+  transform: scale(1.1);
 }

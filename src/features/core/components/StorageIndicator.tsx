@@ -17,12 +17,16 @@ export function StorageIndicator() {
   return (
     <div className="flex items-center gap-3">
       <div className="text-right">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-white/60">
           {t('storage.used')}: {formatBytes(usage)} / {formatBytes(quota)}
         </p>
-        <Progress value={percentage} className="h-1 w-32" />
+        <Progress 
+          value={percentage} 
+          className="h-1 w-32 bg-white/20" 
+          indicatorClassName="bg-[#00BCD4]"
+        />
       </div>
-      <i className="fas fa-database text-muted-foreground"></i>
+      <i className="fas fa-database text-white/60"></i>
     </div>
   );
 }

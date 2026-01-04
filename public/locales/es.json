@@ -54,16 +54,17 @@
     "classes": "Clases",
     "open": "Abrir",
     "delete": "Eliminar",
+    "settings": "Configuración del Proyecto",
+    "configure": "Configurar",
+    "edit": "Editar Proyecto",
+    "saveChanges": "Guardar Cambios",
     "stats": {
       "classes": "clases"
     },
     "empty": {
       "title": "No hay proyectos",
       "description": "Crea tu primer proyecto para comenzar a anotar"
-    },
-    "createDescription": "Comienza un nuevo proyecto de anotación",
-    "name": "Nombre del Proyecto",
-    "namePlaceholder": "Mi Proyecto Annotix"
+    }
   },
   "tools": {
     "title": "Herramientas",
@@ -134,7 +135,11 @@
   "annotations": {
     "title": "Anotaciones",
     "empty": "Sin anotaciones",
-    "addClassFirst": "Agrega al menos una clase antes de anotar"
+    "addClassFirst": "Agrega al menos una clase antes de anotar",
+    "delete": "",
+    "confirmDelete": "",
+    "expand": "",
+    "collapse": ""
   },
   "polygon": {
     "toolName": "Polígono",
@@ -231,8 +236,8 @@
     "fitScreen": "Ajustar a pantalla",
     "toggleLabels": "Mostrar/Ocultar Etiquetas",
     "toggleGrid": "Mostrar/Ocultar Grilla",
-    "prevImage": "Imagen Anterior (←)",
-    "nextImage": "Imagen Siguiente (→)"
+    "prevImage": "Imagen Anterior (← / RePag)",
+    "nextImage": "Imagen Siguiente (→ / AvPag)"
   },
   "stats": {
     "title": "Estadísticas",
@@ -940,6 +945,46 @@
         "models": "MICE, KNN, Interpolation, BRITS",
         "difficulty": "Intermedio"
       },
+      "bbox": {
+        "name": "",
+        "description": ""
+      },
+      "mask": {
+        "name": "",
+        "description": ""
+      },
+      "multi-label-classification": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-classification": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-forecasting": {
+        "name": "",
+        "description": ""
+      },
+      "anomaly-detection": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-segmentation": {
+        "name": "",
+        "description": ""
+      },
+      "pattern-recognition": {
+        "name": "",
+        "description": ""
+      },
+      "event-detection": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-regression": {
+        "name": "",
+        "description": ""
+      },
       "object3DDetection": {
         "name": "Detección de Objetos 3D",
         "description": "Detectar objetos en nubes de puntos 3D",
@@ -1090,6 +1135,11 @@
       "useCasesLabel": "Casos de uso",
       "modelsLabel": "Modelos recomendados",
       "difficultyLabel": "Dificultad"
+    },
+    "categories": {
+      "images": "",
+      "classification": "",
+      "timeSeries": ""
     },
     "modality": "Modalidad",
     "initialClasses": "Clases Iniciales (opcional)",
@@ -1447,6 +1497,22 @@
     "seriesList": "Lista de Series Temporales",
     "noSeriesYet": "Aún no hay series temporales",
     "importCSVToStart": "Importa un archivo CSV para comenzar",
-    "deleteConfirm": "¿Estás seguro de que deseas eliminar esta serie temporal?"
+    "deleteConfirm": "¿Estás seguro de que deseas eliminar esta serie temporal?",
+    "tools": {
+      "select": "Seleccionar",
+      "point": "Punto",
+      "range": "Rango",
+      "event": "Evento",
+      "anomaly": "Anomalía",
+      "classification": "Clasificación"
+    },
+    "clearAnnotations": "Limpiar Todas las Anotaciones",
+    "noAnnotations": "Aún no hay anotaciones. Selecciona una herramienta y haz clic en el gráfico para agregar anotaciones.",
+    "instructions": {
+      "point": "Haz clic en el gráfico para marcar un punto de anotación",
+      "range": "Haz clic para establecer el punto inicial, luego haz clic nuevamente para establecer el punto final",
+      "event": "Haz clic en el gráfico para marcar un evento",
+      "anomaly": "Haz clic en el gráfico para marcar una anomalía"
+    }
   }
 }

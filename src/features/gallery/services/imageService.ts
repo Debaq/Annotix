@@ -68,16 +68,17 @@ export const imageService = {
   },
 
   async uploadMultiple(projectId: number, files: File[]): Promise<void> {
-    const promises = files.map(async (file) => {
-      // Load image to get dimensions
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-
+    const uploadPromises = files.map((file) => {
       return new Promise<void>((resolve, reject) => {
-        img.onload = async () => {
-          URL.revokeObjectURL(url);
+        // Load image to get dimensions
+        const img = new Image();
+        const url = URL.createObjectURL(file);
 
+        img.onload = async () => {
           try {
+            URL.revokeObjectURL(url);
+
+            // Create the image entry in the database
             await this.create({
               projectId,
               name: file.name,
@@ -86,8 +87,10 @@ export const imageService = {
               width: img.width,
               height: img.height,
             });
+
             resolve();
           } catch (error) {
+            URL.revokeObjectURL(url);
             reject(error);
           }
         };
@@ -101,6 +104,6 @@ export const imageService = {
       });
     });
 
-    await Promise.all(promises);
+    await Promise.all(uploadPromises);
   },
 };

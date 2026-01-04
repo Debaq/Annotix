@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 import { BaseExporter } from './BaseExporter';
 import { Project, AnnotixImage, Annotation, BBoxData, PolygonData, KeypointsData } from '@/lib/db';
-import { SKELETON_PRESETS } from '@/features/canvas/data/skeletonPresets';
+import { skeletonPresets } from '@/features/canvas/data/skeletonPresets';
 
 interface COCOInfo {
   description: string;
@@ -134,9 +134,9 @@ export class COCOExporter extends BaseExporter {
       // Add keypoints info if project type is keypoints
       if (project.type === 'keypoints') {
         // Use COCO-17 as default skeleton
-        const skeleton = SKELETON_PRESETS['coco-17'];
+        const skeleton = skeletonPresets['coco-17'];
         if (skeleton) {
-          category.keypoints = skeleton.keypoints;
+          category.keypoints = skeleton.points;
           category.skeleton = skeleton.connections;
         }
       }

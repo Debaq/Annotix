@@ -69,7 +69,11 @@
     "annotations": {
         "title": "Annotations",
         "empty": "No annotations",
-        "addClassFirst": "Add at least one class before annotating"
+        "addClassFirst": "Add at least one class before annotating",
+        "delete": "",
+        "confirmDelete": "",
+        "expand": "",
+        "collapse": ""
     },
     "polygon": {
         "toolName": "Polygon",
@@ -166,8 +170,8 @@
         "fitScreen": "Fit to screen",
         "toggleLabels": "Show/Hide Labels",
         "toggleGrid": "Show/Hide Grid",
-        "prevImage": "Previous Image (←)",
-        "nextImage": "Next Image (→)"
+        "prevImage": "Previous Image (← / PgUp)",
+        "nextImage": "Next Image (→ / PgDn)"
     },
     "stats": {
         "title": "Statistics",
@@ -853,6 +857,46 @@
                 "models": "MICE, KNN, Interpolation, BRITS",
                 "difficulty": "Intermediate"
             },
+            "bbox": {
+                "name": "",
+                "description": ""
+            },
+            "mask": {
+                "name": "",
+                "description": ""
+            },
+            "multi-label-classification": {
+                "name": "",
+                "description": ""
+            },
+            "timeseries-classification": {
+                "name": "",
+                "description": ""
+            },
+            "timeseries-forecasting": {
+                "name": "",
+                "description": ""
+            },
+            "anomaly-detection": {
+                "name": "",
+                "description": ""
+            },
+            "timeseries-segmentation": {
+                "name": "",
+                "description": ""
+            },
+            "pattern-recognition": {
+                "name": "",
+                "description": ""
+            },
+            "event-detection": {
+                "name": "",
+                "description": ""
+            },
+            "timeseries-regression": {
+                "name": "",
+                "description": ""
+            },
             "object3DDetection": {
                 "name": "3D Object Detection",
                 "description": "Detect objects in 3D point clouds",
@@ -1003,6 +1047,11 @@
             "useCasesLabel": "Use cases",
             "modelsLabel": "Recommended models",
             "difficultyLabel": "Difficulty"
+        },
+        "categories": {
+            "images": "",
+            "classification": "",
+            "timeSeries": ""
         },
         "modality": "Modality",
         "initialClasses": "Initial Classes (optional)",
@@ -1360,6 +1409,22 @@
         "seriesList": "Time Series List",
         "noSeriesYet": "No time series yet",
         "importCSVToStart": "Import a CSV file to get started",
-        "deleteConfirm": "Are you sure you want to delete this time series?"
+        "deleteConfirm": "Are you sure you want to delete this time series?",
+        "tools": {
+            "select": "Select",
+            "point": "Point",
+            "range": "Range",
+            "event": "Event",
+            "anomaly": "Anomaly",
+            "classification": "Classification"
+        },
+        "clearAnnotations": "Clear All Annotations",
+        "noAnnotations": "No annotations yet. Select a tool and click on the chart to add annotations.",
+        "instructions": {
+            "point": "Click on the chart to mark a point annotation",
+            "range": "Click to set start point, then click again to set end point",
+            "event": "Click on the chart to mark an event",
+            "anomaly": "Click on the chart to mark an anomaly"
+        }
     }
 }

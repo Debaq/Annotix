@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,11 +10,14 @@ import { CSVImporter } from './CSVImporter';
 
 export function TimeSeriesGallery() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { projectId } = useParams();
   const { timeseries, deleteTimeSeries, stats } = useTimeSeries();
-  const { setCurrentTimeSeriesId } = useUIStore();
-
+  
   const handleSelect = (id: number) => {
-    setCurrentTimeSeriesId(id);
+    if (projectId) {
+      navigate(`/projects/${projectId}/timeseries/${id}`);
+    }
   };
 
   const handleDelete = async (id: number, e: React.MouseEvent) => {

@@ -1,5 +1,6 @@
 // src/features/core/store/uiStore.ts
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 type ToolType = 'select' | 'pan' | 'bbox' | 'mask' | 'polygon' | 'keypoints' | 'landmarks' | 'obb';
 type GalleryFilterType = 'all' | 'annotated' | 'unannotated';
@@ -53,51 +54,65 @@ interface UIState {
   setEraseMode: (mode: boolean) => void;
 }
 
-export const useUIStore = create<UIState>((set) => ({
-  // Sidebar
-  sidebarOpen: true,
-  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-  setSidebarOpen: (open) => set({ sidebarOpen: open }),
+export const useUIStore = create<UIState>()(
+  persist(
+    (set) => ({
+      // Sidebar
+      sidebarOpen: true,
+      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+      setSidebarOpen: (open) => set({ sidebarOpen: open }),
 
-  // Active tool
-  activeTool: 'select',
-  setActiveTool: (tool) => set({ activeTool: tool }),
+      // Active tool
+      activeTool: 'select',
+      setActiveTool: (tool) => set({ activeTool: tool }),
 
-  // Active class
-  activeClassId: null,
-  setActiveClassId: (id) => set({ activeClassId: id }),
+      // Active class
+      activeClassId: null,
+      setActiveClassId: (id) => set({ activeClassId: id }),
 
-  // Zoom & Pan (deprecated)
-  zoom: 1,
-  panX: 0,
-  panY: 0,
-  setZoom: (zoom) => set({ zoom: Math.max(0.1, Math.min(5, zoom)) }),
-  setPan: (x, y) => set({ panX: x, panY: y }),
-  resetTransform: () => set({ zoom: 1, panX: 0, panY: 0 }),
+      // Zoom & Pan (deprecated)
+      zoom: 1,
+      panX: 0,
+      panY: 0,
+      setZoom: (zoom) => set({ zoom: Math.max(0.1, Math.min(5, zoom)) }),
+      setPan: (x, y) => set({ panX: x, panY: y }),
+      resetTransform: () => set({ zoom: 1, panX: 0, panY: 0 }),
 
-  // Current project & image
-  currentProjectId: null,
-  currentImageId: null,
-  currentTimeSeriesId: null,
-  setCurrentProjectId: (id) => set({ currentProjectId: id, currentImageId: null, currentTimeSeriesId: null }),
-  setCurrentImageId: (id) => set({ currentImageId: id }),
-  setCurrentTimeSeriesId: (id) => set({ currentTimeSeriesId: id }),
+      // Current project & image
+      currentProjectId: null,
+      currentImageId: null,
+      currentTimeSeriesId: null,
+      setCurrentProjectId: (id) => set({ currentProjectId: id, currentImageId: null, currentTimeSeriesId: null }),
+      setCurrentImageId: (id) => set({ currentImageId: id }),
+      setCurrentTimeSeriesId: (id) => set({ currentTimeSeriesId: id }),
 
-  // Gallery filter
-  galleryFilter: 'all',
-  setGalleryFilter: (filter) => set({ galleryFilter: filter }),
+      // Gallery filter
+      galleryFilter: 'all',
+      setGalleryFilter: (filter) => set({ galleryFilter: filter }),
 
-  // UI flags
-  showLabels: true,
-  showGrid: false,
-  toggleLabels: () => set((state) => ({ showLabels: !state.showLabels })),
-  toggleGrid: () => set((state) => ({ showGrid: !state.showGrid })),
+      // UI flags
+      showLabels: true,
+      showGrid: false,
+      toggleLabels: () => set((state) => ({ showLabels: !state.showLabels })),
+      toggleGrid: () => set((state) => ({ showGrid: !state.showGrid })),
 
-  // Brush size (deprecated)
-  brushSize: 20,
-  setBrushSize: (size) => set({ brushSize: Math.max(5, Math.min(100, size)) }),
+      // Brush size (deprecated)
+      brushSize: 20,
+      setBrushSize: (size) => set({ brushSize: Math.max(5, Math.min(100, size)) }),
 
-  // Erase mode (deprecated)
-  eraseMode: false,
-  setEraseMode: (mode) => set({ eraseMode: mode }),
-}));
+      // Erase mode (deprecated)
+      eraseMode: false,
+      setEraseMode: (mode) => set({ eraseMode: mode }),
+    }),
+    {
+      name: 'annotix-ui-storage',
+      // Optional: Only persist specific fields if needed, but persisting all seems fine for "stay where I was"
+      // partialize: (state) => ({ 
+      //   currentProjectId: state.currentProjectId,
+      //   currentImageId: state.currentImageId,
+      //   sidebarOpen: state.sidebarOpen,
+      //   // ...
+      // }),
+    }
+  )
+);

@@ -1,39 +1,72 @@
 import { useTranslation } from 'react-i18next';
 import { useImageNavigation } from '../hooks/useImageNavigation';
-import { Button } from '@/components/ui/button';
 
 export function ImageNavigation() {
   const { t } = useTranslation();
-  const { currentIndex, total, canNavigatePrevious, canNavigateNext, navigatePrevious, navigateNext } =
+  const { canNavigatePrevious, canNavigateNext, navigatePrevious, navigateNext } =
     useImageNavigation();
 
-  if (total === 0) return null;
-
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        variant="outline"
-        size="sm"
+    <>
+      {/* Previous Button (Left) */}
+      <button
         onClick={navigatePrevious}
         disabled={!canNavigatePrevious}
+        className="w-12 h-12 rounded-full flex items-center justify-center transition-all pointer-events-auto"
+        style={{
+          background: 'var(--annotix-white)',
+          border: 'none',
+          boxShadow: '0 4px 12px var(--annotix-shadow)',
+          color: canNavigatePrevious ? 'var(--annotix-dark)' : 'var(--annotix-gray)',
+          opacity: canNavigatePrevious ? 1 : 0.3,
+          cursor: canNavigatePrevious ? 'pointer' : 'not-allowed',
+        }}
+        onMouseEnter={(e) => {
+          if (canNavigatePrevious) {
+            e.currentTarget.style.background = 'var(--annotix-primary)';
+            e.currentTarget.style.color = 'white';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'var(--annotix-white)';
+          e.currentTarget.style.color = canNavigatePrevious ? 'var(--annotix-dark)' : 'var(--annotix-gray)';
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
+        title={t('navigation.previous')}
       >
-        <i className="fas fa-chevron-left mr-2"></i>
-        {t('navigation.previous')}
-      </Button>
+        <i className="fas fa-chevron-left text-lg"></i>
+      </button>
 
-      <span className="text-sm text-muted-foreground">
-        {currentIndex + 1} / {total}
-      </span>
-
-      <Button
-        variant="outline"
-        size="sm"
+      {/* Next Button (Right) */}
+      <button
         onClick={navigateNext}
         disabled={!canNavigateNext}
+        className="w-12 h-12 rounded-full flex items-center justify-center transition-all pointer-events-auto"
+        style={{
+          background: 'var(--annotix-white)',
+          border: 'none',
+          boxShadow: '0 4px 12px var(--annotix-shadow)',
+          color: canNavigateNext ? 'var(--annotix-dark)' : 'var(--annotix-gray)',
+          opacity: canNavigateNext ? 1 : 0.3,
+          cursor: canNavigateNext ? 'pointer' : 'not-allowed',
+        }}
+        onMouseEnter={(e) => {
+          if (canNavigateNext) {
+            e.currentTarget.style.background = 'var(--annotix-primary)';
+            e.currentTarget.style.color = 'white';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'var(--annotix-white)';
+          e.currentTarget.style.color = canNavigateNext ? 'var(--annotix-dark)' : 'var(--annotix-gray)';
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
+        title={t('navigation.next')}
       >
-        {t('navigation.next')}
-        <i className="fas fa-chevron-right ml-2"></i>
-      </Button>
-    </div>
+        <i className="fas fa-chevron-right text-lg"></i>
+      </button>
+    </>
   );
 }
