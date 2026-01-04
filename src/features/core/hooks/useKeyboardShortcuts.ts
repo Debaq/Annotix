@@ -2,11 +2,14 @@ import { useEffect } from 'react';
 import { useUIStore } from '../store/uiStore';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useImageNavigation } from '../../gallery/hooks/useImageNavigation';
+import { useAnnotations } from '../../canvas/hooks/useAnnotations';
+import { CLASS_SHORTCUTS } from '../constants';
 
 export function useKeyboardShortcuts() {
   const { setActiveTool, setActiveClassId } = useUIStore();
   const { project } = useCurrentProject();
   const { navigatePrevious, navigateNext } = useImageNavigation();
+  const { selectedAnnotationId } = useAnnotations();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -20,61 +23,58 @@ export function useKeyboardShortcuts() {
         return;
       }
 
+      const key = e.key.toLowerCase();
+
+      // Class selection shortcuts (take precedence)
+      const classIndex = CLASS_SHORTCUTS.indexOf(key);
+      if (classIndex !== -1 && !e.ctrlKey && !e.metaKey) {
+        if (project?.classes && project.classes[classIndex]) {
+          e.preventDefault();
+          setActiveClassId(project.classes[classIndex].id);
+          return; // Stop processing other shortcuts
+        }
+      }
+
       // Tool shortcuts
-      if (e.key.toLowerCase() === 'b' && !e.ctrlKey && !e.metaKey) {
+      if (key === 'b' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
-        if (project?.type === 'bbox') {
-          setActiveTool('bbox');
-        }
-      } else if (e.key.toLowerCase() === 'm' && !e.ctrlKey && !e.metaKey) {
+        if (project?.type === 'bbox') setActiveTool('bbox');
+      } else if (key === 'm' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
-        if (project?.type === 'mask') {
-          setActiveTool('mask');
-        }
-      } else if (e.key.toLowerCase() === 'p' && !e.ctrlKey && !e.metaKey) {
+        if (project?.type === 'mask') setActiveTool('mask');
+      } else if (key === 'p' && !e.ctrlKey && !e.metaKey) {
+        // Only if not used by class
         e.preventDefault();
-        if (project?.type === 'polygon') {
-          setActiveTool('polygon');
-        }
-      } else if (e.key.toLowerCase() === 'k' && !e.ctrlKey && !e.metaKey) {
+        if (project?.type === 'polygon') setActiveTool('polygon');
+      } else if (key === 'k' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
-        if (project?.type === 'keypoints') {
-          setActiveTool('keypoints');
-        }
-      } else if (e.key.toLowerCase() === 'l' && !e.ctrlKey && !e.metaKey) {
+        if (project?.type === 'keypoints') setActiveTool('keypoints');
+      } else if (key === 'l' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
-        if (project?.type === 'landmarks') {
-          setActiveTool('landmarks');
-        }
-      } else if (e.key.toLowerCase() === 'o' && !e.ctrlKey && !e.metaKey) {
+        if (project?.type === 'landmarks') setActiveTool('landmarks');
+      } else if (key === 'o' && !e.ctrlKey && !e.metaKey) {
+        // Only if not used by class
         e.preventDefault();
-        if (project?.type === 'obb') {
-          setActiveTool('obb');
-        }
-      } else if (e.key.toLowerCase() === 'v' && !e.ctrlKey && !e.metaKey) {
+        if (project?.type === 'obb') setActiveTool('obb');
+      } else if (key === 'v' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         setActiveTool('select');
-      } else if (e.key.toLowerCase() === 'h' && !e.ctrlKey && !e.metaKey) {
+      } else if (key === 'h' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         setActiveTool('pan');
       }
 
-      // Class selection (1-9)
-      const num = parseInt(e.key, 10);
-      if (!isNaN(num) && num >= 1 && num <= 9 && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-        if (project?.classes && project.classes[num - 1]) {
-          setActiveClassId(project.classes[num - 1].id);
+      // Navigation (only if no annotation is selected)
+      if ((e.key === 'ArrowLeft' || e.key === 'PageUp') && !e.ctrlKey && !e.metaKey) {
+        if (!selectedAnnotationId) {
+          e.preventDefault();
+          navigatePrevious();
         }
-      }
-
-      // Navigation
-      if (e.key === 'ArrowLeft' && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-        navigatePrevious();
-      } else if (e.key === 'ArrowRight' && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-        navigateNext();
+      } else if ((e.key === 'ArrowRight' || e.key === 'PageDown') && !e.ctrlKey && !e.metaKey) {
+        if (!selectedAnnotationId) {
+          e.preventDefault();
+          navigateNext();
+        }
       }
 
       // Save shortcut (Ctrl+S) - handled in canvas component
@@ -94,5 +94,5 @@ export function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [project, setActiveTool, setActiveClassId, navigatePrevious, navigateNext]);
+  }, [project, setActiveTool, setActiveClassId, navigatePrevious, navigateNext, selectedAnnotationId]);
 }

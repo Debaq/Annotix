@@ -18,10 +18,10 @@ const TOOLS = [
 
 export function Sidebar() {
   const { t } = useTranslation();
-  const { currentProjectId, activeTool, setActiveTool } = useUIStore();
+  const { currentProjectId, currentImageId, currentTimeSeriesId, activeTool, setActiveTool } = useUIStore();
   const { project } = useCurrentProject();
 
-  if (!currentProjectId || !project) {
+  if (!currentProjectId || !project || (!currentImageId && !currentTimeSeriesId)) {
     return null;
   }
 

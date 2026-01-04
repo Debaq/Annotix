@@ -1,12 +1,20 @@
-import { useTranslationWithLogging } from '../../../hooks/useTranslationWithLogging';
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useProjects } from '../hooks/useProjects';
 import { ProjectCard } from './ProjectCard';
 import { CreateProjectDialog } from './CreateProjectDialog';
 import { Button } from '@/components/ui/button';
+import { useUIStore } from '../../core/store/uiStore';
 
 export function ProjectList() {
-  const { t } = useTranslationWithLogging();
+  const { t } = useTranslation();
   const { projects, isLoading } = useProjects();
+  const { setCurrentProjectId } = useUIStore();
+
+  // Clear current project selection when on the project list
+  useEffect(() => {
+    setCurrentProjectId(null);
+  }, [setCurrentProjectId]);
 
   if (isLoading) {
     return (

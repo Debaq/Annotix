@@ -31,11 +31,10 @@ export function LanguageSelector() {
 
   return (
     <Select value={i18n.language} onValueChange={handleLanguageChange}>
-      <SelectTrigger className="w-[140px]">
+      <SelectTrigger className="w-[45px] bg-white/5 border-white/20 text-white hover:bg-white/10 transition-colors [&>svg]:hidden px-0 justify-center">
         <SelectValue>
-          <span className="flex items-center gap-2">
-            <span>{currentLanguage.flag}</span>
-            <span className="text-sm">{currentLanguage.name}</span>
+          <span className="flex items-center justify-center">
+            <span className="text-xl leading-none">{currentLanguage.flag}</span>
           </span>
         </SelectValue>
       </SelectTrigger>
@@ -44,7 +43,7 @@ export function LanguageSelector() {
           <SelectItem key={lang.code} value={lang.code}>
             <span className="flex items-center gap-2">
               <span>{lang.flag}</span>
-              <span>{lang.name}</span>
+              <span>{lang.code.toUpperCase()}</span>
             </span>
           </SelectItem>
         ))}

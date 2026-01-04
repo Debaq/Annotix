@@ -8,6 +8,75 @@ export const availableLanguages = [
   { code: 'es', name: 'Español', flag: '🇪🇸' },
 ];
 
+// Helper to identify the caller component from stack trace
+const getCaller = (): string => {
+  try {
+    const err = new Error();
+    if (err.stack) {
+      const stackLines = err.stack.split('\n');
+      
+      // Look for the first line that references a file in src/
+      for (const line of stackLines) {
+        // Skip i18n internals and node_modules
+        if (line.includes('node_modules') || line.includes('src/lib/i18n.ts') || line.includes('i18next')) {
+          continue;
+        }
+
+        // Try to match file path in src/
+        // Example: at Header (http://localhost:5173/src/features/core/components/Header.tsx:16:10)
+        const srcMatch = line.match(/src\/([a-zA-Z0-9_\-\/]+\.tsx?)/);
+        if (srcMatch && srcMatch[1]) {
+           // Return filename (e.g., features/core/components/Header.tsx)
+           // simplify to just the component name if possible
+           const parts = srcMatch[1].split('/');
+           return parts[parts.length - 1]; // Header.tsx
+        }
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+  return 'Unknown';
+};
+
+// Log cache for deduplication (session-wide)
+const logCache = new Set<string>();
+
+// Capture native console.log to potentially bypass some interceptors
+const nativeLog = console.log.bind(console);
+
+// Custom Post-Processor for logging successful translations
+const loggingProcessor = {
+  type: 'postProcessor' as const,
+  name: 'logger',
+  process: function(value: string, key: string, options: any, translator: any) {
+    const caller = getCaller();
+    const lng = translator.language;
+    
+    // Create a unique signature for this log event
+    const signature = `${key}-${lng}-${caller}`;
+    
+    // Check if we've logged this recently to prevent duplication
+    if (logCache.has(signature)) {
+      return value;
+    }
+    
+    // Add to cache (never cleared during session to avoid log spam on interactions)
+    logCache.add(signature);
+    
+    // Check if the key actually exists in the resources
+    const exists = i18n.exists(key, { lng });
+
+    if (exists) {
+       nativeLog(`[OK] ${key}.${lng} (${caller})`);
+    } else {
+       nativeLog(`[FAIL] ${key}.${lng} (${caller})`);
+    }
+    
+    return value;
+  }
+};
+
 const esResources = {
   "language": "Español",
   "code": "es",
@@ -1426,12 +1495,14 @@ const esResources = {
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
+  .use(loggingProcessor) // Register the custom logger
   .init({
     lng: 'es', // Force Spanish immediately
     fallbackLng: 'es',
     supportedLngs: ['es'],
     ns: ['translation'],
     defaultNS: 'translation',
+    postProcess: ['logger'], // Enable global logging for successful translations
     interpolation: {
       escapeValue: false, // React already escapes
     },
@@ -1446,7 +1517,9 @@ i18n
     },
     // Add missing key handler to log missing translations
     missingKeyHandler: (lng, ns, key, fallbackValue) => {
-      console.warn(`[TRANSLATION MISSING] Language: ${lng}, Namespace: ${ns}, Key: ${key}`);
+      // Console log disabled here to avoid duplicates with the logger post-processor which handles both [OK] and [FAIL]
+      // const caller = getCaller();
+      // console.log(`[FAIL] ${key}.${lng} (${caller})`);
 
       // Store missing keys in localStorage for tracking across sessions
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -1461,7 +1534,7 @@ i18n
       }
     },
     // Enable debug mode to see more detailed i18n information
-    debug: true, // Set to true to see all i18n logs, false to only see missing keys
+    debug: false, // Set to true to see all i18n logs, false to only see missing keys
   });
 
 // Utility function to get all missing keys for the current language

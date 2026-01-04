@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useUIStore } from '../../core/store/uiStore';
-import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 type FilterType = 'all' | 'annotated' | 'unannotated';
 
@@ -15,17 +15,21 @@ export function GalleryFilters() {
   ];
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-1">
       {filters.map((filter) => (
-        <Button
+        <button
           key={filter.type}
-          variant={galleryFilter === filter.type ? 'default' : 'outline'}
-          size="sm"
           onClick={() => setGalleryFilter(filter.type)}
+          className={cn(
+            "flex-1 px-2 py-1.5 text-xs font-medium rounded border transition-all",
+            galleryFilter === filter.type
+              ? "bg-[var(--annotix-primary)] text-white border-[var(--annotix-primary)]"
+              : "bg-white text-[var(--annotix-dark)] border-[var(--annotix-border)] hover:border-[var(--annotix-primary)]"
+          )}
         >
-          <i className={`fas ${filter.icon} mr-2`}></i>
+          <i className={`fas ${filter.icon} mr-1`}></i>
           {t(`gallery.filter.${filter.type}`)}
-        </Button>
+        </button>
       ))}
     </div>
   );

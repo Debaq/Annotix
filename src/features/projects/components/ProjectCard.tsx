@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Project } from '@/lib/db';
-import { useUIStore } from '../../core/store/uiStore';
 import { useProjects } from '../hooks/useProjects';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ProjectSettingsDialog } from './ProjectSettingsDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,11 +19,11 @@ interface ProjectCardProps {
 
 export function ProjectCard({ project }: ProjectCardProps) {
   const { t } = useTranslation();
-  const { setCurrentProjectId } = useUIStore();
+  const navigate = useNavigate();
   const { deleteProject } = useProjects();
 
   const handleOpen = () => {
-    setCurrentProjectId(project.id!);
+    navigate(`/projects/${project.id}`);
   };
 
   const handleDelete = async () => {
@@ -59,6 +60,17 @@ export function ProjectCard({ project }: ProjectCardProps) {
                 <i className="fas fa-folder-open mr-2"></i>
                 {t('projects.open')}
               </DropdownMenuItem>
+              
+              <ProjectSettingsDialog 
+                project={project} 
+                trigger={
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <i className="fas fa-cog mr-2"></i>
+                    Configurar
+                  </DropdownMenuItem>
+                }
+              />
+
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleDelete} className="text-destructive">
                 <i className="fas fa-trash mr-2"></i>

@@ -1,22 +1,15 @@
-import { useState, useEffect } from 'react';
-import { AnnotixImage } from '@/lib/db';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db, AnnotixImage } from '@/lib/db';
 import { useUIStore } from '../../core/store/uiStore';
 import { imageService } from '../services/imageService';
 
 export function useImages() {
   const { currentProjectId, galleryFilter } = useUIStore();
-  const [images, setImages] = useState<AnnotixImage[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  const loadImages = async () => {
-    if (!currentProjectId) {
-      setImages([]);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
+  const images = useLiveQuery(
+    async () => {
+      if (!currentProjectId) return [];
+      
       let data = await imageService.listByProject(currentProjectId);
 
       // Apply filters
@@ -26,24 +19,15 @@ export function useImages() {
         data = data.filter((img) => img.annotations.length === 0);
       }
 
-      setImages(data);
-    } catch (error) {
-      console.error('Failed to load images:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadImages();
-  }, [currentProjectId, galleryFilter]);
+      return data;
+    },
+    [currentProjectId, galleryFilter]
+  );
 
   const uploadImages = async (files: File[]) => {
     if (!currentProjectId) return;
-
     try {
       await imageService.uploadMultiple(currentProjectId, files);
-      await loadImages();
     } catch (error) {
       console.error('Failed to upload images:', error);
       throw error;
@@ -53,7 +37,6 @@ export function useImages() {
   const deleteImage = async (id: number) => {
     try {
       await imageService.delete(id);
-      await loadImages();
     } catch (error) {
       console.error('Failed to delete image:', error);
       throw error;
@@ -61,10 +44,9 @@ export function useImages() {
   };
 
   return {
-    images,
-    isLoading,
+    images: images || [],
+    isLoading: images === undefined,
     uploadImages,
     deleteImage,
-    reload: loadImages,
   };
 }

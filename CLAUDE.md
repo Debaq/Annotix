@@ -1,4 +1,4 @@
-# CLAUDE.md - Annotix Modern
+# CLAUDE.md - Annotix
 
 Este archivo proporciona la especificación completa de la migración de Annotix al stack moderno: Vite + React 19 + TypeScript + Tailwind CSS + Shadcn/ui + Dexie.js.
 
@@ -35,6 +35,48 @@ Reconstruir Annotix con arquitectura moderna y modular que permita:
 4. **Base de datos optimizada** - Dexie.js con queries indexadas
 5. **Testing** - Infraestructura para pruebas unitarias/E2E
 6. **Escalabilidad** - Preparado para 46+ tipos de anotación futuros
+
+---
+
+## ⚠️ REGLAS OBLIGATORIAS DE DESARROLLO (MANDATORY)
+
+### 🚫 TRADUCCIONES - POLÍTICA ESTRICTA
+
+**REGLA CRÍTICA - NO NEGOCIABLE:**
+
+Cuando se agreguen nuevas features, componentes, o cualquier funcionalidad que requiera texto traducible:
+
+1. **SOLO agregar las LLAVES (keys)** en los archivos de traducción JSON (`public/locales/*.json`)
+2. **NO realizar traducciones** - Las traducciones serán completadas manualmente por el desarrollador principal
+3. **NO modificar traducciones existentes** a menos que se solicite explícitamente
+
+**Ejemplo CORRECTO al agregar una nueva feature:**
+
+```json
+// public/locales/en.json
+{
+  "newFeature": {
+    "title": "",
+    "description": "",
+    "button": ""
+  }
+}
+```
+
+**Ejemplo INCORRECTO (NO HACER):**
+
+```json
+// public/locales/en.json
+{
+  "newFeature": {
+    "title": "New Feature",           // ❌ NO agregar traducciones
+    "description": "Description",     // ❌ NO agregar traducciones
+    "button": "Click here"            // ❌ NO agregar traducciones
+  }
+}
+```
+
+**Razón:** Las traducciones profesionales a 10 idiomas requieren consistencia terminológica y contexto específico del dominio ML/Computer Vision que solo el desarrollador principal puede garantizar.
 
 ---
 
@@ -313,7 +355,7 @@ export const db = new AnnotixDB();
 ## ESTRUCTURA DE CARPETAS (Feature-Based Architecture)
 
 ```
-annotix-modern/
+annotix/
 ├── public/
 │   ├── locales/                    # Archivos JSON de traducciones
 │   │   ├── en.json                 # English
@@ -640,7 +682,7 @@ annotix-modern/
 - ✅ Ctrl+S: Save annotations
 - ✅ Ctrl+Z: Undo last action
 - ✅ Del/Backspace: Delete selected annotation
-- ✅ ← / →: Navigate images
+- ✅ ← / → / PageUp / PageDown: Navigate images
 - ✅ Esc: Deselect
 
 **Entregable FASE 1:**
@@ -718,7 +760,7 @@ annotix-modern/
 
 **Duración:** Desarrollo iterativo completado el 2026-01-02
 
-**Build Status:** ✅ TypeScript compilation successful | Bundle: 690.61KB (218.16KB gzip)
+**Build Status:** ✅ TypeScript compilation successful | Bundle: 925.33KB (295.70KB gzip)
 
 **Features Implementadas:**
 
@@ -733,7 +775,7 @@ annotix-modern/
 - ✅ Indicadores visuales de estado (badges)
 - ✅ Export: Folders by Class, Classification CSV (desde FASE 2)
 
-**Time Series:**
+**Time Series - Base (Importación y Visualización):**
 - ✅ Esquema de base de datos completo:
   - Nueva tabla `timeseries` en Dexie
   - Interfaces: TimeSeries, TimeSeriesData, TimeSeriesAnnotation
@@ -748,19 +790,12 @@ annotix-modern/
 - ✅ Servicios:
   - csvParser.ts - Parser con validación completa
   - timeseriesService.ts - CRUD operations con Dexie
-- ✅ Hooks:
+- ✅ Hooks base:
   - useTimeSeries - Gestión de series temporales
   - useCurrentTimeSeries - Serie temporal activa
-- ✅ Componentes:
+- ✅ Componentes base:
   - CSVImporter - Wizard de importación con opciones
   - TimeSeriesGallery - Lista/galería con estadísticas
-  - TimeSeriesCanvas - Visualización con Chart.js
-- ✅ Chart.js integration:
-  - Gráficos de líneas interactivos
-  - Soporte univariado y multivariado
-  - Zoom in/out/reset
-  - Tooltips interactivos
-  - Leyendas para series múltiples
 - ✅ Sistema de navegación:
   - Galería con stats (total, anotadas, pendientes)
   - Selección de series
@@ -776,6 +811,80 @@ annotix-modern/
   - Clustering
   - Imputation
 
+**Time Series - Herramientas Interactivas (COMPLETADO 2026-01-02):**
+- ✅ **Hook useTSAnnotations** - Gestión completa de anotaciones:
+  - CRUD operations (crear, actualizar, eliminar, limpiar)
+  - 5 herramientas: Select, Point, Range, Event, Anomaly
+  - Estado de dibujo (isDrawing, tempAnnotation)
+  - Selección y edición de anotaciones
+  - Integración con Dexie para persistencia automática
+  - Uso de UUID v4 para IDs únicos
+- ✅ **TimeSeriesTools Component** - Barra de herramientas:
+  - 5 botones de herramientas con iconos (Select, Point, Range, Event, Anomaly)
+  - Tooltips con atajos de teclado (V, P, R, E, A)
+  - Contador de anotaciones en tiempo real
+  - Botón para limpiar todas las anotaciones
+  - Indicador visual de herramienta activa
+  - Integración con Lucide icons
+- ✅ **TimeSeriesAnnotationsList Component** - Lista lateral:
+  - Lista scrollable de todas las anotaciones
+  - Iconos específicos por tipo (MapPin, MoveHorizontal, Zap, AlertTriangle)
+  - Información detallada (timestamp formateado, tipo, clase)
+  - Click para seleccionar/deseleccionar
+  - Botón de eliminar por anotación
+  - Badges de clase con colores del proyecto
+  - Scroll area con Shadcn ScrollArea
+  - Estado visual de selección (highlight)
+- ✅ **TimeSeriesCanvas Interactivo** - Canvas completamente funcional:
+  - **Interacción con clicks**:
+    - Point tool: Click simple para marcar punto
+    - Range tool: Click inicio + Click fin (drag visual)
+    - Event tool: Click para marcar evento
+    - Anomaly tool: Click para marcar anomalía
+  - **Renderizado en tiempo real** con Chart.js Annotation Plugin:
+    - Points: Círculos de colores (6px radius)
+    - Ranges: Cajas semitransparentes con bordes
+    - Events: Líneas verticales punteadas con labels
+    - Anomalies: Puntos rojos destacados (8px radius)
+    - Preview en vivo mientras se dibuja (tempAnnotation)
+    - Colores por clase del proyecto activo
+  - **Plugins Chart.js**:
+    - chartjs-plugin-annotation - Marcadores y anotaciones visuales
+    - chartjs-plugin-zoom - Zoom interactivo y pan
+  - **Zoom/Pan avanzado**:
+    - Zoom con rueda del mouse (scroll)
+    - Pan arrastrando el gráfico (click + drag)
+    - Botones UI: Zoom in (+20%), Zoom out (-20%), Reset
+    - Métodos: chart.zoom(), chart.resetZoom()
+  - **Chart.js features**:
+    - Gráficos de líneas interactivos
+    - Soporte univariado y multivariado
+    - Tooltips interactivos con mode: 'index'
+    - Leyendas para series múltiples
+    - Responsive y maintainAspectRatio: false
+  - **Instrucciones contextuales**:
+    - Panel inferior con instrucciones según herramienta activa
+    - Muestra solo cuando tool !== 'select'
+    - Traducciones completas (EN, ES)
+  - **Sidebar integrado**:
+    - 320px de ancho fijo
+    - Lista de anotaciones con scroll
+    - Sincronizado con selección del canvas
+  - **Eventos onClick y onHover**:
+    - onClick: Crear anotaciones, finalizar rangos
+    - onHover: Actualizar preview de rangos
+    - Conversión de coordenadas: pixel → data coordinates
+    - Validación de índices de timestamps
+- ✅ **Keyboard Shortcuts**:
+  - V - Select tool
+  - P - Point annotation tool
+  - R - Range annotation tool
+  - E - Event annotation tool
+  - A - Anomaly detection tool
+  - Esc - Cancelar dibujo actual
+  - Delete/Backspace - Eliminar anotación seleccionada
+  - Event listeners globales con cleanup
+
 **App Integration:**
 - ✅ Router lógico para 3 categorías de proyectos:
   - Image-based (bbox, mask, polygon, keypoints, landmarks, obb, instance-seg)
@@ -788,18 +897,41 @@ annotix-modern/
 - ✅ Traducciones actualizadas (EN, ES)
 - ✅ Nueva sección "common" (save, clear, delete, cancel, importing)
 - ✅ Nueva sección "classification" (8 keys)
-- ✅ Nueva sección "timeseries" (19 keys)
+- ✅ Nueva sección "timeseries" (34 keys totales):
+  - Base: 19 keys (importación, navegación)
+  - Tools: 6 keys (nombres de herramientas)
+  - Instructions: 4 keys (instrucciones por tool)
+  - Labels: 5 keys (UI labels adicionales)
 
 **Componentes Shadcn:**
 - ✅ Checkbox component instalado
+- ✅ ScrollArea component instalado
+
+**Dependencias Nuevas:**
+- ✅ uuid + @types/uuid - Generación de IDs únicos
+- ✅ chartjs-plugin-annotation - Anotaciones en gráficos
+- ✅ chartjs-plugin-zoom - Zoom y pan interactivo
+
+**Archivos Creados/Modificados (FASE 3 completa):**
+- **Base (primera iteración):** 15 archivos (~1,200 líneas)
+- **Herramientas interactivas:** 3 archivos nuevos + 3 modificados (~800 líneas)
+- **Total FASE 3:** 18 archivos (~2,000 líneas de código)
 
 **Entregable FASE 3:**
 - ✅ Clasificación single/multi-label funcional
-- ✅ Sistema base de series temporales con importación CSV
-- ✅ Visualización interactiva con Chart.js
-- ✅ 18 tipos de proyectos totales (9 imágenes + 2 clasificación + 7 TS base)
-- ✅ 15 archivos nuevos (~1,200 líneas de código)
-- ✅ Build exitoso: 690.61KB (218.16KB gzip)
+- ✅ Sistema COMPLETO de series temporales:
+  - ✅ Importación CSV con validación
+  - ✅ Visualización interactiva con Chart.js
+  - ✅ 5 herramientas de anotación interactivas
+  - ✅ Renderizado en tiempo real de anotaciones
+  - ✅ Zoom/Pan con rueda del mouse
+  - ✅ Lista lateral de anotaciones
+  - ✅ Atajos de teclado
+  - ✅ Colores por clase
+  - ✅ Persistencia automática en Dexie
+- ✅ 18 tipos de proyectos totales (9 imágenes + 2 clasificación + 7 TS funcionales)
+- ✅ Build exitoso: 925.33KB (295.70KB gzip)
+- ✅ Incremento vs FASE 2: +77KB gzip (+35%)
 
 ---
 
@@ -994,8 +1126,8 @@ npx shadcn@latest add scroll-area
 
 ```bash
 # 1. Crear proyecto Vite con React + TypeScript
-npm create vite@latest annotix-modern -- --template react-ts
-cd annotix-modern
+npm create vite@latest annotix -- --template react-ts
+cd annotix
 
 # 2. Instalar Tailwind CSS
 npm install -D tailwindcss postcss autoprefixer
@@ -1734,16 +1866,28 @@ Universidad Austral de Chile - Sede Puerto Montt
 - [x] Hook useClassification con auto-save
 - [x] Time Series schema en Dexie (tabla timeseries)
 - [x] CSV Parser service (validación, headers, timestamps)
-- [x] Time Series services y hooks
+- [x] Time Series services y hooks base (useTimeSeries, useCurrentTimeSeries)
 - [x] CSVImporter component (wizard de importación)
 - [x] TimeSeriesGallery component (lista con stats)
-- [x] TimeSeriesCanvas component (Chart.js integration)
-- [x] Chart.js instalado (chart.js + react-chartjs-2)
+- [x] Hook useTSAnnotations (CRUD anotaciones TS con UUID)
+- [x] TimeSeriesTools component (5 herramientas: Select/Point/Range/Event/Anomaly)
+- [x] TimeSeriesAnnotationsList component (lista lateral con scroll)
+- [x] TimeSeriesCanvas COMPLETO con interactividad:
+  - [x] Click en gráfico para crear anotaciones
+  - [x] Renderizado en tiempo real con chartjs-plugin-annotation
+  - [x] Zoom/Pan con chartjs-plugin-zoom (rueda mouse + drag)
+  - [x] Preview en vivo de anotaciones temporales
+  - [x] Colores por clase del proyecto
+  - [x] Instrucciones contextuales por herramienta
+  - [x] Sidebar integrado con lista de anotaciones
+- [x] Keyboard shortcuts (V/P/R/E/A, Esc, Delete/Backspace)
+- [x] Chart.js plugins instalados (annotation, zoom)
+- [x] uuid + @types/uuid instalados
 - [x] App router actualizado (3 categorías: image, classification, timeseries)
 - [x] UI Store extendido (currentTimeSeriesId)
-- [x] Checkbox component de Shadcn instalado
-- [x] Traducciones actualizadas (common, classification, timeseries)
-- [x] Build production: 690.61KB (218.16KB gzip)
+- [x] Checkbox + ScrollArea components de Shadcn instalados
+- [x] Traducciones actualizadas (34 keys timeseries: tools, instructions, labels)
+- [x] Build production: 925.33KB (295.70KB gzip)
 
 **FASE 4-5:**
 - [ ] (Ver secciones de fases arriba)
@@ -1859,7 +2003,7 @@ src/
 
 ### ✅ FASE 3 - COMPLETADA (2026-01-02)
 
-**Archivos Creados:** 15 archivos adicionales (Total: ~75 archivos)
+**Archivos Creados:** 18 archivos adicionales (Total: ~78 archivos)
 
 **Estructura Ampliada:**
 ```
@@ -1872,20 +2016,24 @@ src/
 │   │   └── hooks/
 │   │       └── useClassification.ts
 │   │
-│   └── timeseries/            ✅ NUEVA
+│   └── timeseries/            ✅ NUEVA (COMPLETA)
 │       ├── components/
 │       │   ├── CSVImporter.tsx
 │       │   ├── TimeSeriesGallery.tsx
-│       │   └── TimeSeriesCanvas.tsx
+│       │   ├── TimeSeriesCanvas.tsx         ✅ ACTUALIZADO (interactivo)
+│       │   ├── TimeSeriesTools.tsx          ✅ NUEVO
+│       │   └── TimeSeriesAnnotationsList.tsx ✅ NUEVO
 │       ├── hooks/
 │       │   ├── useTimeSeries.ts
-│       │   └── useCurrentTimeSeries.ts
+│       │   ├── useCurrentTimeSeries.ts
+│       │   └── useTSAnnotations.ts          ✅ NUEVO
 │       └── services/
 │           ├── csvParser.ts
 │           └── timeseriesService.ts
 │
 ├── components/ui/
-│   └── checkbox.tsx           ✅ INSTALADO
+│   ├── checkbox.tsx           ✅ INSTALADO
+│   └── scroll-area.tsx        ✅ INSTALADO
 │
 └── lib/
     └── db.ts                  ✅ ACTUALIZADO (Time Series schema)
@@ -1893,14 +2041,19 @@ src/
 
 **Estado del Build:**
 - ✅ TypeScript compilation: SUCCESS
-- ✅ Vite build: SUCCESS (4.91s)
-- ✅ Bundle size: 690.61KB (218.16KB gzip)
-- ✅ Modules: 1790 transformed
+- ✅ Vite build: SUCCESS (5.62s)
+- ✅ Bundle size: 925.33KB (295.70KB gzip)
+- ✅ Modules: 1848 transformed
+- ✅ Incremento vs FASE 2: +77KB gzip (+35%)
 
 **Dependencias Nuevas:**
 - chart.js 4.x ✅
 - react-chartjs-2 latest ✅
+- chartjs-plugin-annotation ✅ (anotaciones visuales)
+- chartjs-plugin-zoom ✅ (zoom/pan interactivo)
+- uuid + @types/uuid ✅ (IDs únicos)
 - @radix-ui/react-checkbox (via shadcn) ✅
+- @radix-ui/react-scroll-area (via shadcn) ✅
 
 **Tipos de Proyectos Soportados (18 totales):**
 
@@ -1935,16 +2088,51 @@ src/
 - ✅ Instrucciones contextuales
 - ✅ Integración completa con clases del proyecto
 
-**Features Time Series:**
-- ✅ Importación CSV con wizard
-- ✅ Validación de formato CSV
-- ✅ Detección automática de headers
-- ✅ Configuración de columna timestamp
-- ✅ Soporte univariado y multivariado
-- ✅ Visualización con Chart.js (Line charts)
-- ✅ Zoom in/out/reset
-- ✅ Galería con estadísticas (total, anotadas, pendientes)
-- ✅ Base para anotaciones (point, range, classification, event, anomaly)
+**Features Time Series (COMPLETAS):**
+- ✅ **Importación y Visualización:**
+  - Importación CSV con wizard interactivo
+  - Validación de formato CSV
+  - Detección automática de headers
+  - Configuración de columna timestamp
+  - Soporte univariado y multivariado
+  - Visualización con Chart.js (Line charts)
+  - Galería con estadísticas (total, anotadas, pendientes)
+- ✅ **Herramientas Interactivas de Anotación:**
+  - 5 herramientas: Select, Point, Range, Event, Anomaly
+  - Click en gráfico para crear anotaciones
+  - Preview en vivo de anotaciones temporales
+  - Colores por clase del proyecto
+  - Validación de coordenadas timestamp
+- ✅ **Renderizado Visual:**
+  - Points: Círculos de colores (6px radius)
+  - Ranges: Cajas semitransparentes con bordes
+  - Events: Líneas verticales punteadas con labels
+  - Anomalies: Puntos rojos destacados (8px radius)
+  - Renderizado en tiempo real con chartjs-plugin-annotation
+- ✅ **Zoom y Pan:**
+  - Zoom con rueda del mouse (scroll wheel)
+  - Pan arrastrando el gráfico (click + drag)
+  - Botones UI: Zoom in, Zoom out, Reset
+  - chartjs-plugin-zoom integration
+- ✅ **UI/UX:**
+  - Barra de herramientas con tooltips
+  - Lista lateral de anotaciones con scroll
+  - Click para seleccionar/deseleccionar
+  - Botón eliminar por anotación
+  - Contador de anotaciones en tiempo real
+  - Instrucciones contextuales por herramienta
+- ✅ **Keyboard Shortcuts:**
+  - V - Select tool
+  - P - Point tool
+  - R - Range tool
+  - E - Event tool
+  - A - Anomaly tool
+  - Esc - Cancelar dibujo
+  - Delete/Backspace - Eliminar anotación
+- ✅ **Persistencia:**
+  - Auto-save en Dexie con cada cambio
+  - UUID v4 para IDs únicos
+  - Sincronización automática con DB
 
 **App Router:**
 - ✅ 3 categorías de proyectos soportadas:
@@ -1955,9 +2143,16 @@ src/
 - ✅ Navegación automática según tipo de proyecto
 
 **Traducciones:**
-- ✅ Inglés (EN) - 80+ nuevas keys
-- ✅ Español (ES) - 80+ nuevas keys
-- ✅ Secciones: common, classification, timeseries
+- ✅ Inglés (EN) - 90+ keys totales FASE 3
+- ✅ Español (ES) - 90+ keys totales FASE 3
+- ✅ Secciones:
+  - common (save, clear, delete, cancel, importing)
+  - classification (8 keys)
+  - timeseries (34 keys):
+    - Base: 19 keys (importación, navegación, labels)
+    - Tools: 6 keys (nombres de herramientas)
+    - Instructions: 4 keys (instrucciones por tool)
+    - Labels: 5 keys (UI labels adicionales)
 
 ### Próximos Pasos (FASE 4 - ONNX Inference)
 

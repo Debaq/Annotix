@@ -2,7 +2,7 @@ import JSZip from 'jszip';
 import { BaseExporter } from './BaseExporter';
 import { Project, AnnotixImage, Annotation } from '@/lib/db';
 import { normalizeCoordinates } from '../utils/converters';
-import { SKELETON_PRESETS } from '@/features/canvas/data/skeletonPresets';
+import { skeletonPresets } from '@/features/canvas/data/skeletonPresets';
 
 export class YOLOExporter extends BaseExporter {
   constructor(private includeSegmentation: boolean = false) {
@@ -70,20 +70,20 @@ export class YOLOExporter extends BaseExporter {
       lines.push('# Keypoints configuration');
 
       // Use COCO-17 as default skeleton
-      const skeleton = SKELETON_PRESETS['coco-17'];
+      const skeleton = skeletonPresets['coco-17'];
       if (skeleton) {
-        lines.push(`kpt_shape: [${skeleton.keypoints.length}, 3]  # number of keypoints, number of dims (x, y, visibility)`);
+        lines.push(`kpt_shape: [${skeleton.points.length}, 3]  # number of keypoints, number of dims (x, y, visibility)`);
         lines.push('');
         lines.push('# Keypoint names');
         lines.push('keypoint_names:');
-        skeleton.keypoints.forEach((name, idx) => {
+        skeleton.points.forEach((name: string, idx: number) => {
           lines.push(`  ${idx}: ${name}`);
         });
 
         lines.push('');
         lines.push('# Skeleton connections (for visualization)');
         lines.push('skeleton:');
-        skeleton.connections.forEach((conn) => {
+        skeleton.connections.forEach((conn: [number, number]) => {
           lines.push(`  - [${conn[0]}, ${conn[1]}]`);
         });
       }
