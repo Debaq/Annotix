@@ -26,7 +26,19 @@
     "clear": "Limpiar",
     "delete": "Eliminar",
     "save": "Guardar",
-    "undo": "Deshacer"
+    "undo": "Deshacer",
+    "actions": "Acciones",
+    "exportDataset": "Exportar Dataset",
+    "backToProjects": "Volver a Proyectos",
+    "classes": "Clases",
+    "selectImageToStart": "Selecciona una imagen para comenzar a anotar",
+    "missingTranslations": "Traducciones Faltantes",
+    "hide": "Ocultar",
+    "totalKeys": "Total de Claves:",
+    "totalUsages": "Total de Usos:",
+    "oneToNine": "1-9",
+    "ctrlS": "Ctrl+S",
+    "arrowKeys": "← →"
   },
   "header": {
     "selectProject": "Seleccionar proyecto...",
@@ -106,7 +118,12 @@
     "deleteConfirm": "¿Eliminar esta imagen?",
     "annotate": "Anotar",
     "upload": "Seleccionar imágenes",
-    "noImages": "No hay imágenes"
+    "noImages": "No hay imágenes",
+    "filter": {
+      "all": "Todas",
+      "annotated": "Anotadas",
+      "unannotated": "Sin anotar"
+    }
   },
   "classes": {
     "title": "Clases Activas",
@@ -246,14 +263,6 @@
     "labels": "Etiquetas",
     "classes": "Clases",
     "progress": "imágenes anotadas"
-  },
-  "gallery": {
-    "title": "Galería",
-    "all": "Todas",
-    "annotated": "Anotadas",
-    "unannotated": "Sin anotar",
-    "empty": "No hay imágenes",
-    "deleteConfirm": "¿Eliminar esta imagen?"
   },
   "export": {
     "title": "Exportar Proyecto",
@@ -945,14 +954,6 @@
         "models": "MICE, KNN, Interpolation, BRITS",
         "difficulty": "Intermedio"
       },
-      "bbox": {
-        "name": "",
-        "description": ""
-      },
-      "mask": {
-        "name": "",
-        "description": ""
-      },
       "multi-label-classification": {
         "name": "",
         "description": ""
@@ -1374,7 +1375,7 @@
     "runInference": "Ejecutar Inferencia",
     "clearPredictions": "Limpiar Todo",
     "convertAll": "Convertir Todo",
-    "processing": "Procesando...",
+    "process": "Procesando...",
     "predictions": "Predicciones",
     "highConf": "Alta Conf",
     "time": "Tiempo",
@@ -1443,37 +1444,6 @@
     "downloadStarted": "Descarga iniciada. Ejecuta el instalador cuando termine.",
     "startTraining": "Iniciar Entrenamiento",
     "trainingStarted": "Entrenamiento iniciado correctamente"
-  },
-  "common": {
-    "loading": "Cargando...",
-    "creating": "Creando...",
-    "importing": "Importando...",
-    "saving": "Guardando...",
-    "cancel": "Cancelar",
-    "create": "Crear",
-    "confirm": "Confirmar",
-    "close": "Cerrar",
-    "duplicate": "Duplicar",
-    "rename": "Renombrar",
-    "exportBackup": "Exportar Backup",
-    "deleteConfirm": "Sí, eliminar",
-    "clearConfirm": "¿Limpiar todas las anotaciones de esta imagen?",
-    "clear": "Limpiar",
-    "delete": "Eliminar",
-    "save": "Guardar",
-    "undo": "Deshacer",
-    "actions": "Acciones",
-    "exportDataset": "Exportar Dataset",
-    "backToProjects": "Volver a Proyectos",
-    "classes": "Clases",
-    "selectImageToStart": "Selecciona una imagen para comenzar a anotar",
-    "missingTranslations": "Traducciones Faltantes",
-    "hide": "Ocultar",
-    "totalKeys": "Total de Claves:",
-    "totalUsages": "Total de Usos:",
-    "oneToNine": "1-9",
-    "ctrlS": "Ctrl+S",
-    "arrowKeys": "← →"
   },
   "timeseries": {
     "noProjectSelected": "No hay proyecto seleccionado. Por favor, selecciona un proyecto de series temporales.",

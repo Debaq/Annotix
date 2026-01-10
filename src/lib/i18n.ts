@@ -2,6 +2,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import { filter } from 'jszip';
 
 // Available languages
 export const availableLanguages = [
@@ -187,9 +188,11 @@ const esResources = {
       "upload": "Subir imágenes"
     },
     "title": "Galería",
-    "all": "Todas",
-    "annotated": "Anotadas",
-    "unannotated": "Sin anotar",
+    "filter": {
+      "all": "Todas",
+      "annotated": "Anotadas",
+      "unannotated": "Sin anotar"
+    },
     "deleteConfirm": "¿Eliminar esta imagen?",
     "annotate": "Anotar",
     "upload": "Seleccionar imágenes",

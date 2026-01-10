@@ -15,18 +15,16 @@ export function GalleryFilters() {
   ];
 
   return (
-    <div className="flex gap-1">
+    <div className="gallery-filters">
       {filters.map((filter) => (
         <button
           key={filter.type}
           onClick={() => setGalleryFilter(filter.type)}
           className={cn(
-            "flex-1 px-2 py-1.5 text-xs font-medium rounded border transition-all",
-            galleryFilter === filter.type
-              ? "bg-[var(--annotix-primary)] text-white border-[var(--annotix-primary)]"
-              : "bg-white text-[var(--annotix-dark)] border-[var(--annotix-border)] hover:border-[var(--annotix-primary)]"
-          )}
-        >
+            "filter-btn",
+            galleryFilter === filter.type && "active"
+            )}>
+        
           <i className={`fas ${filter.icon} mr-1`}></i>
           {t(`gallery.filter.${filter.type}`)}
         </button>

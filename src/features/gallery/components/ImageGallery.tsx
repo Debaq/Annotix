@@ -32,7 +32,7 @@ export function ImageGallery() {
       </div>
 
       {/* Filters Section */}
-      <div className="annotix-panel-section">
+      <div className="panel-section">
         <GalleryFilters />
       </div>
 
