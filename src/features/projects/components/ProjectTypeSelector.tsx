@@ -3,6 +3,7 @@ import { ProjectType } from '@/lib/db';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
+import '@/styles/projects.css';
 
 interface ProjectTypeSelectorProps {
   value: ProjectType;
@@ -45,8 +46,8 @@ export function ProjectTypeSelector({ value, onChange }: ProjectTypeSelectorProp
   ];
 
   const renderOption = (option: ProjectTypeOption) => (
-    <div key={option.value} className="flex items-center space-x-2 rounded-lg border p-3 hover:bg-accent/50 transition-colors">
-      <RadioGroupItem value={option.value} id={`type-${option.value}`} />
+    <div key={option.value} className="project-type-card">
+      <RadioGroupItem value={option.value} id={`type-${option.value}`}  />
       <Label htmlFor={`type-${option.value}`} className="flex-1 cursor-pointer">
         <div className="flex items-center gap-3">
           <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${option.colorClass}`}>
@@ -65,13 +66,13 @@ export function ProjectTypeSelector({ value, onChange }: ProjectTypeSelectorProp
 
   return (
     <div className="space-y-3">
-      <RadioGroup value={value} onValueChange={(v) => onChange(v as ProjectType)}>
+      <RadioGroup value={value} onValueChange={(v) => onChange(v as ProjectType)} >
         {/* Image Annotation Types */}
         <div className="space-y-2">
           <h4 className="text-sm font-semibold text-muted-foreground px-1">
             {t('project.categories.images')}
           </h4>
-          <div className="space-y-2">
+          <div className="project-type-grid">
             {imageTypes.map(renderOption)}
           </div>
         </div>
@@ -83,7 +84,7 @@ export function ProjectTypeSelector({ value, onChange }: ProjectTypeSelectorProp
           <h4 className="text-sm font-semibold text-muted-foreground px-1">
             {t('project.categories.classification')}
           </h4>
-          <div className="space-y-2">
+          <div className="project-type-grid">
             {classificationTypes.map(renderOption)}
           </div>
         </div>
@@ -95,7 +96,7 @@ export function ProjectTypeSelector({ value, onChange }: ProjectTypeSelectorProp
           <h4 className="text-sm font-semibold text-muted-foreground px-1">
             {t('project.categories.timeSeries')}
           </h4>
-          <div className="space-y-2">
+          <div className="project-type-grid">
             {timeSeriesTypes.map(renderOption)}
           </div>
         </div>
