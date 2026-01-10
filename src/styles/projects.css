@@ -1,0 +1,61 @@
+/* Project Type Grid */
+.project-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.project-type-card {
+   display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+
+  padding: 0.75rem; 
+
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.project-type-card:hover {
+  background: hsl(var(--accent) /0.5);
+  transform: translateY(-1px);
+}
+
+.project-type-card.active {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--accent) /0.5);
+}
+
+.project-type-card.selected {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.05);
+  box-shadow: 0 0 0 1px hsl(var(--primary));
+}
+
+.project-type-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+  font-size: 18px;
+}
+
+.project-type-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.project-type-description {
+  font-size: 0.75rem;
+  text-align: center;
+  color: hsl(var(--muted-foreground));
+  margin-top: 4px;
+  line-height: 1.3;
+}

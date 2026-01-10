@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ProjectType, ClassDefinition } from '@/lib/db';
 
+
 interface CreateProjectDialogProps {
   trigger?: ReactNode;
 }
@@ -73,7 +74,7 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
           <DialogDescription>{t('projects.createDescription')}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
           <div className="space-y-2">
             <Label htmlFor="project-name">{t('projects.name')}</Label>
             <Input
