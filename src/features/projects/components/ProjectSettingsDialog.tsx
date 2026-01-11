@@ -62,13 +62,13 @@ export function ProjectSettingsDialog({ project, trigger }: ProjectSettingsDialo
         {trigger || (
           <Button variant="ghost" size="sm">
             <i className="fas fa-cog mr-2"></i>
-            Configurar
+            {t('projects.configure')}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Configuración del Proyecto</DialogTitle>
+          <DialogTitle>{t('projects.settings')}</DialogTitle>
           <DialogDescription>
             Modifica el nombre o gestiona las clases del proyecto.
           </DialogDescription>
@@ -76,7 +76,7 @@ export function ProjectSettingsDialog({ project, trigger }: ProjectSettingsDialo
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="edit-project-name">Nombre del Proyecto</Label>
+            <Label htmlFor="edit-project-name">{t('projects.name')}</Label>
             <Input
               id="edit-project-name"
               value={name}
@@ -85,7 +85,7 @@ export function ProjectSettingsDialog({ project, trigger }: ProjectSettingsDialo
           </div>
 
           <div className="space-y-2">
-            <Label>Gestión de Clases</Label>
+            <Label>{t('classes.manage')}</Label>
             <ClassManager classes={classes} onChange={setClasses} />
           </div>
         </div>

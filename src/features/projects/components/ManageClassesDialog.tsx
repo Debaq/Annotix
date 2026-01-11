@@ -58,7 +58,7 @@ export function ManageClassesDialog({ project, trigger }: ManageClassesDialogPro
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Gestionar Clases</DialogTitle>
+          <DialogTitle>{t('classes.manage')}</DialogTitle>
           <DialogDescription>
             Añade, edita o elimina las categorías disponibles para este proyecto.
           </DialogDescription>

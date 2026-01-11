@@ -17,6 +17,9 @@
         "export": "Export",
         "help": "Help"
     },
+    "projects":{
+        "title": "Projects"
+    },
     "tools": {
         "title": "Tools",
         "bbox": "Box",
@@ -1286,7 +1289,7 @@
         "runInference": "Run Inference",
         "clearPredictions": "Clear All",
         "convertAll": "Convert All",
-        "processing": "Processing...",
+        "process": "Processing...",
         "predictions": "Predictions",
         "highConf": "High Conf",
         "time": "Time",

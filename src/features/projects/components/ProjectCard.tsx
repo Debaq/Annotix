@@ -45,7 +45,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
             <div>
               <h3 className="font-semibold">{project.name}</h3>
               <p className="text-xs text-muted-foreground">
-                {t(`project.type.${project.type}`)}
+                {t(`projects.type.${project.type}`)}
               </p>
             </div>
           </div>
@@ -66,7 +66,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
                 trigger={
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                     <i className="fas fa-cog mr-2"></i>
-                    Configurar
+                    {t('projects.configure')}
                   </DropdownMenuItem>
                 }
               />

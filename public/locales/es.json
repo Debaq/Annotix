@@ -38,7 +38,8 @@
     "totalUsages": "Total de Usos:",
     "oneToNine": "1-9",
     "ctrlS": "Ctrl+S",
-    "arrowKeys": "← →"
+    "arrowKeys": "← →",
+    "understand": "common.understand"
   },
   "header": {
     "selectProject": "Seleccionar proyecto...",
@@ -71,12 +72,13 @@
     "edit": "Editar Proyecto",
     "saveChanges": "Guardar Cambios",
     "stats": {
-      "classes": "clases"
+      "classes": "Clases"
     },
     "empty": {
       "title": "No hay proyectos",
       "description": "Crea tu primer proyecto para comenzar a anotar"
-    }
+    },
+    "confirmDelete": "Confirmar eliminación del proyecto"
   },
   "tools": {
     "title": "Herramientas",
@@ -123,7 +125,11 @@
       "all": "Todas",
       "annotated": "Anotadas",
       "unannotated": "Sin anotar"
-    }
+    },
+    "backToGallery": "Volver a Galería",
+    "selectImage": "Selecciona una imagen",
+    "uploadOrSelect": "Sube o selecciona una imágen",
+    "uploading": "Subiendo imágenes"
   },
   "classes": {
     "title": "Clases Activas",
@@ -147,7 +153,9 @@
     "namePlaceholder": "Nombre de clase",
     "color": "Color",
     "nameRequired": "El nombre de la clase es requerido",
-    "empty": "Sin clases"
+    "empty": "Sin clases",
+    "addPlaceholder": "Agregar nombre de clase",
+    "updated": "Actualizado"
   },
   "annotations": {
     "title": "Anotaciones",
@@ -244,7 +252,9 @@
     "mask": "Mask",
     "select": "Select",
     "pan": "Pan",
-    "classes": "Clase 1-9"
+    "classes": "Clase 1-9",
+    "navigateImages": "shortcuts.navigateImages",
+    "selectClass": "shortcuts.selectClass"
   },
   "canvas": {
     "zoomIn": "Zoom In",
@@ -254,7 +264,10 @@
     "toggleLabels": "Mostrar/Ocultar Etiquetas",
     "toggleGrid": "Mostrar/Ocultar Grilla",
     "prevImage": "Imagen Anterior (← / RePag)",
-    "nextImage": "Imagen Siguiente (→ / AvPag)"
+    "nextImage": "Imagen Siguiente (→ / AvPag)",
+    "reset": "Reiniciar",
+    "tools": "Herramientas",
+    "zoom": "Zoom"
   },
   "stats": {
     "title": "Estadísticas",
@@ -262,7 +275,8 @@
     "annotated": "Anotadas",
     "labels": "Etiquetas",
     "classes": "Clases",
-    "progress": "imágenes anotadas"
+    "progress": "imágenes anotadas",
+    "annotations": "stats.annotations"
   },
   "export": {
     "title": "Exportar Proyecto",
@@ -508,7 +522,8 @@
         "scaler": "Escalado de datos",
         "sequences": "secuencias",
         "timeSteps": "pasos de tiempo",
-        "features": "variables"
+        "features": "variables",
+        "installation": "export.code.template.installation"
       },
       "tooltips": {
         "framework": "Librería de deep learning a usar. Se adapta según tu tipo de proyecto.",
@@ -631,11 +646,21 @@
       "json": {
         "name": "JSON Completo",
         "description": "Exportación JSON con todas las anotaciones"
-      }
+      },
+      "yoloDetectionDesc": "export.formats.yoloDetectionDesc",
+      "yoloSegmentationDesc": "export.formats.yoloSegmentationDesc"
     },
     "preparing": "Preparando exportación...",
     "success": "Dataset exportado exitosamente",
-    "downloadDataheaderset": "Descargar Dataset"
+    "downloadDataheaderset": "Descargar Dataset",
+    "description": "Exportar descripción",
+    "downloadDataset": "Descargar dataset",
+    "export": "Exportar",
+    "exporting": "Exportando...",
+    "format": "Formato",
+    "formatDescription": "Descripción del formato",
+    "progress": "Progreso",
+    "selectFormat": "Seleccionar formato de exportación"
   },
   "projectTypes": {
     "classification": "Clasificación Simple",
@@ -1207,8 +1232,11 @@
       "deleteImage": "Error al eliminar imagen",
       "loadImages": "Error al cargar imágenes",
       "downloadDataset": "Error al descargar dataset",
-      "initApp": "Error al iniciar la aplicación"
-    }
+      "initApp": "Error al iniciar la aplicación",
+      "export": "Error al exportar",
+      "noImages": "Error no se encontraron imágenes"
+    },
+    "imageDeleted": "notifications.imageDeleted"
   },
   "tour": {
     "welcome": "¡Bienvenido a <strong>Annotix</strong>! 🎯<br><br>Una herramienta profesional para anotar imágenes y series temporales para entrenamiento de modelos de machine learning. Soporta múltiples tipos de anotaciones: <strong>Bounding Boxes</strong>, <strong>OBB</strong>, <strong>Segmentación</strong>, <strong>Keypoints</strong>, <strong>Polígonos</strong>, <strong>Landmarks</strong>, <strong>Series Temporales</strong> y <strong>Clasificación</strong>.",
