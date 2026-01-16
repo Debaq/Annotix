@@ -90,7 +90,7 @@ const loggingProcessor = {
 const loadLocale = async (code: string) => {
   if (typeof window === 'undefined' || !code) return null;
   try {
-    const res = await fetch(`/locales/${code}.json`);
+    const res = await fetch(`locales/${code}.json`);
     if (!res.ok) return null;
     const data = await res.json();
     // Add as the default namespace 'translation'

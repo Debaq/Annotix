@@ -38,7 +38,7 @@ export const Header: React.FC = () => {
           className="flex items-center gap-2 transition-opacity hover:opacity-80"
           onClick={() => setCurrentProjectId(null)}
         >
-          <img src="/logo.png" alt="Annotix" className="h-8 w-8 object-contain" />
+          <img src="logo.png" alt="Annotix" className="h-8 w-8 object-contain" />
           <h1 className="text-lg font-semibold text-white tracking-tight">{t('app.title')}</h1>
         </Link>
       </div>
