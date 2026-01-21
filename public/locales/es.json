@@ -49,11 +49,15 @@
     "export": "Exportar",
     "help": "Ayuda"
   },
+  "help":{
+    "shortcuts": "Atajos del teclado"
+  },
   "projects": {
     "title": "Proyectos",
     "subtitle": "Gestiona tus proyectos de anotación",
     "create": "Crear Proyecto",
     "createDescription": "Comienza un nuevo proyecto de anotación",
+    "description": "Modifica el nombre o gestiona las clases del proyecto.",
     "name": "Nombre del Proyecto",
     "namePlaceholder": "Mi Proyecto Annotix",
     "type": {
@@ -155,7 +159,10 @@
     "nameRequired": "El nombre de la clase es requerido",
     "empty": "Sin clases",
     "addPlaceholder": "Agregar nombre de clase",
-    "updated": "Actualizado"
+    "updated": "Actualizado",
+    "description": "Añade, edita o elimina las categorías disponibles para este proyecto.",
+    "save": "Guardar cambios",
+    "cancel": "Cancelar"
   },
   "annotations": {
     "title": "Anotaciones",

@@ -82,11 +82,12 @@ export const Header: React.FC = () => {
           className="h-8 w-8 rounded flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-all"
           title={t('help.shortcuts')}
         >
+
           <i className="fas fa-keyboard"></i>
         </button>
         <LanguageSelector />
         <a
-          href="https://github.com/yourusername/annotix"
+          href="https://github.com/Debaq/Annotix.git"
           target="_blank"
           rel="noopener noreferrer"
           className="h-8 w-8 rounded flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-all"
