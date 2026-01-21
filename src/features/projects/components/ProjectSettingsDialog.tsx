@@ -70,7 +70,7 @@ export function ProjectSettingsDialog({ project, trigger }: ProjectSettingsDialo
         <DialogHeader>
           <DialogTitle>{t('projects.settings')}</DialogTitle>
           <DialogDescription>
-            Modifica el nombre o gestiona las clases del proyecto.
+            {t('projects.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -92,7 +92,7 @@ export function ProjectSettingsDialog({ project, trigger }: ProjectSettingsDialo
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancelar
+            {t('classes.cancel')}
           </Button>
           <Button onClick={handleUpdate} disabled={isUpdating || !name.trim()}>
             {isUpdating ? (
@@ -100,7 +100,7 @@ export function ProjectSettingsDialog({ project, trigger }: ProjectSettingsDialo
             ) : (
               <i className="fas fa-save mr-2"></i>
             )}
-            Guardar Cambios
+            {t('classes.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

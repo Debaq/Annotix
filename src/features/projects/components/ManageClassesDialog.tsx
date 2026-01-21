@@ -60,7 +60,7 @@ export function ManageClassesDialog({ project, trigger }: ManageClassesDialogPro
         <DialogHeader>
           <DialogTitle>{t('classes.manage')}</DialogTitle>
           <DialogDescription>
-            Añade, edita o elimina las categorías disponibles para este proyecto.
+            {t('classes.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -70,11 +70,11 @@ export function ManageClassesDialog({ project, trigger }: ManageClassesDialogPro
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancelar
+            { t('classes.cancel') }
           </Button>
           <Button onClick={handleUpdate} disabled={isUpdating}>
             {isUpdating && <i className="fas fa-spinner fa-spin mr-2"></i>}
-            Guardar Cambios
+            { t('classes.save') }
           </Button>
         </DialogFooter>
       </DialogContent>
