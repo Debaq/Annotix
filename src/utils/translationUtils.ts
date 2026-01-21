@@ -46,14 +46,14 @@ export function withTranslationLogging<OriginalProps extends WithTranslation>(
 export const checkMissingTranslations = async (languageCode: string) => {
   try {
     // Load the translation file for the specified language
-    const response = await fetch(`/locales/${languageCode}.json`);
+    const response = await fetch(`locales/${languageCode}.json`);
     if (!response.ok) {
       throw new Error(`Failed to load ${languageCode}.json`);
     }
     const currentTranslations = await response.json();
     
     // Load the fallback language (English) for comparison
-    const fallbackResponse = await fetch('/locales/en.json');
+    const fallbackResponse = await fetch('locales/en.json');
     if (!fallbackResponse.ok) {
       throw new Error('Failed to load en.json');
     }

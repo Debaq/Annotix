@@ -1,0 +1,96 @@
+/* ShortcutsModal Styles */
+
+.shortcuts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.shortcut-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--background-secondary, #f5f5f5);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 8px;
+  transition: all 0.2s ease-in-out;
+  gap: 12px;
+}
+
+.shortcut-item:hover {
+  background: var(--background-tertiary, #f9f9f9);
+  border-color: var(--primary, #3b82f6);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.shortcut-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.shortcut-name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shortcut-name strong {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--foreground, #000);
+}
+
+.shortcut-description {
+  font-size: 0.85rem;
+  color: var(--muted-foreground, #666);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.shortcut-key {
+  white-space: nowrap;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  min-width: max-content;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .shortcuts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shortcut-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .shortcut-key {
+    align-self: flex-end;
+    margin-top: 8px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .shortcut-item {
+    background: var(--background-secondary, #FFFFFF);
+    border-color: var(--border, #404040);
+  }
+
+  .shortcut-item:hover {
+    background: var(--background-tertiary, PURPLE);
+  }
+
+  .shortcut-name strong {
+    color: var(--foreground, #fff);
+  }
+
+  .shortcut-description {
+    color: var(--muted-foreground, #999);
+  }
+}

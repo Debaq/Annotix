@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { StorageIndicator } from './StorageIndicator';
 import { LanguageSelector } from './LanguageSelector';
+import { ShortcutsModal } from './ShortcutsModal';
 import { useUIStore } from '../store/uiStore';
 import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ export const Header: React.FC = () => {
   const { t } = useTranslation();
   const { setCurrentProjectId } = useUIStore();
   const { project } = useCurrentProject();
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   return (
     <header className="annotix-header">
@@ -38,7 +40,7 @@ export const Header: React.FC = () => {
           className="flex items-center gap-2 transition-opacity hover:opacity-80"
           onClick={() => setCurrentProjectId(null)}
         >
-          <img src="/logo.png" alt="Annotix" className="h-8 w-8 object-contain" />
+          <img src="logo.png" alt="Annotix" className="h-8 w-8 object-contain" />
           <h1 className="text-lg font-semibold text-white tracking-tight">{t('app.title')}</h1>
         </Link>
       </div>
@@ -79,10 +81,10 @@ export const Header: React.FC = () => {
       {/* Right Section: Language + Help */}
       <div className="flex items-center gap-3">
         <button
+          onClick={() => setShowShortcuts(true)}
           className="h-8 w-8 rounded flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-all"
           title={t('help.shortcuts')}
         >
-
           <i className="fas fa-keyboard"></i>
         </button>
         <LanguageSelector />
@@ -96,6 +98,8 @@ export const Header: React.FC = () => {
           <i className="fab fa-github"></i>
         </a>
       </div>
+
+      <ShortcutsModal open={showShortcuts} onOpenChange={setShowShortcuts} />
     </header>
   );
 }
