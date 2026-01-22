@@ -480,82 +480,59 @@
             "trainingNotebook": "Training Notebook"
         },
         "formats": {
-            "csvTimeSeries": {
-                "name": "CSV for Time Series",
-                "description": "Standard CSV format with timestamp, features and target columns"
-            },
-            "jsonTimeSeries": {
-                "name": "Structured JSON",
-                "description": "JSON format with metadata and structured time series"
-            },
-            "numpyTimeSeries": {
-                "name": "NumPy Arrays (.npz)",
-                "description": "Compressed NumPy arrays for efficient Python processing"
-            },
-            "csvAudio": {
-                "name": "CSV for Audio",
-                "description": "Audio metadata with file paths and labels"
-            },
-            "jsonAudio": {
-                "name": "JSON for Audio",
-                "description": "JSON format with audio configuration and annotations"
-            },
-            "csvVideo": {
-                "name": "CSV for Video",
-                "description": "Video metadata with timestamps and per-frame labels"
-            },
-            "jsonVideo": {
-                "name": "JSON for Video",
-                "description": "JSON format with video information and temporal annotations"
-            },
-            "csvText": {
-                "name": "CSV for Text",
-                "description": "CSV format with text and labels for NLP"
-            },
-            "jsonText": {
-                "name": "JSON for Text",
-                "description": "Structured JSON format for language processing tasks"
-            },
-            "yolo": {
-                "name": "YOLO Detection",
-                "description": "Bounding boxes in YOLO format (.txt) with data.yaml"
-            },
-            "yoloSeg": {
-                "name": "YOLO Segmentation",
-                "description": "Polygons in YOLO format (.txt) with data.yaml"
-            },
-            "yoloPose": {
-                "name": "YOLO Pose",
-                "description": "Keypoints in YOLO format (.txt) with skeleton configuration"
-            },
-            "coco": {
-                "name": "COCO JSON",
-                "description": "COCO format for Mask R-CNN, RetinaNet, etc."
-            },
-            "masksPng": {
-                "name": "PNG Masks (U-Net)",
-                "description": "PNG mask images for semantic segmentation"
-            },
-            "voc": {
-                "name": "Pascal VOC XML",
-                "description": "XML format with pixel coordinates"
-            },
-            "csv": {
-                "name": "Simple CSV",
-                "description": "CSV format for pandas processing"
-            },
-            "folders": {
-                "name": "Folders by Class",
-                "description": "Images organized in folders by class"
-            },
-            "json": {
-                "name": "Complete JSON",
-                "description": "JSON export with all annotations"
-            }
+            "yoloDetection": "YOLO Detection",
+            "yoloDetectionDesc": "Bounding boxes in normalized YOLO format (.txt) with data.yaml configuration",
+            "yoloSegmentation": "YOLO Segmentation",
+            "yoloSegmentationDesc": "Polygons in YOLO segmentation format (.txt) with data.yaml configuration",
+            "coco": "COCO JSON",
+            "cocoDesc": "COCO JSON format compatible with Mask R-CNN, RetinaNet, and Detectron2",
+            "pascalVoc": "Pascal VOC XML",
+            "pascalVocDesc": "Pascal VOC XML format with pixel coordinates (legacy format)",
+            "csvDetection": "CSV Detection",
+            "csvDetectionDesc": "CSV tabular format with bounding box coordinates",
+            "csvClassification": "CSV Classification",
+            "csvClassificationDesc": "CSV tabular format with image filename and class label",
+            "csvKeypoints": "CSV Keypoints",
+            "csvKeypointsDesc": "CSV tabular format with keypoint X, Y coordinates and visibility",
+            "csvLandmarks": "CSV Landmarks",
+            "csvLandmarksDesc": "CSV tabular format with landmark coordinates",
+            "foldersByClass": "Folders by Class",
+            "foldersByClassDesc": "Images organized into separate folders by class name",
+            "unetMasks": "U-Net Masks",
+            "unetMasksDesc": "PNG grayscale mask images for semantic segmentation training"
         },
+        "notAvailable": "Export not available for this project type",
         "preparing": "Preparing export...",
         "success": "Dataset exported successfully",
         "downloadDataheaderset": "Download Dataset"
+    },
+    "import": {
+        "title": "Import Dataset",
+        "button": "📥 Import",
+        "selectFile": "Select a ZIP file containing your annotated dataset",
+        "dragFiles": "Drag ZIP files here",
+        "orClickToSelect": "or click to select",
+        "analyzing": "Analyzing Dataset",
+        "configureProject": "Configure your imported project",
+        "projectName": "Project Name",
+        "projectType": "Project Type",
+        "classesCount": "Classes",
+        "classes": "classes",
+        "format": "Detected Format",
+        "import": "Import Project",
+        "importing": "Importing Dataset...",
+        "processing": "Processing your dataset...",
+        "success": "Project Imported Successfully",
+        "successMessage": "Your dataset has been imported and is ready to use",
+        "openProject": "Open Project",
+        "error": {
+            "noFile": "Please select a ZIP file",
+            "invalidZip": "Please select a valid ZIP file",
+            "unsupportedFormat": "Unsupported dataset format. Supported formats: YOLO, COCO, Pascal VOC, CSV, Folders by Class, U-Net Masks",
+            "corruptedData": "Dataset appears to be corrupted or incomplete",
+            "parse": "Error parsing dataset. Please check the file format",
+            "invalidProjectName": "Project name contains invalid characters. Use only alphanumeric characters, hyphens, underscores, and dots"
+        }
     },
     "projectTypes": {
         "classification": "Simple Classification",

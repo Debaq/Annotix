@@ -679,93 +679,32 @@
       "trainingNotebook": "Training Notebook"
     },
     "formats": {
-      "csvTimeSeries": {
-        "name": "CSV para Series Temporales",
-        "description": "Formato CSV estándar con columnas timestamp, features y target"
-      },
-      "jsonTimeSeries": {
-        "name": "JSON Estructurado",
-        "description": "Formato JSON con metadatos y series temporales estructuradas"
-      },
-      "numpyTimeSeries": {
-        "name": "NumPy Arrays (.npz)",
-        "description": "Arrays NumPy comprimidos para procesamiento eficiente en Python"
-      },
-      "csvAudio": {
-        "name": "CSV para Audio",
-        "description": "Metadatos de audio con rutas a archivos y etiquetas"
-      },
-      "jsonAudio": {
-        "name": "JSON para Audio",
-        "description": "Formato JSON con configuración de audio y anotaciones"
-      },
-      "csvVideo": {
-        "name": "CSV para Video",
-        "description": "Metadatos de video con timestamps y etiquetas por frame"
-      },
-      "jsonVideo": {
-        "name": "JSON para Video",
-        "description": "Formato JSON con información de video y anotaciones temporales"
-      },
-      "csvText": {
-        "name": "CSV para Texto",
-        "description": "Formato CSV con texto y etiquetas para NLP"
-      },
-      "jsonText": {
-        "name": "JSON para Texto",
-        "description": "Formato JSON estructurado para tareas de procesamiento de lenguaje"
-      },
-      "yolo": {
-        "name": "YOLO Detection",
-        "description": "Bounding boxes en formato YOLO (.txt) con data.yaml"
-      },
-      "yoloSeg": {
-        "name": "YOLO Segmentation",
-        "description": "Polígonos en formato YOLO (.txt) con data.yaml"
-      },
-      "yoloPose": {
-        "name": "YOLO Pose",
-        "description": "Keypoints en formato YOLO (.txt) con configuración de esqueleto"
-      },
-      "yoloDetection": {
-        "name": "YOLO Detection",
-        "description": "Bounding boxes en formato YOLO (.txt) con data.yaml"
-      },
-      "yoloSegmentation": {
-        "name": "YOLO Segmentation",
-        "description": "Polígonos en formato YOLO (.txt) con data.yaml"
-      },
-      "coco": {
-        "name": "COCO JSON",
-        "description": "Formato COCO para Mask R-CNN, RetinaNet, etc."
-      },
-      "masksPng": {
-        "name": "Máscaras PNG (U-Net)",
-        "description": "Imágenes PNG de máscaras para segmentación semántica"
-      },
-      "voc": {
-        "name": "Pascal VOC XML",
-        "description": "Formato XML con coordenadas en píxeles"
-      },
-      "csv": {
-        "name": "CSV Simple",
-        "description": "Formato CSV para procesamiento con pandas"
-      },
-      "folders": {
-        "name": "Carpetas por Clase",
-        "description": "Imágenes organizadas en carpetas por clase"
-      },
-      "json": {
-        "name": "JSON Completo",
-        "description": "Exportación JSON con todas las anotaciones"
-      },
-      "yoloDetectionDesc": "export.formats.yoloDetectionDesc",
-      "yoloSegmentationDesc": "export.formats.yoloSegmentationDesc"
+      "yoloDetection": "YOLO Detection",
+      "yoloDetectionDesc": "Bounding boxes en formato YOLO normalizado (.txt) con data.yaml",
+      "yoloSegmentation": "YOLO Segmentation",
+      "yoloSegmentationDesc": "Polígonos en formato YOLO segmentación (.txt) con data.yaml",
+      "coco": "COCO JSON",
+      "cocoDesc": "Formato COCO JSON compatible con Mask R-CNN, RetinaNet y Detectron2",
+      "pascalVoc": "Pascal VOC XML",
+      "pascalVocDesc": "Formato Pascal VOC XML con coordenadas en píxeles (formato legacy)",
+      "csvDetection": "CSV Detection",
+      "csvDetectionDesc": "Formato tabular CSV con coordenadas de bounding boxes",
+      "csvClassification": "CSV Classification",
+      "csvClassificationDesc": "Formato tabular CSV con nombre de archivo e imagen y etiqueta de clase",
+      "csvKeypoints": "CSV Keypoints",
+      "csvKeypointsDesc": "Formato tabular CSV con coordenadas X,Y de keypoints y visibilidad",
+      "csvLandmarks": "CSV Landmarks",
+      "csvLandmarksDesc": "Formato tabular CSV con coordenadas de landmarks",
+      "foldersByClass": "Carpetas por Clase",
+      "foldersByClassDesc": "Imágenes organizadas en carpetas separadas por nombre de clase",
+      "unetMasks": "Máscaras U-Net",
+      "unetMasksDesc": "Imágenes PNG en escala de grises para entrenamiento de segmentación"
     },
+    "notAvailable": "Exportación no disponible para este tipo de proyecto",
     "preparing": "Preparando exportación...",
     "success": "Dataset exportado exitosamente",
     "downloadDataheaderset": "Descargar Dataset",
-    "description": "Exportar descripción",
+    "description": "Selecciona uno de los formatos disponibles para exportar el proyecto",
     "downloadDataset": "Descargar dataset",
     "export": "Exportar",
     "exporting": "Exportando...",
@@ -773,6 +712,34 @@
     "formatDescription": "Descripción del formato",
     "progress": "Progreso",
     "selectFormat": "Seleccionar formato de exportación"
+  },
+  "import": {
+    "title": "Importar Dataset",
+    "button": "Importar",
+    "selectFile": "Selecciona un archivo ZIP que contenga tu dataset anotado",
+    "dragFiles": "Arrastra archivos ZIP aquí",
+    "orClickToSelect": "o haz clic para seleccionar",
+    "analyzing": "Analizando Dataset",
+    "configureProject": "Configura tu proyecto importado",
+    "projectName": "Nombre del Proyecto",
+    "projectType": "Tipo de Proyecto",
+    "classesCount": "Clases",
+    "classes": "clases",
+    "format": "Formato Detectado",
+    "import": "Importar Proyecto",
+    "importing": "Importando Dataset...",
+    "processing": "Procesando tu dataset...",
+    "success": "Proyecto Importado Exitosamente",
+    "successMessage": "Tu dataset ha sido importado y está listo para usar",
+    "openProject": "Abrir Proyecto",
+    "error": {
+      "noFile": "Por favor selecciona un archivo ZIP",
+      "invalidZip": "Por favor selecciona un archivo ZIP válido",
+      "unsupportedFormat": "Formato de dataset no soportado. Formatos soportados: YOLO, COCO, Pascal VOC, CSV, Carpetas por Clase, Máscaras U-Net",
+      "corruptedData": "El dataset parece estar corrupto o incompleto",
+      "parse": "Error al analizar el dataset. Por favor verifica el formato del archivo",
+      "invalidProjectName": "El nombre del proyecto contiene caracteres inválidos. Usa solo caracteres alfanuméricos, guiones, guiones bajos y puntos"
+    }
   },
   "projectTypes": {
     "classification": "Clasificación Simple",
