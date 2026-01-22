@@ -1,6 +1,11 @@
 import { db } from '@/lib/db';
-import { ExportFormat } from '../components/ExportDialog';
+import { ExportFormat } from '../utils/formatMapping';
 import { YOLOExporter } from '../exporters/YOLOExporter';
+import { COCOExporter } from '../exporters/COCOExporter';
+import { PascalVOCExporter } from '../exporters/PascalVOCExporter';
+import { CSVExporter } from '../exporters/CSVExporter';
+import { FoldersByClassExporter } from '../exporters/FoldersByClassExporter';
+import { UNetMasksExporter } from '../exporters/UNetMasksExporter';
 
 export const exportService = {
   async export(
@@ -24,11 +29,23 @@ export const exportService = {
       height: img.dimensions.height,
     }));
 
-    // Filter images with annotations
-    const annotatedImages = images.filter((img) => img.annotations.length > 0);
+    // Clean up annotations: remove ones with invalid class IDs
+    // But keep ALL images (even those without annotations)
+    const annotatedImages = images.map((img) => ({
+      ...img,
+      annotations: img.annotations.filter((ann) => {
+        // Skip annotations with invalid class IDs
+        const classExists = project.classes.some((c) => c.id === ann.classId);
+        if (!classExists) {
+          console.warn(`Skipping annotation with invalid class ID ${ann.classId} in image ${img.id}`);
+          return false;
+        }
+        return true;
+      }),
+    }));
 
     if (annotatedImages.length === 0) {
-      throw new Error('No annotated images found');
+      throw new Error('No images found in project');
     }
 
     // Select exporter based on format
@@ -39,6 +56,30 @@ export const exportService = {
         break;
       case 'yolo-segmentation':
         exporter = new YOLOExporter(true);
+        break;
+      case 'coco':
+        exporter = new COCOExporter();
+        break;
+      case 'pascal-voc':
+        exporter = new PascalVOCExporter();
+        break;
+      case 'csv-detection':
+        exporter = new CSVExporter('detection');
+        break;
+      case 'csv-classification':
+        exporter = new CSVExporter('classification');
+        break;
+      case 'csv-keypoints':
+        exporter = new CSVExporter('keypoints');
+        break;
+      case 'csv-landmarks':
+        exporter = new CSVExporter('landmarks');
+        break;
+      case 'folders-by-class':
+        exporter = new FoldersByClassExporter();
+        break;
+      case 'unet-masks':
+        exporter = new UNetMasksExporter();
         break;
       default:
         throw new Error(`Unsupported format: ${format}`);

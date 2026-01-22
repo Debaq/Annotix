@@ -8,6 +8,7 @@ import { useUIStore } from '../store/uiStore';
 import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
 import { Button } from '@/components/ui/button';
 import { ExportDialog } from '@/features/export/components/ExportDialog';
+import { ImportDialog } from '@/features/import/components/ImportDialog';
 
 export const Header: React.FC = () => {
   const { t } = useTranslation();
@@ -48,6 +49,13 @@ export const Header: React.FC = () => {
       {/* Center Section: Project Controls */}
       <div className="flex items-center gap-2">
         <StorageIndicator />
+
+        {!project && (
+          <>
+            <div className="h-6 w-px bg-white/30 mx-1" />
+            <ImportDialog />
+          </>
+        )}
 
         {project && (
           <>

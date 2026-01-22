@@ -4,6 +4,7 @@ import { FormatSelector } from './FormatSelector';
 import { ExportProgress } from './ExportProgress';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { exportService } from '../services/exportService';
+import { ExportFormat, getValidFormats, getDefaultFormat } from '../utils/formatMapping';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,15 +20,26 @@ interface ExportDialogProps {
   trigger?: ReactNode;
 }
 
-export type ExportFormat = 'yolo-detection' | 'yolo-segmentation';
-
 export function ExportDialog({ trigger }: ExportDialogProps) {
   const { t } = useTranslation();
   const { project } = useCurrentProject();
   const [open, setOpen] = useState(false);
-  const [format, setFormat] = useState<ExportFormat>('yolo-detection');
+
+  // Get valid formats for this project type
+  const validFormats = getValidFormats(project?.type);
+  const defaultFormat = getDefaultFormat(project?.type);
+  const [format, setFormat] = useState<ExportFormat>(defaultFormat || 'yolo-detection');
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  // If no valid formats for this project type, don't render the dialog
+  if (!project || validFormats.length === 0) {
+    return trigger ? (
+      <div title={t('export.notAvailable')} className="opacity-50 cursor-not-allowed">
+        {trigger}
+      </div>
+    ) : null;
+  }
 
   const handleExport = async () => {
     if (!project?.id) return;
@@ -75,7 +87,7 @@ export function ExportDialog({ trigger }: ExportDialogProps) {
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <FormatSelector value={format} onChange={setFormat} />
+          <FormatSelector value={format} onChange={setFormat} validFormats={validFormats} />
 
           {isExporting && <ExportProgress progress={progress} />}
         </div>
