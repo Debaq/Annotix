@@ -679,6 +679,8 @@
       "trainingNotebook": "Training Notebook"
     },
     "formats": {
+      "tixGroupTitle": "Exportar backup o compartir",
+      "trainingGroupTitle": "Formatos de entrenamiento",
       "yoloDetection": "YOLO Detection",
       "yoloDetectionDesc": "Bounding boxes en formato YOLO normalizado (.txt) con data.yaml",
       "yoloSegmentation": "YOLO Segmentation",
@@ -710,7 +712,7 @@
     "downloadDataset": "Descargar dataset",
     "export": "Exportar",
     "exporting": "Exportando...",
-    "format": "Formato",
+    "format": "Formatos",
     "formatDescription": "Descripción del formato",
     "progress": "Progreso",
     "selectFormat": "Seleccionar formato de exportación"

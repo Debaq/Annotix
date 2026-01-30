@@ -480,6 +480,8 @@
             "trainingNotebook": "Training Notebook"
         },
         "formats": {
+            "tixGroupTitle": "Export backup or share",
+            "trainingGroupTitle": "Training formats",
             "yoloDetection": "YOLO Detection",
             "yoloDetectionDesc": "Bounding boxes in normalized YOLO format (.txt) with data.yaml configuration",
             "yoloSegmentation": "YOLO Segmentation",

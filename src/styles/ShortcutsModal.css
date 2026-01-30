@@ -7,6 +7,12 @@
   margin-top: 16px;
 }
 
+.shortcuts-panel {
+  max-height: 45vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
 .shortcut-item {
   display: flex;
   justify-content: space-between;
