@@ -54,7 +54,7 @@ export function ExportDialog({ trigger }: ExportDialogProps) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${project.name}-${format}.zip`;
+      a.download = `${project.name}-${format}${format === 'tix' ? '.tix' : '.zip'}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

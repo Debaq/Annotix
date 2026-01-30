@@ -24,6 +24,12 @@ export async function detectFormat(zip: JSZip): Promise<DetectionResult> {
     if (cocoResult) return cocoResult;
   }
 
+  // Detect TIX (Annotix) format: annotations.json + images/ folder with our schema
+  if (hasFile(files, 'annotations.json') && hasFolder(files, 'images')) {
+    const tixResult = await detectTIXFormat(zip, files);
+    if (tixResult) return tixResult;
+  }
+
   // Detect Pascal VOC format
   if (hasFolder(files, 'Annotations') && hasFolder(files, 'images')) {
     const vocResult = await detectPascalVOCFormat(zip, files);
@@ -206,6 +212,39 @@ async function detectUNetFormat(zip: JSZip, files: string[]): Promise<DetectionR
       projectType: 'instance-segmentation',
       confidence: 0.9,
       classCount: 2, // Binary masks
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function detectTIXFormat(zip: JSZip, files: string[]): Promise<DetectionResult | null> {
+  try {
+    const annotFile = zip.file('annotations.json');
+    if (!annotFile) return null;
+
+    const content = await annotFile.async('text');
+    const data = JSON.parse(content);
+
+    // Expecting a structure like { project, classes, images }
+    if (!data.images || !Array.isArray(data.images)) return null;
+
+    const classCount = Array.isArray(data.classes) ? data.classes.length : 0;
+
+    // Determine project type roughly by presence of segmentation fields
+    let projectType: ProjectType = 'bbox';
+    for (const img of data.images) {
+      if (img.annotations && img.annotations.some((a: any) => !!a.segmentation)) {
+        projectType = 'instance-segmentation';
+        break;
+      }
+    }
+
+    return {
+      format: 'tix',
+      projectType,
+      confidence: 0.95,
+      classCount,
     };
   } catch {
     return null;

@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Stage, Layer, Image as KonvaImage, Rect, Transformer } from 'react-konva';
+import { Stage, Layer, Image as KonvaImage, Rect, Transformer, Line, Circle } from 'react-konva';
 import { useCurrentImage } from '../../gallery/hooks/useCurrentImage';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useAnnotations } from '../hooks/useAnnotations';
@@ -9,7 +9,21 @@ import { FloatingTools } from './FloatingTools';
 import { FloatingZoomControls } from './FloatingZoomControls';
 import { ImageNavigation } from '../../gallery/components/ImageNavigation';
 import { AnnotationsBar } from './AnnotationsBar';
-import type { Annotation, BBoxData } from '@/lib/db';
+import { skeletonPresets } from '../data/skeletonPresets';
+import type { Annotation, BBoxData, OBBData, PolygonData, KeypointsData, LandmarksData, MaskData } from '@/lib/db';
+import type { MouseEventData } from '../types/handlers';
+import { BBoxHandler } from '../handlers/BBoxHandler';
+import { OBBHandler } from '../handlers/OBBHandler';
+import { PolygonHandler } from '../handlers/PolygonHandler';
+import { KeypointsHandler } from '../handlers/KeypointsHandler';
+import { LandmarksHandler } from '../handlers/LandmarksHandler';
+import { MaskHandler } from '../handlers/MaskHandler';
+import { BBoxRenderer } from './renderers/BBoxRenderer';
+import { OBBRenderer } from './renderers/OBBRenderer';
+import { PolygonRenderer } from './renderers/PolygonRenderer';
+import { KeypointsRenderer } from './renderers/KeypointsRenderer';
+import { LandmarksRenderer } from './renderers/LandmarksRenderer';
+import { MaskRenderer } from './renderers/MaskRenderer';
 
 const ZOOM_WHEEL_FACTOR = 1.05;
 const MIN_ZOOM_SCALE = 0.1;
@@ -34,9 +48,32 @@ export function AnnotationCanvas() {
   const [stageScale, setStageScale] = useState(1);
   const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 });
 
-  // Drawing state
-  const [newAnnotation, setNewAnnotation] = useState<any>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  // Initialize handlers
+  const classColor = useMemo(() => {
+    if (activeClassId === null) return '#FF6B6B';
+    const classInfo = project?.classes.find(c => c.id === activeClassId);
+    return classInfo?.color || '#FF6B6B';
+  }, [activeClassId, project]);
+
+  const bboxHandler = useMemo(() => new BBoxHandler(activeClassId, addAnnotation), [activeClassId, addAnnotation]);
+  const obbHandler = useMemo(() => new OBBHandler(activeClassId, addAnnotation), [activeClassId, addAnnotation]);
+  const polygonHandler = useMemo(() => new PolygonHandler(activeClassId, addAnnotation), [activeClassId, addAnnotation]);
+  const keypointsHandler = useMemo(() => new KeypointsHandler(activeClassId, addAnnotation), [activeClassId, addAnnotation]);
+  const landmarksHandler = useMemo(() => new LandmarksHandler(activeClassId, addAnnotation), [activeClassId, addAnnotation]);
+  const maskHandler = useMemo(() => new MaskHandler(activeClassId, addAnnotation, classColor), [activeClassId, addAnnotation, classColor]);
+
+  // Get current handler based on active tool
+  const currentHandler = useMemo(() => {
+    switch (activeTool) {
+      case 'bbox': return bboxHandler;
+      case 'obb': return obbHandler;
+      case 'polygon': return polygonHandler;
+      case 'keypoints': return keypointsHandler;
+      case 'landmarks': return landmarksHandler;
+      case 'mask': return maskHandler;
+      default: return null;
+    }
+  }, [activeTool, bboxHandler, obbHandler, polygonHandler, keypointsHandler, landmarksHandler, maskHandler]);
 
   // Load image
   useEffect(() => {
@@ -158,92 +195,56 @@ export function AnnotationCanvas() {
     }
   };
 
-  // Handle mouse down for drawing
-  const handleMouseDown = (e: any) => {
-    // Deselect when clicking on empty area
-    const clickedOnEmpty = e.target === e.target.getStage();
-    const clickedOnImage = e.target.getClassName() === 'Image';
-
-    if (clickedOnEmpty || clickedOnImage) {
-      selectAnnotation(null);
-    }
-
-    if (activeTool === 'bbox' && (clickedOnEmpty || clickedOnImage)) {
-      const stage = stageRef.current;
-      if (!stage) return;
-
-      const pos = stage.getPointerPosition();
-      if (!pos) return;
-
-      // Convert to image coordinates
-      const relativeX = pos.x - stagePos.x;
-      const relativeY = pos.y - stagePos.y;
-      const canvasX = relativeX / stageScale;
-      const canvasY = relativeY / stageScale;
-      const x = (canvasX - imageOffset.x) / scale;
-      const y = (canvasY - imageOffset.y) / scale;
-
-      setIsDrawing(true);
-      setNewAnnotation({
-        x,
-        y,
-        width: 0,
-        height: 0,
-      });
-    }
-  };
-
-  // Handle mouse move for drawing
-  const handleMouseMove = (e: any) => {
-    if (!isDrawing || !newAnnotation || activeTool !== 'bbox') return;
-
-    const stage = stageRef.current;
-    if (!stage) return;
-
+  // Helper to convert stage coordinates to image coordinates
+  const getImageCoordinates = useCallback((stage: any): MouseEventData | null => {
     const pos = stage.getPointerPosition();
-    if (!pos) return;
+    if (!pos) return null;
 
     const relativeX = pos.x - stagePos.x;
     const relativeY = pos.y - stagePos.y;
     const canvasX = relativeX / stageScale;
     const canvasY = relativeY / stageScale;
-    const x = (canvasX - imageOffset.x) / scale;
-    const y = (canvasY - imageOffset.y) / scale;
+    const imageX = (canvasX - imageOffset.x) / scale;
+    const imageY = (canvasY - imageOffset.y) / scale;
 
-    setNewAnnotation({
-      ...newAnnotation,
-      width: x - newAnnotation.x,
-      height: y - newAnnotation.y,
-    });
+    return { imageX, imageY, canvasX, canvasY };
+  }, [stagePos, stageScale, imageOffset, scale]);
+
+  // Handle mouse down for drawing
+  const handleMouseDown = (e: any) => {
+    const clickedOnEmpty = e.target === e.target.getStage();
+    const clickedOnImage = e.target.getClassName() === 'Image';
+
+    if (clickedOnEmpty || clickedOnImage) {
+      selectAnnotation(null);
+
+      if (currentHandler && stageRef.current) {
+        const coords = getImageCoordinates(stageRef.current);
+        if (coords) {
+          currentHandler.onMouseDown(coords);
+        }
+      }
+    }
+  };
+
+  // Handle mouse move for drawing
+  const handleMouseMove = (e: any) => {
+    if (!currentHandler || !stageRef.current) return;
+
+    const coords = getImageCoordinates(stageRef.current);
+    if (coords) {
+      currentHandler.onMouseMove(coords);
+    }
   };
 
   // Handle mouse up for drawing
   const handleMouseUp = () => {
-    if (isDrawing && newAnnotation && konvaImage && activeClassId !== null) {
-      // Normalize bbox
-      const normalizedBbox: BBoxData = {
-        x: newAnnotation.width < 0 ? newAnnotation.x + newAnnotation.width : newAnnotation.x,
-        y: newAnnotation.height < 0 ? newAnnotation.y + newAnnotation.height : newAnnotation.y,
-        width: Math.abs(newAnnotation.width),
-        height: Math.abs(newAnnotation.height),
-      };
+    if (!currentHandler || !stageRef.current) return;
 
-      // Minimum size threshold
-      const minSize = 5;
-      if (normalizedBbox.width > minSize && normalizedBbox.height > minSize) {
-        const annotation: Annotation = {
-          id: crypto.randomUUID(),
-          type: 'bbox',
-          classId: activeClassId,
-          data: normalizedBbox,
-        };
-
-        addAnnotation(annotation);
-      }
-
-      setNewAnnotation(null);
+    const coords = getImageCoordinates(stageRef.current);
+    if (coords) {
+      currentHandler.onMouseUp(coords);
     }
-    setIsDrawing(false);
   };
 
   // Handle annotation drag
@@ -283,6 +284,85 @@ export function AnnotationCanvas() {
       data: { x, y, width, height }
     });
   };
+
+  // Handle OBB-specific transform (including rotation)
+  const handleOBBTransform = (id: string, e: any) => {
+    const node = e.target;
+    const parent = node.getParent();
+    
+    const scaleX = node.scaleX();
+    const scaleY = node.scaleY();
+    const rotation = node.rotation();
+
+    // Reset scale
+    node.scaleX(1);
+    node.scaleY(1);
+
+    const parentX = parent.x();
+    const parentY = parent.y();
+    const x = (parentX - imageOffset.x) / scale;
+    const y = (parentY - imageOffset.y) / scale;
+    const width = Math.max(5, (node.width() * scaleX) / scale);
+    const height = Math.max(5, (node.height() * scaleY) / scale);
+
+    updateAnnotation(id, {
+      data: {
+        x,
+        y,
+        width,
+        height,
+        rotation: rotation % 360,
+      }
+    });
+  };
+
+  // Handle OBB drag
+  const handleOBBDragEnd = (id: string, e: any) => {
+    const group = e.target;
+    const x = (group.x() - imageOffset.x) / scale;
+    const y = (group.y() - imageOffset.y) / scale;
+
+    const currentAnn = annotations.find(a => a.id === id);
+    if (currentAnn && currentAnn.type === 'obb') {
+      const currentData = currentAnn.data as OBBData;
+      updateAnnotation(id, {
+        data: {
+          x,
+          y,
+          width: currentData.width,
+          height: currentData.height,
+          rotation: currentData.rotation,
+        }
+      });
+    }
+  };
+
+  // Keyboard shortcuts for handlers
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (currentHandler && currentHandler.isActive()) {
+        if (e.key === 'Enter' && currentHandler.finish) {
+          currentHandler.finish();
+        } else if (e.key === 'Escape' && currentHandler.cancel) {
+          currentHandler.cancel();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentHandler]);
+
+  // Initialize handlers when tool changes
+  useEffect(() => {
+    if (!konvaImage) return;
+
+    if (activeTool === 'keypoints' && keypointsHandler && !keypointsHandler.isActive()) {
+      keypointsHandler.initialize(konvaImage.width, konvaImage.height);
+    } else if (activeTool === 'mask' && maskHandler && !maskHandler.isActive()) {
+      maskHandler.initialize(konvaImage.width, konvaImage.height);
+    }
+  }, [activeTool, konvaImage, keypointsHandler, maskHandler]);
 
   // Reset zoom
   const handleResetZoom = useCallback(() => {
@@ -399,46 +479,240 @@ export function AnnotationCanvas() {
         {/* Annotations Layer */}
         <Layer>
           {annotations.map((ann) => {
-            if (ann.type !== 'bbox') return null;
-
-            const bboxData = ann.data as BBoxData;
             const classInfo = project.classes.find(c => c.id === ann.classId);
             if (!classInfo) return null;
 
             const isSelected = selectedAnnotationId === ann.id;
+            const commonProps = {
+              scale,
+              imageOffset,
+              color: classInfo.color,
+              isSelected,
+              listening: activeTool === 'select',
+              onClick: () => {
+                if (activeTool === 'select') {
+                  selectAnnotation(ann.id);
+                }
+              },
+            };
 
-            return (
-              <Rect
-                key={ann.id}
-                id={'ann-' + ann.id}
-                x={bboxData.x * scale + imageOffset.x}
-                y={bboxData.y * scale + imageOffset.y}
-                width={bboxData.width * scale}
-                height={bboxData.height * scale}
-                fill={classInfo.color + '20'}
-                stroke={classInfo.color}
-                strokeWidth={2}
-                draggable={activeTool === 'select' && isSelected}
-                listening={activeTool !== 'bbox'}
-                onClick={() => {
-                  if (activeTool === 'select') {
-                    selectAnnotation(ann.id);
-                  }
-                }}
-                onDragEnd={(e) => handleAnnotationDragEnd(ann.id, e)}
-                onTransformEnd={(e) => handleAnnotationTransform(ann.id, e)}
-              />
-            );
+            switch (ann.type) {
+              case 'bbox':
+                return (
+                  <BBoxRenderer
+                    key={ann.id}
+                    id={'ann-' + ann.id}
+                    data={ann.data as BBoxData}
+                    {...commonProps}
+                    draggable={activeTool === 'select' && isSelected}
+                    onDragEnd={(e) => handleAnnotationDragEnd(ann.id, e)}
+                    onTransformEnd={(e) => handleAnnotationTransform(ann.id, e)}
+                  />
+                );
+
+              case 'obb':
+                return (
+                  <OBBRenderer
+                    key={ann.id}
+                    id={'ann-' + ann.id}
+                    data={ann.data as OBBData}
+                    {...commonProps}
+                    draggable={activeTool === 'select' && isSelected}
+                    onDragEnd={(e) => handleOBBDragEnd(ann.id, e)}
+                    onTransformEnd={(e) => handleOBBTransform(ann.id, e)}
+                  />
+                );
+
+              case 'polygon':
+                return (
+                  <PolygonRenderer
+                    key={ann.id}
+                    id={'ann-' + ann.id}
+                    data={ann.data as PolygonData}
+                    {...commonProps}
+                    draggable={activeTool === 'select' && isSelected}
+                    onDragEnd={(e) => {
+                      const polygonData = ann.data as PolygonData;
+                      const group = e.target;
+                      const dx = group.x() / scale;
+                      const dy = group.y() / scale;
+                      const updatedPoints = polygonData.points.map(p => ({
+                        x: p.x + dx,
+                        y: p.y + dy
+                      }));
+                      updateAnnotation(ann.id, {
+                        data: {
+                          points: updatedPoints,
+                          closed: true,
+                        }
+                      });
+                      group.x(0);
+                      group.y(0);
+                    }}
+                  />
+                );
+
+              case 'keypoints':
+                return (
+                  <KeypointsRenderer
+                    key={ann.id}
+                    data={ann.data as KeypointsData}
+                    {...commonProps}
+                  />
+                );
+
+              case 'landmarks':
+                return (
+                  <LandmarksRenderer
+                    key={ann.id}
+                    data={ann.data as LandmarksData}
+                    {...commonProps}
+                  />
+                );
+
+              case 'mask':
+                return (
+                  <MaskRenderer
+                    key={ann.id}
+                    data={ann.data as MaskData}
+                    {...commonProps}
+                    opacity={0.6}
+                  />
+                );
+
+              default:
+                return null;
+            }
           })}
 
-          {/* New annotation being drawn */}
-          {newAnnotation && (
+          {/* Drawing previews for active tools */}
+          {activeTool === 'polygon' && polygonHandler.isActive() && (
+            <>
+              {polygonHandler.getPoints().length >= 2 && (
+                <Line
+                  points={polygonHandler.getPoints().flatMap(p => [
+                    p.x * scale + imageOffset.x,
+                    p.y * scale + imageOffset.y
+                  ])}
+                  stroke={classColor}
+                  strokeWidth={2}
+                  dash={[10, 5]}
+                />
+              )}
+
+              {polygonHandler.getPoints().map((point, idx) => (
+                <Circle
+                  key={`poly-point-${idx}`}
+                  x={point.x * scale + imageOffset.x}
+                  y={point.y * scale + imageOffset.y}
+                  radius={5}
+                  fill={classColor}
+                  stroke="white"
+                  strokeWidth={1}
+                />
+              ))}
+
+              {polygonHandler.getPoints().length >= 2 && (
+                <Line
+                  points={[
+                    polygonHandler.getPoints()[polygonHandler.getPoints().length - 1].x * scale + imageOffset.x,
+                    polygonHandler.getPoints()[polygonHandler.getPoints().length - 1].y * scale + imageOffset.y,
+                    polygonHandler.getPoints()[0].x * scale + imageOffset.x,
+                    polygonHandler.getPoints()[0].y * scale + imageOffset.y,
+                  ]}
+                  stroke={classColor}
+                  strokeWidth={1}
+                  dash={[5, 5]}
+                />
+              )}
+            </>
+          )}
+
+          {activeTool === 'keypoints' && keypointsHandler.isActive() && (
+            <>
+              {(() => {
+                const preset = skeletonPresets[keypointsHandler.getSkeletonType()];
+                return preset.connections.map(([startIdx, endIdx], connIdx) => {
+                  const start = keypointsHandler.getKeypoints()[startIdx];
+                  const end = keypointsHandler.getKeypoints()[endIdx];
+                  if (!start || !end) return null;
+
+                  return (
+                    <Line
+                      key={`temp-conn-${connIdx}`}
+                      points={[
+                        start.x * scale + imageOffset.x,
+                        start.y * scale + imageOffset.y,
+                        end.x * scale + imageOffset.x,
+                        end.y * scale + imageOffset.y,
+                      ]}
+                      stroke={classColor}
+                      strokeWidth={2}
+                    />
+                  );
+                });
+              })()}
+
+              {keypointsHandler.getKeypoints().map((kp, idx) => (
+                <Circle
+                  key={`temp-kp-${idx}`}
+                  x={kp.x * scale + imageOffset.x}
+                  y={kp.y * scale + imageOffset.y}
+                  radius={keypointsHandler.getSelectedIndex() === idx ? 7 : 5}
+                  fill={keypointsHandler.getSelectedIndex() === idx ? "#FF0000" : classColor}
+                  stroke="white"
+                  strokeWidth={2}
+                />
+              ))}
+            </>
+          )}
+
+          {activeTool === 'landmarks' && landmarksHandler.isActive() && (
+            <>
+              {landmarksHandler.getLandmarks().map((lm, idx) => (
+                <Circle
+                  key={`temp-lm-${idx}`}
+                  x={lm.x * scale + imageOffset.x}
+                  y={lm.y * scale + imageOffset.y}
+                  radius={5}
+                  fill={classColor}
+                  stroke="white"
+                  strokeWidth={2}
+                />
+              ))}
+            </>
+          )}
+
+          {activeTool === 'mask' && maskHandler.getMaskImage() && (
+            <KonvaImage
+              image={maskHandler.getMaskImage()!}
+              x={imageOffset.x}
+              y={imageOffset.y}
+              scaleX={scale}
+              scaleY={scale}
+              opacity={0.6}
+            />
+          )}
+
+          {activeTool === 'bbox' && bboxHandler.getDrawingData() && (
             <Rect
-              x={newAnnotation.x * scale + imageOffset.x}
-              y={newAnnotation.y * scale + imageOffset.y}
-              width={newAnnotation.width * scale}
-              height={newAnnotation.height * scale}
-              stroke="#FF6B6B"
+              x={bboxHandler.getDrawingData().startX * scale + imageOffset.x}
+              y={bboxHandler.getDrawingData().startY * scale + imageOffset.y}
+              width={bboxHandler.getDrawingData().width * scale}
+              height={bboxHandler.getDrawingData().height * scale}
+              stroke={classColor}
+              strokeWidth={2}
+              dash={[10, 5]}
+            />
+          )}
+
+          {activeTool === 'obb' && obbHandler.getDrawingData() && (
+            <Rect
+              x={obbHandler.getDrawingData().startX * scale + imageOffset.x}
+              y={obbHandler.getDrawingData().startY * scale + imageOffset.y}
+              width={obbHandler.getDrawingData().width * scale}
+              height={obbHandler.getDrawingData().height * scale}
+              stroke={classColor}
               strokeWidth={2}
               dash={[10, 5]}
             />
@@ -449,7 +723,7 @@ export function AnnotationCanvas() {
         <Layer>
           <Transformer
             ref={trRef}
-            rotateEnabled={false}
+            rotateEnabled={selectedAnnotationId ? annotations.find(a => a.id === selectedAnnotationId)?.type === 'obb' : false}
             keepRatio={false}
             boundBoxFunc={(oldBox, newBox) => {
               if (newBox.width < 5 || newBox.height < 5) {

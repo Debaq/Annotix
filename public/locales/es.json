@@ -698,7 +698,9 @@
       "foldersByClass": "Carpetas por Clase",
       "foldersByClassDesc": "Imágenes organizadas en carpetas separadas por nombre de clase",
       "unetMasks": "Máscaras U-Net",
-      "unetMasksDesc": "Imágenes PNG en escala de grises para entrenamiento de segmentación"
+      "unetMasksDesc": "Imágenes PNG en escala de grises para entrenamiento de segmentación",
+      "tix": "Proyecto Annotix (.tix)",
+      "tixDesc": "Exporta todo el proyecto en un archivo .tix para backup o compartir"
     },
     "notAvailable": "Exportación no disponible para este tipo de proyecto",
     "preparing": "Preparando exportación...",

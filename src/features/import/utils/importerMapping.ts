@@ -6,6 +6,7 @@ import { PascalVOCImporter } from '../importers/PascalVOCImporter';
 import { CSVImporter } from '../importers/CSVImporter';
 import { FoldersByClassImporter } from '../importers/FoldersByClassImporter';
 import { UNetMasksImporter } from '../importers/UNetMasksImporter';
+import { TIXImporter } from '../importers/TIXImporter';
 
 export function getImporterForFormat(format: ExportFormat): BaseImporter {
   switch (format) {
@@ -29,6 +30,8 @@ export function getImporterForFormat(format: ExportFormat): BaseImporter {
       return new FoldersByClassImporter();
     case 'unet-masks':
       return new UNetMasksImporter();
+    case 'tix':
+      return new TIXImporter();
     default:
       throw new Error(`Unsupported format: ${format}`);
   }
