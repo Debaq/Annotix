@@ -35,7 +35,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ open, onOpenChan
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span>⌨️</span>
@@ -54,7 +54,11 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ open, onOpenChan
           </TabsList>
 
           {categories.map(category => (
-            <TabsContent key={getCategoryTab(category.name)} value={getCategoryTab(category.name)}>
+            <TabsContent
+              key={getCategoryTab(category.name)}
+              value={getCategoryTab(category.name)}
+              className="shortcuts-panel"
+            >
               <div className="shortcuts-grid">
                 {category.shortcuts.map(shortcut => (
                   <div key={shortcut.id} className="shortcut-item">
