@@ -6,6 +6,7 @@ import { PascalVOCExporter } from '../exporters/PascalVOCExporter';
 import { CSVExporter } from '../exporters/CSVExporter';
 import { FoldersByClassExporter } from '../exporters/FoldersByClassExporter';
 import { UNetMasksExporter } from '../exporters/UNetMasksExporter';
+import { TIXExporter } from '../exporters/TIXExporter';
 
 export const exportService = {
   async export(
@@ -80,6 +81,9 @@ export const exportService = {
         break;
       case 'unet-masks':
         exporter = new UNetMasksExporter();
+        break;
+      case 'tix':
+        exporter = new TIXExporter();
         break;
       default:
         throw new Error(`Unsupported format: ${format}`);

@@ -4,6 +4,7 @@ export type ExportFormat =
   | 'yolo-detection'
   | 'yolo-segmentation'
   | 'coco'
+  | 'tix'
   | 'pascal-voc'
   | 'csv-detection'
   | 'csv-classification'
@@ -33,6 +34,11 @@ export const FORMAT_INFO: Record<ExportFormat, FormatInfo> = {
     id: 'coco',
     labelKey: 'export.formats.coco',
     descriptionKey: 'export.formats.cocoDesc',
+  },
+  tix: {
+    id: 'tix',
+    labelKey: 'export.formats.tix',
+    descriptionKey: 'export.formats.tixDesc',
   },
   'pascal-voc': {
     id: 'pascal-voc',
@@ -79,19 +85,19 @@ export function getValidFormats(projectType: ProjectType | undefined): ExportFor
 
   switch (projectType) {
     case 'bbox':
-      return ['yolo-detection', 'pascal-voc', 'coco', 'csv-detection'];
+      return ['yolo-detection', 'pascal-voc', 'coco', 'csv-detection', 'tix'];
 
     case 'obb':
       return ['yolo-detection', 'pascal-voc', 'coco'];
 
     case 'instance-segmentation':
-      return ['yolo-segmentation', 'coco', 'unet-masks'];
+      return ['yolo-segmentation', 'coco', 'unet-masks', 'tix'];
 
     case 'polygon':
-      return ['coco', 'unet-masks'];
+      return ['coco', 'unet-masks', 'tix'];
 
     case 'mask':
-      return ['unet-masks', 'coco'];
+      return ['unet-masks', 'coco', 'tix'];
 
     case 'classification':
     case 'multi-label-classification':

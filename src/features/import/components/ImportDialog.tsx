@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,7 @@ interface ImportDialogProps {
 export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { setCurrentProjectId } = useUIStore();
   
   const [open, setOpen] = useState(false);
@@ -55,7 +57,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.zip')) {
+    if (!file.name.endsWith('.zip') && !file.name.endsWith('.tix')) {
       setError(t('import.error.invalidZip'));
       return;
     }
@@ -72,7 +74,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
       setProgress(100);
       
       // Auto-fill project name
-      const baseName = file.name.replace('.zip', '');
+      const baseName = file.name.replace(/\.zip$|\.tix$/i, '');
       setProjectName(baseName);
       
       setStep('configure');
@@ -126,6 +128,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
   const handleOpenProject = () => {
     if (importedProjectId) {
       setCurrentProjectId(importedProjectId);
+      navigate(`/projects/${importedProjectId}`);
       setOpen(false);
       // Reset state
       setStep('select');
@@ -184,7 +187,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".zip"
+                accept=".zip,.tix"
                 onChange={handleFileSelect}
                 className="hidden"
               />
