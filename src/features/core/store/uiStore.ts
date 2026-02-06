@@ -82,7 +82,19 @@ export const useUIStore = create<UIState>()(
       currentProjectId: null,
       currentImageId: null,
       currentTimeSeriesId: null,
-      setCurrentProjectId: (id) => set({ currentProjectId: id, currentImageId: null, currentTimeSeriesId: null }),
+      setCurrentProjectId: (id) => set((state) => {
+        const projectChanged = state.currentProjectId !== null && state.currentProjectId !== id;
+        return {
+          currentProjectId: id, 
+          currentImageId: null, 
+          currentTimeSeriesId: null,
+          // Only reset tool and class when switching between projects (not on initial load)
+          ...(projectChanged && {
+            activeTool: 'pan',
+            activeClassId: null
+          })
+        };
+      }),
       setCurrentImageId: (id) => set({ currentImageId: id }),
       setCurrentTimeSeriesId: (id) => set({ currentTimeSeriesId: id }),
 

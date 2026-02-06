@@ -6,6 +6,44 @@ import { annotationService } from '../services/annotationService';
 import { useToast } from '@/components/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
+// Store global para control de guardado válido
+interface SaveGuardStore {
+  allowedImageId: number | null;
+  allowedProjectId: number | null;
+  captureContext: (imageId: number | null, projectId: number | null) => void;
+  invalidateContext: () => void;
+  isContextValid: (imageId: number | null) => boolean;
+}
+
+const useSaveGuard = create<SaveGuardStore>((set, get) => ({
+  allowedImageId: null,
+  allowedProjectId: null,
+  captureContext: (imageId, projectId) => {
+    console.log('[SaveGuard] Capturando contexto:', { imageId, projectId });
+    set({ allowedImageId: imageId, allowedProjectId: projectId });
+  },
+  invalidateContext: () => {
+    console.log('[SaveGuard] Invalidando contexto');
+    set({ allowedImageId: null, allowedProjectId: null });
+  },
+  isContextValid: (imageId) => {
+    const state = get();
+    // Si no hay contexto capturado, permitir (modo normal)
+    if (state.allowedImageId === null) return true;
+    // Si hay contexto capturado, solo permitir si coincide
+    return state.allowedImageId === imageId;
+  },
+}));
+
+// Exportar funciones para usar desde AnnotationCanvas
+export const captureSaveContext = (imageId: number | null, projectId: number | null) => {
+  useSaveGuard.getState().captureContext(imageId, projectId);
+};
+
+export const invalidateSaveContext = () => {
+  useSaveGuard.getState().invalidateContext();
+};
+
 interface AnnotationState {
   annotations: Annotation[];
   selectedAnnotationId: string | null;
@@ -64,11 +102,18 @@ export function useAnnotations() {
   }, [image?.id, setAnnotations, setSelectedAnnotationId]);
 
   const saveAnnotations = useCallback(async (targetAnnotations?: Annotation[], showToast = false) => {
-    if (!image?.id) return;
+    if (!image?.id) {
+      console.log('[useAnnotations] saveAnnotations - no image.id, cancelando');
+      return;
+    }
 
     const annsToSave = targetAnnotations ?? useAnnotationStore.getState().annotations;
+    console.log('[useAnnotations] saveAnnotations - guardando', annsToSave.length, 'anotaciones para imagen', image.id);
+    
     try {
       await annotationService.save(image.id, annsToSave);
+      console.log('[useAnnotations] saveAnnotations - guardado exitoso en DB');
+      
       if (showToast) {
         toast({
           title: t('notifications.imageSaved'),
@@ -76,7 +121,7 @@ export function useAnnotations() {
         });
       }
     } catch (error) {
-      console.error('Failed to save annotations:', error);
+      console.error('[useAnnotations] saveAnnotations - ERROR:', error);
       toast({
         title: t('notifications.error.saveImage'),
         variant: 'destructive',
@@ -86,11 +131,42 @@ export function useAnnotations() {
   }, [image?.id, toast, t]);
 
   const addAnnotation = useCallback(async (annotation: Annotation) => {
+    const currentImageId = image?.id || null;
+    
+    // VALIDACIÓN CRÍTICA: Verificar contexto de guardado
+    const isValid = useSaveGuard.getState().isContextValid(currentImageId);
+    
+    if (!currentImageId) {
+      console.error('[useAnnotations] BLOQUEADO: No hay imagen activa');
+      return;
+    }
+    
+    if (!isValid) {
+      console.error('[useAnnotations] BLOQUEADO: Contexto de guardado inválido', {
+        imagenActual: currentImageId,
+        imagenPermitida: useSaveGuard.getState().allowedImageId
+      });
+      return;
+    }
+    
+    console.log('[useAnnotations] addAnnotation llamado con:', {
+      id: annotation.id,
+      type: annotation.type,
+      classId: annotation.classId,
+      hasData: !!annotation.data,
+      imageId: currentImageId
+    });
+    
     addAnnotationState(annotation);
+    
     // Auto-save using latest state from store
     const latestAnns = useAnnotationStore.getState().annotations;
+    console.log('[useAnnotations] Guardando en DB, total annotations:', latestAnns.length, 'para imagen:', currentImageId);
+    
     await saveAnnotations(latestAnns);
-  }, [addAnnotationState, saveAnnotations]);
+    
+    console.log('[useAnnotations] Anotación guardada exitosamente en imagen:', currentImageId);
+  }, [addAnnotationState, saveAnnotations, image?.id]);
 
   const updateAnnotation = useCallback(async (id: string, updates: Partial<Annotation>) => {
     updateAnnotationState(id, updates);

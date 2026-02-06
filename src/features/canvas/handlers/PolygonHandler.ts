@@ -9,6 +9,14 @@ export class PolygonHandler implements BaseHandler {
     private onAddAnnotation: (annotation: Annotation) => void
   ) {}
 
+  updateActiveClassId(classId: number | null): void {
+    this.activeClassId = classId;
+  }
+
+  updateAddAnnotationCallback(callback: (annotation: Annotation) => void): void {
+    this.onAddAnnotation = callback;
+  }
+
   onMouseDown(event: MouseEventData): void {
     if (this.activeClassId === null) return;
 
