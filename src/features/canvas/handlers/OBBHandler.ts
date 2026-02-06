@@ -6,14 +6,30 @@ export class OBBHandler implements BaseHandler {
     isDrawing: false,
     data: null,
   };
+  private onDrawingDataUpdate: ((data: any) => void) | null = null;
+  private isValid: boolean = true;
 
   constructor(
     private activeClassId: number | null,
     private onAddAnnotation: (annotation: Annotation) => void
   ) {}
 
+  setDrawingDataUpdateCallback(callback: (data: any) => void): void {
+    this.onDrawingDataUpdate = callback;
+  }
+
+  updateActiveClassId(classId: number | null): void {
+    this.activeClassId = classId;
+  }
+
+  updateAddAnnotationCallback(callback: (annotation: Annotation) => void): void {
+    this.onAddAnnotation = callback;
+  }
+
   onMouseDown(event: MouseEventData): void {
     if (this.activeClassId === null) return;
+
+    this.isValid = true; // Revalidar al empezar nuevo dibujo
 
     this.drawingState = {
       isDrawing: true,
@@ -34,11 +50,18 @@ export class OBBHandler implements BaseHandler {
       width: event.imageX - this.drawingState.data.startX,
       height: event.imageY - this.drawingState.data.startY,
     };
+
+    if (this.onDrawingDataUpdate) {
+      this.onDrawingDataUpdate(this.drawingState.data);
+    }
   }
 
   onMouseUp(event: MouseEventData): void {
     if (!this.drawingState.isDrawing || !this.drawingState.data || this.activeClassId === null) {
       this.drawingState.isDrawing = false;
+      if (this.onDrawingDataUpdate) {
+        this.onDrawingDataUpdate(null);
+      }
       return;
     }
 
@@ -67,6 +90,9 @@ export class OBBHandler implements BaseHandler {
     }
 
     this.drawingState = { isDrawing: false, data: null };
+    if (this.onDrawingDataUpdate) {
+      this.onDrawingDataUpdate(null);
+    }
   }
 
   isActive(): boolean {

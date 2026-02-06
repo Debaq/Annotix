@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Stage, Layer, Image as KonvaImage, Rect, Transformer, Line, Circle } from 'react-konva';
 import { useCurrentImage } from '../../gallery/hooks/useCurrentImage';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
-import { useAnnotations } from '../hooks/useAnnotations';
+import { useAnnotations, captureSaveContext, invalidateSaveContext } from '../hooks/useAnnotations';
 import { useUIStore } from '../../core/store/uiStore';
 import { FloatingTools } from './FloatingTools';
 import { FloatingZoomControls } from './FloatingZoomControls';
@@ -34,7 +34,7 @@ export function AnnotationCanvas() {
   const { image } = useCurrentImage();
   const { project } = useCurrentProject();
   const { annotations, selectedAnnotationId, selectAnnotation, updateAnnotation, addAnnotation } = useAnnotations();
-  const { activeTool, activeClassId } = useUIStore();
+  const { activeTool, activeClassId, setActiveTool } = useUIStore();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<any>(null);
@@ -47,6 +47,15 @@ export function AnnotationCanvas() {
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
   const [stageScale, setStageScale] = useState(1);
   const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 });
+  const [maskImage, setMaskImage] = useState<HTMLImageElement | null>(null);
+  const [bboxDrawingData, setBboxDrawingData] = useState<any>(null);
+  const [obbDrawingData, setObbDrawingData] = useState<any>(null);
+
+  // Track previous tool to finish handlers when switching
+  const prevToolRef = useRef<string | null>(null);
+  const prevImageIdRef = useRef<number | null>(null);
+  const prevProjectIdRef = useRef<number | null>(null);
+  const justChangedProjectRef = useRef<boolean>(false);
 
   // Initialize handlers
   const classColor = useMemo(() => {
@@ -55,25 +64,97 @@ export function AnnotationCanvas() {
     return classInfo?.color || '#FF6B6B';
   }, [activeClassId, project]);
 
-  const bboxHandler = useMemo(() => new BBoxHandler(activeClassId, addAnnotation), [activeClassId, addAnnotation]);
-  const obbHandler = useMemo(() => new OBBHandler(activeClassId, addAnnotation), [activeClassId, addAnnotation]);
-  const polygonHandler = useMemo(() => new PolygonHandler(activeClassId, addAnnotation), [activeClassId, addAnnotation]);
-  const keypointsHandler = useMemo(() => new KeypointsHandler(activeClassId, addAnnotation), [activeClassId, addAnnotation]);
-  const landmarksHandler = useMemo(() => new LandmarksHandler(activeClassId, addAnnotation), [activeClassId, addAnnotation]);
-  const maskHandler = useMemo(() => new MaskHandler(activeClassId, addAnnotation, classColor), [activeClassId, addAnnotation, classColor]);
+  const bboxHandlerRef = useRef<BBoxHandler | null>(null);
+  if (!bboxHandlerRef.current) {
+    bboxHandlerRef.current = new BBoxHandler(null, addAnnotation);
+  }
+  const bboxHandler = bboxHandlerRef.current;
+
+  const obbHandlerRef = useRef<OBBHandler | null>(null);
+  if (!obbHandlerRef.current) {
+    obbHandlerRef.current = new OBBHandler(null, addAnnotation);
+  }
+  const obbHandler = obbHandlerRef.current;
+
+  const polygonHandlerRef = useRef<PolygonHandler | null>(null);
+  if (!polygonHandlerRef.current) {
+    polygonHandlerRef.current = new PolygonHandler(null, addAnnotation);
+  }
+  const polygonHandler = polygonHandlerRef.current;
+
+  const keypointsHandlerRef = useRef<KeypointsHandler | null>(null);
+  if (!keypointsHandlerRef.current) {
+    keypointsHandlerRef.current = new KeypointsHandler(null, addAnnotation);
+  }
+  const keypointsHandler = keypointsHandlerRef.current;
+
+  const landmarksHandlerRef = useRef<LandmarksHandler | null>(null);
+  if (!landmarksHandlerRef.current) {
+    landmarksHandlerRef.current = new LandmarksHandler(null, addAnnotation);
+  }
+  const landmarksHandler = landmarksHandlerRef.current;
+  
+  const maskHandlerRef = useRef<MaskHandler | null>(null);
+  if (!maskHandlerRef.current) {
+    maskHandlerRef.current = new MaskHandler(null, addAnnotation, '#FF6B6B');
+  }
+  const maskHandler = maskHandlerRef.current;
+
+  // Registrar callbacks y actualizar activeClassId cuando cambia
+  useEffect(() => {
+    bboxHandler.setDrawingDataUpdateCallback(setBboxDrawingData);
+    bboxHandler.updateActiveClassId(activeClassId);
+  }, [activeClassId]);
+
+  useEffect(() => {
+    obbHandler.setDrawingDataUpdateCallback(setObbDrawingData);
+    obbHandler.updateActiveClassId(activeClassId);
+  }, [activeClassId]);
+
+  useEffect(() => {
+    polygonHandler.updateActiveClassId(activeClassId);
+  }, [activeClassId]);
+
+  useEffect(() => {
+    keypointsHandler.updateActiveClassId(activeClassId);
+  }, [activeClassId]);
+
+  useEffect(() => {
+    landmarksHandler.updateActiveClassId(activeClassId);
+  }, [activeClassId]);
+
+  // Actualizar activeClassId y classColor en el MaskHandler sin recrearlo
+  useEffect(() => {
+    console.log('[AnnotationCanvas] Actualizando MaskHandler con activeClassId:', activeClassId, 'y color:', classColor);
+    maskHandler.updateActiveClassId(activeClassId);
+    maskHandler.updateClassColor(classColor);
+    // Registrar callback para actualizaciones de la imagen
+    maskHandler.setMaskImageUpdateCallback(setMaskImage);
+  }, [activeClassId, classColor]);
+
+  // Actualizar callback de addAnnotation en TODOS los handlers cuando cambia
+  useEffect(() => {
+    console.log('[AnnotationCanvas] Actualizando callback addAnnotation en todos los handlers');
+    bboxHandler.updateAddAnnotationCallback(addAnnotation);
+    obbHandler.updateAddAnnotationCallback(addAnnotation);
+    polygonHandler.updateAddAnnotationCallback(addAnnotation);
+    keypointsHandler.updateAddAnnotationCallback(addAnnotation);
+    landmarksHandler.updateAddAnnotationCallback(addAnnotation);
+    maskHandler.updateAddAnnotationCallback(addAnnotation);
+  }, [addAnnotation]);
 
   // Get current handler based on active tool
   const currentHandler = useMemo(() => {
     switch (activeTool) {
-      case 'bbox': return bboxHandler;
-      case 'obb': return obbHandler;
-      case 'polygon': return polygonHandler;
-      case 'keypoints': return keypointsHandler;
-      case 'landmarks': return landmarksHandler;
-      case 'mask': return maskHandler;
+      case 'bbox': return activeClassId !== null ? bboxHandler : null;
+      case 'obb': return activeClassId !== null ? obbHandler : null;
+      case 'polygon': return activeClassId !== null ? polygonHandler : null;
+      case 'keypoints': return activeClassId !== null ? keypointsHandler : null;
+      case 'landmarks': return activeClassId !== null ? landmarksHandler : null;
+      case 'mask': return activeClassId !== null ? maskHandler : null;
       default: return null;
     }
-  }, [activeTool, bboxHandler, obbHandler, polygonHandler, keypointsHandler, landmarksHandler, maskHandler]);
+  }, [activeTool, activeClassId]);
 
   // Load image
   useEffect(() => {
@@ -219,6 +300,10 @@ export function AnnotationCanvas() {
       selectAnnotation(null);
 
       if (currentHandler && stageRef.current) {
+        // CRÍTICO: Capturar contexto ANTES de empezar a dibujar
+        captureSaveContext(image?.id || null, project?.id || null);
+        console.log('[AnnotationCanvas] Iniciando dibujo en imagen:', image?.id, 'proyecto:', project?.id);
+        
         const coords = getImageCoordinates(stageRef.current);
         if (coords) {
           currentHandler.onMouseDown(coords);
@@ -353,16 +438,120 @@ export function AnnotationCanvas() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentHandler]);
 
-  // Initialize handlers when tool changes
+  // Finish previous handler when tool changes or image changes
   useEffect(() => {
     if (!konvaImage) return;
 
-    if (activeTool === 'keypoints' && keypointsHandler && !keypointsHandler.isActive()) {
+    const prevTool = prevToolRef.current;
+    const prevImageId = prevImageIdRef.current;
+    const prevProjectId = prevProjectIdRef.current;
+    const currentImageId = image?.id || null;
+    const currentProjectId = project?.id || null;
+
+    // Si cambió el proyecto, resetear TODO sin guardar y SALIR
+    if (prevProjectId !== null && prevProjectId !== currentProjectId) {
+      console.log('[AnnotationCanvas] Proyecto cambió, reseteando todos los handlers SIN guardar');
+      
+      // INVALIDAR contexto de guardado para prevenir guardados futuros
+      invalidateSaveContext();
+      
+      // Marcar que acabamos de cambiar de proyecto
+      justChangedProjectRef.current = true;
+      
+      // NO guardar, solo resetear
+      if (maskHandler.isActive()) {
+        maskHandler.cancel();
+      }
+      if (keypointsHandler.isActive()) {
+        keypointsHandler.cancel();
+      }
+      bboxHandler.cancel();
+      obbHandler.cancel();
+      polygonHandler.cancel();
+      landmarksHandler.cancel();
+      
+      // Limpiar estados de preview en React
+      setBboxDrawingData(null);
+      setObbDrawingData(null);
+      setMaskImage(null);
+      
+      // Actualizar referencias y SALIR para no ejecutar lógica de cambio de imagen
+      prevToolRef.current = activeTool;
+      prevImageIdRef.current = currentImageId;
+      prevProjectIdRef.current = currentProjectId;
+      return;
+    }
+
+    // Si cambió la imagen (pero NO el proyecto), guardar cualquier handler activo y resetear TODOS
+    if (prevImageId !== null && prevImageId !== currentImageId) {
+      console.log('[AnnotationCanvas] Imagen cambió');
+      
+      // Si acabamos de cambiar de proyecto, NO guardar nada
+      if (justChangedProjectRef.current) {
+        console.log('[AnnotationCanvas] Acabamos de cambiar de proyecto, NO guardando');
+        justChangedProjectRef.current = false; // Reset flag
+      } else {
+        console.log('[AnnotationCanvas] Guardando handlers activos antes de cambiar imagen');
+        
+        // Guardar handlers que necesitan finish
+        if (maskHandler.isActive()) {
+          console.log('[AnnotationCanvas] Guardando máscara antes de cambiar imagen');
+          maskHandler.finish();
+        }
+        if (keypointsHandler.isActive()) {
+          keypointsHandler.finish();
+        }
+      }
+      
+      // Resetear TODOS los handlers para evitar dibujar en imagen incorrecta
+      console.log('[AnnotationCanvas] Reseteando todos los handlers');
+      bboxHandler.cancel();
+      obbHandler.cancel();
+      polygonHandler.cancel();
+      landmarksHandler.cancel();
+      if (!justChangedProjectRef.current) {
+        // Solo resetear estos si no lo hicimos ya en el cambio de proyecto
+        if (maskHandler.isActive()) maskHandler.cancel();
+        if (keypointsHandler.isActive()) keypointsHandler.cancel();
+      }
+      
+      // Limpiar estados de preview en React
+      setBboxDrawingData(null);
+      setObbDrawingData(null);
+    }
+
+    // Si cambió la herramienta, guardar el handler anterior
+    if (prevTool !== null && prevTool !== activeTool) {
+      console.log('[AnnotationCanvas] Tool cambió de', prevTool, 'a', activeTool);
+      
+      if (prevTool === 'mask' && maskHandler.isActive()) {
+        console.log('[AnnotationCanvas] Guardando máscara antes de cambiar tool');
+        maskHandler.finish();
+      } else if (prevTool === 'keypoints' && keypointsHandler.isActive()) {
+        keypointsHandler.finish();
+      }
+    }
+
+    // Actualizar referencias
+    prevToolRef.current = activeTool;
+    prevImageIdRef.current = currentImageId;
+    prevProjectIdRef.current = currentProjectId;
+  }, [activeTool, konvaImage, image?.id, project?.id]);
+
+  // Inicializar handler SOLO cuando cambia el tool activo (no cuando cambia imagen/proyecto)
+  useEffect(() => {
+    if (!konvaImage) return;
+
+    console.log('[AnnotationCanvas] Tool cambió, inicializando handler si es necesario:', activeTool);
+    
+    if (activeTool === 'keypoints' && !keypointsHandler.isActive()) {
+      console.log('[AnnotationCanvas] Inicializando keypointsHandler');
       keypointsHandler.initialize(konvaImage.width, konvaImage.height);
-    } else if (activeTool === 'mask' && maskHandler && !maskHandler.isActive()) {
+    } else if (activeTool === 'mask' && !maskHandler.isActive()) {
+      console.log('[AnnotationCanvas] Inicializando maskHandler');
       maskHandler.initialize(konvaImage.width, konvaImage.height);
     }
-  }, [activeTool, konvaImage, keypointsHandler, maskHandler]);
+  }, [activeTool, konvaImage]);
 
   // Reset zoom
   const handleResetZoom = useCallback(() => {
@@ -683,35 +872,37 @@ export function AnnotationCanvas() {
             </>
           )}
 
-          {activeTool === 'mask' && maskHandler.getMaskImage() && (
+          {/* Mask drawing preview - show while drawing or when switching tools */}
+          {maskImage && (
             <KonvaImage
-              image={maskHandler.getMaskImage()!}
+              image={maskImage}
               x={imageOffset.x}
               y={imageOffset.y}
               scaleX={scale}
               scaleY={scale}
               opacity={0.6}
+              listening={false}
             />
           )}
 
-          {activeTool === 'bbox' && bboxHandler.getDrawingData() && (
+          {activeTool === 'bbox' && bboxDrawingData && (
             <Rect
-              x={bboxHandler.getDrawingData().startX * scale + imageOffset.x}
-              y={bboxHandler.getDrawingData().startY * scale + imageOffset.y}
-              width={bboxHandler.getDrawingData().width * scale}
-              height={bboxHandler.getDrawingData().height * scale}
+              x={bboxDrawingData.startX * scale + imageOffset.x}
+              y={bboxDrawingData.startY * scale + imageOffset.y}
+              width={bboxDrawingData.width * scale}
+              height={bboxDrawingData.height * scale}
               stroke={classColor}
               strokeWidth={2}
               dash={[10, 5]}
             />
           )}
 
-          {activeTool === 'obb' && obbHandler.getDrawingData() && (
+          {activeTool === 'obb' && obbDrawingData && (
             <Rect
-              x={obbHandler.getDrawingData().startX * scale + imageOffset.x}
-              y={obbHandler.getDrawingData().startY * scale + imageOffset.y}
-              width={obbHandler.getDrawingData().width * scale}
-              height={obbHandler.getDrawingData().height * scale}
+              x={obbDrawingData.startX * scale + imageOffset.x}
+              y={obbDrawingData.startY * scale + imageOffset.y}
+              width={obbDrawingData.width * scale}
+              height={obbDrawingData.height * scale}
               stroke={classColor}
               strokeWidth={2}
               dash={[10, 5]}

@@ -18,6 +18,14 @@ export class KeypointsHandler implements BaseHandler {
     private skeletonType: string = 'coco-17'
   ) {}
 
+  updateActiveClassId(classId: number | null): void {
+    this.activeClassId = classId;
+  }
+
+  updateAddAnnotationCallback(callback: (annotation: Annotation) => void): void {
+    this.onAddAnnotation = callback;
+  }
+
   initialize(imageWidth: number, imageHeight: number): void {
     const preset = skeletonPresets[this.skeletonType];
     if (!preset) return;
