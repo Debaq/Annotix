@@ -32,7 +32,7 @@ export const ALL_TOOLS: ToolDefinition[] = [
   { id: 'polygon', icon: 'fa-draw-polygon', key: 'P', name: 'tools.polygon' },
   { id: 'keypoints', icon: 'fa-user-circle', key: 'K', name: 'tools.keypoints' },
   { id: 'landmarks', icon: 'fa-map-marker-alt', key: 'L', name: 'tools.landmarks' },
-  { id: 'obb', icon: 'fa-rectangle-wide', key: 'O', name: 'tools.obb' },
+  { id: 'obb', icon: 'fa-rotate', key: 'O', name: 'tools.obb' },
 ];
 
 // Tools available per project type

@@ -11,6 +11,8 @@ export class KeypointsHandler implements BaseHandler {
   private keypoints: KeypointData[] = [];
   private selectedKeypointIndex: number | null = null;
   private isDragging: boolean = false;
+  private onPreviewUpdate: (() => void) | null = null;
+  private readonly selectionRadius: number = 20;
 
   constructor(
     private activeClassId: number | null,
@@ -26,56 +28,92 @@ export class KeypointsHandler implements BaseHandler {
     this.onAddAnnotation = callback;
   }
 
-  initialize(imageWidth: number, imageHeight: number): void {
+  setPreviewUpdateCallback(callback: () => void): void {
+    this.onPreviewUpdate = callback;
+  }
+
+  private notifyPreviewUpdate(): void {
+    if (this.onPreviewUpdate) {
+      this.onPreviewUpdate();
+    }
+  }
+
+  initialize(_imageWidth: number, _imageHeight: number): void {
     const preset = skeletonPresets[this.skeletonType];
     if (!preset) return;
 
-    // Create initial keypoints at center with grid layout
-    const centerX = imageWidth / 2;
-    const centerY = imageHeight / 2;
-    const gridCols = Math.ceil(Math.sqrt(preset.points.length));
-    const spacing = 30;
-
-    this.keypoints = preset.points.map((name, idx) => ({
-      x: centerX + (idx % gridCols) * spacing - (gridCols * spacing) / 2,
-      y: centerY + Math.floor(idx / gridCols) * spacing - (Math.floor(preset.points.length / gridCols) * spacing) / 2,
-      visible: true,
-      name,
-    }));
-
-    this.selectedKeypointIndex = 0;
+    // No auto-create keypoints. User places them with clicks.
+    this.keypoints = [];
+    this.selectedKeypointIndex = null;
+    this.isDragging = false;
+    this.notifyPreviewUpdate();
   }
 
-  onMouseDown(event: MouseEventData): void {
-    if (this.keypoints.length === 0 || this.activeClassId === null) return;
+  private findClosestKeypointIndex(x: number, y: number): { index: number; distance: number } | null {
+    if (this.keypoints.length === 0) return null;
 
-    // Find closest keypoint
     let closestIdx = 0;
     let minDist = Infinity;
 
     this.keypoints.forEach((kp, idx) => {
-      const dist = Math.sqrt((kp.x - event.imageX) ** 2 + (kp.y - event.imageY) ** 2);
+      const dist = Math.hypot(kp.x - x, kp.y - y);
       if (dist < minDist) {
         minDist = dist;
         closestIdx = idx;
       }
     });
 
-    // Select if close enough (within 20 pixels)
-    if (minDist < 20) {
-      this.selectedKeypointIndex = closestIdx;
+    return { index: closestIdx, distance: minDist };
+  }
+
+  onMouseDown(event: MouseEventData): void {
+    if (this.activeClassId === null) return;
+
+    const preset = skeletonPresets[this.skeletonType];
+    if (!preset) return;
+
+    const closest = this.findClosestKeypointIndex(event.imageX, event.imageY);
+
+    if (closest && closest.distance <= this.selectionRadius) {
+      this.selectedKeypointIndex = closest.index;
       this.isDragging = true;
+      this.notifyPreviewUpdate();
+      return;
+    }
+
+    if (this.keypoints.length < preset.points.length) {
+      const nextIndex = this.keypoints.length;
+      const nextName = preset.points[nextIndex];
+
+      this.keypoints = [
+        ...this.keypoints,
+        {
+          x: event.imageX,
+          y: event.imageY,
+          visible: true,
+          name: nextName,
+        },
+      ];
+
+      this.selectedKeypointIndex = nextIndex;
+      this.isDragging = true;
+      this.notifyPreviewUpdate();
     }
   }
 
   onMouseMove(event: MouseEventData): void {
     if (!this.isDragging || this.selectedKeypointIndex === null) return;
 
-    this.keypoints[this.selectedKeypointIndex] = {
-      ...this.keypoints[this.selectedKeypointIndex],
-      x: event.imageX,
-      y: event.imageY,
-    };
+    this.keypoints = this.keypoints.map((kp, idx) => {
+      if (idx !== this.selectedKeypointIndex) return kp;
+      return {
+        ...kp,
+        x: event.imageX,
+        y: event.imageY,
+      };
+    });
+
+    this.notifyPreviewUpdate();
   }
 
   onMouseUp(event: MouseEventData): void {
@@ -125,5 +163,6 @@ export class KeypointsHandler implements BaseHandler {
     this.keypoints = [];
     this.selectedKeypointIndex = null;
     this.isDragging = false;
+    this.notifyPreviewUpdate();
   }
 }
