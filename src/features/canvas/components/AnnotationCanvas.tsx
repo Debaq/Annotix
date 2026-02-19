@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, useReducer } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Stage, Layer, Image as KonvaImage, Rect, Transformer, Line, Circle } from 'react-konva';
 import { useCurrentImage } from '../../gallery/hooks/useCurrentImage';
@@ -50,6 +50,7 @@ export function AnnotationCanvas() {
   const [maskImage, setMaskImage] = useState<HTMLImageElement | null>(null);
   const [bboxDrawingData, setBboxDrawingData] = useState<any>(null);
   const [obbDrawingData, setObbDrawingData] = useState<any>(null);
+  const [, forceKeypointsPreviewUpdate] = useReducer((v: number) => v + 1, 0);
 
   // Track previous tool to finish handlers when switching
   const prevToolRef = useRef<string | null>(null);
@@ -118,6 +119,12 @@ export function AnnotationCanvas() {
   useEffect(() => {
     keypointsHandler.updateActiveClassId(activeClassId);
   }, [activeClassId]);
+
+  useEffect(() => {
+    keypointsHandler.setPreviewUpdateCallback(() => {
+      forceKeypointsPreviewUpdate();
+    });
+  }, [keypointsHandler]);
 
   useEffect(() => {
     landmarksHandler.updateActiveClassId(activeClassId);
@@ -248,6 +255,16 @@ export function AnnotationCanvas() {
     const stage = stageRef.current;
     if (!stage) return;
 
+    // Si es proyecto mask y se presiona Ctrl, ajustar tamaño de pincel
+    if (project?.type === 'mask' && e.evt.ctrlKey && maskHandler) {
+      const delta = e.evt.deltaY > 0 ? -2 : 2; // Invertir para que scroll up = más grande
+      const currentSize = maskHandler.getBrushSize();
+      const newSize = Math.max(5, Math.min(100, currentSize + delta));
+      maskHandler.setBrushSize(newSize);
+      return;
+    }
+
+    // Zoom normal si no es mask o no hay Ctrl
     const oldScale = stageScale;
     const pointer = stage.getPointerPosition();
 
@@ -373,8 +390,7 @@ export function AnnotationCanvas() {
   // Handle OBB-specific transform (including rotation)
   const handleOBBTransform = (id: string, e: any) => {
     const node = e.target;
-    const parent = node.getParent();
-    
+
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
     const rotation = node.rotation();
@@ -383,12 +399,18 @@ export function AnnotationCanvas() {
     node.scaleX(1);
     node.scaleY(1);
 
-    const parentX = parent.x();
-    const parentY = parent.y();
-    const x = (parentX - imageOffset.x) / scale;
-    const y = (parentY - imageOffset.y) / scale;
-    const width = Math.max(5, (node.width() * scaleX) / scale);
-    const height = Math.max(5, (node.height() * scaleY) / scale);
+    const x = (node.x() - imageOffset.x) / scale;
+    const y = (node.y() - imageOffset.y) / scale;
+
+    const currentAnn = annotations.find(a => a.id === id);
+    if (!currentAnn || currentAnn.type !== 'obb') {
+      return;
+    }
+
+    const currentData = currentAnn.data as OBBData;
+    const width = Math.max(5, currentData.width * scaleX);
+    const height = Math.max(5, currentData.height * scaleY);
+    const normalizedRotation = ((rotation % 360) + 360) % 360;
 
     updateAnnotation(id, {
       data: {
@@ -396,7 +418,7 @@ export function AnnotationCanvas() {
         y,
         width,
         height,
-        rotation: rotation % 360,
+        rotation: normalizedRotation,
       }
     });
   };
@@ -425,6 +447,7 @@ export function AnnotationCanvas() {
   // Keyboard shortcuts for handlers
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Handler specific shortcuts (Enter/Escape)
       if (currentHandler && currentHandler.isActive()) {
         if (e.key === 'Enter' && currentHandler.finish) {
           currentHandler.finish();
@@ -432,11 +455,37 @@ export function AnnotationCanvas() {
           currentHandler.cancel();
         }
       }
+
+      // Mask-specific shortcuts (solo en proyectos mask)
+      if (project?.type === 'mask' && maskHandler) {
+        // [: Disminuir tamaño de pincel
+        if (e.key === '[') {
+          e.preventDefault();
+          const currentSize = maskHandler.getBrushSize();
+          maskHandler.setBrushSize(currentSize - 5);
+          return;
+        }
+        
+        // ]: Aumentar tamaño de pincel
+        if (e.key === ']') {
+          e.preventDefault();
+          const currentSize = maskHandler.getBrushSize();
+          maskHandler.setBrushSize(currentSize + 5);
+          return;
+        }
+        
+        // E: Toggle modo borrador
+        if (e.key === 'e' || e.key === 'E') {
+          e.preventDefault();
+          maskHandler.toggleEraseMode();
+          return;
+        }
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentHandler]);
+  }, [currentHandler, project?.type, maskHandler]);
 
   // Finish previous handler when tool changes or image changes
   useEffect(() => {
@@ -499,7 +548,7 @@ export function AnnotationCanvas() {
           maskHandler.finish();
         }
         if (keypointsHandler.isActive()) {
-          keypointsHandler.finish();
+          keypointsHandler.cancel();
         }
       }
       
@@ -528,7 +577,7 @@ export function AnnotationCanvas() {
         console.log('[AnnotationCanvas] Guardando máscara antes de cambiar tool');
         maskHandler.finish();
       } else if (prevTool === 'keypoints' && keypointsHandler.isActive()) {
-        keypointsHandler.finish();
+        keypointsHandler.cancel();
       }
     }
 
@@ -824,11 +873,12 @@ export function AnnotationCanvas() {
                 return preset.connections.map(([startIdx, endIdx], connIdx) => {
                   const start = keypointsHandler.getKeypoints()[startIdx];
                   const end = keypointsHandler.getKeypoints()[endIdx];
-                  if (!start || !end) return null;
+                  if (!start || !end || !start.visible || !end.visible) return null;
 
                   return (
                     <Line
                       key={`temp-conn-${connIdx}`}
+                      listening={false}
                       points={[
                         start.x * scale + imageOffset.x,
                         start.y * scale + imageOffset.y,
@@ -845,6 +895,7 @@ export function AnnotationCanvas() {
               {keypointsHandler.getKeypoints().map((kp, idx) => (
                 <Circle
                   key={`temp-kp-${idx}`}
+                  listening={false}
                   x={kp.x * scale + imageOffset.x}
                   y={kp.y * scale + imageOffset.y}
                   radius={keypointsHandler.getSelectedIndex() === idx ? 7 : 5}

@@ -6,10 +6,11 @@ export class MaskHandler implements BaseHandler {
   private ctx: CanvasRenderingContext2D | null = null;
   private isDragging: boolean = false;
   private brushSize: number = 15;
+  private eraseMode: boolean = false; // Modo borrador
   private maskImage: HTMLImageElement | null = null;
   private onMaskImageUpdate: ((img: HTMLImageElement | null) => void) | null = null;
   private drawingClassId: number | null = null; // Guarda el classId cuando se inicia el dibujo
-  private autoSaveTimer: NodeJS.Timeout | null = null; // Timer para auto-guardar después de pintar
+  private autoSaveTimer: ReturnType<typeof setTimeout> | null = null; // Timer para auto-guardar después de pintar
   private hasDrawn: boolean = false; // Indica si se ha dibujado algo
   private isValid: boolean = true; // Indica si el handler es válido (no ha sido cancelado)
 
@@ -77,11 +78,27 @@ export class MaskHandler implements BaseHandler {
   }
 
   setBrushSize(size: number): void {
-    this.brushSize = size;
+    this.brushSize = Math.max(5, Math.min(100, size));
+    console.log('[MaskHandler] Brush size ajustado a:', this.brushSize);
   }
 
   getBrushSize(): number {
     return this.brushSize;
+  }
+
+  setEraseMode(enabled: boolean): void {
+    this.eraseMode = enabled;
+    console.log('[MaskHandler] Erase mode:', enabled ? 'ON' : 'OFF');
+  }
+
+  getEraseMode(): boolean {
+    return this.eraseMode;
+  }
+
+  toggleEraseMode(): boolean {
+    this.eraseMode = !this.eraseMode;
+    console.log('[MaskHandler] Erase mode toggled:', this.eraseMode ? 'ON' : 'OFF');
+    return this.eraseMode;
   }
 
   onMouseDown(event: MouseEventData): void {
@@ -117,15 +134,16 @@ export class MaskHandler implements BaseHandler {
   private paintAt(x: number, y: number): void {
     if (!this.ctx || !this.canvas) return;
 
-    console.log('[MaskHandler] pintando en:', { x, y, color: this.classColor });
+    console.log('[MaskHandler] pintando en:', { x, y, color: this.classColor, eraseMode: this.eraseMode });
     
     // Marcar que se ha dibujado y cancelar timer previo
     this.hasDrawn = true;
     this.cancelAutoSaveTimer();
 
-    this.ctx.globalCompositeOperation = 'source-over';
-    this.ctx.fillStyle = this.classColor + 'AA';
-    this.ctx.strokeStyle = this.classColor;
+    // Configurar modo: pintar o borrar
+    this.ctx.globalCompositeOperation = this.eraseMode ? 'destination-out' : 'source-over';
+    this.ctx.fillStyle = this.eraseMode ? 'rgba(0,0,0,1)' : this.classColor + 'AA';
+    this.ctx.strokeStyle = this.eraseMode ? 'rgba(0,0,0,1)' : this.classColor;
     this.ctx.lineWidth = this.brushSize;
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';

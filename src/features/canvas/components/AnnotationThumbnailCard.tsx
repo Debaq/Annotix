@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Annotation, BBoxData, MaskData, PolygonData } from '@/lib/db';
+import { Annotation, BBoxData, MaskData, PolygonData, KeypointsData, LandmarksData, OBBData } from '@/lib/db';
 import { cn } from '@/lib/utils';
+import { skeletonPresets } from '../data/skeletonPresets';
 
 interface AnnotationThumbnailCardProps {
   annotation: Annotation;
@@ -77,36 +78,54 @@ export const AnnotationThumbnailCard: React.FC<AnnotationThumbnailCardProps> = (
       return { drawWidth, drawHeight, offsetX, offsetY };
     };
 
-    // Draw annotation based on type
-    if (annotation.type === 'bbox') {
-      const bbox = annotation.data as BBoxData;
-      const { drawWidth, drawHeight, offsetX, offsetY } = fitRegion(bbox.width, bbox.height);
-
-      // Draw only the cropped region from the original image
-      ctx.drawImage(
-        image,
-        bbox.x, bbox.y, bbox.width, bbox.height,
-        offsetX, offsetY, drawWidth, drawHeight
-      );
-
-      // Draw border
+    const drawBorder = (offsetX: number, offsetY: number, drawWidth: number, drawHeight: number) => {
       ctx.strokeStyle = classColor;
       ctx.lineWidth = 3;
       ctx.strokeRect(offsetX, offsetY, drawWidth, drawHeight);
+    };
+
+    const drawCroppedRegion = (cropX: number, cropY: number, cropWidth: number, cropHeight: number) => {
+      const safeCropX = Math.max(0, cropX);
+      const safeCropY = Math.max(0, cropY);
+      const safeCropWidth = Math.max(1, Math.min(image.width - safeCropX, cropWidth));
+      const safeCropHeight = Math.max(1, Math.min(image.height - safeCropY, cropHeight));
+
+      const { drawWidth, drawHeight, offsetX, offsetY } = fitRegion(safeCropWidth, safeCropHeight);
+
+      ctx.drawImage(
+        image,
+        safeCropX, safeCropY, safeCropWidth, safeCropHeight,
+        offsetX, offsetY, drawWidth, drawHeight
+      );
+
+      return {
+        cropX: safeCropX,
+        cropY: safeCropY,
+        cropWidth: safeCropWidth,
+        cropHeight: safeCropHeight,
+        drawWidth,
+        drawHeight,
+        offsetX,
+        offsetY,
+        scaleX: drawWidth / safeCropWidth,
+        scaleY: drawHeight / safeCropHeight,
+      };
+    };
+
+    // Draw annotation based on type
+    if (annotation.type === 'bbox') {
+      const bbox = annotation.data as BBoxData;
+      const region = drawCroppedRegion(bbox.x, bbox.y, bbox.width, bbox.height);
+      drawBorder(region.offsetX, region.offsetY, region.drawWidth, region.drawHeight);
 
     } else if (annotation.type === 'mask' && maskImage) {
-      // For mask, we need to find the bounding box of non-transparent pixels
-      // For now, use the full image dimensions (can be optimized later)
       const { drawWidth, drawHeight, offsetX, offsetY } = fitRegion(image.width, image.height);
 
-      // Draw cropped image
       ctx.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
 
-      // Draw mask overlay with class color
       ctx.globalCompositeOperation = 'source-atop';
-      ctx.fillStyle = classColor + '80'; // Semi-transparent
+      ctx.fillStyle = classColor + '80';
 
-      // Create temp canvas to draw mask
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = maskImage.width;
       tempCanvas.height = maskImage.height;
@@ -118,17 +137,12 @@ export const AnnotationThumbnailCard: React.FC<AnnotationThumbnailCardProps> = (
       }
 
       ctx.globalCompositeOperation = 'source-over';
-
-      // Draw border
-      ctx.strokeStyle = classColor;
-      ctx.lineWidth = 3;
-      ctx.strokeRect(offsetX, offsetY, drawWidth, drawHeight);
+      drawBorder(offsetX, offsetY, drawWidth, drawHeight);
 
     } else if (annotation.type === 'polygon') {
       const polygonData = annotation.data as PolygonData;
 
       if (polygonData.points.length > 0) {
-        // Calculate bounding box of polygon
         const xs = polygonData.points.map(p => p.x);
         const ys = polygonData.points.map(p => p.y);
         const minX = Math.min(...xs);
@@ -136,34 +150,20 @@ export const AnnotationThumbnailCard: React.FC<AnnotationThumbnailCardProps> = (
         const minY = Math.min(...ys);
         const maxY = Math.max(...ys);
 
-        const bboxWidth = maxX - minX;
-        const bboxHeight = maxY - minY;
-
-        // Add some padding
+        const bboxWidth = Math.max(1, maxX - minX);
+        const bboxHeight = Math.max(1, maxY - minY);
         const padding = 10;
         const cropX = Math.max(0, minX - padding);
         const cropY = Math.max(0, minY - padding);
         const cropWidth = Math.min(image.width - cropX, bboxWidth + padding * 2);
         const cropHeight = Math.min(image.height - cropY, bboxHeight + padding * 2);
 
-        const { drawWidth, drawHeight, offsetX, offsetY } = fitRegion(cropWidth, cropHeight);
+        const region = drawCroppedRegion(cropX, cropY, cropWidth, cropHeight);
 
-        // Draw cropped region
-        ctx.drawImage(
-          image,
-          cropX, cropY, cropWidth, cropHeight,
-          offsetX, offsetY, drawWidth, drawHeight
-        );
-
-        // Calculate scale for polygon points
-        const scaleX = drawWidth / cropWidth;
-        const scaleY = drawHeight / cropHeight;
-
-        // Draw polygon overlay
         ctx.beginPath();
         polygonData.points.forEach((point, index) => {
-          const x = (point.x - cropX) * scaleX + offsetX;
-          const y = (point.y - cropY) * scaleY + offsetY;
+          const x = (point.x - region.cropX) * region.scaleX + region.offsetX;
+          const y = (point.y - region.cropY) * region.scaleY + region.offsetY;
           if (index === 0) {
             ctx.moveTo(x, y);
           } else {
@@ -172,22 +172,166 @@ export const AnnotationThumbnailCard: React.FC<AnnotationThumbnailCardProps> = (
         });
         ctx.closePath();
 
-        // Fill with semi-transparent color
         ctx.fillStyle = classColor + '40';
         ctx.fill();
 
-        // Stroke with class color
         ctx.strokeStyle = classColor;
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Draw border around thumbnail
-        ctx.strokeStyle = classColor;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(offsetX, offsetY, drawWidth, drawHeight);
+        drawBorder(region.offsetX, region.offsetY, region.drawWidth, region.drawHeight);
       }
+    } else if (annotation.type === 'keypoints') {
+      const keypointsData = annotation.data as KeypointsData;
+      const visiblePoints = keypointsData.points.filter((point) => point.visible);
+
+      if (visiblePoints.length > 0) {
+        const xs = visiblePoints.map(point => point.x);
+        const ys = visiblePoints.map(point => point.y);
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+
+        const bboxWidth = Math.max(1, maxX - minX);
+        const bboxHeight = Math.max(1, maxY - minY);
+        const padding = 12;
+
+        const region = drawCroppedRegion(
+          minX - padding,
+          minY - padding,
+          bboxWidth + padding * 2,
+          bboxHeight + padding * 2
+        );
+
+        const preset = skeletonPresets[keypointsData.skeletonType];
+        if (preset) {
+          preset.connections.forEach(([startIdx, endIdx]) => {
+            const start = keypointsData.points[startIdx];
+            const end = keypointsData.points[endIdx];
+
+            if (!start || !end || !start.visible || !end.visible) {
+              return;
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(
+              (start.x - region.cropX) * region.scaleX + region.offsetX,
+              (start.y - region.cropY) * region.scaleY + region.offsetY
+            );
+            ctx.lineTo(
+              (end.x - region.cropX) * region.scaleX + region.offsetX,
+              (end.y - region.cropY) * region.scaleY + region.offsetY
+            );
+            ctx.strokeStyle = classColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          });
+        }
+
+        visiblePoints.forEach((point) => {
+          const px = (point.x - region.cropX) * region.scaleX + region.offsetX;
+          const py = (point.y - region.cropY) * region.scaleY + region.offsetY;
+          ctx.beginPath();
+          ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = classColor;
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        });
+
+        drawBorder(region.offsetX, region.offsetY, region.drawWidth, region.drawHeight);
+      }
+    } else if (annotation.type === 'landmarks') {
+      const landmarksData = annotation.data as LandmarksData;
+
+      if (landmarksData.points.length > 0) {
+        const xs = landmarksData.points.map(point => point.x);
+        const ys = landmarksData.points.map(point => point.y);
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+
+        const bboxWidth = Math.max(1, maxX - minX);
+        const bboxHeight = Math.max(1, maxY - minY);
+        const padding = 12;
+
+        const region = drawCroppedRegion(
+          minX - padding,
+          minY - padding,
+          bboxWidth + padding * 2,
+          bboxHeight + padding * 2
+        );
+
+        landmarksData.points.forEach((point) => {
+          const px = (point.x - region.cropX) * region.scaleX + region.offsetX;
+          const py = (point.y - region.cropY) * region.scaleY + region.offsetY;
+          ctx.beginPath();
+          ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+          ctx.fillStyle = classColor;
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        });
+
+        drawBorder(region.offsetX, region.offsetY, region.drawWidth, region.drawHeight);
+      }
+    } else if (annotation.type === 'obb') {
+      const obbData = annotation.data as OBBData;
+      const halfWidth = obbData.width / 2;
+      const halfHeight = obbData.height / 2;
+      const angle = (obbData.rotation * Math.PI) / 180;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+
+      const corners = [
+        { x: -halfWidth, y: -halfHeight },
+        { x: halfWidth, y: -halfHeight },
+        { x: halfWidth, y: halfHeight },
+        { x: -halfWidth, y: halfHeight },
+      ].map((corner) => ({
+        x: obbData.x + corner.x * cos - corner.y * sin,
+        y: obbData.y + corner.x * sin + corner.y * cos,
+      }));
+
+      const xs = corners.map(point => point.x);
+      const ys = corners.map(point => point.y);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+
+      const bboxWidth = Math.max(1, maxX - minX);
+      const bboxHeight = Math.max(1, maxY - minY);
+      const padding = 10;
+
+      const region = drawCroppedRegion(
+        minX - padding,
+        minY - padding,
+        bboxWidth + padding * 2,
+        bboxHeight + padding * 2
+      );
+
+      const centerX = (obbData.x - region.cropX) * region.scaleX + region.offsetX;
+      const centerY = (obbData.y - region.cropY) * region.scaleY + region.offsetY;
+      const rectWidth = obbData.width * region.scaleX;
+      const rectHeight = obbData.height * region.scaleY;
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(angle);
+      ctx.fillStyle = classColor + '40';
+      ctx.fillRect(-rectWidth / 2, -rectHeight / 2, rectWidth, rectHeight);
+      ctx.strokeStyle = classColor;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-rectWidth / 2, -rectHeight / 2, rectWidth, rectHeight);
+      ctx.restore();
+
+      drawBorder(region.offsetX, region.offsetY, region.drawWidth, region.drawHeight);
     }
-    // TODO: Add rendering for keypoints, landmarks, obb
 
   }, [annotation, image, classColor, maskImage]);
 

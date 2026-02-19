@@ -24,6 +24,10 @@ export function KeypointsRenderer({
   const preset = skeletonPresets[data.skeletonType];
   if (!preset) return null;
 
+  const connectionStrokeWidth = isSelected ? 3 : 2;
+  const keypointRadius = isSelected ? 6 : 5;
+  const keypointStrokeWidth = isSelected ? 3 : 2;
+
   return (
     <Group listening={listening} onClick={onClick}>
       {/* Draw connections */}
@@ -42,7 +46,7 @@ export function KeypointsRenderer({
               end.y * scale + imageOffset.y,
             ]}
             stroke={color}
-            strokeWidth={2}
+            strokeWidth={connectionStrokeWidth}
           />
         );
       })}
@@ -56,10 +60,10 @@ export function KeypointsRenderer({
             key={`kp-${idx}`}
             x={kp.x * scale + imageOffset.x}
             y={kp.y * scale + imageOffset.y}
-            radius={5}
+            radius={keypointRadius}
             fill={color}
             stroke="white"
-            strokeWidth={2}
+            strokeWidth={keypointStrokeWidth}
           />
         );
       })}

@@ -39,10 +39,12 @@ export function OBBRenderer({
       id={id}
       x={x}
       y={y}
+      rotation={rot}
       draggable={draggable}
       listening={listening}
       onClick={onClick}
       onDragEnd={onDragEnd}
+      onTransformEnd={onTransformEnd}
     >
       <Rect
         x={-w / 2}
@@ -52,8 +54,7 @@ export function OBBRenderer({
         fill={color + '20'}
         stroke={color}
         strokeWidth={2}
-        rotation={rot}
-        onTransformEnd={onTransformEnd}
+        strokeScaleEnabled={false}
       />
     </Group>
   );
