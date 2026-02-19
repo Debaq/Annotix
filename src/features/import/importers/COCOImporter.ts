@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import { BaseImporter, ImportResult } from './BaseImporter';
-import { Annotation, BBoxData, KeypointsData } from '@/lib/db';
+import { Annotation, BBoxData, KeypointsData, PolygonData } from '@/lib/db';
 
 interface COCOAnnotation {
   id: number;
@@ -126,7 +126,7 @@ export class COCOImporter extends BaseImporter {
             points.push({
               x,
               y,
-              visible: visible === 2,
+              visible: visible > 0,
               name: `keypoint_${i / 3}`,
             });
           }
@@ -139,6 +139,26 @@ export class COCOImporter extends BaseImporter {
           annotations.push(
             this.createAnnotation(cocoAnn.category_id - 1, 'keypoints', data)
           );
+        } else if (Array.isArray(cocoAnn.segmentation) && cocoAnn.segmentation.length > 0) {
+          const firstSeg = cocoAnn.segmentation[0];
+          if (Array.isArray(firstSeg) && firstSeg.length >= 6) {
+            const points: { x: number; y: number }[] = [];
+            for (let i = 0; i < firstSeg.length; i += 2) {
+              points.push({
+                x: firstSeg[i],
+                y: firstSeg[i + 1],
+              });
+            }
+
+            const data: PolygonData = {
+              points,
+              closed: true,
+            };
+
+            annotations.push(
+              this.createAnnotation(cocoAnn.category_id - 1, 'polygon', data)
+            );
+          }
         } else if (cocoAnn.bbox) {
           // BBox format [x, y, width, height]
           const data: BBoxData = {
@@ -148,7 +168,7 @@ export class COCOImporter extends BaseImporter {
             height: cocoAnn.bbox[3],
           };
 
-          const annotationType = projectType === 'instance-segmentation' ? 'mask' : 'bbox';
+          const annotationType = 'bbox';
           annotations.push(
             this.createAnnotation(cocoAnn.category_id - 1, annotationType, data)
           );

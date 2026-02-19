@@ -9,6 +9,7 @@ interface AnnotationThumbnailCardProps {
   image: HTMLImageElement;
   classColor: string;
   className: string;
+  classShortcut?: string;
   isSelected: boolean;
   onSelect: () => void;
   onDelete: () => void;
@@ -19,6 +20,7 @@ export const AnnotationThumbnailCard: React.FC<AnnotationThumbnailCardProps> = (
   image,
   classColor,
   className,
+  classShortcut,
   isSelected,
   onSelect,
   onDelete,
@@ -364,6 +366,7 @@ export const AnnotationThumbnailCard: React.FC<AnnotationThumbnailCardProps> = (
               style={{ backgroundColor: classColor }}
             >
               {className}
+              {classShortcut && <span className="ml-1 opacity-80">[{classShortcut}]</span>}
             </span>
             <span className="annotix-annotation-type-badge">
               {getTypeLabel(annotation.type)}

@@ -4,6 +4,7 @@ import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
 import { useAnnotations } from '../hooks/useAnnotations';
 import { AnnotationThumbnailCard } from './AnnotationThumbnailCard';
 import { cn } from '@/lib/utils';
+import { CLASS_SHORTCUTS } from '@/features/core/constants';
 
 interface AnnotationsBarProps {
   image: HTMLImageElement;
@@ -41,6 +42,8 @@ export const AnnotationsBar: React.FC<AnnotationsBarProps> = ({ image }) => {
               annotations.map((ann) => {
                 const classInfo = project.classes.find(c => c.id === ann.classId);
                 if (!classInfo) return null;
+                const classIndex = project.classes.findIndex(c => c.id === ann.classId);
+                const classShortcut = classIndex >= 0 ? CLASS_SHORTCUTS[classIndex] : undefined;
 
                 return (
                   <AnnotationThumbnailCard
@@ -49,6 +52,7 @@ export const AnnotationsBar: React.FC<AnnotationsBarProps> = ({ image }) => {
                     image={image}
                     classColor={classInfo.color}
                     className={classInfo.name}
+                    classShortcut={classShortcut}
                     isSelected={selectedAnnotationId === ann.id}
                     onSelect={() => selectAnnotation(ann.id)}
                     onDelete={() => {

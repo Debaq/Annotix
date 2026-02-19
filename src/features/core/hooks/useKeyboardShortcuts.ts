@@ -9,7 +9,7 @@ export function useKeyboardShortcuts() {
   const { setActiveTool, setActiveClassId } = useUIStore();
   const { project } = useCurrentProject();
   const { navigatePrevious, navigateNext } = useImageNavigation();
-  const { selectedAnnotationId } = useAnnotations();
+  const { selectedAnnotationId, deleteAnnotation } = useAnnotations();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -90,9 +90,17 @@ export function useKeyboardShortcuts() {
         // Dispatch custom event for undo
         window.dispatchEvent(new CustomEvent('annotix:undo'));
       }
+
+      // Delete selected annotation (works for selection from canvas or thumbnail)
+      if ((e.key === 'Delete' || e.key === 'Backspace') && !e.ctrlKey && !e.metaKey) {
+        if (selectedAnnotationId) {
+          e.preventDefault();
+          void deleteAnnotation(selectedAnnotationId);
+        }
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [project, setActiveTool, setActiveClassId, navigatePrevious, navigateNext, selectedAnnotationId]);
+  }, [project, setActiveTool, setActiveClassId, navigatePrevious, navigateNext, selectedAnnotationId, deleteAnnotation]);
 }

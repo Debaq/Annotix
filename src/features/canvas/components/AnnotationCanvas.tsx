@@ -33,7 +33,7 @@ export function AnnotationCanvas() {
   const { t } = useTranslation();
   const { image } = useCurrentImage();
   const { project } = useCurrentProject();
-  const { annotations, selectedAnnotationId, selectAnnotation, updateAnnotation, addAnnotation } = useAnnotations();
+  const { annotations, selectedAnnotationId, selectAnnotation, updateAnnotation, addAnnotation, deleteAnnotation } = useAnnotations();
   const { activeTool, activeClassId, setActiveTool } = useUIStore();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -50,6 +50,13 @@ export function AnnotationCanvas() {
   const [maskImage, setMaskImage] = useState<HTMLImageElement | null>(null);
   const [bboxDrawingData, setBboxDrawingData] = useState<any>(null);
   const [obbDrawingData, setObbDrawingData] = useState<any>(null);
+  const [maskBrushSize, setMaskBrushSize] = useState(15);
+  const [maskEraseMode, setMaskEraseMode] = useState(false);
+  const [maskCursor, setMaskCursor] = useState<{ x: number; y: number; visible: boolean }>({
+    x: 0,
+    y: 0,
+    visible: false,
+  });
   const [, forceKeypointsPreviewUpdate] = useReducer((v: number) => v + 1, 0);
 
   // Track previous tool to finish handlers when switching
@@ -57,6 +64,7 @@ export function AnnotationCanvas() {
   const prevImageIdRef = useRef<number | null>(null);
   const prevProjectIdRef = useRef<number | null>(null);
   const justChangedProjectRef = useRef<boolean>(false);
+  const prevActiveClassIdRef = useRef<number | null>(activeClassId);
 
   // Initialize handlers
   const classColor = useMemo(() => {
@@ -101,6 +109,39 @@ export function AnnotationCanvas() {
   }
   const maskHandler = maskHandlerRef.current;
 
+  const getActiveClassMaskBase = useCallback((): string | undefined => {
+    if (activeClassId === null) return undefined;
+    const maskCandidates = annotations.filter(
+      (annotation) => annotation.type === 'mask' && annotation.classId === activeClassId
+    );
+    if (maskCandidates.length === 0) return undefined;
+    const latest = maskCandidates[maskCandidates.length - 1];
+    return (latest.data as MaskData).base64png;
+  }, [annotations, activeClassId]);
+
+  const initializeMaskHandler = useCallback(() => {
+    if (!konvaImage) return;
+    const baseMask = getActiveClassMaskBase();
+    maskHandler.initialize(konvaImage.width, konvaImage.height, baseMask);
+  }, [konvaImage, getActiveClassMaskBase, maskHandler]);
+
+  const addAnnotationWithMaskReplace = useCallback(async (annotation: Annotation) => {
+    if (annotation.type !== 'mask') {
+      await addAnnotation(annotation);
+      return;
+    }
+
+    const existingMaskIds = annotations
+      .filter((item) => item.type === 'mask' && item.classId === annotation.classId)
+      .map((item) => item.id);
+
+    for (const annotationId of existingMaskIds) {
+      await deleteAnnotation(annotationId);
+    }
+
+    await addAnnotation(annotation);
+  }, [annotations, addAnnotation, deleteAnnotation]);
+
   // Registrar callbacks y actualizar activeClassId cuando cambia
   useEffect(() => {
     bboxHandler.setDrawingDataUpdateCallback(setBboxDrawingData);
@@ -135,20 +176,43 @@ export function AnnotationCanvas() {
     console.log('[AnnotationCanvas] Actualizando MaskHandler con activeClassId:', activeClassId, 'y color:', classColor);
     maskHandler.updateActiveClassId(activeClassId);
     maskHandler.updateClassColor(classColor);
+    setMaskBrushSize(maskHandler.getBrushSize());
+    setMaskEraseMode(maskHandler.getEraseMode());
     // Registrar callback para actualizaciones de la imagen
     maskHandler.setMaskImageUpdateCallback(setMaskImage);
   }, [activeClassId, classColor]);
 
+  useEffect(() => {
+    if (!selectedAnnotationId || activeClassId === null) {
+      prevActiveClassIdRef.current = activeClassId;
+      return;
+    }
+
+    const previousClassId = prevActiveClassIdRef.current;
+    prevActiveClassIdRef.current = activeClassId;
+
+    if (previousClassId === activeClassId) {
+      return;
+    }
+
+    const selectedAnnotation = annotations.find((annotation) => annotation.id === selectedAnnotationId);
+    if (!selectedAnnotation || selectedAnnotation.classId === activeClassId) {
+      return;
+    }
+
+    updateAnnotation(selectedAnnotationId, { classId: activeClassId });
+  }, [activeClassId, selectedAnnotationId, annotations, updateAnnotation]);
+
   // Actualizar callback de addAnnotation en TODOS los handlers cuando cambia
   useEffect(() => {
     console.log('[AnnotationCanvas] Actualizando callback addAnnotation en todos los handlers');
-    bboxHandler.updateAddAnnotationCallback(addAnnotation);
-    obbHandler.updateAddAnnotationCallback(addAnnotation);
-    polygonHandler.updateAddAnnotationCallback(addAnnotation);
-    keypointsHandler.updateAddAnnotationCallback(addAnnotation);
-    landmarksHandler.updateAddAnnotationCallback(addAnnotation);
-    maskHandler.updateAddAnnotationCallback(addAnnotation);
-  }, [addAnnotation]);
+    bboxHandler.updateAddAnnotationCallback(addAnnotationWithMaskReplace);
+    obbHandler.updateAddAnnotationCallback(addAnnotationWithMaskReplace);
+    polygonHandler.updateAddAnnotationCallback(addAnnotationWithMaskReplace);
+    keypointsHandler.updateAddAnnotationCallback(addAnnotationWithMaskReplace);
+    landmarksHandler.updateAddAnnotationCallback(addAnnotationWithMaskReplace);
+    maskHandler.updateAddAnnotationCallback(addAnnotationWithMaskReplace);
+  }, [addAnnotationWithMaskReplace]);
 
   // Get current handler based on active tool
   const currentHandler = useMemo(() => {
@@ -261,6 +325,7 @@ export function AnnotationCanvas() {
       const currentSize = maskHandler.getBrushSize();
       const newSize = Math.max(5, Math.min(100, currentSize + delta));
       maskHandler.setBrushSize(newSize);
+      setMaskBrushSize(newSize);
       return;
     }
 
@@ -316,6 +381,11 @@ export function AnnotationCanvas() {
     if (clickedOnEmpty || clickedOnImage) {
       selectAnnotation(null);
 
+      if (activeTool === 'mask' && konvaImage && !maskHandler.isActive()) {
+        console.log('[AnnotationCanvas] Re-inicializando maskHandler on-demand en mouseDown');
+        initializeMaskHandler();
+      }
+
       if (currentHandler && stageRef.current) {
         // CRÍTICO: Capturar contexto ANTES de empezar a dibujar
         captureSaveContext(image?.id || null, project?.id || null);
@@ -331,11 +401,27 @@ export function AnnotationCanvas() {
 
   // Handle mouse move for drawing
   const handleMouseMove = (e: any) => {
-    if (!currentHandler || !stageRef.current) return;
+    if (!stageRef.current) return;
 
     const coords = getImageCoordinates(stageRef.current);
     if (coords) {
-      currentHandler.onMouseMove(coords);
+      if (currentHandler) {
+        currentHandler.onMouseMove(coords);
+      }
+
+      if (activeTool === 'mask' && image) {
+        const insideImage =
+          coords.imageX >= 0 &&
+          coords.imageY >= 0 &&
+          coords.imageX <= image.width &&
+          coords.imageY <= image.height;
+
+        setMaskCursor({
+          x: coords.canvasX,
+          y: coords.canvasY,
+          visible: insideImage,
+        });
+      }
     }
   };
 
@@ -462,7 +548,9 @@ export function AnnotationCanvas() {
         if (e.key === '[') {
           e.preventDefault();
           const currentSize = maskHandler.getBrushSize();
-          maskHandler.setBrushSize(currentSize - 5);
+          const newSize = currentSize - 5;
+          maskHandler.setBrushSize(newSize);
+          setMaskBrushSize(maskHandler.getBrushSize());
           return;
         }
         
@@ -470,14 +558,17 @@ export function AnnotationCanvas() {
         if (e.key === ']') {
           e.preventDefault();
           const currentSize = maskHandler.getBrushSize();
-          maskHandler.setBrushSize(currentSize + 5);
+          const newSize = currentSize + 5;
+          maskHandler.setBrushSize(newSize);
+          setMaskBrushSize(maskHandler.getBrushSize());
           return;
         }
         
         // E: Toggle modo borrador
         if (e.key === 'e' || e.key === 'E') {
           e.preventDefault();
-          maskHandler.toggleEraseMode();
+          const newMode = maskHandler.toggleEraseMode();
+          setMaskEraseMode(newMode);
           return;
         }
       }
@@ -574,8 +665,9 @@ export function AnnotationCanvas() {
       console.log('[AnnotationCanvas] Tool cambió de', prevTool, 'a', activeTool);
       
       if (prevTool === 'mask' && maskHandler.isActive()) {
-        console.log('[AnnotationCanvas] Guardando máscara antes de cambiar tool');
-        maskHandler.finish();
+        console.log('[AnnotationCanvas] Cancelando máscara antes de cambiar tool (sin auto-guardar)');
+        maskHandler.cancel();
+        setMaskImage(null);
       } else if (prevTool === 'keypoints' && keypointsHandler.isActive()) {
         keypointsHandler.cancel();
       }
@@ -598,9 +690,9 @@ export function AnnotationCanvas() {
       keypointsHandler.initialize(konvaImage.width, konvaImage.height);
     } else if (activeTool === 'mask' && !maskHandler.isActive()) {
       console.log('[AnnotationCanvas] Inicializando maskHandler');
-      maskHandler.initialize(konvaImage.width, konvaImage.height);
+      initializeMaskHandler();
     }
-  }, [activeTool, konvaImage]);
+  }, [activeTool, konvaImage, initializeMaskHandler]);
 
   // Reset zoom
   const handleResetZoom = useCallback(() => {
@@ -616,6 +708,25 @@ export function AnnotationCanvas() {
   const handleZoomOut = useCallback(() => {
     setStageScale(prev => Math.max(MIN_ZOOM_SCALE, prev / 1.2));
   }, []);
+
+  useEffect(() => {
+    if (!stageRef.current) return;
+
+    const stageContainer = stageRef.current.container();
+    if (!stageContainer) return;
+
+    stageContainer.style.cursor = activeTool === 'mask' ? 'none' : 'default';
+
+    return () => {
+      stageContainer.style.cursor = 'default';
+    };
+  }, [activeTool]);
+
+  useEffect(() => {
+    if (activeTool !== 'mask') {
+      setMaskCursor((prev) => ({ ...prev, visible: false }));
+    }
+  }, [activeTool]);
 
   if (!image) {
     return (
@@ -642,7 +753,18 @@ export function AnnotationCanvas() {
       className="annotix-canvas-container"
     >
       {/* Floating Tools (Left) */}
-      <FloatingTools />
+      <FloatingTools
+        maskBrushSize={maskBrushSize}
+        maskEraseMode={maskEraseMode}
+        onMaskBrushSizeChange={(size) => {
+          maskHandler.setBrushSize(size);
+          setMaskBrushSize(maskHandler.getBrushSize());
+        }}
+        onMaskToggleErase={() => {
+          const newMode = maskHandler.toggleEraseMode();
+          setMaskEraseMode(newMode);
+        }}
+      />
 
       {/* Floating Zoom Controls (Right) */}
       <FloatingZoomControls
@@ -700,6 +822,11 @@ export function AnnotationCanvas() {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onMouseLeave={() => {
+          if (activeTool === 'mask') {
+            setMaskCursor((prev) => ({ ...prev, visible: false }));
+          }
+        }}
       >
         {/* Image Layer */}
         <Layer>
@@ -809,6 +936,9 @@ export function AnnotationCanvas() {
                 );
 
               case 'mask':
+                if (activeTool === 'mask' && ann.classId === activeClassId) {
+                  return null;
+                }
                 return (
                   <MaskRenderer
                     key={ann.id}
@@ -932,6 +1062,18 @@ export function AnnotationCanvas() {
               scaleX={scale}
               scaleY={scale}
               opacity={0.6}
+              listening={false}
+            />
+          )}
+
+          {activeTool === 'mask' && maskCursor.visible && (
+            <Circle
+              x={maskCursor.x}
+              y={maskCursor.y}
+              radius={(maskBrushSize * scale) / 2}
+              stroke={maskEraseMode ? '#ffffff' : classColor}
+              strokeWidth={2}
+              fill={maskEraseMode ? 'transparent' : `${classColor}55`}
               listening={false}
             />
           )}
