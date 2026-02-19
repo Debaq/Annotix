@@ -2,6 +2,7 @@ import JSZip from 'jszip';
 import { db, Project, AnnotixImage, ClassDefinition } from '@/lib/db';
 import { DetectionResult, detectFormat } from '../utils/formatDetector';
 import { getImporterForFormat } from '../utils/importerMapping';
+import { normalizeAnnotationShape } from '@/lib/annotationNormalizer';
 
 export interface ImportServiceResult {
   project: Project;
@@ -45,7 +46,10 @@ function validateData(classes: ClassDefinition[], images: AnnotixImage[]): void 
 
     // Check annotations
     let imageInvalidCount = 0;
-    image.annotations = image.annotations.filter((annotation) => {
+    image.annotations = image.annotations
+      .map((annotation) => normalizeAnnotationShape(annotation))
+      .filter((annotation): annotation is NonNullable<typeof annotation> => annotation !== null)
+      .filter((annotation) => {
       // Verify classId exists in the classes array
       if (!validClassIds.has(annotation.classId)) {
         imageInvalidCount++;

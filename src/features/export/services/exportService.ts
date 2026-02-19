@@ -7,6 +7,7 @@ import { CSVExporter } from '../exporters/CSVExporter';
 import { FoldersByClassExporter } from '../exporters/FoldersByClassExporter';
 import { UNetMasksExporter } from '../exporters/UNetMasksExporter';
 import { TIXExporter } from '../exporters/TIXExporter';
+import { normalizeAnnotationShape } from '@/lib/annotationNormalizer';
 
 export const exportService = {
   async export(
@@ -34,7 +35,10 @@ export const exportService = {
     // But keep ALL images (even those without annotations)
     const annotatedImages = images.map((img) => ({
       ...img,
-      annotations: img.annotations.filter((ann) => {
+      annotations: img.annotations
+        .map((ann) => normalizeAnnotationShape(ann))
+        .filter((ann): ann is NonNullable<typeof ann> => ann !== null)
+        .filter((ann) => {
         // Skip annotations with invalid class IDs
         const classExists = project.classes.some((c) => c.id === ann.classId);
         if (!classExists) {

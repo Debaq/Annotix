@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import { BaseImporter, ImportResult } from './BaseImporter';
-import { Annotation, MaskData, PolygonData } from '@/lib/db';
+import { Annotation, MaskData } from '@/lib/db';
 
 export class UNetMasksImporter extends BaseImporter {
   async import(
@@ -27,6 +27,17 @@ export class UNetMasksImporter extends BaseImporter {
         this.createClassDefinition(1, 'object'),
       ];
 
+      // Build mask lookup by basename (supports nested folders and varied extensions)
+      const maskByBaseName = new Map<string, string>();
+      for (const maskPath of maskFiles) {
+        const maskName = maskPath.split('/').pop() || '';
+        const baseName = maskName.replace(/\.[^/.]+$/, '').toLowerCase();
+        if (!baseName) continue;
+        if (!maskByBaseName.has(baseName)) {
+          maskByBaseName.set(baseName, maskPath);
+        }
+      }
+
       // Import images with masks
       const images = [];
       for (const imagePath of imageFiles) {
@@ -39,18 +50,20 @@ export class UNetMasksImporter extends BaseImporter {
           const { width, height } = await this.getImageDimensions(imageBlob);
 
           // Find corresponding mask file
-          const maskName = imageName.replace(/\.[^/.]+$/, '.png');
-          const maskPath = `masks/${maskName}`;
+          const imageBaseName = imageName.replace(/\.[^/.]+$/, '').toLowerCase();
+          const maskPath = maskByBaseName.get(imageBaseName);
 
           let annotations: Annotation[] = [];
-          try {
-            const maskBlob = await this.extractFileAsBlob(zip, maskPath);
-            const annotation = await this.parseMask(maskBlob, width, height);
-            if (annotation) {
-              annotations.push(annotation);
+          if (maskPath) {
+            try {
+              const maskBlob = await this.extractFileAsBlob(zip, maskPath);
+              const annotation = await this.parseMask(maskBlob, width, height);
+              if (annotation) {
+                annotations.push(annotation);
+              }
+            } catch (e) {
+              // No mask for this image or read issue
             }
-          } catch (e) {
-            // No mask for this image
           }
 
           const annotixImage = this.createAnnotixImage(
@@ -103,10 +116,9 @@ export class UNetMasksImporter extends BaseImporter {
               const reader = new FileReader();
               reader.onload = () => {
                 const base64 = reader.result as string;
-                const base64Data = base64.split(',')[1];
 
                 const data: MaskData = {
-                  base64png: base64Data,
+                  base64png: base64,
                   instanceId: 1,
                 };
 

@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import { BaseImporter, ImportResult } from './BaseImporter';
-import { Annotation, BBoxData, KeypointsData, ClassificationData, AnnotixImage } from '@/lib/db';
+import { Annotation, BBoxData, KeypointsData, ClassificationData, AnnotixImage, LandmarksData } from '@/lib/db';
 
 export class CSVImporter extends BaseImporter {
   constructor(private csvType: 'detection' | 'classification' | 'keypoints' | 'landmarks') {
@@ -205,12 +205,17 @@ export class CSVImporter extends BaseImporter {
           const keypointStr = Object.values(data)[keypointIndex];
           const points = this.parseKeypointString(keypointStr);
 
+          const classIndex = header.findIndex(h => h.toLowerCase() === 'class' || h.toLowerCase() === 'label');
+          const className = classIndex >= 0 ? Object.values(data)[classIndex] : undefined;
+          const foundClass = className ? classes.find((c: any) => c.name === className) : undefined;
+          const classId = foundClass?.id ?? 0;
+
           const kpData: KeypointsData = {
             points,
             skeletonType: 'coco-17',
           };
 
-          return this.createAnnotation(0, 'keypoints', kpData);
+          return this.createAnnotation(classId, 'keypoints', kpData);
         }
 
         case 'landmarks': {
@@ -219,14 +224,20 @@ export class CSVImporter extends BaseImporter {
           if (landmarkIndex < 0) return null;
 
           const landmarkStr = Object.values(data)[landmarkIndex];
-          const points = this.parseKeypointString(landmarkStr);
+          const classIndex = header.findIndex(h => h.toLowerCase() === 'class' || h.toLowerCase() === 'label');
+          const className = classIndex >= 0 ? Object.values(data)[classIndex] : undefined;
+          const foundClass = className ? classes.find((c: any) => c.name === className) : undefined;
+          const classId = foundClass?.id ?? 0;
 
-          const kpData: KeypointsData = {
-            points,
-            skeletonType: 'landmarks',
-          };
+          const points = this.parseKeypointString(landmarkStr).map((point, idx) => ({
+            x: point.x,
+            y: point.y,
+            name: point.name || `Point ${idx + 1}`,
+          }));
 
-          return this.createAnnotation(0, 'landmarks', kpData);
+          const lmData: LandmarksData = { points };
+
+          return this.createAnnotation(classId, 'landmarks', lmData);
         }
 
         default:

@@ -11,45 +11,46 @@ export interface DetectionResult {
 
 export async function detectFormat(zip: JSZip): Promise<DetectionResult> {
   const files = Object.keys(zip.files);
+  const lowerFiles = files.map((file) => file.toLowerCase());
   
   // Detect YOLO format
-  if (hasFile(files, 'classes.txt') && hasFile(files, 'data.yaml')) {
-    const yoloResult = await detectYOLOFormat(zip, files);
+  if (hasFile(lowerFiles, 'classes.txt') && hasFile(lowerFiles, 'data.yaml')) {
+    const yoloResult = await detectYOLOFormat(zip, lowerFiles);
     if (yoloResult) return yoloResult;
   }
 
+  // Detect U-Net Masks format first when masks/images folders are present
+  if (hasFolder(lowerFiles, 'masks') && hasFolder(lowerFiles, 'images')) {
+    const unetResult = await detectUNetFormat(zip, lowerFiles);
+    if (unetResult) return unetResult;
+  }
+
   // Detect COCO format
-  if (hasFile(files, 'annotations.json')) {
-    const cocoResult = await detectCOCOFormat(zip, files);
+  if (hasFile(lowerFiles, 'annotations.json')) {
+    const cocoResult = await detectCOCOFormat(zip, lowerFiles);
     if (cocoResult) return cocoResult;
   }
 
   // Detect TIX (Annotix) format: annotations.json + images/ folder with our schema
-  if (hasFile(files, 'annotations.json') && hasFolder(files, 'images')) {
-    const tixResult = await detectTIXFormat(zip, files);
+  if (hasFile(lowerFiles, 'annotations.json') && hasFolder(lowerFiles, 'images')) {
+    const tixResult = await detectTIXFormat(zip, lowerFiles);
     if (tixResult) return tixResult;
   }
 
   // Detect Pascal VOC format
-  if (hasFolder(files, 'Annotations') && hasFolder(files, 'images')) {
-    const vocResult = await detectPascalVOCFormat(zip, files);
+  if (hasFolder(lowerFiles, 'annotations') && hasFolder(lowerFiles, 'images')) {
+    const vocResult = await detectPascalVOCFormat(zip, lowerFiles);
     if (vocResult) return vocResult;
   }
 
   // Detect CSV format
-  if (hasFile(files, 'annotations.csv')) {
-    const csvResult = await detectCSVFormat(zip, files);
+  if (hasFile(lowerFiles, 'annotations.csv')) {
+    const csvResult = await detectCSVFormat(zip, lowerFiles);
     if (csvResult) return csvResult;
   }
 
-  // Detect U-Net Masks format
-  if (hasFolder(files, 'masks') && hasFolder(files, 'images')) {
-    const unetResult = await detectUNetFormat(zip, files);
-    if (unetResult) return unetResult;
-  }
-
   // Detect Folders by Class format
-  const folderResult = await detectFoldersByClassFormat(zip, files);
+  const folderResult = await detectFoldersByClassFormat(zip, lowerFiles);
   if (folderResult) return folderResult;
 
   throw new Error('Unable to detect dataset format');
@@ -203,7 +204,10 @@ async function detectCSVFormat(zip: JSZip, files: string[]): Promise<DetectionRe
 
 async function detectUNetFormat(zip: JSZip, files: string[]): Promise<DetectionResult | null> {
   try {
-    const maskFiles = files.filter(f => f.startsWith('masks/') && f.endsWith('.png'));
+    const maskFiles = files.filter((file) => {
+      if (!file.startsWith('masks/')) return false;
+      return ['.png', '.jpg', '.jpeg', '.bmp', '.webp'].some((ext) => file.endsWith(ext));
+    });
     
     if (maskFiles.length === 0) return null;
 
@@ -229,14 +233,60 @@ async function detectTIXFormat(zip: JSZip, files: string[]): Promise<DetectionRe
     // Expecting a structure like { project, classes, images }
     if (!data.images || !Array.isArray(data.images)) return null;
 
-    const classCount = Array.isArray(data.classes) ? data.classes.length : 0;
+    const mapProjectType = (type: string | undefined): ProjectType | null => {
+      if (!type) return null;
 
-    // Determine project type roughly by presence of segmentation fields
-    let projectType: ProjectType = 'bbox';
-    for (const img of data.images) {
-      if (img.annotations && img.annotations.some((a: any) => !!a.segmentation)) {
-        projectType = 'instance-segmentation';
-        break;
+      const normalized = String(type).toLowerCase();
+      const mapped: Record<string, ProjectType> = {
+        bbox: 'bbox',
+        detection: 'bbox',
+        mask: 'mask',
+        segmentation: 'mask',
+        polygon: 'polygon',
+        keypoint: 'keypoints',
+        keypoints: 'keypoints',
+        landmark: 'landmarks',
+        landmarks: 'landmarks',
+        obb: 'obb',
+        classification: 'classification',
+        multilabel: 'multi-label-classification',
+        'multi-label-classification': 'multi-label-classification',
+        instanceseg: 'instance-segmentation',
+        instancesegmentation: 'instance-segmentation',
+        'instance-segmentation': 'instance-segmentation',
+      };
+
+      return mapped[normalized] || null;
+    };
+
+    const projectClasses = Array.isArray(data.project?.classes)
+      ? data.project.classes
+      : Array.isArray(data.classes)
+        ? data.classes
+        : [];
+    const classCount = projectClasses.length;
+
+    // First choice: explicit project.type from file
+    let projectType: ProjectType = mapProjectType(data.project?.type) || 'bbox';
+
+    // Fallback inference from annotation types when needed
+    if (projectType === 'bbox') {
+      for (const img of data.images) {
+        const anns = Array.isArray(img.annotations) ? img.annotations : [];
+        for (const ann of anns) {
+          const annType = mapProjectType(ann?.type);
+          if (annType && annType !== 'bbox') {
+            projectType = annType;
+            break;
+          }
+
+          if (ann?.segmentation) {
+            projectType = 'instance-segmentation';
+            break;
+          }
+        }
+
+        if (projectType !== 'bbox') break;
       }
     }
 
@@ -283,11 +333,16 @@ async function detectFoldersByClassFormat(zip: JSZip, files: string[]): Promise<
 }
 
 function hasFile(files: string[], filename: string): boolean {
-  return files.some(f => f.endsWith(filename) && !f.includes('/') || f === `${filename}`);
+  const target = filename.toLowerCase();
+  return files.some((file) => {
+    const normalized = file.toLowerCase();
+    return (normalized.endsWith(target) && !normalized.includes('/')) || normalized === target;
+  });
 }
 
 function hasFolder(files: string[], folderName: string): boolean {
-  return files.some(f => f.startsWith(folderName + '/'));
+  const target = folderName.toLowerCase() + '/';
+  return files.some((file) => file.toLowerCase().startsWith(target));
 }
 
 function detectSegmentationFormat(content: string): boolean {

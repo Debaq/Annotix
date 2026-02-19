@@ -45,7 +45,7 @@ export class MaskHandler implements BaseHandler {
     this.onAddAnnotation = callback;
   }
 
-  initialize(imageWidth: number, imageHeight: number): void {
+  initialize(imageWidth: number, imageHeight: number, baseMaskDataUrl?: string): void {
     // Siempre inicializar un nuevo canvas, incluso si ya existe uno
     // Esto permite crear una nueva máscara después de guardar la anterior
     console.log('[MaskHandler] initialize() - creando nuevo canvas y REVALIDANDO', { 
@@ -73,7 +73,18 @@ export class MaskHandler implements BaseHandler {
       this.ctx.clearRect(0, 0, imageWidth, imageHeight);
       this.ctx.fillStyle = 'transparent';
       this.ctx.fillRect(0, 0, imageWidth, imageHeight);
-      this.updateMaskImage();
+
+      if (baseMaskDataUrl) {
+        const baseImage = new window.Image();
+        baseImage.onload = () => {
+          if (!this.ctx || !this.canvas) return;
+          this.ctx.drawImage(baseImage, 0, 0, this.canvas.width, this.canvas.height);
+          this.updateMaskImage();
+        };
+        baseImage.src = baseMaskDataUrl;
+      } else {
+        this.updateMaskImage();
+      }
     }
   }
 
@@ -182,6 +193,12 @@ export class MaskHandler implements BaseHandler {
         activeClassId: this.activeClassId,
         drawingClassId: this.drawingClassId
       });
+      return;
+    }
+
+    if (!this.hasDrawn) {
+      console.log('[MaskHandler] finish() - no hubo trazos, cancelando guardado');
+      this.reset();
       return;
     }
 
