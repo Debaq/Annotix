@@ -9,6 +9,10 @@ import type {
   ClassDefinition,
   Annotation,
   TimeSeriesAnnotation,
+  Video,
+  VideoTrack,
+  VideoInfo,
+  AnnotixImage,
 } from './db';
 
 // Re-export el tipo AnnotixImage adaptado para Tauri (sin Blob, con blobPath)
@@ -176,6 +180,107 @@ export async function getStorageInfo(): Promise<StorageInfo> {
   return invoke<StorageInfo>('get_storage_info');
 }
 
+// ─── Video Commands ─────────────────────────────────────────────────────────
+
+export async function checkFfmpegAvailable(): Promise<boolean> {
+  return invoke<boolean>('check_ffmpeg_available');
+}
+
+export async function getVideoInfo(path: string): Promise<VideoInfo> {
+  return invoke<VideoInfo>('get_video_info', { path });
+}
+
+export async function uploadVideo(
+  projectId: number,
+  filePath: string,
+  fpsExtraction: number
+): Promise<number> {
+  return invoke<number>('upload_video', { projectId, filePath, fpsExtraction });
+}
+
+export async function extractVideoFrames(
+  projectId: number,
+  videoId: number
+): Promise<number> {
+  return invoke<number>('extract_video_frames', { projectId, videoId });
+}
+
+export async function getVideo(videoId: number): Promise<Video | null> {
+  return invoke<Video | null>('get_video', { videoId });
+}
+
+export async function listVideosByProject(projectId: number): Promise<Video[]> {
+  return invoke<Video[]>('list_videos_by_project', { projectId });
+}
+
+export async function listFramesByVideo(videoId: number): Promise<AnnotixImage[]> {
+  return invoke<AnnotixImage[]>('list_frames_by_video', { videoId });
+}
+
+export async function deleteVideo(videoId: number): Promise<void> {
+  return invoke('delete_video', { videoId });
+}
+
+export async function createTrack(
+  videoId: number,
+  trackUuid: string,
+  classId: number,
+  label?: string
+): Promise<number> {
+  return invoke<number>('create_track', { videoId, trackUuid, classId, label });
+}
+
+export async function listTracksByVideo(videoId: number): Promise<VideoTrack[]> {
+  return invoke<VideoTrack[]>('list_tracks_by_video', { videoId });
+}
+
+export async function updateTrack(
+  trackId: number,
+  videoId: number,
+  updates: { classId?: number; label?: string; enabled?: boolean }
+): Promise<void> {
+  return invoke('update_track', { trackId, videoId, ...updates });
+}
+
+export async function deleteTrack(trackId: number, videoId: number): Promise<void> {
+  return invoke('delete_track', { trackId, videoId });
+}
+
+export async function setKeyframe(
+  trackId: number,
+  videoId: number,
+  frameIndex: number,
+  bboxX: number,
+  bboxY: number,
+  bboxWidth: number,
+  bboxHeight: number
+): Promise<number> {
+  return invoke<number>('set_keyframe', {
+    trackId, videoId, frameIndex, bboxX, bboxY, bboxWidth, bboxHeight,
+  });
+}
+
+export async function deleteKeyframe(
+  trackId: number,
+  videoId: number,
+  frameIndex: number
+): Promise<void> {
+  return invoke('delete_keyframe', { trackId, videoId, frameIndex });
+}
+
+export async function toggleKeyframeEnabled(
+  trackId: number,
+  videoId: number,
+  frameIndex: number,
+  enabled: boolean
+): Promise<void> {
+  return invoke('toggle_keyframe_enabled', { trackId, videoId, frameIndex, enabled });
+}
+
+export async function bakeVideoTracks(videoId: number): Promise<void> {
+  return invoke('bake_video_tracks', { videoId });
+}
+
 // ─── Event Listeners (reactividad) ──────────────────────────────────────────
 
 export function onProjectsChanged(callback: () => void): Promise<UnlistenFn> {
@@ -194,6 +299,22 @@ export function onTimeseriesChanged(
   callback: (projectId: number) => void
 ): Promise<UnlistenFn> {
   return listen<number>('db:timeseries-changed', (event) =>
+    callback(event.payload)
+  );
+}
+
+export function onVideosChanged(
+  callback: (projectId: number) => void
+): Promise<UnlistenFn> {
+  return listen<number>('db:videos-changed', (event) =>
+    callback(event.payload)
+  );
+}
+
+export function onTracksChanged(
+  callback: (videoId: number) => void
+): Promise<UnlistenFn> {
+  return listen<number>('db:tracks-changed', (event) =>
     callback(event.payload)
   );
 }

@@ -287,6 +287,67 @@ export interface AnnotixImage {
     annotated?: number;
     status: 'pending' | 'annotated' | 'reviewed';
   };
+  videoId?: number | null;
+  frameIndex?: number | null;
+}
+
+// ============================================================================
+// VIDEO TYPES
+// ============================================================================
+
+export interface Video {
+  id?: number;
+  projectId: number;
+  name: string;
+  sourcePath: string;
+  fpsExtraction: number;
+  fpsOriginal: number | null;
+  totalFrames: number;
+  durationMs: number;
+  width: number;
+  height: number;
+  metadata: {
+    uploaded: number;
+    status: 'processing' | 'ready' | 'error';
+  };
+}
+
+export interface VideoTrack {
+  id?: number;
+  videoId: number;
+  trackUuid: string;
+  classId: number;
+  label: string | null;
+  enabled: boolean;
+  keyframes: VideoKeyframe[];
+}
+
+export interface VideoKeyframe {
+  id?: number;
+  trackId: number;
+  frameIndex: number;
+  bboxX: number;
+  bboxY: number;
+  bboxWidth: number;
+  bboxHeight: number;
+  isKeyframe: boolean;
+  enabled: boolean;
+}
+
+export interface InterpolatedBBox {
+  trackUuid: string;
+  trackId: number;
+  classId: number;
+  bbox: BBoxData;
+  isKeyframe: boolean;
+  enabled: boolean;
+}
+
+export interface VideoInfo {
+  durationMs: number;
+  fpsOriginal: number;
+  width: number;
+  height: number;
 }
 
 /**

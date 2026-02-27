@@ -7,3 +7,4 @@ pub mod export_commands;
 pub mod import_commands;
 pub mod csv_commands;
 pub mod image_processing_commands;
+pub mod video_commands;

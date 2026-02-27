@@ -13,6 +13,20 @@ impl Database {
         height: u32,
         annotations: &[Annotation],
     ) -> Result<i64, String> {
+        self.create_image_with_video(project_id, name, blob_path, width, height, annotations, None, None)
+    }
+
+    pub fn create_image_with_video(
+        &self,
+        project_id: i64,
+        name: &str,
+        blob_path: &str,
+        width: u32,
+        height: u32,
+        annotations: &[Annotation],
+        video_id: Option<i64>,
+        frame_index: Option<i64>,
+    ) -> Result<i64, String> {
         let conn = self.conn.lock().map_err(|e| e.to_string())?;
         let now = js_timestamp();
         let annotations_json = serde_json::to_string(annotations).map_err(|e| e.to_string())?;
@@ -20,13 +34,15 @@ impl Database {
 
         conn.execute(
             "INSERT INTO images (project_id, name, blob_path, annotations, dim_width, dim_height,
-             metadata_uploaded, metadata_annotated, metadata_status)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+             metadata_uploaded, metadata_annotated, metadata_status, video_id, frame_index)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
             rusqlite::params![
                 project_id, name, blob_path, annotations_json,
                 width, height, now,
                 if annotations.is_empty() { None } else { Some(now) },
                 status,
+                video_id,
+                frame_index,
             ],
         )
         .map_err(|e| format!("Error creando imagen: {}", e))?;
@@ -40,7 +56,7 @@ impl Database {
         let mut stmt = conn
             .prepare(
                 "SELECT id, project_id, name, blob_path, annotations, dim_width, dim_height,
-                 metadata_uploaded, metadata_annotated, metadata_status
+                 metadata_uploaded, metadata_annotated, metadata_status, video_id, frame_index
                  FROM images WHERE id = ?1",
             )
             .map_err(|e| e.to_string())?;
@@ -63,13 +79,36 @@ impl Database {
         let mut stmt = conn
             .prepare(
                 "SELECT id, project_id, name, blob_path, annotations, dim_width, dim_height,
-                 metadata_uploaded, metadata_annotated, metadata_status
+                 metadata_uploaded, metadata_annotated, metadata_status, video_id, frame_index
                  FROM images WHERE project_id = ?1 ORDER BY metadata_uploaded ASC",
             )
             .map_err(|e| e.to_string())?;
 
         let images = stmt
             .query_map(rusqlite::params![project_id], |row| {
+                Ok(row_to_annotix_image(row))
+            })
+            .map_err(|e| e.to_string())?
+            .filter_map(|r| r.ok())
+            .filter_map(|r| r.ok())
+            .collect();
+
+        Ok(images)
+    }
+
+    pub fn list_frames_by_video(&self, video_id: i64) -> Result<Vec<AnnotixImage>, String> {
+        let conn = self.conn.lock().map_err(|e| e.to_string())?;
+
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, project_id, name, blob_path, annotations, dim_width, dim_height,
+                 metadata_uploaded, metadata_annotated, metadata_status, video_id, frame_index
+                 FROM images WHERE video_id = ?1 ORDER BY frame_index ASC",
+            )
+            .map_err(|e| e.to_string())?;
+
+        let images = stmt
+            .query_map(rusqlite::params![video_id], |row| {
                 Ok(row_to_annotix_image(row))
             })
             .map_err(|e| e.to_string())?
@@ -149,6 +188,8 @@ fn row_to_annotix_image(row: &rusqlite::Row) -> Result<AnnotixImage, String> {
             annotated: row.get(8).map_err(|e| e.to_string())?,
             status: row.get(9).map_err(|e| e.to_string())?,
         },
+        video_id: row.get(10).map_err(|e| e.to_string())?,
+        frame_index: row.get(11).map_err(|e| e.to_string())?,
     })
 }
 
