@@ -1,6 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import {
   Dialog,
   DialogContent,
@@ -13,11 +15,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-// import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/components/hooks/use-toast';
 import { useUIStore } from '@/features/core/store/uiStore';
-import { importService } from '../services/importService';
-import { DetectionResult } from '../utils/formatDetector';
+import { pickZipFile } from '@/lib/nativeDialogs';
+
+interface DetectionResult {
+  format: string;
+  projectType: string;
+  confidence: number;
+  classCount?: number;
+}
+
+interface ImportResult {
+  projectId: number;
+  stats: {
+    imagesCount: number;
+    classesCount: number;
+    annotationsCount: number;
+  };
+}
 
 interface ImportDialogProps {
   trigger?: React.ReactNode;
@@ -28,16 +44,15 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { setCurrentProjectId } = useUIStore();
-  
+
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<'select' | 'analyze' | 'configure' | 'importing' | 'success'>('select');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFilePath, setSelectedFilePath] = useState('');
   const [projectName, setProjectName] = useState('');
   const [detection, setDetection] = useState<DetectionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [importedProjectId, setImportedProjectId] = useState<number | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getProjectTypeLabel = (type: string): string => {
     const typeMap: Record<string, string> = {
@@ -53,41 +68,41 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
     return typeMap[type] || type;
   };
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleSelectFile = async () => {
+    const filePath = await pickZipFile();
+    if (!filePath) return;
 
-    if (!file.name.endsWith('.zip') && !file.name.endsWith('.tix')) {
+    const fileName = filePath.split('/').pop() || filePath.split('\\').pop() || filePath;
+
+    if (!fileName.endsWith('.zip') && !fileName.endsWith('.tix')) {
       setError(t('import.error.invalidZip'));
       return;
     }
 
-    setSelectedFile(file);
+    setSelectedFilePath(filePath);
     setError(null);
     setStep('analyze');
 
-    // Analyze file
     try {
-      setProgress(50);
-      const result = await importService.detectFormat(file);
+      setProgress(30);
+      const result = await invoke<DetectionResult>('detect_import_format', { filePath });
       setDetection(result);
       setProgress(100);
-      
-      // Auto-fill project name
-      const baseName = file.name.replace(/\.zip$|\.tix$/i, '');
+
+      const baseName = fileName.replace(/\.zip$|\.tix$/i, '');
       setProjectName(baseName);
-      
+
       setStep('configure');
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : t('import.error.unsupportedFormat')
+        err instanceof Error ? err.message : typeof err === 'string' ? err : t('import.error.unsupportedFormat')
       );
       setStep('select');
     }
   };
 
   const handleImport = async () => {
-    if (!selectedFile || !projectName.trim() || !detection) {
+    if (!selectedFilePath || !projectName.trim() || !detection) {
       setError(t('import.error.noFile'));
       return;
     }
@@ -101,16 +116,17 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
     setProgress(0);
     setError(null);
 
-    try {
-      const result = await importService.importProject(
-        selectedFile,
-        projectName,
-        (progress) => setProgress(progress)
-      );
+    const unlisten = await listen<number>('import:progress', (event) => {
+      setProgress(event.payload);
+    });
 
-      if (result.project.id !== undefined) {
-        setImportedProjectId(result.project.id);
-      }
+    try {
+      const result = await invoke<ImportResult>('import_dataset', {
+        filePath: selectedFilePath,
+        projectName,
+      });
+
+      setImportedProjectId(result.projectId);
       setStep('success');
 
       toast({
@@ -119,9 +135,11 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
       });
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : t('import.error.corruptedData')
+        err instanceof Error ? err.message : typeof err === 'string' ? err : t('import.error.corruptedData')
       );
       setStep('configure');
+    } finally {
+      unlisten();
     }
   };
 
@@ -130,21 +148,14 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
       setCurrentProjectId(importedProjectId);
       navigate(`/projects/${importedProjectId}`);
       setOpen(false);
-      // Reset state
-      setStep('select');
-      setSelectedFile(null);
-      setProjectName('');
-      setDetection(null);
-      setError(null);
-      setProgress(0);
-      setImportedProjectId(null);
+      handleReset();
     }
   };
 
   const handleReset = () => {
     setOpen(false);
     setStep('select');
-    setSelectedFile(null);
+    setSelectedFilePath('');
     setProjectName('');
     setDetection(null);
     setError(null);
@@ -177,20 +188,12 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
             <div className="space-y-4">
               <div
                 className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={handleSelectFile}
               >
                 <i className="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2 block"></i>
                 <p className="text-sm font-medium">{t('import.dragFiles')}</p>
                 <p className="text-xs text-gray-500">{t('import.orClickToSelect')}</p>
               </div>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".zip,.tix"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
 
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
@@ -332,7 +335,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
         {step === 'success' && importedProjectId && (
           <>
             <DialogHeader>
-              <DialogTitle>✨ {t('import.success')}</DialogTitle>
+              <DialogTitle>{t('import.success')}</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4">

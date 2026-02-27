@@ -32,3 +32,6 @@ __pycache__/
 venv/
 ENV/
 env/
+
+# Tauri
+src-tauri/target/

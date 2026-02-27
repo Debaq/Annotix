@@ -1,0 +1,70 @@
+mod db;
+mod commands;
+mod export;
+mod import;
+mod utils;
+
+use db::Database;
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    let database = Database::new().expect("Error inicializando base de datos");
+
+    tauri::Builder::default()
+        .manage(database)
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
+        .setup(|app| {
+            if cfg!(debug_assertions) {
+                app.handle().plugin(
+                    tauri_plugin_log::Builder::default()
+                        .level(log::LevelFilter::Info)
+                        .build(),
+                )?;
+            }
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            // Proyectos
+            commands::project_commands::create_project,
+            commands::project_commands::get_project,
+            commands::project_commands::list_projects,
+            commands::project_commands::update_project,
+            commands::project_commands::delete_project,
+            // Imágenes
+            commands::image_commands::upload_images,
+            commands::image_commands::upload_image_bytes,
+            commands::image_commands::get_image,
+            commands::image_commands::list_images_by_project,
+            commands::image_commands::get_image_data,
+            commands::image_commands::get_image_file_path,
+            commands::image_commands::save_annotations,
+            commands::image_commands::delete_image,
+            // Series temporales
+            commands::timeseries_commands::create_timeseries,
+            commands::timeseries_commands::get_timeseries,
+            commands::timeseries_commands::list_timeseries_by_project,
+            commands::timeseries_commands::save_ts_annotations,
+            commands::timeseries_commands::delete_timeseries,
+            // Storage
+            commands::storage_commands::get_storage_info,
+            // File System
+            commands::fs_commands::read_text_file,
+            commands::fs_commands::read_binary_file,
+            commands::fs_commands::write_binary_file,
+            // Export
+            commands::export_commands::export_dataset,
+            // Import
+            commands::import_commands::detect_import_format,
+            commands::import_commands::import_dataset,
+            // CSV
+            commands::csv_commands::parse_csv,
+            commands::csv_commands::validate_csv,
+            // Image processing
+            commands::image_processing_commands::generate_thumbnail,
+            commands::image_processing_commands::get_thumbnail_path,
+            commands::image_processing_commands::generate_thumbnails_batch,
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import * as tauriDb from '@/lib/tauriDb';
 
 interface StorageEstimate {
   usage: number;
@@ -15,17 +16,15 @@ export function useStorageEstimate() {
 
   useEffect(() => {
     const updateEstimate = async () => {
-      if ('storage' in navigator && 'estimate' in navigator.storage) {
-        try {
-          const result = await navigator.storage.estimate();
-          const usage = result.usage || 0;
-          const quota = result.quota || 0;
-          const percentage = quota > 0 ? (usage / quota) * 100 : 0;
-
-          setEstimate({ usage, quota, percentage });
-        } catch (error) {
-          console.error('Failed to estimate storage:', error);
-        }
+      try {
+        const info = await tauriDb.getStorageInfo();
+        setEstimate({
+          usage: info.usage,
+          quota: info.quota,
+          percentage: info.percentage,
+        });
+      } catch (error) {
+        console.error('Failed to estimate storage:', error);
       }
     };
 

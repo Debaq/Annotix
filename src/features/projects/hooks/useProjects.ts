@@ -1,11 +1,12 @@
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db, Project, NewProject } from '@/lib/db';
+import { Project, NewProject } from '@/lib/db';
 import { projectService } from '../services/projectService';
+import { useTauriQuery } from '@/hooks/useTauriQuery';
 
 export function useProjects() {
-  const projects = useLiveQuery(
+  const { data: projects, isLoading } = useTauriQuery(
     () => projectService.list(),
-    []
+    [],
+    ['db:projects-changed']
   );
 
   const createProject = async (project: NewProject) => {
@@ -38,7 +39,7 @@ export function useProjects() {
 
   return {
     projects: projects || [],
-    isLoading: projects === undefined,
+    isLoading,
     createProject,
     updateProject,
     deleteProject,

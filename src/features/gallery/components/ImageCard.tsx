@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AnnotixImage } from '@/lib/db';
 import { useUIStore } from '../../core/store/uiStore';
 import { cn } from '@/lib/utils';
+import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 
 interface ImageCardProps {
   image: AnnotixImage;
@@ -15,12 +16,17 @@ export function ImageCard({ image }: ImageCardProps) {
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
 
   useEffect(() => {
-    if (image.image) {
-      const url = URL.createObjectURL(image.image);
-      setThumbnailUrl(url);
-      return () => URL.revokeObjectURL(url);
+    if (image.id) {
+      invoke<string>('get_thumbnail_path', { imageId: image.id }).then((path) => {
+        setThumbnailUrl(convertFileSrc(path));
+      }).catch(() => {
+        // Fallback to original image
+        invoke<string>('get_image_file_path', { imageId: image.id }).then((path) => {
+          setThumbnailUrl(convertFileSrc(path));
+        });
+      });
     }
-  }, [image.image]);
+  }, [image.id, image.blobPath]);
 
   const handleSelect = () => {
     if (projectId) {

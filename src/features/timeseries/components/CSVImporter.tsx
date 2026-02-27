@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { invoke } from '@tauri-apps/api/core';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,53 +9,78 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, FileText, Check } from 'lucide-react';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useTimeSeries } from '../hooks/useTimeSeries';
-import { parseCSV, validateCSV } from '../services/csvParser';
+import { pickCsvFile } from '@/lib/nativeDialogs';
+
+interface CSVParseResult {
+  timestamps: number[];
+  values: number[] | number[][];
+  columns?: string[];
+  headers: string[];
+  rowCount: number;
+  columnCount: number;
+}
+
+interface CSVValidation {
+  valid: boolean;
+  error?: string;
+  rowCount: number;
+  columnCount: number;
+}
 
 export function CSVImporter() {
   const { t } = useTranslation();
   const { project } = useCurrentProject();
   const { addTimeSeries, reload } = useTimeSeries();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [file, setFile] = useState<File | null>(null);
+  const [filePath, setFilePath] = useState<string | null>(null);
+  const [fileName, setFileName] = useState('');
   const [hasHeader, setHasHeader] = useState(true);
   const [timestampColumn, setTimestampColumn] = useState(0);
   const [importing, setImporting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile && selectedFile.name.endsWith('.csv')) {
-      setFile(selectedFile);
+  const handleSelectFile = async () => {
+    const path = await pickCsvFile();
+    if (path) {
+      setFilePath(path);
+      setFileName(path.split('/').pop() || path.split('\\').pop() || path);
       setSuccess(false);
     }
   };
 
   const handleImport = async () => {
-    if (!file || !project?.id) return;
+    if (!filePath || !project?.id) return;
 
     setImporting(true);
     try {
-      // Validate CSV
-      const text = await file.text();
-      const validation = validateCSV(text);
+      // Validate CSV via Rust
+      const validation = await invoke<CSVValidation>('validate_csv', {
+        filePath,
+      });
       if (!validation.valid) {
         alert(`Invalid CSV: ${validation.error}`);
         setImporting(false);
         return;
       }
 
-      // Parse CSV
-      const result = await parseCSV(file, {
-        hasHeader,
-        timestampColumn,
+      // Parse CSV via Rust
+      const result = await invoke<CSVParseResult>('parse_csv', {
+        filePath,
+        options: {
+          hasHeader,
+          timestampColumn,
+        },
       });
 
       // Create time series
       await addTimeSeries({
         projectId: project.id,
-        name: file.name.replace('.csv', ''),
-        data: result.data,
+        name: fileName.replace('.csv', ''),
+        data: {
+          timestamps: result.timestamps,
+          values: result.values,
+          columns: result.columns,
+        },
         annotations: [],
         metadata: {
           uploaded: Date.now(),
@@ -63,10 +89,8 @@ export function CSVImporter() {
       });
 
       setSuccess(true);
-      setFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      setFilePath(null);
+      setFileName('');
       await reload();
     } catch (error) {
       console.error('Failed to import CSV:', error);
@@ -99,26 +123,28 @@ export function CSVImporter() {
           </div>
         )}
 
-        {/* File Input */}
+        {/* File Select Button */}
         <div className="space-y-2">
           <Label>{t('timeseries.selectCSV')}</Label>
-          <Input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            onChange={handleFileSelect}
+          <Button
+            variant="outline"
+            onClick={handleSelectFile}
             disabled={importing}
-          />
-          {file && (
+            className="w-full justify-start"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            {fileName || t('timeseries.selectCSV')}
+          </Button>
+          {fileName && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <FileText className="w-4 h-4" />
-              <span>{file.name}</span>
+              <span>{fileName}</span>
             </div>
           )}
         </div>
 
         {/* Options */}
-        {file && (
+        {filePath && (
           <>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -152,7 +178,7 @@ export function CSVImporter() {
         {/* Import Button */}
         <Button
           onClick={handleImport}
-          disabled={!file || importing}
+          disabled={!filePath || importing}
           className="w-full"
         >
           {importing ? (

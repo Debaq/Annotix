@@ -1,15 +1,14 @@
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db, AnnotixImage } from '@/lib/db';
 import { useUIStore } from '../../core/store/uiStore';
 import { imageService } from '../services/imageService';
+import { useTauriQuery } from '@/hooks/useTauriQuery';
 
 export function useImages() {
   const { currentProjectId, galleryFilter } = useUIStore();
 
-  const images = useLiveQuery(
+  const { data: images, isLoading } = useTauriQuery(
     async () => {
       if (!currentProjectId) return [];
-      
+
       let data = await imageService.listByProject(currentProjectId);
 
       // Apply filters
@@ -21,7 +20,8 @@ export function useImages() {
 
       return data;
     },
-    [currentProjectId, galleryFilter]
+    [currentProjectId, galleryFilter],
+    ['db:images-changed']
   );
 
   const uploadImages = async (files: File[]) => {
@@ -45,7 +45,7 @@ export function useImages() {
 
   return {
     images: images || [],
-    isLoading: images === undefined,
+    isLoading,
     uploadImages,
     deleteImage,
   };

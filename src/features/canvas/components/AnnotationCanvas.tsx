@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo, useReducer } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Stage, Layer, Image as KonvaImage, Rect, Transformer, Line, Circle } from 'react-konva';
+import { convertFileSrc } from '@tauri-apps/api/core';
 import { useCurrentImage } from '../../gallery/hooks/useCurrentImage';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useAnnotations, captureSaveContext, invalidateSaveContext } from '../hooks/useAnnotations';
@@ -10,6 +11,7 @@ import { FloatingZoomControls } from './FloatingZoomControls';
 import { ImageNavigation } from '../../gallery/components/ImageNavigation';
 import { AnnotationsBar } from './AnnotationsBar';
 import { skeletonPresets } from '../data/skeletonPresets';
+import { imageService } from '../../gallery/services/imageService';
 import type { Annotation, BBoxData, OBBData, PolygonData, KeypointsData, LandmarksData, MaskData } from '@/lib/db';
 import type { MouseEventData } from '../types/handlers';
 import { BBoxHandler } from '../handlers/BBoxHandler';
@@ -227,44 +229,50 @@ export function AnnotationCanvas() {
     }
   }, [activeTool, activeClassId]);
 
-  // Load image
+  // Load image from filesystem via Tauri
   useEffect(() => {
-    if (!image) return;
+    if (!image || !image.id) return;
 
-    const img = new window.Image();
-    const url = URL.createObjectURL(image.image);
+    let cancelled = false;
 
-    img.onload = () => {
-      setKonvaImage(img);
-      imageElementRef.current = img;
-      URL.revokeObjectURL(url);
+    imageService.getFilePath(image.id).then((filePath) => {
+      if (cancelled) return;
 
-      // Calculate initial scale
-      if (containerRef.current) {
-        const containerWidth = containerRef.current.clientWidth;
-        const containerHeight = containerRef.current.clientHeight || 600;
+      const img = new window.Image();
+      const url = convertFileSrc(filePath);
 
-        const scaleX = containerWidth / img.width;
-        const scaleY = containerHeight / img.height;
-        const newScale = Math.min(scaleX, scaleY) * 0.9;
+      img.onload = () => {
+        if (cancelled) return;
+        setKonvaImage(img);
+        imageElementRef.current = img;
 
-        const scaledWidth = img.width * newScale;
-        const scaledHeight = img.height * newScale;
-        const offsetX = (containerWidth - scaledWidth) / 2;
-        const offsetY = (containerHeight - scaledHeight) / 2;
+        // Calculate initial scale
+        if (containerRef.current) {
+          const containerWidth = containerRef.current.clientWidth;
+          const containerHeight = containerRef.current.clientHeight || 600;
 
-        setScale(newScale);
-        setImageOffset({ x: offsetX, y: offsetY });
-        setStageSize({ width: containerWidth, height: containerHeight });
-        setStageScale(1);
-        setStagePos({ x: 0, y: 0 });
-      }
-    };
+          const scaleX = containerWidth / img.width;
+          const scaleY = containerHeight / img.height;
+          const newScale = Math.min(scaleX, scaleY) * 0.9;
 
-    img.src = url;
+          const scaledWidth = img.width * newScale;
+          const scaledHeight = img.height * newScale;
+          const offsetX = (containerWidth - scaledWidth) / 2;
+          const offsetY = (containerHeight - scaledHeight) / 2;
+
+          setScale(newScale);
+          setImageOffset({ x: offsetX, y: offsetY });
+          setStageSize({ width: containerWidth, height: containerHeight });
+          setStageScale(1);
+          setStagePos({ x: 0, y: 0 });
+        }
+      };
+
+      img.src = url;
+    });
 
     return () => {
-      if (img.src) URL.revokeObjectURL(img.src);
+      cancelled = true;
     };
   }, [image]);
 

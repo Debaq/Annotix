@@ -1,6 +1,8 @@
-import { ReactNode, useRef, useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useImages } from '../hooks/useImages';
+import { useUIStore } from '../../core/store/uiStore';
+import { imageService } from '../services/imageService';
+import { pickImages } from '@/lib/nativeDialogs';
 import { Button } from '@/components/ui/button';
 
 interface ImageUploaderProps {
@@ -9,19 +11,18 @@ interface ImageUploaderProps {
 
 export function ImageUploader({ trigger }: ImageUploaderProps) {
   const { t } = useTranslation();
-  const { uploadImages } = useImages();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { currentProjectId } = useUIStore();
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleFileSelect = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+  const handleClick = async () => {
+    if (!currentProjectId || isUploading) return;
+
+    const filePaths = await pickImages();
+    if (!filePaths || filePaths.length === 0) return;
 
     setIsUploading(true);
     try {
-      await uploadImages(Array.from(files));
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      await imageService.uploadFromPaths(currentProjectId, filePaths);
     } catch (error) {
       console.error('Failed to upload images:', error);
     } finally {
@@ -29,21 +30,8 @@ export function ImageUploader({ trigger }: ImageUploaderProps) {
     }
   };
 
-  const handleClick = () => {
-    fileInputRef.current?.click();
-  };
-
   return (
     <>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        onChange={(e) => handleFileSelect(e.target.files)}
-      />
-
       {trigger ? (
         <div onClick={handleClick}>{trigger}</div>
       ) : (
