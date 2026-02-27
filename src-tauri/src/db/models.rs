@@ -54,6 +54,10 @@ pub struct AnnotixImage {
     pub height: u32,
     pub annotations: Vec<Annotation>,
     pub metadata: ImageMetadata,
+    #[serde(rename = "videoId")]
+    pub video_id: Option<i64>,
+    #[serde(rename = "frameIndex")]
+    pub frame_index: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -133,6 +137,79 @@ pub struct TrainingJob {
     pub created_at: f64,
     #[serde(rename = "updatedAt")]
     pub updated_at: f64,
+}
+
+// ─── Video Types ────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VideoRecord {
+    pub id: Option<i64>,
+    #[serde(rename = "projectId")]
+    pub project_id: i64,
+    pub name: String,
+    #[serde(rename = "sourcePath")]
+    pub source_path: String,
+    #[serde(rename = "fpsExtraction")]
+    pub fps_extraction: f64,
+    #[serde(rename = "fpsOriginal")]
+    pub fps_original: Option<f64>,
+    #[serde(rename = "totalFrames")]
+    pub total_frames: i64,
+    #[serde(rename = "durationMs")]
+    pub duration_ms: i64,
+    pub width: i64,
+    pub height: i64,
+    pub metadata: VideoMetadata,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VideoMetadata {
+    pub uploaded: f64,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VideoTrackRecord {
+    pub id: Option<i64>,
+    #[serde(rename = "videoId")]
+    pub video_id: i64,
+    #[serde(rename = "trackUuid")]
+    pub track_uuid: String,
+    #[serde(rename = "classId")]
+    pub class_id: i64,
+    pub label: Option<String>,
+    pub enabled: bool,
+    pub keyframes: Vec<VideoKeyframeRecord>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VideoKeyframeRecord {
+    pub id: Option<i64>,
+    #[serde(rename = "trackId")]
+    pub track_id: i64,
+    #[serde(rename = "frameIndex")]
+    pub frame_index: i64,
+    #[serde(rename = "bboxX")]
+    pub bbox_x: f64,
+    #[serde(rename = "bboxY")]
+    pub bbox_y: f64,
+    #[serde(rename = "bboxWidth")]
+    pub bbox_width: f64,
+    #[serde(rename = "bboxHeight")]
+    pub bbox_height: f64,
+    #[serde(rename = "isKeyframe")]
+    pub is_keyframe: bool,
+    pub enabled: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VideoInfo {
+    #[serde(rename = "durationMs")]
+    pub duration_ms: i64,
+    #[serde(rename = "fpsOriginal")]
+    pub fps_original: f64,
+    pub width: i64,
+    pub height: i64,
 }
 
 // ─── Storage Info ────────────────────────────────────────────────────────────

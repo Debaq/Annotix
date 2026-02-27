@@ -31,9 +31,13 @@ interface UIState {
   currentProjectId: number | null;
   currentImageId: number | null;
   currentTimeSeriesId: number | null;
+  currentVideoId: number | null;
+  currentFrameIndex: number;
   setCurrentProjectId: (id: number | null) => void;
   setCurrentImageId: (id: number | null) => void;
   setCurrentTimeSeriesId: (id: number | null) => void;
+  setCurrentVideoId: (id: number | null) => void;
+  setCurrentFrameIndex: (index: number) => void;
 
   // Gallery filter
   galleryFilter: GalleryFilterType;
@@ -82,12 +86,16 @@ export const useUIStore = create<UIState>()(
       currentProjectId: null,
       currentImageId: null,
       currentTimeSeriesId: null,
+      currentVideoId: null,
+      currentFrameIndex: 0,
       setCurrentProjectId: (id) => set((state) => {
         const projectChanged = state.currentProjectId !== null && state.currentProjectId !== id;
         return {
-          currentProjectId: id, 
-          currentImageId: null, 
+          currentProjectId: id,
+          currentImageId: null,
           currentTimeSeriesId: null,
+          currentVideoId: null,
+          currentFrameIndex: 0,
           // Only reset tool and class when switching between projects (not on initial load)
           ...(projectChanged && {
             activeTool: 'pan',
@@ -97,6 +105,8 @@ export const useUIStore = create<UIState>()(
       }),
       setCurrentImageId: (id) => set({ currentImageId: id }),
       setCurrentTimeSeriesId: (id) => set({ currentTimeSeriesId: id }),
+      setCurrentVideoId: (id) => set({ currentVideoId: id, currentFrameIndex: 0 }),
+      setCurrentFrameIndex: (index) => set({ currentFrameIndex: index }),
 
       // Gallery filter
       galleryFilter: 'all',

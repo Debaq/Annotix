@@ -3,10 +3,29 @@ import { useImages } from '../hooks/useImages';
 import { ImageGrid } from './ImageGrid';
 import { ImageUploader } from './ImageUploader';
 import { GalleryFilters } from './GalleryFilters';
+import { VideoUploader } from '../../video/components/VideoUploader';
+import { VideoCard } from '../../video/components/VideoCard';
+import { useUIStore } from '../../core/store/uiStore';
+import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
+import { useTauriQuery } from '@/hooks/useTauriQuery';
+import { videoService } from '../../video/services/videoService';
 
 export function ImageGallery() {
   const { t } = useTranslation();
   const { images, isLoading } = useImages();
+  const { currentProjectId } = useUIStore();
+  const { project } = useCurrentProject();
+
+  const isBboxProject = project?.type === 'bbox';
+
+  const { data: videos } = useTauriQuery(
+    async () => {
+      if (!currentProjectId || !isBboxProject) return [];
+      return videoService.listByProject(currentProjectId);
+    },
+    [currentProjectId, isBboxProject],
+    ['db:videos-changed']
+  );
 
   if (isLoading) {
     return (
@@ -21,7 +40,7 @@ export function ImageGallery() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Upload Button Section */}
+      {/* Upload Buttons Section */}
       <div className="annotix-panel-section">
         <ImageUploader trigger={
           <button className="annotix-btn annotix-btn-primary w-full">
@@ -29,7 +48,27 @@ export function ImageGallery() {
             {t('gallery.upload')}
           </button>
         } />
+        {isBboxProject && (
+          <div className="mt-2">
+            <VideoUploader />
+          </div>
+        )}
       </div>
+
+      {/* Videos Section */}
+      {isBboxProject && videos && videos.length > 0 && (
+        <div className="annotix-panel-section">
+          <h4 className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--annotix-gray)' }}>
+            <i className="fas fa-video mr-1"></i>
+            {t('video.videos', 'Videos')} ({videos.length})
+          </h4>
+          <div className="grid grid-cols-3 gap-1.5">
+            {videos.map((video) => (
+              <VideoCard key={video.id} video={video} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Filters Section */}
       <div className="panel-section">

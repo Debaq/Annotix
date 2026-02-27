@@ -25,6 +25,25 @@ export async function pickImages(): Promise<string[] | null> {
 }
 
 /**
+ * Abre file picker nativo para seleccionar un video.
+ * @returns Ruta absoluta, o null si se canceló
+ */
+export async function pickVideo(): Promise<string | null> {
+  const result = await open({
+    multiple: false,
+    filters: [
+      {
+        name: 'Video',
+        extensions: ['mp4', 'avi', 'mov', 'mkv', 'webm'],
+      },
+    ],
+  });
+
+  if (!result) return null;
+  return Array.isArray(result) ? result[0] : result;
+}
+
+/**
  * Abre file picker nativo para seleccionar un archivo CSV.
  * @returns Ruta absoluta, o null si se canceló
  */

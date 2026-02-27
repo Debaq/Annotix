@@ -64,6 +64,23 @@ pub fn run() {
             commands::image_processing_commands::generate_thumbnail,
             commands::image_processing_commands::get_thumbnail_path,
             commands::image_processing_commands::generate_thumbnails_batch,
+            // Video
+            commands::video_commands::check_ffmpeg_available,
+            commands::video_commands::get_video_info,
+            commands::video_commands::upload_video,
+            commands::video_commands::extract_video_frames,
+            commands::video_commands::get_video,
+            commands::video_commands::list_videos_by_project,
+            commands::video_commands::list_frames_by_video,
+            commands::video_commands::delete_video,
+            commands::video_commands::create_track,
+            commands::video_commands::list_tracks_by_video,
+            commands::video_commands::update_track,
+            commands::video_commands::delete_track,
+            commands::video_commands::set_keyframe,
+            commands::video_commands::delete_keyframe,
+            commands::video_commands::toggle_keyframe_enabled,
+            commands::video_commands::bake_video_tracks,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

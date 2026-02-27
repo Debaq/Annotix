@@ -7,6 +7,7 @@ import { AnnotationCanvas } from './features/canvas/components/AnnotationCanvas'
 import { ClassificationPanel } from './features/classification/components/ClassificationPanel';
 import { TimeSeriesGallery } from './features/timeseries/components/TimeSeriesGallery';
 import { TimeSeriesCanvas } from './features/timeseries/components/TimeSeriesCanvas';
+import { VideoView } from './features/video/components/VideoView';
 import { useUIStore } from './features/core/store/uiStore';
 import { useKeyboardShortcuts } from './features/core/hooks/useKeyboardShortcuts';
 import { useCurrentProject } from './features/projects/hooks/useCurrentProject';
@@ -329,6 +330,7 @@ function App() {
         <Route path="/projects/:projectId" element={<ProjectView />} />
         <Route path="/projects/:projectId/images/:imageId" element={<ImageView />} />
         <Route path="/projects/:projectId/timeseries/:seriesId" element={<TimeSeriesView />} />
+        <Route path="/projects/:projectId/videos/:videoId" element={<VideoView />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster />
