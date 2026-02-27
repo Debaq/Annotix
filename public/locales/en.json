@@ -1408,5 +1408,30 @@
             "event": "Click on the chart to mark an event",
             "anomaly": "Click on the chart to mark an anomaly"
         }
+    },
+    "video": {
+        "importVideo": "",
+        "selectVideo": "",
+        "extractFrames": "",
+        "extracting": "",
+        "fps": "",
+        "everyNFrames": "",
+        "estimatedFrames": "",
+        "extractionMode": "",
+        "quality": "",
+        "progress": "",
+        "completed": "",
+        "cancel": "",
+        "videoInfo": "",
+        "duration": "",
+        "resolution": "",
+        "noVideoSelected": "",
+        "formatError": "",
+        "codecError": "",
+        "addMore": "",
+        "loadingInfo": "",
+        "loadingInfoHint": "",
+        "ffmpegMode": "",
+        "processingVideo": ""
     }
 }

@@ -23,6 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
+# FFmpeg WASM (31MB, installed via npm)
+public/ffmpeg/
+
 # Python
 __pycache__/
 *.py[cod]

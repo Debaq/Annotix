@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useImages } from '../hooks/useImages';
 import { ImageGrid } from './ImageGrid';
 import { ImageUploader } from './ImageUploader';
+import { VideoImporter } from './VideoImporter';
 import { GalleryFilters } from './GalleryFilters';
 
 export function ImageGallery() {
@@ -23,12 +24,20 @@ export function ImageGallery() {
     <div className="flex h-full flex-col">
       {/* Upload Button Section */}
       <div className="annotix-panel-section">
-        <ImageUploader trigger={
-          <button className="annotix-btn annotix-btn-primary w-full">
-            <i className="fas fa-folder-open mr-2"></i>
-            {t('gallery.upload')}
-          </button>
-        } />
+        <div className="flex flex-col gap-2">
+          <ImageUploader trigger={
+            <button className="annotix-btn annotix-btn-primary w-full">
+              <i className="fas fa-folder-open mr-2"></i>
+              {t('gallery.upload')}
+            </button>
+          } />
+          <VideoImporter trigger={
+            <button className="annotix-btn annotix-btn-secondary w-full">
+              <i className="fas fa-video mr-2"></i>
+              {t('video.importVideo')}
+            </button>
+          } />
+        </div>
       </div>
 
       {/* Filters Section */}

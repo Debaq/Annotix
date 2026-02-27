@@ -1595,5 +1595,30 @@
       "event": "Haz clic en el gráfico para marcar un evento",
       "anomaly": "Haz clic en el gráfico para marcar una anomalía"
     }
+  },
+  "video": {
+    "importVideo": "",
+    "selectVideo": "",
+    "extractFrames": "",
+    "extracting": "",
+    "fps": "",
+    "everyNFrames": "",
+    "estimatedFrames": "",
+    "extractionMode": "",
+    "quality": "",
+    "progress": "",
+    "completed": "",
+    "cancel": "",
+    "videoInfo": "",
+    "duration": "",
+    "resolution": "",
+    "noVideoSelected": "",
+    "formatError": "",
+    "codecError": "",
+    "addMore": "",
+    "loadingInfo": "",
+    "loadingInfoHint": "",
+    "ffmpegMode": "",
+    "processingVideo": ""
   }
 }
