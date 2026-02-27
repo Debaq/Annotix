@@ -1,48 +1,34 @@
-import { db, Project, NewProject } from '@/lib/db';
+import { Project, NewProject, ClassDefinition } from '@/lib/db';
+import * as tauriDb from '@/lib/tauriDb';
 
 export const projectService = {
   async create(project: NewProject): Promise<number> {
-    const now = Date.now();
-    const fullProject: Omit<Project, 'id'> = {
-      ...project,
-      metadata: {
-        created: now,
-        updated: now,
-        version: '2.0.0',
-        ...project.metadata,
-      },
-    };
-    const id = await db.projects.add(fullProject);
+    const id = await tauriDb.createProject(
+      project.name,
+      project.type,
+      project.classes
+    );
     return id;
   },
 
   async get(id: number): Promise<Project | undefined> {
-    return await db.projects.get(id);
+    const project = await tauriDb.getProject(id);
+    return project ?? undefined;
   },
 
   async list(): Promise<Project[]> {
-    return await db.projects.orderBy('metadata.created').reverse().toArray();
+    return await tauriDb.listProjects();
   },
 
   async update(id: number, updates: Partial<Project>): Promise<void> {
-    const current = await db.projects.get(id);
-    if (!current) return;
-
-    await db.projects.update(id, {
-      ...updates,
-      metadata: {
-        ...current.metadata,
-        ...updates.metadata,
-        updated: Date.now(),
-      },
+    await tauriDb.updateProject(id, {
+      name: updates.name,
+      projectType: updates.type,
+      classes: updates.classes,
     });
   },
 
   async delete(id: number): Promise<void> {
-    // Delete all images associated with this project
-    await db.images.where('projectId').equals(id).delete();
-
-    // Delete the project
-    await db.projects.delete(id);
+    await tauriDb.deleteProject(id);
   },
 };

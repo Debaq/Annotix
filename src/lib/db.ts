@@ -1,5 +1,5 @@
 // src/lib/db.ts
-import Dexie, { Table } from 'dexie';
+// Solo interfaces y tipos - la persistencia se maneja via Tauri/SQLite (tauriDb.ts)
 
 // ============================================================================
 // PROJECTS TABLE
@@ -260,32 +260,6 @@ export interface TrainingMetrics {
 }
 
 // ============================================================================
-// DEXIE DATABASE CLASS
-// ============================================================================
-
-class AnnotixDB extends Dexie {
-  projects!: Table<Project>;
-  images!: Table<Image>;
-  timeseries!: Table<TimeSeries>;
-  inferenceCache!: Table<InferenceCache>;
-  trainingJobs!: Table<TrainingJob>;
-
-  constructor() {
-    super('annotixDB');
-
-    this.version(1).stores({
-      projects: '++id, name, type, metadata.created',
-      images: '++id, projectId, metadata.status, metadata.uploaded',
-      timeseries: '++id, projectId, metadata.status, metadata.uploaded',
-      inferenceCache: '++id, imageId, modelHash',
-      trainingJobs: '++id, projectId, status, createdAt',
-    });
-  }
-}
-
-export const db = new AnnotixDB();
-
-// ============================================================================
 // HELPER TYPES FOR SERVICE LAYER
 // ============================================================================
 
@@ -297,16 +271,22 @@ export type NewProject = Omit<Project, 'id' | 'metadata'> & {
 };
 
 /**
- * Alias for Image with flattened structure (compatibility with agent-generated code)
- * Transforms:
- *   - blob → image
- *   - dimensions.width → width
- *   - dimensions.height → height
+ * AnnotixImage para Tauri - usa blobPath en lugar de Blob
+ * El frontend obtiene la URL de la imagen via convertFileSrc() o getImageFilePath()
  */
-export interface AnnotixImage extends Omit<Image, 'blob' | 'dimensions'> {
-  image: Blob;  // Renamed from 'blob'
-  width: number; // Flattened from dimensions.width
-  height: number; // Flattened from dimensions.height
+export interface AnnotixImage {
+  id?: number;
+  projectId: number;
+  name: string;
+  blobPath: string;
+  width: number;
+  height: number;
+  annotations: Annotation[];
+  metadata: {
+    uploaded: number;
+    annotated?: number;
+    status: 'pending' | 'annotated' | 'reviewed';
+  };
 }
 
 /**

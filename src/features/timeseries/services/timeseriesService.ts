@@ -1,82 +1,50 @@
-import { db, TimeSeries, TimeSeriesAnnotation } from '@/lib/db';
+import { TimeSeries, TimeSeriesAnnotation } from '@/lib/db';
+import * as tauriDb from '@/lib/tauriDb';
 
 export const timeseriesService = {
-  /**
-   * Get all time series for a project
-   */
   async getByProjectId(projectId: number): Promise<TimeSeries[]> {
-    return await db.timeseries.where('projectId').equals(projectId).toArray();
+    const records = await tauriDb.listTimeseriesByProject(projectId);
+    return records as unknown as TimeSeries[];
   },
 
-  /**
-   * Get single time series by ID
-   */
   async getById(id: number): Promise<TimeSeries | undefined> {
-    return await db.timeseries.get(id);
+    const record = await tauriDb.getTimeseries(id);
+    return (record as unknown as TimeSeries) ?? undefined;
   },
 
-  /**
-   * Create a new time series
-   */
   async create(timeseries: Omit<TimeSeries, 'id'>): Promise<number> {
-    const id = await db.timeseries.add({
-      ...timeseries,
-      metadata: {
-        ...timeseries.metadata,
-        uploaded: timeseries.metadata?.uploaded || Date.now(),
-        status: timeseries.metadata?.status || 'pending',
-      },
-    });
-    return id;
+    return await tauriDb.createTimeseries(
+      timeseries.projectId,
+      timeseries.name,
+      timeseries.data
+    );
   },
 
-  /**
-   * Delete time series
-   */
   async delete(id: number): Promise<void> {
-    await db.timeseries.delete(id);
+    await tauriDb.deleteTimeseries(id);
   },
 
-  /**
-   * Delete all time series for a project
-   */
   async deleteByProjectId(projectId: number): Promise<void> {
-    await db.timeseries.where('projectId').equals(projectId).delete();
+    const records = await tauriDb.listTimeseriesByProject(projectId);
+    for (const record of records) {
+      if (record.id) {
+        await tauriDb.deleteTimeseries(record.id);
+      }
+    }
   },
 
-  /**
-   * Update annotations for a time series
-   */
   async saveAnnotations(
     timeseriesId: number,
     annotations: TimeSeriesAnnotation[]
   ): Promise<void> {
-    const ts = await db.timeseries.get(timeseriesId);
-    if (!ts) {
-      throw new Error(`TimeSeries ${timeseriesId} not found`);
-    }
-
-    await db.timeseries.update(timeseriesId, {
-      annotations,
-      metadata: {
-        ...ts.metadata,
-        annotated: Date.now(),
-        status: annotations.length > 0 ? 'annotated' : 'pending',
-      },
-    });
+    await tauriDb.saveTsAnnotations(timeseriesId, annotations);
   },
 
-  /**
-   * Get time series count by status
-   */
   async getCountByStatus(
     projectId: number,
     status: 'pending' | 'annotated' | 'reviewed'
   ): Promise<number> {
-    return await db.timeseries
-      .where('projectId')
-      .equals(projectId)
-      .and((ts) => ts.metadata.status === status)
-      .count();
+    const records = await tauriDb.listTimeseriesByProject(projectId);
+    return records.filter((r) => r.metadata.status === status).length;
   },
 };

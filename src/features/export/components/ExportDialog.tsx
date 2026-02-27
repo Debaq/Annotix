@@ -1,10 +1,12 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { FormatSelector } from './FormatSelector';
 import { ExportProgress } from './ExportProgress';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
-import { exportService } from '../services/exportService';
 import { ExportFormat, getValidFormats, getDefaultFormat } from '../utils/formatMapping';
+import { pickSaveLocation } from '@/lib/nativeDialogs';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -47,24 +49,35 @@ export function ExportDialog({ trigger }: ExportDialogProps) {
     setIsExporting(true);
     setProgress(0);
 
-    try {
-      const blob = await exportService.export(project.id, format, (p) => setProgress(p));
+    // Escuchar progreso del backend
+    const unlisten = await listen<number>('export:progress', (event) => {
+      setProgress(event.payload);
+    });
 
-      // Download file
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${project.name}-${format}${format === 'tix' ? '.tix' : '.zip'}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    try {
+      // Pedir ubicación de guardado con diálogo nativo
+      const ext = format === 'tix' ? 'tix' : 'zip';
+      const defaultName = `${project.name}-${format}.${ext}`;
+      const savePath = await pickSaveLocation(defaultName, ext);
+      if (!savePath) {
+        setIsExporting(false);
+        unlisten();
+        return;
+      }
+
+      // Exportar directamente en Rust (sin pasar blobs por JS)
+      await invoke('export_dataset', {
+        projectId: project.id,
+        format,
+        outputPath: savePath,
+      });
 
       setOpen(false);
     } catch (error) {
       console.error('Export failed:', error);
       alert('Export failed. Please try again.');
     } finally {
+      unlisten();
       setIsExporting(false);
       setProgress(0);
     }
