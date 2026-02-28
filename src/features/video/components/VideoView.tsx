@@ -33,8 +33,8 @@ export function VideoView() {
 
   // Sync URL -> Store
   useEffect(() => {
-    if (projectId) setCurrentProjectId(Number(projectId));
-    if (videoId) setCurrentVideoId(Number(videoId));
+    if (projectId) setCurrentProjectId(projectId);
+    if (videoId) setCurrentVideoId(videoId);
   }, [projectId, videoId, setCurrentProjectId, setCurrentVideoId]);
 
   // Initialize active class

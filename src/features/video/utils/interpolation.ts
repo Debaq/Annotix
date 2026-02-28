@@ -75,19 +75,30 @@ function interpolateTrackAtFrame(
     }
   }
 
-  // If only one side exists, don't show outside range
-  if (!prev || !next) return null;
-
-  // If either is disabled, the interpolated frame is disabled
-  if (!prev.enabled || !next.enabled) {
+  // If only one side exists, extend (hold) the nearest keyframe
+  if (!prev && next) {
     return {
-      x: 0, y: 0, width: 0, height: 0,
+      x: next.bboxX,
+      y: next.bboxY,
+      width: next.bboxWidth,
+      height: next.bboxHeight,
       isKeyframe: false,
-      enabled: false,
+      enabled: next.enabled,
     };
   }
+  if (prev && !next) {
+    return {
+      x: prev.bboxX,
+      y: prev.bboxY,
+      width: prev.bboxWidth,
+      height: prev.bboxHeight,
+      isKeyframe: false,
+      enabled: prev.enabled,
+    };
+  }
+  if (!prev || !next) return null;
 
-  // Linear interpolation
+  // Linear interpolation (siempre calcular coords reales, marcar disabled si corresponde)
   const t = (frameIndex - prev.frameIndex) / (next.frameIndex - prev.frameIndex);
   return {
     x: prev.bboxX + (next.bboxX - prev.bboxX) * t,
@@ -95,6 +106,6 @@ function interpolateTrackAtFrame(
     width: prev.bboxWidth + (next.bboxWidth - prev.bboxWidth) * t,
     height: prev.bboxHeight + (next.bboxHeight - prev.bboxHeight) * t,
     isKeyframe: false,
-    enabled: true,
+    enabled: prev.enabled && next.enabled,
   };
 }

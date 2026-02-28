@@ -1,17 +1,17 @@
 use std::collections::{BTreeSet, HashSet};
-use std::io::{Write, Seek};
+use std::io::Write;
+use std::path::Path;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
-use crate::db::models::{Project, AnnotixImage, Annotation};
-use crate::db::Database;
+use crate::store::project_file::{ProjectFile, ImageEntry, AnnotationEntry};
 use crate::utils::converters::obb_to_aabbox;
 use super::{parse_bbox, parse_obb, parse_landmarks, parse_keypoints, class_name, add_image_to_zip};
 
 pub fn export<F: Fn(f64)>(
-    project: &Project,
-    images: &[AnnotixImage],
-    db: &Database,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    images_dir: &Path,
     file: std::fs::File,
     format: &str,
     emit_progress: F,
@@ -21,7 +21,7 @@ pub fn export<F: Fn(f64)>(
 
     // Add images
     for image in images {
-        add_image_to_zip(&mut zip, "images", image, db)?;
+        add_image_to_zip(&mut zip, "images", image, images_dir)?;
     }
 
     // Generate CSV
@@ -49,11 +49,11 @@ pub fn export<F: Fn(f64)>(
     Ok(())
 }
 
-fn generate_detection_csv(images: &[AnnotixImage], project: &Project) -> String {
+fn generate_detection_csv(images: &[ImageEntry], project: &ProjectFile) -> String {
     let mut rows = vec!["filename,width,height,class,xmin,ymin,xmax,ymax".to_string()];
 
     for image in images {
-        let bbox_anns: Vec<&Annotation> = image.annotations.iter()
+        let bbox_anns: Vec<&AnnotationEntry> = image.annotations.iter()
             .filter(|a| a.annotation_type == "bbox" || a.annotation_type == "obb")
             .collect();
 
@@ -77,7 +77,7 @@ fn generate_detection_csv(images: &[AnnotixImage], project: &Project) -> String 
     rows.join("\n")
 }
 
-fn generate_landmarks_csv(images: &[AnnotixImage], project: &Project) -> String {
+fn generate_landmarks_csv(images: &[ImageEntry], project: &ProjectFile) -> String {
     // Collect all unique landmark names
     let mut landmark_names = BTreeSet::new();
     for image in images {
@@ -104,7 +104,7 @@ fn generate_landmarks_csv(images: &[AnnotixImage], project: &Project) -> String 
 
     // Data
     for image in images {
-        let landmark_anns: Vec<&Annotation> = image.annotations.iter()
+        let landmark_anns: Vec<&AnnotationEntry> = image.annotations.iter()
             .filter(|a| a.annotation_type == "landmarks")
             .collect();
 
@@ -153,7 +153,7 @@ fn generate_landmarks_csv(images: &[AnnotixImage], project: &Project) -> String 
     rows.join("\n")
 }
 
-fn generate_keypoints_csv(images: &[AnnotixImage], project: &Project) -> String {
+fn generate_keypoints_csv(images: &[ImageEntry], project: &ProjectFile) -> String {
     // Collect all unique keypoint names
     let mut kp_names = BTreeSet::new();
     for image in images {
@@ -186,7 +186,7 @@ fn generate_keypoints_csv(images: &[AnnotixImage], project: &Project) -> String 
 
     // Data
     for image in images {
-        let kp_anns: Vec<&Annotation> = image.annotations.iter()
+        let kp_anns: Vec<&AnnotationEntry> = image.annotations.iter()
             .filter(|a| a.annotation_type == "keypoints")
             .collect();
 
@@ -242,11 +242,11 @@ fn generate_keypoints_csv(images: &[AnnotixImage], project: &Project) -> String 
     rows.join("\n")
 }
 
-fn generate_classification_csv(images: &[AnnotixImage], project: &Project) -> String {
+fn generate_classification_csv(images: &[ImageEntry], project: &ProjectFile) -> String {
     let mut rows = vec!["filename,class".to_string()];
 
     for image in images {
-        let class_anns: Vec<&Annotation> = image.annotations.iter()
+        let class_anns: Vec<&AnnotationEntry> = image.annotations.iter()
             .filter(|a| a.annotation_type == "classification" || a.annotation_type == "multi-label-classification")
             .collect();
 
@@ -273,7 +273,7 @@ fn generate_classification_csv(images: &[AnnotixImage], project: &Project) -> St
     rows.join("\n")
 }
 
-fn get_bbox_coords(ann: &Annotation) -> Option<(f64, f64, f64, f64)> {
+fn get_bbox_coords(ann: &AnnotationEntry) -> Option<(f64, f64, f64, f64)> {
     match ann.annotation_type.as_str() {
         "bbox" => {
             let bbox = parse_bbox(&ann.data)?;

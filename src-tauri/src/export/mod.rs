@@ -7,12 +7,13 @@ pub mod folders_by_class;
 pub mod tix;
 
 use std::io::{Write, Seek};
+use std::path::Path;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
 use tauri::Emitter;
-use crate::db::models::{Project, AnnotixImage, Annotation, ClassDefinition};
-use crate::db::Database;
+use crate::store::project_file::{ClassDef, ImageEntry};
+use crate::store::AppState;
 
 /// Datos de anotación extraídos de serde_json::Value
 pub struct BBoxData {
@@ -32,7 +33,6 @@ pub struct OBBData {
 
 pub struct PolygonData {
     pub points: Vec<(f64, f64)>,
-    pub closed: bool,
 }
 
 pub struct KeypointsData {
@@ -93,8 +93,7 @@ pub fn parse_polygon(data: &serde_json::Value) -> Option<PolygonData> {
     if points.len() < 3 {
         return None;
     }
-    let closed = data.get("closed").and_then(|v| v.as_bool()).unwrap_or(true);
-    Some(PolygonData { points, closed })
+    Some(PolygonData { points })
 }
 
 pub fn parse_keypoints(data: &serde_json::Value) -> Option<KeypointsData> {
@@ -144,7 +143,7 @@ pub fn parse_mask(data: &serde_json::Value) -> Option<MaskData> {
 }
 
 /// Busca nombre de clase por ID
-pub fn class_name(classes: &[ClassDefinition], class_id: i64) -> String {
+pub fn class_name(classes: &[ClassDef], class_id: i64) -> String {
     classes.iter()
         .find(|c| c.id == class_id)
         .map(|c| c.name.clone())
@@ -155,10 +154,10 @@ pub fn class_name(classes: &[ClassDefinition], class_id: i64) -> String {
 pub fn add_image_to_zip<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     folder: &str,
-    image: &AnnotixImage,
-    db: &Database,
+    image: &ImageEntry,
+    images_dir: &Path,
 ) -> Result<(), String> {
-    let file_path = db.get_image_file_path(image.project_id, &image.blob_path)?;
+    let file_path = images_dir.join(&image.file);
     let data = std::fs::read(&file_path)
         .map_err(|e| format!("Error leyendo imagen {}: {}", image.name, e))?;
 
@@ -179,24 +178,23 @@ pub fn add_image_to_zip<W: Write + Seek>(
 
 /// Exportar dataset completo a un archivo ZIP en output_path.
 pub fn export_dataset(
-    db: &Database,
-    project_id: i64,
+    state: &AppState,
+    project_id: &str,
     format: &str,
     output_path: &str,
     app_handle: &tauri::AppHandle,
 ) -> Result<(), String> {
-    let project = db.get_project(project_id)?
-        .ok_or_else(|| "Proyecto no encontrado".to_string())?;
+    let pf = state.read_project_file(project_id)?;
+    let images_dir = state.project_images_dir(project_id)?;
 
-    let images = db.list_images_by_project(project_id)?;
-    if images.is_empty() {
+    if pf.images.is_empty() {
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
     // Filtrar anotaciones inválidas (classId no existe en las clases del proyecto)
-    let images: Vec<AnnotixImage> = images.into_iter().map(|mut img| {
+    let images: Vec<ImageEntry> = pf.images.iter().cloned().map(|mut img| {
         img.annotations.retain(|ann| {
-            project.classes.iter().any(|c| c.id == ann.class_id)
+            pf.classes.iter().any(|c| c.id == ann.class_id)
         });
         img
     }).collect();
@@ -209,17 +207,17 @@ pub fn export_dataset(
         .map_err(|e| format!("Error creando archivo de salida: {}", e))?;
 
     match format {
-        "yolo-detection" => yolo::export(&project, &images, db, file, false, emit_progress),
-        "yolo-segmentation" => yolo::export(&project, &images, db, file, true, emit_progress),
-        "coco" => coco::export(&project, &images, db, file, emit_progress),
-        "pascal-voc" => pascal_voc::export(&project, &images, db, file, emit_progress),
-        "csv-detection" => csv_export::export(&project, &images, db, file, "detection", emit_progress),
-        "csv-classification" => csv_export::export(&project, &images, db, file, "classification", emit_progress),
-        "csv-keypoints" => csv_export::export(&project, &images, db, file, "keypoints", emit_progress),
-        "csv-landmarks" => csv_export::export(&project, &images, db, file, "landmarks", emit_progress),
-        "folders-by-class" => folders_by_class::export(&project, &images, db, file, emit_progress),
-        "unet-masks" => unet_masks::export(&project, &images, db, file, emit_progress),
-        "tix" => tix::export(&project, &images, db, file, emit_progress),
+        "yolo-detection" => yolo::export(&pf, &images, &images_dir, file, false, emit_progress),
+        "yolo-segmentation" => yolo::export(&pf, &images, &images_dir, file, true, emit_progress),
+        "coco" => coco::export(&pf, &images, &images_dir, file, emit_progress),
+        "pascal-voc" => pascal_voc::export(&pf, &images, &images_dir, file, emit_progress),
+        "csv-detection" => csv_export::export(&pf, &images, &images_dir, file, "detection", emit_progress),
+        "csv-classification" => csv_export::export(&pf, &images, &images_dir, file, "classification", emit_progress),
+        "csv-keypoints" => csv_export::export(&pf, &images, &images_dir, file, "keypoints", emit_progress),
+        "csv-landmarks" => csv_export::export(&pf, &images, &images_dir, file, "landmarks", emit_progress),
+        "folders-by-class" => folders_by_class::export(&pf, &images, &images_dir, file, emit_progress),
+        "unet-masks" => unet_masks::export(&pf, &images, &images_dir, file, emit_progress),
+        "tix" => tix::export(&pf, &images, &images_dir, file, emit_progress),
         _ => Err(format!("Formato no soportado: {}", format)),
     }
 }

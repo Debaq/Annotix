@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useCallback, useMemo, useReducer } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, useReducer } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Stage, Layer, Image as KonvaImage, Rect, Transformer, Line, Circle } from 'react-konva';
+import { Stage, Layer, Image as KonvaImage, Rect, Transformer, Line, Circle, Group } from 'react-konva';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { useCurrentImage } from '../../gallery/hooks/useCurrentImage';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
@@ -31,11 +31,27 @@ const ZOOM_WHEEL_FACTOR = 1.05;
 const MIN_ZOOM_SCALE = 0.1;
 const MAX_ZOOM_SCALE = 20;
 
-export function AnnotationCanvas() {
+export interface AnnotationOverride {
+  annotations: Annotation[];
+  selectedAnnotationId: string | null;
+  selectAnnotation: (id: string | null) => void;
+  addAnnotation: (annotation: Annotation) => Promise<void>;
+  updateAnnotation: (id: string, updates: Partial<Annotation>) => Promise<void>;
+  deleteAnnotation: (id: string) => Promise<void>;
+  disabledAnnotationIds?: Set<string>;
+  onToggleAnnotation?: (id: string) => Promise<void>;
+}
+
+interface AnnotationCanvasProps {
+  overrideAnnotations?: AnnotationOverride;
+}
+
+export function AnnotationCanvas({ overrideAnnotations }: AnnotationCanvasProps = {}) {
   const { t } = useTranslation();
   const { image } = useCurrentImage();
   const { project } = useCurrentProject();
-  const { annotations, selectedAnnotationId, selectAnnotation, updateAnnotation, addAnnotation, deleteAnnotation } = useAnnotations();
+  const defaults = useAnnotations();
+  const { annotations, selectedAnnotationId, selectAnnotation, updateAnnotation, addAnnotation, deleteAnnotation } = overrideAnnotations ?? defaults;
   const { activeTool, activeClassId, setActiveTool } = useUIStore();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -63,8 +79,8 @@ export function AnnotationCanvas() {
 
   // Track previous tool to finish handlers when switching
   const prevToolRef = useRef<string | null>(null);
-  const prevImageIdRef = useRef<number | null>(null);
-  const prevProjectIdRef = useRef<number | null>(null);
+  const prevImageIdRef = useRef<string | null>(null);
+  const prevProjectIdRef = useRef<string | null>(null);
   const justChangedProjectRef = useRef<boolean>(false);
   const prevActiveClassIdRef = useRef<number | null>(activeClassId);
 
@@ -235,7 +251,7 @@ export function AnnotationCanvas() {
 
     let cancelled = false;
 
-    imageService.getFilePath(image.id).then((filePath) => {
+    imageService.getFilePath(image.projectId, image.id).then((filePath) => {
       if (cancelled) return;
 
       const img = new window.Image();
@@ -856,10 +872,12 @@ export function AnnotationCanvas() {
             if (!classInfo) return null;
 
             const isSelected = selectedAnnotationId === ann.id;
+            const isDisabled = overrideAnnotations?.disabledAnnotationIds?.has(ann.id) ?? false;
+            const annColor = isDisabled ? '#999999' : classInfo.color;
             const commonProps = {
               scale,
               imageOffset,
-              color: classInfo.color,
+              color: annColor,
               isSelected,
               listening: activeTool === 'select',
               onClick: () => {
@@ -870,18 +888,57 @@ export function AnnotationCanvas() {
             };
 
             switch (ann.type) {
-              case 'bbox':
+              case 'bbox': {
+                const bboxData = ann.data as BBoxData;
+                const toggleFn = overrideAnnotations?.onToggleAnnotation;
+                const btnX = bboxData.x * scale + imageOffset.x + bboxData.width * scale - 20;
+                const btnY = bboxData.y * scale + imageOffset.y + 2;
                 return (
-                  <BBoxRenderer
-                    key={ann.id}
-                    id={'ann-' + ann.id}
-                    data={ann.data as BBoxData}
-                    {...commonProps}
-                    draggable={activeTool === 'select' && isSelected}
-                    onDragEnd={(e) => handleAnnotationDragEnd(ann.id, e)}
-                    onTransformEnd={(e) => handleAnnotationTransform(ann.id, e)}
-                  />
+                  <React.Fragment key={ann.id}>
+                    <BBoxRenderer
+                      id={'ann-' + ann.id}
+                      data={bboxData}
+                      {...commonProps}
+                      draggable={activeTool === 'select' && isSelected && !isDisabled}
+                      onDragEnd={(e) => handleAnnotationDragEnd(ann.id, e)}
+                      onTransformEnd={(e) => handleAnnotationTransform(ann.id, e)}
+                    />
+                    {toggleFn && (
+                      <Group
+                        x={btnX}
+                        y={btnY}
+                        listening={true}
+                        onClick={(e: any) => {
+                          e.cancelBubble = true;
+                          toggleFn(ann.id);
+                        }}
+                      >
+                        <Rect
+                          width={18}
+                          height={18}
+                          fill="rgba(0,0,0,0.55)"
+                          cornerRadius={3}
+                        />
+                        <Circle
+                          x={9}
+                          y={9}
+                          radius={4}
+                          fill={isDisabled ? '#888' : 'white'}
+                          stroke={isDisabled ? '#666' : annColor}
+                          strokeWidth={1}
+                        />
+                        {isDisabled && (
+                          <Line
+                            points={[2, 2, 16, 16]}
+                            stroke="#ff5555"
+                            strokeWidth={2}
+                          />
+                        )}
+                      </Group>
+                    )}
+                  </React.Fragment>
                 );
+              }
 
               case 'obb':
                 return (

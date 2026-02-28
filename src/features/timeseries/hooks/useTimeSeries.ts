@@ -42,9 +42,10 @@ export function useTimeSeries() {
     }
   };
 
-  const deleteTimeSeries = async (id: number) => {
+  const deleteTimeSeries = async (id: string) => {
+    if (!project?.id) return;
     try {
-      await timeseriesService.delete(id);
+      await timeseriesService.delete(project.id, id);
       await load();
     } catch (error) {
       console.error('Failed to delete time series:', error);

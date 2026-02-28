@@ -1,66 +1,50 @@
-use std::path::PathBuf;
-use std::process::Command;
+use std::io::Cursor;
 
-use tauri::{AppHandle, Emitter, State};
+use image::codecs::jpeg::JpegEncoder;
+use image::{DynamicImage, RgbImage};
+use tauri::{AppHandle, Emitter, Manager, State};
 
-use crate::db::models::{Annotation, VideoInfo, VideoRecord, VideoTrackRecord};
-use crate::db::Database;
+use crate::store::project_file::{AnnotationEntry, KeyframeEntry};
+use crate::store::images::ImageResponse;
+use crate::store::videos::{TrackResponse, VideoInfo, VideoResponse};
+use crate::store::AppState;
 
-#[tauri::command]
-pub fn check_ffmpeg_available() -> Result<bool, String> {
-    let output = Command::new("ffmpeg")
-        .arg("-version")
-        .output();
-
-    Ok(output.is_ok())
-}
+// ─── get_video_info: usa ffmpeg-next en lugar de ffprobe ─────────────────────
 
 #[tauri::command]
 pub fn get_video_info(path: String) -> Result<VideoInfo, String> {
-    let output = Command::new("ffprobe")
-        .args([
-            "-v", "quiet",
-            "-print_format", "json",
-            "-show_format",
-            "-show_streams",
-            &path,
-        ])
-        .output()
-        .map_err(|e| format!("Error ejecutando ffprobe: {}", e))?;
+    let ictx = ffmpeg_the_third::format::input(&path)
+        .map_err(|e| format!("Error abriendo video: {}", e))?;
 
-    if !output.status.success() {
-        return Err("ffprobe falló al analizar el video".to_string());
-    }
-
-    let json_str = String::from_utf8_lossy(&output.stdout);
-    let json: serde_json::Value =
-        serde_json::from_str(&json_str).map_err(|e| format!("Error parseando ffprobe: {}", e))?;
-
-    // Find video stream
-    let streams = json["streams"]
-        .as_array()
-        .ok_or("No se encontraron streams")?;
-
-    let video_stream = streams
-        .iter()
-        .find(|s| s["codec_type"].as_str() == Some("video"))
+    let stream = ictx
+        .streams()
+        .best(ffmpeg_the_third::media::Type::Video)
         .ok_or("No se encontró stream de video")?;
 
-    let width = video_stream["width"].as_i64().unwrap_or(0);
-    let height = video_stream["height"].as_i64().unwrap_or(0);
+    let codec_params = stream.parameters();
+    let decoder = ffmpeg_the_third::codec::context::Context::from_parameters(codec_params)
+        .map_err(|e| format!("Error creando contexto de códec: {}", e))?
+        .decoder()
+        .video()
+        .map_err(|e| format!("Error creando decoder de video: {}", e))?;
 
-    // Parse FPS from r_frame_rate (e.g., "30/1" or "30000/1001")
-    let fps_str = video_stream["r_frame_rate"]
-        .as_str()
-        .unwrap_or("30/1");
-    let fps = parse_fps(fps_str);
+    let width = decoder.width() as i64;
+    let height = decoder.height() as i64;
 
-    // Duration in ms
-    let duration_secs = json["format"]["duration"]
-        .as_str()
-        .and_then(|s| s.parse::<f64>().ok())
-        .unwrap_or(0.0);
-    let duration_ms = (duration_secs * 1000.0) as i64;
+    // FPS del stream
+    let rate = stream.avg_frame_rate();
+    let fps = if rate.denominator() > 0 {
+        rate.numerator() as f64 / rate.denominator() as f64
+    } else {
+        30.0
+    };
+
+    // Duración en ms
+    let duration_ms = if ictx.duration() > 0 {
+        (ictx.duration() as f64 / f64::from(ffmpeg_the_third::ffi::AV_TIME_BASE) * 1000.0) as i64
+    } else {
+        0
+    };
 
     Ok(VideoInfo {
         duration_ms,
@@ -70,40 +54,37 @@ pub fn get_video_info(path: String) -> Result<VideoInfo, String> {
     })
 }
 
+// ─── upload_video ────────────────────────────────────────────────────────────
+
 #[tauri::command]
 pub fn upload_video(
-    db: State<'_, Database>,
+    state: State<'_, AppState>,
     app: AppHandle,
-    project_id: i64,
+    project_id: String,
     file_path: String,
     fps_extraction: f64,
-) -> Result<i64, String> {
-    // Get video info first
+) -> Result<String, String> {
     let info = get_video_info(file_path.clone())?;
 
-    let source = PathBuf::from(&file_path);
+    let source = std::path::PathBuf::from(&file_path);
     let file_name = source
         .file_name()
         .ok_or("Nombre de archivo inválido")?
         .to_string_lossy()
         .to_string();
 
-    // Copy video to project directory
-    let videos_dir = db.data_dir.join("projects").join(project_id.to_string()).join("videos");
+    let videos_dir = state.project_videos_dir(&project_id)?;
     std::fs::create_dir_all(&videos_dir)
         .map_err(|e| format!("Error creando directorio de videos: {}", e))?;
 
     let unique_name = format!("{}_{}", uuid::Uuid::new_v4(), file_name);
     let dest = videos_dir.join(&unique_name);
-    std::fs::copy(&source, &dest)
-        .map_err(|e| format!("Error copiando video: {}", e))?;
+    std::fs::copy(&source, &dest).map_err(|e| format!("Error copiando video: {}", e))?;
 
-    let relative_path = format!("projects/{}/videos/{}", project_id, unique_name);
-
-    let video_id = db.create_video(
-        project_id,
+    let video_id = state.create_video(
+        &project_id,
         &file_name,
-        &relative_path,
+        &unique_name,
         fps_extraction,
         Some(info.fps_original),
         0,
@@ -112,167 +93,260 @@ pub fn upload_video(
         info.height,
     )?;
 
-    let _ = app.emit("db:videos-changed", project_id);
+    let _ = app.emit("db:videos-changed", &project_id);
     Ok(video_id)
 }
 
+// ─── extract_video_frames: async con spawn_blocking para progreso real ───────
+
 #[tauri::command]
-pub fn extract_video_frames(
-    db: State<'_, Database>,
+pub async fn extract_video_frames(
     app: AppHandle,
-    project_id: i64,
-    video_id: i64,
+    project_id: String,
+    video_id: String,
 ) -> Result<i64, String> {
-    let video = db
-        .get_video(video_id)?
+    // Obtener datos necesarios del state antes de spawn
+    let state = app.state::<AppState>();
+    let video = state
+        .get_video(&project_id, &video_id)?
         .ok_or("Video no encontrado")?;
 
-    let video_path = db.data_dir.join(&video.source_path);
+    let videos_dir = state.project_videos_dir(&project_id)?;
+    let video_path_str = videos_dir.join(&video.file).to_string_lossy().to_string();
 
-    // Create frames output directory
-    let frames_dir = db.data_dir
-        .join("projects")
-        .join(project_id.to_string())
-        .join("images");
-    std::fs::create_dir_all(&frames_dir)
-        .map_err(|e| format!("Error creando directorio de frames: {}", e))?;
+    let fps_extraction = video.fps_extraction;
+    let duration_ms = video.duration_ms;
 
-    // Use a temporary directory for ffmpeg output then move files
-    let temp_dir = db.data_dir.join("temp_frames").join(video_id.to_string());
-    std::fs::create_dir_all(&temp_dir)
-        .map_err(|e| format!("Error creando directorio temporal: {}", e))?;
+    let estimated_total = if duration_ms > 0 {
+        ((duration_ms as f64 / 1000.0) * fps_extraction).ceil() as i64
+    } else {
+        0
+    };
 
-    let output_pattern = temp_dir.join("frame_%06d.jpg");
+    // Clonar AppHandle para el thread (da acceso a State internamente)
+    let app_bg = app.clone();
+    let pid = project_id.clone();
+    let vid = video_id.clone();
 
-    // Run ffmpeg
-    let status = Command::new("ffmpeg")
-        .args([
-            "-i", &video_path.to_string_lossy(),
-            "-vf", &format!("fps={}", video.fps_extraction),
-            "-q:v", "2",
-            &output_pattern.to_string_lossy(),
-        ])
-        .output()
-        .map_err(|e| format!("Error ejecutando ffmpeg: {}", e))?;
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        do_extract_frames(&app_bg, &pid, &vid, &video_path_str, fps_extraction, estimated_total)
+    })
+    .await
+    .map_err(|e| format!("Error en thread de extracción: {}", e))??;
 
-    if !status.status.success() {
-        let _ = std::fs::remove_dir_all(&temp_dir);
-        return Err(format!(
-            "ffmpeg falló: {}",
-            String::from_utf8_lossy(&status.stderr)
-        ));
-    }
+    // Notificar al frontend
+    let _ = app.emit("db:videos-changed", &project_id);
+    let _ = app.emit("db:images-changed", &project_id);
 
-    // Count and register frames
-    let mut frame_files: Vec<String> = std::fs::read_dir(&temp_dir)
-        .map_err(|e| e.to_string())?
-        .filter_map(|entry| {
-            let entry = entry.ok()?;
-            let name = entry.file_name().to_string_lossy().to_string();
-            if name.starts_with("frame_") && name.ends_with(".jpg") {
-                Some(name)
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    frame_files.sort();
-    let total_frames = frame_files.len() as i64;
-
-    // Move each frame to images dir and create DB record
-    for (index, frame_name) in frame_files.iter().enumerate() {
-        let src = temp_dir.join(frame_name);
-        let unique_name = format!("{}_{}_{}", uuid::Uuid::new_v4(), video_id, frame_name);
-        let dest = frames_dir.join(&unique_name);
-
-        std::fs::rename(&src, &dest)
-            .or_else(|_| std::fs::copy(&src, &dest).map(|_| ()))
-            .map_err(|e| format!("Error moviendo frame: {}", e))?;
-
-        let (width, height) = get_frame_dimensions(&dest)?;
-        let relative_path = format!("projects/{}/images/{}", project_id, unique_name);
-        let display_name = format!("{} - frame {}", video.name, index);
-
-        db.create_image_with_video(
-            project_id,
-            &display_name,
-            &relative_path,
-            width,
-            height,
-            &[],
-            Some(video_id),
-            Some(index as i64),
-        )?;
-
-        // Emit progress
-        let progress = ((index + 1) as f64 / total_frames as f64 * 100.0) as i32;
-        let _ = app.emit("video:extraction-progress", serde_json::json!({
-            "videoId": video_id,
-            "progress": progress,
-            "current": index + 1,
-            "total": total_frames,
-        }));
-    }
-
-    // Clean up temp dir
-    let _ = std::fs::remove_dir_all(&temp_dir);
-
-    // Update video status
-    db.update_video_status(video_id, "ready", total_frames)?;
-
-    let _ = app.emit("db:videos-changed", project_id);
-    let _ = app.emit("db:images-changed", project_id);
-
-    Ok(total_frames)
+    Ok(result)
 }
 
+/// Trabajo pesado de extracción — corre en un thread separado
+fn do_extract_frames(
+    app: &AppHandle,
+    project_id: &str,
+    video_id: &str,
+    video_path: &str,
+    fps_extraction: f64,
+    estimated_total: i64,
+) -> Result<i64, String> {
+    let state = app.state::<AppState>();
+
+    // Preparar directorio de thumbnails
+    let thumb_dir = state.project_thumbnails_dir(project_id)?;
+    std::fs::create_dir_all(&thumb_dir)
+        .map_err(|e| format!("Error creando directorio de thumbnails: {}", e))?;
+
+    let mut ictx = ffmpeg_the_third::format::input(video_path)
+        .map_err(|e| format!("Error abriendo video: {}", e))?;
+
+    let video_stream_index = ictx
+        .streams()
+        .best(ffmpeg_the_third::media::Type::Video)
+        .ok_or("No se encontró stream de video")?
+        .index();
+
+    let (time_base_num, time_base_den) = {
+        let stream = ictx.stream(video_stream_index).unwrap();
+        let tb = stream.time_base();
+        (tb.numerator() as f64, tb.denominator() as f64)
+    };
+
+    let context = ffmpeg_the_third::codec::context::Context::from_parameters(
+        ictx.stream(video_stream_index).unwrap().parameters(),
+    )
+    .map_err(|e| format!("Error creando contexto: {}", e))?;
+
+    let mut decoder = context
+        .decoder()
+        .video()
+        .map_err(|e| format!("Error creando decoder: {}", e))?;
+
+    let width = decoder.width();
+    let height = decoder.height();
+
+    let mut scaler = ffmpeg_the_third::software::scaling::Context::get(
+        decoder.format(),
+        width,
+        height,
+        ffmpeg_the_third::format::Pixel::RGB24,
+        width,
+        height,
+        ffmpeg_the_third::software::scaling::Flags::BILINEAR,
+    )
+    .map_err(|e| format!("Error creando scaler: {}", e))?;
+
+    let pts_per_second = time_base_den / time_base_num;
+    let pts_interval = (pts_per_second / fps_extraction) as i64;
+
+    let mut frame_count: i64 = 0;
+    let mut next_pts: i64 = 0;
+
+    let mut process_decoded = |decoder: &mut ffmpeg_the_third::decoder::Video| -> Result<(), String> {
+        let mut decoded_frame = ffmpeg_the_third::frame::Video::empty();
+        while decoder.receive_frame(&mut decoded_frame).is_ok() {
+            let pts = decoded_frame.pts().unwrap_or(0);
+
+            if pts < next_pts {
+                continue;
+            }
+            next_pts = pts + pts_interval;
+
+            // Convertir a RGB
+            let mut rgb_frame = ffmpeg_the_third::frame::Video::empty();
+            scaler
+                .run(&decoded_frame, &mut rgb_frame)
+                .map_err(|e| format!("Error convirtiendo frame: {}", e))?;
+
+            let data = rgb_frame.data(0);
+            let stride = rgb_frame.stride(0);
+            let w = rgb_frame.width() as usize;
+            let h = rgb_frame.height() as usize;
+
+            // Copiar datos sin padding
+            let mut raw_rgb = Vec::with_capacity(w * h * 3);
+            for row in 0..h {
+                let start = row * stride;
+                raw_rgb.extend_from_slice(&data[start..start + w * 3]);
+            }
+
+            let img = RgbImage::from_raw(w as u32, h as u32, raw_rgb)
+                .ok_or("Error creando imagen RGB")?;
+
+            // Encodear a JPEG (imagen completa)
+            let mut jpeg_buf = Cursor::new(Vec::new());
+            let encoder = JpegEncoder::new_with_quality(&mut jpeg_buf, 90);
+            img.write_with_encoder(encoder)
+                .map_err(|e| format!("Error codificando JPEG: {}", e))?;
+            let jpeg_data = jpeg_buf.into_inner();
+
+            let frame_name = format!(
+                "{}_{}_frame_{:06}.jpg",
+                uuid::Uuid::new_v4(),
+                video_id,
+                frame_count
+            );
+
+            // Guardar imagen completa
+            let image_id = state.upload_image_bytes(
+                project_id,
+                &frame_name,
+                &jpeg_data,
+                &[],
+                Some(video_id),
+                Some(frame_count),
+            )?;
+
+            // Generar thumbnail (256px max)
+            let dynamic_img = DynamicImage::ImageRgb8(img);
+            let thumb = dynamic_img.thumbnail(256, 256);
+            let thumb_path = thumb_dir.join(format!("{}.jpg", image_id));
+            let _ = thumb.save(&thumb_path);
+
+            frame_count += 1;
+
+            // Emitir progreso al frontend
+            let progress = if estimated_total > 0 {
+                ((frame_count as f64 / estimated_total as f64) * 100.0).min(99.0) as i32
+            } else {
+                0
+            };
+
+            let _ = app.emit(
+                "video:extraction-progress",
+                serde_json::json!({
+                    "videoId": video_id,
+                    "progress": progress,
+                    "current": frame_count,
+                    "total": estimated_total,
+                }),
+            );
+        }
+        Ok(())
+    };
+
+    // Procesar paquetes
+    for result in ictx.packets() {
+        let (stream, packet) = result.map_err(|e| format!("Error leyendo paquete: {}", e))?;
+        if stream.index() != video_stream_index {
+            continue;
+        }
+        decoder
+            .send_packet(&packet)
+            .map_err(|e| format!("Error enviando paquete: {}", e))?;
+        process_decoded(&mut decoder)?;
+    }
+
+    // Flush decoder
+    decoder
+        .send_eof()
+        .map_err(|e| format!("Error enviando EOF: {}", e))?;
+    process_decoded(&mut decoder)?;
+
+    // Actualizar estado del video
+    state.update_video_status(project_id, video_id, "ready", frame_count)?;
+
+    Ok(frame_count)
+}
+
+// ─── CRUD Commands ───────────────────────────────────────────────────────────
+
 #[tauri::command]
-pub fn get_video(db: State<'_, Database>, video_id: i64) -> Result<Option<VideoRecord>, String> {
-    db.get_video(video_id)
+pub fn get_video(
+    state: State<'_, AppState>,
+    project_id: String,
+    video_id: String,
+) -> Result<Option<VideoResponse>, String> {
+    state.get_video(&project_id, &video_id)
 }
 
 #[tauri::command]
 pub fn list_videos_by_project(
-    db: State<'_, Database>,
-    project_id: i64,
-) -> Result<Vec<VideoRecord>, String> {
-    db.list_videos_by_project(project_id)
+    state: State<'_, AppState>,
+    project_id: String,
+) -> Result<Vec<VideoResponse>, String> {
+    state.list_videos(&project_id)
 }
 
 #[tauri::command]
 pub fn list_frames_by_video(
-    db: State<'_, Database>,
-    video_id: i64,
-) -> Result<Vec<crate::db::models::AnnotixImage>, String> {
-    db.list_frames_by_video(video_id)
+    state: State<'_, AppState>,
+    project_id: String,
+    video_id: String,
+) -> Result<Vec<ImageResponse>, String> {
+    state.list_frames_by_video(&project_id, &video_id)
 }
 
 #[tauri::command]
 pub fn delete_video(
-    db: State<'_, Database>,
+    state: State<'_, AppState>,
     app: AppHandle,
-    video_id: i64,
+    project_id: String,
+    video_id: String,
 ) -> Result<(), String> {
-    // Get frames blob paths before deletion
-    let frames = db.list_frames_by_video(video_id)?;
-
-    let info = db.delete_video(video_id)?;
-
-    // Delete frame files
-    for frame in &frames {
-        let full_path = db.data_dir.join(&frame.blob_path);
-        let _ = std::fs::remove_file(&full_path);
-    }
-
-    // Delete video file
-    if let Some((project_id, source_path)) = &info {
-        let full_path = db.data_dir.join(source_path);
-        let _ = std::fs::remove_file(&full_path);
-        let _ = app.emit("db:videos-changed", *project_id);
-        let _ = app.emit("db:images-changed", *project_id);
-    }
-
+    state.delete_video(&project_id, &video_id)?;
+    let _ = app.emit("db:videos-changed", &project_id);
+    let _ = app.emit("db:images-changed", &project_id);
     Ok(())
 }
 
@@ -280,189 +354,209 @@ pub fn delete_video(
 
 #[tauri::command]
 pub fn create_track(
-    db: State<'_, Database>,
+    state: State<'_, AppState>,
     app: AppHandle,
-    video_id: i64,
+    project_id: String,
+    video_id: String,
     track_uuid: String,
     class_id: i64,
     label: Option<String>,
-) -> Result<i64, String> {
-    let id = db.create_track(video_id, &track_uuid, class_id, label.as_deref())?;
-    let _ = app.emit("db:tracks-changed", video_id);
+) -> Result<String, String> {
+    let id =
+        state.create_track(&project_id, &video_id, &track_uuid, class_id, label.as_deref())?;
+    let _ = app.emit("db:tracks-changed", &video_id);
     Ok(id)
 }
 
 #[tauri::command]
 pub fn list_tracks_by_video(
-    db: State<'_, Database>,
-    video_id: i64,
-) -> Result<Vec<VideoTrackRecord>, String> {
-    db.list_tracks_by_video(video_id)
+    state: State<'_, AppState>,
+    project_id: String,
+    video_id: String,
+) -> Result<Vec<TrackResponse>, String> {
+    state.list_tracks(&project_id, &video_id)
 }
 
 #[tauri::command]
 pub fn update_track(
-    db: State<'_, Database>,
+    state: State<'_, AppState>,
     app: AppHandle,
-    track_id: i64,
-    video_id: i64,
+    project_id: String,
+    video_id: String,
+    track_id: String,
     class_id: Option<i64>,
     label: Option<String>,
     enabled: Option<bool>,
 ) -> Result<(), String> {
-    db.update_track(track_id, class_id, label.as_deref(), enabled)?;
-    let _ = app.emit("db:tracks-changed", video_id);
+    let label_update = label.map(|l| Some(l));
+    state.update_track(
+        &project_id,
+        &video_id,
+        &track_id,
+        class_id,
+        label_update,
+        enabled,
+    )?;
+    let _ = app.emit("db:tracks-changed", &video_id);
     Ok(())
 }
 
 #[tauri::command]
 pub fn delete_track(
-    db: State<'_, Database>,
+    state: State<'_, AppState>,
     app: AppHandle,
-    track_id: i64,
-    video_id: i64,
+    project_id: String,
+    video_id: String,
+    track_id: String,
 ) -> Result<(), String> {
-    db.delete_track(track_id)?;
-    let _ = app.emit("db:tracks-changed", video_id);
+    state.delete_track(&project_id, &video_id, &track_id)?;
+    let _ = app.emit("db:tracks-changed", &video_id);
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_keyframe(
-    db: State<'_, Database>,
+    state: State<'_, AppState>,
     app: AppHandle,
-    track_id: i64,
-    video_id: i64,
+    project_id: String,
+    video_id: String,
+    track_id: String,
     frame_index: i64,
     bbox_x: f64,
     bbox_y: f64,
     bbox_width: f64,
     bbox_height: f64,
-) -> Result<i64, String> {
-    let id = db.set_keyframe(track_id, frame_index, bbox_x, bbox_y, bbox_width, bbox_height)?;
-    let _ = app.emit("db:tracks-changed", video_id);
+) -> Result<String, String> {
+    let id = state.set_keyframe(
+        &project_id,
+        &video_id,
+        &track_id,
+        frame_index,
+        bbox_x,
+        bbox_y,
+        bbox_width,
+        bbox_height,
+    )?;
+    let _ = app.emit("db:tracks-changed", &video_id);
     Ok(id)
 }
 
 #[tauri::command]
 pub fn delete_keyframe(
-    db: State<'_, Database>,
+    state: State<'_, AppState>,
     app: AppHandle,
-    track_id: i64,
-    video_id: i64,
+    project_id: String,
+    video_id: String,
+    track_id: String,
     frame_index: i64,
 ) -> Result<(), String> {
-    db.delete_keyframe(track_id, frame_index)?;
-    let _ = app.emit("db:tracks-changed", video_id);
+    state.delete_keyframe(&project_id, &video_id, &track_id, frame_index)?;
+    let _ = app.emit("db:tracks-changed", &video_id);
     Ok(())
 }
 
 #[tauri::command]
 pub fn toggle_keyframe_enabled(
-    db: State<'_, Database>,
+    state: State<'_, AppState>,
     app: AppHandle,
-    track_id: i64,
-    video_id: i64,
+    project_id: String,
+    video_id: String,
+    track_id: String,
     frame_index: i64,
     enabled: bool,
 ) -> Result<(), String> {
-    db.toggle_keyframe_enabled(track_id, frame_index, enabled)?;
-    let _ = app.emit("db:tracks-changed", video_id);
+    state.toggle_keyframe_enabled(&project_id, &video_id, &track_id, frame_index, enabled)?;
+    let _ = app.emit("db:tracks-changed", &video_id);
     Ok(())
 }
 
 #[tauri::command]
 pub fn bake_video_tracks(
-    db: State<'_, Database>,
+    state: State<'_, AppState>,
     app: AppHandle,
-    video_id: i64,
+    project_id: String,
+    video_id: String,
 ) -> Result<(), String> {
-    let tracks = db.list_tracks_by_video(video_id)?;
-    let frames = db.list_frames_by_video(video_id)?;
+    let tracks = state.list_tracks(&project_id, &video_id)?;
+    let frames = state.list_frames_by_video(&project_id, &video_id)?;
 
     for frame in &frames {
         let frame_index = frame.frame_index.unwrap_or(0);
-        let mut annotations = frame.annotations.clone();
+        let mut annotations: Vec<AnnotationEntry> = frame.annotations.clone();
 
         for track in &tracks {
             if !track.enabled {
                 continue;
             }
 
-            if let Some(bbox) = interpolate_bbox(&track.keyframes, frame_index) {
-                if !bbox.3 {
-                    // not enabled for this frame
+            let keyframe_entries: Vec<KeyframeEntry> = track
+                .keyframes
+                .iter()
+                .map(|k| KeyframeEntry {
+                    frame_index: k.frame_index,
+                    bbox_x: k.bbox_x,
+                    bbox_y: k.bbox_y,
+                    bbox_width: k.bbox_width,
+                    bbox_height: k.bbox_height,
+                    is_keyframe: k.is_keyframe,
+                    enabled: k.enabled,
+                })
+                .collect();
+
+            if let Some((x, y, w, h, bbox_enabled)) =
+                interpolate_bbox(&keyframe_entries, frame_index)
+            {
+                if !bbox_enabled {
                     continue;
                 }
 
-                let annotation = Annotation {
+                let annotation = AnnotationEntry {
                     id: uuid::Uuid::new_v4().to_string(),
                     annotation_type: "bbox".to_string(),
                     class_id: track.class_id,
                     data: serde_json::json!({
-                        "x": bbox.0,
-                        "y": bbox.1,
-                        "width": bbox.2.0,
-                        "height": bbox.2.1,
+                        "x": x,
+                        "y": y,
+                        "width": w,
+                        "height": h,
                     }),
                 };
                 annotations.push(annotation);
             }
         }
 
-        if let Some(image_id) = frame.id {
-            db.save_annotations(image_id, &annotations)?;
-        }
+        state.save_annotations(&project_id, &frame.id, &annotations)?;
     }
 
-    // Get project_id for event
-    if let Ok(Some(video)) = db.get_video(video_id) {
-        let _ = app.emit("db:images-changed", video.project_id);
-    }
-
+    let _ = app.emit("db:images-changed", &project_id);
     Ok(())
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-fn parse_fps(fps_str: &str) -> f64 {
-    let parts: Vec<&str> = fps_str.split('/').collect();
-    if parts.len() == 2 {
-        let num: f64 = parts[0].parse().unwrap_or(30.0);
-        let den: f64 = parts[1].parse().unwrap_or(1.0);
-        if den > 0.0 { num / den } else { 30.0 }
-    } else {
-        fps_str.parse().unwrap_or(30.0)
-    }
-}
-
-fn get_frame_dimensions(path: &PathBuf) -> Result<(u32, u32), String> {
-    let img = image::open(path).map_err(|e| format!("Error leyendo dimensiones: {}", e))?;
-    Ok((img.width(), img.height()))
-}
-
-/// Returns (x, y, (width, height), enabled) for a given frame_index by interpolating keyframes
+/// Retorna (x, y, width, height, enabled) interpolando entre keyframes
 fn interpolate_bbox(
-    keyframes: &[crate::db::models::VideoKeyframeRecord],
+    keyframes: &[KeyframeEntry],
     frame_index: i64,
-) -> Option<(f64, f64, (f64, f64), bool)> {
+) -> Option<(f64, f64, f64, f64, bool)> {
     if keyframes.is_empty() {
         return None;
     }
 
-    // Exact match
     if let Some(kf) = keyframes.iter().find(|k| k.frame_index == frame_index) {
-        return Some((kf.bbox_x, kf.bbox_y, (kf.bbox_width, kf.bbox_height), kf.enabled));
+        return Some((kf.bbox_x, kf.bbox_y, kf.bbox_width, kf.bbox_height, kf.enabled));
     }
 
-    // Find surrounding keyframes
-    let prev = keyframes.iter().filter(|k| k.frame_index < frame_index).last();
+    let prev = keyframes
+        .iter()
+        .filter(|k| k.frame_index < frame_index)
+        .last();
     let next = keyframes.iter().find(|k| k.frame_index > frame_index);
 
     match (prev, next) {
         (Some(p), Some(n)) => {
             if !p.enabled || !n.enabled {
-                return Some((0.0, 0.0, (0.0, 0.0), false));
+                return Some((0.0, 0.0, 0.0, 0.0, false));
             }
             let t = (frame_index - p.frame_index) as f64
                 / (n.frame_index - p.frame_index) as f64;
@@ -470,8 +564,8 @@ fn interpolate_bbox(
             let y = p.bbox_y + (n.bbox_y - p.bbox_y) * t;
             let w = p.bbox_width + (n.bbox_width - p.bbox_width) * t;
             let h = p.bbox_height + (n.bbox_height - p.bbox_height) * t;
-            Some((x, y, (w, h), true))
+            Some((x, y, w, h, true))
         }
-        _ => None, // Outside keyframe range
+        _ => None,
     }
 }

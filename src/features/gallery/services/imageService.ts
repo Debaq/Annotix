@@ -2,23 +2,23 @@ import { AnnotixImage } from '@/lib/db';
 import * as tauriDb from '@/lib/tauriDb';
 
 export const imageService = {
-  async get(id: number): Promise<AnnotixImage | undefined> {
-    const image = await tauriDb.getImage(id);
+  async get(projectId: string, id: string): Promise<AnnotixImage | undefined> {
+    const image = await tauriDb.getImage(projectId, id);
     return image ?? undefined;
   },
 
-  async listByProject(projectId: number): Promise<AnnotixImage[]> {
+  async listByProject(projectId: string): Promise<AnnotixImage[]> {
     return await tauriDb.listImagesByProject(projectId);
   },
 
-  async delete(id: number): Promise<void> {
-    await tauriDb.deleteImage(id);
+  async delete(projectId: string, id: string): Promise<void> {
+    await tauriDb.deleteImage(projectId, id);
   },
 
   /**
    * Upload múltiple desde file paths nativos (post file picker)
    */
-  async uploadFromPaths(projectId: number, filePaths: string[]): Promise<number[]> {
+  async uploadFromPaths(projectId: string, filePaths: string[]): Promise<string[]> {
     return await tauriDb.uploadImages(projectId, filePaths);
   },
 
@@ -26,11 +26,11 @@ export const imageService = {
    * Upload desde bytes (para importación y otros usos programáticos)
    */
   async uploadFromBytes(
-    projectId: number,
+    projectId: string,
     fileName: string,
     data: Uint8Array,
     annotations: AnnotixImage['annotations'] = []
-  ): Promise<number> {
+  ): Promise<string> {
     return await tauriDb.uploadImageBytes(
       projectId,
       fileName,
@@ -43,7 +43,7 @@ export const imageService = {
    * Upload múltiple desde File objects del browser (compatibilidad)
    * Lee cada File como ArrayBuffer y lo envía al backend
    */
-  async uploadMultiple(projectId: number, files: File[]): Promise<void> {
+  async uploadMultiple(projectId: string, files: File[]): Promise<void> {
     for (const file of files) {
       const buffer = await file.arrayBuffer();
       const data = new Uint8Array(buffer);
@@ -54,15 +54,15 @@ export const imageService = {
   /**
    * Obtener la ruta absoluta del archivo de imagen
    */
-  async getFilePath(id: number): Promise<string> {
-    return await tauriDb.getImageFilePath(id);
+  async getFilePath(projectId: string, id: string): Promise<string> {
+    return await tauriDb.getImageFilePath(projectId, id);
   },
 
   /**
    * Obtener los bytes raw de una imagen
    */
-  async getImageData(id: number): Promise<Uint8Array> {
-    const data = await tauriDb.getImageData(id);
+  async getImageData(projectId: string, id: string): Promise<Uint8Array> {
+    const data = await tauriDb.getImageData(projectId, id);
     return new Uint8Array(data);
   },
 };

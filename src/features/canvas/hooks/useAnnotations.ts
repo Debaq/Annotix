@@ -2,23 +2,24 @@ import { useEffect, useCallback } from 'react';
 import { create } from 'zustand';
 import { Annotation } from '@/lib/db';
 import { useCurrentImage } from '../../gallery/hooks/useCurrentImage';
+import { useUIStore } from '../../core/store/uiStore';
 import { annotationService } from '../services/annotationService';
 import { useToast } from '@/components/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 
 // Store global para control de guardado válido
 interface SaveGuardStore {
-  allowedImageId: number | null;
-  allowedProjectId: number | null;
-  captureContext: (imageId: number | null, projectId: number | null) => void;
+  allowedImageId: string | null;
+  allowedProjectId: string | null;
+  captureContext: (imageId: string | null, projectId: string | null) => void;
   invalidateContext: () => void;
-  isContextValid: (imageId: number | null) => boolean;
+  isContextValid: (imageId: string | null) => boolean;
 }
 
 const useSaveGuard = create<SaveGuardStore>((set, get) => ({
   allowedImageId: null,
   allowedProjectId: null,
-  captureContext: (imageId, projectId) => {
+  captureContext: (imageId: string | null, projectId: string | null) => {
     console.log('[SaveGuard] Capturando contexto:', { imageId, projectId });
     set({ allowedImageId: imageId, allowedProjectId: projectId });
   },
@@ -36,7 +37,7 @@ const useSaveGuard = create<SaveGuardStore>((set, get) => ({
 }));
 
 // Exportar funciones para usar desde AnnotationCanvas
-export const captureSaveContext = (imageId: number | null, projectId: number | null) => {
+export const captureSaveContext = (imageId: string | null, projectId: string | null) => {
   useSaveGuard.getState().captureContext(imageId, projectId);
 };
 
@@ -80,6 +81,7 @@ export function useAnnotations() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { image } = useCurrentImage();
+  const currentProjectId = useUIStore((s) => s.currentProjectId);
   const {
     annotations,
     selectedAnnotationId,
@@ -102,17 +104,17 @@ export function useAnnotations() {
   }, [image?.id, setAnnotations, setSelectedAnnotationId]);
 
   const saveAnnotations = useCallback(async (targetAnnotations?: Annotation[], showToast = false) => {
-    if (!image?.id) {
-      console.log('[useAnnotations] saveAnnotations - no image.id, cancelando');
+    if (!image?.id || !currentProjectId) {
+      console.log('[useAnnotations] saveAnnotations - no image.id o projectId, cancelando');
       return;
     }
 
     const annsToSave = targetAnnotations ?? useAnnotationStore.getState().annotations;
     console.log('[useAnnotations] saveAnnotations - guardando', annsToSave.length, 'anotaciones para imagen', image.id);
-    
+
     try {
-      await annotationService.save(image.id, annsToSave);
-      console.log('[useAnnotations] saveAnnotations - guardado exitoso en DB');
+      await annotationService.save(currentProjectId, image.id, annsToSave);
+      console.log('[useAnnotations] saveAnnotations - guardado exitoso');
       
       if (showToast) {
         toast({
@@ -128,7 +130,7 @@ export function useAnnotations() {
       });
       throw error;
     }
-  }, [image?.id, toast, t]);
+  }, [image?.id, currentProjectId, toast, t]);
 
   const addAnnotation = useCallback(async (annotation: Annotation) => {
     const currentImageId = image?.id || null;

@@ -1,4 +1,4 @@
-use std::collections::{HashMap, BTreeSet};
+use std::collections::BTreeSet;
 use zip::ZipArchive;
 use serde_json::json;
 

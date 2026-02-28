@@ -2,71 +2,67 @@ import type { Video, VideoTrack, AnnotixImage, VideoInfo } from '@/lib/db';
 import * as tauriDb from '@/lib/tauriDb';
 
 export const videoService = {
-  async checkFfmpeg(): Promise<boolean> {
-    return tauriDb.checkFfmpegAvailable();
-  },
-
   async getVideoInfo(path: string): Promise<VideoInfo> {
     return tauriDb.getVideoInfo(path);
   },
 
-  async upload(projectId: number, filePath: string, fpsExtraction: number): Promise<number> {
+  async upload(projectId: string, filePath: string, fpsExtraction: number): Promise<string> {
     return tauriDb.uploadVideo(projectId, filePath, fpsExtraction);
   },
 
-  async extractFrames(projectId: number, videoId: number): Promise<number> {
+  async extractFrames(projectId: string, videoId: string): Promise<number> {
     return tauriDb.extractVideoFrames(projectId, videoId);
   },
 
-  async get(videoId: number): Promise<Video | null> {
-    return tauriDb.getVideo(videoId);
+  async get(projectId: string, videoId: string): Promise<Video | null> {
+    return tauriDb.getVideo(projectId, videoId);
   },
 
-  async listByProject(projectId: number): Promise<Video[]> {
+  async listByProject(projectId: string): Promise<Video[]> {
     return tauriDb.listVideosByProject(projectId);
   },
 
-  async listFrames(videoId: number): Promise<AnnotixImage[]> {
-    return tauriDb.listFramesByVideo(videoId);
+  async listFrames(projectId: string, videoId: string): Promise<AnnotixImage[]> {
+    return tauriDb.listFramesByVideo(projectId, videoId);
   },
 
-  async delete(videoId: number): Promise<void> {
-    return tauriDb.deleteVideo(videoId);
+  async delete(projectId: string, videoId: string): Promise<void> {
+    return tauriDb.deleteVideo(projectId, videoId);
   },
 
   // Track operations
-  async createTrack(videoId: number, trackUuid: string, classId: number, label?: string): Promise<number> {
-    return tauriDb.createTrack(videoId, trackUuid, classId, label);
+  async createTrack(projectId: string, videoId: string, trackUuid: string, classId: number, label?: string): Promise<string> {
+    return tauriDb.createTrack(projectId, videoId, trackUuid, classId, label);
   },
 
-  async listTracks(videoId: number): Promise<VideoTrack[]> {
-    return tauriDb.listTracksByVideo(videoId);
+  async listTracks(projectId: string, videoId: string): Promise<VideoTrack[]> {
+    return tauriDb.listTracksByVideo(projectId, videoId);
   },
 
-  async updateTrack(trackId: number, videoId: number, updates: { classId?: number; label?: string; enabled?: boolean }): Promise<void> {
-    return tauriDb.updateTrack(trackId, videoId, updates);
+  async updateTrack(projectId: string, trackId: string, videoId: string, updates: { classId?: number; label?: string; enabled?: boolean }): Promise<void> {
+    return tauriDb.updateTrack(projectId, trackId, videoId, updates);
   },
 
-  async deleteTrack(trackId: number, videoId: number): Promise<void> {
-    return tauriDb.deleteTrack(trackId, videoId);
+  async deleteTrack(projectId: string, trackId: string, videoId: string): Promise<void> {
+    return tauriDb.deleteTrack(projectId, trackId, videoId);
   },
 
   async setKeyframe(
-    trackId: number, videoId: number, frameIndex: number,
+    projectId: string, trackId: string, videoId: string, frameIndex: number,
     bboxX: number, bboxY: number, bboxWidth: number, bboxHeight: number
-  ): Promise<number> {
-    return tauriDb.setKeyframe(trackId, videoId, frameIndex, bboxX, bboxY, bboxWidth, bboxHeight);
+  ): Promise<string> {
+    return tauriDb.setKeyframe(projectId, trackId, videoId, frameIndex, bboxX, bboxY, bboxWidth, bboxHeight);
   },
 
-  async deleteKeyframe(trackId: number, videoId: number, frameIndex: number): Promise<void> {
-    return tauriDb.deleteKeyframe(trackId, videoId, frameIndex);
+  async deleteKeyframe(projectId: string, trackId: string, videoId: string, frameIndex: number): Promise<void> {
+    return tauriDb.deleteKeyframe(projectId, trackId, videoId, frameIndex);
   },
 
-  async toggleKeyframeEnabled(trackId: number, videoId: number, frameIndex: number, enabled: boolean): Promise<void> {
-    return tauriDb.toggleKeyframeEnabled(trackId, videoId, frameIndex, enabled);
+  async toggleKeyframeEnabled(projectId: string, trackId: string, videoId: string, frameIndex: number, enabled: boolean): Promise<void> {
+    return tauriDb.toggleKeyframeEnabled(projectId, trackId, videoId, frameIndex, enabled);
   },
 
-  async bake(videoId: number): Promise<void> {
-    return tauriDb.bakeVideoTracks(videoId);
+  async bake(projectId: string, videoId: string): Promise<void> {
+    return tauriDb.bakeVideoTracks(projectId, videoId);
   },
 };

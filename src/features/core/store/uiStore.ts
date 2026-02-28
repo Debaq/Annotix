@@ -28,15 +28,15 @@ interface UIState {
   resetTransform: () => void;
 
   // Current project & image
-  currentProjectId: number | null;
-  currentImageId: number | null;
-  currentTimeSeriesId: number | null;
-  currentVideoId: number | null;
+  currentProjectId: string | null;
+  currentImageId: string | null;
+  currentTimeSeriesId: string | null;
+  currentVideoId: string | null;
   currentFrameIndex: number;
-  setCurrentProjectId: (id: number | null) => void;
-  setCurrentImageId: (id: number | null) => void;
-  setCurrentTimeSeriesId: (id: number | null) => void;
-  setCurrentVideoId: (id: number | null) => void;
+  setCurrentProjectId: (id: string | null) => void;
+  setCurrentImageId: (id: string | null) => void;
+  setCurrentTimeSeriesId: (id: string | null) => void;
+  setCurrentVideoId: (id: string | null) => void;
   setCurrentFrameIndex: (index: number) => void;
 
   // Gallery filter

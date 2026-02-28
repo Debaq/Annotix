@@ -8,8 +8,8 @@ pub mod folders_by_class;
 pub mod tix;
 
 use serde::{Deserialize, Serialize};
-use crate::db::models::{ClassDefinition, Annotation};
-use crate::db::Database;
+use crate::store::project_file::{ClassDef, AnnotationEntry};
+use crate::store::AppState;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -31,22 +31,24 @@ pub struct ImportStats {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ImportResult {
-    pub project_id: i64,
+    pub project_id: String,
     pub stats: ImportStats,
 }
 
 /// Resultado interno de un importador: clases + datos de imágenes.
 pub struct ImportData {
-    pub classes: Vec<ClassDefinition>,
+    pub classes: Vec<ClassDef>,
     pub images: Vec<ImageImportData>,
 }
 
 pub struct ImageImportData {
     pub name: String,
     pub data: Vec<u8>,
+    #[allow(dead_code)]
     pub width: u32,
+    #[allow(dead_code)]
     pub height: u32,
-    pub annotations: Vec<Annotation>,
+    pub annotations: Vec<AnnotationEntry>,
 }
 
 /// Colores por defecto para clases
@@ -59,16 +61,16 @@ pub fn generate_color(index: usize) -> String {
     DEFAULT_COLORS[index % DEFAULT_COLORS.len()].to_string()
 }
 
-pub fn create_class(id: i64, name: &str, color: Option<&str>) -> ClassDefinition {
-    ClassDefinition {
+pub fn create_class(id: i64, name: &str, color: Option<&str>) -> ClassDef {
+    ClassDef {
         id,
         name: name.to_string(),
         color: color.map(|c| c.to_string()).unwrap_or_else(|| generate_color(id as usize)),
     }
 }
 
-pub fn create_annotation(class_id: i64, ann_type: &str, data: serde_json::Value) -> Annotation {
-    Annotation {
+pub fn create_annotation(class_id: i64, ann_type: &str, data: serde_json::Value) -> AnnotationEntry {
+    AnnotationEntry {
         id: uuid::Uuid::new_v4().to_string(),
         annotation_type: ann_type.to_string(),
         class_id,
@@ -88,7 +90,7 @@ pub fn detect_format(file_path: &str) -> Result<DetectionResult, String> {
 
 /// Importar un dataset completo desde un archivo ZIP.
 pub fn import_dataset(
-    db: &Database,
+    state: &AppState,
     file_path: &str,
     project_name: &str,
     app_handle: &tauri::AppHandle,
@@ -136,9 +138,9 @@ pub fn import_dataset(
         return Err("No se encontraron imágenes en el dataset".to_string());
     }
 
-    // Crear proyecto
+    // Crear proyecto usando AppState
     emit_progress(50.0);
-    let project_id = db.create_project(
+    let project_id = state.create_project(
         project_name,
         &detection.project_type,
         &import_data.classes,
@@ -149,25 +151,16 @@ pub fn import_dataset(
     let mut total_annotations = 0;
 
     for (i, img) in import_data.images.iter().enumerate() {
-        // Guardar archivo de imagen en disco
-        let images_dir = db.project_images_dir(project_id);
-        std::fs::create_dir_all(&images_dir)
-            .map_err(|e| format!("Error creando directorio de imágenes: {}", e))?;
-
-        let file_name = format!("{}_{}", uuid::Uuid::new_v4(), img.name);
-        let file_path = images_dir.join(&file_name);
-        std::fs::write(&file_path, &img.data)
-            .map_err(|e| format!("Error escribiendo imagen: {}", e))?;
-
-        // Crear registro en DB
         total_annotations += img.annotations.len();
-        db.create_image(
-            project_id,
+
+        // Guardar imagen usando upload_image_bytes de AppState
+        state.upload_image_bytes(
+            &project_id,
             &img.name,
-            &file_name,
-            img.width,
-            img.height,
+            &img.data,
             &img.annotations,
+            None, // video_id
+            None, // frame_index
         )?;
 
         emit_progress(50.0 + ((i + 1) as f64 / total) * 45.0);

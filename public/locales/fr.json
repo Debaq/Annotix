@@ -2,250 +2,12 @@
   "language": "Français",
   "code": "fr",
   "app": {
-    "title": "Annotateur YOLO",
-    "subtitle": "Outil d'annotation professionnel",
+    "title": "Annotix",
+    "subtitle": "Outil professionnel d'annotation",
     "branding": {
       "fablab": "TecMedHub",
       "university": "Universidad Austral de Chile - Campus Puerto Montt"
     }
-  },
-  "header": {
-    "selectProject": "Sélectionner un projet...",
-    "newProject": "Nouveau",
-    "exportProject": "Exporter le projet complet",
-    "exportConfig": "Exporter la configuration",
-    "importConfig": "Importer la configuration",
-    "help": "Aide"
-  },
-  "tools": {
-    "title": "Outils",
-    "bbox": "Boîte",
-    "mask": "Masque",
-    "polygon": "Polygone",
-    "keypoints": "Points clés",
-    "landmarks": "Repères",
-    "obb": "Boîte orientée",
-    "select": "Sélectionner",
-    "pan": "Déplacer",
-    "tooltips": {
-      "bbox": "Boîte englobante (B)",
-      "mask": "Masque (M)",
-      "polygon": "Polygone (P)",
-      "keypoints": "Points clés (K)",
-      "landmarks": "Repères (L)",
-      "obb": "Boîte orientée (O)",
-      "select": "Sélectionner (V)",
-      "pan": "Déplacer (H)"
-    }
-  },
-  "classes": {
-    "title": "Classes actives",
-    "manage": "Gérer les classes",
-    "add": "Ajouter une classe",
-    "placeholder": "Nom de la classe",
-    "empty": "Créez d'abord un projet",
-    "deleteConfirm": "Il y a des annotations avec cette classe. Supprimer quand même?",
-    "exists": "Une classe avec ce nom existe déjà",
-    "enterName": "Entrez un nom pour la classe"
-  },
-  "images": {
-    "title": "Charger une image",
-    "select": "Sélectionner des images",
-    "upload": "Sélectionner des images",
-    "noImages": "Aucune image"
-  },
-  "actions": {
-    "title": "Actions",
-    "save": "Enregistrer",
-    "undo": "Annuler",
-    "clear": "Effacer",
-    "delete": "Supprimer",
-    "cancel": "Annuler",
-    "create": "Créer",
-    "confirm": "Confirmer",
-    "clearConfirm": "Effacer toutes les annotations de cette image?"
-  },
-  "shortcuts": {
-    "title": "Raccourcis",
-    "save": "Enregistrer",
-    "undo": "Annuler",
-    "delete": "Supprimer",
-    "navigation": "Navigation",
-    "bbox": "Boîte",
-    "mask": "Masque",
-    "select": "Sélectionner",
-    "pan": "Déplacer",
-    "classes": "Classe 1-9"
-  },
-  "canvas": {
-    "zoomIn": "Zoom avant",
-    "zoomOut": "Zoom arrière",
-    "resetZoom": "Réinitialiser le zoom",
-    "toggleLabels": "Afficher/Masquer les étiquettes",
-    "toggleGrid": "Afficher/Masquer la grille",
-    "prevImage": "Image précédente (←)",
-    "nextImage": "Image suivante (→)"
-  },
-  "stats": {
-    "title": "Statistiques",
-    "images": "Images",
-    "annotated": "Annotées",
-    "labels": "Étiquettes",
-    "classes": "Classes",
-    "progress": "images annotées"
-  },
-  "gallery": {
-    "title": "Galerie",
-    "all": "Toutes",
-    "annotated": "Annotées",
-    "unannotated": "Non annotées",
-    "empty": "Aucune image",
-    "deleteConfirm": "Supprimer cette image?"
-  },
-  "export": {
-    "title": "Exporter",
-    "format": "Format",
-    "description": "Description du format",
-    "export": "Exporter",
-    "exporting": "Exportation en cours...",
-    "progress": "Progression",
-    "selectFormat": "Sélectionner le format d'export",
-    "downloadDataset": "Télécharger le dataset ZIP",
-    "downloadClasses": "Télécharger classes.txt",
-    "notAvailable": "L'exportation n'est pas disponible pour ce type de projet",
-    "formats": {
-      "yoloDetection": "YOLO Détection",
-      "yoloDetectionDesc": "Boîtes englobantes au format YOLO normalisé (.txt) avec data.yaml",
-      "yoloSegmentation": "YOLO Segmentation",
-      "yoloSegmentationDesc": "Polygones au format YOLO segmentation (.txt) avec data.yaml",
-      "coco": "COCO JSON",
-      "cocoDesc": "Format COCO compatible avec Mask R-CNN, RetinaNet et Detectron2",
-      "pascalVoc": "Pascal VOC XML",
-      "pascalVocDesc": "Format Pascal VOC XML avec coordonnées en pixels",
-      "csvDetection": "CSV Détection",
-      "csvDetectionDesc": "Format CSV avec coordonnées de boîtes englobantes",
-      "csvClassification": "CSV Classification",
-      "csvClassificationDesc": "Format CSV avec nom d'image et label de classe",
-      "csvKeypoints": "CSV Points clés",
-      "csvKeypointsDesc": "Format CSV avec coordonnées X,Y des points clés et visibilité",
-      "csvLandmarks": "CSV Repères",
-      "csvLandmarksDesc": "Format CSV avec coordonnées des repères",
-      "foldersByClass": "Dossiers par classe",
-      "foldersByClassDesc": "Images organisées en dossiers par nom de classe",
-      "unetMasks": "Masques U-Net",
-      "unetMasksDesc": "Images PNG en niveaux de gris pour segmentation sémantique"
-    }
-  },
-  "import": {
-    "title": "Importer un ensemble de données",
-    "button": "📥 Importer",
-    "selectFile": "Sélectionnez un fichier ZIP contenant votre ensemble de données annoté",
-    "dragFiles": "Faites glisser les fichiers ZIP ici",
-    "orClickToSelect": "ou cliquez pour sélectionner",
-    "analyzing": "Analyse de l'ensemble de données",
-    "configureProject": "Configurez votre projet importé",
-    "projectName": "Nom du projet",
-    "projectType": "Type de projet",
-    "classesCount": "Classes",
-    "classes": "classes",
-    "format": "Format détecté",
-    "import": "Importer le projet",
-    "importing": "Import de l'ensemble de données...",
-    "processing": "Traitement de votre ensemble de données...",
-    "success": "Projet importé avec succès",
-    "successMessage": "Votre ensemble de données a été importé et est prêt à être utilisé",
-    "openProject": "Ouvrir le projet",
-    "error": {
-      "noFile": "Veuillez sélectionner un fichier ZIP",
-      "invalidZip": "Veuillez sélectionner un fichier ZIP valide",
-      "unsupportedFormat": "Format d'ensemble de données non pris en charge. Formats pris en charge : YOLO, COCO, Pascal VOC, CSV, Dossiers par classe, Masques U-Net",
-      "corruptedData": "L'ensemble de données semble être corrompu ou incomplet",
-      "parse": "Erreur lors de l'analyse de l'ensemble de données. Veuillez vérifier le format du fichier",
-      "invalidProjectName": "Le nom du projet contient des caractères invalides. Utilisez uniquement des caractères alphanumériques, des tirets, des traits de soulignement et des points"
-    }
-  },
-  "project": {
-    "new": "Nouveau projet",
-    "name": "Nom du projet",
-    "namePlaceholder": "Mon projet YOLO",
-    "type": "Type d'annotation",
-    "typeBbox": "Boîte englobante",
-    "typeMask": "Segmentation (Masque)",
-    "initialClasses": "Classes initiales (optionnel)",
-    "classesPlaceholder": "classe1, classe2, classe3",
-    "classesHelp": "Séparées par des virgules. Vous pouvez en ajouter plus tard.",
-    "enterName": "Entrez un nom pour le projet",
-    "created": "Projet \"{name}\" créé",
-    "updated": "Updated",
-    "loaded": "Projet \"{name}\" chargé",
-    "deleted": "Projet supprimé",
-    "exported": "Projet exporté",
-    "configExported": "Configuration exportée",
-    "selectFirst": "Sélectionnez d'abord un projet"
-  },
-  "notifications": {
-    "imageSaved": "Image enregistrée",
-    "datasetDownloaded": "Dataset téléchargé",
-    "classesDownloaded": "classes.txt téléchargé",
-    "noClasses": "Aucune classe à télécharger",
-    "noImages": "Aucune image dans le projet",
-    "noAnnotations": "Aucune annotation à télécharger",
-    "appStarted": "Application démarrée",
-    "error": {
-      "createProject": "Erreur lors de la création du projet",
-      "loadProject": "Erreur lors du chargement du projet",
-      "updateProject": "Erreur lors de la mise à jour du projet",
-      "deleteProject": "Erreur lors de la suppression du projet",
-      "exportProject": "Erreur lors de l'exportation du projet",
-      "exportConfig": "Erreur lors de l'exportation de la configuration",
-      "importConfig": "Erreur lors de l'importation de la configuration",
-      "loadImage": "Erreur lors du chargement de l'image",
-      "saveImage": "Erreur lors de l'enregistrement de l'image",
-      "deleteImage": "Erreur lors de la suppression de l'image",
-      "loadImages": "Erreur lors du chargement des images",
-      "downloadDataset": "Erreur lors du téléchargement du dataset",
-      "initApp": "Erreur lors du démarrage de l'application"
-    }
-  },
-  "tour": {
-    "welcome": "Bienvenue dans <strong>YOLO Annotator</strong>. Cet outil vous permet d'annoter des images pour entraîner des modèles YOLO.",
-    "project": "D'abord, créez un nouveau projet ou sélectionnez-en un existant. Chaque projet peut être de type <strong>Boîte englobante</strong> ou <strong>Segmentation</strong>.",
-    "tools": "Ici vous trouverez les <strong>outils</strong> d'annotation: Boîte pour les rectangles, Masque pour les masques peignables, Sélectionner pour éditer, et Déplacer pour bouger la vue.",
-    "classes": "Définissez vos <strong>classes</strong> d'annotation. Chaque classe a un nom et une couleur. Vous pouvez ajouter, modifier ou supprimer des classes.",
-    "workspace": "L'<strong>espace de travail</strong> principal. Ici vous chargerez vos images et créerez les annotations. Utilisez la souris pour dessiner et la molette pour zoomer.",
-    "management": "Panneau de gestion où vous verrez les <strong>statistiques</strong> du projet, la <strong>galerie</strong> d'images et pourrez <strong>exporter</strong> votre dataset au format YOLO.",
-    "next": "Suivant →",
-    "prev": "← Précédent",
-    "done": "Terminé!",
-    "skip": "Passer"
-  },
-  "imageInfo": {
-    "noName": "Sans nom",
-    "dimensions": "Dimensions"
-  },
-  "pwa": {
-    "installButton": "Installer l'App",
-    "modal": {
-      "title": "🚀 Installer Annotix comme application",
-      "benefits": "Avantages de l'installation:",
-      "benefit1": "✅ Accès direct depuis le bureau",
-      "benefit2": "✅ Fonctionne hors ligne",
-      "benefit3": "✅ Plus rapide et fluide",
-      "benefit4": "✅ Sans barre de navigateur",
-      "benefit5": "✅ Vos données toujours privées",
-      "benefit6": "✅ Mises à jour automatiques",
-      "cancelButton": "Pas maintenant",
-      "installButtonModal": "📥 Installer l'App"
-    },
-    "notifications": {
-      "installed": "Annotix installé avec succès!",
-      "installFailed": "Erreur lors de l'installation",
-      "updateAvailable": "Mise à jour disponible. Rechargez pour mettre à jour.",
-      "offline": "Mode hors ligne activé. L'app fonctionne sans connexion."
-    }
-  },
-  "storage": {
-    "used": "Stockage utilisé dans IndexedDB"
   },
   "common": {
     "loading": "Chargement...",
@@ -260,7 +22,7 @@
     "rename": "Renommer",
     "exportBackup": "Exporter la sauvegarde",
     "deleteConfirm": "Oui, supprimer",
-    "clearConfirm": "Effacer toutes les annotations de cette image?",
+    "clearConfirm": "Effacer toutes les annotations de cette image ?",
     "clear": "Effacer",
     "delete": "Supprimer",
     "save": "Enregistrer",
@@ -272,10 +34,1716 @@
     "selectImageToStart": "Sélectionnez une image pour commencer à annoter",
     "missingTranslations": "Traductions manquantes",
     "hide": "Masquer",
-    "totalKeys": "Total des clés:",
-    "totalUsages": "Total des utilisations:",
+    "totalKeys": "Total des clés :",
+    "totalUsages": "Total des utilisations :",
     "oneToNine": "1-9",
     "ctrlS": "Ctrl+S",
-    "arrowKeys": "← →"
+    "arrowKeys": "← →",
+    "understand": "Compris"
+  },
+  "header": {
+    "selectProject": "Sélectionner un projet...",
+    "newProject": "Nouveau Projet",
+    "openProject": "Ouvrir un Projet",
+    "manageProjects": "Gérer les Projets",
+    "export": "Exporter",
+    "help": "Aide"
+  },
+  "help": {
+    "shortcuts": "Raccourcis clavier"
+  },
+  "shortcuts": {
+    "title": "Raccourcis Clavier",
+    "tip": "Les raccourcis fonctionnent également pendant le travail sur le canevas. Appuyez sur ? pour ouvrir cette fenêtre à tout moment.",
+    "categories": {
+      "general": "Général",
+      "navigation": "Navigation",
+      "tools": "Outils",
+      "editing": "Édition"
+    },
+    "items": {
+      "save": {
+        "name": "Enregistrer",
+        "key": "Ctrl+S"
+      },
+      "undo": {
+        "name": "Annuler",
+        "key": "Ctrl+Z"
+      },
+      "redo": {
+        "name": "Rétablir",
+        "key": "Ctrl+Y"
+      },
+      "delete": {
+        "name": "Supprimer",
+        "description": "Supprime l'élément sélectionné",
+        "key": "Del / Backspace"
+      },
+      "deselect": {
+        "name": "Désélectionner",
+        "key": "Esc"
+      },
+      "prevImage": {
+        "name": "Image précédente",
+        "key": "←"
+      },
+      "nextImage": {
+        "name": "Image suivante",
+        "key": "→"
+      },
+      "zoomIn": {
+        "name": "Zoom avant",
+        "key": "Ctrl++"
+      },
+      "zoomOut": {
+        "name": "Zoom arrière",
+        "key": "Ctrl+-"
+      },
+      "zoomFit": {
+        "name": "Ajuster",
+        "key": "Ctrl+0"
+      },
+      "toolBox": {
+        "name": "Outil Box",
+        "description": "Sélectionne l'outil boîte englobante",
+        "key": "B"
+      },
+      "toolOBB": {
+        "name": "Outil OBB",
+        "description": "Sélectionne l'outil OBB",
+        "key": "O"
+      },
+      "toolMask": {
+        "name": "Outil Mask",
+        "description": "Sélectionne l'outil masque",
+        "key": "M"
+      },
+      "toolPolygon": {
+        "name": "Outil Polygone",
+        "description": "Sélectionne l'outil polygone",
+        "key": "P"
+      },
+      "toolKeypoints": {
+        "name": "Outil Points Clés",
+        "description": "Sélectionne l'outil points clés",
+        "key": "K"
+      },
+      "toolSelect": {
+        "name": "Outil Sélection",
+        "description": "Sélectionne l'outil de sélection",
+        "key": "V"
+      },
+      "toolPan": {
+        "name": "Outil Pan",
+        "description": "Sélectionne l'outil de panoramique",
+        "key": "H"
+      },
+      "rotateLeft": {
+        "name": "Rotation gauche",
+        "key": "A"
+      },
+      "rotateRight": {
+        "name": "Rotation droite",
+        "key": "D"
+      },
+      "class1": {
+        "name": "Sélectionner Classe 1",
+        "key": "1"
+      },
+      "class2": {
+        "name": "Sélectionner Classe 2",
+        "key": "2"
+      },
+      "class3": {
+        "name": "Sélectionner Classe 3",
+        "key": "3"
+      },
+      "class4": {
+        "name": "Sélectionner Classe 4",
+        "key": "4"
+      },
+      "class5": {
+        "name": "Sélectionner Classe 5",
+        "key": "5"
+      },
+      "class6": {
+        "name": "Sélectionner Classe 6",
+        "key": "6"
+      },
+      "class7": {
+        "name": "Sélectionner Classe 7",
+        "key": "7"
+      },
+      "class8": {
+        "name": "Sélectionner Classe 8",
+        "key": "8"
+      },
+      "class9": {
+        "name": "Sélectionner Classe 9",
+        "key": "9"
+      }
+    }
+  },
+  "projects": {
+    "title": "Projets",
+    "subtitle": "Gérez vos projets d'annotation",
+    "create": "Créer un Projet",
+    "createDescription": "Commencez un nouveau projet d'annotation",
+    "description": "Modifiez le nom ou gérez les classes du projet.",
+    "name": "Nom du Projet",
+    "namePlaceholder": "Mon Projet Annotix",
+    "type": {
+      "label": "Type de Projet",
+      "bbox": "Bounding Box",
+      "bboxDescription": "Détection d'objets avec boîtes englobantes",
+      "mask": "Masque",
+      "maskDescription": "Segmentation d'instances avec masques"
+    },
+    "typeSelectHelper": "Sélectionnez le type d'annotation selon votre objectif d'entraînement",
+    "classes": "Classes",
+    "open": "Ouvrir",
+    "delete": "Supprimer",
+    "settings": "Configuration du Projet",
+    "configure": "Configurer",
+    "edit": "Modifier le Projet",
+    "saveChanges": "Enregistrer les Modifications",
+    "stats": {
+      "classes": "Classes"
+    },
+    "empty": {
+      "title": "Aucun projet",
+      "description": "Créez votre premier projet pour commencer à annoter"
+    },
+    "confirmDelete": "Confirmer la suppression du projet"
+  },
+  "tools": {
+    "title": "Outils",
+    "bbox": "Box",
+    "obb": "OBB",
+    "mask": "Mask",
+    "polygon": "Polygone",
+    "keypoints": "Keypoints",
+    "landmarks": "Landmarks",
+    "select": "Select",
+    "pan": "Pan",
+    "eraseMode": "Gomme",
+    "newInstance": "Nouvelle Instance",
+    "tooltips": {
+      "bbox": "Bounding Box (B)",
+      "obb": "Oriented Box (O)",
+      "mask": "Masque (M)",
+      "polygon": "Polygone (P)",
+      "keypoints": "Keypoints (K)",
+      "landmarks": "Landmarks (L)",
+      "point": "Point (P)",
+      "range": "Plage (R)",
+      "select": "Sélectionner (V)",
+      "pan": "Pan (H)"
+    }
+  },
+  "gallery": {
+    "imageCount": "{{count}} images",
+    "imageCount_plural": "{{count}} images",
+    "empty": {
+      "title": "Aucune image",
+      "description": "Téléchargez des images pour commencer à annoter",
+      "upload": "Télécharger des images"
+    },
+    "title": "Galerie",
+    "all": "Toutes",
+    "annotated": "Annotées",
+    "unannotated": "Non annotées",
+    "deleteConfirm": "Supprimer cette image ?",
+    "annotate": "Annoter",
+    "upload": "Sélectionner des images",
+    "noImages": "Aucune image",
+    "filter": {
+      "all": "Toutes",
+      "annotated": "Annotées",
+      "unannotated": "Non annotées"
+    },
+    "backToGallery": "Retour à la Galerie",
+    "selectImage": "Sélectionnez une image",
+    "uploadOrSelect": "Téléchargez ou sélectionnez une image",
+    "uploading": "Téléchargement des images"
+  },
+  "classes": {
+    "title": "Classes Actives",
+    "active": "Classes Actives",
+    "manage": "Gérer les Classes",
+    "add": "Ajouter une Classe",
+    "placeholder": "Nom de la classe",
+    "deleteConfirm": "Il y a des annotations avec cette classe. La supprimer quand même ?",
+    "exists": "Une classe avec ce nom existe déjà",
+    "enterName": "Entrez un nom pour la classe",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "rename": "Renommer la Classe",
+    "editTitle": "Modifier la Classe",
+    "deleteTitle": "Supprimer la Classe",
+    "deleteQuestion": "Que souhaitez-vous faire avec cette classe ?",
+    "deleteWarning": "Cette classe a",
+    "annotations": "annotations",
+    "deleteAll": "Supprimer la Classe et les Annotations",
+    "name": "Nom",
+    "namePlaceholder": "Nom de la classe",
+    "color": "Couleur",
+    "nameRequired": "Le nom de la classe est requis",
+    "empty": "Aucune classe",
+    "addPlaceholder": "Ajouter un nom de classe",
+    "updated": "Mis à jour",
+    "description": "Ajoutez, modifiez ou supprimez les catégories disponibles pour ce projet.",
+    "save": "Enregistrer les modifications",
+    "cancel": "Annuler"
+  },
+  "annotations": {
+    "title": "Annotations",
+    "empty": "Aucune annotation",
+    "addClassFirst": "Ajoutez au moins une classe avant d'annoter",
+    "delete": "",
+    "confirmDelete": "",
+    "expand": "",
+    "collapse": ""
+  },
+  "polygon": {
+    "toolName": "Polygone",
+    "clickToAdd": "Cliquez pour ajouter des points. Double-clic ou Entrée pour fermer.",
+    "needMinPoints": "Vous avez besoin d'au moins {min} points pour créer un polygone",
+    "created": "Polygone créé",
+    "cancelled": "Dessin annulé",
+    "cannotDeletePoint": "Impossible de supprimer le point. Minimum {min} points requis.",
+    "pointDeleted": "Point supprimé"
+  },
+  "landmarks": {
+    "toolName": "Point de Référence",
+    "placed": "Point de référence \"{name}\" placé",
+    "selectFirst": "Sélectionnez d'abord un point de référence",
+    "enterName": "Veuillez entrer un nom",
+    "renamed": "Point de référence renommé",
+    "renumbered": "{count} points renumérotés",
+    "renameLandmark": "Renommer le Point de Référence",
+    "landmarkName": "Nom du Point :",
+    "namePlaceholder": "ex : Centre, Haut-Gauche, Entrée"
+  },
+  "skeleton": {
+    "addKeypointClass": "Ajouter une Classe de Keypoints",
+    "step1": "Étape 1 : Informations de Base",
+    "step2": "Étape 2 : Sélectionner un Preset de Squelette",
+    "className": "Nom de la Classe",
+    "classNamePlaceholder": "ex : Personne, Main, Visage",
+    "classColor": "Couleur de la Classe",
+    "selectPreset": "Sélectionnez un preset de squelette pour cette classe :",
+    "presetInfo": "Chaque classe peut avoir son propre squelette. Cela vous permet d'annoter différents types d'objets dans le même projet.",
+    "points": "points",
+    "connections": "connexions",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "finish": "Terminer",
+    "presets": {
+      "coco17": "COCO 17 Keypoints",
+      "coco17Desc": "Squelette humain complet (dataset COCO)",
+      "mediapipePose": "MediaPipe Pose 33",
+      "mediapipePoseDesc": "Pose détaillée du corps complet",
+      "mediapipeHand": "MediaPipe Hand 21",
+      "mediapipeHandDesc": "Articulations détaillées de la main",
+      "openpose25": "OpenPose 25",
+      "openpose25Desc": "Squelette OpenPose avec mains",
+      "facial68": "Facial Landmarks 68",
+      "facial68Desc": "Points faciaux détaillés",
+      "facial5": "Facial 5 Points",
+      "facial5Desc": "Points faciaux basiques (yeux, nez, bouche)",
+      "animalQuad": "Animal Quadrupède",
+      "animalQuadDesc": "Squelette pour animaux à 4 pattes",
+      "custom": "Personnalisé",
+      "customDesc": "Définissez votre propre squelette"
+    }
+  },
+  "images": {
+    "load": "Charger des images",
+    "title": "Titre",
+    "select": "Sélectionner des images",
+    "upload": "Sélectionner des images",
+    "noImages": "Aucune image"
+  },
+  "actions": {
+    "title": "Actions",
+    "save": "Enregistrer",
+    "undo": "Annuler",
+    "clear": "Effacer",
+    "delete": "Supprimer",
+    "cancel": "Annuler",
+    "create": "Créer",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "duplicate": "Dupliquer",
+    "rename": "Renommer",
+    "exportBackup": "Exporter la sauvegarde",
+    "deleteConfirm": "Oui, supprimer",
+    "clearConfirm": "Effacer toutes les annotations de cette image ?"
+  },
+  "shortcut": {
+    "title": "Raccourcis",
+    "save": "Enregistrer",
+    "undo": "Annuler",
+    "delete": "Supprimer",
+    "navigation": "Navigation",
+    "bbox": "Bbox",
+    "mask": "Mask",
+    "select": "Select",
+    "pan": "Pan",
+    "classes": "Classe 1-9",
+    "navigateImages": "shortcuts.navigateImages",
+    "selectClass": "shortcuts.selectClass"
+  },
+  "canvas": {
+    "zoomIn": "Zoom avant",
+    "zoomOut": "Zoom arrière",
+    "resetZoom": "Réinitialiser le Zoom",
+    "fitScreen": "Ajuster à l'écran",
+    "toggleLabels": "Afficher/Masquer les Étiquettes",
+    "toggleGrid": "Afficher/Masquer la Grille",
+    "prevImage": "Image Précédente (← / PgPrec)",
+    "nextImage": "Image Suivante (→ / PgSuiv)",
+    "reset": "Réinitialiser",
+    "tools": "Outils",
+    "zoom": "Zoom"
+  },
+  "stats": {
+    "title": "Statistiques",
+    "images": "Images",
+    "annotated": "Annotées",
+    "labels": "Étiquettes",
+    "classes": "Classes",
+    "progress": "images annotées",
+    "annotations": "stats.annotations"
+  },
+  "export": {
+    "title": "Exporter le Projet",
+    "project": {
+      "title": "Exporter le Projet (.tix)",
+      "description": "Pour continuer à travailler plus tard ou partager avec votre équipe",
+      "withImages": "Inclure les images (projet complet)",
+      "button": "Exporter le Projet"
+    },
+    "training": {
+      "title": "Exporter pour l'Entraînement",
+      "description": "Dataset prêt pour entraîner votre modèle (inclut toujours les images)",
+      "tabExport": "Exporter",
+      "tabCode": "Générer le Code",
+      "tabTrain": "Entraîner avec Connector",
+      "selectFormat": "Sélectionnez le format :",
+      "button": "Exporter le Dataset"
+    },
+    "code": {
+      "framework": "Framework",
+      "model": "Modèle",
+      "device": "Dispositif",
+      "epochs": "Epochs",
+      "batch": "Batch Size",
+      "imgsz": "Taille Image",
+      "preview": "Aperçu",
+      "copy": "Copier le Code",
+      "downloadPy": "Télécharger .py",
+      "downloadIpynb": "Télécharger .ipynb",
+      "labels": {
+        "model": "Modèle",
+        "device": "Dispositif",
+        "epochs": "Epochs",
+        "batchSize": "Batch Size",
+        "imageSize": "Taille Image",
+        "sequenceLength": "Sequence Length",
+        "forecastHorizon": "Forecast Horizon",
+        "hiddenSize": "Hidden Size",
+        "advancedOptions": "Options Avancées",
+        "training": "Entraînement",
+        "optimizer": "Optimizer",
+        "learningRate": "Learning Rate",
+        "patience": "Patience (Early Stop)",
+        "validationSplit": "Validation Split (%)",
+        "dataAugmentation": "Data Augmentation",
+        "metricsAndPlots": "Métriques et Graphiques",
+        "modelExport": "Exportation du Modèle"
+      },
+      "modelSizes": {
+        "nano": "Nano (plus rapide)",
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large",
+        "xlarge": "XLarge (plus précis)"
+      },
+      "devices": {
+        "cpu": "🖥️ CPU",
+        "gpu": "🎮 GPU (CUDA)",
+        "mps": "🍎 Apple Silicon (MPS)"
+      },
+      "optimizers": {
+        "adam": "Adam (recommandé pour débutants)",
+        "adamw": "AdamW (Adam amélioré avec weight decay)",
+        "sgd": "SGD (classique, nécessite plus de réglages)",
+        "rmsprop": "RMSprop (bon pour les réseaux récurrents)"
+      },
+      "augmentation": {
+        "mosaic": "Mosaic (combine 4 images)",
+        "mixup": "Mixup (mélange de transparences)",
+        "hsv": "HSV (color jitter)",
+        "flip": "Flips (horizontal/vertical)",
+        "rotate": "Rotation",
+        "scale": "Scale/Crop"
+      },
+      "metrics": {
+        "savePlots": "Enregistrer les graphiques d'entraînement",
+        "saveMetricsCsv": "Exporter les métriques en CSV",
+        "saveConfMatrix": "Matrice de confusion",
+        "savePrCurves": "Courbes Precision-Recall",
+        "savePredictions": "Visualiser les prédictions"
+      },
+      "exportFormats": {
+        "onnx": "ONNX (recommandé)",
+        "torchscript": "TorchScript",
+        "tflite": "TensorFlow Lite",
+        "openvino": "OpenVINO",
+        "coreml": "CoreML",
+        "tensorrt": "TensorRT"
+      },
+      "template": {
+        "generatedBy": "Généré automatiquement par Annotix",
+        "projectType": "Type de projet",
+        "important": "IMPORTANT",
+        "installDeps": "Installer les dépendances avant d'exécuter",
+        "importantCLI": "IMPORTANT : YOLOv5 utilise CLI, pas l'API Python",
+        "importantDetectron2": "IMPORTANT : Detectron2 est plus avancé mais complexe",
+        "importantClassification": "IMPORTANT : Classification avec architectures modernes",
+        "importantSegmentation": "IMPORTANT : Segmentation sémantique avec architectures modernes",
+        "cloneYOLOv5": "Cloner le dépôt YOLOv5 (première fois uniquement)",
+        "trainCLI": "ENTRAÎNER AVEC CLI",
+        "trainingScript": "Script d'Entraînement",
+        "registerCOCO": "Enregistrer votre dataset au format COCO",
+        "modelConfiguration": "CONFIGURATION DU MODÈLE",
+        "approxEpochs": "Environ epochs",
+        "model": "MODÈLE",
+        "lossOptimizer": "LOSS ET OPTIMIZER",
+        "training": "Entraînement",
+        "metrics": "Métriques",
+        "saveBestModelSection": "Sauvegarder le meilleur modèle",
+        "evaluatingModel": "Évaluation du modèle",
+        "validateBestModel": "Valider avec le meilleur modèle",
+        "printMetrics": "Afficher les métriques clés",
+        "predictValidation": "Prédire sur les images de validation",
+        "changeToValFolder": "Changer vers votre dossier de validation",
+        "saveImagesWithPredictions": "Enregistrer les images avec prédictions",
+        "minConfidence": "Confiance minimale",
+        "dontSaveLabels": "Ne pas enregistrer les labels",
+        "dontCropDetections": "Ne pas recadrer les détections",
+        "exportingProduction": "Exportation du modèle vers les formats de production",
+        "exportProduction": "EXPORTER LE MODÈLE POUR LA PRODUCTION",
+        "yolov5Completed": "Entraînement YOLOv5 terminé",
+        "yolonasCompleted": "Entraînement YOLO-NAS terminé",
+        "unetLoaded": "Modèle U-Net chargé",
+        "availableArchitectures": "Architectures disponibles",
+        "calculateIoU": "Calculer IoU",
+        "bestModelSaved": "Meilleur modèle enregistré",
+        "plotsSaved": "Graphiques enregistrés dans",
+        "loadDataset": "Charger le dataset (structure : train/class1, train/class2, ...)",
+        "trainTransforms": "Transformations d'entraînement",
+        "valTransforms": "Transformations de validation",
+        "options": "Options",
+        "initialLearningRate": "Learning rate initial",
+        "finalLearningRate": "Learning rate final (en fraction de lr0)",
+        "momentumSGD": "Momentum pour SGD",
+        "weightDecay": "Weight decay (régularisation L2)",
+        "earlyStoppingPatience": "Patience d'arrêt anticipé",
+        "saveCheckpoints": "Enregistrer les checkpoints",
+        "savePeriod": "Enregistrer tous les N epochs",
+        "generatePlots": "Générer les graphiques d'entraînement",
+        "minConfidenceMatrix": "Confiance minimale pour la matrice de confusion",
+        "cacheImages": "Mettre en cache les images (utilise plus de RAM)",
+        "numWorkers": "Nombre de workers pour DataLoader",
+        "resultsFolder": "Dossier de résultats",
+        "experimentName": "Nom de l'expérience",
+        "overwriteExperiments": "Écraser les expériences existantes",
+        "validateDuringTraining": "Valider pendant l'entraînement",
+        "valPercentage": "Pourcentage de validation si pas de val split",
+        "verboseMode": "Mode verbose",
+        "executeCmds": "Exécuter ces commandes dans votre terminal",
+        "configuration": "CONFIGURATION DE L'ENTRAÎNEMENT",
+        "modelAndDevice": "Modèle et dispositif",
+        "basicHyperparams": "Hyperparamètres de base",
+        "dataAugmentation": "Data Augmentation",
+        "loadPretrainedModel": "CHARGER LE MODÈLE PRÉENTRAÎNÉ",
+        "trainModel": "ENTRAÎNER LE MODÈLE",
+        "evaluateModel": "ÉVALUER LE MODÈLE",
+        "exportMetrics": "EXPORTER LES MÉTRIQUES EN CSV",
+        "visualizePredictions": "VISUALISER LES PRÉDICTIONS",
+        "exportForProduction": "EXPORTER LE MODÈLE POUR LA PRODUCTION",
+        "dataset": "Dataset",
+        "basics": "Basiques",
+        "optimization": "Optimisation",
+        "callbacks": "Callbacks et sauvegarde",
+        "visualization": "Visualisation et métriques",
+        "performance": "Performance",
+        "validation": "Validation",
+        "modelLoaded": "Modèle chargé",
+        "parameters": "Paramètres",
+        "trainingCompleted": "ENTRAÎNEMENT TERMINÉ",
+        "evaluating": "Évaluation du modèle...",
+        "finalMetrics": "MÉTRIQUES FINALES",
+        "metricsSaved": "Métriques enregistrées dans",
+        "predictionsSaved": "Prédictions enregistrées dans",
+        "exportingModel": "Exportation du modèle vers les formats de production...",
+        "onnxExported": "ONNX exporté",
+        "torchscriptExported": "TorchScript exporté",
+        "tfliteExported": "TFLite exporté",
+        "openvinoExported": "OpenVINO exporté",
+        "coremlExported": "CoreML exporté",
+        "tensorrtExported": "TensorRT exporté",
+        "allDone": "Tout est prêt !",
+        "resultsIn": "Résultats dans",
+        "bestModel": "Meilleur modèle",
+        "yoloUsesCli": "YOLOv5 utilise CLI, pas l'API Python",
+        "cloneRepo": "Cloner le dépôt YOLOv5 (première fois uniquement)",
+        "trainWithCli": "ENTRAÎNER AVEC CLI",
+        "validate": "VALIDER",
+        "yoloTrainingCompleted": "Entraînement YOLOv5 terminé !",
+        "prepareTrainer": "Préparer le trainer",
+        "configureDataset": "Configurer le dataset",
+        "loadModel": "Charger le modèle",
+        "train": "Entraîner",
+        "trainingCompletedShort": "Entraînement terminé !",
+        "registerDataset": "ENREGISTRER LE DATASET",
+        "modelConfig": "CONFIGURATION DU MODÈLE",
+        "datasets": "Datasets",
+        "pretrainedModel": "Modèle préentraîné",
+        "hyperparameters": "Hyperparamètres",
+        "numClasses": "Nombre de classes",
+        "output": "Sortie",
+        "evaluate": "ÉVALUER",
+        "advancedButComplex": "est plus avancé mais complexe",
+        "customDataset": "Dataset personnalisé",
+        "lossAndOptimizer": "LOSS ET OPTIMIZER",
+        "trainingLoop": "ENTRAÎNEMENT",
+        "saveBestModelAcc": "Meilleur modèle enregistré (accuracy",
+        "saveBestModelIoU": "Meilleur modèle enregistré (IoU",
+        "saveMetrics": "Enregistrer les métriques",
+        "plotResults": "Tracer les résultats",
+        "bestAccuracy": "Meilleure accuracy",
+        "bestIoU": "Meilleur IoU",
+        "modernArchitectures": "avec architectures modernes",
+        "semanticSegmentation": "Segmentation sémantique avec architectures modernes",
+        "forVisualization": "Pour les visualisations",
+        "forExportMetrics": "Pour exporter les métriques",
+        "trainingSamples": "Échantillons d'entraînement",
+        "valSamples": "Échantillons de validation",
+        "classes": "Classes",
+        "torchvisionModels": "Modèles TorchVision",
+        "timmModels": "Modèles timm (plus de modèles disponibles)",
+        "lossOptimizerTitle": "Loss et Optimizer",
+        "architecturesAvailable": "Architectures disponibles",
+        "trainSamples": "Échantillons d'entraînement",
+        "testSamples": "Échantillons de test",
+        "sequenceLength": "Longueur de séquence",
+        "numFeatures": "Nombre de variables",
+        "trainEpoch": "Entraînement",
+        "testEpoch": "Test",
+        "trainLoss": "Train Loss",
+        "testLoss": "Test Loss",
+        "trainAcc": "Train Acc",
+        "testAcc": "Test Acc",
+        "dataLoading": "CHARGEMENT DES DONNÉES",
+        "modelArchitecture": "ARCHITECTURE DU MODÈLE",
+        "prepareData": "Préparer les données",
+        "trainTest": "ENTRAÎNER ET ÉVALUER",
+        "forecasting": "PRÉVISION",
+        "makePredictions": "Effectuer des prédictions",
+        "forecastHorizon": "Horizon de prévision",
+        "predictionsMade": "Prédictions effectuées",
+        "trainingData": "Données d'entraînement",
+        "testingData": "Données de test",
+        "scaler": "Mise à l'échelle des données",
+        "sequences": "séquences",
+        "timeSteps": "pas de temps",
+        "features": "variables",
+        "installation": "export.code.template.installation"
+      },
+      "tooltips": {
+        "framework": "Bibliothèque de deep learning à utiliser. S'adapte selon votre type de projet.",
+        "model": "Taille du modèle : Nano est rapide mais moins précis, XLarge est lent mais plus précis.",
+        "device": "Où entraîner : CPU est lent mais fonctionne toujours, GPU (CUDA) est très rapide si vous avez NVIDIA.",
+        "epochs": "Combien de fois le modèle voit tout le dataset. Plus d'epochs = plus d'apprentissage mais plus de temps.",
+        "batch": "Combien d'images traiter en même temps. Des valeurs élevées utilisent plus de mémoire mais entraînent plus vite.",
+        "imgsz": "Résolution des images pendant l'entraînement. Plus grand = plus de détails mais plus lent.",
+        "seqLength": "Nombre de pas de temps à utiliser en entrée. Ex : utiliser 50 valeurs passées pour prédire le futur.",
+        "forecastHorizon": "Combien de pas futurs prédire (uniquement pour le forecasting). Ex : prédire les 10 prochaines valeurs.",
+        "hiddenSize": "Taille de la couche cachée du réseau neuronal (LSTM). Plus grand = plus de capacité mais plus lent.",
+        "optimizer": "Algorithme qui ajuste les poids du modèle pendant l'entraînement. Adam : équilibré et populaire. AdamW : Adam avec weight decay amélioré. SGD : classique, plus lent mais parfois meilleur résultat final. RMSprop : bon pour les RNNs.",
+        "lr": "À quelle vitesse le modèle apprend. Des valeurs élevées = apprentissage rapide mais peut être instable. 0.001 est un bon point de départ.",
+        "patience": "Combien d'epochs attendre sans amélioration avant d'arrêter. Si le modèle ne s'améliore pas en 50 epochs, il s'arrête automatiquement.",
+        "valSplit": "Quel pourcentage de vos images utiliser pour valider le modèle. 20% est standard : 80% entraîne, 20% valide.",
+        "augmentationTitle": "Techniques pour créer des variations de vos images et éviter que le modèle mémorise. Aide à mieux généraliser.",
+        "augMosaic": "Combine 4 images aléatoires en une seule. Très efficace pour améliorer la détection de petits objets.",
+        "augMixup": "Mélange deux images avec transparence. Aide le modèle à être plus robuste face aux occlusions.",
+        "augHsv": "Modifie les couleurs de l'image (teinte, saturation, luminosité). Utile pour différentes conditions d'éclairage.",
+        "augFlip": "Retourne les images horizontalement ou verticalement. Double vos données sans effort.",
+        "augRotate": "Fait pivoter légèrement les images. Utile si vos objets peuvent apparaître sous différents angles.",
+        "augScale": "Zoom avant/arrière et recadre aléatoirement. Simule des objets à différentes distances.",
+        "metricsTitle": "Quelles informations sauvegarder pendant l'entraînement pour analyser les performances du modèle.",
+        "savePlots": "Enregistre les graphiques de perte et de précision pendant l'entraînement. Très utile pour voir si le modèle apprend.",
+        "saveConfMatrix": "Tableau montrant quelles classes se confondent entre elles. Idéal pour comprendre les erreurs du modèle.",
+        "savePrCurves": "Graphiques montrant l'équilibre entre précision et recall. Importants pour évaluer la qualité des détections.",
+        "savePredictions": "Enregistre les images avec les prédictions du modèle dessinées dessus. Parfait pour voir visuellement les performances.",
+        "saveMetricsCsv": "Exporte toutes les métriques dans un fichier CSV pour les analyser dans Excel ou créer vos propres graphiques.",
+        "exportTitle": "Formats pour déployer votre modèle entraîné en production.",
+        "exportOnnx": "ONNX : format universel, fonctionne avec TensorFlow, PyTorch et presque toute bibliothèque. Idéal pour la production.",
+        "exportTorchscript": "TorchScript : format natif PyTorch, très rapide mais fonctionne uniquement avec PyTorch.",
+        "exportTflite": "TensorFlow Lite : pour mobiles et appareils embarqués (Android, iOS, Raspberry Pi).",
+        "exportOpenvino": "OpenVINO : optimisé pour les CPUs Intel. Très rapide sur matériel Intel.",
+        "exportCoreml": "CoreML : pour les apps natives iOS/macOS. Tire parti des puces Apple.",
+        "exportTensorrt": "TensorRT : accélération maximale sur GPUs NVIDIA. Pour la production haute performance."
+      },
+      "codeCopied": "Code copié dans le presse-papiers",
+      "copyError": "Erreur lors de la copie du code",
+      "pyDownloaded": "Fichier .py téléchargé",
+      "ipynbDownloaded": "Notebook .ipynb téléchargé",
+      "trainingNotebook": "Notebook d'Entraînement"
+    },
+    "formats": {
+      "tixGroupTitle": "Exporter sauvegarde ou partager",
+      "trainingGroupTitle": "Formats d'entraînement",
+      "yoloDetection": "YOLO Detection",
+      "yoloDetectionDesc": "Boîtes englobantes au format YOLO normalisé (.txt) avec data.yaml",
+      "yoloSegmentation": "YOLO Segmentation",
+      "yoloSegmentationDesc": "Polygones au format YOLO segmentation (.txt) avec data.yaml",
+      "coco": "COCO JSON",
+      "cocoDesc": "Format COCO JSON compatible avec Mask R-CNN, RetinaNet et Detectron2",
+      "pascalVoc": "Pascal VOC XML",
+      "pascalVocDesc": "Format Pascal VOC XML avec coordonnées en pixels (format legacy)",
+      "csvDetection": "CSV Detection",
+      "csvDetectionDesc": "Format tabulaire CSV avec coordonnées de boîtes englobantes",
+      "csvClassification": "CSV Classification",
+      "csvClassificationDesc": "Format tabulaire CSV avec nom de fichier d'image et étiquette de classe",
+      "csvKeypoints": "CSV Keypoints",
+      "csvKeypointsDesc": "Format tabulaire CSV avec coordonnées X,Y des keypoints et visibilité",
+      "csvLandmarks": "CSV Landmarks",
+      "csvLandmarksDesc": "Format tabulaire CSV avec coordonnées des landmarks",
+      "foldersByClass": "Dossiers par Classe",
+      "foldersByClassDesc": "Images organisées en dossiers séparés par nom de classe",
+      "unetMasks": "Masques U-Net",
+      "unetMasksDesc": "Images PNG en niveaux de gris pour l'entraînement de segmentation",
+      "tix": "Projet Annotix (.tix)",
+      "tixDesc": "Exporte tout le projet dans un fichier .tix pour sauvegarde ou partage"
+    },
+    "notAvailable": "Exportation non disponible pour ce type de projet",
+    "preparing": "Préparation de l'exportation...",
+    "success": "Dataset exporté avec succès",
+    "description": "Sélectionnez un des formats disponibles pour exporter le projet",
+    "downloadDataset": "Télécharger le dataset",
+    "export": "Exporter",
+    "exporting": "Exportation...",
+    "format": "Formats",
+    "formatDescription": "Description du format",
+    "progress": "Progression",
+    "selectFormat": "Sélectionner le format d'exportation"
+  },
+  "import": {
+    "title": "Importer un Dataset",
+    "button": "Importer",
+    "selectFile": "Sélectionnez un fichier ZIP contenant votre dataset annoté",
+    "dragFiles": "Glissez les fichiers ZIP ici",
+    "orClickToSelect": "ou cliquez pour sélectionner",
+    "analyzing": "Analyse du Dataset",
+    "configureProject": "Configurez votre projet importé",
+    "projectName": "Nom du Projet",
+    "projectType": "Type de Projet",
+    "classesCount": "Classes",
+    "classes": "classes",
+    "format": "Format Détecté",
+    "import": "Importer le Projet",
+    "importing": "Importation du Dataset...",
+    "processing": "Traitement de votre dataset...",
+    "success": "Projet Importé avec Succès",
+    "successMessage": "Votre dataset a été importé et est prêt à être utilisé",
+    "openProject": "Ouvrir le Projet",
+    "error": {
+      "noFile": "Veuillez sélectionner un fichier ZIP",
+      "invalidZip": "Veuillez sélectionner un fichier ZIP valide",
+      "unsupportedFormat": "Format de dataset non pris en charge. Formats pris en charge : YOLO, COCO, Pascal VOC, CSV, Dossiers par Classe, Masques U-Net",
+      "corruptedData": "Le dataset semble être corrompu ou incomplet",
+      "parse": "Erreur lors de l'analyse du dataset. Veuillez vérifier le format du fichier",
+      "invalidProjectName": "Le nom du projet contient des caractères invalides. Utilisez uniquement des caractères alphanumériques, des tirets, des traits de soulignement et des points"
+    }
+  },
+  "projectTypes": {
+    "classification": "Classification Simple",
+    "multiLabel": "Classification Multi-Étiquettes",
+    "detection": "Détection d'Objets",
+    "segmentation": "Segmentation Sémantique",
+    "instanceSeg": "Segmentation d'Instances",
+    "keypoints": "Points Clés",
+    "obb": "Boîtes Orientées (OBB)"
+  },
+  "project": {
+    "new": "Nouveau Projet",
+    "name": "Nom du Projet",
+    "namePlaceholder": "Mon Projet Annotix",
+    "type": "Type d'Annotation",
+    "typeSelectHelper": "Sélectionnez le type d'annotation selon votre objectif d'entraînement",
+    "types": {
+      "classification": {
+        "name": "Classification Simple",
+        "description": "Assigner une seule étiquette à chaque image complète",
+        "useCases": "Identifier ce que contient l'image (ex : chat, chien, voiture)",
+        "models": "ResNet, VGG, EfficientNet, MobileNet",
+        "difficulty": "Débutant"
+      },
+      "bbox": {
+        "name": "Bounding Box",
+        "description": "Détection d'objets avec boîtes englobantes",
+        "useCases": "Détecter et localiser des objets dans les images",
+        "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+        "difficulty": "Débutant"
+      },
+      "mask": {
+        "name": "Masque",
+        "description": "Segmentation d'instances avec masques de pixels",
+        "useCases": "Séparer les objets au niveau du pixel",
+        "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+        "difficulty": "Intermédiaire"
+      },
+      "multiLabel": {
+        "name": "Classification Multi-Étiquettes",
+        "description": "Assigner plusieurs étiquettes à chaque image",
+        "useCases": "Image avec plusieurs éléments (ex : parc + chien + ciel)",
+        "models": "ResNet, VGG avec sortie multi-label",
+        "difficulty": "Débutant"
+      },
+      "detection": {
+        "name": "Détection d'Objets",
+        "description": "Localiser des objets avec des boîtes rectangulaires (bounding boxes)",
+        "useCases": "Trouver et localiser des objets spécifiques dans l'image",
+        "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+        "difficulty": "Intermédiaire"
+      },
+      "segmentation": {
+        "name": "Segmentation Sémantique",
+        "description": "Classifier chaque pixel de l'image par classe",
+        "useCases": "Séparer les régions (ex : route, ciel, bâtiments)",
+        "models": "U-Net, DeepLab, FCN",
+        "difficulty": "Avancé"
+      },
+      "instanceSeg": {
+        "name": "Segmentation d'Instances",
+        "description": "Délimiter le contour de chaque objet individuel",
+        "useCases": "Séparer les objets individuels au niveau du pixel",
+        "models": "Mask R-CNN, YOLACT, YOLOv8-seg",
+        "difficulty": "Avancé"
+      },
+      "keypoints": {
+        "name": "Points Clés",
+        "description": "Marquer des points spécifiques sur les objets",
+        "useCases": "Estimation de pose, reconnaissance faciale, anatomie",
+        "models": "OpenPose, HRNet, MediaPipe",
+        "difficulty": "Intermédiaire"
+      },
+      "polygon": {
+        "name": "Segmentation par Polygones",
+        "description": "Dessiner des polygones point par point pour une segmentation précise",
+        "useCases": "Contours précis, formes géométriques, plus léger que les masques",
+        "models": "YOLOv8-seg, Mask R-CNN, SOLO",
+        "difficulty": "Intermédiaire"
+      },
+      "landmarks": {
+        "name": "Points de Référence",
+        "description": "Placer des points indépendants sans connexions",
+        "useCases": "Centres d'objets, points de référence, comptage, localisations",
+        "models": "Modèles de détection, détecteurs de points personnalisés",
+        "difficulty": "Débutant"
+      },
+      "obb": {
+        "name": "Boîtes Orientées (OBB)",
+        "description": "Boîtes englobantes avec rotation libre",
+        "useCases": "Texte en angle, objets aériens, satellites",
+        "models": "Rotated-YOLO, RRPN",
+        "difficulty": "Avancé"
+      },
+      "semanticSeg": {
+        "name": "Segmentation Sémantique Pure",
+        "description": "Classifier chaque pixel sans distinguer les instances",
+        "useCases": "Cartes de segmentation, paysages, scènes urbaines",
+        "models": "U-Net, DeepLabV3+, SegFormer",
+        "difficulty": "Avancé"
+      },
+      "panopticSeg": {
+        "name": "Segmentation Panoptique",
+        "description": "Combine segmentation sémantique et d'instances",
+        "useCases": "Conduite autonome, analyse de scènes complètes",
+        "models": "Panoptic-FPN, DETR, MaskFormer",
+        "difficulty": "Avancé"
+      },
+      "ocr": {
+        "name": "OCR (Reconnaissance de Texte)",
+        "description": "Détecter et reconnaître du texte dans les images",
+        "useCases": "Documents, panneaux, affiches, factures",
+        "models": "CRAFT, EasyOCR, Tesseract, PaddleOCR",
+        "difficulty": "Intermédiaire"
+      },
+      "depthEstimation": {
+        "name": "Estimation de Profondeur",
+        "description": "Prédire la distance de chaque pixel à la caméra",
+        "useCases": "Robotique, AR/VR, reconstruction 3D",
+        "models": "MiDaS, DPT, Depth Anything",
+        "difficulty": "Avancé"
+      },
+      "audioClassification": {
+        "name": "Classification Audio",
+        "description": "Assigner une étiquette à des clips audio",
+        "useCases": "Classification de musique, sons ambiants",
+        "models": "AudioSet, PANNs, YAMNet",
+        "difficulty": "Intermédiaire"
+      },
+      "speechRecognition": {
+        "name": "Reconnaissance Vocale",
+        "description": "Transcrire l'audio en texte",
+        "useCases": "Sous-titres, assistants vocaux, transcription",
+        "models": "Whisper, Wav2Vec2, DeepSpeech",
+        "difficulty": "Avancé"
+      },
+      "soundEventDetection": {
+        "name": "Détection d'Événements Sonores",
+        "description": "Identifier et localiser des événements dans l'audio",
+        "useCases": "Surveillance de sécurité, analyse urbaine",
+        "models": "CRNN, CNN14, SED-CRNN",
+        "difficulty": "Avancé"
+      },
+      "speakerIdentification": {
+        "name": "Identification du Locuteur",
+        "description": "Reconnaître qui parle",
+        "useCases": "Sécurité, diarisation de réunions",
+        "models": "x-vector, ECAPA-TDNN, SpeakerNet",
+        "difficulty": "Avancé"
+      },
+      "audioTagging": {
+        "name": "Étiquetage Audio",
+        "description": "Assigner plusieurs étiquettes à l'audio",
+        "useCases": "Analyse de scènes acoustiques",
+        "models": "VGGish, PANNs, AudioSet",
+        "difficulty": "Intermédiaire"
+      },
+      "musicGenreClassification": {
+        "name": "Classification de Genres Musicaux",
+        "description": "Identifier le genre musical d'une chanson",
+        "useCases": "Organisation de bibliothèques musicales",
+        "models": "MusiCNN, CNN-Spectrograms",
+        "difficulty": "Intermédiaire"
+      },
+      "emotionRecognition": {
+        "name": "Reconnaissance d'Émotions",
+        "description": "Détecter l'émotion dans la voix",
+        "useCases": "Service client, analyse de sentiments",
+        "models": "OpenSMILE, EmotiW, SER-CNN",
+        "difficulty": "Avancé"
+      },
+      "voiceActivityDetection": {
+        "name": "Détection d'Activité Vocale (VAD)",
+        "description": "Détecter quand il y a de la voix dans l'audio",
+        "useCases": "Prétraitement audio, systèmes téléphoniques",
+        "models": "WebRTC VAD, Silero VAD",
+        "difficulty": "Débutant"
+      },
+      "keywordSpotting": {
+        "name": "Détection de Mots-Clés",
+        "description": "Détecter des mots spécifiques dans l'audio",
+        "useCases": "Assistants vocaux (Hey Siri, OK Google)",
+        "models": "CNN-KWS, Depthwise Separable CNNs",
+        "difficulty": "Intermédiaire"
+      },
+      "environmentalSound": {
+        "name": "Classification de Sons Ambiants",
+        "description": "Classifier les sons de l'environnement",
+        "useCases": "Surveillance urbaine, conservation de la faune",
+        "models": "ESC-CNN, UrbanSound8K models",
+        "difficulty": "Intermédiaire"
+      },
+      "actionRecognition": {
+        "name": "Reconnaissance d'Actions",
+        "description": "Identifier des actions dans la vidéo",
+        "useCases": "Analyse sportive, surveillance, interaction humaine",
+        "models": "C3D, I3D, SlowFast, X3D",
+        "difficulty": "Avancé"
+      },
+      "objectTracking": {
+        "name": "Suivi d'Objets",
+        "description": "Suivre des objets à travers les frames",
+        "useCases": "Surveillance, analyse du trafic, sports",
+        "models": "SORT, DeepSORT, ByteTrack, BoT-SORT",
+        "difficulty": "Avancé"
+      },
+      "temporalActionLocalization": {
+        "name": "Localisation Temporelle d'Actions",
+        "description": "Détecter quand les actions se produisent dans la vidéo",
+        "useCases": "Analyse vidéo, résumés automatiques",
+        "models": "BMN, TSN, ActionFormer",
+        "difficulty": "Avancé"
+      },
+      "videoClassification": {
+        "name": "Classification Vidéo",
+        "description": "Assigner une catégorie à une vidéo complète",
+        "useCases": "Organisation de contenu, recommandations",
+        "models": "3D-CNN, Two-Stream Networks, TimeSformer",
+        "difficulty": "Intermédiaire"
+      },
+      "videoSegmentation": {
+        "name": "Segmentation Vidéo",
+        "description": "Segmenter des objets dans la vidéo image par image",
+        "useCases": "Montage vidéo, effets spéciaux",
+        "models": "STM, XMem, SAM-Track",
+        "difficulty": "Avancé"
+      },
+      "activityDetection": {
+        "name": "Détection d'Activités",
+        "description": "Détecter des activités humaines spécifiques",
+        "useCases": "Surveillance de personnes âgées, sécurité",
+        "models": "ActivityNet models, TSM",
+        "difficulty": "Avancé"
+      },
+      "poseTracking": {
+        "name": "Suivi de Poses",
+        "description": "Suivre les points clés du corps dans la vidéo",
+        "useCases": "Analyse de mouvement, fitness, sports",
+        "models": "AlphaPose, OpenPose, MMPose",
+        "difficulty": "Avancé"
+      },
+      "videoAnomalyDetection": {
+        "name": "Détection d'Anomalies Vidéo",
+        "description": "Détecter des événements inhabituels dans la vidéo",
+        "useCases": "Surveillance, contrôle qualité industriel",
+        "models": "AnomalyNet, Future Frame Prediction",
+        "difficulty": "Avancé"
+      },
+      "spatiotemporalAction": {
+        "name": "Détection Spatiotemporelle d'Actions",
+        "description": "Détecter des actions dans l'espace et le temps",
+        "useCases": "Analyse détaillée de vidéo, YOLO-Act",
+        "models": "AVA models, SlowFast, YOLO-Act",
+        "difficulty": "Avancé"
+      },
+      "timeSeriesClassification": {
+        "name": "Classification de Séries Temporelles",
+        "description": "Assigner une classe à chaque série temporelle complète (mode classification globale)",
+        "useCases": "Diagnostic médical, reconnaissance de gestes, classification d'ECG",
+        "models": "InceptionTime, ROCKET, ResNet",
+        "difficulty": "Intermédiaire"
+      },
+      "timeSeriesForecasting": {
+        "name": "Prévision de Séries Temporelles",
+        "description": "Marquer les fenêtres historiques et l'horizon de prédiction avec des plages",
+        "useCases": "Prédiction de ventes, météo, demande énergétique",
+        "models": "LSTM, Transformer, N-BEATS, Prophet",
+        "difficulty": "Avancé"
+      },
+      "anomalyDetection": {
+        "name": "Détection d'Anomalies",
+        "description": "Marquer les points anormaux dans la série temporelle",
+        "useCases": "Détection de fraudes, pannes d'équipements, surveillance de santé",
+        "models": "AutoEncoder, Isolation Forest, LSTM-AE",
+        "difficulty": "Avancé"
+      },
+      "timeSeriesSegmentation": {
+        "name": "Segmentation de Séries Temporelles",
+        "description": "Diviser la série en segments avec classes en utilisant des plages",
+        "useCases": "Analyse de comportement, changement de régime, états d'activité",
+        "models": "ClaSP, FLUSS, Seasonal-Trend Decomposition",
+        "difficulty": "Avancé"
+      },
+      "patternRecognition": {
+        "name": "Reconnaissance de Motifs",
+        "description": "Marquer des motifs/patterns répétitifs avec des plages",
+        "useCases": "Analyse boursière, signaux biomédicaux, détection de cycles",
+        "models": "Matrix Profile, STOMP, SAX",
+        "difficulty": "Intermédiaire"
+      },
+      "eventDetection": {
+        "name": "Détection d'Événements",
+        "description": "Marquer des événements discrets dans le temps avec des points",
+        "useCases": "Surveillance de capteurs, alertes, changements d'état",
+        "models": "Change Point Detection, Event Detection CNN",
+        "difficulty": "Intermédiaire"
+      },
+      "timeSeriesRegression": {
+        "name": "Régression de Séries Temporelles",
+        "description": "Marquer des points avec des valeurs cibles numériques",
+        "useCases": "Estimation de demande, tarification dynamique, prédiction de valeurs",
+        "models": "XGBoost, Random Forest, Neural Networks",
+        "difficulty": "Intermédiaire"
+      },
+      "clustering": {
+        "name": "Regroupement de Séries",
+        "description": "Assigner un cluster à chaque série temporelle complète (mode classification globale)",
+        "useCases": "Segmentation de clients, analyse de motifs, regroupement de comportements",
+        "models": "K-Shape, DTW-KMeans, K-Means",
+        "difficulty": "Intermédiaire"
+      },
+      "imputation": {
+        "name": "Imputation de Valeurs Manquantes",
+        "description": "Marquer les sections de données manquantes à imputer avec des plages",
+        "useCases": "Nettoyage de données de capteurs, remplissage de lacunes dans les mesures",
+        "models": "MICE, KNN, Interpolation, BRITS",
+        "difficulty": "Intermédiaire"
+      },
+      "multi-label-classification": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-classification": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-forecasting": {
+        "name": "",
+        "description": ""
+      },
+      "anomaly-detection": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-segmentation": {
+        "name": "",
+        "description": ""
+      },
+      "pattern-recognition": {
+        "name": "",
+        "description": ""
+      },
+      "event-detection": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-regression": {
+        "name": "",
+        "description": ""
+      },
+      "object3DDetection": {
+        "name": "Détection d'Objets 3D",
+        "description": "Détecter des objets dans des nuages de points 3D",
+        "useCases": "Conduite autonome, robotique",
+        "models": "PointNet++, VoxelNet, PointPillars",
+        "difficulty": "Avancé"
+      },
+      "semantic3DSegmentation": {
+        "name": "Segmentation Sémantique 3D",
+        "description": "Classifier des points dans des nuages 3D",
+        "useCases": "Cartographie urbaine, BIM, scan de bâtiments",
+        "models": "PointNet, MinkowskiNet, KPConv",
+        "difficulty": "Avancé"
+      },
+      "instance3DSegmentation": {
+        "name": "Segmentation d'Instances 3D",
+        "description": "Séparer des objets individuels en 3D",
+        "useCases": "Robotique, manipulation d'objets",
+        "models": "PointGroup, SoftGroup, Mask3D",
+        "difficulty": "Avancé"
+      },
+      "pointCloudClassification": {
+        "name": "Classification de Nuages de Points",
+        "description": "Classifier des nuages de points complets",
+        "useCases": "Reconnaissance d'objets 3D",
+        "models": "PointNet, DGCNN, PointTransformer",
+        "difficulty": "Avancé"
+      },
+      "meshSegmentation": {
+        "name": "Segmentation de Maillages",
+        "description": "Segmenter des maillages polygonaux 3D",
+        "useCases": "Modélisation 3D, analyse géométrique",
+        "models": "MeshCNN, TextureNet",
+        "difficulty": "Avancé"
+      },
+      "pose3DEstimation": {
+        "name": "Estimation de Pose 3D",
+        "description": "Estimer les poses humaines en 3D",
+        "useCases": "Capture de mouvement, animation",
+        "models": "VideoPose3D, VoxelPose",
+        "difficulty": "Avancé"
+      },
+      "keypoint3DDetection": {
+        "name": "Détection de Points Clés 3D",
+        "description": "Détecter des points d'intérêt en 3D",
+        "useCases": "Recalage de nuages de points, SLAM",
+        "models": "D3Feat, FCGF, Predator",
+        "difficulty": "Avancé"
+      },
+      "surfaceReconstruction": {
+        "name": "Reconstruction de Surfaces",
+        "description": "Reconstruire des surfaces à partir de points",
+        "useCases": "Scan 3D, patrimoine culturel",
+        "models": "Poisson Surface Reconstruction, COLMAP",
+        "difficulty": "Avancé"
+      },
+      "slamAnnotation": {
+        "name": "Annotation pour SLAM",
+        "description": "Annoter des données pour la localisation et la cartographie",
+        "useCases": "Robotique mobile, navigation autonome",
+        "models": "ORB-SLAM, LiDAR-SLAM",
+        "difficulty": "Avancé"
+      },
+      "textClassification": {
+        "name": "Classification de Texte",
+        "description": "Assigner une catégorie à du texte",
+        "useCases": "Classification d'actualités, détection de spam",
+        "models": "BERT, RoBERTa, DistilBERT",
+        "difficulty": "Intermédiaire"
+      },
+      "namedEntityRecognition": {
+        "name": "Reconnaissance d'Entités (NER)",
+        "description": "Identifier des noms, lieux, organisations",
+        "useCases": "Extraction d'informations, analyse de documents",
+        "models": "SpaCy, Flair, BERT-NER",
+        "difficulty": "Intermédiaire"
+      },
+      "sentimentAnalysis": {
+        "name": "Analyse de Sentiments",
+        "description": "Détecter le sentiment (positif/négatif/neutre)",
+        "useCases": "Analyse d'opinions, réseaux sociaux",
+        "models": "VADER, TextBlob, RoBERTa-Sentiment",
+        "difficulty": "Intermédiaire"
+      },
+      "intentClassification": {
+        "name": "Classification d'Intentions",
+        "description": "Identifier l'intention de l'utilisateur",
+        "useCases": "Chatbots, assistants virtuels",
+        "models": "DIET, Rasa NLU, BERT-Intent",
+        "difficulty": "Intermédiaire"
+      },
+      "relationExtraction": {
+        "name": "Extraction de Relations",
+        "description": "Identifier les relations entre entités",
+        "useCases": "Graphes de connaissances, analyse de textes",
+        "models": "SpanBERT, LUKE, Relation Extraction BERT",
+        "difficulty": "Avancé"
+      },
+      "posTagging": {
+        "name": "Étiquetage Grammatical (POS)",
+        "description": "Identifier les catégories grammaticales",
+        "useCases": "Analyse linguistique, prétraitement NLP",
+        "models": "SpaCy, NLTK, Flair",
+        "difficulty": "Débutant"
+      },
+      "dependencyParsing": {
+        "name": "Analyse de Dépendances",
+        "description": "Analyser la structure syntaxique",
+        "useCases": "Compréhension du langage, traduction",
+        "models": "SpaCy, Stanford Parser",
+        "difficulty": "Avancé"
+      },
+      "questionAnswering": {
+        "name": "Réponse aux Questions",
+        "description": "Répondre à des questions sur du texte",
+        "useCases": "Assistants QA, recherche d'informations",
+        "models": "BERT-QA, RoBERTa-QA, T5",
+        "difficulty": "Avancé"
+      },
+      "keyphraseExtraction": {
+        "name": "Extraction de Phrases Clés",
+        "description": "Identifier les phrases importantes",
+        "useCases": "Résumés, indexation de documents",
+        "models": "YAKE, KeyBERT, RAKE",
+        "difficulty": "Intermédiaire"
+      },
+      "entityLinking": {
+        "name": "Liaison d'Entités",
+        "description": "Lier les entités à des bases de connaissances",
+        "useCases": "Enrichissement de données, graphes de connaissances",
+        "models": "BLINK, ELQ, GENRE",
+        "difficulty": "Avancé"
+      },
+      "toxicityClassification": {
+        "name": "Classification de Toxicité",
+        "description": "Détecter du contenu toxique ou offensant",
+        "useCases": "Modération de contenu, filtres",
+        "models": "Perspective API, Detoxify, RoBERTa-Toxicity",
+        "difficulty": "Intermédiaire"
+      },
+      "languageIdentification": {
+        "name": "Identification de Langue",
+        "description": "Détecter la langue du texte",
+        "useCases": "Traitement multilingue, traduction",
+        "models": "langdetect, fastText, XLM-RoBERTa",
+        "difficulty": "Débutant"
+      },
+      "useCasesLabel": "Cas d'utilisation",
+      "modelsLabel": "Modèles recommandés",
+      "difficultyLabel": "Difficulté"
+    },
+    "categories": {
+      "images": "",
+      "classification": "",
+      "timeSeries": ""
+    },
+    "modality": "Modalité",
+    "initialClasses": "Classes Initiales (optionnel)",
+    "classesPlaceholder": "classe1, classe2, classe3",
+    "classesHelp": "Séparées par des virgules. Vous pouvez en ajouter plus tard.",
+    "imageDimensions": "Dimensions des Images",
+    "dimensionsAuto": "Automatique - Accepte toute taille",
+    "dimensionsFixed": "Fixe - Toutes les images seront redimensionnées",
+    "targetSize": "Taille cible",
+    "resizeStrategy": "Stratégie",
+    "enterName": "Entrez un nom pour le projet",
+    "created": "Projet \"{name}\" créé",
+    "updated": "Mis à jour",
+    "loaded": "Projet \"{name}\" chargé",
+    "deleted": "Projet supprimé",
+    "duplicated": "Projet \"{name}\" dupliqué",
+    "renamed": "Projet renommé",
+    "imported": "Projet \"{name}\" importé",
+    "exported": "Projet exporté",
+    "configExported": "Configuration exportée",
+    "selectFirst": "Sélectionnez d'abord un projet",
+    "noProjects": "Aucun projet disponible",
+    "manageProjects": "Gérer les Projets",
+    "renameProject": "Renommer le Projet",
+    "newName": "Nouveau nom",
+    "images": "images",
+    "annotations": "annotations",
+    "exportBackup": "Télécharger la sauvegarde .tix avant de supprimer",
+    "deleteWarning": {
+      "title": "AVERTISSEMENT : SUPPRESSION PERMANENTE",
+      "confirmTitle": "Confirmer la Suppression ?",
+      "projectName": "Projet :",
+      "message": "Vous êtes sur le point de supprimer ce projet de façon PERMANENTE.",
+      "permanent": "Cette action NE PEUT PAS être annulée",
+      "allData": "TOUTES les images et annotations seront supprimées",
+      "noUndo": "Il n'y a aucun moyen de récupérer les données supprimées",
+      "recommendation": "Recommandation : Exportez le projet au format .tix comme sauvegarde AVANT de le supprimer"
+    }
+  },
+  "notifications": {
+    "imageSaved": "Image enregistrée",
+    "imagesLoaded": "{count} images chargées",
+    "datasetDownloaded": "Dataset téléchargé",
+    "classesDownloaded": "classes.txt téléchargé",
+    "noClasses": "Aucune classe à télécharger",
+    "noImages": "Aucune image dans le projet",
+    "noAnnotations": "Aucune annotation à télécharger",
+    "appStarted": "Application démarrée",
+    "classDeleted": "Classe et toutes ses annotations supprimées",
+    "error": {
+      "createProject": "Erreur lors de la création du projet",
+      "loadProject": "Erreur lors du chargement du projet",
+      "updateProject": "Erreur lors de la mise à jour du projet",
+      "deleteProject": "Erreur lors de la suppression du projet",
+      "duplicateProject": "Erreur lors de la duplication du projet",
+      "renameProject": "Erreur lors du renommage du projet",
+      "loadProjects": "Erreur lors du chargement des projets",
+      "exportProject": "Erreur lors de l'exportation du projet",
+      "exportConfig": "Erreur lors de l'exportation de la configuration",
+      "importConfig": "Erreur lors de l'importation de la configuration",
+      "importProject": "Erreur lors de l'importation du projet",
+      "loadImage": "Erreur lors du chargement de l'image",
+      "saveImage": "Erreur lors de l'enregistrement de l'image",
+      "deleteImage": "Erreur lors de la suppression de l'image",
+      "loadImages": "Erreur lors du chargement des images",
+      "downloadDataset": "Erreur lors du téléchargement du dataset",
+      "initApp": "Erreur lors du démarrage de l'application",
+      "export": "Erreur lors de l'exportation",
+      "noImages": "Erreur : aucune image trouvée"
+    },
+    "imageDeleted": "notifications.imageDeleted"
+  },
+  "tour": {
+    "welcome": "Bienvenue dans <strong>Annotix</strong> ! <br><br>Un outil professionnel pour annoter des images et des séries temporelles pour l'entraînement de modèles de machine learning. Prend en charge plusieurs types d'annotations : <strong>Bounding Boxes</strong>, <strong>OBB</strong>, <strong>Segmentation</strong>, <strong>Keypoints</strong>, <strong>Polygones</strong>, <strong>Landmarks</strong>, <strong>Séries Temporelles</strong> et <strong>Classification</strong>.",
+    "installation": "<strong>Installation locale</strong><br><br>Annotix s'installe complètement sur votre <strong>PC comme une application web progressive (PWA)</strong>. Ne nécessite pas de connexion internet après l'installation initiale. Fonctionne hors ligne et s'exécute directement depuis votre navigateur.",
+    "dataStorage": "<strong>Stockage des données</strong><br><br><strong>IMPORTANT :</strong> Toutes vos données sont enregistrées dans <strong>IndexedDB du navigateur</strong>, pas sur un serveur. Cela signifie :<br>• Total confidentialité : vos données ne quittent jamais votre PC<br>• Fonctionne sans internet<br>• Risque : si vous supprimez les données du navigateur, tout sera perdu",
+    "projectBackup": "<strong>Sauvegarde de projets</strong><br><br>Pour éviter la perte de données :<br>• Exportez vos projets au format <strong>.tix</strong> (contient tout : images, annotations, classes)<br>• Vous pouvez recharger le fichier .tix à tout moment<br>• Partagez des projets .tix avec d'autres utilisateurs<br>• Exportez également des fichiers <strong>.tixconfig</strong> pour partager uniquement la configuration des classes",
+    "createProjectButton": "Cliquez sur <strong>Nouveau Projet</strong> pour commencer. La fenêtre de création s'ouvrira pour que vous choisissiez le type de projet.",
+    "projectTypeSelection": "<strong>Types de projet</strong><br><br>Dans la fenêtre, vous pouvez choisir parmi <strong>8 types différents</strong> :<br>• <strong>Bounding Box</strong> : Boîtes rectangulaires (détection d'objets)<br>• <strong>OBB</strong> : Boîtes orientées avec rotation<br>• <strong>Mask</strong> : Segmentation par pixels<br>• <strong>Keypoints</strong> : Points clés (estimation de pose)<br>• <strong>Polygon</strong> : Polygones libres<br>• <strong>Landmarks</strong> : Points faciaux<br>• <strong>Time Series</strong> : Séries temporelles<br>• <strong>Classification</strong> : Classification d'images",
+    "projectName": "<strong>Nom du projet</strong><br><br>Dans la fenêtre, entrez un <strong>nom descriptif</strong> pour votre projet. Par exemple : 'Détection de Voitures 2024' ou 'Segmentation de Cellules'.<br><br>Le type de projet déterminera quels outils seront disponibles sur le canevas.",
+    "classesPanel": "Voici le <strong>panneau de gestion des classes</strong>. Ici vous définissez les catégories que vous allez annoter.",
+    "classesInWorkflow": "<strong>Gestion des classes</strong><br><br>Les classes peuvent être ajoutées de <strong>deux façons</strong> :<br><br>1. <strong>Dans la fenêtre de création de projet :</strong> Définissez vos classes principales dès le départ<br><br>2. <strong>Dans le panneau de droite (actuel) :</strong> Ajoutez, modifiez ou supprimez des classes à tout moment pendant le travail<br><br>Chaque classe a un <strong>nom unique</strong>, une <strong>couleur distinctive</strong> et un <strong>ID séquentiel</strong>. Utilisez les touches <strong>1-9</strong> pour sélectionner rapidement les classes.",
+    "gallery": "La <strong>galerie d'images</strong> affiche toutes les images de votre projet. Vous pouvez filtrer par toutes, annotées ou non annotées. Les miniatures montrent l'état de chaque image.",
+    "loadImages": "Appuyez sur <strong>Charger des Images</strong> pour importer des images dans votre projet. Prend en charge plusieurs formats : JPG, PNG, WEBP. Vous pouvez également utiliser le <strong>Data Augmentation</strong> pour générer automatiquement des variations de vos images.",
+    "workspace": "L'<strong>espace de travail principal</strong> où vous visualisez et annotez vos images ou séries temporelles. Utilisez la souris pour dessiner, la molette pour zoomer, et maintenez le bouton central enfoncé ou utilisez l'outil Pan pour déplacer la vue.",
+    "tools": "Les <strong>outils flottants</strong> changent selon le type de projet. Ils incluent : Box (B), OBB (O), Mask (M), Select (V) et Pan (H). Chaque outil a des contrôles spécifiques comme la taille du pinceau pour les masques ou les contrôles de zoom.",
+    "stats": "Le panneau de <strong>statistiques</strong> montre la progression de votre projet : total d'images, images annotées, total d'étiquettes et nombre de classes. La barre de progression vous aide à visualiser l'avancement du travail.",
+    "exportButton": "Le bouton <strong>Exporter</strong> vous permet de télécharger votre dataset. Voyons les options disponibles...",
+    "exportFormats": "<strong>Formats d'exportation</strong><br><br>Dans la fenêtre d'exportation, vous trouverez plusieurs options :<br><br>• <strong>YOLO Detection</strong> : .txt avec bounding boxes normalisées<br>• <strong>YOLO Segmentation</strong> : .txt avec polygones de masques<br>• <strong>YOLO OBB</strong> : .txt avec boîtes orientées<br>• <strong>COCO JSON</strong> : Format standard COCO<br>• <strong>U-Net Masks</strong> : Images PNG pour segmentation<br>• <strong>Pascal VOC XML</strong> : Format Pascal VOC<br>• <strong>CSV</strong> : Tableau de données",
+    "trainingCode": "<strong>Code d'entraînement</strong><br><br>Dans la fenêtre d'exportation, vous trouverez l'option <strong>'Générer le code d'entraînement Python'</strong>.<br><br>Cela crée un <strong>script d'exemple complet</strong> pour entraîner votre modèle avec <strong>YOLOv8</strong> en utilisant Ultralytics :<br>• Configuration automatique des chemins<br>• Script d'entraînement avec hyperparamètres optimaux<br>• Prêt à exécuter : installez les dépendances et entraînez",
+    "shortcuts": "Appuyez sur le bouton du <strong>clavier</strong> ou utilisez F1 pour voir tous les <strong>raccourcis clavier</strong> disponibles. Ils incluent Ctrl+S pour enregistrer, Ctrl+Z pour annuler, les touches numériques pour sélectionner les classes, et plus encore.",
+    "finish": "Prêt à commencer !<br><br>N'oubliez pas :<br>• Enregistrez fréquemment avec <strong>Ctrl+S</strong><br>• Exportez des sauvegardes au format <strong>.tix</strong><br>• Vos données sont <strong>uniquement dans votre navigateur</strong><br><br>Si vous avez besoin d'aide, appuyez sur le bouton <strong>?</strong> pour revoir ce tour.",
+    "next": "Suivant →",
+    "prev": "← Précédent",
+    "done": "Compris !",
+    "skip": "Passer le tour"
+  },
+  "imageInfo": {
+    "noName": "Sans nom",
+    "dimensions": "Dimensions"
+  },
+  "preprocessing": {
+    "title": "Prétraiter les Images",
+    "detected": "{count} images non carrées détectées",
+    "description": "Les images seront ajustées à une taille carrée pour optimiser l'entraînement. Choisissez la stratégie de redimensionnement :",
+    "targetSize": "Taille cible (pixels)",
+    "recommended": "Recommandé : {size}px",
+    "strategy": "Stratégie de redimensionnement",
+    "strategies": {
+      "resize": {
+        "name": "Redimensionner + Padding",
+        "description": "Réduit l'image et ajoute du padding (optimise l'espace et la mémoire)"
+      },
+      "padding": {
+        "name": "Padding uniquement",
+        "description": "Conserve la taille originale et ajoute du padding (meilleure qualité)"
+      }
+    },
+    "options": {
+      "apply": "Appliquer le prétraitement",
+      "skip": "Télécharger sans prétraiter"
+    },
+    "progress": "Traitement de l'image {current} sur {total}...",
+    "complete": "{count} images prétraitées correctement",
+    "preview": "Aperçu",
+    "original": "Original",
+    "processed": "Traitée",
+    "aspectRatio": "Rapport d'aspect original préservé",
+    "paddingInfo": "Un padding noir symétrique sera ajouté"
+  },
+  "classification": {
+    "selectOne": "Sélectionnez l'étiquette correcte",
+    "selectMultiple": "Sélectionnez les étiquettes applicables",
+    "singleHint": "Vous ne pouvez sélectionner qu'une seule étiquette",
+    "multiHint": "Vous pouvez sélectionner plusieurs étiquettes",
+    "noLabels": "Aucune étiquette assignée",
+    "labeled": "Étiquetée",
+    "selectLabel": "Sélectionnez une étiquette",
+    "selectLabels": "Sélectionnez des étiquettes",
+    "selected": "sélectionnées",
+    "multiLabel": "Classification Multi-Étiquettes",
+    "singleLabel": "Classification Simple",
+    "noImageSelected": "Aucune image sélectionnée. Veuillez sélectionner une image depuis la galerie.",
+    "multiLabelInstructions": "Sélectionnez une ou plusieurs étiquettes applicables à cette image. Appuyez sur Ctrl+S pour enregistrer.",
+    "singleLabelInstructions": "Sélectionnez l'étiquette qui décrit le mieux cette image. Appuyez sur Ctrl+S pour enregistrer."
+  },
+  "augmentation": {
+    "title": "Data Augmentation",
+    "batchButton": "Data Augmentation",
+    "augmentImage": "Appliquer l'augmentation",
+    "variationsCount": "Nombre de variations",
+    "variationsCountHelp": "Combien d'images augmentées créer ? (1-20)",
+    "generationMode": "Mode de génération",
+    "modeManual": "Manuel (configuration fixe)",
+    "modeRandom": "Aléatoire (plages configurables)",
+    "modeManualHelp": "Appliquer la même configuration N fois",
+    "modeRandomHelp": "Générer N variations avec des valeurs aléatoires dans les plages spécifiées",
+    "geometricTransforms": "Transformations Géométriques",
+    "flipHorizontal": "Retournement Horizontal",
+    "flipVertical": "Retournement Vertical",
+    "rotation": "Rotation",
+    "noRotation": "Pas de rotation",
+    "customRotation": "Rotation personnalisée",
+    "colorAdjustments": "Ajustements de Couleur",
+    "brightness": "Luminosité",
+    "contrast": "Contraste",
+    "saturation": "Saturation",
+    "randomOptions": "Options Aléatoires",
+    "randomFlip": "Flip aléatoire (horizontal/vertical)",
+    "randomRotation": "Rotation aléatoire",
+    "randomColor": "Ajustements de couleur aléatoires",
+    "rotationRange": "Plage de rotation (degrés)",
+    "brightnessRange": "Plage de luminosité",
+    "contrastRange": "Plage de contraste",
+    "saturationRange": "Plage de saturation",
+    "min": "Min",
+    "max": "Max",
+    "keepAnnotations": "Conserver les annotations transformées",
+    "keepAnnotationsHelp": "Les boîtes seront automatiquement transformées avec l'image",
+    "maskProjectWarning": "Projet de masques",
+    "maskProjectWarningText": "Les annotations NE seront PAS conservées. Vous devrez peindre les masques manuellement sur chaque image augmentée.",
+    "apply": "Appliquer",
+    "processing": "Traitement de l'augmentation...",
+    "generatingVariations": "Génération de {count} variations...",
+    "variationsSuccess": "{count} variations créées avec succès",
+    "success": "Image augmentée créée avec succès",
+    "error": "Erreur lors de l'application de l'augmentation",
+    "batchProcessing": "Application de l'augmentation à {count} images...",
+    "batchRandomProcessing": "Génération de {variations} variations pour {images} images ({total} au total)...",
+    "batchSuccess": "{count} images augmentées créées avec succès",
+    "batchRandomSuccess": "{count} variations aléatoires créées avec succès",
+    "batchError": "Erreur lors de l'application de l'augmentation par lots"
+  },
+  "pwa": {
+    "installButton": "Installer l'App",
+    "modal": {
+      "title": "Installer Annotix comme application",
+      "benefits": "Avantages de l'installation :",
+      "benefit1": "Accès direct depuis le bureau",
+      "benefit2": "Fonctionne hors ligne",
+      "benefit3": "Plus rapide et fluide",
+      "benefit4": "Sans barre de navigateur",
+      "benefit5": "Vos données toujours privées",
+      "benefit6": "Mises à jour automatiques",
+      "platformCompatibility": "Compatibilité par plateforme :",
+      "androidInfo": "<strong>Android :</strong> Fonctionne parfaitement. Installation native complète, se comporte comme une app du Play Store.",
+      "iosInfo": "<strong>iOS/iPadOS :</strong> Fonctionne bien, mais Safari peut nettoyer le cache périodiquement. <strong>Important :</strong> Enregistrez vos progrès fréquemment en exportant vos projets.",
+      "linuxInfo": "<strong>Linux :</strong> Fonctionne parfaitement. Support complet dans Chrome, Firefox et Edge.",
+      "windowsInfo": "<strong>Windows :</strong> Devrait fonctionner sans problème dans Chrome et Edge, bien que nous n'ayons pas pu le tester de manière approfondie.",
+      "generalTip": "<strong>Recommandation :</strong> Exportez vos projets régulièrement comme sauvegarde, quel que soit votre système d'exploitation.",
+      "cancelButton": "Pas maintenant",
+      "installButtonModal": "Installer l'App"
+    },
+    "notifications": {
+      "installed": "Annotix installé avec succès !",
+      "installFailed": "Erreur lors de l'installation",
+      "updateAvailable": "Mise à jour disponible. Rechargez pour mettre à jour.",
+      "offline": "Mode hors ligne activé. L'app fonctionne sans connexion."
+    }
+  },
+  "storage": {
+    "used": "Utilisation disque"
+  },
+  "inference": {
+    "title": "Inférence de Modèle",
+    "uploadModel": "Télécharger le Modèle",
+    "uploadPrompt": "Cliquez pour télécharger un modèle ONNX",
+    "uploadHint": "Prend en charge YOLO Détection, Segmentation et Classification",
+    "modelName": "Modèle",
+    "modelType": "Type",
+    "inputSize": "Taille d'Entrée",
+    "settings": "Configuration",
+    "confidenceThreshold": "Seuil de Confiance",
+    "autoInference": "Auto-inférence au chargement de l'image",
+    "runInference": "Exécuter l'Inférence",
+    "clearPredictions": "Tout Effacer",
+    "convertAll": "Tout Convertir",
+    "process": "Traitement...",
+    "predictions": "Prédictions",
+    "highConf": "Haute Conf",
+    "time": "Temps",
+    "distribution": "Distribution des Classes",
+    "batchProgress": "Traitement des Images...",
+    "showPredictions": "Afficher les Prédictions",
+    "hidePredictions": "Masquer les Prédictions",
+    "togglePredictions": "Basculer la Visibilité des Prédictions",
+    "convertSelected": "Convertir la Prédiction Sélectionnée",
+    "convertToPrediction": "Convertir en Annotation",
+    "alreadyLoading": "Le modèle est déjà en cours de chargement",
+    "loadingModel": "Chargement du modèle...",
+    "modelLoaded": "Modèle {name} chargé avec succès",
+    "loadModelError": "Erreur lors du chargement du modèle : {error}",
+    "modelUnloaded": "Modèle déchargé",
+    "noModelLoaded": "Aucun modèle chargé. Veuillez d'abord télécharger un modèle.",
+    "inferenceCompleted": "{count} prédictions en {time}ms",
+    "inferenceError": "Erreur d'inférence : {error}",
+    "invalidModelName": "Le nom du modèle doit suivre le format : {expected}",
+    "viewModelTitle": "Voir l'Architecture du Modèle",
+    "viewModelInstructions": "Téléchargez votre modèle et ouvrez-le dans Netron pour visualiser l'architecture.",
+    "downloadModel": "Télécharger le Modèle",
+    "netronInstructions": "Puis allez sur",
+    "netronInstructions2": "et ouvrez le fichier téléchargé",
+    "viewModel": "Voir l'Architecture du Modèle",
+    "enforceNaming": "Appliquer la convention de nommage",
+    "helpText": "Téléchargez un modèle avec le format : <strong>nomprojet_v1.onnx</strong> pour assurer la compatibilité. Utilisez le bouton cerveau <i class='fas fa-brain'></i> sur chaque image pour exécuter l'inférence. Vous pouvez désactiver la validation des noms si vous voulez tester d'autres modèles.",
+    "modelArchitecture": "Architecture du Modèle",
+    "modelInformation": "Informations du Modèle",
+    "dataFlow": "Flux de Données",
+    "inputTensor": "Tenseur d'Entrée",
+    "processing": "Traitement",
+    "outputTensor": "Tenseur de Sortie",
+    "inputs": "Entrées",
+    "outputs": "Sorties",
+    "format": "Format",
+    "advancedVisualization": "Pour une visualisation avancée couche par couche, utilisez Netron :",
+    "loadingArchitecture": "Chargement du visualiseur d'architecture...",
+    "netronInstructionsTitle": "Voir l'Architecture Interactive",
+    "netronInstructionsText": "Glissez et déposez votre fichier de modèle dans la fenêtre Netron ci-dessous pour voir l'architecture complète couche par couche.",
+    "downloadForNetron": "Télécharger le Fichier du Modèle",
+    "netronBrowserNote": "Ou glissez votre fichier de modèle directement dans Netron ci-dessous",
+    "overview": "Vue Générale",
+    "interactive": "Interactif (Netron)",
+    "totalLayers": "Couches",
+    "operationStats": "Statistiques des Opérations",
+    "layerList": "Liste des Couches",
+    "detectedOps": "Opérations Détectées",
+    "parsingFailed": "Impossible d'analyser le modèle",
+    "useNetron": "Utilisez l'onglet Interactif pour voir l'architecture complète",
+    "showingLayers": "Affichage de {shown} sur {total} couches"
+  },
+  "connector": {
+    "connected": "Connector",
+    "disconnected": "Sans Connector",
+    "connectedMessage": "Connector en ligne - Port 5000",
+    "checking": "Vérification de la connexion avec le Connector...",
+    "connectedReady": "Connecté - Prêt pour l'entraînement",
+    "notConnected": "Impossible de se connecter au Moteur Compagnon",
+    "notConnectedHint": "Assurez-vous qu'il est en cours d'exécution",
+    "offlineMessage": "Impossible de se connecter au Moteur Compagnon.\n\nAvez-vous téléchargé et lancé l'application de bureau ?\nAssurez-vous que 'motor_server.exe' est en cours d'exécution sur votre PC.",
+    "downloadTitle": "Moteur Compagnon Non Détecté",
+    "downloadMessage": "Pour entraîner des modèles localement, vous devez télécharger et installer le Moteur Compagnon d'Annotix.",
+    "downloadHint": "Le Moteur Compagnon s'exécutera en arrière-plan sur votre PC et permettra d'entraîner des modèles avec vos données annotées.",
+    "download": "Télécharger le Moteur Compagnon",
+    "downloadStarted": "Téléchargement lancé. Exécutez l'installateur une fois terminé.",
+    "startTraining": "Démarrer l'Entraînement",
+    "trainingStarted": "Entraînement démarré avec succès"
+  },
+  "timeseries": {
+    "noProjectSelected": "Aucun projet sélectionné. Veuillez sélectionner un projet de séries temporelles.",
+    "importCSV": "Importer un Fichier CSV",
+    "importSuccess": "CSV importé avec succès !",
+    "selectCSV": "Sélectionner un Fichier CSV",
+    "hasHeader": "La première ligne contient des en-têtes",
+    "timestampColumn": "Colonne de Timestamp (index base 0)",
+    "timestampColumnHelp": "Index de colonne pour les timestamps (par défaut : 0 = première colonne)",
+    "import": "Importer",
+    "csvFormatInfo": "Format CSV : La première colonne doit être les timestamps, les colonnes restantes sont les valeurs. Exemple : temps,valeur1,valeur2",
+    "noSeriesSelected": "Aucune série temporelle sélectionnée. Veuillez sélectionner une série depuis la galerie.",
+    "dataPoints": "points de données",
+    "series": "séries",
+    "annotations": "Annotations",
+    "annotationsCount": "annotations",
+    "addAnnotation": "Ajouter une Annotation",
+    "totalSeries": "Séries Totales",
+    "annotated": "Annotées",
+    "pending": "En attente",
+    "seriesList": "Liste des Séries Temporelles",
+    "noSeriesYet": "Pas encore de séries temporelles",
+    "importCSVToStart": "Importez un fichier CSV pour commencer",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette série temporelle ?",
+    "tools": {
+      "select": "Sélectionner",
+      "point": "Point",
+      "range": "Plage",
+      "event": "Événement",
+      "anomaly": "Anomalie",
+      "classification": "Classification"
+    },
+    "clearAnnotations": "Effacer Toutes les Annotations",
+    "noAnnotations": "Pas encore d'annotations. Sélectionnez un outil et cliquez sur le graphique pour ajouter des annotations.",
+    "instructions": {
+      "point": "Cliquez sur le graphique pour marquer un point d'annotation",
+      "range": "Cliquez pour définir le point de départ, puis cliquez à nouveau pour définir le point final",
+      "event": "Cliquez sur le graphique pour marquer un événement",
+      "anomaly": "Cliquez sur le graphique pour marquer une anomalie"
+    }
+  },
+  "training": {
+    "title": "Entraîner le Modèle",
+    "description": "Entraînez un modèle YOLO avec votre jeu de données annoté",
+    "start": "Démarrer l'entraînement",
+    "starting": "Démarrage...",
+    "cancel": "Annuler l'entraînement",
+    "env": {
+      "checking": "Vérification de l'environnement Python...",
+      "ready": "Environnement Python prêt",
+      "notInstalled": "Environnement Python non configuré",
+      "description": "Annotix nécessite Python avec ultralytics pour entraîner des modèles. Cliquez ci-dessous pour configurer automatiquement.",
+      "setup": "Configurer l'environnement",
+      "setupHint": "Cela peut prendre quelques minutes la première fois"
+    },
+    "gpu": {
+      "detecting": "Détection..."
+    },
+    "presets": {
+      "title": "Preset d'entraînement",
+      "quick": "Rapide",
+      "quickDesc": "50 époques, augmentation légère. Bon pour les tests.",
+      "balanced": "Équilibré",
+      "balancedDesc": "100 époques, augmentation moyenne. Recommandé.",
+      "full": "Complet",
+      "fullDesc": "300 époques, augmentation intensive. Meilleure précision."
+    },
+    "model": {
+      "version": "Version YOLO",
+      "size": "Taille du Modèle",
+      "recommended": "Recommandé",
+      "sizeDescNano": "Le plus rapide, précision moindre. Bon pour les appareils edge.",
+      "sizeDescSmall": "Rapide avec une bonne précision.",
+      "sizeDescMedium": "Vitesse et précision équilibrées.",
+      "sizeDescLarge": "Haute précision, entraînement plus lent.",
+      "sizeDescXLarge": "Précision maximale, entraînement le plus lent."
+    },
+    "config": {
+      "title": "Configuration d'entraînement",
+      "advanced": "Paramètres avancés",
+      "epochs": "Époques",
+      "batchSize": "Taille du lot",
+      "batchSizeHint": "-1 pour taille automatique",
+      "imageSize": "Taille d'image",
+      "optimizer": "Optimiseur",
+      "lr0": "LR Initial",
+      "lrf": "LR Final",
+      "patience": "Patience",
+      "valSplit": "Split Validation",
+      "workers": "Workers",
+      "device": "Appareil",
+      "augmentation": "Augmentation"
+    },
+    "augmentation": {
+      "mosaic": "Mosaïque",
+      "mixup": "MixUp",
+      "hsv_h": "HSV Teinte",
+      "hsv_s": "HSV Saturation",
+      "hsv_v": "HSV Valeur",
+      "flipud": "Retourner verticalement",
+      "fliplr": "Retourner horizontalement",
+      "degrees": "Rotation",
+      "scale": "Échelle",
+      "shear": "Cisaillement",
+      "perspective": "Perspective",
+      "copy_paste": "Copier-Coller",
+      "erasing": "Effacement"
+    },
+    "monitor": {
+      "title": "Entraînement en cours",
+      "epochProgress": "Époque {{epoch}} / {{total}}",
+      "epoch": "Époque",
+      "loss": "Perte",
+      "metrics": "Métriques",
+      "precision": "Précision",
+      "recall": "Rappel",
+      "logs": "Logs d'entraînement",
+      "waitingMetrics": "En attente des métriques...",
+      "waitingLogs": "En attente des logs..."
+    },
+    "status": {
+      "pending": "En attente",
+      "training": "Entraînement",
+      "completed": "Terminé",
+      "failed": "Échoué",
+      "cancelled": "Annulé"
+    },
+    "result": {
+      "completed": "Entraînement terminé",
+      "description": "Votre modèle a été entraîné avec succès.",
+      "finalMetrics": "Métriques finales",
+      "modelPaths": "Fichiers du modèle",
+      "exported": "Modèles exportés",
+      "exportModel": "Exporter le modèle",
+      "newTraining": "Nouvel entraînement"
+    },
+    "jobs": {
+      "title": "Historique d'entraînement",
+      "empty": "Aucun entraînement pour le moment"
+    }
+  },
+  "setup": {
+    "welcome": "Bienvenue sur Annotix",
+    "description": "Choisissez un dossier où vos projets seront stockés. Chaque projet sera un sous-dossier avec ses images, annotations et configuration.",
+    "selectFolder": "Sélectionner le Dossier de Projets",
+    "selectedFolder": "Dossier sélectionné",
+    "confirm": "Commencer",
+    "noFolder": "Aucun dossier sélectionné",
+    "changeFolder": "Changer de Dossier"
+  },
+  "video": {
+    "upload": "Importer vidéo",
+    "fpsTitle": "Configurer l'extraction",
+    "fpsLabel": "Images par seconde à extraire",
+    "fpsHelp": "Valeurs basses = moins d'images, plus rapide. Recommandé : 2-10 FPS",
+    "resolution": "Résolution",
+    "duration": "Durée",
+    "estimatedFrames": "Environ {{count}} images seront générées",
+    "extract": "Extraire les frames",
+    "uploading": "Import de la vidéo...",
+    "extracting": "Extraction des frames...",
+    "extractingFrame": "Extraction du frame {{current}} / {{total}}",
+    "processing": "Traitement de la vidéo",
+    "done": "Terminé"
   }
 }

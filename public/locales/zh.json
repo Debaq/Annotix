@@ -2,54 +2,365 @@
   "language": "中文",
   "code": "zh",
   "app": {
-    "title": "YOLO标注工具",
+    "title": "Annotix",
     "subtitle": "专业标注工具",
     "branding": {
       "fablab": "TecMedHub",
-      "university": "智利南方大学 - 蒙特港校区"
+      "university": "Universidad Austral de Chile - 蒙特港校区"
     }
+  },
+  "common": {
+    "loading": "加载中...",
+    "creating": "创建中...",
+    "importing": "导入中...",
+    "saving": "保存中...",
+    "cancel": "取消",
+    "create": "创建",
+    "confirm": "确认",
+    "close": "关闭",
+    "duplicate": "复制",
+    "rename": "重命名",
+    "exportBackup": "导出备份",
+    "deleteConfirm": "是的，删除",
+    "clearConfirm": "清除此图像的所有标注？",
+    "clear": "清除",
+    "delete": "删除",
+    "save": "保存",
+    "undo": "撤销",
+    "actions": "操作",
+    "exportDataset": "导出数据集",
+    "backToProjects": "返回项目",
+    "classes": "类别",
+    "selectImageToStart": "选择一张图像以开始标注",
+    "missingTranslations": "缺失的翻译",
+    "hide": "隐藏",
+    "totalKeys": "总键数：",
+    "totalUsages": "总使用次数：",
+    "oneToNine": "1-9",
+    "ctrlS": "Ctrl+S",
+    "arrowKeys": "← →",
+    "understand": "了解"
   },
   "header": {
     "selectProject": "选择项目...",
-    "newProject": "新建",
-    "exportProject": "导出完整项目",
-    "exportConfig": "导出配置",
-    "importConfig": "导入配置",
+    "newProject": "新建项目",
+    "openProject": "打开项目",
+    "manageProjects": "管理项目",
+    "export": "导出",
     "help": "帮助"
+  },
+  "help": {
+    "shortcuts": "键盘快捷键"
+  },
+  "shortcuts": {
+    "title": "键盘快捷键",
+    "tip": "快捷键在画布上工作时同样有效。随时按 ? 打开此窗口。",
+    "categories": {
+      "general": "通用",
+      "navigation": "导航",
+      "tools": "工具",
+      "editing": "编辑"
+    },
+    "items": {
+      "save": {
+        "name": "保存",
+        "key": "Ctrl+S"
+      },
+      "undo": {
+        "name": "撤销",
+        "key": "Ctrl+Z"
+      },
+      "redo": {
+        "name": "重做",
+        "key": "Ctrl+Y"
+      },
+      "delete": {
+        "name": "删除",
+        "description": "删除选中的元素",
+        "key": "Del / Backspace"
+      },
+      "deselect": {
+        "name": "取消选择",
+        "key": "Esc"
+      },
+      "prevImage": {
+        "name": "上一张图像",
+        "key": "←"
+      },
+      "nextImage": {
+        "name": "下一张图像",
+        "key": "→"
+      },
+      "zoomIn": {
+        "name": "放大",
+        "key": "Ctrl++"
+      },
+      "zoomOut": {
+        "name": "缩小",
+        "key": "Ctrl+-"
+      },
+      "zoomFit": {
+        "name": "适应",
+        "key": "Ctrl+0"
+      },
+      "toolBox": {
+        "name": "Box 工具",
+        "description": "选择边界框工具",
+        "key": "B"
+      },
+      "toolOBB": {
+        "name": "OBB 工具",
+        "description": "选择OBB工具",
+        "key": "O"
+      },
+      "toolMask": {
+        "name": "Mask 工具",
+        "description": "选择遮罩工具",
+        "key": "M"
+      },
+      "toolPolygon": {
+        "name": "多边形工具",
+        "description": "选择多边形工具",
+        "key": "P"
+      },
+      "toolKeypoints": {
+        "name": "关键点工具",
+        "description": "选择关键点工具",
+        "key": "K"
+      },
+      "toolSelect": {
+        "name": "选择工具",
+        "description": "选择选取工具",
+        "key": "V"
+      },
+      "toolPan": {
+        "name": "Pan 工具",
+        "description": "选择平移工具",
+        "key": "H"
+      },
+      "rotateLeft": {
+        "name": "向左旋转",
+        "key": "A"
+      },
+      "rotateRight": {
+        "name": "向右旋转",
+        "key": "D"
+      },
+      "class1": {
+        "name": "选择类别 1",
+        "key": "1"
+      },
+      "class2": {
+        "name": "选择类别 2",
+        "key": "2"
+      },
+      "class3": {
+        "name": "选择类别 3",
+        "key": "3"
+      },
+      "class4": {
+        "name": "选择类别 4",
+        "key": "4"
+      },
+      "class5": {
+        "name": "选择类别 5",
+        "key": "5"
+      },
+      "class6": {
+        "name": "选择类别 6",
+        "key": "6"
+      },
+      "class7": {
+        "name": "选择类别 7",
+        "key": "7"
+      },
+      "class8": {
+        "name": "选择类别 8",
+        "key": "8"
+      },
+      "class9": {
+        "name": "选择类别 9",
+        "key": "9"
+      }
+    }
+  },
+  "projects": {
+    "title": "项目",
+    "subtitle": "管理您的标注项目",
+    "create": "创建项目",
+    "createDescription": "开始一个新的标注项目",
+    "description": "修改名称或管理项目类别。",
+    "name": "项目名称",
+    "namePlaceholder": "我的 Annotix 项目",
+    "type": {
+      "label": "项目类型",
+      "bbox": "Bounding Box",
+      "bboxDescription": "使用边界框进行目标检测",
+      "mask": "遮罩",
+      "maskDescription": "使用遮罩进行实例分割"
+    },
+    "typeSelectHelper": "根据训练目标选择标注类型",
+    "classes": "类别",
+    "open": "打开",
+    "delete": "删除",
+    "settings": "项目设置",
+    "configure": "配置",
+    "edit": "编辑项目",
+    "saveChanges": "保存更改",
+    "stats": {
+      "classes": "类别"
+    },
+    "empty": {
+      "title": "没有项目",
+      "description": "创建您的第一个项目以开始标注"
+    },
+    "confirmDelete": "确认删除项目"
   },
   "tools": {
     "title": "工具",
-    "bbox": "框",
-    "mask": "遮罩",
+    "bbox": "Box",
+    "obb": "OBB",
+    "mask": "Mask",
     "polygon": "多边形",
-    "keypoints": "关键点",
-    "landmarks": "地标",
-    "obb": "旋转框",
-    "select": "选择",
-    "pan": "平移",
+    "keypoints": "Keypoints",
+    "landmarks": "Landmarks",
+    "select": "Select",
+    "pan": "Pan",
+    "eraseMode": "橡皮擦",
+    "newInstance": "新实例",
     "tooltips": {
-      "bbox": "边界框 (B)",
+      "bbox": "Bounding Box (B)",
+      "obb": "Oriented Box (O)",
       "mask": "遮罩 (M)",
       "polygon": "多边形 (P)",
-      "keypoints": "关键点 (K)",
-      "landmarks": "地标 (L)",
-      "obb": "旋转框 (O)",
+      "keypoints": "Keypoints (K)",
+      "landmarks": "Landmarks (L)",
+      "point": "点 (P)",
+      "range": "范围 (R)",
       "select": "选择 (V)",
-      "pan": "平移 (H)"
+      "pan": "Pan (H)"
     }
+  },
+  "gallery": {
+    "imageCount": "{{count}} 张图像",
+    "imageCount_plural": "{{count}} 张图像",
+    "empty": {
+      "title": "没有图像",
+      "description": "上传图像以开始标注",
+      "upload": "上传图像"
+    },
+    "title": "图库",
+    "all": "全部",
+    "annotated": "已标注",
+    "unannotated": "未标注",
+    "deleteConfirm": "删除此图像？",
+    "annotate": "标注",
+    "upload": "选择图像",
+    "noImages": "没有图像",
+    "filter": {
+      "all": "全部",
+      "annotated": "已标注",
+      "unannotated": "未标注"
+    },
+    "backToGallery": "返回图库",
+    "selectImage": "选择一张图像",
+    "uploadOrSelect": "上传或选择一张图像",
+    "uploading": "上传图像中"
   },
   "classes": {
     "title": "活动类别",
+    "active": "活动类别",
     "manage": "管理类别",
     "add": "添加类别",
     "placeholder": "类别名称",
-    "empty": "请先创建项目",
-    "deleteConfirm": "此类别有标注。仍要删除吗？",
+    "deleteConfirm": "此类别有标注。仍然删除吗？",
     "exists": "该名称的类别已存在",
-    "enterName": "请输入类别名称"
+    "enterName": "请输入类别名称",
+    "edit": "编辑",
+    "delete": "删除",
+    "rename": "重命名类别",
+    "editTitle": "编辑类别",
+    "deleteTitle": "删除类别",
+    "deleteQuestion": "您想对此类别执行什么操作？",
+    "deleteWarning": "此类别有",
+    "annotations": "个标注",
+    "deleteAll": "删除类别和标注",
+    "name": "名称",
+    "namePlaceholder": "类别名称",
+    "color": "颜色",
+    "nameRequired": "类别名称为必填项",
+    "empty": "没有类别",
+    "addPlaceholder": "添加类别名称",
+    "updated": "已更新",
+    "description": "为此项目添加、编辑或删除可用类别。",
+    "save": "保存更改",
+    "cancel": "取消"
+  },
+  "annotations": {
+    "title": "标注",
+    "empty": "没有标注",
+    "addClassFirst": "请先添加至少一个类别再进行标注",
+    "delete": "",
+    "confirmDelete": "",
+    "expand": "",
+    "collapse": ""
+  },
+  "polygon": {
+    "toolName": "多边形",
+    "clickToAdd": "点击添加点。双击或按 Enter 闭合。",
+    "needMinPoints": "创建多边形至少需要 {min} 个点",
+    "created": "多边形已创建",
+    "cancelled": "绘制已取消",
+    "cannotDeletePoint": "无法删除点。至少需要 {min} 个点。",
+    "pointDeleted": "点已删除"
+  },
+  "landmarks": {
+    "toolName": "参考点",
+    "placed": "参考点 \"{name}\" 已放置",
+    "selectFirst": "请先选择一个参考点",
+    "enterName": "请输入名称",
+    "renamed": "参考点已重命名",
+    "renumbered": "{count} 个点已重新编号",
+    "renameLandmark": "重命名参考点",
+    "landmarkName": "点名称：",
+    "namePlaceholder": "例如：中心、左上、入口"
+  },
+  "skeleton": {
+    "addKeypointClass": "添加关键点类别",
+    "step1": "步骤 1：基本信息",
+    "step2": "步骤 2：选择骨架预设",
+    "className": "类别名称",
+    "classNamePlaceholder": "例如：人物、手、面部",
+    "classColor": "类别颜色",
+    "selectPreset": "为此类别选择一个骨架预设：",
+    "presetInfo": "每个类别可以有自己的骨架。这允许您在同一项目中标注不同类型的对象。",
+    "points": "个点",
+    "connections": "个连接",
+    "previous": "上一步",
+    "next": "下一步",
+    "finish": "完成",
+    "presets": {
+      "coco17": "COCO 17 Keypoints",
+      "coco17Desc": "完整人体骨架（COCO 数据集）",
+      "mediapipePose": "MediaPipe Pose 33",
+      "mediapipePoseDesc": "详细的全身姿态",
+      "mediapipeHand": "MediaPipe Hand 21",
+      "mediapipeHandDesc": "详细的手部关节",
+      "openpose25": "OpenPose 25",
+      "openpose25Desc": "带手部的 OpenPose 骨架",
+      "facial68": "Facial Landmarks 68",
+      "facial68Desc": "详细的面部特征点",
+      "facial5": "Facial 5 Points",
+      "facial5Desc": "基本面部特征点（眼睛、鼻子、嘴巴）",
+      "animalQuad": "四足动物",
+      "animalQuadDesc": "四足动物骨架",
+      "custom": "自定义",
+      "customDesc": "定义您自己的骨架"
+    }
   },
   "images": {
-    "title": "加载图像",
+    "load": "加载图像",
+    "title": "标题",
     "select": "选择图像",
     "upload": "选择图像",
     "noImages": "没有图像"
@@ -63,28 +374,39 @@
     "cancel": "取消",
     "create": "创建",
     "confirm": "确认",
+    "close": "关闭",
+    "duplicate": "复制",
+    "rename": "重命名",
+    "exportBackup": "导出备份",
+    "deleteConfirm": "是的，删除",
     "clearConfirm": "清除此图像的所有标注？"
   },
-  "shortcuts": {
+  "shortcut": {
     "title": "快捷键",
     "save": "保存",
     "undo": "撤销",
     "delete": "删除",
     "navigation": "导航",
-    "bbox": "边界框",
-    "mask": "遮罩",
-    "select": "选择",
-    "pan": "平移",
-    "classes": "类别 1-9"
+    "bbox": "Bbox",
+    "mask": "Mask",
+    "select": "Select",
+    "pan": "Pan",
+    "classes": "类别 1-9",
+    "navigateImages": "shortcuts.navigateImages",
+    "selectClass": "shortcuts.selectClass"
   },
   "canvas": {
-    "zoomIn": "放大",
-    "zoomOut": "缩小",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
     "resetZoom": "重置缩放",
+    "fitScreen": "适应屏幕",
     "toggleLabels": "显示/隐藏标签",
     "toggleGrid": "显示/隐藏网格",
-    "prevImage": "上一张图像 (←)",
-    "nextImage": "下一张图像 (→)"
+    "prevImage": "上一张图像 (← / PgUp)",
+    "nextImage": "下一张图像 (→ / PgDn)",
+    "reset": "重置",
+    "tools": "工具",
+    "zoom": "缩放"
   },
   "stats": {
     "title": "统计",
@@ -92,72 +414,347 @@
     "annotated": "已标注",
     "labels": "标签",
     "classes": "类别",
-    "progress": "张已标注"
-  },
-  "gallery": {
-    "title": "图库",
-    "all": "全部",
-    "annotated": "已标注",
-    "unannotated": "未标注",
-    "empty": "没有图像",
-    "deleteConfirm": "删除此图像？"
+    "progress": "张图像已标注",
+    "annotations": "stats.annotations"
   },
   "export": {
-    "title": "导出",
-    "format": "格式",
-    "description": "格式说明",
+    "title": "导出项目",
+    "project": {
+      "title": "导出项目 (.tix)",
+      "description": "用于稍后继续工作或与团队共享",
+      "withImages": "包含图像（完整项目）",
+      "button": "导出项目"
+    },
+    "training": {
+      "title": "导出用于训练",
+      "description": "准备好训练模型的数据集（始终包含图像）",
+      "tabExport": "导出",
+      "tabCode": "生成代码",
+      "tabTrain": "使用 Connector 训练",
+      "selectFormat": "选择格式：",
+      "button": "导出数据集"
+    },
+    "code": {
+      "framework": "Framework",
+      "model": "模型",
+      "device": "设备",
+      "epochs": "Epochs",
+      "batch": "Batch Size",
+      "imgsz": "图像大小",
+      "preview": "预览",
+      "copy": "复制代码",
+      "downloadPy": "下载 .py",
+      "downloadIpynb": "下载 .ipynb",
+      "labels": {
+        "model": "模型",
+        "device": "设备",
+        "epochs": "Epochs",
+        "batchSize": "Batch Size",
+        "imageSize": "图像大小",
+        "sequenceLength": "Sequence Length",
+        "forecastHorizon": "Forecast Horizon",
+        "hiddenSize": "Hidden Size",
+        "advancedOptions": "高级选项",
+        "training": "训练",
+        "optimizer": "Optimizer",
+        "learningRate": "Learning Rate",
+        "patience": "Patience (Early Stop)",
+        "validationSplit": "Validation Split (%)",
+        "dataAugmentation": "Data Augmentation",
+        "metricsAndPlots": "指标和图表",
+        "modelExport": "模型导出"
+      },
+      "modelSizes": {
+        "nano": "Nano（最快）",
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large",
+        "xlarge": "XLarge（最精确）"
+      },
+      "devices": {
+        "cpu": "🖥️ CPU",
+        "gpu": "🎮 GPU (CUDA)",
+        "mps": "🍎 Apple Silicon (MPS)"
+      },
+      "optimizers": {
+        "adam": "Adam（推荐给初学者）",
+        "adamw": "AdamW（改进的 Adam 带 weight decay）",
+        "sgd": "SGD（经典，需要更多调整）",
+        "rmsprop": "RMSprop（适合循环网络）"
+      },
+      "augmentation": {
+        "mosaic": "Mosaic（组合 4 张图像）",
+        "mixup": "Mixup（混合透明度）",
+        "hsv": "HSV（color jitter）",
+        "flip": "Flips（水平/垂直）",
+        "rotate": "旋转",
+        "scale": "Scale/Crop"
+      },
+      "metrics": {
+        "savePlots": "保存训练图表",
+        "saveMetricsCsv": "导出指标到 CSV",
+        "saveConfMatrix": "混淆矩阵",
+        "savePrCurves": "Precision-Recall 曲线",
+        "savePredictions": "可视化预测"
+      },
+      "exportFormats": {
+        "onnx": "ONNX（推荐）",
+        "torchscript": "TorchScript",
+        "tflite": "TensorFlow Lite",
+        "openvino": "OpenVINO",
+        "coreml": "CoreML",
+        "tensorrt": "TensorRT"
+      },
+      "template": {
+        "generatedBy": "由 Annotix 自动生成",
+        "projectType": "项目类型",
+        "important": "重要",
+        "installDeps": "运行前请安装依赖",
+        "importantCLI": "重要：YOLOv5 使用 CLI，而非 Python API",
+        "importantDetectron2": "重要：Detectron2 更高级但更复杂",
+        "importantClassification": "重要：使用现代架构进行分类",
+        "importantSegmentation": "重要：使用现代架构进行语义分割",
+        "cloneYOLOv5": "克隆 YOLOv5 仓库（仅首次）",
+        "trainCLI": "使用 CLI 训练",
+        "trainingScript": "Training Script",
+        "registerCOCO": "以 COCO 格式注册数据集",
+        "modelConfiguration": "模型配置",
+        "approxEpochs": "大约 epochs",
+        "model": "模型",
+        "lossOptimizer": "LOSS 和 OPTIMIZER",
+        "training": "Training",
+        "metrics": "Metrics",
+        "saveBestModelSection": "Save best model",
+        "evaluatingModel": "评估模型",
+        "validateBestModel": "使用最佳模型验证",
+        "printMetrics": "输出关键指标",
+        "predictValidation": "在验证图像上进行预测",
+        "changeToValFolder": "切换到验证文件夹",
+        "saveImagesWithPredictions": "保存带预测的图像",
+        "minConfidence": "最低置信度",
+        "dontSaveLabels": "不保存标签",
+        "dontCropDetections": "不裁剪检测结果",
+        "exportingProduction": "导出模型为生产格式",
+        "exportProduction": "导出模型用于生产",
+        "yolov5Completed": "YOLOv5 训练完成",
+        "yolonasCompleted": "YOLO-NAS 训练完成",
+        "unetLoaded": "U-Net 模型已加载",
+        "availableArchitectures": "可用架构",
+        "calculateIoU": "Calculate IoU",
+        "bestModelSaved": "最佳模型已保存",
+        "plotsSaved": "图表已保存至",
+        "loadDataset": "加载数据集（结构：train/class1, train/class2, ...）",
+        "trainTransforms": "训练变换",
+        "valTransforms": "验证变换",
+        "options": "选项",
+        "initialLearningRate": "初始 learning rate",
+        "finalLearningRate": "最终 learning rate（作为 lr0 的比例）",
+        "momentumSGD": "SGD 动量",
+        "weightDecay": "Weight decay（L2 正则化）",
+        "earlyStoppingPatience": "Early stopping patience",
+        "saveCheckpoints": "保存检查点",
+        "savePeriod": "每 N 个 epochs 保存",
+        "generatePlots": "生成训练图表",
+        "minConfidenceMatrix": "混淆矩阵的最低置信度",
+        "cacheImages": "缓存图像（使用更多内存）",
+        "numWorkers": "DataLoader 的 workers 数量",
+        "resultsFolder": "结果文件夹",
+        "experimentName": "实验名称",
+        "overwriteExperiments": "覆盖现有实验",
+        "validateDuringTraining": "训练期间验证",
+        "valPercentage": "如果没有 val split 的验证百分比",
+        "verboseMode": "详细模式",
+        "executeCmds": "在终端中执行这些命令",
+        "configuration": "训练配置",
+        "modelAndDevice": "模型和设备",
+        "basicHyperparams": "基本超参数",
+        "dataAugmentation": "Data Augmentation",
+        "loadPretrainedModel": "加载预训练模型",
+        "trainModel": "训练模型",
+        "evaluateModel": "评估模型",
+        "exportMetrics": "导出指标到 CSV",
+        "visualizePredictions": "可视化预测",
+        "exportForProduction": "导出模型用于生产",
+        "dataset": "Dataset",
+        "basics": "基础",
+        "optimization": "优化",
+        "callbacks": "Callbacks 和保存",
+        "visualization": "可视化和指标",
+        "performance": "性能",
+        "validation": "验证",
+        "modelLoaded": "模型已加载",
+        "parameters": "参数",
+        "trainingCompleted": "训练完成",
+        "evaluating": "评估模型中...",
+        "finalMetrics": "最终指标",
+        "metricsSaved": "指标已保存至",
+        "predictionsSaved": "预测已保存至",
+        "exportingModel": "导出模型为生产格式...",
+        "onnxExported": "ONNX 已导出",
+        "torchscriptExported": "TorchScript 已导出",
+        "tfliteExported": "TFLite 已导出",
+        "openvinoExported": "OpenVINO 已导出",
+        "coremlExported": "CoreML 已导出",
+        "tensorrtExported": "TensorRT 已导出",
+        "allDone": "全部完成！",
+        "resultsIn": "结果位于",
+        "bestModel": "最佳模型",
+        "yoloUsesCli": "YOLOv5 使用 CLI，而非 Python API",
+        "cloneRepo": "克隆 YOLOv5 仓库（仅首次）",
+        "trainWithCli": "使用 CLI 训练",
+        "validate": "验证",
+        "yoloTrainingCompleted": "YOLOv5 训练完成！",
+        "prepareTrainer": "准备 trainer",
+        "configureDataset": "配置数据集",
+        "loadModel": "加载模型",
+        "train": "训练",
+        "trainingCompletedShort": "训练完成！",
+        "registerDataset": "注册数据集",
+        "modelConfig": "模型配置",
+        "datasets": "Datasets",
+        "pretrainedModel": "预训练模型",
+        "hyperparameters": "超参数",
+        "numClasses": "类别数量",
+        "output": "Output",
+        "evaluate": "评估",
+        "advancedButComplex": "更高级但更复杂",
+        "customDataset": "自定义数据集",
+        "lossAndOptimizer": "LOSS 和 OPTIMIZER",
+        "trainingLoop": "训练",
+        "saveBestModelAcc": "最佳模型已保存（accuracy",
+        "saveBestModelIoU": "最佳模型已保存（IoU",
+        "saveMetrics": "保存指标",
+        "plotResults": "绘制结果图表",
+        "bestAccuracy": "最佳 accuracy",
+        "bestIoU": "最佳 IoU",
+        "modernArchitectures": "使用现代架构",
+        "semanticSegmentation": "使用现代架构进行语义分割",
+        "forVisualization": "用于可视化",
+        "forExportMetrics": "用于导出指标",
+        "trainingSamples": "Train samples",
+        "valSamples": "Val samples",
+        "classes": "Classes",
+        "torchvisionModels": "TorchVision models",
+        "timmModels": "timm models（更多模型可用）",
+        "lossOptimizerTitle": "Loss 和 Optimizer",
+        "architecturesAvailable": "可用架构",
+        "trainSamples": "训练样本",
+        "testSamples": "测试样本",
+        "sequenceLength": "序列长度",
+        "numFeatures": "变量数量",
+        "trainEpoch": "Training",
+        "testEpoch": "Testing",
+        "trainLoss": "Train Loss",
+        "testLoss": "Test Loss",
+        "trainAcc": "Train Acc",
+        "testAcc": "Test Acc",
+        "dataLoading": "数据加载",
+        "modelArchitecture": "模型架构",
+        "prepareData": "准备数据",
+        "trainTest": "训练和评估",
+        "forecasting": "预测",
+        "makePredictions": "执行预测",
+        "forecastHorizon": "预测范围",
+        "predictionsMade": "预测已完成",
+        "trainingData": "训练数据",
+        "testingData": "测试数据",
+        "scaler": "数据缩放",
+        "sequences": "个序列",
+        "timeSteps": "个时间步",
+        "features": "个变量",
+        "installation": "export.code.template.installation"
+      },
+      "tooltips": {
+        "framework": "要使用的深度学习库。根据项目类型自动调整。",
+        "model": "模型大小：Nano 快但精度低，XLarge 慢但精度高。",
+        "device": "训练位置：CPU 慢但始终可用，GPU (CUDA) 在有 NVIDIA 时非常快。",
+        "epochs": "模型查看整个数据集的次数。更多 epochs = 更多学习但需要更多时间。",
+        "batch": "同时处理的图像数量。较大值使用更多内存但训练更快。",
+        "imgsz": "训练期间图像的分辨率。更大 = 更多细节但更慢。",
+        "seqLength": "用作输入的时间步数。例如：使用过去 50 个值来预测未来。",
+        "forecastHorizon": "预测多少个未来步骤（仅用于预测）。例如：预测接下来的 10 个值。",
+        "hiddenSize": "神经网络（LSTM）隐藏层的大小。更大 = 更强能力但更慢。",
+        "optimizer": "训练期间调整模型权重的算法。Adam：平衡且流行。AdamW：改进的 Adam 带 weight decay。SGD：经典，较慢但有时结果更好。RMSprop：适合 RNN。",
+        "lr": "模型学习的速度。较大值 = 学习快但可能不稳定。0.001 是一个好的起点。",
+        "patience": "没有改善时等待多少个 epochs 后停止。如果模型在 50 个 epochs 内没有改善，自动停止。",
+        "valSplit": "用于验证模型的图像百分比。20% 是标准：80% 训练，20% 验证。",
+        "augmentationTitle": "创建图像变体以防止模型记忆的技术。有助于更好地泛化。",
+        "augMosaic": "将 4 张随机图像组合成一张。对改善小目标检测非常有效。",
+        "augMixup": "以透明度混合两张图像。帮助模型对遮挡更加稳健。",
+        "augHsv": "改变图像颜色（色调、饱和度、亮度）。适用于不同光照条件。",
+        "augFlip": "水平或垂直翻转图像。轻松将数据翻倍。",
+        "augRotate": "轻微旋转图像。当目标可能以不同角度出现时很有用。",
+        "augScale": "随机缩放和裁剪。模拟不同距离的目标。",
+        "metricsTitle": "训练期间保存哪些信息以分析模型性能。",
+        "savePlots": "保存训练期间的损失和精度图表。非常有用于观察模型是否在学习。",
+        "saveConfMatrix": "显示哪些类别互相混淆的表格。非常适合理解模型错误。",
+        "savePrCurves": "显示精确率和召回率之间平衡的图表。对评估检测质量很重要。",
+        "savePredictions": "保存带有模型预测绘制的图像。非常适合直观查看模型效果。",
+        "saveMetricsCsv": "将所有指标导出到 CSV 文件，以便在 Excel 中分析或创建自己的图表。",
+        "exportTitle": "将训练好的模型部署到生产环境的格式。",
+        "exportOnnx": "ONNX：通用格式，兼容 TensorFlow、PyTorch 和几乎任何库。生产环境的理想选择。",
+        "exportTorchscript": "TorchScript：PyTorch 原生格式，速度极快但仅适用于 PyTorch。",
+        "exportTflite": "TensorFlow Lite：用于移动和嵌入式设备（Android、iOS、Raspberry Pi）。",
+        "exportOpenvino": "OpenVINO：针对 Intel CPU 优化。在 Intel 硬件上速度极快。",
+        "exportCoreml": "CoreML：用于 iOS/macOS 原生应用。充分利用 Apple 芯片。",
+        "exportTensorrt": "TensorRT：NVIDIA GPU 上的最大加速。用于高性能生产环境。"
+      },
+      "codeCopied": "代码已复制到剪贴板",
+      "copyError": "复制代码时出错",
+      "pyDownloaded": ".py 文件已下载",
+      "ipynbDownloaded": ".ipynb Notebook 已下载",
+      "trainingNotebook": "Training Notebook"
+    },
+    "formats": {
+      "tixGroupTitle": "导出备份或共享",
+      "trainingGroupTitle": "训练格式",
+      "yoloDetection": "YOLO Detection",
+      "yoloDetectionDesc": "YOLO 归一化格式的边界框 (.txt) 及 data.yaml",
+      "yoloSegmentation": "YOLO Segmentation",
+      "yoloSegmentationDesc": "YOLO 分割格式的多边形 (.txt) 及 data.yaml",
+      "coco": "COCO JSON",
+      "cocoDesc": "兼容 Mask R-CNN、RetinaNet 和 Detectron2 的 COCO JSON 格式",
+      "pascalVoc": "Pascal VOC XML",
+      "pascalVocDesc": "带像素坐标的 Pascal VOC XML 格式（传统格式）",
+      "csvDetection": "CSV Detection",
+      "csvDetectionDesc": "包含边界框坐标的 CSV 表格格式",
+      "csvClassification": "CSV Classification",
+      "csvClassificationDesc": "包含文件名和类别标签的 CSV 表格格式",
+      "csvKeypoints": "CSV Keypoints",
+      "csvKeypointsDesc": "包含关键点 X,Y 坐标和可见性的 CSV 表格格式",
+      "csvLandmarks": "CSV Landmarks",
+      "csvLandmarksDesc": "包含参考点坐标的 CSV 表格格式",
+      "foldersByClass": "按类别分文件夹",
+      "foldersByClassDesc": "按类别名称组织到不同文件夹中的图像",
+      "unetMasks": "U-Net 掩码",
+      "unetMasksDesc": "用于分割训练的灰度 PNG 图像",
+      "tix": "Annotix 项目 (.tix)",
+      "tixDesc": "将整个项目导出为 .tix 文件用于备份或共享"
+    },
+    "notAvailable": "此项目类型不支持导出",
+    "preparing": "准备导出...",
+    "success": "数据集导出成功",
+    "description": "选择一种可用格式导出项目",
+    "downloadDataset": "下载数据集",
     "export": "导出",
     "exporting": "导出中...",
+    "format": "格式",
+    "formatDescription": "格式说明",
     "progress": "进度",
-    "selectFormat": "选择导出格式",
-    "downloadDataset": "下载数据集 ZIP",
-    "downloadClasses": "下载 classes.txt",
-    "notAvailable": "此项目类型不支持导出",
-    "formats": {
-      "yoloDetection": "YOLO 检测",
-      "yoloDetectionDesc": "规范化YOLO格式的边界框(.txt)和data.yaml",
-      "yoloSegmentation": "YOLO 分割",
-      "yoloSegmentationDesc": "YOLO分割格式的多边形(.txt)和data.yaml",
-      "coco": "COCO JSON",
-      "cocoDesc": "与Mask R-CNN、RetinaNet和Detectron2兼容的COCO格式",
-      "pascalVoc": "Pascal VOC XML",
-      "pascalVocDesc": "具有像素坐标的Pascal VOC XML格式",
-      "csvDetection": "CSV 检测",
-      "csvDetectionDesc": "包含边界框坐标的CSV格式",
-      "csvClassification": "CSV 分类",
-      "csvClassificationDesc": "包含图像名称和类标签的CSV格式",
-      "csvKeypoints": "CSV 关键点",
-      "csvKeypointsDesc": "包含关键点X,Y坐标和可见性的CSV格式",
-      "csvLandmarks": "CSV 地标",
-      "csvLandmarksDesc": "包含地标坐标的CSV格式",
-      "foldersByClass": "按类别分文件夹",
-      "foldersByClassDesc": "按类名整理到文件夹中的图像",
-      "unetMasks": "U-Net 掩码",
-      "unetMasksDesc": "用于语义分割的灰度PNG图像"
-    },
-    "yoloDetectionDesc": "规范化YOLO格式的边界框(.txt)和data.yaml",
-    "yoloSegmentationDesc": "YOLO分割格式的多边形(.txt)和data.yaml",
-    "cocoDesc": "与Mask R-CNN、RetinaNet和Detectron2兼容的COCO JSON格式",
-    "pascalVocDesc": "具有像素坐标的Pascal VOC XML格式(遗留格式)",
-    "csvDetectionDesc": "包含边界框坐标的CSV表格式",
-    "csvClassificationDesc": "包含图像名称和类标签的CSV表格式",
-    "csvKeypointsDesc": "包含关键点X,Y坐标和可见性的CSV表格式",
-    "csvLandmarksDesc": "包含地标坐标的CSV表格式",
-    "foldersByClassDesc": "按类名分隔到文件夹中的图像",
-    "unetMasksDesc": "用于分割训练的灰度PNG图像"
+    "selectFormat": "选择导出格式"
   },
   "import": {
     "title": "导入数据集",
-    "button": "📥 导入",
-    "selectFile": "选择包含注释数据集的ZIP文件",
-    "dragFiles": "将ZIP文件拖到这里",
+    "button": "导入",
+    "selectFile": "选择包含标注数据集的 ZIP 文件",
+    "dragFiles": "将 ZIP 文件拖到此处",
     "orClickToSelect": "或点击选择",
-    "analyzing": "分析数据集中",
+    "analyzing": "分析数据集",
     "configureProject": "配置导入的项目",
     "projectName": "项目名称",
     "projectType": "项目类型",
     "classesCount": "类别",
-    "classes": "类别",
+    "classes": "个类别",
     "format": "检测到的格式",
     "import": "导入项目",
     "importing": "导入数据集中...",
@@ -166,72 +763,710 @@
     "successMessage": "您的数据集已导入并准备就绪",
     "openProject": "打开项目",
     "error": {
-      "noFile": "请选择ZIP文件",
-      "invalidZip": "请选择有效的ZIP文件",
-      "unsupportedFormat": "不支持的数据集格式。支持的格式: YOLO、COCO、Pascal VOC、CSV、按类别分文件夹、U-Net 掩码",
+      "noFile": "请选择 ZIP 文件",
+      "invalidZip": "请选择有效的 ZIP 文件",
+      "unsupportedFormat": "不支持的数据集格式。支持的格式：YOLO、COCO、Pascal VOC、CSV、按类别分文件夹、U-Net 掩码",
       "corruptedData": "数据集已损坏或不完整",
       "parse": "数据集解析错误。请检查文件格式",
       "invalidProjectName": "项目名称包含无效字符。仅使用字母数字、连字符、下划线和点"
     }
   },
+  "projectTypes": {
+    "classification": "简单分类",
+    "multiLabel": "多标签分类",
+    "detection": "目标检测",
+    "segmentation": "语义分割",
+    "instanceSeg": "实例分割",
+    "keypoints": "关键点",
+    "obb": "旋转框 (OBB)"
+  },
   "project": {
     "new": "新建项目",
     "name": "项目名称",
-    "namePlaceholder": "我的YOLO项目",
+    "namePlaceholder": "我的 Annotix 项目",
     "type": "标注类型",
-    "typeBbox": "边界框",
-    "typeMask": "分割（遮罩）",
+    "typeSelectHelper": "根据训练目标选择标注类型",
+    "types": {
+      "classification": {
+        "name": "简单分类",
+        "description": "为每张图像分配单个标签",
+        "useCases": "识别图像内容（例如：猫、狗、汽车）",
+        "models": "ResNet, VGG, EfficientNet, MobileNet",
+        "difficulty": "初学者"
+      },
+      "bbox": {
+        "name": "Bounding Box",
+        "description": "使用边界框进行目标检测",
+        "useCases": "检测和定位图像中的对象",
+        "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+        "difficulty": "初学者"
+      },
+      "mask": {
+        "name": "遮罩",
+        "description": "使用像素遮罩进行实例分割",
+        "useCases": "在像素级别分离对象",
+        "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+        "difficulty": "中级"
+      },
+      "multiLabel": {
+        "name": "多标签分类",
+        "description": "为每张图像分配多个标签",
+        "useCases": "包含多个元素的图像（例如：公园 + 狗 + 天空）",
+        "models": "ResNet, VGG 多标签输出",
+        "difficulty": "初学者"
+      },
+      "detection": {
+        "name": "目标检测",
+        "description": "使用矩形框（bounding boxes）定位对象",
+        "useCases": "在图像中查找和定位特定对象",
+        "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+        "difficulty": "中级"
+      },
+      "segmentation": {
+        "name": "语义分割",
+        "description": "按类别对图像的每个像素进行分类",
+        "useCases": "分离区域（例如：道路、天空、建筑物）",
+        "models": "U-Net, DeepLab, FCN",
+        "difficulty": "高级"
+      },
+      "instanceSeg": {
+        "name": "实例分割",
+        "description": "勾画每个单独对象的轮廓",
+        "useCases": "在像素级别分离单个对象",
+        "models": "Mask R-CNN, YOLACT, YOLOv8-seg",
+        "difficulty": "高级"
+      },
+      "keypoints": {
+        "name": "关键点",
+        "description": "在对象上标记特定点",
+        "useCases": "姿态估计、人脸识别、解剖学",
+        "models": "OpenPose, HRNet, MediaPipe",
+        "difficulty": "中级"
+      },
+      "polygon": {
+        "name": "多边形分割",
+        "description": "逐点绘制多边形以进行精确分割",
+        "useCases": "精确轮廓、几何形状，比遮罩更轻量",
+        "models": "YOLOv8-seg, Mask R-CNN, SOLO",
+        "difficulty": "中级"
+      },
+      "landmarks": {
+        "name": "参考点",
+        "description": "放置独立的点，无连接",
+        "useCases": "对象中心、参考点、计数、位置",
+        "models": "检测模型、自定义点检测器",
+        "difficulty": "初学者"
+      },
+      "obb": {
+        "name": "旋转框 (OBB)",
+        "description": "可自由旋转的边界框",
+        "useCases": "倾斜文字、航拍对象、卫星",
+        "models": "Rotated-YOLO, RRPN",
+        "difficulty": "高级"
+      },
+      "semanticSeg": {
+        "name": "纯语义分割",
+        "description": "对每个像素分类，不区分实例",
+        "useCases": "分割地图、风景、城市场景",
+        "models": "U-Net, DeepLabV3+, SegFormer",
+        "difficulty": "高级"
+      },
+      "panopticSeg": {
+        "name": "全景分割",
+        "description": "结合语义分割和实例分割",
+        "useCases": "自动驾驶、完整场景分析",
+        "models": "Panoptic-FPN, DETR, MaskFormer",
+        "difficulty": "高级"
+      },
+      "ocr": {
+        "name": "OCR（文字识别）",
+        "description": "检测和识别图像中的文字",
+        "useCases": "文档、标志、海报、发票",
+        "models": "CRAFT, EasyOCR, Tesseract, PaddleOCR",
+        "difficulty": "中级"
+      },
+      "depthEstimation": {
+        "name": "深度估计",
+        "description": "预测每个像素到相机的距离",
+        "useCases": "机器人、AR/VR、3D 重建",
+        "models": "MiDaS, DPT, Depth Anything",
+        "difficulty": "高级"
+      },
+      "audioClassification": {
+        "name": "音频分类",
+        "description": "为音频片段分配标签",
+        "useCases": "音乐分类、环境声音",
+        "models": "AudioSet, PANNs, YAMNet",
+        "difficulty": "中级"
+      },
+      "speechRecognition": {
+        "name": "语音识别",
+        "description": "将音频转录为文字",
+        "useCases": "字幕、语音助手、转录",
+        "models": "Whisper, Wav2Vec2, DeepSpeech",
+        "difficulty": "高级"
+      },
+      "soundEventDetection": {
+        "name": "声音事件检测",
+        "description": "识别和定位音频中的事件",
+        "useCases": "安全监控、城市分析",
+        "models": "CRNN, CNN14, SED-CRNN",
+        "difficulty": "高级"
+      },
+      "speakerIdentification": {
+        "name": "说话人识别",
+        "description": "识别谁在说话",
+        "useCases": "安全、会议日志记录",
+        "models": "x-vector, ECAPA-TDNN, SpeakerNet",
+        "difficulty": "高级"
+      },
+      "audioTagging": {
+        "name": "音频标记",
+        "description": "为音频分配多个标签",
+        "useCases": "声学场景分析",
+        "models": "VGGish, PANNs, AudioSet",
+        "difficulty": "中级"
+      },
+      "musicGenreClassification": {
+        "name": "音乐流派分类",
+        "description": "识别歌曲的音乐流派",
+        "useCases": "音乐库组织",
+        "models": "MusiCNN, CNN-Spectrograms",
+        "difficulty": "中级"
+      },
+      "emotionRecognition": {
+        "name": "情感识别",
+        "description": "检测语音中的情感",
+        "useCases": "客户服务、情感分析",
+        "models": "OpenSMILE, EmotiW, SER-CNN",
+        "difficulty": "高级"
+      },
+      "voiceActivityDetection": {
+        "name": "语音活动检测 (VAD)",
+        "description": "检测音频中是否有语音",
+        "useCases": "音频预处理、电话系统",
+        "models": "WebRTC VAD, Silero VAD",
+        "difficulty": "初学者"
+      },
+      "keywordSpotting": {
+        "name": "关键词检测",
+        "description": "检测音频中的特定词语",
+        "useCases": "语音助手（Hey Siri、OK Google）",
+        "models": "CNN-KWS, Depthwise Separable CNNs",
+        "difficulty": "中级"
+      },
+      "environmentalSound": {
+        "name": "环境声音分类",
+        "description": "分类环境中的声音",
+        "useCases": "城市监控、野生动物保护",
+        "models": "ESC-CNN, UrbanSound8K models",
+        "difficulty": "中级"
+      },
+      "actionRecognition": {
+        "name": "动作识别",
+        "description": "识别视频中的动作",
+        "useCases": "体育分析、监控、人际互动",
+        "models": "C3D, I3D, SlowFast, X3D",
+        "difficulty": "高级"
+      },
+      "objectTracking": {
+        "name": "目标跟踪",
+        "description": "跨帧跟踪对象",
+        "useCases": "监控、交通分析、体育",
+        "models": "SORT, DeepSORT, ByteTrack, BoT-SORT",
+        "difficulty": "高级"
+      },
+      "temporalActionLocalization": {
+        "name": "时间动作定位",
+        "description": "检测视频中动作发生的时间",
+        "useCases": "视频分析、自动摘要",
+        "models": "BMN, TSN, ActionFormer",
+        "difficulty": "高级"
+      },
+      "videoClassification": {
+        "name": "视频分类",
+        "description": "为完整视频分配类别",
+        "useCases": "内容组织、推荐",
+        "models": "3D-CNN, Two-Stream Networks, TimeSformer",
+        "difficulty": "中级"
+      },
+      "videoSegmentation": {
+        "name": "视频分割",
+        "description": "逐帧分割视频中的对象",
+        "useCases": "视频编辑、特效",
+        "models": "STM, XMem, SAM-Track",
+        "difficulty": "高级"
+      },
+      "activityDetection": {
+        "name": "活动检测",
+        "description": "检测特定的人类活动",
+        "useCases": "老年人监控、安全",
+        "models": "ActivityNet models, TSM",
+        "difficulty": "高级"
+      },
+      "poseTracking": {
+        "name": "姿态跟踪",
+        "description": "在视频中跟踪身体关键点",
+        "useCases": "运动分析、健身、体育",
+        "models": "AlphaPose, OpenPose, MMPose",
+        "difficulty": "高级"
+      },
+      "videoAnomalyDetection": {
+        "name": "视频异常检测",
+        "description": "检测视频中的异常事件",
+        "useCases": "监控、工业质量控制",
+        "models": "AnomalyNet, Future Frame Prediction",
+        "difficulty": "高级"
+      },
+      "spatiotemporalAction": {
+        "name": "时空动作检测",
+        "description": "在空间和时间中检测动作",
+        "useCases": "详细视频分析、YOLO-Act",
+        "models": "AVA models, SlowFast, YOLO-Act",
+        "difficulty": "高级"
+      },
+      "timeSeriesClassification": {
+        "name": "时间序列分类",
+        "description": "为每个完整时间序列分配一个类别（全局分类模式）",
+        "useCases": "医学诊断、手势识别、ECG 分类",
+        "models": "InceptionTime, ROCKET, ResNet",
+        "difficulty": "中级"
+      },
+      "timeSeriesForecasting": {
+        "name": "时间序列预测",
+        "description": "使用范围标记历史窗口和预测范围",
+        "useCases": "销售预测、天气预报、能源需求",
+        "models": "LSTM, Transformer, N-BEATS, Prophet",
+        "difficulty": "高级"
+      },
+      "anomalyDetection": {
+        "name": "异常检测",
+        "description": "标记时间序列中的异常点",
+        "useCases": "欺诈检测、设备故障、健康监测",
+        "models": "AutoEncoder, Isolation Forest, LSTM-AE",
+        "difficulty": "高级"
+      },
+      "timeSeriesSegmentation": {
+        "name": "时间序列分割",
+        "description": "使用范围将序列划分为带类别的段",
+        "useCases": "行为分析、体制变化、活动状态",
+        "models": "ClaSP, FLUSS, Seasonal-Trend Decomposition",
+        "difficulty": "高级"
+      },
+      "patternRecognition": {
+        "name": "模式识别",
+        "description": "使用范围标记重复的模式/母题",
+        "useCases": "股市分析、生物医学信号、周期检测",
+        "models": "Matrix Profile, STOMP, SAX",
+        "difficulty": "中级"
+      },
+      "eventDetection": {
+        "name": "事件检测",
+        "description": "使用点标记时间中的离散事件",
+        "useCases": "传感器监控、告警、状态变化",
+        "models": "Change Point Detection, Event Detection CNN",
+        "difficulty": "中级"
+      },
+      "timeSeriesRegression": {
+        "name": "时间序列回归",
+        "description": "标记带有数值目标的点",
+        "useCases": "需求估计、动态定价、值预测",
+        "models": "XGBoost, Random Forest, Neural Networks",
+        "difficulty": "中级"
+      },
+      "clustering": {
+        "name": "序列聚类",
+        "description": "为每个完整时间序列分配聚类（全局分类模式）",
+        "useCases": "客户细分、模式分析、行为分组",
+        "models": "K-Shape, DTW-KMeans, K-Means",
+        "difficulty": "中级"
+      },
+      "imputation": {
+        "name": "缺失值填补",
+        "description": "使用范围标记需要填补的缺失数据段",
+        "useCases": "传感器数据清洗、测量间隙填充",
+        "models": "MICE, KNN, Interpolation, BRITS",
+        "difficulty": "中级"
+      },
+      "multi-label-classification": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-classification": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-forecasting": {
+        "name": "",
+        "description": ""
+      },
+      "anomaly-detection": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-segmentation": {
+        "name": "",
+        "description": ""
+      },
+      "pattern-recognition": {
+        "name": "",
+        "description": ""
+      },
+      "event-detection": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-regression": {
+        "name": "",
+        "description": ""
+      },
+      "object3DDetection": {
+        "name": "3D 目标检测",
+        "description": "在 3D 点云中检测对象",
+        "useCases": "自动驾驶、机器人",
+        "models": "PointNet++, VoxelNet, PointPillars",
+        "difficulty": "高级"
+      },
+      "semantic3DSegmentation": {
+        "name": "3D 语义分割",
+        "description": "在 3D 点云中对点进行分类",
+        "useCases": "城市测绘、BIM、建筑扫描",
+        "models": "PointNet, MinkowskiNet, KPConv",
+        "difficulty": "高级"
+      },
+      "instance3DSegmentation": {
+        "name": "3D 实例分割",
+        "description": "在 3D 中分离单个对象",
+        "useCases": "机器人、物体操控",
+        "models": "PointGroup, SoftGroup, Mask3D",
+        "difficulty": "高级"
+      },
+      "pointCloudClassification": {
+        "name": "点云分类",
+        "description": "对完整点云进行分类",
+        "useCases": "3D 物体识别",
+        "models": "PointNet, DGCNN, PointTransformer",
+        "difficulty": "高级"
+      },
+      "meshSegmentation": {
+        "name": "网格分割",
+        "description": "分割 3D 多边形网格",
+        "useCases": "3D 建模、几何分析",
+        "models": "MeshCNN, TextureNet",
+        "difficulty": "高级"
+      },
+      "pose3DEstimation": {
+        "name": "3D 姿态估计",
+        "description": "估计 3D 中的人体姿态",
+        "useCases": "动作捕捉、动画",
+        "models": "VideoPose3D, VoxelPose",
+        "difficulty": "高级"
+      },
+      "keypoint3DDetection": {
+        "name": "3D 关键点检测",
+        "description": "检测 3D 中的兴趣点",
+        "useCases": "点云配准、SLAM",
+        "models": "D3Feat, FCGF, Predator",
+        "difficulty": "高级"
+      },
+      "surfaceReconstruction": {
+        "name": "表面重建",
+        "description": "从点重建表面",
+        "useCases": "3D 扫描、文化遗产",
+        "models": "Poisson Surface Reconstruction, COLMAP",
+        "difficulty": "高级"
+      },
+      "slamAnnotation": {
+        "name": "SLAM 标注",
+        "description": "为定位和建图标注数据",
+        "useCases": "移动机器人、自主导航",
+        "models": "ORB-SLAM, LiDAR-SLAM",
+        "difficulty": "高级"
+      },
+      "textClassification": {
+        "name": "文本分类",
+        "description": "为文本分配类别",
+        "useCases": "新闻分类、垃圾邮件检测",
+        "models": "BERT, RoBERTa, DistilBERT",
+        "difficulty": "中级"
+      },
+      "namedEntityRecognition": {
+        "name": "命名实体识别 (NER)",
+        "description": "识别名称、地点、组织",
+        "useCases": "信息提取、文档分析",
+        "models": "SpaCy, Flair, BERT-NER",
+        "difficulty": "中级"
+      },
+      "sentimentAnalysis": {
+        "name": "情感分析",
+        "description": "检测情感（正面/负面/中性）",
+        "useCases": "观点分析、社交媒体",
+        "models": "VADER, TextBlob, RoBERTa-Sentiment",
+        "difficulty": "中级"
+      },
+      "intentClassification": {
+        "name": "意图分类",
+        "description": "识别用户意图",
+        "useCases": "聊天机器人、虚拟助手",
+        "models": "DIET, Rasa NLU, BERT-Intent",
+        "difficulty": "中级"
+      },
+      "relationExtraction": {
+        "name": "关系提取",
+        "description": "识别实体之间的关系",
+        "useCases": "知识图谱、文本分析",
+        "models": "SpanBERT, LUKE, Relation Extraction BERT",
+        "difficulty": "高级"
+      },
+      "posTagging": {
+        "name": "词性标注 (POS)",
+        "description": "识别语法类别",
+        "useCases": "语言学分析、NLP 预处理",
+        "models": "SpaCy, NLTK, Flair",
+        "difficulty": "初学者"
+      },
+      "dependencyParsing": {
+        "name": "依存分析",
+        "description": "分析句法结构",
+        "useCases": "语言理解、翻译",
+        "models": "SpaCy, Stanford Parser",
+        "difficulty": "高级"
+      },
+      "questionAnswering": {
+        "name": "问答",
+        "description": "回答关于文本的问题",
+        "useCases": "QA 助手、信息搜索",
+        "models": "BERT-QA, RoBERTa-QA, T5",
+        "difficulty": "高级"
+      },
+      "keyphraseExtraction": {
+        "name": "关键短语提取",
+        "description": "识别重要短语",
+        "useCases": "摘要、文档索引",
+        "models": "YAKE, KeyBERT, RAKE",
+        "difficulty": "中级"
+      },
+      "entityLinking": {
+        "name": "实体链接",
+        "description": "将实体链接到知识库",
+        "useCases": "数据富化、知识图谱",
+        "models": "BLINK, ELQ, GENRE",
+        "difficulty": "高级"
+      },
+      "toxicityClassification": {
+        "name": "毒性分类",
+        "description": "检测有毒或冒犯性内容",
+        "useCases": "内容审核、过滤器",
+        "models": "Perspective API, Detoxify, RoBERTa-Toxicity",
+        "difficulty": "中级"
+      },
+      "languageIdentification": {
+        "name": "语言识别",
+        "description": "检测文本的语言",
+        "useCases": "多语言处理、翻译",
+        "models": "langdetect, fastText, XLM-RoBERTa",
+        "difficulty": "初学者"
+      },
+      "useCasesLabel": "应用场景",
+      "modelsLabel": "推荐模型",
+      "difficultyLabel": "难度"
+    },
+    "categories": {
+      "images": "",
+      "classification": "",
+      "timeSeries": ""
+    },
+    "modality": "模态",
     "initialClasses": "初始类别（可选）",
     "classesPlaceholder": "类别1, 类别2, 类别3",
     "classesHelp": "用逗号分隔。之后可以添加更多。",
+    "imageDimensions": "图像尺寸",
+    "dimensionsAuto": "自动 — 接受任何尺寸",
+    "dimensionsFixed": "固定 — 所有图像将被调整大小",
+    "targetSize": "目标大小",
+    "resizeStrategy": "策略",
     "enterName": "请输入项目名称",
     "created": "项目 \"{name}\" 已创建",
-    "updated": "Updated",
+    "updated": "已更新",
     "loaded": "项目 \"{name}\" 已加载",
     "deleted": "项目已删除",
+    "duplicated": "项目 \"{name}\" 已复制",
+    "renamed": "项目已重命名",
+    "imported": "项目 \"{name}\" 已导入",
     "exported": "项目已导出",
     "configExported": "配置已导出",
-    "selectFirst": "请先选择项目"
+    "selectFirst": "请先选择一个项目",
+    "noProjects": "没有可用项目",
+    "manageProjects": "管理项目",
+    "renameProject": "重命名项目",
+    "newName": "新名称",
+    "images": "张图像",
+    "annotations": "个标注",
+    "exportBackup": "删除前下载 .tix 备份",
+    "deleteWarning": {
+      "title": "⚠️ 警告：永久删除",
+      "confirmTitle": "确认删除？",
+      "projectName": "项目：",
+      "message": "您即将永久删除此项目。",
+      "permanent": "此操作无法撤销",
+      "allData": "所有图像和标注都将被删除",
+      "noUndo": "没有方法恢复已删除的数据",
+      "recommendation": "💡 建议：删除前先将项目导出为 .tix 格式作为备份"
+    }
   },
   "notifications": {
     "imageSaved": "图像已保存",
+    "imagesLoaded": "{count} 张图像已加载",
     "datasetDownloaded": "数据集已下载",
-    "classesDownloaded": "classes.txt已下载",
+    "classesDownloaded": "classes.txt 已下载",
     "noClasses": "没有可下载的类别",
     "noImages": "项目中没有图像",
     "noAnnotations": "没有可下载的标注",
     "appStarted": "应用程序已启动",
+    "classDeleted": "类别及其所有标注已删除",
     "error": {
       "createProject": "创建项目时出错",
       "loadProject": "加载项目时出错",
       "updateProject": "更新项目时出错",
       "deleteProject": "删除项目时出错",
+      "duplicateProject": "复制项目时出错",
+      "renameProject": "重命名项目时出错",
+      "loadProjects": "加载项目列表时出错",
       "exportProject": "导出项目时出错",
       "exportConfig": "导出配置时出错",
       "importConfig": "导入配置时出错",
+      "importProject": "导入项目时出错",
       "loadImage": "加载图像时出错",
       "saveImage": "保存图像时出错",
       "deleteImage": "删除图像时出错",
       "loadImages": "加载图像时出错",
       "downloadDataset": "下载数据集时出错",
-      "initApp": "启动应用程序时出错"
-    }
+      "initApp": "启动应用程序时出错",
+      "export": "导出时出错",
+      "noImages": "错误：未找到图像"
+    },
+    "imageDeleted": "notifications.imageDeleted"
   },
   "tour": {
-    "welcome": "欢迎使用<strong>YOLO标注工具</strong>。此工具可让您标注图像以训练YOLO模型。",
-    "project": "首先，创建一个新项目或选择现有项目。每个项目可以是<strong>边界框</strong>或<strong>分割</strong>类型。",
-    "tools": "这里您会找到标注<strong>工具</strong>：框用于矩形，遮罩用于可绘制遮罩，选择用于编辑，平移用于移动视图。",
-    "classes": "定义您的标注<strong>类别</strong>。每个类别都有名称和颜色。您可以添加、编辑或删除类别。",
-    "workspace": "主<strong>工作区</strong>。在这里您将加载图像并创建标注。使用鼠标绘制，使用滚轮缩放。",
-    "management": "管理面板，您将在这里看到项目<strong>统计</strong>、图像<strong>图库</strong>，并可以以YOLO格式<strong>导出</strong>数据集。",
+    "welcome": "欢迎使用 <strong>Annotix</strong>！🎯<br><br>一款专业的图像和时间序列标注工具，用于训练机器学习模型。支持多种标注类型：<strong>Bounding Boxes</strong>、<strong>OBB</strong>、<strong>分割</strong>、<strong>Keypoints</strong>、<strong>多边形</strong>、<strong>Landmarks</strong>、<strong>时间序列</strong>和<strong>分类</strong>。",
+    "installation": "📦 <strong>本地安装</strong><br><br>Annotix 完全安装在您的 <strong>PC 上作为渐进式 Web 应用 (PWA)</strong>。初次安装后无需网络连接。可离线工作，直接从浏览器运行。",
+    "dataStorage": "💾 <strong>数据存储</strong><br><br><strong>重要：</strong>您的所有数据都保存在<strong>浏览器的 IndexedDB</strong> 中，而不是服务器上。这意味着：<br>• ✅ 完全隐私：数据永远不会离开您的 PC<br>• ✅ 无需网络即可工作<br>• ⚠️ 风险：如果您清除浏览器数据，一切都会丢失",
+    "projectBackup": "💼 <strong>项目备份</strong><br><br>为防止数据丢失：<br>• 以 <strong>.tix</strong> 格式导出项目（包含所有内容：图像、标注、类别）<br>• 您可以随时重新加载 .tix 文件<br>• 与其他用户共享 .tix 项目<br>• 还可以导出 <strong>.tixconfig</strong> 文件，仅共享类别配置",
+    "createProjectButton": "点击 <strong>新建项目</strong> 开始。创建窗口将打开，让您选择项目类型。",
+    "projectTypeSelection": "📋 <strong>项目类型</strong><br><br>在窗口中可以选择 <strong>8 种不同类型</strong>：<br>• <strong>Bounding Box</strong>：矩形框（目标检测）<br>• <strong>OBB</strong>：有向旋转框<br>• <strong>Mask</strong>：像素分割<br>• <strong>Keypoints</strong>：关键点（姿态估计）<br>• <strong>Polygon</strong>：自由多边形<br>• <strong>Landmarks</strong>：面部特征点<br>• <strong>Time Series</strong>：时间序列<br>• <strong>Classification</strong>：图像分类",
+    "projectName": "✏️ <strong>项目名称</strong><br><br>在窗口中输入项目的<strong>描述性名称</strong>。例如：'2024年汽车检测'或'细胞分割'。<br><br>项目类型决定了画布上可用的工具。",
+    "classesPanel": "这是<strong>类别管理面板</strong>。在这里定义要标注的类别。",
+    "classesInWorkflow": "🏷️ <strong>类别管理</strong><br><br>类别可以通过<strong>两种方式</strong>添加：<br><br>1. <strong>在项目创建窗口中：</strong>从一开始就定义主要类别<br><br>2. <strong>在右侧面板（当前）：</strong>在工作期间随时添加、编辑或删除类别<br><br>每个类别都有<strong>唯一名称</strong>、<strong>独特颜色</strong>和<strong>顺序 ID</strong>。使用 <strong>1-9</strong> 键快速选择类别。",
+    "gallery": "<strong>图像图库</strong>显示项目中的所有图像。您可以按全部、已标注或未标注进行过滤。缩略图显示每张图像的状态。",
+    "loadImages": "点击<strong>加载图像</strong>将图像导入项目。支持多种格式：JPG、PNG、WEBP。您还可以使用 <strong>Data Augmentation</strong> 自动生成图像变体。",
+    "workspace": "主<strong>工作区</strong>，您在这里查看和标注图像或时间序列。使用鼠标绘制，使用滚轮缩放，按住中键或使用 Pan 工具移动视图。",
+    "tools": "<strong>浮动工具</strong>根据项目类型而变化。包括：Box (B)、OBB (O)、Mask (M)、Select (V) 和 Pan (H)。每个工具都有特定的控件，如遮罩的画笔大小或缩放控件。",
+    "stats": "<strong>统计</strong>面板显示项目进度：总图像数、已标注图像、总标签数和类别数。进度条帮助您直观了解已完成的工作量。",
+    "exportButton": "<strong>导出</strong>按钮允许您下载数据集。让我们看看可用的选项...",
+    "exportFormats": "📦 <strong>导出格式</strong><br><br>在导出窗口中您将找到多种选项：<br><br>• <strong>YOLO Detection</strong>：.txt 归一化边界框<br>• <strong>YOLO Segmentation</strong>：.txt 遮罩多边形<br>• <strong>YOLO OBB</strong>：.txt 有向框<br>• <strong>COCO JSON</strong>：标准 COCO 格式<br>• <strong>U-Net Masks</strong>：用于分割的 PNG 图像<br>• <strong>Pascal VOC XML</strong>：Pascal VOC 格式<br>• <strong>CSV</strong>：数据表",
+    "trainingCode": "🐍 <strong>训练代码</strong><br><br>在导出窗口中，您将找到<strong>'生成 Python 训练代码'</strong>选项。<br><br>这会创建一个<strong>完整的示例脚本</strong>，使用 Ultralytics 的 <strong>YOLOv8</strong> 训练模型：<br>• 自动路径配置<br>• 带有最优超参数的训练脚本<br>• 开箱即用：只需安装依赖并训练",
+    "shortcuts": "点击<strong>键盘</strong>按钮或使用 F1 查看所有可用的<strong>键盘快捷键</strong>。包括 Ctrl+S 保存、Ctrl+Z 撤销、数字键选择类别等。",
+    "finish": "准备开始！🚀<br><br>请记住：<br>• 经常使用 <strong>Ctrl+S</strong> 保存<br>• 以 <strong>.tix</strong> 格式导出备份<br>• 您的数据<strong>仅在浏览器中</strong><br><br>如需帮助，点击 <strong>?</strong> 按钮重新查看此导览。",
     "next": "下一步 →",
     "prev": "← 上一步",
-    "done": "完成！",
-    "skip": "跳过"
+    "done": "了解！",
+    "skip": "跳过导览"
   },
   "imageInfo": {
     "noName": "无名称",
     "dimensions": "尺寸"
+  },
+  "preprocessing": {
+    "title": "图像预处理",
+    "detected": "检测到 {count} 张非正方形图像",
+    "description": "图像将被调整为正方形以优化训练。选择调整大小策略：",
+    "targetSize": "目标大小（像素）",
+    "recommended": "推荐：{size}px",
+    "strategy": "调整大小策略",
+    "strategies": {
+      "resize": {
+        "name": "调整大小 + 填充",
+        "description": "缩小图像并添加填充（优化空间和内存）"
+      },
+      "padding": {
+        "name": "仅填充",
+        "description": "保持原始大小并添加填充（更好的质量）"
+      }
+    },
+    "options": {
+      "apply": "应用预处理",
+      "skip": "不预处理直接上传"
+    },
+    "progress": "正在处理图像 {current} / {total}...",
+    "complete": "{count} 张图像预处理成功",
+    "preview": "预览",
+    "original": "原始",
+    "processed": "已处理",
+    "aspectRatio": "原始宽高比已保留",
+    "paddingInfo": "将添加对称的黑色填充"
+  },
+  "classification": {
+    "selectOne": "选择正确的标签",
+    "selectMultiple": "选择适用的标签",
+    "singleHint": "只能选择一个标签",
+    "multiHint": "可以选择多个标签",
+    "noLabels": "未分配标签",
+    "labeled": "已标记",
+    "selectLabel": "选择一个标签",
+    "selectLabels": "选择标签",
+    "selected": "已选择",
+    "multiLabel": "多标签分类",
+    "singleLabel": "简单分类",
+    "noImageSelected": "未选择图像。请从图库中选择一张图像。",
+    "multiLabelInstructions": "选择一个或多个适用于此图像的标签。按 Ctrl+S 保存。",
+    "singleLabelInstructions": "选择最能描述此图像的标签。按 Ctrl+S 保存。"
+  },
+  "augmentation": {
+    "title": "Data Augmentation",
+    "batchButton": "Data Augmentation",
+    "augmentImage": "应用 augmentation",
+    "variationsCount": "变体数量",
+    "variationsCountHelp": "要创建多少张增强图像？(1-20)",
+    "generationMode": "生成模式",
+    "modeManual": "手动（固定配置）",
+    "modeRandom": "随机（可配置范围）",
+    "modeManualHelp": "应用相同配置 N 次",
+    "modeRandomHelp": "在指定范围内以随机值生成 N 个变体",
+    "geometricTransforms": "几何变换",
+    "flipHorizontal": "水平翻转",
+    "flipVertical": "垂直翻转",
+    "rotation": "旋转",
+    "noRotation": "不旋转",
+    "customRotation": "自定义旋转",
+    "colorAdjustments": "颜色调整",
+    "brightness": "亮度",
+    "contrast": "对比度",
+    "saturation": "饱和度",
+    "randomOptions": "随机选项",
+    "randomFlip": "随机翻转（水平/垂直）",
+    "randomRotation": "随机旋转",
+    "randomColor": "随机颜色调整",
+    "rotationRange": "旋转范围（度）",
+    "brightnessRange": "亮度范围",
+    "contrastRange": "对比度范围",
+    "saturationRange": "饱和度范围",
+    "min": "最小",
+    "max": "最大",
+    "keepAnnotations": "保留变换后的标注",
+    "keepAnnotationsHelp": "边界框将随图像自动变换",
+    "maskProjectWarning": "遮罩项目",
+    "maskProjectWarningText": "标注将不会被保留。您需要在每张增强图像上手动绘制遮罩。",
+    "apply": "应用",
+    "processing": "处理 augmentation 中...",
+    "generatingVariations": "生成 {count} 个变体中...",
+    "variationsSuccess": "{count} 个变体创建成功",
+    "success": "增强图像创建成功",
+    "error": "应用 augmentation 时出错",
+    "batchProcessing": "对 {count} 张图像应用 augmentation...",
+    "batchRandomProcessing": "为 {images} 张图像生成 {variations} 个变体（共 {total} 个）...",
+    "batchSuccess": "{count} 张增强图像创建成功",
+    "batchRandomSuccess": "{count} 个随机变体创建成功",
+    "batchError": "批量应用 augmentation 时出错"
   },
   "pwa": {
     "installButton": "安装应用",
@@ -244,8 +1479,14 @@
       "benefit4": "✅ 无浏览器栏",
       "benefit5": "✅ 您的数据始终私密",
       "benefit6": "✅ 自动更新",
+      "platformCompatibility": "平台兼容性：",
+      "androidInfo": "<strong>Android：</strong>运行极佳。完全原生安装，如同 Play Store 应用。",
+      "iosInfo": "<strong>iOS/iPadOS：</strong>运行良好，但 Safari 可能会定期清除缓存。<strong>重要：</strong>请经常导出项目以保存进度。",
+      "linuxInfo": "<strong>Linux：</strong>完美运行。在 Chrome、Firefox 和 Edge 中完全支持。",
+      "windowsInfo": "<strong>Windows：</strong>在 Chrome 和 Edge 中应该没有问题，但我们尚未进行广泛测试。",
+      "generalTip": "💡 <strong>建议：</strong>无论您的操作系统如何，都请定期导出项目作为备份。",
       "cancelButton": "暂不安装",
-      "installButtonModal": "📥 安装应用"
+      "installButtonModal": "🖖 安装应用"
     },
     "notifications": {
       "installed": "Annotix 安装成功！",
@@ -255,6 +1496,254 @@
     }
   },
   "storage": {
-    "used": "IndexedDB 中使用的存储"
+    "used": "磁盘使用量"
+  },
+  "inference": {
+    "title": "模型推理",
+    "uploadModel": "上传模型",
+    "uploadPrompt": "点击上传 ONNX 模型",
+    "uploadHint": "支持 YOLO Detection、Segmentation 和 Classification",
+    "modelName": "模型",
+    "modelType": "类型",
+    "inputSize": "输入大小",
+    "settings": "设置",
+    "confidenceThreshold": "置信度阈值",
+    "autoInference": "加载图像时自动推理",
+    "runInference": "运行推理",
+    "clearPredictions": "清除全部",
+    "convertAll": "全部转换",
+    "process": "处理中...",
+    "predictions": "预测",
+    "highConf": "高置信度",
+    "time": "时间",
+    "distribution": "类别分布",
+    "batchProgress": "处理图像中...",
+    "showPredictions": "显示预测",
+    "hidePredictions": "隐藏预测",
+    "togglePredictions": "切换预测可见性",
+    "convertSelected": "转换选中的预测",
+    "convertToPrediction": "转换为标注",
+    "alreadyLoading": "模型正在加载中",
+    "loadingModel": "加载模型中...",
+    "modelLoaded": "模型 {name} 加载成功",
+    "loadModelError": "加载模型时出错：{error}",
+    "modelUnloaded": "模型已卸载",
+    "noModelLoaded": "未加载模型。请先上传模型。",
+    "inferenceCompleted": "{count} 个预测，用时 {time}ms",
+    "inferenceError": "推理错误：{error}",
+    "invalidModelName": "模型名称必须遵循格式：{expected}",
+    "viewModelTitle": "查看模型架构",
+    "viewModelInstructions": "下载模型并在 Netron 中打开以查看架构。",
+    "downloadModel": "下载模型",
+    "netronInstructions": "然后前往",
+    "netronInstructions2": "并打开下载的文件",
+    "viewModel": "查看模型架构",
+    "enforceNaming": "应用命名约定",
+    "helpText": "上传格式为 <strong>projectname_v1.onnx</strong> 的模型以确保兼容性。使用每张图像上的大脑按钮 <i class='fas fa-brain'></i> 运行推理。如果要测试其他模型，可以禁用名称验证。",
+    "modelArchitecture": "模型架构",
+    "modelInformation": "模型信息",
+    "dataFlow": "数据流",
+    "inputTensor": "输入张量",
+    "processing": "处理",
+    "outputTensor": "输出张量",
+    "inputs": "输入",
+    "outputs": "输出",
+    "format": "格式",
+    "advancedVisualization": "如需逐层高级可视化，请使用 Netron：",
+    "loadingArchitecture": "加载架构查看器...",
+    "netronInstructionsTitle": "交互式架构查看",
+    "netronInstructionsText": "将模型文件拖放到下方的 Netron 窗口中，逐层查看完整架构。",
+    "downloadForNetron": "下载模型文件",
+    "netronBrowserNote": "或直接将模型文件拖到下方的 Netron",
+    "overview": "概览",
+    "interactive": "交互式 (Netron)",
+    "totalLayers": "层数",
+    "operationStats": "操作统计",
+    "layerList": "层列表",
+    "detectedOps": "检测到的操作",
+    "parsingFailed": "无法解析模型",
+    "useNetron": "使用交互式选项卡查看完整架构",
+    "showingLayers": "显示 {shown} / {total} 层"
+  },
+  "connector": {
+    "connected": "Connector",
+    "disconnected": "无 Connector",
+    "connectedMessage": "Connector 在线 — 端口 5000",
+    "checking": "正在检查 Connector 连接...",
+    "connectedReady": "已连接 — 准备训练",
+    "notConnected": "无法连接到伴侣引擎",
+    "notConnectedHint": "请确保它正在运行",
+    "offlineMessage": "无法连接到伴侣引擎。\n\n您是否已下载并运行了桌面应用程序？\n请确保 'motor_server.exe' 正在您的 PC 上运行。",
+    "downloadTitle": "未检测到伴侣引擎",
+    "downloadMessage": "要在本地训练模型，您需要下载并安装 Annotix 伴侣引擎。",
+    "downloadHint": "伴侣引擎将在您的 PC 上后台运行，并允许您使用标注数据训练模型。",
+    "download": "下载伴侣引擎",
+    "downloadStarted": "下载已开始。完成后运行安装程序。",
+    "startTraining": "开始训练",
+    "trainingStarted": "训练已成功开始"
+  },
+  "timeseries": {
+    "noProjectSelected": "未选择项目。请选择一个时间序列项目。",
+    "importCSV": "导入 CSV 文件",
+    "importSuccess": "CSV 导入成功！",
+    "selectCSV": "选择 CSV 文件",
+    "hasHeader": "第一行包含表头",
+    "timestampColumn": "时间戳列（基于 0 的索引）",
+    "timestampColumnHelp": "时间戳的列索引（默认：0 = 第一列）",
+    "import": "导入",
+    "csvFormatInfo": "CSV 格式：第一列应为时间戳，其余列为数值。例如：时间,值1,值2",
+    "noSeriesSelected": "未选择时间序列。请从图库中选择一个序列。",
+    "dataPoints": "个数据点",
+    "series": "个序列",
+    "annotations": "标注",
+    "annotationsCount": "个标注",
+    "addAnnotation": "添加标注",
+    "totalSeries": "总序列数",
+    "annotated": "已标注",
+    "pending": "待处理",
+    "seriesList": "时间序列列表",
+    "noSeriesYet": "暂无时间序列",
+    "importCSVToStart": "导入 CSV 文件以开始",
+    "deleteConfirm": "确定要删除此时间序列吗？",
+    "tools": {
+      "select": "选择",
+      "point": "点",
+      "range": "范围",
+      "event": "事件",
+      "anomaly": "异常",
+      "classification": "分类"
+    },
+    "clearAnnotations": "清除所有标注",
+    "noAnnotations": "暂无标注。选择一个工具并点击图表以添加标注。",
+    "instructions": {
+      "point": "点击图表以标记标注点",
+      "range": "点击设置起点，然后再次点击设置终点",
+      "event": "点击图表以标记事件",
+      "anomaly": "点击图表以标记异常"
+    }
+  },
+  "training": {
+    "title": "训练模型",
+    "description": "使用标注数据集训练YOLO模型",
+    "start": "开始训练",
+    "starting": "启动中...",
+    "cancel": "取消训练",
+    "env": {
+      "checking": "检查Python环境...",
+      "ready": "Python环境就绪",
+      "notInstalled": "Python环境未配置",
+      "description": "Annotix需要安装ultralytics的Python来训练模型。点击下方自动设置。",
+      "setup": "配置环境",
+      "setupHint": "首次设置可能需要几分钟"
+    },
+    "gpu": {
+      "detecting": "检测中..."
+    },
+    "presets": {
+      "title": "训练预设",
+      "quick": "快速",
+      "quickDesc": "50轮，轻度增强。适合测试。",
+      "balanced": "均衡",
+      "balancedDesc": "100轮，中度增强。推荐。",
+      "full": "完整",
+      "fullDesc": "300轮，强力增强。最高精度。"
+    },
+    "model": {
+      "version": "YOLO版本",
+      "size": "模型大小",
+      "recommended": "推荐",
+      "sizeDescNano": "最快，精度较低。适合边缘设备。",
+      "sizeDescSmall": "快速且精度不错。",
+      "sizeDescMedium": "速度与精度均衡。",
+      "sizeDescLarge": "高精度，训练较慢。",
+      "sizeDescXLarge": "最高精度，训练最慢。"
+    },
+    "config": {
+      "title": "训练配置",
+      "advanced": "高级设置",
+      "epochs": "训练轮数",
+      "batchSize": "批次大小",
+      "batchSizeHint": "-1为自动批次大小",
+      "imageSize": "图像大小",
+      "optimizer": "优化器",
+      "lr0": "初始学习率",
+      "lrf": "最终学习率",
+      "patience": "耐心值",
+      "valSplit": "验证集比例",
+      "workers": "工作线程",
+      "device": "设备",
+      "augmentation": "数据增强"
+    },
+    "augmentation": {
+      "mosaic": "马赛克",
+      "mixup": "MixUp",
+      "hsv_h": "HSV色调",
+      "hsv_s": "HSV饱和度",
+      "hsv_v": "HSV亮度",
+      "flipud": "上下翻转",
+      "fliplr": "左右翻转",
+      "degrees": "旋转",
+      "scale": "缩放",
+      "shear": "剪切",
+      "perspective": "透视",
+      "copy_paste": "复制粘贴",
+      "erasing": "擦除"
+    },
+    "monitor": {
+      "title": "训练进行中",
+      "epochProgress": "轮次 {{epoch}} / {{total}}",
+      "epoch": "轮次",
+      "loss": "损失",
+      "metrics": "指标",
+      "precision": "精确率",
+      "recall": "召回率",
+      "logs": "训练日志",
+      "waitingMetrics": "等待指标...",
+      "waitingLogs": "等待日志..."
+    },
+    "status": {
+      "pending": "等待中",
+      "training": "训练中",
+      "completed": "已完成",
+      "failed": "失败",
+      "cancelled": "已取消"
+    },
+    "result": {
+      "completed": "训练完成",
+      "description": "模型训练成功完成。",
+      "finalMetrics": "最终指标",
+      "modelPaths": "模型文件",
+      "exported": "已导出模型",
+      "exportModel": "导出模型",
+      "newTraining": "开始新训练"
+    },
+    "jobs": {
+      "title": "训练历史",
+      "empty": "暂无训练记录"
+    }
+  },
+  "setup": {
+    "welcome": "欢迎使用 Annotix",
+    "description": "选择一个文件夹来存储您的项目。每个项目将是一个包含图片、标注和配置的子文件夹。",
+    "selectFolder": "选择项目文件夹",
+    "selectedFolder": "已选文件夹",
+    "confirm": "开始使用",
+    "noFolder": "未选择文件夹",
+    "changeFolder": "更改文件夹"
+  },
+  "video": {
+    "upload": "上传视频",
+    "fpsTitle": "配置提取",
+    "fpsLabel": "每秒提取帧数",
+    "fpsHelp": "较低值 = 更少帧数，更快速。推荐：2-10 FPS",
+    "resolution": "分辨率",
+    "duration": "时长",
+    "estimatedFrames": "将生成大约 {{count}} 张图片",
+    "extract": "提取帧",
+    "uploading": "正在上传视频...",
+    "extracting": "正在提取帧...",
+    "extractingFrame": "正在提取帧 {{current}} / {{total}}",
+    "processing": "正在处理视频",
+    "done": "完成"
   }
 }

@@ -21,7 +21,7 @@ export function withTranslationLogging<OriginalProps extends WithTranslation>(
         // Store missing keys in localStorage for tracking across sessions
         if (typeof window !== 'undefined' && window.localStorage) {
           const missingKeysKey = `missing_translation_keys_${currentLang}`;
-          let missingKeys = JSON.parse(localStorage.getItem(missingKeysKey) || '{}');
+          const missingKeys = JSON.parse(localStorage.getItem(missingKeysKey) || '{}');
           
           // Add or increment the count for this key
           missingKeys[key] = (missingKeys[key] || 0) + 1;

@@ -1,59 +1,62 @@
 use tauri::{AppHandle, Emitter, State};
 
-use crate::db::models::{TimeSeriesAnnotation, TimeSeriesRecord};
-use crate::db::Database;
+use crate::store::project_file::TsAnnotationEntry;
+use crate::store::timeseries::TimeSeriesResponse;
+use crate::store::AppState;
 
 #[tauri::command]
 pub fn create_timeseries(
-    db: State<'_, Database>,
+    state: State<'_, AppState>,
     app: AppHandle,
-    project_id: i64,
+    project_id: String,
     name: String,
     data: serde_json::Value,
-) -> Result<i64, String> {
-    let id = db.create_timeseries(project_id, &name, &data, &[])?;
-    let _ = app.emit("db:timeseries-changed", project_id);
+    annotations: Option<Vec<TsAnnotationEntry>>,
+) -> Result<String, String> {
+    let anns = annotations.unwrap_or_default();
+    let id = state.create_timeseries(&project_id, &name, data, &anns)?;
+    let _ = app.emit("db:timeseries-changed", &project_id);
     Ok(id)
 }
 
 #[tauri::command]
-pub fn get_timeseries(db: State<'_, Database>, id: i64) -> Result<Option<TimeSeriesRecord>, String> {
-    db.get_timeseries(id)
+pub fn get_timeseries(
+    state: State<'_, AppState>,
+    project_id: String,
+    id: String,
+) -> Result<Option<TimeSeriesResponse>, String> {
+    state.get_timeseries(&project_id, &id)
 }
 
 #[tauri::command]
 pub fn list_timeseries_by_project(
-    db: State<'_, Database>,
-    project_id: i64,
-) -> Result<Vec<TimeSeriesRecord>, String> {
-    db.list_timeseries_by_project(project_id)
+    state: State<'_, AppState>,
+    project_id: String,
+) -> Result<Vec<TimeSeriesResponse>, String> {
+    state.list_timeseries(&project_id)
 }
 
 #[tauri::command]
 pub fn save_ts_annotations(
-    db: State<'_, Database>,
+    state: State<'_, AppState>,
     app: AppHandle,
-    timeseries_id: i64,
-    annotations: Vec<TimeSeriesAnnotation>,
+    project_id: String,
+    timeseries_id: String,
+    annotations: Vec<TsAnnotationEntry>,
 ) -> Result<(), String> {
-    db.save_ts_annotations(timeseries_id, &annotations)?;
-    // Obtener project_id para el evento
-    if let Ok(Some(ts)) = db.get_timeseries(timeseries_id) {
-        let _ = app.emit("db:timeseries-changed", ts.project_id);
-    }
+    state.save_ts_annotations(&project_id, &timeseries_id, &annotations)?;
+    let _ = app.emit("db:timeseries-changed", &project_id);
     Ok(())
 }
 
 #[tauri::command]
 pub fn delete_timeseries(
-    db: State<'_, Database>,
+    state: State<'_, AppState>,
     app: AppHandle,
-    id: i64,
+    project_id: String,
+    id: String,
 ) -> Result<(), String> {
-    let project_id = db.get_timeseries(id)?.map(|ts| ts.project_id);
-    db.delete_timeseries(id)?;
-    if let Some(pid) = project_id {
-        let _ = app.emit("db:timeseries-changed", pid);
-    }
+    state.delete_timeseries(&project_id, &id)?;
+    let _ = app.emit("db:timeseries-changed", &project_id);
     Ok(())
 }

@@ -39,7 +39,7 @@
     "oneToNine": "1-9",
     "ctrlS": "Ctrl+S",
     "arrowKeys": "← →",
-    "understand": "common.understand"
+    "understand": "Entendido"
   },
   "header": {
     "selectProject": "Seleccionar proyecto...",
@@ -49,7 +49,7 @@
     "export": "Exportar",
     "help": "Ayuda"
   },
-  "help":{
+  "help": {
     "shortcuts": "Atajos del teclado"
   },
   "shortcuts": {
@@ -146,15 +146,42 @@
         "name": "Rotar derecha",
         "key": "D"
       },
-      "class1": { "name": "Seleccionar Clase 1", "key": "1" },
-      "class2": { "name": "Seleccionar Clase 2", "key": "2" },
-      "class3": { "name": "Seleccionar Clase 3", "key": "3" },
-      "class4": { "name": "Seleccionar Clase 4", "key": "4" },
-      "class5": { "name": "Seleccionar Clase 5", "key": "5" },
-      "class6": { "name": "Seleccionar Clase 6", "key": "6" },
-      "class7": { "name": "Seleccionar Clase 7", "key": "7" },
-      "class8": { "name": "Seleccionar Clase 8", "key": "8" },
-      "class9": { "name": "Seleccionar Clase 9", "key": "9" }
+      "class1": {
+        "name": "Seleccionar Clase 1",
+        "key": "1"
+      },
+      "class2": {
+        "name": "Seleccionar Clase 2",
+        "key": "2"
+      },
+      "class3": {
+        "name": "Seleccionar Clase 3",
+        "key": "3"
+      },
+      "class4": {
+        "name": "Seleccionar Clase 4",
+        "key": "4"
+      },
+      "class5": {
+        "name": "Seleccionar Clase 5",
+        "key": "5"
+      },
+      "class6": {
+        "name": "Seleccionar Clase 6",
+        "key": "6"
+      },
+      "class7": {
+        "name": "Seleccionar Clase 7",
+        "key": "7"
+      },
+      "class8": {
+        "name": "Seleccionar Clase 8",
+        "key": "8"
+      },
+      "class9": {
+        "name": "Seleccionar Clase 9",
+        "key": "9"
+      }
     }
   },
   "projects": {
@@ -707,7 +734,6 @@
     "notAvailable": "Exportación no disponible para este tipo de proyecto",
     "preparing": "Preparando exportación...",
     "success": "Dataset exportado exitosamente",
-    "downloadDataheaderset": "Descargar Dataset",
     "description": "Selecciona uno de los formatos disponibles para exportar el proyecto",
     "downloadDataset": "Descargar dataset",
     "export": "Exportar",
@@ -1470,7 +1496,7 @@
     }
   },
   "storage": {
-    "used": "Almacenamiento usado en IndexedDB"
+    "used": "Uso en disco"
   },
   "inference": {
     "title": "Inferencia de Modelo",
@@ -1595,5 +1621,129 @@
       "event": "Haz clic en el gráfico para marcar un evento",
       "anomaly": "Haz clic en el gráfico para marcar una anomalía"
     }
+  },
+  "training": {
+    "title": "Entrenar Modelo",
+    "description": "Entrena un modelo YOLO con tu dataset anotado",
+    "start": "Iniciar Entrenamiento",
+    "starting": "Iniciando...",
+    "cancel": "Cancelar Entrenamiento",
+    "env": {
+      "checking": "Verificando entorno Python...",
+      "ready": "Entorno Python listo",
+      "notInstalled": "Entorno Python no configurado",
+      "description": "Annotix necesita Python con ultralytics para entrenar modelos. Haz clic para configurar automáticamente.",
+      "setup": "Configurar Entorno",
+      "setupHint": "Esto puede tardar unos minutos la primera vez"
+    },
+    "gpu": {
+      "detecting": "Detectando..."
+    },
+    "presets": {
+      "title": "Preset de Entrenamiento",
+      "quick": "Rápido",
+      "quickDesc": "50 épocas, aumento ligero. Bueno para pruebas.",
+      "balanced": "Balanceado",
+      "balancedDesc": "100 épocas, aumento medio. Recomendado.",
+      "full": "Completo",
+      "fullDesc": "300 épocas, aumento intenso. Mejor precisión."
+    },
+    "model": {
+      "version": "Versión YOLO",
+      "size": "Tamaño del Modelo",
+      "recommended": "Recomendado",
+      "sizeDescNano": "El más rápido, menor precisión. Ideal para dispositivos edge.",
+      "sizeDescSmall": "Rápido con buena precisión.",
+      "sizeDescMedium": "Velocidad y precisión balanceadas.",
+      "sizeDescLarge": "Alta precisión, entrenamiento más lento.",
+      "sizeDescXLarge": "Máxima precisión, entrenamiento más lento."
+    },
+    "config": {
+      "title": "Configuración de Entrenamiento",
+      "advanced": "Configuración Avanzada",
+      "epochs": "Épocas",
+      "batchSize": "Tamaño de Lote",
+      "batchSizeHint": "-1 para tamaño automático",
+      "imageSize": "Tamaño de Imagen",
+      "optimizer": "Optimizador",
+      "lr0": "LR Inicial",
+      "lrf": "LR Final",
+      "patience": "Paciencia",
+      "valSplit": "Split Validación",
+      "workers": "Workers",
+      "device": "Dispositivo",
+      "augmentation": "Aumentación"
+    },
+    "augmentation": {
+      "mosaic": "Mosaico",
+      "mixup": "MixUp",
+      "hsv_h": "HSV Tono",
+      "hsv_s": "HSV Saturación",
+      "hsv_v": "HSV Valor",
+      "flipud": "Volteo Vertical",
+      "fliplr": "Volteo Horizontal",
+      "degrees": "Rotación",
+      "scale": "Escala",
+      "shear": "Cizalla",
+      "perspective": "Perspectiva",
+      "copy_paste": "Copiar-Pegar",
+      "erasing": "Borrado"
+    },
+    "monitor": {
+      "title": "Entrenamiento en Progreso",
+      "epochProgress": "Época {{epoch}} / {{total}}",
+      "epoch": "Época",
+      "loss": "Pérdida",
+      "metrics": "Métricas",
+      "precision": "Precisión",
+      "recall": "Recall",
+      "logs": "Logs de Entrenamiento",
+      "waitingMetrics": "Esperando métricas...",
+      "waitingLogs": "Esperando logs..."
+    },
+    "status": {
+      "pending": "Pendiente",
+      "training": "Entrenando",
+      "completed": "Completado",
+      "failed": "Fallido",
+      "cancelled": "Cancelado"
+    },
+    "result": {
+      "completed": "Entrenamiento Completo",
+      "description": "Tu modelo ha sido entrenado exitosamente.",
+      "finalMetrics": "Métricas Finales",
+      "modelPaths": "Archivos del Modelo",
+      "exported": "Modelos Exportados",
+      "exportModel": "Exportar Modelo",
+      "newTraining": "Nuevo Entrenamiento"
+    },
+    "jobs": {
+      "title": "Historial de Entrenamientos",
+      "empty": "No hay entrenamientos aún"
+    }
+  },
+  "setup": {
+    "welcome": "Bienvenido a Annotix",
+    "description": "Elige una carpeta donde se guardarán tus proyectos. Cada proyecto será una subcarpeta con sus imágenes, anotaciones y configuración.",
+    "selectFolder": "Seleccionar Carpeta de Proyectos",
+    "selectedFolder": "Carpeta seleccionada",
+    "confirm": "Comenzar",
+    "noFolder": "Ninguna carpeta seleccionada",
+    "changeFolder": "Cambiar Carpeta"
+  },
+  "video": {
+    "upload": "Subir video",
+    "fpsTitle": "Configurar extracción",
+    "fpsLabel": "Frames por segundo a extraer",
+    "fpsHelp": "Valores bajos = menos frames, más rápido. Recomendado: 2-10 FPS",
+    "resolution": "Resolución",
+    "duration": "Duración",
+    "estimatedFrames": "Se generarán aproximadamente {{count}} imágenes",
+    "extract": "Extraer frames",
+    "uploading": "Subiendo video...",
+    "extracting": "Extrayendo frames...",
+    "extractingFrame": "Extrayendo frame {{current}} / {{total}}",
+    "processing": "Procesando video",
+    "done": "Listo"
   }
 }

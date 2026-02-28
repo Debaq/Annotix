@@ -8,9 +8,9 @@ interface VideoTrackListProps {
   tracks: VideoTrack[];
   classes: ClassDefinition[];
   currentFrameIndex: number;
-  onCreateTrack: (classId: number, label?: string) => Promise<void>;
-  onDeleteTrack: (trackId: number) => Promise<void>;
-  onUpdateTrack: (trackId: number, updates: { classId?: number; label?: string; enabled?: boolean }) => Promise<void>;
+  onCreateTrack: (classId: number, label?: string) => Promise<string | undefined | void>;
+  onDeleteTrack: (trackId: string) => Promise<void>;
+  onUpdateTrack: (trackId: string, updates: { classId?: number; label?: string; enabled?: boolean }) => Promise<void>;
 }
 
 export function VideoTrackList({

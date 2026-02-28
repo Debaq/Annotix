@@ -1,6 +1,6 @@
 /**
  * tauriDb.ts - Puente entre el frontend React y el backend Rust via Tauri invoke()
- * Reemplaza Dexie.js/IndexedDB por comandos Tauri que acceden a SQLite.
+ * Puente entre el frontend React y el backend Rust via Tauri invoke().
  */
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
@@ -17,8 +17,8 @@ import type {
 
 // Re-export el tipo AnnotixImage adaptado para Tauri (sin Blob, con blobPath)
 export interface TauriAnnotixImage {
-  id?: number;
-  projectId: number;
+  id?: string;
+  projectId: string;
   name: string;
   blobPath: string;
   width: number;
@@ -32,8 +32,8 @@ export interface TauriAnnotixImage {
 }
 
 export interface TauriTimeSeriesRecord {
-  id?: number;
-  projectId: number;
+  id?: string;
+  projectId: string;
   name: string;
   data: unknown;
   annotations: TimeSeriesAnnotation[];
@@ -56,15 +56,15 @@ export async function createProject(
   name: string,
   projectType: string,
   classes: ClassDefinition[]
-): Promise<number> {
-  return invoke<number>('create_project', {
+): Promise<string> {
+  return invoke<string>('create_project', {
     name,
     projectType,
     classes,
   });
 }
 
-export async function getProject(id: number): Promise<Project | null> {
+export async function getProject(id: string): Promise<Project | null> {
   return invoke<Project | null>('get_project', { id });
 }
 
@@ -73,7 +73,7 @@ export async function listProjects(): Promise<Project[]> {
 }
 
 export async function updateProject(
-  id: number,
+  id: string,
   updates: {
     name?: string;
     projectType?: string;
@@ -83,26 +83,26 @@ export async function updateProject(
   return invoke('update_project', { id, ...updates });
 }
 
-export async function deleteProject(id: number): Promise<void> {
+export async function deleteProject(id: string): Promise<void> {
   return invoke('delete_project', { id });
 }
 
 // ─── Image Commands ──────────────────────────────────────────────────────────
 
 export async function uploadImages(
-  projectId: number,
+  projectId: string,
   filePaths: string[]
-): Promise<number[]> {
-  return invoke<number[]>('upload_images', { projectId, filePaths });
+): Promise<string[]> {
+  return invoke<string[]>('upload_images', { projectId, filePaths });
 }
 
 export async function uploadImageBytes(
-  projectId: number,
+  projectId: string,
   fileName: string,
   data: number[],
   annotations: Annotation[] = []
-): Promise<number> {
-  return invoke<number>('upload_image_bytes', {
+): Promise<string> {
+  return invoke<string>('upload_image_bytes', {
     projectId,
     fileName,
     data,
@@ -110,53 +110,55 @@ export async function uploadImageBytes(
   });
 }
 
-export async function getImage(id: number): Promise<TauriAnnotixImage | null> {
-  return invoke<TauriAnnotixImage | null>('get_image', { id });
+export async function getImage(projectId: string, id: string): Promise<TauriAnnotixImage | null> {
+  return invoke<TauriAnnotixImage | null>('get_image', { projectId, id });
 }
 
 export async function listImagesByProject(
-  projectId: number
+  projectId: string
 ): Promise<TauriAnnotixImage[]> {
   return invoke<TauriAnnotixImage[]>('list_images_by_project', { projectId });
 }
 
-export async function getImageData(id: number): Promise<number[]> {
-  return invoke<number[]>('get_image_data', { id });
+export async function getImageData(projectId: string, id: string): Promise<number[]> {
+  return invoke<number[]>('get_image_data', { projectId, id });
 }
 
-export async function getImageFilePath(id: number): Promise<string> {
-  return invoke<string>('get_image_file_path', { id });
+export async function getImageFilePath(projectId: string, id: string): Promise<string> {
+  return invoke<string>('get_image_file_path', { projectId, id });
 }
 
 export async function saveAnnotations(
-  imageId: number,
+  projectId: string,
+  imageId: string,
   annotations: Annotation[]
 ): Promise<void> {
-  return invoke('save_annotations', { imageId, annotations });
+  return invoke('save_annotations', { projectId, imageId, annotations });
 }
 
-export async function deleteImage(id: number): Promise<void> {
-  return invoke('delete_image', { id });
+export async function deleteImage(projectId: string, id: string): Promise<void> {
+  return invoke('delete_image', { projectId, id });
 }
 
 // ─── TimeSeries Commands ─────────────────────────────────────────────────────
 
 export async function createTimeseries(
-  projectId: number,
+  projectId: string,
   name: string,
   data: unknown
-): Promise<number> {
-  return invoke<number>('create_timeseries', { projectId, name, data });
+): Promise<string> {
+  return invoke<string>('create_timeseries', { projectId, name, data });
 }
 
 export async function getTimeseries(
-  id: number
+  projectId: string,
+  id: string
 ): Promise<TauriTimeSeriesRecord | null> {
-  return invoke<TauriTimeSeriesRecord | null>('get_timeseries', { id });
+  return invoke<TauriTimeSeriesRecord | null>('get_timeseries', { projectId, id });
 }
 
 export async function listTimeseriesByProject(
-  projectId: number
+  projectId: string
 ): Promise<TauriTimeSeriesRecord[]> {
   return invoke<TauriTimeSeriesRecord[]>('list_timeseries_by_project', {
     projectId,
@@ -164,14 +166,15 @@ export async function listTimeseriesByProject(
 }
 
 export async function saveTsAnnotations(
-  timeseriesId: number,
+  projectId: string,
+  timeseriesId: string,
   annotations: TimeSeriesAnnotation[]
 ): Promise<void> {
-  return invoke('save_ts_annotations', { timeseriesId, annotations });
+  return invoke('save_ts_annotations', { projectId, timeseriesId, annotations });
 }
 
-export async function deleteTimeseries(id: number): Promise<void> {
-  return invoke('delete_timeseries', { id });
+export async function deleteTimeseries(projectId: string, id: string): Promise<void> {
+  return invoke('delete_timeseries', { projectId, id });
 }
 
 // ─── Storage Commands ────────────────────────────────────────────────────────
@@ -182,103 +185,104 @@ export async function getStorageInfo(): Promise<StorageInfo> {
 
 // ─── Video Commands ─────────────────────────────────────────────────────────
 
-export async function checkFfmpegAvailable(): Promise<boolean> {
-  return invoke<boolean>('check_ffmpeg_available');
-}
-
 export async function getVideoInfo(path: string): Promise<VideoInfo> {
   return invoke<VideoInfo>('get_video_info', { path });
 }
 
 export async function uploadVideo(
-  projectId: number,
+  projectId: string,
   filePath: string,
   fpsExtraction: number
-): Promise<number> {
-  return invoke<number>('upload_video', { projectId, filePath, fpsExtraction });
+): Promise<string> {
+  return invoke<string>('upload_video', { projectId, filePath, fpsExtraction });
 }
 
 export async function extractVideoFrames(
-  projectId: number,
-  videoId: number
+  projectId: string,
+  videoId: string
 ): Promise<number> {
   return invoke<number>('extract_video_frames', { projectId, videoId });
 }
 
-export async function getVideo(videoId: number): Promise<Video | null> {
-  return invoke<Video | null>('get_video', { videoId });
+export async function getVideo(projectId: string, videoId: string): Promise<Video | null> {
+  return invoke<Video | null>('get_video', { projectId, videoId });
 }
 
-export async function listVideosByProject(projectId: number): Promise<Video[]> {
+export async function listVideosByProject(projectId: string): Promise<Video[]> {
   return invoke<Video[]>('list_videos_by_project', { projectId });
 }
 
-export async function listFramesByVideo(videoId: number): Promise<AnnotixImage[]> {
-  return invoke<AnnotixImage[]>('list_frames_by_video', { videoId });
+export async function listFramesByVideo(projectId: string, videoId: string): Promise<AnnotixImage[]> {
+  return invoke<AnnotixImage[]>('list_frames_by_video', { projectId, videoId });
 }
 
-export async function deleteVideo(videoId: number): Promise<void> {
-  return invoke('delete_video', { videoId });
+export async function deleteVideo(projectId: string, videoId: string): Promise<void> {
+  return invoke('delete_video', { projectId, videoId });
 }
 
 export async function createTrack(
-  videoId: number,
+  projectId: string,
+  videoId: string,
   trackUuid: string,
   classId: number,
   label?: string
-): Promise<number> {
-  return invoke<number>('create_track', { videoId, trackUuid, classId, label });
+): Promise<string> {
+  return invoke<string>('create_track', { projectId, videoId, trackUuid, classId, label });
 }
 
-export async function listTracksByVideo(videoId: number): Promise<VideoTrack[]> {
-  return invoke<VideoTrack[]>('list_tracks_by_video', { videoId });
+export async function listTracksByVideo(projectId: string, videoId: string): Promise<VideoTrack[]> {
+  return invoke<VideoTrack[]>('list_tracks_by_video', { projectId, videoId });
 }
 
 export async function updateTrack(
-  trackId: number,
-  videoId: number,
+  projectId: string,
+  trackId: string,
+  videoId: string,
   updates: { classId?: number; label?: string; enabled?: boolean }
 ): Promise<void> {
-  return invoke('update_track', { trackId, videoId, ...updates });
+  return invoke('update_track', { projectId, trackId, videoId, ...updates });
 }
 
-export async function deleteTrack(trackId: number, videoId: number): Promise<void> {
-  return invoke('delete_track', { trackId, videoId });
+export async function deleteTrack(projectId: string, trackId: string, videoId: string): Promise<void> {
+  return invoke('delete_track', { projectId, trackId, videoId });
 }
 
 export async function setKeyframe(
-  trackId: number,
-  videoId: number,
+  projectId: string,
+  trackId: string,
+  videoId: string,
   frameIndex: number,
   bboxX: number,
   bboxY: number,
   bboxWidth: number,
   bboxHeight: number
-): Promise<number> {
-  return invoke<number>('set_keyframe', {
-    trackId, videoId, frameIndex, bboxX, bboxY, bboxWidth, bboxHeight,
+): Promise<string> {
+  return invoke<string>('set_keyframe', {
+    projectId, trackId, videoId, frameIndex, bboxX, bboxY, bboxWidth, bboxHeight,
   });
 }
 
 export async function deleteKeyframe(
-  trackId: number,
-  videoId: number,
+  projectId: string,
+  trackId: string,
+  videoId: string,
   frameIndex: number
 ): Promise<void> {
-  return invoke('delete_keyframe', { trackId, videoId, frameIndex });
+  return invoke('delete_keyframe', { projectId, trackId, videoId, frameIndex });
 }
 
 export async function toggleKeyframeEnabled(
-  trackId: number,
-  videoId: number,
+  projectId: string,
+  trackId: string,
+  videoId: string,
   frameIndex: number,
   enabled: boolean
 ): Promise<void> {
-  return invoke('toggle_keyframe_enabled', { trackId, videoId, frameIndex, enabled });
+  return invoke('toggle_keyframe_enabled', { projectId, trackId, videoId, frameIndex, enabled });
 }
 
-export async function bakeVideoTracks(videoId: number): Promise<void> {
-  return invoke('bake_video_tracks', { videoId });
+export async function bakeVideoTracks(projectId: string, videoId: string): Promise<void> {
+  return invoke('bake_video_tracks', { projectId, videoId });
 }
 
 // ─── Event Listeners (reactividad) ──────────────────────────────────────────
@@ -288,33 +292,33 @@ export function onProjectsChanged(callback: () => void): Promise<UnlistenFn> {
 }
 
 export function onImagesChanged(
-  callback: (projectId: number) => void
+  callback: (projectId: string) => void
 ): Promise<UnlistenFn> {
-  return listen<number>('db:images-changed', (event) =>
+  return listen<string>('db:images-changed', (event) =>
     callback(event.payload)
   );
 }
 
 export function onTimeseriesChanged(
-  callback: (projectId: number) => void
+  callback: (projectId: string) => void
 ): Promise<UnlistenFn> {
-  return listen<number>('db:timeseries-changed', (event) =>
+  return listen<string>('db:timeseries-changed', (event) =>
     callback(event.payload)
   );
 }
 
 export function onVideosChanged(
-  callback: (projectId: number) => void
+  callback: (projectId: string) => void
 ): Promise<UnlistenFn> {
-  return listen<number>('db:videos-changed', (event) =>
+  return listen<string>('db:videos-changed', (event) =>
     callback(event.payload)
   );
 }
 
 export function onTracksChanged(
-  callback: (videoId: number) => void
+  callback: (videoId: string) => void
 ): Promise<UnlistenFn> {
-  return listen<number>('db:tracks-changed', (event) =>
+  return listen<string>('db:tracks-changed', (event) =>
     callback(event.payload)
   );
 }

@@ -2,46 +2,365 @@
   "language": "한국어",
   "code": "ko",
   "app": {
-    "title": "YOLO 주석 도구",
+    "title": "Annotix",
     "subtitle": "전문 주석 도구",
     "branding": {
       "fablab": "TecMedHub",
-      "university": "칠레 남부대학교 - 푸에르토 몬트 캠퍼스"
+      "university": "Universidad Austral de Chile - 푸에르토몬트 캠퍼스"
     }
+  },
+  "common": {
+    "loading": "로딩 중...",
+    "creating": "생성 중...",
+    "importing": "가져오는 중...",
+    "saving": "저장 중...",
+    "cancel": "취소",
+    "create": "생성",
+    "confirm": "확인",
+    "close": "닫기",
+    "duplicate": "복제",
+    "rename": "이름 변경",
+    "exportBackup": "백업 내보내기",
+    "deleteConfirm": "예, 삭제합니다",
+    "clearConfirm": "이 이미지의 모든 주석을 지우시겠습니까?",
+    "clear": "지우기",
+    "delete": "삭제",
+    "save": "저장",
+    "undo": "실행 취소",
+    "actions": "작업",
+    "exportDataset": "데이터셋 내보내기",
+    "backToProjects": "프로젝트로 돌아가기",
+    "classes": "클래스",
+    "selectImageToStart": "주석을 시작하려면 이미지를 선택하세요",
+    "missingTranslations": "누락된 번역",
+    "hide": "숨기기",
+    "totalKeys": "전체 키:",
+    "totalUsages": "전체 사용:",
+    "oneToNine": "1-9",
+    "ctrlS": "Ctrl+S",
+    "arrowKeys": "← →",
+    "understand": "이해했습니다"
   },
   "header": {
     "selectProject": "프로젝트 선택...",
-    "newProject": "새로 만들기",
-    "exportProject": "전체 프로젝트 내보내기",
-    "exportConfig": "설정 내보내기",
-    "importConfig": "설정 가져오기",
+    "newProject": "새 프로젝트",
+    "openProject": "프로젝트 열기",
+    "manageProjects": "프로젝트 관리",
+    "export": "내보내기",
     "help": "도움말"
+  },
+  "help": {
+    "shortcuts": "키보드 단축키"
+  },
+  "shortcuts": {
+    "title": "키보드 단축키",
+    "tip": "단축키는 캔버스에서 작업하는 동안에도 사용할 수 있습니다. 언제든지 ?를 눌러 이 모달을 열 수 있습니다.",
+    "categories": {
+      "general": "일반",
+      "navigation": "탐색",
+      "tools": "도구",
+      "editing": "편집"
+    },
+    "items": {
+      "save": {
+        "name": "저장",
+        "key": "Ctrl+S"
+      },
+      "undo": {
+        "name": "실행 취소",
+        "key": "Ctrl+Z"
+      },
+      "redo": {
+        "name": "다시 실행",
+        "key": "Ctrl+Y"
+      },
+      "delete": {
+        "name": "삭제",
+        "description": "선택한 요소를 삭제합니다",
+        "key": "Del / Backspace"
+      },
+      "deselect": {
+        "name": "선택 해제",
+        "key": "Esc"
+      },
+      "prevImage": {
+        "name": "이전 이미지",
+        "key": "←"
+      },
+      "nextImage": {
+        "name": "다음 이미지",
+        "key": "→"
+      },
+      "zoomIn": {
+        "name": "확대",
+        "key": "Ctrl++"
+      },
+      "zoomOut": {
+        "name": "축소",
+        "key": "Ctrl+-"
+      },
+      "zoomFit": {
+        "name": "화면 맞춤",
+        "key": "Ctrl+0"
+      },
+      "toolBox": {
+        "name": "박스 도구",
+        "description": "박스 도구 선택",
+        "key": "B"
+      },
+      "toolOBB": {
+        "name": "OBB 도구",
+        "description": "OBB 도구 선택",
+        "key": "O"
+      },
+      "toolMask": {
+        "name": "마스크 도구",
+        "description": "마스크 도구 선택",
+        "key": "M"
+      },
+      "toolPolygon": {
+        "name": "폴리곤 도구",
+        "description": "폴리곤 도구 선택",
+        "key": "P"
+      },
+      "toolKeypoints": {
+        "name": "키포인트 도구",
+        "description": "키포인트 도구 선택",
+        "key": "K"
+      },
+      "toolSelect": {
+        "name": "선택 도구",
+        "description": "선택 도구 선택",
+        "key": "V"
+      },
+      "toolPan": {
+        "name": "이동 도구",
+        "description": "이동/팬 도구 선택",
+        "key": "H"
+      },
+      "rotateLeft": {
+        "name": "왼쪽 회전",
+        "key": "A"
+      },
+      "rotateRight": {
+        "name": "오른쪽 회전",
+        "key": "D"
+      },
+      "class1": {
+        "name": "클래스 1 선택",
+        "key": "1"
+      },
+      "class2": {
+        "name": "클래스 2 선택",
+        "key": "2"
+      },
+      "class3": {
+        "name": "클래스 3 선택",
+        "key": "3"
+      },
+      "class4": {
+        "name": "클래스 4 선택",
+        "key": "4"
+      },
+      "class5": {
+        "name": "클래스 5 선택",
+        "key": "5"
+      },
+      "class6": {
+        "name": "클래스 6 선택",
+        "key": "6"
+      },
+      "class7": {
+        "name": "클래스 7 선택",
+        "key": "7"
+      },
+      "class8": {
+        "name": "클래스 8 선택",
+        "key": "8"
+      },
+      "class9": {
+        "name": "클래스 9 선택",
+        "key": "9"
+      }
+    }
+  },
+  "projects": {
+    "title": "프로젝트",
+    "subtitle": "주석 프로젝트 관리",
+    "create": "프로젝트 생성",
+    "createDescription": "새 주석 프로젝트를 시작합니다",
+    "description": "프로젝트 이름을 수정하거나 클래스를 관리합니다.",
+    "name": "프로젝트 이름",
+    "namePlaceholder": "내 Annotix 프로젝트",
+    "type": {
+      "label": "프로젝트 유형",
+      "bbox": "바운딩 박스",
+      "bboxDescription": "바운딩 박스를 사용한 객체 감지",
+      "mask": "마스크",
+      "maskDescription": "마스크를 사용한 인스턴스 분할"
+    },
+    "typeSelectHelper": "학습 목표에 맞는 주석 유형을 선택하세요",
+    "classes": "클래스",
+    "open": "열기",
+    "delete": "삭제",
+    "settings": "프로젝트 설정",
+    "configure": "구성",
+    "edit": "프로젝트 편집",
+    "saveChanges": "변경사항 저장",
+    "stats": {
+      "classes": "클래스"
+    },
+    "empty": {
+      "title": "프로젝트 없음",
+      "description": "주석을 시작하려면 첫 프로젝트를 만드세요"
+    },
+    "confirmDelete": "프로젝트 삭제 확인"
   },
   "tools": {
     "title": "도구",
-    "bbox": "박스",
-    "mask": "마스크",
-    "select": "선택",
-    "pan": "이동",
+    "bbox": "Box",
+    "obb": "OBB",
+    "mask": "Mask",
+    "polygon": "폴리곤",
+    "keypoints": "Keypoints",
+    "landmarks": "Landmarks",
+    "select": "Select",
+    "pan": "Pan",
+    "eraseMode": "지우개",
+    "newInstance": "새 인스턴스",
     "tooltips": {
-      "bbox": "경계 상자 (B)",
+      "bbox": "Bounding Box (B)",
+      "obb": "Oriented Box (O)",
       "mask": "마스크 (M)",
+      "polygon": "폴리곤 (P)",
+      "keypoints": "Keypoints (K)",
+      "landmarks": "Landmarks (L)",
+      "point": "포인트 (P)",
+      "range": "범위 (R)",
       "select": "선택 (V)",
-      "pan": "이동 (H)"
+      "pan": "Pan (H)"
     }
+  },
+  "gallery": {
+    "imageCount": "{{count}}개 이미지",
+    "imageCount_plural": "{{count}}개 이미지",
+    "empty": {
+      "title": "이미지 없음",
+      "description": "주석을 시작하려면 이미지를 업로드하세요",
+      "upload": "이미지 업로드"
+    },
+    "title": "갤러리",
+    "all": "전체",
+    "annotated": "주석 완료",
+    "unannotated": "주석 미완료",
+    "deleteConfirm": "이 이미지를 삭제하시겠습니까?",
+    "annotate": "주석 달기",
+    "upload": "이미지 선택",
+    "noImages": "이미지 없음",
+    "filter": {
+      "all": "전체",
+      "annotated": "주석 완료",
+      "unannotated": "주석 미완료"
+    },
+    "backToGallery": "갤러리로 돌아가기",
+    "selectImage": "이미지를 선택하세요",
+    "uploadOrSelect": "이미지를 업로드하거나 선택하세요",
+    "uploading": "이미지 업로드 중"
   },
   "classes": {
     "title": "활성 클래스",
+    "active": "활성 클래스",
     "manage": "클래스 관리",
     "add": "클래스 추가",
     "placeholder": "클래스 이름",
-    "empty": "먼저 프로젝트를 생성하세요",
     "deleteConfirm": "이 클래스로 주석이 있습니다. 그래도 삭제하시겠습니까?",
     "exists": "해당 이름의 클래스가 이미 존재합니다",
-    "enterName": "클래스 이름을 입력하세요"
+    "enterName": "클래스 이름을 입력하세요",
+    "edit": "편집",
+    "delete": "삭제",
+    "rename": "클래스 이름 변경",
+    "editTitle": "클래스 편집",
+    "deleteTitle": "클래스 삭제",
+    "deleteQuestion": "이 클래스를 어떻게 하시겠습니까?",
+    "deleteWarning": "이 클래스에는",
+    "annotations": "주석이 있습니다",
+    "deleteAll": "클래스와 주석 모두 삭제",
+    "name": "이름",
+    "namePlaceholder": "클래스 이름",
+    "color": "색상",
+    "nameRequired": "클래스 이름은 필수입니다",
+    "empty": "클래스 없음",
+    "addPlaceholder": "클래스 이름 추가",
+    "updated": "업데이트됨",
+    "description": "이 프로젝트에 사용할 카테고리를 추가, 편집 또는 삭제합니다.",
+    "save": "변경사항 저장",
+    "cancel": "취소"
+  },
+  "annotations": {
+    "title": "주석",
+    "empty": "주석 없음",
+    "addClassFirst": "주석을 달기 전에 최소 하나의 클래스를 추가하세요",
+    "delete": "",
+    "confirmDelete": "",
+    "expand": "",
+    "collapse": ""
+  },
+  "polygon": {
+    "toolName": "폴리곤",
+    "clickToAdd": "클릭하여 점을 추가합니다. 더블클릭 또는 Enter를 눌러 닫습니다.",
+    "needMinPoints": "폴리곤을 만들려면 최소 {min}개의 점이 필요합니다",
+    "created": "폴리곤 생성됨",
+    "cancelled": "그리기 취소됨",
+    "cannotDeletePoint": "점을 삭제할 수 없습니다. 최소 {min}개의 점이 필요합니다.",
+    "pointDeleted": "점 삭제됨"
+  },
+  "landmarks": {
+    "toolName": "랜드마크",
+    "placed": "랜드마크 \"{name}\" 배치됨",
+    "selectFirst": "먼저 랜드마크를 선택하세요",
+    "enterName": "이름을 입력하세요",
+    "renamed": "랜드마크 이름 변경됨",
+    "renumbered": "{count}개 점 번호 재지정됨",
+    "renameLandmark": "랜드마크 이름 변경",
+    "landmarkName": "포인트 이름:",
+    "namePlaceholder": "예: 중심, 왼쪽 상단, 입구"
+  },
+  "skeleton": {
+    "addKeypointClass": "키포인트 클래스 추가",
+    "step1": "1단계: 기본 정보",
+    "step2": "2단계: 스켈레톤 프리셋 선택",
+    "className": "클래스 이름",
+    "classNamePlaceholder": "예: 사람, 손, 얼굴",
+    "classColor": "클래스 색상",
+    "selectPreset": "이 클래스의 스켈레톤 프리셋을 선택하세요:",
+    "presetInfo": "각 클래스는 고유한 스켈레톤을 가질 수 있습니다. 이를 통해 같은 프로젝트에서 다양한 유형의 객체에 주석을 달 수 있습니다.",
+    "points": "포인트",
+    "connections": "연결",
+    "previous": "이전",
+    "next": "다음",
+    "finish": "완료",
+    "presets": {
+      "coco17": "COCO 17 Keypoints",
+      "coco17Desc": "완전한 인체 스켈레톤 (COCO 데이터셋)",
+      "mediapipePose": "MediaPipe Pose 33",
+      "mediapipePoseDesc": "전신 상세 포즈",
+      "mediapipeHand": "MediaPipe Hand 21",
+      "mediapipeHandDesc": "상세한 손 관절",
+      "openpose25": "OpenPose 25",
+      "openpose25Desc": "손을 포함한 OpenPose 스켈레톤",
+      "facial68": "Facial Landmarks 68",
+      "facial68Desc": "상세한 얼굴 포인트",
+      "facial5": "Facial 5 Points",
+      "facial5Desc": "기본 얼굴 포인트 (눈, 코, 입)",
+      "animalQuad": "사족동물",
+      "animalQuadDesc": "네 발 동물 스켈레톤",
+      "custom": "사용자 정의",
+      "customDesc": "나만의 스켈레톤 정의"
+    }
   },
   "images": {
-    "title": "이미지 로드",
+    "load": "이미지 로드",
+    "title": "제목",
     "select": "이미지 선택",
     "upload": "이미지 선택",
     "noImages": "이미지 없음"
@@ -53,30 +372,41 @@
     "clear": "지우기",
     "delete": "삭제",
     "cancel": "취소",
-    "create": "만들기",
+    "create": "생성",
     "confirm": "확인",
+    "close": "닫기",
+    "duplicate": "복제",
+    "rename": "이름 변경",
+    "exportBackup": "백업 내보내기",
+    "deleteConfirm": "예, 삭제합니다",
     "clearConfirm": "이 이미지의 모든 주석을 지우시겠습니까?"
   },
-  "shortcuts": {
+  "shortcut": {
     "title": "단축키",
     "save": "저장",
     "undo": "실행 취소",
     "delete": "삭제",
     "navigation": "탐색",
-    "bbox": "박스",
-    "mask": "마스크",
-    "select": "선택",
-    "pan": "이동",
-    "classes": "클래스 1-9"
+    "bbox": "Bbox",
+    "mask": "Mask",
+    "select": "Select",
+    "pan": "Pan",
+    "classes": "클래스 1-9",
+    "navigateImages": "shortcuts.navigateImages",
+    "selectClass": "shortcuts.selectClass"
   },
   "canvas": {
     "zoomIn": "확대",
     "zoomOut": "축소",
-    "resetZoom": "확대/축소 재설정",
+    "resetZoom": "확대/축소 초기화",
+    "fitScreen": "화면에 맞추기",
     "toggleLabels": "레이블 표시/숨기기",
     "toggleGrid": "격자 표시/숨기기",
-    "prevImage": "이전 이미지 (←)",
-    "nextImage": "다음 이미지 (→)"
+    "prevImage": "이전 이미지 (← / PgUp)",
+    "nextImage": "다음 이미지 (→ / PgDn)",
+    "reset": "초기화",
+    "tools": "도구",
+    "zoom": "확대/축소"
   },
   "stats": {
     "title": "통계",
@@ -84,65 +414,340 @@
     "annotated": "주석 완료",
     "labels": "레이블",
     "classes": "클래스",
-    "progress": "개 주석 완료"
-  },
-  "gallery": {
-    "title": "갤러리",
-    "all": "전체",
-    "annotated": "주석 완료",
-    "unannotated": "주석 미완료",
-    "empty": "이미지 없음",
-    "deleteConfirm": "이 이미지를 삭제하시겠습니까?"
+    "progress": "주석된 이미지",
+    "annotations": "stats.annotations"
   },
   "export": {
-    "title": "내보내기",
-    "format": "형식",
-    "description": "형식 설명",
+    "title": "프로젝트 내보내기",
+    "project": {
+      "title": "프로젝트 내보내기 (.tix)",
+      "description": "나중에 작업을 이어가거나 팀과 공유하기 위해",
+      "withImages": "이미지 포함 (전체 프로젝트)",
+      "button": "프로젝트 내보내기"
+    },
+    "training": {
+      "title": "학습용 내보내기",
+      "description": "모델 학습에 바로 사용할 수 있는 데이터셋 (항상 이미지 포함)",
+      "tabExport": "내보내기",
+      "tabCode": "코드 생성",
+      "tabTrain": "Connector로 학습",
+      "selectFormat": "형식을 선택하세요:",
+      "button": "데이터셋 내보내기"
+    },
+    "code": {
+      "framework": "프레임워크",
+      "model": "모델",
+      "device": "장치",
+      "epochs": "에포크",
+      "batch": "배치 크기",
+      "imgsz": "이미지 크기",
+      "preview": "미리보기",
+      "copy": "코드 복사",
+      "downloadPy": ".py 다운로드",
+      "downloadIpynb": ".ipynb 다운로드",
+      "labels": {
+        "model": "모델",
+        "device": "장치",
+        "epochs": "에포크",
+        "batchSize": "배치 크기",
+        "imageSize": "이미지 크기",
+        "sequenceLength": "시퀀스 길이",
+        "forecastHorizon": "예측 기간",
+        "hiddenSize": "히든 크기",
+        "advancedOptions": "고급 옵션",
+        "training": "학습",
+        "optimizer": "옵티마이저",
+        "learningRate": "학습률",
+        "patience": "인내 (조기 중단)",
+        "validationSplit": "검증 분할 (%)",
+        "dataAugmentation": "데이터 증강",
+        "metricsAndPlots": "메트릭 및 그래프",
+        "modelExport": "모델 내보내기"
+      },
+      "modelSizes": {
+        "nano": "Nano (가장 빠름)",
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large",
+        "xlarge": "XLarge (가장 정확)"
+      },
+      "devices": {
+        "cpu": "🖥️ CPU",
+        "gpu": "🎮 GPU (CUDA)",
+        "mps": "🍎 Apple Silicon (MPS)"
+      },
+      "optimizers": {
+        "adam": "Adam (초보자에게 권장)",
+        "adamw": "AdamW (weight decay가 개선된 Adam)",
+        "sgd": "SGD (클래식, 더 많은 튜닝 필요)",
+        "rmsprop": "RMSprop (순환 신경망에 적합)"
+      },
+      "augmentation": {
+        "mosaic": "Mosaic (4개 이미지 결합)",
+        "mixup": "Mixup (투명도 혼합)",
+        "hsv": "HSV (색상 지터)",
+        "flip": "Flips (수평/수직)",
+        "rotate": "회전",
+        "scale": "Scale/Crop"
+      },
+      "metrics": {
+        "savePlots": "학습 그래프 저장",
+        "saveMetricsCsv": "메트릭을 CSV로 내보내기",
+        "saveConfMatrix": "혼동 행렬",
+        "savePrCurves": "Precision-Recall 커브",
+        "savePredictions": "예측 시각화"
+      },
+      "exportFormats": {
+        "onnx": "ONNX (권장)",
+        "torchscript": "TorchScript",
+        "tflite": "TensorFlow Lite",
+        "openvino": "OpenVINO",
+        "coreml": "CoreML",
+        "tensorrt": "TensorRT"
+      },
+      "template": {
+        "generatedBy": "Annotix에 의해 자동 생성됨",
+        "projectType": "프로젝트 유형",
+        "important": "중요",
+        "installDeps": "실행 전 종속성 설치",
+        "importantCLI": "중요: YOLOv5는 Python API가 아닌 CLI를 사용합니다",
+        "importantDetectron2": "중요: Detectron2는 더 고급이지만 복잡합니다",
+        "importantClassification": "중요: 최신 아키텍처를 사용한 분류",
+        "importantSegmentation": "중요: 최신 아키텍처를 사용한 시맨틱 분할",
+        "cloneYOLOv5": "YOLOv5 저장소 클론 (첫 번째만)",
+        "trainCLI": "CLI로 학습",
+        "trainingScript": "학습 스크립트",
+        "registerCOCO": "COCO 형식으로 데이터셋 등록",
+        "modelConfiguration": "모델 구성",
+        "approxEpochs": "대략 에포크",
+        "model": "모델",
+        "lossOptimizer": "손실 함수와 옵티마이저",
+        "training": "학습",
+        "metrics": "메트릭",
+        "saveBestModelSection": "최적 모델 저장",
+        "evaluatingModel": "모델 평가 중",
+        "validateBestModel": "최적 모델로 검증",
+        "printMetrics": "주요 메트릭 출력",
+        "predictValidation": "검증 이미지에서 예측",
+        "changeToValFolder": "검증 폴더로 변경",
+        "saveImagesWithPredictions": "예측이 포함된 이미지 저장",
+        "minConfidence": "최소 신뢰도",
+        "dontSaveLabels": "레이블 저장 안 함",
+        "dontCropDetections": "감지 항목 자르지 않음",
+        "exportingProduction": "프로덕션 형식으로 모델 내보내기 중",
+        "exportProduction": "프로덕션용 모델 내보내기",
+        "yolov5Completed": "YOLOv5 학습 완료",
+        "yolonasCompleted": "YOLO-NAS 학습 완료",
+        "unetLoaded": "U-Net 모델 로드됨",
+        "availableArchitectures": "사용 가능한 아키텍처",
+        "calculateIoU": "IoU 계산",
+        "bestModelSaved": "최적 모델 저장됨",
+        "plotsSaved": "그래프 저장 위치",
+        "loadDataset": "데이터셋 로드 (구조: train/class1, train/class2, ...)",
+        "trainTransforms": "학습 변환",
+        "valTransforms": "검증 변환",
+        "options": "옵션",
+        "initialLearningRate": "초기 학습률",
+        "finalLearningRate": "최종 학습률 (lr0의 비율)",
+        "momentumSGD": "SGD용 모멘텀",
+        "weightDecay": "가중치 감쇠 (L2 정규화)",
+        "earlyStoppingPatience": "조기 중단 인내",
+        "saveCheckpoints": "체크포인트 저장",
+        "savePeriod": "N 에포크마다 저장",
+        "generatePlots": "학습 그래프 생성",
+        "minConfidenceMatrix": "혼동 행렬 최소 신뢰도",
+        "cacheImages": "이미지 캐싱 (RAM 더 사용)",
+        "numWorkers": "DataLoader 워커 수",
+        "resultsFolder": "결과 폴더",
+        "experimentName": "실험 이름",
+        "overwriteExperiments": "기존 실험 덮어쓰기",
+        "validateDuringTraining": "학습 중 검증",
+        "valPercentage": "검증 분할이 없는 경우 검증 비율",
+        "verboseMode": "상세 모드",
+        "executeCmds": "터미널에서 이 명령어 실행",
+        "configuration": "학습 구성",
+        "modelAndDevice": "모델 및 장치",
+        "basicHyperparams": "기본 하이퍼파라미터",
+        "dataAugmentation": "데이터 증강",
+        "loadPretrainedModel": "사전 학습 모델 로드",
+        "trainModel": "모델 학습",
+        "evaluateModel": "모델 평가",
+        "exportMetrics": "메트릭을 CSV로 내보내기",
+        "visualizePredictions": "예측 시각화",
+        "exportForProduction": "프로덕션용 모델 내보내기",
+        "dataset": "데이터셋",
+        "basics": "기본",
+        "optimization": "최적화",
+        "callbacks": "콜백 및 저장",
+        "visualization": "시각화 및 메트릭",
+        "performance": "성능",
+        "validation": "검증",
+        "modelLoaded": "모델 로드됨",
+        "parameters": "파라미터",
+        "trainingCompleted": "학습 완료",
+        "evaluating": "모델 평가 중...",
+        "finalMetrics": "최종 메트릭",
+        "metricsSaved": "메트릭 저장 위치",
+        "predictionsSaved": "예측 저장 위치",
+        "exportingModel": "프로덕션 형식으로 모델 내보내기 중...",
+        "onnxExported": "ONNX 내보내기 완료",
+        "torchscriptExported": "TorchScript 내보내기 완료",
+        "tfliteExported": "TFLite 내보내기 완료",
+        "openvinoExported": "OpenVINO 내보내기 완료",
+        "coremlExported": "CoreML 내보내기 완료",
+        "tensorrtExported": "TensorRT 내보내기 완료",
+        "allDone": "모두 완료!",
+        "resultsIn": "결과 위치",
+        "bestModel": "최적 모델",
+        "yoloUsesCli": "YOLOv5는 Python API가 아닌 CLI를 사용합니다",
+        "cloneRepo": "YOLOv5 저장소 클론 (첫 번째만)",
+        "trainWithCli": "CLI로 학습",
+        "validate": "검증",
+        "yoloTrainingCompleted": "YOLOv5 학습 완료!",
+        "prepareTrainer": "트레이너 준비",
+        "configureDataset": "데이터셋 구성",
+        "loadModel": "모델 로드",
+        "train": "학습",
+        "trainingCompletedShort": "학습 완료!",
+        "registerDataset": "데이터셋 등록",
+        "modelConfig": "모델 구성",
+        "datasets": "데이터셋",
+        "pretrainedModel": "사전 학습 모델",
+        "hyperparameters": "하이퍼파라미터",
+        "numClasses": "클래스 수",
+        "output": "출력",
+        "evaluate": "평가",
+        "advancedButComplex": "더 고급이지만 복잡합니다",
+        "customDataset": "사용자 정의 데이터셋",
+        "lossAndOptimizer": "손실 함수와 옵티마이저",
+        "trainingLoop": "학습",
+        "saveBestModelAcc": "최적 모델 저장됨 (정확도",
+        "saveBestModelIoU": "최적 모델 저장됨 (IoU",
+        "saveMetrics": "메트릭 저장",
+        "plotResults": "결과 그래프",
+        "bestAccuracy": "최고 정확도",
+        "bestIoU": "최고 IoU",
+        "modernArchitectures": "최신 아키텍처 사용",
+        "semanticSegmentation": "최신 아키텍처를 사용한 시맨틱 분할",
+        "forVisualization": "시각화용",
+        "forExportMetrics": "메트릭 내보내기용",
+        "trainingSamples": "학습 샘플",
+        "valSamples": "검증 샘플",
+        "classes": "클래스",
+        "torchvisionModels": "TorchVision 모델",
+        "timmModels": "timm 모델 (더 많은 모델 사용 가능)",
+        "lossOptimizerTitle": "손실 함수와 옵티마이저",
+        "architecturesAvailable": "사용 가능한 아키텍처",
+        "trainSamples": "학습 샘플",
+        "testSamples": "테스트 샘플",
+        "sequenceLength": "시퀀스 길이",
+        "numFeatures": "변수 수",
+        "trainEpoch": "학습",
+        "testEpoch": "테스트",
+        "trainLoss": "학습 손실",
+        "testLoss": "테스트 손실",
+        "trainAcc": "학습 정확도",
+        "testAcc": "테스트 정확도",
+        "dataLoading": "데이터 로딩",
+        "modelArchitecture": "모델 아키텍처",
+        "prepareData": "데이터 준비",
+        "trainTest": "학습 및 평가",
+        "forecasting": "예측",
+        "makePredictions": "예측 수행",
+        "forecastHorizon": "예측 기간",
+        "predictionsMade": "예측 완료",
+        "trainingData": "학습 데이터",
+        "testingData": "테스트 데이터",
+        "scaler": "데이터 스케일링",
+        "sequences": "시퀀스",
+        "timeSteps": "시간 단계",
+        "features": "변수",
+        "installation": "export.code.template.installation"
+      },
+      "tooltips": {
+        "framework": "사용할 딥러닝 라이브러리. 프로젝트 유형에 따라 조정됩니다.",
+        "model": "모델 크기: Nano는 빠르지만 덜 정확하고, XLarge는 느리지만 더 정확합니다.",
+        "device": "학습 장치: CPU는 느리지만 항상 작동하고, GPU (CUDA)는 NVIDIA가 있으면 매우 빠릅니다.",
+        "epochs": "모델이 전체 데이터셋을 보는 횟수. 에포크가 많을수록 더 많이 학습하지만 시간이 더 걸립니다.",
+        "batch": "동시에 처리할 이미지 수. 높은 값은 더 많은 메모리를 사용하지만 학습이 더 빠릅니다.",
+        "imgsz": "학습 중 이미지 해상도. 클수록 더 세밀하지만 느려집니다.",
+        "seqLength": "입력으로 사용할 시간 단계 수. 예: 미래를 예측하기 위해 과거 50개 값 사용.",
+        "forecastHorizon": "예측할 미래 단계 수 (예측 전용). 예: 다음 10개 값 예측.",
+        "hiddenSize": "신경망 (LSTM)의 히든 레이어 크기. 클수록 더 많은 용량이지만 느려집니다.",
+        "optimizer": "학습 중 모델 가중치를 조정하는 알고리즘. Adam: 균형 잡히고 인기 있음. AdamW: weight decay가 개선된 Adam. SGD: 클래식, 느리지만 때로는 더 나은 최종 결과. RMSprop: RNN에 적합.",
+        "lr": "모델이 학습하는 속도. 높은 값 = 빠른 학습이지만 불안정할 수 있음. 0.001이 좋은 시작점입니다.",
+        "patience": "개선 없이 기다릴 에포크 수. 모델이 50 에포크 동안 개선되지 않으면 자동 중단.",
+        "valSplit": "모델 검증에 사용할 이미지 비율. 20%가 표준: 80% 학습, 20% 검증.",
+        "augmentationTitle": "이미지의 변형을 만들어 모델이 암기하는 것을 방지하는 기법. 더 나은 일반화에 도움됩니다.",
+        "augMosaic": "4개의 랜덤 이미지를 하나로 결합. 작은 객체 감지 향상에 매우 효과적.",
+        "augMixup": "두 이미지를 투명도로 혼합. 가림에 대한 모델의 견고성 향상.",
+        "augHsv": "이미지 색상 변경 (색조, 채도, 밝기). 다양한 조명 조건에 유용.",
+        "augFlip": "이미지를 수평 또는 수직으로 뒤집기. 노력 없이 데이터를 두 배로 늘립니다.",
+        "augRotate": "이미지를 약간 회전. 객체가 다양한 각도로 나타날 수 있을 때 유용.",
+        "augScale": "무작위로 확대/축소 및 자르기. 다양한 거리의 객체를 시뮬레이션.",
+        "metricsTitle": "모델 성능을 분석하기 위해 학습 중 저장할 정보.",
+        "savePlots": "학습 중 손실 및 정확도 그래프 저장. 모델이 학습하고 있는지 확인하는 데 매우 유용.",
+        "saveConfMatrix": "어떤 클래스가 서로 혼동되는지 보여주는 표. 모델 오류를 이해하는 데 이상적.",
+        "savePrCurves": "정밀도와 재현율 간의 균형을 보여주는 그래프. 감지 품질 평가에 중요.",
+        "savePredictions": "모델의 예측이 그려진 이미지 저장. 시각적으로 얼마나 잘 작동하는지 확인하기에 완벽.",
+        "saveMetricsCsv": "모든 메트릭을 CSV 파일로 내보내 Excel에서 분석하거나 자체 그래프를 만들 수 있습니다.",
+        "exportTitle": "학습된 모델을 프로덕션에 배포하기 위한 형식.",
+        "exportOnnx": "ONNX: 범용 형식, TensorFlow, PyTorch 및 거의 모든 라이브러리에서 작동. 프로덕션에 이상적.",
+        "exportTorchscript": "TorchScript: PyTorch 네이티브 형식, 매우 빠르지만 PyTorch에서만 작동.",
+        "exportTflite": "TensorFlow Lite: 모바일 및 임베디드 장치용 (Android, iOS, Raspberry Pi).",
+        "exportOpenvino": "OpenVINO: 인텔 CPU에 최적화. 인텔 하드웨어에서 매우 빠름.",
+        "exportCoreml": "CoreML: iOS/macOS 네이티브 앱용. Apple 칩 활용.",
+        "exportTensorrt": "TensorRT: NVIDIA GPU에서 최대 가속. 고성능 프로덕션용."
+      },
+      "codeCopied": "코드가 클립보드에 복사되었습니다",
+      "copyError": "코드 복사 오류",
+      "pyDownloaded": ".py 파일 다운로드됨",
+      "ipynbDownloaded": "노트북 .ipynb 다운로드됨",
+      "trainingNotebook": "학습 노트북"
+    },
+    "formats": {
+      "tixGroupTitle": "백업 내보내기 또는 공유",
+      "trainingGroupTitle": "학습 형식",
+      "yoloDetection": "YOLO Detection",
+      "yoloDetectionDesc": "정규화된 YOLO 형식의 바운딩 박스 (.txt) 및 data.yaml",
+      "yoloSegmentation": "YOLO Segmentation",
+      "yoloSegmentationDesc": "YOLO 분할 형식의 폴리곤 (.txt) 및 data.yaml",
+      "coco": "COCO JSON",
+      "cocoDesc": "Mask R-CNN, RetinaNet, Detectron2와 호환 가능한 COCO JSON 형식",
+      "pascalVoc": "Pascal VOC XML",
+      "pascalVocDesc": "픽셀 좌표가 있는 Pascal VOC XML 형식 (레거시 형식)",
+      "csvDetection": "CSV Detection",
+      "csvDetectionDesc": "바운딩 박스 좌표가 포함된 CSV 표 형식",
+      "csvClassification": "CSV Classification",
+      "csvClassificationDesc": "파일 이름과 클래스 레이블이 포함된 CSV 표 형식",
+      "csvKeypoints": "CSV Keypoints",
+      "csvKeypointsDesc": "키포인트 X,Y 좌표 및 가시성이 포함된 CSV 표 형식",
+      "csvLandmarks": "CSV Landmarks",
+      "csvLandmarksDesc": "랜드마크 좌표가 포함된 CSV 표 형식",
+      "foldersByClass": "클래스별 폴더",
+      "foldersByClassDesc": "클래스 이름별로 분리된 폴더에 정리된 이미지",
+      "unetMasks": "U-Net 마스크",
+      "unetMasksDesc": "분할 학습을 위한 그레이스케일 PNG 이미지",
+      "tix": "Annotix 프로젝트 (.tix)",
+      "tixDesc": "백업 또는 공유를 위해 전체 프로젝트를 .tix 파일로 내보내기"
+    },
+    "notAvailable": "이 프로젝트 유형에는 내보내기를 사용할 수 없습니다",
+    "preparing": "내보내기 준비 중...",
+    "success": "데이터셋이 성공적으로 내보내졌습니다",
+    "description": "프로젝트를 내보낼 형식을 선택하세요",
+    "downloadDataset": "데이터셋 다운로드",
     "export": "내보내기",
     "exporting": "내보내는 중...",
-    "progress": "진행도",
-    "selectFormat": "내보내기 형식 선택",
-    "downloadDataset": "데이터셋 ZIP 다운로드",
-    "downloadClasses": "classes.txt 다운로드",
-    "notAvailable": "이 프로젝트 유형에는 내보내기가 사용할 수 없습니다",
-    "formats": {
-      "yoloDetection": "YOLO 감지",
-      "yoloDetectionDesc": "정규화된 YOLO 형식의 경계 상자(.txt)와 data.yaml",
-      "yoloSegmentation": "YOLO 분할",
-      "yoloSegmentationDesc": "YOLO 분할 형식의 다각형(.txt)과 data.yaml",
-      "coco": "COCO JSON",
-      "cocoDesc": "Mask R-CNN, RetinaNet, Detectron2와 호환 가능한 COCO 형식",
-      "pascalVoc": "Pascal VOC XML",
-      "pascalVocDesc": "픽셀 좌표가 있는 Pascal VOC XML 형식",
-      "csvDetection": "CSV 감지",
-      "csvDetectionDesc": "경계 상자 좌표를 포함한 CSV 형식",
-      "csvClassification": "CSV 분류",
-      "csvClassificationDesc": "이미지 이름과 클래스 레이블을 포함한 CSV 형식",
-      "csvKeypoints": "CSV 주요 포인트",
-      "csvKeypointsDesc": "주요 포인트 X,Y 좌표 및 가시성이 포함된 CSV 형식",
-      "csvLandmarks": "CSV 랜드마크",
-      "csvLandmarksDesc": "랜드마크 좌표를 포함한 CSV 형식",
-      "foldersByClass": "클래스별 폴더",
-      "foldersByClassDesc": "클래스 이름으로 폴더에 정렬된 이미지",
-      "unetMasks": "U-Net 마스크",
-      "unetMasksDesc": "의미 분할을 위한 그레이스케일 PNG 이미지"
-    },
-    "yoloDetectionDesc": "정규화된 YOLO 형식의 경계 상자(.txt)와 data.yaml",
-    "yoloSegmentationDesc": "YOLO 분할 형식의 다각형(.txt)과 data.yaml",
-    "cocoDesc": "Mask R-CNN, RetinaNet, Detectron2와 호환 가능한 COCO JSON 형식",
-    "pascalVocDesc": "픽셀 좌표가 있는 Pascal VOC XML 형식(레거시 형식)",
-    "csvDetectionDesc": "경계 상자 좌표를 포함한 CSV 표 형식",
-    "csvClassificationDesc": "이미지 이름과 클래스 레이블을 포함한 CSV 표 형식",
-    "csvKeypointsDesc": "주요 포인트 X,Y 좌표 및 가시성이 포함된 CSV 표 형식",
-    "csvLandmarksDesc": "랜드마크 좌표를 포함한 CSV 표 형식",
-    "foldersByClassDesc": "클래스 이름으로 분리된 폴더에 정렬된 이미지",
-    "unetMasksDesc": "분할 훈련을 위한 그레이스케일 PNG 이미지"
+    "format": "형식",
+    "formatDescription": "형식 설명",
+    "progress": "진행 상황",
+    "selectFormat": "내보내기 형식 선택"
   },
   "import": {
     "title": "데이터셋 가져오기",
-    "button": "📥 가져오기",
-    "selectFile": "주석이 있는 데이터셋을 포함하는 ZIP 파일 선택",
-    "dragFiles": "ZIP 파일을 여기로 드래그",
+    "button": "가져오기",
+    "selectFile": "주석된 데이터셋이 포함된 ZIP 파일을 선택하세요",
+    "dragFiles": "ZIP 파일을 여기로 드래그하세요",
     "orClickToSelect": "또는 클릭하여 선택",
     "analyzing": "데이터셋 분석 중",
     "configureProject": "가져온 프로젝트 구성",
@@ -162,68 +767,706 @@
       "invalidZip": "유효한 ZIP 파일을 선택하세요",
       "unsupportedFormat": "지원하지 않는 데이터셋 형식입니다. 지원 형식: YOLO, COCO, Pascal VOC, CSV, 클래스별 폴더, U-Net 마스크",
       "corruptedData": "데이터셋이 손상되었거나 불완전합니다",
-      "parse": "데이터셋 구문 분석 오류입니다. 파일 형식을 확인하세요",
+      "parse": "데이터셋 분석 오류입니다. 파일 형식을 확인하세요",
       "invalidProjectName": "프로젝트 이름에 잘못된 문자가 포함되어 있습니다. 영숫자, 하이픈, 밑줄 및 점만 사용하세요"
     }
+  },
+  "projectTypes": {
+    "classification": "단순 분류",
+    "multiLabel": "다중 레이블 분류",
+    "detection": "객체 감지",
+    "segmentation": "시맨틱 분할",
+    "instanceSeg": "인스턴스 분할",
+    "keypoints": "키포인트",
+    "obb": "회전된 박스 (OBB)"
   },
   "project": {
     "new": "새 프로젝트",
     "name": "프로젝트 이름",
-    "namePlaceholder": "내 YOLO 프로젝트",
+    "namePlaceholder": "내 Annotix 프로젝트",
     "type": "주석 유형",
-    "typeBbox": "경계 상자",
-    "typeMask": "세그멘테이션 (마스크)",
+    "typeSelectHelper": "학습 목표에 맞는 주석 유형을 선택하세요",
+    "types": {
+      "classification": {
+        "name": "단순 분류",
+        "description": "전체 이미지에 하나의 레이블 할당",
+        "useCases": "이미지 내용 식별 (예: 고양이, 개, 자동차)",
+        "models": "ResNet, VGG, EfficientNet, MobileNet",
+        "difficulty": "초급"
+      },
+      "bbox": {
+        "name": "바운딩 박스",
+        "description": "바운딩 박스를 사용한 객체 감지",
+        "useCases": "이미지에서 객체 감지 및 위치 파악",
+        "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+        "difficulty": "초급"
+      },
+      "mask": {
+        "name": "마스크",
+        "description": "픽셀 마스크를 사용한 인스턴스 분할",
+        "useCases": "픽셀 수준에서 객체 분리",
+        "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+        "difficulty": "중급"
+      },
+      "multiLabel": {
+        "name": "다중 레이블 분류",
+        "description": "각 이미지에 여러 레이블 할당",
+        "useCases": "여러 요소가 있는 이미지 (예: 공원 + 개 + 하늘)",
+        "models": "ResNet, VGG 다중 레이블 출력",
+        "difficulty": "초급"
+      },
+      "detection": {
+        "name": "객체 감지",
+        "description": "직사각형 박스 (바운딩 박스)로 객체 위치 파악",
+        "useCases": "이미지에서 특정 객체 찾기 및 위치 확인",
+        "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+        "difficulty": "중급"
+      },
+      "segmentation": {
+        "name": "시맨틱 분할",
+        "description": "이미지의 각 픽셀을 클래스별로 분류",
+        "useCases": "영역 분리 (예: 도로, 하늘, 건물)",
+        "models": "U-Net, DeepLab, FCN",
+        "difficulty": "고급"
+      },
+      "instanceSeg": {
+        "name": "인스턴스 분할",
+        "description": "각 개별 객체의 윤곽 그리기",
+        "useCases": "픽셀 수준에서 개별 객체 분리",
+        "models": "Mask R-CNN, YOLACT, YOLOv8-seg",
+        "difficulty": "고급"
+      },
+      "keypoints": {
+        "name": "키포인트",
+        "description": "객체의 특정 점 표시",
+        "useCases": "포즈 추정, 얼굴 인식, 해부학",
+        "models": "OpenPose, HRNet, MediaPipe",
+        "difficulty": "중급"
+      },
+      "polygon": {
+        "name": "폴리곤 분할",
+        "description": "정확한 분할을 위해 점별로 폴리곤 그리기",
+        "useCases": "정밀한 윤곽, 기하학적 형태, 마스크보다 가벼움",
+        "models": "YOLOv8-seg, Mask R-CNN, SOLO",
+        "difficulty": "중급"
+      },
+      "landmarks": {
+        "name": "랜드마크",
+        "description": "연결 없는 독립적인 포인트 배치",
+        "useCases": "객체 중심, 참조점, 카운팅, 위치",
+        "models": "감지 모델, 커스텀 포인트 감지기",
+        "difficulty": "초급"
+      },
+      "obb": {
+        "name": "회전된 박스 (OBB)",
+        "description": "자유 회전이 가능한 바운딩 박스",
+        "useCases": "기울어진 텍스트, 항공 객체, 위성",
+        "models": "Rotated-YOLO, RRPN",
+        "difficulty": "고급"
+      },
+      "semanticSeg": {
+        "name": "순수 시맨틱 분할",
+        "description": "인스턴스를 구분하지 않고 각 픽셀 분류",
+        "useCases": "분할 맵, 풍경, 도시 장면",
+        "models": "U-Net, DeepLabV3+, SegFormer",
+        "difficulty": "고급"
+      },
+      "panopticSeg": {
+        "name": "파노프틱 분할",
+        "description": "시맨틱 분할과 인스턴스 분할 결합",
+        "useCases": "자율 주행, 전체 장면 분석",
+        "models": "Panoptic-FPN, DETR, MaskFormer",
+        "difficulty": "고급"
+      },
+      "ocr": {
+        "name": "OCR (텍스트 인식)",
+        "description": "이미지에서 텍스트 감지 및 인식",
+        "useCases": "문서, 표지판, 간판, 청구서",
+        "models": "CRAFT, EasyOCR, Tesseract, PaddleOCR",
+        "difficulty": "중급"
+      },
+      "depthEstimation": {
+        "name": "깊이 추정",
+        "description": "각 픽셀의 카메라까지 거리 예측",
+        "useCases": "로봇공학, AR/VR, 3D 재구성",
+        "models": "MiDaS, DPT, Depth Anything",
+        "difficulty": "고급"
+      },
+      "audioClassification": {
+        "name": "오디오 분류",
+        "description": "오디오 클립에 레이블 할당",
+        "useCases": "음악 분류, 환경 소리",
+        "models": "AudioSet, PANNs, YAMNet",
+        "difficulty": "중급"
+      },
+      "speechRecognition": {
+        "name": "음성 인식",
+        "description": "오디오를 텍스트로 변환",
+        "useCases": "자막, 음성 비서, 전사",
+        "models": "Whisper, Wav2Vec2, DeepSpeech",
+        "difficulty": "고급"
+      },
+      "soundEventDetection": {
+        "name": "음향 이벤트 감지",
+        "description": "오디오에서 이벤트 식별 및 위치 파악",
+        "useCases": "보안 모니터링, 도시 분석",
+        "models": "CRNN, CNN14, SED-CRNN",
+        "difficulty": "고급"
+      },
+      "speakerIdentification": {
+        "name": "화자 식별",
+        "description": "누가 말하고 있는지 인식",
+        "useCases": "보안, 회의 화자 분리",
+        "models": "x-vector, ECAPA-TDNN, SpeakerNet",
+        "difficulty": "고급"
+      },
+      "audioTagging": {
+        "name": "오디오 태깅",
+        "description": "오디오에 여러 태그 할당",
+        "useCases": "음향 장면 분석",
+        "models": "VGGish, PANNs, AudioSet",
+        "difficulty": "중급"
+      },
+      "musicGenreClassification": {
+        "name": "음악 장르 분류",
+        "description": "곡의 음악 장르 식별",
+        "useCases": "음악 라이브러리 정리",
+        "models": "MusiCNN, CNN-Spectrograms",
+        "difficulty": "중급"
+      },
+      "emotionRecognition": {
+        "name": "감정 인식",
+        "description": "음성에서 감정 감지",
+        "useCases": "고객 서비스, 감정 분석",
+        "models": "OpenSMILE, EmotiW, SER-CNN",
+        "difficulty": "고급"
+      },
+      "voiceActivityDetection": {
+        "name": "음성 활동 감지 (VAD)",
+        "description": "오디오에서 음성이 있는지 감지",
+        "useCases": "오디오 전처리, 전화 시스템",
+        "models": "WebRTC VAD, Silero VAD",
+        "difficulty": "초급"
+      },
+      "keywordSpotting": {
+        "name": "키워드 감지",
+        "description": "오디오에서 특정 단어 감지",
+        "useCases": "음성 비서 (Hey Siri, OK Google)",
+        "models": "CNN-KWS, Depthwise Separable CNNs",
+        "difficulty": "중급"
+      },
+      "environmentalSound": {
+        "name": "환경 소리 분류",
+        "description": "주변 환경 소리 분류",
+        "useCases": "도시 모니터링, 야생 동물 보전",
+        "models": "ESC-CNN, UrbanSound8K models",
+        "difficulty": "중급"
+      },
+      "actionRecognition": {
+        "name": "동작 인식",
+        "description": "비디오에서 동작 식별",
+        "useCases": "스포츠 분석, 감시, 인간 상호작용",
+        "models": "C3D, I3D, SlowFast, X3D",
+        "difficulty": "고급"
+      },
+      "objectTracking": {
+        "name": "객체 추적",
+        "description": "프레임 간 객체 추적",
+        "useCases": "감시, 교통 분석, 스포츠",
+        "models": "SORT, DeepSORT, ByteTrack, BoT-SORT",
+        "difficulty": "고급"
+      },
+      "temporalActionLocalization": {
+        "name": "시간적 동작 로컬라이제이션",
+        "description": "비디오에서 동작 발생 시점 감지",
+        "useCases": "비디오 분석, 자동 요약",
+        "models": "BMN, TSN, ActionFormer",
+        "difficulty": "고급"
+      },
+      "videoClassification": {
+        "name": "비디오 분류",
+        "description": "전체 비디오에 카테고리 할당",
+        "useCases": "콘텐츠 정리, 추천",
+        "models": "3D-CNN, Two-Stream Networks, TimeSformer",
+        "difficulty": "중급"
+      },
+      "videoSegmentation": {
+        "name": "비디오 분할",
+        "description": "비디오에서 프레임별 객체 분할",
+        "useCases": "비디오 편집, 특수 효과",
+        "models": "STM, XMem, SAM-Track",
+        "difficulty": "고급"
+      },
+      "activityDetection": {
+        "name": "활동 감지",
+        "description": "특정 인간 활동 감지",
+        "useCases": "노인 모니터링, 보안",
+        "models": "ActivityNet models, TSM",
+        "difficulty": "고급"
+      },
+      "poseTracking": {
+        "name": "포즈 추적",
+        "description": "비디오에서 신체 키포인트 추적",
+        "useCases": "동작 분석, 피트니스, 스포츠",
+        "models": "AlphaPose, OpenPose, MMPose",
+        "difficulty": "고급"
+      },
+      "videoAnomalyDetection": {
+        "name": "비디오 이상 감지",
+        "description": "비디오에서 비정상 이벤트 감지",
+        "useCases": "감시, 산업 품질 관리",
+        "models": "AnomalyNet, Future Frame Prediction",
+        "difficulty": "고급"
+      },
+      "spatiotemporalAction": {
+        "name": "시공간 동작 감지",
+        "description": "공간과 시간에서 동작 감지",
+        "useCases": "상세 비디오 분석, YOLO-Act",
+        "models": "AVA models, SlowFast, YOLO-Act",
+        "difficulty": "고급"
+      },
+      "timeSeriesClassification": {
+        "name": "시계열 분류",
+        "description": "각 전체 시계열에 클래스 할당 (전역 분류 모드)",
+        "useCases": "의료 진단, 제스처 인식, ECG 분류",
+        "models": "InceptionTime, ROCKET, ResNet",
+        "difficulty": "중급"
+      },
+      "timeSeriesForecasting": {
+        "name": "시계열 예측",
+        "description": "범위를 사용하여 히스토리 윈도우와 예측 기간 표시",
+        "useCases": "매출 예측, 날씨, 에너지 수요",
+        "models": "LSTM, Transformer, N-BEATS, Prophet",
+        "difficulty": "고급"
+      },
+      "anomalyDetection": {
+        "name": "이상 감지",
+        "description": "시계열에서 이상 포인트 표시",
+        "useCases": "사기 감지, 장비 고장, 건강 모니터링",
+        "models": "AutoEncoder, Isolation Forest, LSTM-AE",
+        "difficulty": "고급"
+      },
+      "timeSeriesSegmentation": {
+        "name": "시계열 분할",
+        "description": "범위를 사용하여 시리즈를 클래스별 세그먼트로 분할",
+        "useCases": "행동 분석, 체제 변화, 활동 상태",
+        "models": "ClaSP, FLUSS, Seasonal-Trend Decomposition",
+        "difficulty": "고급"
+      },
+      "patternRecognition": {
+        "name": "패턴 인식",
+        "description": "범위를 사용하여 반복 패턴/모티프 표시",
+        "useCases": "주식 분석, 생의학 신호, 사이클 감지",
+        "models": "Matrix Profile, STOMP, SAX",
+        "difficulty": "중급"
+      },
+      "eventDetection": {
+        "name": "이벤트 감지",
+        "description": "포인트를 사용하여 시간상의 개별 이벤트 표시",
+        "useCases": "센서 모니터링, 알림, 상태 변화",
+        "models": "Change Point Detection, Event Detection CNN",
+        "difficulty": "중급"
+      },
+      "timeSeriesRegression": {
+        "name": "시계열 회귀",
+        "description": "포인트에 숫자 타겟 값 표시",
+        "useCases": "수요 추정, 동적 가격 책정, 값 예측",
+        "models": "XGBoost, Random Forest, Neural Networks",
+        "difficulty": "중급"
+      },
+      "clustering": {
+        "name": "시리즈 클러스터링",
+        "description": "각 전체 시계열에 클러스터 할당 (전역 분류 모드)",
+        "useCases": "고객 세분화, 패턴 분석, 행동 그룹화",
+        "models": "K-Shape, DTW-KMeans, K-Means",
+        "difficulty": "중급"
+      },
+      "imputation": {
+        "name": "결측값 대체",
+        "description": "범위를 사용하여 대체할 결측 데이터 구간 표시",
+        "useCases": "센서 데이터 정제, 측정 갭 메우기",
+        "models": "MICE, KNN, Interpolation, BRITS",
+        "difficulty": "중급"
+      },
+      "multi-label-classification": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-classification": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-forecasting": {
+        "name": "",
+        "description": ""
+      },
+      "anomaly-detection": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-segmentation": {
+        "name": "",
+        "description": ""
+      },
+      "pattern-recognition": {
+        "name": "",
+        "description": ""
+      },
+      "event-detection": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-regression": {
+        "name": "",
+        "description": ""
+      },
+      "object3DDetection": {
+        "name": "3D 객체 감지",
+        "description": "3D 포인트 클라우드에서 객체 감지",
+        "useCases": "자율 주행, 로봇공학",
+        "models": "PointNet++, VoxelNet, PointPillars",
+        "difficulty": "고급"
+      },
+      "semantic3DSegmentation": {
+        "name": "3D 시맨틱 분할",
+        "description": "3D 포인트 클라우드에서 포인트 분류",
+        "useCases": "도시 매핑, BIM, 건물 스캔",
+        "models": "PointNet, MinkowskiNet, KPConv",
+        "difficulty": "고급"
+      },
+      "instance3DSegmentation": {
+        "name": "3D 인스턴스 분할",
+        "description": "3D에서 개별 객체 분리",
+        "useCases": "로봇공학, 객체 조작",
+        "models": "PointGroup, SoftGroup, Mask3D",
+        "difficulty": "고급"
+      },
+      "pointCloudClassification": {
+        "name": "포인트 클라우드 분류",
+        "description": "전체 포인트 클라우드 분류",
+        "useCases": "3D 객체 인식",
+        "models": "PointNet, DGCNN, PointTransformer",
+        "difficulty": "고급"
+      },
+      "meshSegmentation": {
+        "name": "메시 분할",
+        "description": "3D 폴리곤 메시 분할",
+        "useCases": "3D 모델링, 기하학적 분석",
+        "models": "MeshCNN, TextureNet",
+        "difficulty": "고급"
+      },
+      "pose3DEstimation": {
+        "name": "3D 포즈 추정",
+        "description": "3D 인체 포즈 추정",
+        "useCases": "모션 캡처, 애니메이션",
+        "models": "VideoPose3D, VoxelPose",
+        "difficulty": "고급"
+      },
+      "keypoint3DDetection": {
+        "name": "3D 키포인트 감지",
+        "description": "3D에서 관심 포인트 감지",
+        "useCases": "포인트 클라우드 정합, SLAM",
+        "models": "D3Feat, FCGF, Predator",
+        "difficulty": "고급"
+      },
+      "surfaceReconstruction": {
+        "name": "표면 재구성",
+        "description": "포인트에서 표면 재구성",
+        "useCases": "3D 스캔, 문화 유산",
+        "models": "Poisson Surface Reconstruction, COLMAP",
+        "difficulty": "고급"
+      },
+      "slamAnnotation": {
+        "name": "SLAM 주석",
+        "description": "위치 파악 및 매핑을 위한 데이터 주석",
+        "useCases": "모바일 로봇, 자율 탐색",
+        "models": "ORB-SLAM, LiDAR-SLAM",
+        "difficulty": "고급"
+      },
+      "textClassification": {
+        "name": "텍스트 분류",
+        "description": "텍스트에 카테고리 할당",
+        "useCases": "뉴스 분류, 스팸 감지",
+        "models": "BERT, RoBERTa, DistilBERT",
+        "difficulty": "중급"
+      },
+      "namedEntityRecognition": {
+        "name": "개체명 인식 (NER)",
+        "description": "이름, 장소, 조직 식별",
+        "useCases": "정보 추출, 문서 분석",
+        "models": "SpaCy, Flair, BERT-NER",
+        "difficulty": "중급"
+      },
+      "sentimentAnalysis": {
+        "name": "감정 분석",
+        "description": "감정 감지 (긍정/부정/중립)",
+        "useCases": "의견 분석, 소셜 미디어",
+        "models": "VADER, TextBlob, RoBERTa-Sentiment",
+        "difficulty": "중급"
+      },
+      "intentClassification": {
+        "name": "의도 분류",
+        "description": "사용자 의도 식별",
+        "useCases": "챗봇, 가상 비서",
+        "models": "DIET, Rasa NLU, BERT-Intent",
+        "difficulty": "중급"
+      },
+      "relationExtraction": {
+        "name": "관계 추출",
+        "description": "엔티티 간 관계 식별",
+        "useCases": "지식 그래프, 텍스트 분석",
+        "models": "SpanBERT, LUKE, Relation Extraction BERT",
+        "difficulty": "고급"
+      },
+      "posTagging": {
+        "name": "품사 태깅 (POS)",
+        "description": "문법적 카테고리 식별",
+        "useCases": "언어학적 분석, NLP 전처리",
+        "models": "SpaCy, NLTK, Flair",
+        "difficulty": "초급"
+      },
+      "dependencyParsing": {
+        "name": "의존 구문 분석",
+        "description": "구문 구조 분석",
+        "useCases": "언어 이해, 번역",
+        "models": "SpaCy, Stanford Parser",
+        "difficulty": "고급"
+      },
+      "questionAnswering": {
+        "name": "질문 응답",
+        "description": "텍스트에 대한 질문에 답변",
+        "useCases": "QA 비서, 정보 검색",
+        "models": "BERT-QA, RoBERTa-QA, T5",
+        "difficulty": "고급"
+      },
+      "keyphraseExtraction": {
+        "name": "핵심 구문 추출",
+        "description": "중요한 구문 식별",
+        "useCases": "요약, 문서 인덱싱",
+        "models": "YAKE, KeyBERT, RAKE",
+        "difficulty": "중급"
+      },
+      "entityLinking": {
+        "name": "엔티티 연결",
+        "description": "엔티티를 지식 베이스에 연결",
+        "useCases": "데이터 강화, 지식 그래프",
+        "models": "BLINK, ELQ, GENRE",
+        "difficulty": "고급"
+      },
+      "toxicityClassification": {
+        "name": "독성 분류",
+        "description": "유해하거나 공격적인 콘텐츠 감지",
+        "useCases": "콘텐츠 모더레이션, 필터",
+        "models": "Perspective API, Detoxify, RoBERTa-Toxicity",
+        "difficulty": "중급"
+      },
+      "languageIdentification": {
+        "name": "언어 식별",
+        "description": "텍스트의 언어 감지",
+        "useCases": "다국어 처리, 번역",
+        "models": "langdetect, fastText, XLM-RoBERTa",
+        "difficulty": "초급"
+      },
+      "useCasesLabel": "사용 사례",
+      "modelsLabel": "추천 모델",
+      "difficultyLabel": "난이도"
+    },
+    "categories": {
+      "images": "",
+      "classification": "",
+      "timeSeries": ""
+    },
+    "modality": "모달리티",
     "initialClasses": "초기 클래스 (선택사항)",
     "classesPlaceholder": "클래스1, 클래스2, 클래스3",
     "classesHelp": "쉼표로 구분. 나중에 더 추가할 수 있습니다.",
+    "imageDimensions": "이미지 치수",
+    "dimensionsAuto": "자동 - 모든 크기 허용",
+    "dimensionsFixed": "고정 - 모든 이미지가 리사이즈됨",
+    "targetSize": "목표 크기",
+    "resizeStrategy": "전략",
     "enterName": "프로젝트 이름을 입력하세요",
     "created": "프로젝트 \"{name}\"이(가) 생성되었습니다",
-    "updated": "Updated",
+    "updated": "업데이트됨",
     "loaded": "프로젝트 \"{name}\"이(가) 로드되었습니다",
     "deleted": "프로젝트가 삭제되었습니다",
+    "duplicated": "프로젝트 \"{name}\"이(가) 복제되었습니다",
+    "renamed": "프로젝트 이름이 변경되었습니다",
+    "imported": "프로젝트 \"{name}\"이(가) 가져오기 되었습니다",
     "exported": "프로젝트가 내보내졌습니다",
     "configExported": "설정이 내보내졌습니다",
-    "selectFirst": "먼저 프로젝트를 선택하세요"
+    "selectFirst": "먼저 프로젝트를 선택하세요",
+    "noProjects": "사용 가능한 프로젝트가 없습니다",
+    "manageProjects": "프로젝트 관리",
+    "renameProject": "프로젝트 이름 변경",
+    "newName": "새 이름",
+    "images": "이미지",
+    "annotations": "주석",
+    "exportBackup": "삭제 전 .tix 백업 다운로드",
+    "deleteWarning": {
+      "title": "⚠️ 경고: 영구 삭제",
+      "confirmTitle": "삭제를 확인하시겠습니까?",
+      "projectName": "프로젝트:",
+      "message": "이 프로젝트를 영구적으로 삭제하려고 합니다.",
+      "permanent": "이 작업은 취소할 수 없습니다",
+      "allData": "모든 이미지와 주석이 삭제됩니다",
+      "noUndo": "삭제된 데이터를 복구할 방법이 없습니다",
+      "recommendation": "💡 권장: 삭제하기 전에 프로젝트를 .tix 형식으로 백업으로 내보내세요"
+    }
   },
   "notifications": {
     "imageSaved": "이미지가 저장되었습니다",
+    "imagesLoaded": "{count}개 이미지가 로드되었습니다",
     "datasetDownloaded": "데이터셋이 다운로드되었습니다",
     "classesDownloaded": "classes.txt가 다운로드되었습니다",
     "noClasses": "다운로드할 클래스가 없습니다",
     "noImages": "프로젝트에 이미지가 없습니다",
     "noAnnotations": "다운로드할 주석이 없습니다",
     "appStarted": "애플리케이션이 시작되었습니다",
+    "classDeleted": "클래스와 모든 주석이 삭제되었습니다",
     "error": {
       "createProject": "프로젝트 생성 오류",
       "loadProject": "프로젝트 로드 오류",
       "updateProject": "프로젝트 업데이트 오류",
       "deleteProject": "프로젝트 삭제 오류",
+      "duplicateProject": "프로젝트 복제 오류",
+      "renameProject": "프로젝트 이름 변경 오류",
+      "loadProjects": "프로젝트 목록 로드 오류",
       "exportProject": "프로젝트 내보내기 오류",
       "exportConfig": "설정 내보내기 오류",
       "importConfig": "설정 가져오기 오류",
+      "importProject": "프로젝트 가져오기 오류",
       "loadImage": "이미지 로드 오류",
       "saveImage": "이미지 저장 오류",
       "deleteImage": "이미지 삭제 오류",
-      "loadImages": "이미지 로드 오류",
+      "loadImages": "이미지 목록 로드 오류",
       "downloadDataset": "데이터셋 다운로드 오류",
-      "initApp": "애플리케이션 시작 오류"
-    }
+      "initApp": "애플리케이션 시작 오류",
+      "export": "내보내기 오류",
+      "noImages": "이미지를 찾을 수 없습니다 오류"
+    },
+    "imageDeleted": "notifications.imageDeleted"
   },
   "tour": {
-    "welcome": "<strong>YOLO 주석 도구</strong>에 오신 것을 환영합니다. 이 도구를 사용하면 YOLO 모델을 훈련하기 위해 이미지에 주석을 달 수 있습니다.",
-    "project": "먼저 새 프로젝트를 만들거나 기존 프로젝트를 선택하세요. 각 프로젝트는 <strong>경계 상자</strong> 또는 <strong>세그멘테이션</strong> 유형일 수 있습니다.",
-    "tools": "여기에서 주석 <strong>도구</strong>를 찾을 수 있습니다: 사각형용 박스, 페인트 가능한 마스크용 마스크, 편집용 선택, 뷰 이동용 이동.",
-    "classes": "주석 <strong>클래스</strong>를 정의하세요. 각 클래스에는 이름과 색상이 있습니다. 클래스를 추가, 편집 또는 삭제할 수 있습니다.",
-    "workspace": "메인 <strong>작업 공간</strong>입니다. 여기에서 이미지를 로드하고 주석을 생성합니다. 마우스로 그리고 휠로 확대/축소하세요.",
-    "management": "프로젝트 <strong>통계</strong>, 이미지 <strong>갤러리</strong>를 보고 YOLO 형식으로 데이터셋을 <strong>내보낼</strong> 수 있는 관리 패널입니다.",
+    "welcome": "<strong>Annotix</strong>에 오신 것을 환영합니다! 🎯<br><br>머신 러닝 모델 학습을 위한 이미지 및 시계열 데이터 주석 전문 도구입니다. 다양한 주석 유형을 지원합니다: <strong>바운딩 박스</strong>, <strong>OBB</strong>, <strong>분할</strong>, <strong>키포인트</strong>, <strong>폴리곤</strong>, <strong>랜드마크</strong>, <strong>시계열</strong> 및 <strong>분류</strong>.",
+    "installation": "📦 <strong>로컬 설치</strong><br><br>Annotix는 <strong>프로그레시브 웹 앱 (PWA)</strong>으로 PC에 완전히 설치됩니다. 초기 설치 후 인터넷 연결이 필요하지 않습니다. 오프라인으로 작동하며 브라우저에서 직접 실행됩니다.",
+    "dataStorage": "💾 <strong>데이터 저장</strong><br><br><strong>중요:</strong> 모든 데이터는 서버가 아닌 <strong>브라우저의 IndexedDB</strong>에 저장됩니다. 이는 다음을 의미합니다:<br>• ✅ 완전한 프라이버시: 데이터가 PC를 떠나지 않음<br>• ✅ 인터넷 없이 작동<br>• ⚠️ 위험: 브라우저 데이터를 삭제하면 모든 것을 잃게 됩니다",
+    "projectBackup": "💼 <strong>프로젝트 백업</strong><br><br>데이터 손실을 방지하려면:<br>• <strong>.tix</strong> 형식으로 프로젝트를 내보내세요 (모든 것 포함: 이미지, 주석, 클래스)<br>• 언제든지 .tix 파일을 다시 로드할 수 있습니다<br>• 다른 사용자와 .tix 프로젝트를 공유하세요<br>• 클래스 설정만 공유하려면 <strong>.tixconfig</strong> 파일도 내보낼 수 있습니다",
+    "createProjectButton": "<strong>새 프로젝트</strong>를 클릭하여 시작하세요. 프로젝트 유형을 선택할 수 있는 생성 모달이 열립니다.",
+    "projectTypeSelection": "📋 <strong>프로젝트 유형</strong><br><br>모달에서 <strong>8가지 다른 유형</strong> 중 선택할 수 있습니다:<br>• <strong>바운딩 박스</strong>: 직사각형 박스 (객체 감지)<br>• <strong>OBB</strong>: 회전된 방향 박스<br>• <strong>마스크</strong>: 픽셀 분할<br>• <strong>키포인트</strong>: 키포인트 (포즈 추정)<br>• <strong>폴리곤</strong>: 자유 형태 폴리곤<br>• <strong>랜드마크</strong>: 얼굴 포인트<br>• <strong>시계열</strong>: 시계열 데이터<br>• <strong>분류</strong>: 이미지 분류",
+    "projectName": "✏️ <strong>프로젝트 이름</strong><br><br>모달에서 프로젝트의 <strong>설명적인 이름</strong>을 입력하세요. 예: '2024 자동차 감지' 또는 '세포 분할'.<br><br>프로젝트 유형에 따라 캔버스에서 사용할 수 있는 도구가 결정됩니다.",
+    "classesPanel": "이것은 <strong>클래스 관리 패널</strong>입니다. 여기서 주석을 달 카테고리를 정의합니다.",
+    "classesInWorkflow": "🏷️ <strong>클래스 관리</strong><br><br>클래스는 <strong>두 가지 방법</strong>으로 추가할 수 있습니다:<br><br>1. <strong>프로젝트 생성 모달에서:</strong> 처음부터 주요 클래스 정의<br><br>2. <strong>오른쪽 패널 (현재)에서:</strong> 작업 중 언제든지 클래스 추가, 편집 또는 삭제<br><br>각 클래스에는 <strong>고유한 이름</strong>, <strong>구별되는 색상</strong>, <strong>순차적 ID</strong>가 있습니다. <strong>1-9</strong> 키를 사용하여 클래스를 빠르게 선택하세요.",
+    "gallery": "<strong>이미지 갤러리</strong>는 프로젝트의 모든 이미지를 표시합니다. 전체, 주석 완료, 주석 미완료로 필터링할 수 있습니다. 썸네일은 각 이미지의 상태를 보여줍니다.",
+    "loadImages": "<strong>이미지 로드</strong>를 눌러 프로젝트에 이미지를 가져오세요. JPG, PNG, WEBP 등 다양한 형식을 지원합니다. <strong>데이터 증강</strong>을 사용하여 이미지의 자동 변형을 생성할 수도 있습니다.",
+    "workspace": "이미지나 시계열 데이터를 시각화하고 주석을 다는 <strong>메인 작업 공간</strong>입니다. 마우스로 그리고, 휠로 확대/축소하고, 가운데 버튼을 누르거나 Pan 도구를 사용하여 뷰를 이동하세요.",
+    "tools": "<strong>플로팅 도구</strong>는 프로젝트 유형에 따라 변경됩니다. Box (B), OBB (O), Mask (M), Select (V), Pan (H)이 포함됩니다. 각 도구에는 마스크의 브러시 크기나 줌 컨트롤 같은 특정 제어 기능이 있습니다.",
+    "stats": "<strong>통계</strong> 패널은 프로젝트 진행 상황을 보여줍니다: 전체 이미지, 주석된 이미지, 전체 레이블, 클래스 수. 진행률 바가 완료된 작업량을 시각화하는 데 도움을 줍니다.",
+    "exportButton": "<strong>내보내기</strong> 버튼을 사용하여 데이터셋을 다운로드할 수 있습니다. 사용 가능한 옵션을 살펴보겠습니다...",
+    "exportFormats": "📦 <strong>내보내기 형식</strong><br><br>내보내기 모달에서 다양한 옵션을 찾을 수 있습니다:<br><br>• <strong>YOLO Detection</strong>: 정규화된 바운딩 박스가 있는 .txt<br>• <strong>YOLO Segmentation</strong>: 마스크 폴리곤이 있는 .txt<br>• <strong>YOLO OBB</strong>: 방향 박스가 있는 .txt<br>• <strong>COCO JSON</strong>: 표준 COCO 형식<br>• <strong>U-Net Masks</strong>: 분할용 PNG 이미지<br>• <strong>Pascal VOC XML</strong>: Pascal VOC 형식<br>• <strong>CSV</strong>: 데이터 테이블",
+    "trainingCode": "🐍 <strong>학습 코드</strong><br><br>내보내기 모달에서 <strong>'Python 학습 코드 생성'</strong> 옵션을 찾을 수 있습니다.<br><br>이것은 Ultralytics의 <strong>YOLOv8</strong>으로 모델을 학습시키기 위한 <strong>완전한 예제 스크립트</strong>를 생성합니다:<br>• 자동 경로 설정<br>• 최적의 하이퍼파라미터가 포함된 학습 스크립트<br>• 바로 실행 가능: 종속성만 설치하고 학습 시작",
+    "shortcuts": "<strong>키보드</strong> 버튼을 누르거나 F1을 사용하여 사용 가능한 모든 <strong>키보드 단축키</strong>를 확인하세요. Ctrl+S로 저장, Ctrl+Z로 실행 취소, 숫자 키로 클래스 선택 등이 포함됩니다.",
+    "finish": "시작할 준비가 되었습니다! 🚀<br><br>기억하세요:<br>• <strong>Ctrl+S</strong>로 자주 저장하세요<br>• <strong>.tix</strong> 형식으로 백업을 내보내세요<br>• 데이터는 <strong>브라우저에만</strong> 저장됩니다<br><br>도움이 필요하면 <strong>?</strong> 버튼을 눌러 이 투어를 다시 보세요.",
     "next": "다음 →",
     "prev": "← 이전",
-    "done": "완료!",
-    "skip": "건너뛰기"
+    "done": "이해했습니다!",
+    "skip": "투어 건너뛰기"
   },
   "imageInfo": {
     "noName": "이름 없음",
-    "dimensions": "크기"
+    "dimensions": "치수"
+  },
+  "preprocessing": {
+    "title": "이미지 전처리",
+    "detected": "정사각형이 아닌 이미지 {count}개 감지됨",
+    "description": "학습을 최적화하기 위해 이미지를 정사각형 크기로 조정합니다. 리사이즈 전략을 선택하세요:",
+    "targetSize": "목표 크기 (픽셀)",
+    "recommended": "권장: {size}px",
+    "strategy": "리사이즈 전략",
+    "strategies": {
+      "resize": {
+        "name": "리사이즈 + 패딩",
+        "description": "이미지를 축소하고 패딩을 추가합니다 (공간 및 메모리 최적화)"
+      },
+      "padding": {
+        "name": "패딩만",
+        "description": "원본 크기를 유지하고 패딩을 추가합니다 (최상의 품질)"
+      }
+    },
+    "options": {
+      "apply": "전처리 적용",
+      "skip": "전처리 없이 업로드"
+    },
+    "progress": "이미지 {current}/{total} 처리 중...",
+    "complete": "{count}개 이미지가 성공적으로 전처리되었습니다",
+    "preview": "미리보기",
+    "original": "원본",
+    "processed": "처리됨",
+    "aspectRatio": "원본 종횡비 유지됨",
+    "paddingInfo": "대칭적인 검은색 패딩이 추가됩니다"
+  },
+  "classification": {
+    "selectOne": "올바른 레이블을 선택하세요",
+    "selectMultiple": "해당되는 레이블을 선택하세요",
+    "singleHint": "하나의 레이블만 선택할 수 있습니다",
+    "multiHint": "여러 레이블을 선택할 수 있습니다",
+    "noLabels": "할당된 레이블 없음",
+    "labeled": "레이블됨",
+    "selectLabel": "레이블 선택",
+    "selectLabels": "레이블 선택",
+    "selected": "선택됨",
+    "multiLabel": "다중 레이블 분류",
+    "singleLabel": "단순 분류",
+    "noImageSelected": "이미지가 선택되지 않았습니다. 갤러리에서 이미지를 선택하세요.",
+    "multiLabelInstructions": "이 이미지에 해당하는 하나 이상의 레이블을 선택하세요. Ctrl+S를 눌러 저장합니다.",
+    "singleLabelInstructions": "이 이미지를 가장 잘 설명하는 레이블을 선택하세요. Ctrl+S를 눌러 저장합니다."
+  },
+  "augmentation": {
+    "title": "데이터 증강",
+    "batchButton": "데이터 증강",
+    "augmentImage": "증강 적용",
+    "variationsCount": "변형 수",
+    "variationsCountHelp": "몇 개의 증강된 이미지를 생성할까요? (1-20)",
+    "generationMode": "생성 모드",
+    "modeManual": "수동 (고정 설정)",
+    "modeRandom": "무작위 (설정 가능한 범위)",
+    "modeManualHelp": "동일한 설정을 N번 적용",
+    "modeRandomHelp": "지정된 범위 내에서 무작위 값으로 N개의 변형 생성",
+    "geometricTransforms": "기하학적 변환",
+    "flipHorizontal": "수평 뒤집기",
+    "flipVertical": "수직 뒤집기",
+    "rotation": "회전",
+    "noRotation": "회전 없음",
+    "customRotation": "사용자 정의 회전",
+    "colorAdjustments": "색상 조정",
+    "brightness": "밝기",
+    "contrast": "대비",
+    "saturation": "채도",
+    "randomOptions": "무작위 옵션",
+    "randomFlip": "무작위 뒤집기 (수평/수직)",
+    "randomRotation": "무작위 회전",
+    "randomColor": "무작위 색상 조정",
+    "rotationRange": "회전 범위 (도)",
+    "brightnessRange": "밝기 범위",
+    "contrastRange": "대비 범위",
+    "saturationRange": "채도 범위",
+    "min": "최소",
+    "max": "최대",
+    "keepAnnotations": "변환된 주석 유지",
+    "keepAnnotationsHelp": "박스가 이미지와 함께 자동으로 변환됩니다",
+    "maskProjectWarning": "마스크 프로젝트",
+    "maskProjectWarningText": "주석이 유지되지 않습니다. 각 증강된 이미지에서 수동으로 마스크를 그려야 합니다.",
+    "apply": "적용",
+    "processing": "증강 처리 중...",
+    "generatingVariations": "{count}개 변형 생성 중...",
+    "variationsSuccess": "{count}개 변형이 성공적으로 생성되었습니다",
+    "success": "증강된 이미지가 성공적으로 생성되었습니다",
+    "error": "증강 적용 오류",
+    "batchProcessing": "{count}개 이미지에 증강 적용 중...",
+    "batchRandomProcessing": "{images}개 이미지에 {variations}개 변형 생성 중 (총 {total}개)...",
+    "batchSuccess": "{count}개 증강된 이미지가 성공적으로 생성되었습니다",
+    "batchRandomSuccess": "{count}개 무작위 변형이 성공적으로 생성되었습니다",
+    "batchError": "일괄 증강 적용 오류"
   },
   "pwa": {
     "installButton": "앱 설치",
@@ -236,17 +1479,271 @@
       "benefit4": "✅ 브라우저 바 없음",
       "benefit5": "✅ 데이터는 항상 비공개",
       "benefit6": "✅ 자동 업데이트",
+      "platformCompatibility": "플랫폼별 호환성:",
+      "androidInfo": "<strong>Android:</strong> 우수하게 작동합니다. 완전한 네이티브 설치, Play Store 앱처럼 동작합니다.",
+      "iosInfo": "<strong>iOS/iPadOS:</strong> 잘 작동하지만 Safari가 주기적으로 캐시를 정리할 수 있습니다. <strong>중요:</strong> 프로젝트를 자주 내보내서 진행 상황을 저장하세요.",
+      "linuxInfo": "<strong>Linux:</strong> 완벽하게 작동합니다. Chrome, Firefox, Edge에서 완전 지원.",
+      "windowsInfo": "<strong>Windows:</strong> Chrome 및 Edge에서 문제없이 작동할 것으로 예상되지만 광범위하게 테스트하지는 못했습니다.",
+      "generalTip": "💡 <strong>권장:</strong> 운영 체제에 관계없이 프로젝트를 정기적으로 백업으로 내보내세요.",
       "cancelButton": "나중에",
-      "installButtonModal": "📥 앱 설치"
+      "installButtonModal": "🖖 앱 설치"
     },
     "notifications": {
       "installed": "Annotix가 성공적으로 설치되었습니다!",
       "installFailed": "앱 설치 오류",
-      "updateAvailable": "업데이트 사용 가능. 업데이트하려면 새로고침하세요.",
+      "updateAvailable": "업데이트 사용 가능. 새로고침하여 업데이트하세요.",
       "offline": "오프라인 모드 활성화. 앱이 연결 없이 작동합니다."
     }
   },
   "storage": {
-    "used": "IndexedDB에서 사용된 저장공간"
+    "used": "디스크 사용량"
+  },
+  "inference": {
+    "title": "모델 추론",
+    "uploadModel": "모델 업로드",
+    "uploadPrompt": "ONNX 모델을 업로드하려면 클릭하세요",
+    "uploadHint": "YOLO 감지, 분할 및 분류를 지원합니다",
+    "modelName": "모델",
+    "modelType": "유형",
+    "inputSize": "입력 크기",
+    "settings": "설정",
+    "confidenceThreshold": "신뢰도 임계값",
+    "autoInference": "이미지 로드 시 자동 추론",
+    "runInference": "추론 실행",
+    "clearPredictions": "모두 지우기",
+    "convertAll": "모두 변환",
+    "process": "처리 중...",
+    "predictions": "예측",
+    "highConf": "높은 신뢰도",
+    "time": "시간",
+    "distribution": "클래스 분포",
+    "batchProgress": "이미지 처리 중...",
+    "showPredictions": "예측 표시",
+    "hidePredictions": "예측 숨기기",
+    "togglePredictions": "예측 가시성 전환",
+    "convertSelected": "선택한 예측 변환",
+    "convertToPrediction": "주석으로 변환",
+    "alreadyLoading": "모델이 이미 로드 중입니다",
+    "loadingModel": "모델 로드 중...",
+    "modelLoaded": "모델 {name}이(가) 성공적으로 로드되었습니다",
+    "loadModelError": "모델 로드 오류: {error}",
+    "modelUnloaded": "모델이 언로드되었습니다",
+    "noModelLoaded": "로드된 모델이 없습니다. 먼저 모델을 업로드하세요.",
+    "inferenceCompleted": "{count}개 예측, {time}ms",
+    "inferenceError": "추론 오류: {error}",
+    "invalidModelName": "모델 이름은 다음 형식을 따라야 합니다: {expected}",
+    "viewModelTitle": "모델 아키텍처 보기",
+    "viewModelInstructions": "모델을 다운로드하고 Netron에서 열어 아키텍처를 시각화하세요.",
+    "downloadModel": "모델 다운로드",
+    "netronInstructions": "그런 다음",
+    "netronInstructions2": "으로 이동하여 다운로드한 파일을 여세요",
+    "viewModel": "모델 아키텍처 보기",
+    "enforceNaming": "이름 규칙 적용",
+    "helpText": "호환성을 보장하려면 <strong>프로젝트이름_v1.onnx</strong> 형식의 모델을 업로드하세요. 각 이미지에서 뇌 <i class='fas fa-brain'></i> 버튼을 사용하여 추론을 실행하세요. 다른 모델을 테스트하려면 이름 검증을 비활성화할 수 있습니다.",
+    "modelArchitecture": "모델 아키텍처",
+    "modelInformation": "모델 정보",
+    "dataFlow": "데이터 흐름",
+    "inputTensor": "입력 텐서",
+    "processing": "처리",
+    "outputTensor": "출력 텐서",
+    "inputs": "입력",
+    "outputs": "출력",
+    "format": "형식",
+    "advancedVisualization": "레이어별 고급 시각화를 위해 Netron을 사용하세요:",
+    "loadingArchitecture": "아키텍처 뷰어 로드 중...",
+    "netronInstructionsTitle": "인터랙티브 아키텍처 보기",
+    "netronInstructionsText": "모델 파일을 아래 Netron 창에 드래그 앤 드롭하여 레이어별 전체 아키텍처를 확인하세요.",
+    "downloadForNetron": "모델 파일 다운로드",
+    "netronBrowserNote": "또는 모델 파일을 아래 Netron에 직접 드래그하세요",
+    "overview": "개요",
+    "interactive": "인터랙티브 (Netron)",
+    "totalLayers": "레이어",
+    "operationStats": "연산 통계",
+    "layerList": "레이어 목록",
+    "detectedOps": "감지된 연산",
+    "parsingFailed": "모델을 파싱할 수 없습니다",
+    "useNetron": "전체 아키텍처를 보려면 인터랙티브 탭을 사용하세요",
+    "showingLayers": "{total}개 중 {shown}개 레이어 표시"
+  },
+  "connector": {
+    "connected": "Connector",
+    "disconnected": "Connector 없음",
+    "connectedMessage": "Connector 온라인 - 포트 5000",
+    "checking": "Connector 연결 확인 중...",
+    "connectedReady": "연결됨 - 학습 준비 완료",
+    "notConnected": "동반 엔진에 연결할 수 없습니다",
+    "notConnectedHint": "실행 중인지 확인하세요",
+    "offlineMessage": "동반 엔진에 연결할 수 없습니다.\n\n데스크톱 앱을 다운로드하고 실행하셨나요?\n'motor_server.exe'가 PC에서 실행 중인지 확인하세요.",
+    "downloadTitle": "동반 엔진이 감지되지 않음",
+    "downloadMessage": "로컬에서 모델을 학습하려면 Annotix 동반 엔진을 다운로드하고 설치해야 합니다.",
+    "downloadHint": "동반 엔진은 PC에서 백그라운드로 실행되며 주석된 데이터로 모델을 학습할 수 있게 합니다.",
+    "download": "동반 엔진 다운로드",
+    "downloadStarted": "다운로드가 시작되었습니다. 완료되면 설치 프로그램을 실행하세요.",
+    "startTraining": "학습 시작",
+    "trainingStarted": "학습이 성공적으로 시작되었습니다"
+  },
+  "timeseries": {
+    "noProjectSelected": "프로젝트가 선택되지 않았습니다. 시계열 프로젝트를 선택하세요.",
+    "importCSV": "CSV 파일 가져오기",
+    "importSuccess": "CSV를 성공적으로 가져왔습니다!",
+    "selectCSV": "CSV 파일 선택",
+    "hasHeader": "첫 번째 행에 헤더가 포함되어 있습니다",
+    "timestampColumn": "타임스탬프 열 (0 기반 인덱스)",
+    "timestampColumnHelp": "타임스탬프의 열 인덱스 (기본값: 0 = 첫 번째 열)",
+    "import": "가져오기",
+    "csvFormatInfo": "CSV 형식: 첫 번째 열은 타임스탬프, 나머지 열은 값입니다. 예: 시간,값1,값2",
+    "noSeriesSelected": "시계열이 선택되지 않았습니다. 갤러리에서 시리즈를 선택하세요.",
+    "dataPoints": "데이터 포인트",
+    "series": "시리즈",
+    "annotations": "주석",
+    "annotationsCount": "주석",
+    "addAnnotation": "주석 추가",
+    "totalSeries": "전체 시리즈",
+    "annotated": "주석 완료",
+    "pending": "대기 중",
+    "seriesList": "시계열 목록",
+    "noSeriesYet": "아직 시계열이 없습니다",
+    "importCSVToStart": "시작하려면 CSV 파일을 가져오세요",
+    "deleteConfirm": "이 시계열을 삭제하시겠습니까?",
+    "tools": {
+      "select": "선택",
+      "point": "포인트",
+      "range": "범위",
+      "event": "이벤트",
+      "anomaly": "이상",
+      "classification": "분류"
+    },
+    "clearAnnotations": "모든 주석 지우기",
+    "noAnnotations": "아직 주석이 없습니다. 도구를 선택하고 그래프를 클릭하여 주석을 추가하세요.",
+    "instructions": {
+      "point": "그래프를 클릭하여 주석 포인트를 표시합니다",
+      "range": "클릭하여 시작점을 설정한 다음 다시 클릭하여 끝점을 설정합니다",
+      "event": "그래프를 클릭하여 이벤트를 표시합니다",
+      "anomaly": "그래프를 클릭하여 이상을 표시합니다"
+    }
+  },
+  "training": {
+    "title": "모델 학습",
+    "description": "주석이 달린 데이터셋으로 YOLO 모델을 학습합니다",
+    "start": "학습 시작",
+    "starting": "시작 중...",
+    "cancel": "학습 취소",
+    "env": {
+      "checking": "Python 환경 확인 중...",
+      "ready": "Python 환경 준비 완료",
+      "notInstalled": "Python 환경 미설정",
+      "description": "Annotix는 모델 학습을 위해 ultralytics가 포함된 Python이 필요합니다. 아래 버튼을 클릭하여 자동 설정하세요.",
+      "setup": "환경 설정",
+      "setupHint": "최초 설정 시 몇 분 소요될 수 있습니다"
+    },
+    "gpu": {
+      "detecting": "감지 중..."
+    },
+    "presets": {
+      "title": "학습 프리셋",
+      "quick": "빠른",
+      "quickDesc": "50 에폭, 가벼운 증강. 테스트용.",
+      "balanced": "균형",
+      "balancedDesc": "100 에폭, 중간 증강. 권장.",
+      "full": "전체",
+      "fullDesc": "300 에폭, 강한 증강. 최고 정확도."
+    },
+    "model": {
+      "version": "YOLO 버전",
+      "size": "모델 크기",
+      "recommended": "권장",
+      "sizeDescNano": "가장 빠름, 낮은 정확도. 엣지 디바이스용.",
+      "sizeDescSmall": "빠르고 적절한 정확도.",
+      "sizeDescMedium": "속도와 정확도의 균형.",
+      "sizeDescLarge": "높은 정확도, 느린 학습.",
+      "sizeDescXLarge": "최고 정확도, 가장 느린 학습."
+    },
+    "config": {
+      "title": "학습 설정",
+      "advanced": "고급 설정",
+      "epochs": "에폭",
+      "batchSize": "배치 크기",
+      "batchSizeHint": "-1은 자동 배치 크기",
+      "imageSize": "이미지 크기",
+      "optimizer": "옵티마이저",
+      "lr0": "초기 학습률",
+      "lrf": "최종 학습률",
+      "patience": "인내심",
+      "valSplit": "검증 분할",
+      "workers": "워커",
+      "device": "장치",
+      "augmentation": "데이터 증강"
+    },
+    "augmentation": {
+      "mosaic": "모자이크",
+      "mixup": "MixUp",
+      "hsv_h": "HSV 색조",
+      "hsv_s": "HSV 채도",
+      "hsv_v": "HSV 명도",
+      "flipud": "상하 반전",
+      "fliplr": "좌우 반전",
+      "degrees": "회전",
+      "scale": "스케일",
+      "shear": "전단",
+      "perspective": "원근",
+      "copy_paste": "복사-붙여넣기",
+      "erasing": "지우기"
+    },
+    "monitor": {
+      "title": "학습 진행 중",
+      "epochProgress": "에폭 {{epoch}} / {{total}}",
+      "epoch": "에폭",
+      "loss": "손실",
+      "metrics": "메트릭",
+      "precision": "정밀도",
+      "recall": "재현율",
+      "logs": "학습 로그",
+      "waitingMetrics": "메트릭 대기 중...",
+      "waitingLogs": "로그 대기 중..."
+    },
+    "status": {
+      "pending": "대기 중",
+      "training": "학습 중",
+      "completed": "완료",
+      "failed": "실패",
+      "cancelled": "취소됨"
+    },
+    "result": {
+      "completed": "학습 완료",
+      "description": "모델 학습이 성공적으로 완료되었습니다.",
+      "finalMetrics": "최종 메트릭",
+      "modelPaths": "모델 파일",
+      "exported": "내보낸 모델",
+      "exportModel": "모델 내보내기",
+      "newTraining": "새 학습 시작"
+    },
+    "jobs": {
+      "title": "학습 기록",
+      "empty": "아직 학습 기록이 없습니다"
+    }
+  },
+  "setup": {
+    "welcome": "Annotix에 오신 것을 환영합니다",
+    "description": "프로젝트가 저장될 폴더를 선택하세요. 각 프로젝트는 이미지, 주석 및 설정이 포함된 하위 폴더가 됩니다.",
+    "selectFolder": "프로젝트 폴더 선택",
+    "selectedFolder": "선택된 폴더",
+    "confirm": "시작하기",
+    "noFolder": "폴더가 선택되지 않았습니다",
+    "changeFolder": "폴더 변경"
+  },
+  "video": {
+    "upload": "영상 업로드",
+    "fpsTitle": "추출 설정",
+    "fpsLabel": "초당 추출할 프레임 수",
+    "fpsHelp": "낮은 값 = 적은 프레임, 빠른 속도. 권장: 2-10 FPS",
+    "resolution": "해상도",
+    "duration": "길이",
+    "estimatedFrames": "약 {{count}}개의 이미지가 생성됩니다",
+    "extract": "프레임 추출",
+    "uploading": "영상 업로드 중...",
+    "extracting": "프레임 추출 중...",
+    "extractingFrame": "프레임 추출 중 {{current}} / {{total}}",
+    "processing": "영상 처리 중",
+    "done": "완료"
   }
 }

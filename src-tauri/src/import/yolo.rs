@@ -6,7 +6,7 @@ use super::{ImportData, ImageImportData, create_class, create_annotation};
 
 pub fn import_data(
     archive: &mut ZipArchive<std::fs::File>,
-    project_type: &str,
+    _project_type: &str,
     is_segmentation: bool,
 ) -> Result<ImportData, String> {
     // Read classes.txt
@@ -65,7 +65,7 @@ fn parse_label_file(
     img_width: u32,
     img_height: u32,
     is_segmentation: bool,
-) -> Vec<crate::db::models::Annotation> {
+) -> Vec<crate::store::project_file::AnnotationEntry> {
     let mut annotations = Vec::new();
     let w = img_width as f64;
     let h = img_height as f64;

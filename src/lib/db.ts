@@ -1,12 +1,12 @@
 // src/lib/db.ts
-// Solo interfaces y tipos - la persistencia se maneja via Tauri/SQLite (tauriDb.ts)
+// Solo interfaces y tipos - la persistencia se maneja via Tauri/Rust (tauriDb.ts)
 
 // ============================================================================
 // PROJECTS TABLE
 // ============================================================================
 
 export interface Project {
-  id?: number;
+  id?: string;
   name: string;
   type: ProjectType;
   classes: ClassDefinition[];
@@ -15,6 +15,7 @@ export interface Project {
     updated: number;
     version: string;
   };
+  imageCount?: number;
 }
 
 export interface ClassDefinition {
@@ -54,8 +55,8 @@ export type ProjectType =
 // ============================================================================
 
 export interface Image {
-  id?: number;
-  projectId: number;           // Indexed
+  id?: string;
+  projectId: string;           // Indexed
   name: string;
   blob: Blob;
   annotations: Annotation[];
@@ -143,8 +144,8 @@ export interface ClassificationData {
 // ============================================================================
 
 export interface InferenceCache {
-  id?: number;
-  imageId: number;             // Indexed
+  id?: string;
+  imageId: string;             // Indexed
   modelHash: string;           // MD5 hash of model file - Indexed
   predictions: Prediction[];
   timestamp: number;
@@ -163,8 +164,8 @@ export interface Prediction {
 // ============================================================================
 
 export interface TimeSeries {
-  id?: number;
-  projectId: number;           // Indexed
+  id?: string;
+  projectId: string;           // Indexed
   name: string;
   data: TimeSeriesData;
   annotations: TimeSeriesAnnotation[];
@@ -228,8 +229,8 @@ export interface AnomalyAnnotation {
 // ============================================================================
 
 export interface TrainingJob {
-  id?: number;
-  projectId: number;           // Indexed
+  id?: string;
+  projectId: string;           // Indexed
   status: 'pending' | 'running' | 'completed' | 'failed';  // Indexed
   config: TrainingConfig;
   progress: number;            // 0-100
@@ -275,8 +276,8 @@ export type NewProject = Omit<Project, 'id' | 'metadata'> & {
  * El frontend obtiene la URL de la imagen via convertFileSrc() o getImageFilePath()
  */
 export interface AnnotixImage {
-  id?: number;
-  projectId: number;
+  id?: string;
+  projectId: string;
   name: string;
   blobPath: string;
   width: number;
@@ -287,7 +288,7 @@ export interface AnnotixImage {
     annotated?: number;
     status: 'pending' | 'annotated' | 'reviewed';
   };
-  videoId?: number | null;
+  videoId?: string | null;
   frameIndex?: number | null;
 }
 
@@ -296,25 +297,24 @@ export interface AnnotixImage {
 // ============================================================================
 
 export interface Video {
-  id?: number;
-  projectId: number;
+  id?: string;
+  projectId: string;
   name: string;
-  sourcePath: string;
+  file: string;
   fpsExtraction: number;
   fpsOriginal: number | null;
   totalFrames: number;
   durationMs: number;
   width: number;
   height: number;
-  metadata: {
-    uploaded: number;
-    status: 'processing' | 'ready' | 'error';
-  };
+  uploaded: number;
+  status: 'pending' | 'processing' | 'ready' | 'error';
+  tracks: VideoTrack[];
 }
 
 export interface VideoTrack {
-  id?: number;
-  videoId: number;
+  id?: string;
+  videoId: string;
   trackUuid: string;
   classId: number;
   label: string | null;
@@ -323,8 +323,8 @@ export interface VideoTrack {
 }
 
 export interface VideoKeyframe {
-  id?: number;
-  trackId: number;
+  id?: string;
+  trackId: string;
   frameIndex: number;
   bboxX: number;
   bboxY: number;
@@ -336,7 +336,7 @@ export interface VideoKeyframe {
 
 export interface InterpolatedBBox {
   trackUuid: string;
-  trackId: number;
+  trackId: string;
   classId: number;
   bbox: BBoxData;
   isKeyframe: boolean;

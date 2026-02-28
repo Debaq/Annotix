@@ -1,16 +1,21 @@
 use tauri::State;
 
-use crate::db::models::StorageInfo;
-use crate::db::Database;
+use crate::store::AppState;
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct StorageInfo {
+    pub usage: u64,
+    pub quota: u64,
+    pub percentage: f64,
+}
 
 #[tauri::command]
-pub fn get_storage_info(db: State<'_, Database>) -> Result<StorageInfo, String> {
-    let data_dir = &db.data_dir;
+pub fn get_storage_info(state: State<'_, AppState>) -> Result<StorageInfo, String> {
+    let projects_dir = state.projects_dir()?;
 
-    let usage = dir_size(data_dir);
+    let usage = dir_size(&projects_dir);
 
-    // En desktop, el "quota" es el espacio disponible en disco
-    let available = fs2_available_space(data_dir);
+    let available = fs_available_space(&projects_dir);
     let quota = usage + available;
 
     let percentage = if quota > 0 {
@@ -47,17 +52,9 @@ fn dir_size(path: &std::path::Path) -> u64 {
     total
 }
 
-fn fs2_available_space(path: &std::path::Path) -> u64 {
-    // Usar statvfs en Linux/macOS
+fn fs_available_space(path: &std::path::Path) -> u64 {
     #[cfg(unix)]
     {
-        use std::os::unix::fs::MetadataExt;
-        if let Ok(meta) = std::fs::metadata(path) {
-            // Fallback: intentar obtener info del filesystem
-            let _ = meta.dev();
-        }
-        // Usar nix o libc para statvfs sería ideal, pero por ahora un fallback simple
-        // con el comando df
         if let Ok(output) = std::process::Command::new("df")
             .arg("-B1")
             .arg(path)
@@ -72,5 +69,5 @@ fn fs2_available_space(path: &std::path::Path) -> u64 {
             }
         }
     }
-    10_000_000_000 // 10GB default fallback
+    10_000_000_000
 }

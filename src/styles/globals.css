@@ -145,6 +145,41 @@
   z-index: 1000;
 }
 
+/* Header button (tools like keyboard, github) */
+.window-header-btn {
+  height: 32px;
+  width: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 0.15s ease;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.window-header-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Window control buttons (minimize, maximize, close) */
+.window-control-btn {
+  height: 30px;
+  width: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: background 0.15s ease;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
 /* Canvas container */
 .annotix-canvas-container {
   position: relative;
