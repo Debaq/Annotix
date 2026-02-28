@@ -30,12 +30,21 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
 
   return (
     <div className="annotix-floating" style={{ left: '20px', top: '50%', transform: 'translateY(-50%)' }}>
-      <div className="flex flex-col gap-1">
-        <h4 className="text-[0.7em] uppercase font-semibold tracking-wider" style={{ color: 'var(--annotix-gray)' }}>
+      <div className="flex items-start gap-1">
+        <h4
+          className="text-[0.6em] uppercase font-semibold tracking-wider self-center"
+          style={{
+            color: 'var(--annotix-gray)',
+            writingMode: 'vertical-lr',
+            textOrientation: 'mixed',
+            transform: 'rotate(180deg)',
+            letterSpacing: '0.15em',
+          }}
+        >
           {t('canvas.tools')}
         </h4>
 
-        <div className="flex items-start gap-1">
+        <div className="flex flex-col gap-1">
           <div className="flex flex-col gap-2">
             {availableTools.map((tool) => (
               <button

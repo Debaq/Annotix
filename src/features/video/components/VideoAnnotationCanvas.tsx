@@ -1,6 +1,7 @@
+import { useMemo } from 'react';
 import { useCurrentImage } from '../../gallery/hooks/useCurrentImage';
 import { AnnotationCanvas } from '../../canvas/components/AnnotationCanvas';
-import { InterpolatedBBox, VideoTrack, ClassDefinition } from '@/lib/db';
+import { InterpolatedBBox, VideoTrack, ClassDefinition, Video } from '@/lib/db';
 import { useUIStore } from '../../core/store/uiStore';
 import { useVideoAnnotationBridge } from '../hooks/useVideoAnnotationBridge';
 
@@ -8,6 +9,7 @@ interface VideoAnnotationCanvasProps {
   interpolatedBBoxes: InterpolatedBBox[];
   tracks: VideoTrack[];
   classes: ClassDefinition[];
+  video: Video;
 }
 
 /**
@@ -20,6 +22,7 @@ export function VideoAnnotationCanvas({
   interpolatedBBoxes,
   tracks,
   classes,
+  video,
 }: VideoAnnotationCanvasProps) {
   const { currentFrameIndex } = useUIStore();
   const { image } = useCurrentImage();
@@ -35,9 +38,14 @@ export function VideoAnnotationCanvas({
     imageHeight,
   );
 
+  const videoFrameInfo = useMemo(() => ({
+    frameIndex: currentFrameIndex,
+    fps: video.fpsExtraction,
+  }), [currentFrameIndex, video.fpsExtraction]);
+
   return (
     <div className="relative flex-1 h-full">
-      <AnnotationCanvas overrideAnnotations={bridge} />
+      <AnnotationCanvas overrideAnnotations={bridge} videoFrameInfo={videoFrameInfo} />
     </div>
   );
 }

@@ -31,6 +31,15 @@ const ZOOM_WHEEL_FACTOR = 1.05;
 const MIN_ZOOM_SCALE = 0.1;
 const MAX_ZOOM_SCALE = 20;
 
+function formatFrameTime(frameIndex: number, fps: number): string {
+  if (fps <= 0) return '0:00.000';
+  const totalSeconds = frameIndex / fps;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+  const ms = Math.round((totalSeconds % 1) * 1000);
+  return `${minutes}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+}
+
 export interface AnnotationOverride {
   annotations: Annotation[];
   selectedAnnotationId: string | null;
@@ -44,9 +53,10 @@ export interface AnnotationOverride {
 
 interface AnnotationCanvasProps {
   overrideAnnotations?: AnnotationOverride;
+  videoFrameInfo?: { frameIndex: number; fps: number };
 }
 
-export function AnnotationCanvas({ overrideAnnotations }: AnnotationCanvasProps = {}) {
+export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: AnnotationCanvasProps = {}) {
   const { t } = useTranslation();
   const { image } = useCurrentImage();
   const { project } = useCurrentProject();
@@ -798,21 +808,38 @@ export function AnnotationCanvas({ overrideAnnotations }: AnnotationCanvasProps 
         onZoomReset={handleResetZoom}
       />
 
-      {/* Image Info (Top Left) */}
+      {/* Image/Frame Info (Top Left) */}
       <div className="annotix-floating" style={{ top: '20px', left: '20px' }}>
         <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-sm">
-            <i className="fas fa-image" style={{ color: 'var(--annotix-primary)' }}></i>
-            <span className="font-medium text-[var(--annotix-dark)]">{image.name}</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--annotix-gray)' }}>
-            <i className="fas fa-expand-arrows-alt"></i>
-            <span>{image.width} × {image.height}</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--annotix-gray)' }}>
-            <i className="fas fa-layer-group"></i>
-            <span>{annotations.length} {t('annotations.title')}</span>
-          </div>
+          {videoFrameInfo ? (
+            <>
+              <div className="flex items-center gap-2 text-sm">
+                <i className="fas fa-film" style={{ color: 'var(--annotix-primary)' }}></i>
+                <span className="font-medium text-[var(--annotix-dark)]">
+                  {t('video.frame', 'Frame')} {videoFrameInfo.frameIndex + 1}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--annotix-gray)' }}>
+                <i className="fas fa-clock"></i>
+                <span>{formatFrameTime(videoFrameInfo.frameIndex, videoFrameInfo.fps)}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 text-sm">
+                <i className="fas fa-image" style={{ color: 'var(--annotix-primary)' }}></i>
+                <span className="font-medium text-[var(--annotix-dark)]">{image.name}</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--annotix-gray)' }}>
+                <i className="fas fa-expand-arrows-alt"></i>
+                <span>{image.width} × {image.height}</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--annotix-gray)' }}>
+                <i className="fas fa-layer-group"></i>
+                <span>{annotations.length} {t('annotations.title')}</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
