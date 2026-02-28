@@ -29,6 +29,11 @@ export function VideoView() {
   const { video } = useCurrentVideo();
   const { currentFrameIndex, totalFrames, currentFrame } = useVideoNavigation();
   const { tracks, createTrack, deleteTrack, updateTrack, setKeyframe, removeKeyframe, bake } = useVideoTracks();
+
+  // Auto-bake al salir de la vista de video
+  useEffect(() => {
+    return () => { bake(); };
+  }, [bake]);
   const { interpolatedBBoxes } = useInterpolation(tracks, currentFrameIndex);
 
   // Sync URL -> Store
@@ -198,17 +203,6 @@ export function VideoView() {
 
           {/* Actions */}
           <div className="annotix-panel-section space-y-2">
-            {tracks.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={bake}
-              >
-                <i className="fas fa-magic mr-2"></i>
-                {t('video.bake', 'Convertir a anotaciones')}
-              </Button>
-            )}
             <Button
               variant="outline"
               size="sm"

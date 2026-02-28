@@ -1744,6 +1744,15 @@
     "extracting": "フレームを抽出中...",
     "extractingFrame": "フレーム {{current}} / {{total}} を抽出中",
     "processing": "動画を処理中",
-    "done": "完了"
+    "done": "完了",
+    "frame": "フレーム",
+    "tracks": "トラック",
+    "newTrack": "新規",
+    "noTracks": "トラックがありません。トラッキングを開始するには作成してください。",
+    "videos": "動画",
+    "keyframeHere": "このフレームのキーフレーム",
+    "hideTrack": "非表示",
+    "showTrack": "表示",
+    "deleteTrack": "トラックを削除"
   }
 }

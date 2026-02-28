@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { VideoTrack, ClassDefinition } from '@/lib/db';
 import { cn } from '@/lib/utils';
 
@@ -16,6 +17,7 @@ export function VideoTrackItem({
   onDelete,
   onToggle,
 }: VideoTrackItemProps) {
+  const { t } = useTranslation();
   const classInfo = classes.find(c => c.id === track.classId);
   const color = classInfo?.color || '#888';
   const keyframeCount = track.keyframes.filter(kf => kf.isKeyframe).length;
@@ -43,7 +45,7 @@ export function VideoTrackItem({
 
       {/* Keyframe indicator */}
       {hasKeyframeAtCurrent && (
-        <div className="w-2 h-2 rotate-45" style={{ backgroundColor: color }} title="Keyframe en este frame" />
+        <div className="w-2 h-2 rotate-45" style={{ backgroundColor: color }} title={t('video.keyframeHere')} />
       )}
 
       {/* Keyframe count */}
@@ -55,7 +57,7 @@ export function VideoTrackItem({
       <button
         onClick={() => onToggle(!track.enabled)}
         className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-100"
-        title={track.enabled ? 'Ocultar' : 'Mostrar'}
+        title={track.enabled ? t('video.hideTrack') : t('video.showTrack')}
       >
         <i className={cn("fas text-[10px]", track.enabled ? "fa-eye" : "fa-eye-slash")}></i>
       </button>
@@ -64,7 +66,7 @@ export function VideoTrackItem({
       <button
         onClick={onDelete}
         className="w-5 h-5 flex items-center justify-center rounded hover:bg-red-50 text-red-400 hover:text-red-600"
-        title="Eliminar track"
+        title={t('video.deleteTrack')}
       >
         <i className="fas fa-trash text-[10px]"></i>
       </button>
