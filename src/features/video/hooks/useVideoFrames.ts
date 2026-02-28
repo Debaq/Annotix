@@ -4,14 +4,14 @@ import { videoService } from '../services/videoService';
 import { useTauriQuery } from '@/hooks/useTauriQuery';
 
 export function useVideoFrames() {
-  const { currentVideoId } = useUIStore();
+  const { currentVideoId, currentProjectId } = useUIStore();
 
   const { data: frames, isLoading, reload } = useTauriQuery(
     async () => {
-      if (!currentVideoId) return [];
-      return videoService.listFrames(currentVideoId);
+      if (!currentVideoId || !currentProjectId) return [];
+      return videoService.listFrames(currentProjectId, currentVideoId);
     },
-    [currentVideoId],
+    [currentVideoId, currentProjectId],
     ['db:images-changed']
   );
 

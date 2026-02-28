@@ -19,7 +19,7 @@ export function useProjects() {
     }
   };
 
-  const updateProject = async (id: number, updates: Partial<Project>) => {
+  const updateProject = async (id: string, updates: Partial<Project>) => {
     try {
       await projectService.update(id, updates);
     } catch (error) {
@@ -28,7 +28,7 @@ export function useProjects() {
     }
   };
 
-  const deleteProject = async (id: number) => {
+  const deleteProject = async (id: string) => {
     try {
       await projectService.delete(id);
     } catch (error) {

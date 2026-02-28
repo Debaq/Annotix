@@ -16,17 +16,17 @@ export function ImageCard({ image }: ImageCardProps) {
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
 
   useEffect(() => {
-    if (image.id) {
-      invoke<string>('get_thumbnail_path', { imageId: image.id }).then((path) => {
+    if (image.id && projectId) {
+      invoke<string>('get_thumbnail_path', { projectId, imageId: image.id }).then((path) => {
         setThumbnailUrl(convertFileSrc(path));
       }).catch(() => {
         // Fallback to original image
-        invoke<string>('get_image_file_path', { imageId: image.id }).then((path) => {
+        invoke<string>('get_image_file_path', { projectId, id: image.id }).then((path) => {
           setThumbnailUrl(convertFileSrc(path));
         });
       });
     }
-  }, [image.id, image.blobPath]);
+  }, [image.id, image.blobPath, projectId]);
 
   const handleSelect = () => {
     if (projectId) {

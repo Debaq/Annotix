@@ -73,6 +73,46 @@ export function TimeSeriesCanvas() {
     timeseriesId: timeseries?.id || null,
   });
 
+  // Keyboard shortcuts (must be before early return)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isDrawing) {
+        cancelDrawing();
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedAnnotationId) {
+          deleteAnnotation(selectedAnnotationId);
+        }
+      } else if (!e.ctrlKey && !e.metaKey) {
+        switch (e.key.toLowerCase()) {
+          case 'v':
+            setActiveTool('select');
+            break;
+          case 'p':
+            setActiveTool('point');
+            break;
+          case 'r':
+            setActiveTool('range');
+            break;
+          case 'e':
+            setActiveTool('event');
+            break;
+          case 'a':
+            setActiveTool('anomaly');
+            break;
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    isDrawing,
+    selectedAnnotationId,
+    setActiveTool,
+    cancelDrawing,
+    deleteAnnotation,
+  ]);
+
   if (!timeseries || !project) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -290,46 +330,6 @@ export function TimeSeriesCanvas() {
       chartRef.current.zoom(0.8);
     }
   };
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isDrawing) {
-        cancelDrawing();
-      } else if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedAnnotationId) {
-          deleteAnnotation(selectedAnnotationId);
-        }
-      } else if (!e.ctrlKey && !e.metaKey) {
-        switch (e.key.toLowerCase()) {
-          case 'v':
-            setActiveTool('select');
-            break;
-          case 'p':
-            setActiveTool('point');
-            break;
-          case 'r':
-            setActiveTool('range');
-            break;
-          case 'e':
-            setActiveTool('event');
-            break;
-          case 'a':
-            setActiveTool('anomaly');
-            break;
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    isDrawing,
-    selectedAnnotationId,
-    setActiveTool,
-    cancelDrawing,
-    deleteAnnotation,
-  ]);
 
   return (
     <div className="flex flex-col h-full">

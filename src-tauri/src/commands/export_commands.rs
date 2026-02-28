@@ -1,14 +1,13 @@
 use tauri::State;
-use crate::db::Database;
+use crate::store::AppState;
 
 #[tauri::command]
 pub async fn export_dataset(
-    project_id: i64,
+    project_id: String,
     format: String,
     output_path: String,
-    db: State<'_, Database>,
+    state: State<'_, AppState>,
     app: tauri::AppHandle,
 ) -> Result<(), String> {
-    let db_ref = &*db;
-    crate::export::export_dataset(db_ref, project_id, &format, &output_path, &app)
+    crate::export::export_dataset(&state, &project_id, &format, &output_path, &app)
 }

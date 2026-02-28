@@ -96,8 +96,8 @@ fn parse_annotation(
     csv_type: &str,
     header: &[String],
     values: &[&str],
-    classes: &[crate::db::models::ClassDefinition],
-) -> Option<crate::db::models::Annotation> {
+    classes: &[crate::store::project_file::ClassDef],
+) -> Option<crate::store::project_file::AnnotationEntry> {
     match csv_type {
         "detection" => {
             let class_idx = find_col(header, &["class", "label"])?;

@@ -6,7 +6,7 @@ use super::yolo::{read_zip_text, read_zip_bytes, get_image_dimensions};
 
 pub fn import_data(
     archive: &mut ZipArchive<std::fs::File>,
-    project_type: &str,
+    _project_type: &str,
 ) -> Result<ImportData, String> {
     let content = read_zip_text(archive, "annotations.json")?;
     let data: serde_json::Value = serde_json::from_str(&content)
@@ -84,7 +84,7 @@ pub fn import_data(
     Ok(ImportData { classes, images })
 }
 
-fn parse_tix_annotation(ann: &serde_json::Value) -> Option<crate::db::models::Annotation> {
+fn parse_tix_annotation(ann: &serde_json::Value) -> Option<crate::store::project_file::AnnotationEntry> {
     let ann_type = ann.get("type").and_then(|t| t.as_str())?;
     let normalized_type = normalize_type(ann_type);
 

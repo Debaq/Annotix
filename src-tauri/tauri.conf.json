@@ -19,11 +19,26 @@
         "minHeight": 700,
         "resizable": true,
         "fullscreen": false,
-        "center": true
+        "center": true,
+        "decorations": false,
+        "shadow": true
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": {
+          "allow": [
+            "$HOME/**",
+            "$APPDATA/**",
+            "$DOCUMENT/**",
+            "$DESKTOP/**",
+            "$DOWNLOAD/**",
+            "/tmp/**"
+          ]
+        }
+      }
     }
   },
   "bundle": {

@@ -2,46 +2,365 @@
   "language": "Русский",
   "code": "ru",
   "app": {
-    "title": "Аннотатор YOLO",
+    "title": "Annotix",
     "subtitle": "Профессиональный инструмент аннотации",
     "branding": {
       "fablab": "TecMedHub",
-      "university": "Южный университет Чили - Кампус Пуэрто-Монтт"
+      "university": "Universidad Austral de Chile - Кампус Пуэрто-Монтт"
     }
+  },
+  "common": {
+    "loading": "Загрузка...",
+    "creating": "Создание...",
+    "importing": "Импорт...",
+    "saving": "Сохранение...",
+    "cancel": "Отмена",
+    "create": "Создать",
+    "confirm": "Подтвердить",
+    "close": "Закрыть",
+    "duplicate": "Дублировать",
+    "rename": "Переименовать",
+    "exportBackup": "Экспортировать Backup",
+    "deleteConfirm": "Да, удалить",
+    "clearConfirm": "Очистить все аннотации этого изображения?",
+    "clear": "Очистить",
+    "delete": "Удалить",
+    "save": "Сохранить",
+    "undo": "Отменить",
+    "actions": "Действия",
+    "exportDataset": "Экспортировать Dataset",
+    "backToProjects": "Вернуться к проектам",
+    "classes": "Классы",
+    "selectImageToStart": "Выберите изображение, чтобы начать аннотирование",
+    "missingTranslations": "Отсутствующие переводы",
+    "hide": "Скрыть",
+    "totalKeys": "Всего ключей:",
+    "totalUsages": "Всего использований:",
+    "oneToNine": "1-9",
+    "ctrlS": "Ctrl+S",
+    "arrowKeys": "← →",
+    "understand": "Понятно"
   },
   "header": {
     "selectProject": "Выбрать проект...",
-    "newProject": "Новый",
-    "exportProject": "Экспорт полного проекта",
-    "exportConfig": "Экспорт конфигурации",
-    "importConfig": "Импорт конфигурации",
+    "newProject": "Новый проект",
+    "openProject": "Открыть проект",
+    "manageProjects": "Управление проектами",
+    "export": "Экспорт",
     "help": "Помощь"
+  },
+  "help": {
+    "shortcuts": "Горячие клавиши"
+  },
+  "shortcuts": {
+    "title": "Горячие клавиши",
+    "tip": "Горячие клавиши работают и при работе на холсте. Нажмите ? чтобы открыть это окно в любой момент.",
+    "categories": {
+      "general": "Общие",
+      "navigation": "Навигация",
+      "tools": "Инструменты",
+      "editing": "Редактирование"
+    },
+    "items": {
+      "save": {
+        "name": "Сохранить",
+        "key": "Ctrl+S"
+      },
+      "undo": {
+        "name": "Отменить",
+        "key": "Ctrl+Z"
+      },
+      "redo": {
+        "name": "Повторить",
+        "key": "Ctrl+Y"
+      },
+      "delete": {
+        "name": "Удалить",
+        "description": "Удалить выбранный элемент",
+        "key": "Del / Backspace"
+      },
+      "deselect": {
+        "name": "Снять выделение",
+        "key": "Esc"
+      },
+      "prevImage": {
+        "name": "Предыдущее изображение",
+        "key": "←"
+      },
+      "nextImage": {
+        "name": "Следующее изображение",
+        "key": "→"
+      },
+      "zoomIn": {
+        "name": "Увеличить",
+        "key": "Ctrl++"
+      },
+      "zoomOut": {
+        "name": "Уменьшить",
+        "key": "Ctrl+-"
+      },
+      "zoomFit": {
+        "name": "По размеру",
+        "key": "Ctrl+0"
+      },
+      "toolBox": {
+        "name": "Инструмент Box",
+        "description": "Выбрать инструмент рамки",
+        "key": "B"
+      },
+      "toolOBB": {
+        "name": "Инструмент OBB",
+        "description": "Выбрать инструмент OBB",
+        "key": "O"
+      },
+      "toolMask": {
+        "name": "Инструмент Mask",
+        "description": "Выбрать инструмент маски",
+        "key": "M"
+      },
+      "toolPolygon": {
+        "name": "Инструмент Полигон",
+        "description": "Выбрать инструмент полигона",
+        "key": "P"
+      },
+      "toolKeypoints": {
+        "name": "Инструмент Ключевые точки",
+        "description": "Выбрать инструмент ключевых точек",
+        "key": "K"
+      },
+      "toolSelect": {
+        "name": "Инструмент Выбор",
+        "description": "Выбрать инструмент выделения",
+        "key": "V"
+      },
+      "toolPan": {
+        "name": "Инструмент Pan",
+        "description": "Выбрать инструмент перемещения",
+        "key": "H"
+      },
+      "rotateLeft": {
+        "name": "Повернуть влево",
+        "key": "A"
+      },
+      "rotateRight": {
+        "name": "Повернуть вправо",
+        "key": "D"
+      },
+      "class1": {
+        "name": "Выбрать Класс 1",
+        "key": "1"
+      },
+      "class2": {
+        "name": "Выбрать Класс 2",
+        "key": "2"
+      },
+      "class3": {
+        "name": "Выбрать Класс 3",
+        "key": "3"
+      },
+      "class4": {
+        "name": "Выбрать Класс 4",
+        "key": "4"
+      },
+      "class5": {
+        "name": "Выбрать Класс 5",
+        "key": "5"
+      },
+      "class6": {
+        "name": "Выбрать Класс 6",
+        "key": "6"
+      },
+      "class7": {
+        "name": "Выбрать Класс 7",
+        "key": "7"
+      },
+      "class8": {
+        "name": "Выбрать Класс 8",
+        "key": "8"
+      },
+      "class9": {
+        "name": "Выбрать Класс 9",
+        "key": "9"
+      }
+    }
+  },
+  "projects": {
+    "title": "Проекты",
+    "subtitle": "Управляйте своими проектами аннотации",
+    "create": "Создать проект",
+    "createDescription": "Начать новый проект аннотации",
+    "description": "Измените название или управляйте классами проекта.",
+    "name": "Название проекта",
+    "namePlaceholder": "Мой проект Annotix",
+    "type": {
+      "label": "Тип проекта",
+      "bbox": "Bounding Box",
+      "bboxDescription": "Обнаружение объектов с ограничительными рамками",
+      "mask": "Маска",
+      "maskDescription": "Сегментация экземпляров с масками"
+    },
+    "typeSelectHelper": "Выберите тип аннотации в соответствии с целью обучения",
+    "classes": "Классы",
+    "open": "Открыть",
+    "delete": "Удалить",
+    "settings": "Настройки проекта",
+    "configure": "Настроить",
+    "edit": "Редактировать проект",
+    "saveChanges": "Сохранить изменения",
+    "stats": {
+      "classes": "Классы"
+    },
+    "empty": {
+      "title": "Нет проектов",
+      "description": "Создайте свой первый проект, чтобы начать аннотирование"
+    },
+    "confirmDelete": "Подтвердить удаление проекта"
   },
   "tools": {
     "title": "Инструменты",
-    "bbox": "Рамка",
-    "mask": "Маска",
-    "select": "Выбрать",
-    "pan": "Панорама",
+    "bbox": "Box",
+    "obb": "OBB",
+    "mask": "Mask",
+    "polygon": "Полигон",
+    "keypoints": "Keypoints",
+    "landmarks": "Landmarks",
+    "select": "Select",
+    "pan": "Pan",
+    "eraseMode": "Ластик",
+    "newInstance": "Новый экземпляр",
     "tooltips": {
-      "bbox": "Ограничительная рамка (B)",
+      "bbox": "Bounding Box (B)",
+      "obb": "Oriented Box (O)",
       "mask": "Маска (M)",
+      "polygon": "Полигон (P)",
+      "keypoints": "Keypoints (K)",
+      "landmarks": "Landmarks (L)",
+      "point": "Точка (P)",
+      "range": "Диапазон (R)",
       "select": "Выбрать (V)",
-      "pan": "Панорама (H)"
+      "pan": "Pan (H)"
     }
+  },
+  "gallery": {
+    "imageCount": "{{count}} изображений",
+    "imageCount_plural": "{{count}} изображений",
+    "empty": {
+      "title": "Нет изображений",
+      "description": "Загрузите изображения, чтобы начать аннотирование",
+      "upload": "Загрузить изображения"
+    },
+    "title": "Галерея",
+    "all": "Все",
+    "annotated": "Аннотированные",
+    "unannotated": "Без аннотаций",
+    "deleteConfirm": "Удалить это изображение?",
+    "annotate": "Аннотировать",
+    "upload": "Выбрать изображения",
+    "noImages": "Нет изображений",
+    "filter": {
+      "all": "Все",
+      "annotated": "Аннотированные",
+      "unannotated": "Без аннотаций"
+    },
+    "backToGallery": "Вернуться в галерею",
+    "selectImage": "Выберите изображение",
+    "uploadOrSelect": "Загрузите или выберите изображение",
+    "uploading": "Загрузка изображений"
   },
   "classes": {
     "title": "Активные классы",
+    "active": "Активные классы",
     "manage": "Управление классами",
     "add": "Добавить класс",
     "placeholder": "Название класса",
-    "empty": "Сначала создайте проект",
-    "deleteConfirm": "Есть аннотации с этим классом. Удалить в любом случае?",
+    "deleteConfirm": "Есть аннотации с этим классом. Всё равно удалить?",
     "exists": "Класс с таким названием уже существует",
-    "enterName": "Введите название класса"
+    "enterName": "Введите название класса",
+    "edit": "Редактировать",
+    "delete": "Удалить",
+    "rename": "Переименовать класс",
+    "editTitle": "Редактировать класс",
+    "deleteTitle": "Удалить класс",
+    "deleteQuestion": "Что вы хотите сделать с этим классом?",
+    "deleteWarning": "Этот класс имеет",
+    "annotations": "аннотаций",
+    "deleteAll": "Удалить класс и аннотации",
+    "name": "Название",
+    "namePlaceholder": "Название класса",
+    "color": "Цвет",
+    "nameRequired": "Название класса обязательно",
+    "empty": "Нет классов",
+    "addPlaceholder": "Добавить название класса",
+    "updated": "Обновлено",
+    "description": "Добавляйте, редактируйте или удаляйте категории, доступные для этого проекта.",
+    "save": "Сохранить изменения",
+    "cancel": "Отмена"
+  },
+  "annotations": {
+    "title": "Аннотации",
+    "empty": "Нет аннотаций",
+    "addClassFirst": "Добавьте хотя бы один класс перед аннотированием",
+    "delete": "",
+    "confirmDelete": "",
+    "expand": "",
+    "collapse": ""
+  },
+  "polygon": {
+    "toolName": "Полигон",
+    "clickToAdd": "Нажмите, чтобы добавить точки. Двойной клик или Enter для завершения.",
+    "needMinPoints": "Необходимо минимум {min} точек для создания полигона",
+    "created": "Полигон создан",
+    "cancelled": "Рисование отменено",
+    "cannotDeletePoint": "Невозможно удалить точку. Требуется минимум {min} точек.",
+    "pointDeleted": "Точка удалена"
+  },
+  "landmarks": {
+    "toolName": "Ориентир",
+    "placed": "Ориентир \"{name}\" размещён",
+    "selectFirst": "Сначала выберите ориентир",
+    "enterName": "Пожалуйста, введите название",
+    "renamed": "Ориентир переименован",
+    "renumbered": "{count} точек перенумеровано",
+    "renameLandmark": "Переименовать ориентир",
+    "landmarkName": "Название точки:",
+    "namePlaceholder": "например: Центр, Верх-Лево, Вход"
+  },
+  "skeleton": {
+    "addKeypointClass": "Добавить класс Keypoints",
+    "step1": "Шаг 1: Основная информация",
+    "step2": "Шаг 2: Выбрать пресет скелета",
+    "className": "Название класса",
+    "classNamePlaceholder": "например: Человек, Рука, Лицо",
+    "classColor": "Цвет класса",
+    "selectPreset": "Выберите пресет скелета для этого класса:",
+    "presetInfo": "Каждый класс может иметь свой скелет. Это позволяет аннотировать различные типы объектов в одном проекте.",
+    "points": "точек",
+    "connections": "соединений",
+    "previous": "Назад",
+    "next": "Далее",
+    "finish": "Завершить",
+    "presets": {
+      "coco17": "COCO 17 Keypoints",
+      "coco17Desc": "Полный скелет человека (COCO dataset)",
+      "mediapipePose": "MediaPipe Pose 33",
+      "mediapipePoseDesc": "Детальная поза всего тела",
+      "mediapipeHand": "MediaPipe Hand 21",
+      "mediapipeHandDesc": "Детальные суставы руки",
+      "openpose25": "OpenPose 25",
+      "openpose25Desc": "Скелет OpenPose с руками",
+      "facial68": "Facial Landmarks 68",
+      "facial68Desc": "Детальные точки лица",
+      "facial5": "Facial 5 Points",
+      "facial5Desc": "Базовые точки лица (глаза, нос, рот)",
+      "animalQuad": "Животное-четвероногое",
+      "animalQuadDesc": "Скелет для четвероногих животных",
+      "custom": "Пользовательский",
+      "customDesc": "Определите свой собственный скелет"
+    }
   },
   "images": {
-    "title": "Загрузить изображение",
+    "load": "Загрузить изображения",
+    "title": "Заголовок",
     "select": "Выбрать изображения",
     "upload": "Выбрать изображения",
     "noImages": "Нет изображений"
@@ -55,28 +374,39 @@
     "cancel": "Отмена",
     "create": "Создать",
     "confirm": "Подтвердить",
-    "clearConfirm": "Очистить все аннотации с этого изображения?"
+    "close": "Закрыть",
+    "duplicate": "Дублировать",
+    "rename": "Переименовать",
+    "exportBackup": "Экспортировать Backup",
+    "deleteConfirm": "Да, удалить",
+    "clearConfirm": "Очистить все аннотации этого изображения?"
   },
-  "shortcuts": {
+  "shortcut": {
     "title": "Горячие клавиши",
     "save": "Сохранить",
     "undo": "Отменить",
     "delete": "Удалить",
     "navigation": "Навигация",
-    "bbox": "Рамка",
-    "mask": "Маска",
-    "select": "Выбрать",
-    "pan": "Панорама",
-    "classes": "Класс 1-9"
+    "bbox": "Bbox",
+    "mask": "Mask",
+    "select": "Select",
+    "pan": "Pan",
+    "classes": "Класс 1-9",
+    "navigateImages": "shortcuts.navigateImages",
+    "selectClass": "shortcuts.selectClass"
   },
   "canvas": {
-    "zoomIn": "Увеличить",
-    "zoomOut": "Уменьшить",
-    "resetZoom": "Сброс масштаба",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "resetZoom": "Сбросить Zoom",
+    "fitScreen": "По размеру экрана",
     "toggleLabels": "Показать/Скрыть метки",
     "toggleGrid": "Показать/Скрыть сетку",
-    "prevImage": "Предыдущее изображение (←)",
-    "nextImage": "Следующее изображение (→)"
+    "prevImage": "Предыдущее изображение (← / PgUp)",
+    "nextImage": "Следующее изображение (→ / PgDn)",
+    "reset": "Сбросить",
+    "tools": "Инструменты",
+    "zoom": "Zoom"
   },
   "stats": {
     "title": "Статистика",
@@ -84,146 +414,1059 @@
     "annotated": "Аннотировано",
     "labels": "Метки",
     "classes": "Классы",
-    "progress": "изображений аннотировано"
-  },
-  "gallery": {
-    "title": "Галерея",
-    "all": "Все",
-    "annotated": "Аннотированные",
-    "unannotated": "Не аннотированные",
-    "empty": "Нет изображений",
-    "deleteConfirm": "Удалить это изображение?"
+    "progress": "изображений аннотировано",
+    "annotations": "stats.annotations"
   },
   "export": {
-    "title": "Экспорт",
-    "format": "Формат",
-    "description": "Описание формата",
-    "export": "Экспортировать",
-    "exporting": "Экспорт...",
-    "progress": "Ход выполнения",
-    "selectFormat": "Выберите формат экспорта",
-    "downloadDataset": "Скачать набор данных ZIP",
-    "downloadClasses": "Скачать classes.txt",
-    "notAvailable": "Экспорт недоступен для этого типа проекта",
+    "title": "Экспорт проекта",
+    "project": {
+      "title": "Экспорт проекта (.tix)",
+      "description": "Для продолжения работы позже или для обмена с командой",
+      "withImages": "Включить изображения (полный проект)",
+      "button": "Экспортировать проект"
+    },
+    "training": {
+      "title": "Экспорт для обучения",
+      "description": "Dataset, готовый для обучения модели (всегда включает изображения)",
+      "tabExport": "Экспорт",
+      "tabCode": "Генерация кода",
+      "tabTrain": "Обучение с Connector",
+      "selectFormat": "Выберите формат:",
+      "button": "Экспортировать Dataset"
+    },
+    "code": {
+      "framework": "Framework",
+      "model": "Модель",
+      "device": "Устройство",
+      "epochs": "Epochs",
+      "batch": "Batch Size",
+      "imgsz": "Размер изображения",
+      "preview": "Предпросмотр",
+      "copy": "Копировать код",
+      "downloadPy": "Скачать .py",
+      "downloadIpynb": "Скачать .ipynb",
+      "labels": {
+        "model": "Модель",
+        "device": "Устройство",
+        "epochs": "Epochs",
+        "batchSize": "Batch Size",
+        "imageSize": "Размер изображения",
+        "sequenceLength": "Sequence Length",
+        "forecastHorizon": "Forecast Horizon",
+        "hiddenSize": "Hidden Size",
+        "advancedOptions": "Дополнительные параметры",
+        "training": "Обучение",
+        "optimizer": "Optimizer",
+        "learningRate": "Learning Rate",
+        "patience": "Patience (Early Stop)",
+        "validationSplit": "Validation Split (%)",
+        "dataAugmentation": "Data Augmentation",
+        "metricsAndPlots": "Метрики и графики",
+        "modelExport": "Экспорт модели"
+      },
+      "modelSizes": {
+        "nano": "Nano (самый быстрый)",
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large",
+        "xlarge": "XLarge (самый точный)"
+      },
+      "devices": {
+        "cpu": "🖥️ CPU",
+        "gpu": "🎮 GPU (CUDA)",
+        "mps": "🍎 Apple Silicon (MPS)"
+      },
+      "optimizers": {
+        "adam": "Adam (рекомендуется для начинающих)",
+        "adamw": "AdamW (улучшенный Adam с weight decay)",
+        "sgd": "SGD (классический, требует больше настройки)",
+        "rmsprop": "RMSprop (хорош для рекуррентных сетей)"
+      },
+      "augmentation": {
+        "mosaic": "Mosaic (комбинирует 4 изображения)",
+        "mixup": "Mixup (смешивает прозрачности)",
+        "hsv": "HSV (color jitter)",
+        "flip": "Flips (горизонтальный/вертикальный)",
+        "rotate": "Вращение",
+        "scale": "Scale/Crop"
+      },
+      "metrics": {
+        "savePlots": "Сохранять графики обучения",
+        "saveMetricsCsv": "Экспортировать метрики в CSV",
+        "saveConfMatrix": "Матрица ошибок",
+        "savePrCurves": "Кривые Precision-Recall",
+        "savePredictions": "Визуализировать прогнозы"
+      },
+      "exportFormats": {
+        "onnx": "ONNX (рекомендуется)",
+        "torchscript": "TorchScript",
+        "tflite": "TensorFlow Lite",
+        "openvino": "OpenVINO",
+        "coreml": "CoreML",
+        "tensorrt": "TensorRT"
+      },
+      "template": {
+        "generatedBy": "Сгенерировано автоматически Annotix",
+        "projectType": "Тип проекта",
+        "important": "ВАЖНО",
+        "installDeps": "Установите зависимости перед запуском",
+        "importantCLI": "ВАЖНО: YOLOv5 использует CLI, а не Python API",
+        "importantDetectron2": "ВАЖНО: Detectron2 более продвинутый, но сложный",
+        "importantClassification": "ВАЖНО: Классификация с современными архитектурами",
+        "importantSegmentation": "ВАЖНО: Семантическая сегментация с современными архитектурами",
+        "cloneYOLOv5": "Клонировать репозиторий YOLOv5 (только первый раз)",
+        "trainCLI": "ОБУЧЕНИЕ ЧЕРЕЗ CLI",
+        "trainingScript": "Training Script",
+        "registerCOCO": "Зарегистрировать dataset в формате COCO",
+        "modelConfiguration": "КОНФИГУРАЦИЯ МОДЕЛИ",
+        "approxEpochs": "Прибл. epochs",
+        "model": "МОДЕЛЬ",
+        "lossOptimizer": "LOSS И OPTIMIZER",
+        "training": "Training",
+        "metrics": "Metrics",
+        "saveBestModelSection": "Save best model",
+        "evaluatingModel": "Оценка модели",
+        "validateBestModel": "Валидация лучшей модели",
+        "printMetrics": "Вывод ключевых метрик",
+        "predictValidation": "Прогнозы на валидационных изображениях",
+        "changeToValFolder": "Перейти в папку валидации",
+        "saveImagesWithPredictions": "Сохранить изображения с прогнозами",
+        "minConfidence": "Минимальная уверенность",
+        "dontSaveLabels": "Не сохранять labels",
+        "dontCropDetections": "Не обрезать детекции",
+        "exportingProduction": "Экспорт модели в формат production",
+        "exportProduction": "ЭКСПОРТ МОДЕЛИ ДЛЯ PRODUCTION",
+        "yolov5Completed": "Обучение YOLOv5 завершено",
+        "yolonasCompleted": "Обучение YOLO-NAS завершено",
+        "unetLoaded": "Модель U-Net загружена",
+        "availableArchitectures": "Доступные архитектуры",
+        "calculateIoU": "Calculate IoU",
+        "bestModelSaved": "Лучшая модель сохранена",
+        "plotsSaved": "Графики сохранены в",
+        "loadDataset": "Загрузить dataset (структура: train/class1, train/class2, ...)",
+        "trainTransforms": "Трансформации обучения",
+        "valTransforms": "Трансформации валидации",
+        "options": "Параметры",
+        "initialLearningRate": "Начальный learning rate",
+        "finalLearningRate": "Конечный learning rate (как доля от lr0)",
+        "momentumSGD": "Momentum для SGD",
+        "weightDecay": "Weight decay (L2 регуляризация)",
+        "earlyStoppingPatience": "Early stopping patience",
+        "saveCheckpoints": "Сохранять контрольные точки",
+        "savePeriod": "Сохранять каждые N epochs",
+        "generatePlots": "Генерировать графики обучения",
+        "minConfidenceMatrix": "Минимальная уверенность для confusion matrix",
+        "cacheImages": "Кэшировать изображения (использует больше RAM)",
+        "numWorkers": "Количество workers для DataLoader",
+        "resultsFolder": "Папка результатов",
+        "experimentName": "Название эксперимента",
+        "overwriteExperiments": "Перезаписывать существующие эксперименты",
+        "validateDuringTraining": "Валидация во время обучения",
+        "valPercentage": "Процент валидации если нет val split",
+        "verboseMode": "Подробный режим",
+        "executeCmds": "Выполните эти команды в терминале",
+        "configuration": "КОНФИГУРАЦИЯ ОБУЧЕНИЯ",
+        "modelAndDevice": "Модель и устройство",
+        "basicHyperparams": "Базовые гиперпараметры",
+        "dataAugmentation": "Data Augmentation",
+        "loadPretrainedModel": "ЗАГРУЗИТЬ ПРЕДОБУЧЕННУЮ МОДЕЛЬ",
+        "trainModel": "ОБУЧИТЬ МОДЕЛЬ",
+        "evaluateModel": "ОЦЕНИТЬ МОДЕЛЬ",
+        "exportMetrics": "ЭКСПОРТИРОВАТЬ МЕТРИКИ В CSV",
+        "visualizePredictions": "ВИЗУАЛИЗИРОВАТЬ ПРОГНОЗЫ",
+        "exportForProduction": "ЭКСПОРТИРОВАТЬ МОДЕЛЬ ДЛЯ PRODUCTION",
+        "dataset": "Dataset",
+        "basics": "Основы",
+        "optimization": "Оптимизация",
+        "callbacks": "Callbacks и сохранение",
+        "visualization": "Визуализация и метрики",
+        "performance": "Производительность",
+        "validation": "Валидация",
+        "modelLoaded": "Модель загружена",
+        "parameters": "Параметры",
+        "trainingCompleted": "ОБУЧЕНИЕ ЗАВЕРШЕНО",
+        "evaluating": "Оценка модели...",
+        "finalMetrics": "ФИНАЛЬНЫЕ МЕТРИКИ",
+        "metricsSaved": "Метрики сохранены в",
+        "predictionsSaved": "Прогнозы сохранены в",
+        "exportingModel": "Экспорт модели в форматы production...",
+        "onnxExported": "ONNX экспортирован",
+        "torchscriptExported": "TorchScript экспортирован",
+        "tfliteExported": "TFLite экспортирован",
+        "openvinoExported": "OpenVINO экспортирован",
+        "coremlExported": "CoreML экспортирован",
+        "tensorrtExported": "TensorRT экспортирован",
+        "allDone": "Всё готово!",
+        "resultsIn": "Результаты в",
+        "bestModel": "Лучшая модель",
+        "yoloUsesCli": "YOLOv5 использует CLI, а не Python API",
+        "cloneRepo": "Клонировать репозиторий YOLOv5 (только первый раз)",
+        "trainWithCli": "ОБУЧЕНИЕ ЧЕРЕЗ CLI",
+        "validate": "ВАЛИДАЦИЯ",
+        "yoloTrainingCompleted": "Обучение YOLOv5 завершено!",
+        "prepareTrainer": "Подготовить trainer",
+        "configureDataset": "Настроить dataset",
+        "loadModel": "Загрузить модель",
+        "train": "Обучить",
+        "trainingCompletedShort": "Обучение завершено!",
+        "registerDataset": "ЗАРЕГИСТРИРОВАТЬ DATASET",
+        "modelConfig": "КОНФИГУРАЦИЯ МОДЕЛИ",
+        "datasets": "Datasets",
+        "pretrainedModel": "Предобученная модель",
+        "hyperparameters": "Гиперпараметры",
+        "numClasses": "Количество классов",
+        "output": "Output",
+        "evaluate": "ОЦЕНИТЬ",
+        "advancedButComplex": "более продвинутый, но сложный",
+        "customDataset": "Пользовательский dataset",
+        "lossAndOptimizer": "LOSS И OPTIMIZER",
+        "trainingLoop": "ОБУЧЕНИЕ",
+        "saveBestModelAcc": "Лучшая модель сохранена (accuracy",
+        "saveBestModelIoU": "Лучшая модель сохранена (IoU",
+        "saveMetrics": "Сохранить метрики",
+        "plotResults": "Построить графики результатов",
+        "bestAccuracy": "Лучшая accuracy",
+        "bestIoU": "Лучший IoU",
+        "modernArchitectures": "с современными архитектурами",
+        "semanticSegmentation": "Семантическая сегментация с современными архитектурами",
+        "forVisualization": "Для визуализаций",
+        "forExportMetrics": "Для экспорта метрик",
+        "trainingSamples": "Train samples",
+        "valSamples": "Val samples",
+        "classes": "Classes",
+        "torchvisionModels": "TorchVision models",
+        "timmModels": "timm models (больше моделей доступно)",
+        "lossOptimizerTitle": "Loss и Optimizer",
+        "architecturesAvailable": "Доступные архитектуры",
+        "trainSamples": "Обучающие образцы",
+        "testSamples": "Тестовые образцы",
+        "sequenceLength": "Длина последовательности",
+        "numFeatures": "Количество переменных",
+        "trainEpoch": "Training",
+        "testEpoch": "Testing",
+        "trainLoss": "Train Loss",
+        "testLoss": "Test Loss",
+        "trainAcc": "Train Acc",
+        "testAcc": "Test Acc",
+        "dataLoading": "ЗАГРУЗКА ДАННЫХ",
+        "modelArchitecture": "АРХИТЕКТУРА МОДЕЛИ",
+        "prepareData": "Подготовить данные",
+        "trainTest": "ОБУЧЕНИЕ И ОЦЕНКА",
+        "forecasting": "ПРОГНОЗИРОВАНИЕ",
+        "makePredictions": "Создать прогнозы",
+        "forecastHorizon": "Горизонт прогнозирования",
+        "predictionsMade": "Прогнозы выполнены",
+        "trainingData": "Данные обучения",
+        "testingData": "Данные тестирования",
+        "scaler": "Масштабирование данных",
+        "sequences": "последовательностей",
+        "timeSteps": "временных шагов",
+        "features": "переменных",
+        "installation": "export.code.template.installation"
+      },
+      "tooltips": {
+        "framework": "Библиотека deep learning для использования. Адаптируется под тип проекта.",
+        "model": "Размер модели: Nano — быстрый, но менее точный, XLarge — медленный, но более точный.",
+        "device": "Где обучать: CPU медленный, но всегда работает, GPU (CUDA) очень быстрый при наличии NVIDIA.",
+        "epochs": "Сколько раз модель просматривает весь dataset. Больше epochs = больше обучения, но больше времени.",
+        "batch": "Сколько изображений обрабатывать одновременно. Высокие значения используют больше памяти, но обучают быстрее.",
+        "imgsz": "Разрешение изображений при обучении. Больше = больше деталей, но медленнее.",
+        "seqLength": "Количество временных шагов для входа. Например: использовать 50 прошлых значений для прогноза будущего.",
+        "forecastHorizon": "Сколько будущих шагов прогнозировать (только для forecasting). Например: предсказать следующие 10 значений.",
+        "hiddenSize": "Размер скрытого слоя нейронной сети (LSTM). Больше = больше возможностей, но медленнее.",
+        "optimizer": "Алгоритм настройки весов модели при обучении. Adam: сбалансированный и популярный. AdamW: улучшенный Adam с weight decay. SGD: классический, медленнее, но иногда лучше результат. RMSprop: хорош для RNN.",
+        "lr": "Скорость обучения модели. Высокие значения = быстрое обучение, но может быть нестабильно. 0.001 — хорошая отправная точка.",
+        "patience": "Сколько epochs ждать без улучшений перед остановкой. Если модель не улучшается за 50 epochs, автоматическая остановка.",
+        "valSplit": "Какой процент изображений использовать для валидации. 20% — стандарт: 80% обучают, 20% валидируют.",
+        "augmentationTitle": "Техники создания вариаций изображений для предотвращения переобучения. Помогает лучше обобщать.",
+        "augMosaic": "Комбинирует 4 случайных изображения в одно. Очень эффективно для улучшения обнаружения мелких объектов.",
+        "augMixup": "Смешивает два изображения с прозрачностью. Помогает модели быть более устойчивой к перекрытиям.",
+        "augHsv": "Изменяет цвета изображения (оттенок, насыщенность, яркость). Полезно для разных условий освещения.",
+        "augFlip": "Переворачивает изображения по горизонтали или вертикали. Удваивает данные без усилий.",
+        "augRotate": "Слегка поворачивает изображения. Полезно, если объекты могут появляться под разными углами.",
+        "augScale": "Увеличение/уменьшение и случайная обрезка. Имитирует объекты на разных расстояниях.",
+        "metricsTitle": "Какую информацию сохранять во время обучения для анализа производительности модели.",
+        "savePlots": "Сохраняет графики потерь и точности во время обучения. Очень полезно для отслеживания обучения.",
+        "saveConfMatrix": "Таблица, показывающая какие классы путаются между собой. Идеально для понимания ошибок модели.",
+        "savePrCurves": "Графики баланса между точностью и полнотой. Важны для оценки качества детекций.",
+        "savePredictions": "Сохраняет изображения с нарисованными прогнозами модели. Идеально для визуальной оценки работы.",
+        "saveMetricsCsv": "Экспортирует все метрики в CSV файл для анализа в Excel или создания собственных графиков.",
+        "exportTitle": "Форматы для развёртывания обученной модели в production.",
+        "exportOnnx": "ONNX: универсальный формат, работает с TensorFlow, PyTorch и почти любой библиотекой. Идеален для production.",
+        "exportTorchscript": "TorchScript: нативный формат PyTorch, очень быстрый, но работает только с PyTorch.",
+        "exportTflite": "TensorFlow Lite: для мобильных устройств и встроенных систем (Android, iOS, Raspberry Pi).",
+        "exportOpenvino": "OpenVINO: оптимизирован для CPU Intel. Очень быстрый на Intel оборудовании.",
+        "exportCoreml": "CoreML: для нативных приложений iOS/macOS. Использует чипы Apple.",
+        "exportTensorrt": "TensorRT: максимальное ускорение на GPU NVIDIA. Для высокопроизводительного production."
+      },
+      "codeCopied": "Код скопирован в буфер обмена",
+      "copyError": "Ошибка копирования кода",
+      "pyDownloaded": "Файл .py скачан",
+      "ipynbDownloaded": "Notebook .ipynb скачан",
+      "trainingNotebook": "Training Notebook"
+    },
     "formats": {
+      "tixGroupTitle": "Экспорт backup или обмен",
+      "trainingGroupTitle": "Форматы для обучения",
       "yoloDetection": "YOLO Detection",
-      "yoloDetectionDesc": "Ограничивающие рамки в нормализованном формате YOLO (.txt) с data.yaml",
+      "yoloDetectionDesc": "Bounding boxes в нормализованном формате YOLO (.txt) с data.yaml",
       "yoloSegmentation": "YOLO Segmentation",
       "yoloSegmentationDesc": "Полигоны в формате YOLO сегментация (.txt) с data.yaml",
       "coco": "COCO JSON",
-      "cocoDesc": "Формат COCO, совместимый с Mask R-CNN, RetinaNet и Detectron2",
+      "cocoDesc": "Формат COCO JSON, совместимый с Mask R-CNN, RetinaNet и Detectron2",
       "pascalVoc": "Pascal VOC XML",
-      "pascalVocDesc": "Формат Pascal VOC XML с координатами в пикселях",
+      "pascalVocDesc": "Формат Pascal VOC XML с координатами в пикселях (устаревший формат)",
       "csvDetection": "CSV Detection",
-      "csvDetectionDesc": "Формат CSV с координатами ограничивающих рамок",
+      "csvDetectionDesc": "Табличный формат CSV с координатами bounding boxes",
       "csvClassification": "CSV Classification",
-      "csvClassificationDesc": "Формат CSV с названием изображения и меткой класса",
+      "csvClassificationDesc": "Табличный формат CSV с именем файла и меткой класса",
       "csvKeypoints": "CSV Keypoints",
-      "csvKeypointsDesc": "Формат CSV с координатами X,Y опорных точек и видимостью",
+      "csvKeypointsDesc": "Табличный формат CSV с координатами X,Y ключевых точек и видимостью",
       "csvLandmarks": "CSV Landmarks",
-      "csvLandmarksDesc": "Формат CSV с координатами ориентиров",
+      "csvLandmarksDesc": "Табличный формат CSV с координатами ориентиров",
       "foldersByClass": "Папки по классам",
       "foldersByClassDesc": "Изображения, организованные в папки по названию класса",
-      "unetMasks": "U-Net Маски",
-      "unetMasksDesc": "Изображения PNG в оттенках серого для семантической сегментации"
+      "unetMasks": "Маски U-Net",
+      "unetMasksDesc": "PNG изображения в градациях серого для обучения сегментации",
+      "tix": "Проект Annotix (.tix)",
+      "tixDesc": "Экспорт всего проекта в файл .tix для backup или обмена"
     },
-    "yoloDetectionDesc": "Ограничивающие рамки в нормализованном формате YOLO (.txt) с data.yaml",
-    "yoloSegmentationDesc": "Полигоны в формате YOLO сегментация (.txt) с data.yaml",
-    "cocoDesc": "Формат COCO JSON, совместимый с Mask R-CNN, RetinaNet и Detectron2",
-    "pascalVocDesc": "Формат Pascal VOC XML с координатами в пикселях (формат наследия)",
-    "csvDetectionDesc": "Табличный формат CSV с координатами ограничивающих рамок",
-    "csvClassificationDesc": "Табличный формат CSV с названием изображения и меткой класса",
-    "csvKeypointsDesc": "Табличный формат CSV с координатами X,Y опорных точек и видимостью",
-    "csvLandmarksDesc": "Табличный формат CSV с координатами ориентиров",
-    "foldersByClassDesc": "Изображения, организованные в отдельные папки по названию класса",
-    "unetMasksDesc": "Изображения PNG в оттенках серого для обучения сегментации"
+    "notAvailable": "Экспорт недоступен для этого типа проекта",
+    "preparing": "Подготовка экспорта...",
+    "success": "Dataset успешно экспортирован",
+    "description": "Выберите один из доступных форматов для экспорта проекта",
+    "downloadDataset": "Скачать dataset",
+    "export": "Экспортировать",
+    "exporting": "Экспорт...",
+    "format": "Форматы",
+    "formatDescription": "Описание формата",
+    "progress": "Прогресс",
+    "selectFormat": "Выберите формат экспорта"
   },
   "import": {
-    "title": "Импорт набора данных",
-    "button": "📥 Импорт",
-    "selectFile": "Выберите ZIP-файл с аннотированным набором данных",
+    "title": "Импорт Dataset",
+    "button": "Импорт",
+    "selectFile": "Выберите ZIP-файл с аннотированным dataset",
     "dragFiles": "Перетащите ZIP-файлы сюда",
     "orClickToSelect": "или нажмите для выбора",
-    "analyzing": "Анализ набора данных",
+    "analyzing": "Анализ Dataset",
     "configureProject": "Настройте импортированный проект",
-    "projectName": "Имя проекта",
+    "projectName": "Название проекта",
     "projectType": "Тип проекта",
     "classesCount": "Классы",
-    "classes": "классы",
+    "classes": "классов",
     "format": "Обнаруженный формат",
     "import": "Импортировать проект",
-    "importing": "Импорт набора данных...",
-    "processing": "Обработка вашего набора данных...",
+    "importing": "Импорт Dataset...",
+    "processing": "Обработка dataset...",
     "success": "Проект успешно импортирован",
-    "successMessage": "Ваш набор данных импортирован и готов к использованию",
+    "successMessage": "Ваш dataset импортирован и готов к использованию",
     "openProject": "Открыть проект",
     "error": {
       "noFile": "Пожалуйста, выберите ZIP-файл",
       "invalidZip": "Пожалуйста, выберите действительный ZIP-файл",
-      "unsupportedFormat": "Неподдерживаемый формат набора данных. Поддерживаемые форматы: YOLO, COCO, Pascal VOC, CSV, папки по классам, маски U-Net",
-      "corruptedData": "Набор данных повреждён или неполный",
-      "parse": "Ошибка разбора набора данных. Проверьте формат файла",
-      "invalidProjectName": "Имя проекта содержит недопустимые символы. Используйте только буквы, цифры, дефисы, подчёркивания и точки"
+      "unsupportedFormat": "Неподдерживаемый формат dataset. Поддерживаемые форматы: YOLO, COCO, Pascal VOC, CSV, Папки по классам, Маски U-Net",
+      "corruptedData": "Dataset повреждён или неполный",
+      "parse": "Ошибка анализа dataset. Пожалуйста, проверьте формат файла",
+      "invalidProjectName": "Название проекта содержит недопустимые символы. Используйте только буквенно-цифровые символы, дефисы, подчёркивания и точки"
     }
+  },
+  "projectTypes": {
+    "classification": "Простая классификация",
+    "multiLabel": "Мульти-классовая классификация",
+    "detection": "Обнаружение объектов",
+    "segmentation": "Семантическая сегментация",
+    "instanceSeg": "Сегментация экземпляров",
+    "keypoints": "Ключевые точки",
+    "obb": "Повёрнутые рамки (OBB)"
   },
   "project": {
     "new": "Новый проект",
     "name": "Название проекта",
-    "namePlaceholder": "Мой проект YOLO",
+    "namePlaceholder": "Мой проект Annotix",
     "type": "Тип аннотации",
-    "typeBbox": "Ограничительная рамка",
-    "typeMask": "Сегментация (Маска)",
+    "typeSelectHelper": "Выберите тип аннотации в соответствии с целью обучения",
+    "types": {
+      "classification": {
+        "name": "Простая классификация",
+        "description": "Присвоить одну метку каждому изображению",
+        "useCases": "Определить содержимое изображения (например: кот, собака, машина)",
+        "models": "ResNet, VGG, EfficientNet, MobileNet",
+        "difficulty": "Начинающий"
+      },
+      "bbox": {
+        "name": "Bounding Box",
+        "description": "Обнаружение объектов с ограничительными рамками",
+        "useCases": "Обнаружение и локализация объектов на изображениях",
+        "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+        "difficulty": "Начинающий"
+      },
+      "mask": {
+        "name": "Маска",
+        "description": "Сегментация экземпляров с масками пикселей",
+        "useCases": "Разделение объектов на уровне пикселей",
+        "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+        "difficulty": "Средний"
+      },
+      "multiLabel": {
+        "name": "Мульти-классовая классификация",
+        "description": "Присвоить несколько меток каждому изображению",
+        "useCases": "Изображение с несколькими элементами (например: парк + собака + небо)",
+        "models": "ResNet, VGG с multi-label выходом",
+        "difficulty": "Начинающий"
+      },
+      "detection": {
+        "name": "Обнаружение объектов",
+        "description": "Локализация объектов с прямоугольными рамками (bounding boxes)",
+        "useCases": "Поиск и определение положения объектов на изображении",
+        "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+        "difficulty": "Средний"
+      },
+      "segmentation": {
+        "name": "Семантическая сегментация",
+        "description": "Классификация каждого пикселя изображения по классу",
+        "useCases": "Разделение областей (например: дорога, небо, здания)",
+        "models": "U-Net, DeepLab, FCN",
+        "difficulty": "Продвинутый"
+      },
+      "instanceSeg": {
+        "name": "Сегментация экземпляров",
+        "description": "Выделение контура каждого отдельного объекта",
+        "useCases": "Разделение отдельных объектов на уровне пикселей",
+        "models": "Mask R-CNN, YOLACT, YOLOv8-seg",
+        "difficulty": "Продвинутый"
+      },
+      "keypoints": {
+        "name": "Ключевые точки",
+        "description": "Отметка определённых точек на объектах",
+        "useCases": "Оценка позы, распознавание лиц, анатомия",
+        "models": "OpenPose, HRNet, MediaPipe",
+        "difficulty": "Средний"
+      },
+      "polygon": {
+        "name": "Сегментация полигонами",
+        "description": "Рисование полигонов точка за точкой для точной сегментации",
+        "useCases": "Точные контуры, геометрические формы, легче чем маски",
+        "models": "YOLOv8-seg, Mask R-CNN, SOLO",
+        "difficulty": "Средний"
+      },
+      "landmarks": {
+        "name": "Ориентиры",
+        "description": "Размещение независимых точек без соединений",
+        "useCases": "Центры объектов, ориентиры, подсчёт, расположение",
+        "models": "Модели обнаружения, пользовательские детекторы точек",
+        "difficulty": "Начинающий"
+      },
+      "obb": {
+        "name": "Повёрнутые рамки (OBB)",
+        "description": "Bounding boxes со свободным вращением",
+        "useCases": "Текст под углом, аэрообъекты, спутники",
+        "models": "Rotated-YOLO, RRPN",
+        "difficulty": "Продвинутый"
+      },
+      "semanticSeg": {
+        "name": "Чистая семантическая сегментация",
+        "description": "Классификация каждого пикселя без различения экземпляров",
+        "useCases": "Карты сегментации, пейзажи, городские сцены",
+        "models": "U-Net, DeepLabV3+, SegFormer",
+        "difficulty": "Продвинутый"
+      },
+      "panopticSeg": {
+        "name": "Панопtическая сегментация",
+        "description": "Комбинирует семантическую сегментацию и сегментацию экземпляров",
+        "useCases": "Автономное вождение, полный анализ сцен",
+        "models": "Panoptic-FPN, DETR, MaskFormer",
+        "difficulty": "Продвинутый"
+      },
+      "ocr": {
+        "name": "OCR (Распознавание текста)",
+        "description": "Обнаружение и распознавание текста на изображениях",
+        "useCases": "Документы, знаки, вывески, счета",
+        "models": "CRAFT, EasyOCR, Tesseract, PaddleOCR",
+        "difficulty": "Средний"
+      },
+      "depthEstimation": {
+        "name": "Оценка глубины",
+        "description": "Предсказание расстояния каждого пикселя до камеры",
+        "useCases": "Робототехника, AR/VR, 3D реконструкция",
+        "models": "MiDaS, DPT, Depth Anything",
+        "difficulty": "Продвинутый"
+      },
+      "audioClassification": {
+        "name": "Классификация аудио",
+        "description": "Присвоение метки аудиоклипам",
+        "useCases": "Классификация музыки, звуки окружающей среды",
+        "models": "AudioSet, PANNs, YAMNet",
+        "difficulty": "Средний"
+      },
+      "speechRecognition": {
+        "name": "Распознавание речи",
+        "description": "Транскрипция аудио в текст",
+        "useCases": "Субтитры, голосовые помощники, транскрипция",
+        "models": "Whisper, Wav2Vec2, DeepSpeech",
+        "difficulty": "Продвинутый"
+      },
+      "soundEventDetection": {
+        "name": "Обнаружение звуковых событий",
+        "description": "Идентификация и локализация событий в аудио",
+        "useCases": "Мониторинг безопасности, городской анализ",
+        "models": "CRNN, CNN14, SED-CRNN",
+        "difficulty": "Продвинутый"
+      },
+      "speakerIdentification": {
+        "name": "Идентификация говорящего",
+        "description": "Распознавание кто говорит",
+        "useCases": "Безопасность, диаризация совещаний",
+        "models": "x-vector, ECAPA-TDNN, SpeakerNet",
+        "difficulty": "Продвинутый"
+      },
+      "audioTagging": {
+        "name": "Теги аудио",
+        "description": "Присвоение нескольких меток аудио",
+        "useCases": "Анализ акустических сцен",
+        "models": "VGGish, PANNs, AudioSet",
+        "difficulty": "Средний"
+      },
+      "musicGenreClassification": {
+        "name": "Классификация музыкальных жанров",
+        "description": "Определение музыкального жанра песни",
+        "useCases": "Организация музыкальных библиотек",
+        "models": "MusiCNN, CNN-Spectrograms",
+        "difficulty": "Средний"
+      },
+      "emotionRecognition": {
+        "name": "Распознавание эмоций",
+        "description": "Обнаружение эмоций в голосе",
+        "useCases": "Обслуживание клиентов, анализ настроений",
+        "models": "OpenSMILE, EmotiW, SER-CNN",
+        "difficulty": "Продвинутый"
+      },
+      "voiceActivityDetection": {
+        "name": "Обнаружение речевой активности (VAD)",
+        "description": "Определение наличия речи в аудио",
+        "useCases": "Предобработка аудио, телефонные системы",
+        "models": "WebRTC VAD, Silero VAD",
+        "difficulty": "Начинающий"
+      },
+      "keywordSpotting": {
+        "name": "Обнаружение ключевых слов",
+        "description": "Обнаружение определённых слов в аудио",
+        "useCases": "Голосовые помощники (Hey Siri, OK Google)",
+        "models": "CNN-KWS, Depthwise Separable CNNs",
+        "difficulty": "Средний"
+      },
+      "environmentalSound": {
+        "name": "Классификация звуков окружающей среды",
+        "description": "Классификация звуков окружения",
+        "useCases": "Городской мониторинг, охрана фауны",
+        "models": "ESC-CNN, UrbanSound8K models",
+        "difficulty": "Средний"
+      },
+      "actionRecognition": {
+        "name": "Распознавание действий",
+        "description": "Идентификация действий в видео",
+        "useCases": "Спортивный анализ, наблюдение, взаимодействие людей",
+        "models": "C3D, I3D, SlowFast, X3D",
+        "difficulty": "Продвинутый"
+      },
+      "objectTracking": {
+        "name": "Отслеживание объектов",
+        "description": "Отслеживание объектов по кадрам",
+        "useCases": "Наблюдение, анализ трафика, спорт",
+        "models": "SORT, DeepSORT, ByteTrack, BoT-SORT",
+        "difficulty": "Продвинутый"
+      },
+      "temporalActionLocalization": {
+        "name": "Временная локализация действий",
+        "description": "Обнаружение когда происходят действия в видео",
+        "useCases": "Анализ видео, автоматические сводки",
+        "models": "BMN, TSN, ActionFormer",
+        "difficulty": "Продвинутый"
+      },
+      "videoClassification": {
+        "name": "Классификация видео",
+        "description": "Присвоение категории полному видео",
+        "useCases": "Организация контента, рекомендации",
+        "models": "3D-CNN, Two-Stream Networks, TimeSformer",
+        "difficulty": "Средний"
+      },
+      "videoSegmentation": {
+        "name": "Сегментация видео",
+        "description": "Сегментация объектов в видео кадр за кадром",
+        "useCases": "Видеоредактирование, спецэффекты",
+        "models": "STM, XMem, SAM-Track",
+        "difficulty": "Продвинутый"
+      },
+      "activityDetection": {
+        "name": "Обнаружение активности",
+        "description": "Обнаружение конкретных человеческих действий",
+        "useCases": "Мониторинг пожилых людей, безопасность",
+        "models": "ActivityNet models, TSM",
+        "difficulty": "Продвинутый"
+      },
+      "poseTracking": {
+        "name": "Отслеживание позы",
+        "description": "Отслеживание ключевых точек тела в видео",
+        "useCases": "Анализ движений, фитнес, спорт",
+        "models": "AlphaPose, OpenPose, MMPose",
+        "difficulty": "Продвинутый"
+      },
+      "videoAnomalyDetection": {
+        "name": "Обнаружение аномалий в видео",
+        "description": "Обнаружение необычных событий в видео",
+        "useCases": "Наблюдение, промышленный контроль качества",
+        "models": "AnomalyNet, Future Frame Prediction",
+        "difficulty": "Продвинутый"
+      },
+      "spatiotemporalAction": {
+        "name": "Пространственно-временное обнаружение действий",
+        "description": "Обнаружение действий в пространстве и времени",
+        "useCases": "Детальный анализ видео, YOLO-Act",
+        "models": "AVA models, SlowFast, YOLO-Act",
+        "difficulty": "Продвинутый"
+      },
+      "timeSeriesClassification": {
+        "name": "Классификация временных рядов",
+        "description": "Присвоение класса каждому полному временному ряду (режим глобальной классификации)",
+        "useCases": "Медицинская диагностика, распознавание жестов, классификация ЭКГ",
+        "models": "InceptionTime, ROCKET, ResNet",
+        "difficulty": "Средний"
+      },
+      "timeSeriesForecasting": {
+        "name": "Прогнозирование временных рядов",
+        "description": "Разметка исторических окон и горизонта прогнозирования с помощью диапазонов",
+        "useCases": "Прогнозирование продаж, погоды, энергопотребления",
+        "models": "LSTM, Transformer, N-BEATS, Prophet",
+        "difficulty": "Продвинутый"
+      },
+      "anomalyDetection": {
+        "name": "Обнаружение аномалий",
+        "description": "Разметка аномальных точек во временном ряду",
+        "useCases": "Обнаружение мошенничества, отказов оборудования, мониторинг здоровья",
+        "models": "AutoEncoder, Isolation Forest, LSTM-AE",
+        "difficulty": "Продвинутый"
+      },
+      "timeSeriesSegmentation": {
+        "name": "Сегментация временных рядов",
+        "description": "Разделение ряда на сегменты с классами с помощью диапазонов",
+        "useCases": "Анализ поведения, смена режима, состояния активности",
+        "models": "ClaSP, FLUSS, Seasonal-Trend Decomposition",
+        "difficulty": "Продвинутый"
+      },
+      "patternRecognition": {
+        "name": "Распознавание паттернов",
+        "description": "Разметка повторяющихся паттернов/мотивов с помощью диапазонов",
+        "useCases": "Биржевой анализ, биомедицинские сигналы, обнаружение циклов",
+        "models": "Matrix Profile, STOMP, SAX",
+        "difficulty": "Средний"
+      },
+      "eventDetection": {
+        "name": "Обнаружение событий",
+        "description": "Разметка дискретных событий во времени с помощью точек",
+        "useCases": "Мониторинг датчиков, оповещения, смена состояний",
+        "models": "Change Point Detection, Event Detection CNN",
+        "difficulty": "Средний"
+      },
+      "timeSeriesRegression": {
+        "name": "Регрессия временных рядов",
+        "description": "Разметка точек с числовыми целевыми значениями",
+        "useCases": "Оценка спроса, динамическое ценообразование, прогнозирование значений",
+        "models": "XGBoost, Random Forest, Neural Networks",
+        "difficulty": "Средний"
+      },
+      "clustering": {
+        "name": "Кластеризация рядов",
+        "description": "Присвоение кластера каждому полному временному ряду (режим глобальной классификации)",
+        "useCases": "Сегментация клиентов, анализ паттернов, группировка поведений",
+        "models": "K-Shape, DTW-KMeans, K-Means",
+        "difficulty": "Средний"
+      },
+      "imputation": {
+        "name": "Импутация пропущенных значений",
+        "description": "Разметка секций с пропущенными данными для импутации с помощью диапазонов",
+        "useCases": "Очистка данных датчиков, заполнение пробелов в измерениях",
+        "models": "MICE, KNN, Interpolation, BRITS",
+        "difficulty": "Средний"
+      },
+      "multi-label-classification": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-classification": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-forecasting": {
+        "name": "",
+        "description": ""
+      },
+      "anomaly-detection": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-segmentation": {
+        "name": "",
+        "description": ""
+      },
+      "pattern-recognition": {
+        "name": "",
+        "description": ""
+      },
+      "event-detection": {
+        "name": "",
+        "description": ""
+      },
+      "timeseries-regression": {
+        "name": "",
+        "description": ""
+      },
+      "object3DDetection": {
+        "name": "Обнаружение 3D объектов",
+        "description": "Обнаружение объектов в 3D облаках точек",
+        "useCases": "Автономное вождение, робототехника",
+        "models": "PointNet++, VoxelNet, PointPillars",
+        "difficulty": "Продвинутый"
+      },
+      "semantic3DSegmentation": {
+        "name": "3D семантическая сегментация",
+        "description": "Классификация точек в 3D облаках",
+        "useCases": "Городское картирование, BIM, сканирование зданий",
+        "models": "PointNet, MinkowskiNet, KPConv",
+        "difficulty": "Продвинутый"
+      },
+      "instance3DSegmentation": {
+        "name": "3D сегментация экземпляров",
+        "description": "Разделение отдельных объектов в 3D",
+        "useCases": "Робототехника, манипулирование объектами",
+        "models": "PointGroup, SoftGroup, Mask3D",
+        "difficulty": "Продвинутый"
+      },
+      "pointCloudClassification": {
+        "name": "Классификация облаков точек",
+        "description": "Классификация полных облаков точек",
+        "useCases": "Распознавание 3D объектов",
+        "models": "PointNet, DGCNN, PointTransformer",
+        "difficulty": "Продвинутый"
+      },
+      "meshSegmentation": {
+        "name": "Сегментация мешей",
+        "description": "Сегментация полигональных 3D мешей",
+        "useCases": "3D моделирование, геометрический анализ",
+        "models": "MeshCNN, TextureNet",
+        "difficulty": "Продвинутый"
+      },
+      "pose3DEstimation": {
+        "name": "Оценка 3D позы",
+        "description": "Оценка человеческих поз в 3D",
+        "useCases": "Захват движений, анимация",
+        "models": "VideoPose3D, VoxelPose",
+        "difficulty": "Продвинутый"
+      },
+      "keypoint3DDetection": {
+        "name": "Обнаружение 3D ключевых точек",
+        "description": "Обнаружение точек интереса в 3D",
+        "useCases": "Регистрация облаков точек, SLAM",
+        "models": "D3Feat, FCGF, Predator",
+        "difficulty": "Продвинутый"
+      },
+      "surfaceReconstruction": {
+        "name": "Реконструкция поверхностей",
+        "description": "Реконструкция поверхностей из точек",
+        "useCases": "3D сканирование, культурное наследие",
+        "models": "Poisson Surface Reconstruction, COLMAP",
+        "difficulty": "Продвинутый"
+      },
+      "slamAnnotation": {
+        "name": "Аннотация для SLAM",
+        "description": "Аннотация данных для локализации и картирования",
+        "useCases": "Мобильная робототехника, автономная навигация",
+        "models": "ORB-SLAM, LiDAR-SLAM",
+        "difficulty": "Продвинутый"
+      },
+      "textClassification": {
+        "name": "Классификация текста",
+        "description": "Присвоение категории тексту",
+        "useCases": "Классификация новостей, обнаружение спама",
+        "models": "BERT, RoBERTa, DistilBERT",
+        "difficulty": "Средний"
+      },
+      "namedEntityRecognition": {
+        "name": "Распознавание сущностей (NER)",
+        "description": "Идентификация имён, мест, организаций",
+        "useCases": "Извлечение информации, анализ документов",
+        "models": "SpaCy, Flair, BERT-NER",
+        "difficulty": "Средний"
+      },
+      "sentimentAnalysis": {
+        "name": "Анализ тональности",
+        "description": "Определение тональности (положительная/отрицательная/нейтральная)",
+        "useCases": "Анализ мнений, социальные сети",
+        "models": "VADER, TextBlob, RoBERTa-Sentiment",
+        "difficulty": "Средний"
+      },
+      "intentClassification": {
+        "name": "Классификация намерений",
+        "description": "Определение намерения пользователя",
+        "useCases": "Чат-боты, виртуальные помощники",
+        "models": "DIET, Rasa NLU, BERT-Intent",
+        "difficulty": "Средний"
+      },
+      "relationExtraction": {
+        "name": "Извлечение отношений",
+        "description": "Идентификация отношений между сущностями",
+        "useCases": "Графы знаний, анализ текстов",
+        "models": "SpanBERT, LUKE, Relation Extraction BERT",
+        "difficulty": "Продвинутый"
+      },
+      "posTagging": {
+        "name": "Грамматическая разметка (POS)",
+        "description": "Идентификация грамматических категорий",
+        "useCases": "Лингвистический анализ, предобработка NLP",
+        "models": "SpaCy, NLTK, Flair",
+        "difficulty": "Начинающий"
+      },
+      "dependencyParsing": {
+        "name": "Анализ зависимостей",
+        "description": "Анализ синтаксической структуры",
+        "useCases": "Понимание языка, перевод",
+        "models": "SpaCy, Stanford Parser",
+        "difficulty": "Продвинутый"
+      },
+      "questionAnswering": {
+        "name": "Ответы на вопросы",
+        "description": "Ответы на вопросы по тексту",
+        "useCases": "QA-ассистенты, поиск информации",
+        "models": "BERT-QA, RoBERTa-QA, T5",
+        "difficulty": "Продвинутый"
+      },
+      "keyphraseExtraction": {
+        "name": "Извлечение ключевых фраз",
+        "description": "Идентификация важных фраз",
+        "useCases": "Сводки, индексация документов",
+        "models": "YAKE, KeyBERT, RAKE",
+        "difficulty": "Средний"
+      },
+      "entityLinking": {
+        "name": "Связывание сущностей",
+        "description": "Связывание сущностей с базами знаний",
+        "useCases": "Обогащение данных, графы знаний",
+        "models": "BLINK, ELQ, GENRE",
+        "difficulty": "Продвинутый"
+      },
+      "toxicityClassification": {
+        "name": "Классификация токсичности",
+        "description": "Обнаружение токсичного или оскорбительного контента",
+        "useCases": "Модерация контента, фильтры",
+        "models": "Perspective API, Detoxify, RoBERTa-Toxicity",
+        "difficulty": "Средний"
+      },
+      "languageIdentification": {
+        "name": "Идентификация языка",
+        "description": "Определение языка текста",
+        "useCases": "Мультиязычная обработка, перевод",
+        "models": "langdetect, fastText, XLM-RoBERTa",
+        "difficulty": "Начинающий"
+      },
+      "useCasesLabel": "Случаи использования",
+      "modelsLabel": "Рекомендуемые модели",
+      "difficultyLabel": "Сложность"
+    },
+    "categories": {
+      "images": "",
+      "classification": "",
+      "timeSeries": ""
+    },
+    "modality": "Модальность",
     "initialClasses": "Начальные классы (необязательно)",
     "classesPlaceholder": "класс1, класс2, класс3",
-    "classesHelp": "Разделенные запятыми. Можно добавить больше позже.",
+    "classesHelp": "Через запятую. Можно добавить ещё позже.",
+    "imageDimensions": "Размеры изображений",
+    "dimensionsAuto": "Автоматически — принимает любой размер",
+    "dimensionsFixed": "Фиксированный — все изображения будут изменены",
+    "targetSize": "Целевой размер",
+    "resizeStrategy": "Стратегия",
     "enterName": "Введите название проекта",
     "created": "Проект \"{name}\" создан",
-    "updated": "Updated",
+    "updated": "Обновлено",
     "loaded": "Проект \"{name}\" загружен",
-    "deleted": "Проект удален",
+    "deleted": "Проект удалён",
+    "duplicated": "Проект \"{name}\" дублирован",
+    "renamed": "Проект переименован",
+    "imported": "Проект \"{name}\" импортирован",
     "exported": "Проект экспортирован",
     "configExported": "Конфигурация экспортирована",
-    "selectFirst": "Сначала выберите проект"
+    "selectFirst": "Сначала выберите проект",
+    "noProjects": "Нет доступных проектов",
+    "manageProjects": "Управление проектами",
+    "renameProject": "Переименовать проект",
+    "newName": "Новое название",
+    "images": "изображений",
+    "annotations": "аннотаций",
+    "exportBackup": "Скачать backup .tix перед удалением",
+    "deleteWarning": {
+      "title": "⚠️ ПРЕДУПРЕЖДЕНИЕ: БЕЗВОЗВРАТНОЕ УДАЛЕНИЕ",
+      "confirmTitle": "Подтвердить удаление?",
+      "projectName": "Проект:",
+      "message": "Вы собираетесь НАВСЕГДА удалить этот проект.",
+      "permanent": "Это действие НЕЛЬЗЯ отменить",
+      "allData": "Будут удалены ВСЕ изображения и аннотации",
+      "noUndo": "Нет способа восстановить удалённые данные",
+      "recommendation": "💡 Рекомендация: Экспортируйте проект в формате .tix как backup ПЕРЕД удалением"
+    }
   },
   "notifications": {
     "imageSaved": "Изображение сохранено",
-    "datasetDownloaded": "Набор данных загружен",
-    "classesDownloaded": "classes.txt загружен",
-    "noClasses": "Нет классов для загрузки",
+    "imagesLoaded": "{count} изображений загружено",
+    "datasetDownloaded": "Dataset скачан",
+    "classesDownloaded": "classes.txt скачан",
+    "noClasses": "Нет классов для скачивания",
     "noImages": "Нет изображений в проекте",
-    "noAnnotations": "Нет аннотаций для загрузки",
+    "noAnnotations": "Нет аннотаций для скачивания",
     "appStarted": "Приложение запущено",
+    "classDeleted": "Класс и все его аннотации удалены",
     "error": {
-      "createProject": "Ошибка создания проекта",
-      "loadProject": "Ошибка загрузки проекта",
-      "updateProject": "Ошибка обновления проекта",
-      "deleteProject": "Ошибка удаления проекта",
-      "exportProject": "Ошибка экспорта проекта",
-      "exportConfig": "Ошибка экспорта конфигурации",
-      "importConfig": "Ошибка импорта конфигурации",
-      "loadImage": "Ошибка загрузки изображения",
-      "saveImage": "Ошибка сохранения изображения",
-      "deleteImage": "Ошибка удаления изображения",
-      "loadImages": "Ошибка загрузки изображений",
-      "downloadDataset": "Ошибка загрузки набора данных",
-      "initApp": "Ошибка запуска приложения"
-    }
+      "createProject": "Ошибка при создании проекта",
+      "loadProject": "Ошибка при загрузке проекта",
+      "updateProject": "Ошибка при обновлении проекта",
+      "deleteProject": "Ошибка при удалении проекта",
+      "duplicateProject": "Ошибка при дублировании проекта",
+      "renameProject": "Ошибка при переименовании проекта",
+      "loadProjects": "Ошибка при загрузке проектов",
+      "exportProject": "Ошибка при экспорте проекта",
+      "exportConfig": "Ошибка при экспорте конфигурации",
+      "importConfig": "Ошибка при импорте конфигурации",
+      "importProject": "Ошибка при импорте проекта",
+      "loadImage": "Ошибка при загрузке изображения",
+      "saveImage": "Ошибка при сохранении изображения",
+      "deleteImage": "Ошибка при удалении изображения",
+      "loadImages": "Ошибка при загрузке изображений",
+      "downloadDataset": "Ошибка при скачивании dataset",
+      "initApp": "Ошибка при запуске приложения",
+      "export": "Ошибка при экспорте",
+      "noImages": "Ошибка: изображения не найдены"
+    },
+    "imageDeleted": "notifications.imageDeleted"
   },
   "tour": {
-    "welcome": "Добро пожаловать в <strong>Аннотатор YOLO</strong>. Этот инструмент позволяет аннотировать изображения для обучения моделей YOLO.",
-    "project": "Сначала создайте новый проект или выберите существующий. Каждый проект может быть типа <strong>Ограничительная рамка</strong> или <strong>Сегментация</strong>.",
-    "tools": "Здесь вы найдете <strong>инструменты</strong> аннотации: Рамка для прямоугольников, Маска для рисуемых масок, Выбрать для редактирования и Панорама для перемещения вида.",
-    "classes": "Определите свои <strong>классы</strong> аннотации. Каждый класс имеет название и цвет. Вы можете добавлять, редактировать или удалять классы.",
-    "workspace": "Основная <strong>рабочая область</strong>. Здесь вы будете загружать изображения и создавать аннотации. Используйте мышь для рисования и колесико для масштабирования.",
-    "management": "Панель управления, где вы увидите <strong>статистику</strong> проекта, <strong>галерею</strong> изображений и сможете <strong>экспортировать</strong> набор данных в формате YOLO.",
+    "welcome": "Добро пожаловать в <strong>Annotix</strong>! 🎯<br><br>Профессиональный инструмент для аннотации изображений и временных рядов для обучения моделей машинного обучения. Поддерживает множество типов аннотаций: <strong>Bounding Boxes</strong>, <strong>OBB</strong>, <strong>Сегментация</strong>, <strong>Keypoints</strong>, <strong>Полигоны</strong>, <strong>Landmarks</strong>, <strong>Временные ряды</strong> и <strong>Классификация</strong>.",
+    "installation": "📦 <strong>Локальная установка</strong><br><br>Annotix полностью устанавливается на ваш <strong>ПК как прогрессивное веб-приложение (PWA)</strong>. Не требует подключения к интернету после первоначальной установки. Работает оффлайн и запускается прямо из браузера.",
+    "dataStorage": "💾 <strong>Хранение данных</strong><br><br><strong>ВАЖНО:</strong> Все ваши данные хранятся в <strong>IndexedDB браузера</strong>, а не на сервере. Это означает:<br>• ✅ Полная конфиденциальность: ваши данные никогда не покидают ваш ПК<br>• ✅ Работает без интернета<br>• ⚠️ Риск: если вы очистите данные браузера, всё будет потеряно",
+    "projectBackup": "💼 <strong>Резервное копирование проектов</strong><br><br>Для предотвращения потери данных:<br>• Экспортируйте проекты в формате <strong>.tix</strong> (содержит всё: изображения, аннотации, классы)<br>• Вы можете загрузить файл .tix в любой момент<br>• Делитесь проектами .tix с другими пользователями<br>• Также экспортируйте файлы <strong>.tixconfig</strong> для обмена только конфигурацией классов",
+    "createProjectButton": "Нажмите <strong>Новый проект</strong>, чтобы начать. Откроется окно создания, где вы выберете тип проекта.",
+    "projectTypeSelection": "📋 <strong>Типы проектов</strong><br><br>В окне можно выбрать из <strong>8 различных типов</strong>:<br>• <strong>Bounding Box</strong>: Прямоугольные рамки (обнаружение объектов)<br>• <strong>OBB</strong>: Ориентированные повёрнутые рамки<br>• <strong>Mask</strong>: Пиксельная сегментация<br>• <strong>Keypoints</strong>: Ключевые точки (оценка позы)<br>• <strong>Polygon</strong>: Свободные полигоны<br>• <strong>Landmarks</strong>: Лицевые точки<br>• <strong>Time Series</strong>: Временные ряды<br>• <strong>Classification</strong>: Классификация изображений",
+    "projectName": "✏️ <strong>Название проекта</strong><br><br>В окне введите <strong>описательное название</strong> для вашего проекта. Например: 'Обнаружение автомобилей 2024' или 'Сегментация клеток'.<br><br>Тип проекта определяет, какие инструменты будут доступны на холсте.",
+    "classesPanel": "Это <strong>панель управления классами</strong>. Здесь вы определяете категории для аннотирования.",
+    "classesInWorkflow": "🏷️ <strong>Управление классами</strong><br><br>Классы можно добавлять <strong>двумя способами</strong>:<br><br>1. <strong>В окне создания проекта:</strong> Определите основные классы с самого начала<br><br>2. <strong>На правой панели (текущая):</strong> Добавляйте, редактируйте или удаляйте классы в любой момент во время работы<br><br>Каждый класс имеет <strong>уникальное название</strong>, <strong>отличительный цвет</strong> и <strong>последовательный ID</strong>. Используйте клавиши <strong>1-9</strong> для быстрого выбора классов.",
+    "gallery": "<strong>Галерея изображений</strong> показывает все изображения вашего проекта. Вы можете фильтровать по всем, аннотированным или без аннотаций. Миниатюры показывают статус каждого изображения.",
+    "loadImages": "Нажмите <strong>Загрузить изображения</strong>, чтобы импортировать изображения в проект. Поддерживает множество форматов: JPG, PNG, WEBP. Вы также можете использовать <strong>Data Augmentation</strong> для автоматической генерации вариаций изображений.",
+    "workspace": "Основная <strong>рабочая область</strong>, где вы визуализируете и аннотируете изображения или временные ряды. Используйте мышь для рисования, колёсико для масштабирования, удерживайте среднюю кнопку или используйте инструмент Pan для перемещения.",
+    "tools": "<strong>Плавающие инструменты</strong> меняются в зависимости от типа проекта. Включают: Box (B), OBB (O), Mask (M), Select (V) и Pan (H). Каждый инструмент имеет специфические элементы управления, такие как размер кисти для масок или элементы масштабирования.",
+    "stats": "Панель <strong>статистики</strong> показывает прогресс вашего проекта: всего изображений, аннотированных изображений, всего меток и количество классов. Индикатор прогресса помогает визуализировать сколько работы выполнено.",
+    "exportButton": "Кнопка <strong>Экспорт</strong> позволяет скачать ваш dataset. Рассмотрим доступные варианты...",
+    "exportFormats": "📦 <strong>Форматы экспорта</strong><br><br>В окне экспорта вы найдёте множество вариантов:<br><br>• <strong>YOLO Detection</strong>: .txt с нормализованными bounding boxes<br>• <strong>YOLO Segmentation</strong>: .txt с полигонами масок<br>• <strong>YOLO OBB</strong>: .txt с ориентированными рамками<br>• <strong>COCO JSON</strong>: Стандартный формат COCO<br>• <strong>U-Net Masks</strong>: PNG изображения для сегментации<br>• <strong>Pascal VOC XML</strong>: Формат Pascal VOC<br>• <strong>CSV</strong>: Таблица данных",
+    "trainingCode": "🐍 <strong>Код для обучения</strong><br><br>В окне экспорта вы найдёте опцию <strong>'Генерация кода обучения Python'</strong>.<br><br>Это создаёт <strong>полный примерный скрипт</strong> для обучения модели с <strong>YOLOv8</strong> через Ultralytics:<br>• Автоматическая конфигурация путей<br>• Скрипт обучения с оптимальными гиперпараметрами<br>• Готов к запуску: просто установите зависимости и обучайте",
+    "shortcuts": "Нажмите кнопку <strong>клавиатуры</strong> или используйте F1, чтобы увидеть все доступные <strong>горячие клавиши</strong>. Включают Ctrl+S для сохранения, Ctrl+Z для отмены, цифровые клавиши для выбора классов и многое другое.",
+    "finish": "Готовы начать! 🚀<br><br>Помните:<br>• Сохраняйте часто с помощью <strong>Ctrl+S</strong><br>• Экспортируйте резервные копии в формате <strong>.tix</strong><br>• Ваши данные находятся <strong>только в вашем браузере</strong><br><br>Если нужна помощь, нажмите кнопку <strong>?</strong>, чтобы снова увидеть этот тур.",
     "next": "Далее →",
     "prev": "← Назад",
-    "done": "Готово!",
-    "skip": "Пропустить"
+    "done": "Понятно!",
+    "skip": "Пропустить тур"
   },
   "imageInfo": {
     "noName": "Без названия",
     "dimensions": "Размеры"
+  },
+  "preprocessing": {
+    "title": "Предобработка изображений",
+    "detected": "Обнаружено {count} неквадратных изображений",
+    "description": "Изображения будут приведены к квадратному формату для оптимизации обучения. Выберите стратегию изменения размера:",
+    "targetSize": "Целевой размер (пиксели)",
+    "recommended": "Рекомендуемый: {size}px",
+    "strategy": "Стратегия изменения размера",
+    "strategies": {
+      "resize": {
+        "name": "Изменить размер + Padding",
+        "description": "Уменьшает изображение и добавляет padding (оптимизирует пространство и память)"
+      },
+      "padding": {
+        "name": "Только Padding",
+        "description": "Сохраняет оригинальный размер и добавляет padding (лучшее качество)"
+      }
+    },
+    "options": {
+      "apply": "Применить предобработку",
+      "skip": "Загрузить без предобработки"
+    },
+    "progress": "Обработка изображения {current} из {total}...",
+    "complete": "{count} изображений успешно предобработано",
+    "preview": "Предпросмотр",
+    "original": "Оригинал",
+    "processed": "Обработанное",
+    "aspectRatio": "Оригинальное соотношение сторон сохранено",
+    "paddingInfo": "Будет добавлен симметричный чёрный padding"
+  },
+  "classification": {
+    "selectOne": "Выберите правильную метку",
+    "selectMultiple": "Выберите подходящие метки",
+    "singleHint": "Можно выбрать только одну метку",
+    "multiHint": "Можно выбрать несколько меток",
+    "noLabels": "Метки не назначены",
+    "labeled": "С меткой",
+    "selectLabel": "Выберите метку",
+    "selectLabels": "Выберите метки",
+    "selected": "выбрано",
+    "multiLabel": "Мульти-классовая классификация",
+    "singleLabel": "Простая классификация",
+    "noImageSelected": "Изображение не выбрано. Пожалуйста, выберите изображение из галереи.",
+    "multiLabelInstructions": "Выберите одну или несколько меток, подходящих к этому изображению. Нажмите Ctrl+S для сохранения.",
+    "singleLabelInstructions": "Выберите метку, которая лучше всего описывает это изображение. Нажмите Ctrl+S для сохранения."
+  },
+  "augmentation": {
+    "title": "Data Augmentation",
+    "batchButton": "Data Augmentation",
+    "augmentImage": "Применить augmentation",
+    "variationsCount": "Количество вариаций",
+    "variationsCountHelp": "Сколько увеличенных изображений создать? (1-20)",
+    "generationMode": "Режим генерации",
+    "modeManual": "Ручной (фиксированные настройки)",
+    "modeRandom": "Случайный (настраиваемые диапазоны)",
+    "modeManualHelp": "Применить одинаковые настройки N раз",
+    "modeRandomHelp": "Сгенерировать N вариаций со случайными значениями в указанных диапазонах",
+    "geometricTransforms": "Геометрические трансформации",
+    "flipHorizontal": "Горизонтальный переворот",
+    "flipVertical": "Вертикальный переворот",
+    "rotation": "Вращение",
+    "noRotation": "Без вращения",
+    "customRotation": "Пользовательское вращение",
+    "colorAdjustments": "Настройки цвета",
+    "brightness": "Яркость",
+    "contrast": "Контраст",
+    "saturation": "Насыщенность",
+    "randomOptions": "Случайные параметры",
+    "randomFlip": "Случайный переворот (горизонтальный/вертикальный)",
+    "randomRotation": "Случайное вращение",
+    "randomColor": "Случайные настройки цвета",
+    "rotationRange": "Диапазон вращения (градусы)",
+    "brightnessRange": "Диапазон яркости",
+    "contrastRange": "Диапазон контраста",
+    "saturationRange": "Диапазон насыщенности",
+    "min": "Мин",
+    "max": "Макс",
+    "keepAnnotations": "Сохранить трансформированные аннотации",
+    "keepAnnotationsHelp": "Рамки будут автоматически трансформированы вместе с изображением",
+    "maskProjectWarning": "Проект масок",
+    "maskProjectWarningText": "Аннотации НЕ будут сохранены. Вам нужно будет нарисовать маски вручную на каждом увеличенном изображении.",
+    "apply": "Применить",
+    "processing": "Обработка augmentation...",
+    "generatingVariations": "Генерация {count} вариаций...",
+    "variationsSuccess": "{count} вариаций успешно создано",
+    "success": "Увеличенное изображение успешно создано",
+    "error": "Ошибка при применении augmentation",
+    "batchProcessing": "Применение augmentation к {count} изображениям...",
+    "batchRandomProcessing": "Генерация {variations} вариаций для {images} изображений ({total} всего)...",
+    "batchSuccess": "{count} увеличенных изображений успешно создано",
+    "batchRandomSuccess": "{count} случайных вариаций успешно создано",
+    "batchError": "Ошибка при пакетном применении augmentation"
   },
   "pwa": {
     "installButton": "Установить приложение",
@@ -231,22 +1474,276 @@
       "title": "🚀 Установить Annotix как приложение",
       "benefits": "Преимущества установки:",
       "benefit1": "✅ Прямой доступ с рабочего стола",
-      "benefit2": "✅ Работает офлайн",
+      "benefit2": "✅ Работает без подключения",
       "benefit3": "✅ Быстрее и плавнее",
       "benefit4": "✅ Без панели браузера",
       "benefit5": "✅ Ваши данные всегда конфиденциальны",
       "benefit6": "✅ Автоматические обновления",
+      "platformCompatibility": "Совместимость по платформам:",
+      "androidInfo": "<strong>Android:</strong> Работает отлично. Полная нативная установка, ведёт себя как приложение из Play Store.",
+      "iosInfo": "<strong>iOS/iPadOS:</strong> Работает хорошо, но Safari может периодически очищать кэш. <strong>Важно:</strong> Часто сохраняйте прогресс, экспортируя проекты.",
+      "linuxInfo": "<strong>Linux:</strong> Работает идеально. Полная поддержка в Chrome, Firefox и Edge.",
+      "windowsInfo": "<strong>Windows:</strong> Должен работать без проблем в Chrome и Edge, хотя мы не смогли провести обширное тестирование.",
+      "generalTip": "💡 <strong>Рекомендация:</strong> Регулярно экспортируйте проекты как backup, независимо от вашей операционной системы.",
       "cancelButton": "Не сейчас",
-      "installButtonModal": "📥 Установить приложение"
+      "installButtonModal": "🖖 Установить приложение"
     },
     "notifications": {
       "installed": "Annotix успешно установлен!",
-      "installFailed": "Ошибка установки приложения",
+      "installFailed": "Ошибка при установке приложения",
       "updateAvailable": "Доступно обновление. Перезагрузите для обновления.",
-      "offline": "Режим офлайн активирован. Приложение работает без подключения."
+      "offline": "Оффлайн-режим активирован. Приложение работает без подключения."
     }
   },
   "storage": {
-    "used": "Использовано хранилища в IndexedDB"
+    "used": "Использование диска"
+  },
+  "inference": {
+    "title": "Инференс модели",
+    "uploadModel": "Загрузить модель",
+    "uploadPrompt": "Нажмите для загрузки модели ONNX",
+    "uploadHint": "Поддерживает YOLO Detection, Segmentation и Classification",
+    "modelName": "Модель",
+    "modelType": "Тип",
+    "inputSize": "Размер входа",
+    "settings": "Настройки",
+    "confidenceThreshold": "Порог уверенности",
+    "autoInference": "Авто-инференс при загрузке изображения",
+    "runInference": "Запустить инференс",
+    "clearPredictions": "Очистить всё",
+    "convertAll": "Конвертировать всё",
+    "process": "Обработка...",
+    "predictions": "Прогнозы",
+    "highConf": "Высокая увер.",
+    "time": "Время",
+    "distribution": "Распределение классов",
+    "batchProgress": "Обработка изображений...",
+    "showPredictions": "Показать прогнозы",
+    "hidePredictions": "Скрыть прогнозы",
+    "togglePredictions": "Переключить видимость прогнозов",
+    "convertSelected": "Конвертировать выбранный прогноз",
+    "convertToPrediction": "Конвертировать в аннотацию",
+    "alreadyLoading": "Модель уже загружается",
+    "loadingModel": "Загрузка модели...",
+    "modelLoaded": "Модель {name} успешно загружена",
+    "loadModelError": "Ошибка загрузки модели: {error}",
+    "modelUnloaded": "Модель выгружена",
+    "noModelLoaded": "Модель не загружена. Пожалуйста, сначала загрузите модель.",
+    "inferenceCompleted": "{count} прогнозов за {time}мс",
+    "inferenceError": "Ошибка инференса: {error}",
+    "invalidModelName": "Название модели должно следовать формату: {expected}",
+    "viewModelTitle": "Просмотр архитектуры модели",
+    "viewModelInstructions": "Скачайте модель и откройте в Netron для визуализации архитектуры.",
+    "downloadModel": "Скачать модель",
+    "netronInstructions": "Затем перейдите на",
+    "netronInstructions2": "и откройте скачанный файл",
+    "viewModel": "Просмотр архитектуры модели",
+    "enforceNaming": "Применять соглашение об именах",
+    "helpText": "Загрузите модель с форматом: <strong>имяпроекта_v1.onnx</strong> для обеспечения совместимости. Используйте кнопку мозга <i class='fas fa-brain'></i> на каждом изображении для запуска инференса. Вы можете отключить валидацию имён, если хотите протестировать другие модели.",
+    "modelArchitecture": "Архитектура модели",
+    "modelInformation": "Информация о модели",
+    "dataFlow": "Поток данных",
+    "inputTensor": "Входной тензор",
+    "processing": "Обработка",
+    "outputTensor": "Выходной тензор",
+    "inputs": "Входы",
+    "outputs": "Выходы",
+    "format": "Формат",
+    "advancedVisualization": "Для продвинутой послойной визуализации используйте Netron:",
+    "loadingArchitecture": "Загрузка просмотрщика архитектуры...",
+    "netronInstructionsTitle": "Интерактивный просмотр архитектуры",
+    "netronInstructionsText": "Перетащите файл модели в окно Netron ниже для просмотра полной архитектуры по слоям.",
+    "downloadForNetron": "Скачать файл модели",
+    "netronBrowserNote": "Или перетащите файл модели прямо в Netron ниже",
+    "overview": "Обзор",
+    "interactive": "Интерактивный (Netron)",
+    "totalLayers": "Слоёв",
+    "operationStats": "Статистика операций",
+    "layerList": "Список слоёв",
+    "detectedOps": "Обнаруженные операции",
+    "parsingFailed": "Не удалось разобрать модель",
+    "useNetron": "Используйте вкладку Интерактивный для просмотра полной архитектуры",
+    "showingLayers": "Показано {shown} из {total} слоёв"
+  },
+  "connector": {
+    "connected": "Connector",
+    "disconnected": "Без Connector",
+    "connectedMessage": "Connector онлайн — Порт 5000",
+    "checking": "Проверка подключения к Connector...",
+    "connectedReady": "Подключён — Готов к обучению",
+    "notConnected": "Не удалось подключиться к Сопутствующему движку",
+    "notConnectedHint": "Убедитесь, что он запущен",
+    "offlineMessage": "Не удалось подключиться к Сопутствующему движку.\n\n Вы скачали и запустили настольное приложение?\nУбедитесь, что 'motor_server.exe' запущен на вашем ПК.",
+    "downloadTitle": "Сопутствующий движок не обнаружен",
+    "downloadMessage": "Для локального обучения моделей необходимо скачать и установить Сопутствующий движок Annotix.",
+    "downloadHint": "Сопутствующий движок работает в фоновом режиме на вашем ПК и позволяет обучать модели с аннотированными данными.",
+    "download": "Скачать Сопутствующий движок",
+    "downloadStarted": "Загрузка начата. Запустите установщик по завершении.",
+    "startTraining": "Начать обучение",
+    "trainingStarted": "Обучение успешно начато"
+  },
+  "timeseries": {
+    "noProjectSelected": "Проект не выбран. Пожалуйста, выберите проект временных рядов.",
+    "importCSV": "Импорт CSV файла",
+    "importSuccess": "CSV успешно импортирован!",
+    "selectCSV": "Выбрать CSV файл",
+    "hasHeader": "Первая строка содержит заголовки",
+    "timestampColumn": "Столбец Timestamp (индекс с 0)",
+    "timestampColumnHelp": "Индекс столбца для timestamps (по умолчанию: 0 = первый столбец)",
+    "import": "Импортировать",
+    "csvFormatInfo": "Формат CSV: Первый столбец должен содержать timestamps, остальные столбцы — значения. Пример: время,значение1,значение2",
+    "noSeriesSelected": "Временной ряд не выбран. Пожалуйста, выберите ряд из галереи.",
+    "dataPoints": "точек данных",
+    "series": "рядов",
+    "annotations": "Аннотации",
+    "annotationsCount": "аннотаций",
+    "addAnnotation": "Добавить аннотацию",
+    "totalSeries": "Всего рядов",
+    "annotated": "Аннотировано",
+    "pending": "В ожидании",
+    "seriesList": "Список временных рядов",
+    "noSeriesYet": "Временных рядов пока нет",
+    "importCSVToStart": "Импортируйте CSV файл для начала",
+    "deleteConfirm": "Вы уверены, что хотите удалить этот временной ряд?",
+    "tools": {
+      "select": "Выбрать",
+      "point": "Точка",
+      "range": "Диапазон",
+      "event": "Событие",
+      "anomaly": "Аномалия",
+      "classification": "Классификация"
+    },
+    "clearAnnotations": "Очистить все аннотации",
+    "noAnnotations": "Аннотаций пока нет. Выберите инструмент и нажмите на график для добавления аннотаций.",
+    "instructions": {
+      "point": "Нажмите на график, чтобы отметить точку аннотации",
+      "range": "Нажмите, чтобы установить начальную точку, затем нажмите снова для конечной точки",
+      "event": "Нажмите на график, чтобы отметить событие",
+      "anomaly": "Нажмите на график, чтобы отметить аномалию"
+    }
+  },
+  "training": {
+    "title": "Обучение модели",
+    "description": "Обучите модель YOLO на вашем аннотированном наборе данных",
+    "start": "Начать обучение",
+    "starting": "Запуск...",
+    "cancel": "Отменить обучение",
+    "env": {
+      "checking": "Проверка среды Python...",
+      "ready": "Среда Python готова",
+      "notInstalled": "Среда Python не настроена",
+      "description": "Annotix требует Python с ultralytics для обучения моделей. Нажмите ниже для автоматической настройки.",
+      "setup": "Настроить среду",
+      "setupHint": "Первоначальная настройка может занять несколько минут"
+    },
+    "gpu": {
+      "detecting": "Обнаружение..."
+    },
+    "presets": {
+      "title": "Пресет обучения",
+      "quick": "Быстрый",
+      "quickDesc": "50 эпох, лёгкая аугментация. Для тестирования.",
+      "balanced": "Сбалансированный",
+      "balancedDesc": "100 эпох, средняя аугментация. Рекомендуется.",
+      "full": "Полный",
+      "fullDesc": "300 эпох, сильная аугментация. Лучшая точность."
+    },
+    "model": {
+      "version": "Версия YOLO",
+      "size": "Размер модели",
+      "recommended": "Рекомендуется",
+      "sizeDescNano": "Самый быстрый, низкая точность. Для edge-устройств.",
+      "sizeDescSmall": "Быстрый с хорошей точностью.",
+      "sizeDescMedium": "Баланс скорости и точности.",
+      "sizeDescLarge": "Высокая точность, медленное обучение.",
+      "sizeDescXLarge": "Максимальная точность, самое медленное обучение."
+    },
+    "config": {
+      "title": "Настройки обучения",
+      "advanced": "Расширенные настройки",
+      "epochs": "Эпохи",
+      "batchSize": "Размер батча",
+      "batchSizeHint": "-1 для автоматического размера",
+      "imageSize": "Размер изображения",
+      "optimizer": "Оптимизатор",
+      "lr0": "Начальный LR",
+      "lrf": "Конечный LR",
+      "patience": "Терпение",
+      "valSplit": "Доля валидации",
+      "workers": "Воркеры",
+      "device": "Устройство",
+      "augmentation": "Аугментация"
+    },
+    "augmentation": {
+      "mosaic": "Мозаика",
+      "mixup": "MixUp",
+      "hsv_h": "HSV Тон",
+      "hsv_s": "HSV Насыщенность",
+      "hsv_v": "HSV Яркость",
+      "flipud": "Отражение по вертикали",
+      "fliplr": "Отражение по горизонтали",
+      "degrees": "Поворот",
+      "scale": "Масштаб",
+      "shear": "Сдвиг",
+      "perspective": "Перспектива",
+      "copy_paste": "Копирование-вставка",
+      "erasing": "Стирание"
+    },
+    "monitor": {
+      "title": "Обучение выполняется",
+      "epochProgress": "Эпоха {{epoch}} / {{total}}",
+      "epoch": "Эпоха",
+      "loss": "Потери",
+      "metrics": "Метрики",
+      "precision": "Точность",
+      "recall": "Полнота",
+      "logs": "Логи обучения",
+      "waitingMetrics": "Ожидание метрик...",
+      "waitingLogs": "Ожидание логов..."
+    },
+    "status": {
+      "pending": "Ожидание",
+      "training": "Обучение",
+      "completed": "Завершено",
+      "failed": "Ошибка",
+      "cancelled": "Отменено"
+    },
+    "result": {
+      "completed": "Обучение завершено",
+      "description": "Ваша модель успешно обучена.",
+      "finalMetrics": "Итоговые метрики",
+      "modelPaths": "Файлы модели",
+      "exported": "Экспортированные модели",
+      "exportModel": "Экспортировать модель",
+      "newTraining": "Новое обучение"
+    },
+    "jobs": {
+      "title": "История обучения",
+      "empty": "Пока нет обучений"
+    }
+  },
+  "setup": {
+    "welcome": "Добро пожаловать в Annotix",
+    "description": "Выберите папку для хранения проектов. Каждый проект будет подпапкой с изображениями, аннотациями и конфигурацией.",
+    "selectFolder": "Выбрать Папку Проектов",
+    "selectedFolder": "Выбранная папка",
+    "confirm": "Начать",
+    "noFolder": "Папка не выбрана",
+    "changeFolder": "Изменить Папку"
+  },
+  "video": {
+    "upload": "Загрузить видео",
+    "fpsTitle": "Настройка извлечения",
+    "fpsLabel": "Кадров в секунду для извлечения",
+    "fpsHelp": "Меньше значение = меньше кадров, быстрее. Рекомендуется: 2-10 FPS",
+    "resolution": "Разрешение",
+    "duration": "Длительность",
+    "estimatedFrames": "Будет создано примерно {{count}} изображений",
+    "extract": "Извлечь кадры",
+    "uploading": "Загрузка видео...",
+    "extracting": "Извлечение кадров...",
+    "extractingFrame": "Извлечение кадра {{current}} / {{total}}",
+    "processing": "Обработка видео",
+    "done": "Готово"
   }
 }

@@ -1,17 +1,17 @@
 use std::collections::{HashMap, HashSet};
 use std::io::{Write, Seek};
+use std::path::Path;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
-use crate::db::models::{Project, AnnotixImage};
-use crate::db::Database;
+use crate::store::project_file::{ProjectFile, ImageEntry};
 use crate::utils::converters::sanitize_folder_name;
-use super::{class_name, add_image_to_zip};
+use super::class_name;
 
 pub fn export<F: Fn(f64)>(
-    project: &Project,
-    images: &[AnnotixImage],
-    db: &Database,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    images_dir: &Path,
     file: std::fs::File,
     emit_progress: F,
 ) -> Result<(), String> {
@@ -24,7 +24,7 @@ pub fn export<F: Fn(f64)>(
 
         if class_ids.is_empty() {
             // Unlabeled
-            add_image_to_folder(&mut zip, "unlabeled", &image.name, image, db)?;
+            add_image_to_folder(&mut zip, "unlabeled", &image.name, image, images_dir)?;
         } else {
             for &class_id in &class_ids {
                 let cls_name = class_name(&project.classes, class_id);
@@ -36,7 +36,7 @@ pub fn export<F: Fn(f64)>(
                     image.name.clone()
                 };
 
-                add_image_to_folder(&mut zip, &folder, &file_name, image, db)?;
+                add_image_to_folder(&mut zip, &folder, &file_name, image, images_dir)?;
             }
         }
 
@@ -56,10 +56,10 @@ fn add_image_to_folder<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     folder: &str,
     file_name: &str,
-    image: &AnnotixImage,
-    db: &Database,
+    image: &ImageEntry,
+    images_dir: &Path,
 ) -> Result<(), String> {
-    let file_path = db.get_image_file_path(image.project_id, &image.blob_path)?;
+    let file_path = images_dir.join(&image.file);
     let data = std::fs::read(&file_path)
         .map_err(|e| format!("Error leyendo imagen {}: {}", image.name, e))?;
 
@@ -72,7 +72,7 @@ fn add_image_to_folder<W: Write + Seek>(
     Ok(())
 }
 
-fn get_image_classes(image: &AnnotixImage) -> Vec<i64> {
+fn get_image_classes(image: &ImageEntry) -> Vec<i64> {
     let mut class_ids = HashSet::new();
     for ann in &image.annotations {
         class_ids.insert(ann.class_id);
@@ -80,7 +80,7 @@ fn get_image_classes(image: &AnnotixImage) -> Vec<i64> {
     class_ids.into_iter().collect()
 }
 
-fn add_class_suffix(filename: &str, class_id: i64, project: &Project) -> String {
+fn add_class_suffix(filename: &str, class_id: i64, project: &ProjectFile) -> String {
     let cls_name = class_name(&project.classes, class_id);
     let sanitized = sanitize_folder_name(&cls_name);
 
@@ -90,7 +90,7 @@ fn add_class_suffix(filename: &str, class_id: i64, project: &Project) -> String 
     }
 }
 
-fn generate_readme(project: &Project, images: &[AnnotixImage]) -> String {
+fn generate_readme(project: &ProjectFile, images: &[ImageEntry]) -> String {
     let mut lines = Vec::new();
 
     lines.push(format!("# {} - Classification Dataset", project.name));

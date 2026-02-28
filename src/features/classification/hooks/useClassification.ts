@@ -72,7 +72,7 @@ export function useClassification() {
         newAnnotations.push(classificationAnnotation);
       }
 
-      await annotationService.save(image.id, newAnnotations);
+      await annotationService.save(image.projectId, image.id, newAnnotations);
       await reload();
     } catch (error) {
       console.error('Failed to save classification:', error);

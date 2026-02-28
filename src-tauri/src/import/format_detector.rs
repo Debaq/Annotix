@@ -1,4 +1,4 @@
-use std::io::{Read, Seek};
+use std::io::Read;
 use zip::ZipArchive;
 
 use super::DetectionResult;
@@ -180,7 +180,7 @@ fn detect_pascal_voc(files: &[String]) -> Option<DetectionResult> {
     })
 }
 
-fn detect_csv(archive: &mut ZipArchive<std::fs::File>, files: &[String]) -> Option<DetectionResult> {
+fn detect_csv(archive: &mut ZipArchive<std::fs::File>, _files: &[String]) -> Option<DetectionResult> {
     let content = read_file_text(archive, "annotations.csv")?;
     let first_line = content.lines().next()?.to_lowercase();
 

@@ -2,7 +2,7 @@ import { Project, NewProject, ClassDefinition } from '@/lib/db';
 import * as tauriDb from '@/lib/tauriDb';
 
 export const projectService = {
-  async create(project: NewProject): Promise<number> {
+  async create(project: NewProject): Promise<string> {
     const id = await tauriDb.createProject(
       project.name,
       project.type,
@@ -11,7 +11,7 @@ export const projectService = {
     return id;
   },
 
-  async get(id: number): Promise<Project | undefined> {
+  async get(id: string): Promise<Project | undefined> {
     const project = await tauriDb.getProject(id);
     return project ?? undefined;
   },
@@ -20,7 +20,7 @@ export const projectService = {
     return await tauriDb.listProjects();
   },
 
-  async update(id: number, updates: Partial<Project>): Promise<void> {
+  async update(id: string, updates: Partial<Project>): Promise<void> {
     await tauriDb.updateProject(id, {
       name: updates.name,
       projectType: updates.type,
@@ -28,7 +28,7 @@ export const projectService = {
     });
   },
 
-  async delete(id: number): Promise<void> {
+  async delete(id: string): Promise<void> {
     await tauriDb.deleteProject(id);
   },
 };

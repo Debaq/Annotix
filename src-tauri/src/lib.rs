@@ -1,17 +1,22 @@
-mod db;
 mod commands;
 mod export;
 mod import;
+mod store;
+mod training;
 mod utils;
 
-use db::Database;
+use store::AppState;
+use training::runner::TrainingProcessManager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let database = Database::new().expect("Error inicializando base de datos");
+    ffmpeg_the_third::init().expect("Error inicializando ffmpeg");
+
+    let app_state = AppState::new().expect("Error inicializando AppState");
 
     tauri::Builder::default()
-        .manage(database)
+        .manage(app_state)
+        .manage(TrainingProcessManager::new())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .setup(|app| {
@@ -65,7 +70,6 @@ pub fn run() {
             commands::image_processing_commands::get_thumbnail_path,
             commands::image_processing_commands::generate_thumbnails_batch,
             // Video
-            commands::video_commands::check_ffmpeg_available,
             commands::video_commands::get_video_info,
             commands::video_commands::upload_video,
             commands::video_commands::extract_video_frames,
@@ -81,6 +85,22 @@ pub fn run() {
             commands::video_commands::delete_keyframe,
             commands::video_commands::toggle_keyframe_enabled,
             commands::video_commands::bake_video_tracks,
+            // Config
+            commands::config_commands::is_setup_complete,
+            commands::config_commands::get_config,
+            commands::config_commands::set_projects_dir,
+            // Training
+            commands::training_commands::check_python_env,
+            commands::training_commands::setup_python_env,
+            commands::training_commands::detect_gpu,
+            commands::training_commands::get_training_presets,
+            commands::training_commands::get_yolo_models,
+            commands::training_commands::start_training,
+            commands::training_commands::cancel_training,
+            commands::training_commands::get_training_job,
+            commands::training_commands::list_training_jobs,
+            commands::training_commands::delete_training_job,
+            commands::training_commands::export_trained_model,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

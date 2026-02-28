@@ -14,13 +14,13 @@ export function TimeSeriesGallery() {
   const { projectId } = useParams();
   const { timeseries, deleteTimeSeries, stats } = useTimeSeries();
   
-  const handleSelect = (id: number) => {
+  const handleSelect = (id: string) => {
     if (projectId) {
       navigate(`/projects/${projectId}/timeseries/${id}`);
     }
   };
 
-  const handleDelete = async (id: number, e: React.MouseEvent) => {
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm(t('timeseries.deleteConfirm'))) {
       await deleteTimeSeries(id);

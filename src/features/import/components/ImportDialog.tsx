@@ -27,7 +27,7 @@ interface DetectionResult {
 }
 
 interface ImportResult {
-  projectId: number;
+  projectId: string;
   stats: {
     imagesCount: number;
     classesCount: number;
@@ -52,7 +52,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
   const [detection, setDetection] = useState<DetectionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
-  const [importedProjectId, setImportedProjectId] = useState<number | null>(null);
+  const [importedProjectId, setImportedProjectId] = useState<string | null>(null);
 
   const getProjectTypeLabel = (type: string): string => {
     const typeMap: Record<string, string> = {

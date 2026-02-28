@@ -1,16 +1,16 @@
-use std::io::{Write, Seek};
+use std::io::Write;
+use std::path::Path;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
-use crate::db::models::{Project, AnnotixImage, Annotation};
-use crate::db::Database;
+use crate::store::project_file::{ProjectFile, ImageEntry, AnnotationEntry};
 use crate::utils::converters::{escape_xml, obb_to_aabbox};
 use super::{parse_bbox, parse_obb, class_name, add_image_to_zip};
 
 pub fn export<F: Fn(f64)>(
-    project: &Project,
-    images: &[AnnotixImage],
-    db: &Database,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    images_dir: &Path,
     file: std::fs::File,
     emit_progress: F,
 ) -> Result<(), String> {
@@ -20,7 +20,7 @@ pub fn export<F: Fn(f64)>(
 
     for (i, image) in images.iter().enumerate() {
         // Add image
-        add_image_to_zip(&mut zip, "JPEGImages", image, db)?;
+        add_image_to_zip(&mut zip, "JPEGImages", image, images_dir)?;
 
         // Generate XML
         let xml = generate_xml(image, project);
@@ -35,7 +35,7 @@ pub fn export<F: Fn(f64)>(
     Ok(())
 }
 
-fn generate_xml(image: &AnnotixImage, project: &Project) -> String {
+fn generate_xml(image: &ImageEntry, project: &ProjectFile) -> String {
     let mut lines = Vec::new();
 
     lines.push("<?xml version=\"1.0\" encoding=\"UTF-8\"?>".to_string());
@@ -53,7 +53,7 @@ fn generate_xml(image: &AnnotixImage, project: &Project) -> String {
     lines.push("\t</size>".to_string());
     lines.push("\t<segmented>0</segmented>".to_string());
 
-    let bbox_annotations: Vec<&Annotation> = image.annotations.iter()
+    let bbox_annotations: Vec<&AnnotationEntry> = image.annotations.iter()
         .filter(|a| a.annotation_type == "bbox" || a.annotation_type == "obb")
         .collect();
 
@@ -79,7 +79,7 @@ fn generate_xml(image: &AnnotixImage, project: &Project) -> String {
     lines.join("\n")
 }
 
-fn get_bbox(ann: &Annotation) -> Option<(f64, f64, f64, f64)> {
+fn get_bbox(ann: &AnnotationEntry) -> Option<(f64, f64, f64, f64)> {
     match ann.annotation_type.as_str() {
         "bbox" => {
             let bbox = parse_bbox(&ann.data)?;

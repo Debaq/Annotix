@@ -1,10 +1,10 @@
-use std::io::{Write, Seek};
+use std::io::Write;
+use std::path::Path;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 use serde_json::json;
 
-use crate::db::models::{Project, AnnotixImage, Annotation};
-use crate::db::Database;
+use crate::store::project_file::{ProjectFile, ImageEntry, AnnotationEntry};
 use crate::utils::converters::{obb_to_aabbox, polygon_area};
 use super::{parse_bbox, parse_obb, parse_polygon, parse_keypoints, add_image_to_zip};
 
@@ -23,9 +23,9 @@ const COCO17_CONNECTIONS: &[[usize; 2]] = &[
 ];
 
 pub fn export<F: Fn(f64)>(
-    project: &Project,
-    images: &[AnnotixImage],
-    db: &Database,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    images_dir: &Path,
     file: std::fs::File,
     emit_progress: F,
 ) -> Result<(), String> {
@@ -65,7 +65,7 @@ pub fn export<F: Fn(f64)>(
         }));
 
         // Add image to ZIP
-        add_image_to_zip(&mut zip, "images", image, db)?;
+        add_image_to_zip(&mut zip, "images", image, images_dir)?;
 
         // Process annotations
         for ann in &image.annotations {
@@ -101,7 +101,7 @@ pub fn export<F: Fn(f64)>(
 }
 
 fn convert_annotation(
-    ann: &Annotation,
+    ann: &AnnotationEntry,
     image_id: i64,
     annotation_id: i64,
     _img_width: u32,

@@ -18,7 +18,7 @@ pub fn import_data(archive: &mut ZipArchive<std::fs::File>) -> Result<ImportData
         return Err("No se encontraron imágenes".to_string());
     }
 
-    let xml_files = list_files_in_folder(archive, "Annotations");
+    let _xml_files = list_files_in_folder(archive, "Annotations");
 
     let mut class_map: HashMap<String, i64> = HashMap::new();
     let mut next_class_id: i64 = 0;
@@ -66,7 +66,7 @@ fn parse_voc_xml(
     xml_content: &str,
     class_map: &mut HashMap<String, i64>,
     next_class_id: &mut i64,
-) -> Vec<crate::db::models::Annotation> {
+) -> Vec<crate::store::project_file::AnnotationEntry> {
     let mut annotations = Vec::new();
 
     // Simple XML parsing without full DOM

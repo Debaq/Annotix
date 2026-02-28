@@ -4,12 +4,12 @@ import { useUIStore } from '../../core/store/uiStore';
 import { imageService } from '../services/imageService';
 
 export function useCurrentImage() {
-  const { currentImageId } = useUIStore();
+  const { currentProjectId, currentImageId } = useUIStore();
   const [image, setImage] = useState<AnnotixImage | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!currentImageId) {
+    if (!currentImageId || !currentProjectId) {
       setImage(null);
       return;
     }
@@ -17,7 +17,7 @@ export function useCurrentImage() {
     const loadImage = async () => {
       setIsLoading(true);
       try {
-        const data = await imageService.get(currentImageId);
+        const data = await imageService.get(currentProjectId, currentImageId);
         setImage(data || null);
       } catch (error) {
         console.error('Failed to load current image:', error);
@@ -28,13 +28,13 @@ export function useCurrentImage() {
     };
 
     loadImage();
-  }, [currentImageId]);
+  }, [currentProjectId, currentImageId]);
 
   const reload = async () => {
-    if (!currentImageId) return;
+    if (!currentImageId || !currentProjectId) return;
 
     try {
-      const data = await imageService.get(currentImageId);
+      const data = await imageService.get(currentProjectId, currentImageId);
       setImage(data || null);
     } catch (error) {
       console.error('Failed to reload image:', error);

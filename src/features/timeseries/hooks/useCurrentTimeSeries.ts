@@ -4,19 +4,19 @@ import { useUIStore } from '../../core/store/uiStore';
 import { timeseriesService } from '../services/timeseriesService';
 
 export function useCurrentTimeSeries() {
-  const { currentTimeSeriesId } = useUIStore();
+  const { currentTimeSeriesId, currentProjectId } = useUIStore();
   const [timeseries, setTimeseries] = useState<TimeSeries | null>(null);
   const [loading, setLoading] = useState(false);
 
   const load = async () => {
-    if (!currentTimeSeriesId) {
+    if (!currentTimeSeriesId || !currentProjectId) {
       setTimeseries(null);
       return;
     }
 
     setLoading(true);
     try {
-      const data = await timeseriesService.getById(currentTimeSeriesId);
+      const data = await timeseriesService.getById(currentProjectId, currentTimeSeriesId);
       setTimeseries(data || null);
     } catch (error) {
       console.error('Failed to load current time series:', error);
@@ -28,7 +28,7 @@ export function useCurrentTimeSeries() {
 
   useEffect(() => {
     load();
-  }, [currentTimeSeriesId]);
+  }, [currentTimeSeriesId, currentProjectId]);
 
   return {
     timeseries,

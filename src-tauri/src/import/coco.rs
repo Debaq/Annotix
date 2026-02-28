@@ -3,7 +3,7 @@ use zip::ZipArchive;
 use serde_json::json;
 
 use super::{ImportData, ImageImportData, create_class, create_annotation};
-use super::yolo::{read_zip_text, read_zip_bytes, list_files_in_folder, get_image_dimensions};
+use super::yolo::{read_zip_text, read_zip_bytes, get_image_dimensions};
 
 pub fn import_data(
     archive: &mut ZipArchive<std::fs::File>,
@@ -81,7 +81,7 @@ pub fn import_data(
 fn parse_coco_annotations(
     coco_anns: &[&serde_json::Value],
     _project_type: &str,
-) -> Vec<crate::db::models::Annotation> {
+) -> Vec<crate::store::project_file::AnnotationEntry> {
     let mut annotations = Vec::new();
 
     for ann in coco_anns {

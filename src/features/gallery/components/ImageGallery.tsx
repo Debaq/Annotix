@@ -24,7 +24,7 @@ export function ImageGallery() {
       return videoService.listByProject(currentProjectId);
     },
     [currentProjectId, isBboxProject],
-    ['db:videos-changed']
+    ['db:videos-changed', 'db:tracks-changed']
   );
 
   if (isLoading) {

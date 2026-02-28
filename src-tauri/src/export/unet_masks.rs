@@ -1,16 +1,16 @@
-use std::io::{Write, Seek, Cursor};
+use std::io::{Write, Cursor};
+use std::path::Path;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 use image::{GrayImage, Luma};
 
-use crate::db::models::{Project, AnnotixImage, Annotation};
-use crate::db::Database;
+use crate::store::project_file::{ProjectFile, ImageEntry};
 use super::{parse_mask, parse_polygon, add_image_to_zip};
 
 pub fn export<F: Fn(f64)>(
-    project: &Project,
-    images: &[AnnotixImage],
-    db: &Database,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    images_dir: &Path,
     file: std::fs::File,
     emit_progress: F,
 ) -> Result<(), String> {
@@ -20,7 +20,7 @@ pub fn export<F: Fn(f64)>(
 
     for (i, image_rec) in images.iter().enumerate() {
         // Add original image
-        add_image_to_zip(&mut zip, "images", image_rec, db)?;
+        add_image_to_zip(&mut zip, "images", image_rec, images_dir)?;
 
         // Generate mask
         if let Some(mask_png) = generate_mask(image_rec, project)? {
@@ -45,7 +45,7 @@ pub fn export<F: Fn(f64)>(
     Ok(())
 }
 
-fn generate_mask(image: &AnnotixImage, project: &Project) -> Result<Option<Vec<u8>>, String> {
+fn generate_mask(image: &ImageEntry, project: &ProjectFile) -> Result<Option<Vec<u8>>, String> {
     let w = image.width as u32;
     let h = image.height as u32;
 
@@ -172,7 +172,7 @@ fn decode_base64_png(data: &str) -> Result<Vec<u8>, String> {
     engine.decode(b64_str).map_err(|e| format!("Error decodificando base64: {}", e))
 }
 
-fn get_class_value(class_id: i64, project: &Project) -> u8 {
+fn get_class_value(class_id: i64, project: &ProjectFile) -> u8 {
     get_scaled_value(class_id, project.classes.len())
 }
 

@@ -3,15 +3,17 @@
 import { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { TimeSeriesAnnotation, TimeSeriesAnnotationData } from '@/lib/db';
+import { useUIStore } from '../../core/store/uiStore';
 import { timeseriesService } from '../services/timeseriesService';
 
 export type TSAnnotationTool = 'point' | 'range' | 'event' | 'anomaly' | 'select';
 
 interface UseTSAnnotationsProps {
-  timeseriesId: number | null;
+  timeseriesId: string | null;
 }
 
 export function useTSAnnotations({ timeseriesId }: UseTSAnnotationsProps) {
+  const { currentProjectId } = useUIStore();
   const [annotations, setAnnotations] = useState<TimeSeriesAnnotation[]>([]);
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
   const [activeTool, setActiveTool] = useState<TSAnnotationTool>('select');
@@ -20,20 +22,20 @@ export function useTSAnnotations({ timeseriesId }: UseTSAnnotationsProps) {
 
   // Load annotations when timeseries changes
   useEffect(() => {
-    if (!timeseriesId) {
+    if (!timeseriesId || !currentProjectId) {
       setAnnotations([]);
       return;
     }
 
     const loadAnnotations = async () => {
-      const ts = await timeseriesService.getById(timeseriesId);
+      const ts = await timeseriesService.getById(currentProjectId, timeseriesId);
       if (ts) {
         setAnnotations(ts.annotations);
       }
     };
 
     loadAnnotations();
-  }, [timeseriesId]);
+  }, [timeseriesId, currentProjectId]);
 
   /**
    * Add a new annotation
@@ -44,7 +46,7 @@ export function useTSAnnotations({ timeseriesId }: UseTSAnnotationsProps) {
       data: TimeSeriesAnnotationData,
       classId?: number
     ) => {
-      if (!timeseriesId) return;
+      if (!timeseriesId || !currentProjectId) return;
 
       const newAnnotation: TimeSeriesAnnotation = {
         id: uuidv4(),
@@ -57,11 +59,11 @@ export function useTSAnnotations({ timeseriesId }: UseTSAnnotationsProps) {
       setAnnotations(updatedAnnotations);
 
       // Save to database
-      await timeseriesService.saveAnnotations(timeseriesId, updatedAnnotations);
+      await timeseriesService.saveAnnotations(currentProjectId, timeseriesId, updatedAnnotations);
 
       return newAnnotation;
     },
-    [timeseriesId, annotations]
+    [timeseriesId, currentProjectId, annotations]
   );
 
   /**
@@ -69,7 +71,7 @@ export function useTSAnnotations({ timeseriesId }: UseTSAnnotationsProps) {
    */
   const updateAnnotation = useCallback(
     async (annotationId: string, data: Partial<TimeSeriesAnnotationData>) => {
-      if (!timeseriesId) return;
+      if (!timeseriesId || !currentProjectId) return;
 
       const updatedAnnotations = annotations.map((ann) => {
         if (ann.id === annotationId) {
@@ -82,9 +84,9 @@ export function useTSAnnotations({ timeseriesId }: UseTSAnnotationsProps) {
       });
 
       setAnnotations(updatedAnnotations);
-      await timeseriesService.saveAnnotations(timeseriesId, updatedAnnotations);
+      await timeseriesService.saveAnnotations(currentProjectId, timeseriesId, updatedAnnotations);
     },
-    [timeseriesId, annotations]
+    [timeseriesId, currentProjectId, annotations]
   );
 
   /**
@@ -92,30 +94,30 @@ export function useTSAnnotations({ timeseriesId }: UseTSAnnotationsProps) {
    */
   const deleteAnnotation = useCallback(
     async (annotationId: string) => {
-      if (!timeseriesId) return;
+      if (!timeseriesId || !currentProjectId) return;
 
       const updatedAnnotations = annotations.filter((ann) => ann.id !== annotationId);
       setAnnotations(updatedAnnotations);
 
-      await timeseriesService.saveAnnotations(timeseriesId, updatedAnnotations);
+      await timeseriesService.saveAnnotations(currentProjectId, timeseriesId, updatedAnnotations);
 
       if (selectedAnnotationId === annotationId) {
         setSelectedAnnotationId(null);
       }
     },
-    [timeseriesId, annotations, selectedAnnotationId]
+    [timeseriesId, currentProjectId, annotations, selectedAnnotationId]
   );
 
   /**
    * Delete all annotations
    */
   const clearAnnotations = useCallback(async () => {
-    if (!timeseriesId) return;
+    if (!timeseriesId || !currentProjectId) return;
 
     setAnnotations([]);
-    await timeseriesService.saveAnnotations(timeseriesId, []);
+    await timeseriesService.saveAnnotations(currentProjectId, timeseriesId, []);
     setSelectedAnnotationId(null);
-  }, [timeseriesId]);
+  }, [timeseriesId, currentProjectId]);
 
   /**
    * Start drawing a new annotation

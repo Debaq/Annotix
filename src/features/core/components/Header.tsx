@@ -1,23 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { StorageIndicator } from './StorageIndicator';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { Minus, Square, X, Copy } from 'lucide-react';
+
 import { LanguageSelector } from './LanguageSelector';
 import { ShortcutsModal } from './ShortcutsModal';
 import { useUIStore } from '../store/uiStore';
 import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
-import { Button } from '@/components/ui/button';
 import { ExportDialog } from '@/features/export/components/ExportDialog';
 import { ImportDialog } from '@/features/import/components/ImportDialog';
+import { TrainingPanel } from '@/features/training/components/TrainingPanel';
+
+const appWindow = getCurrentWindow();
 
 export const Header: React.FC = () => {
   const { t } = useTranslation();
   const { setCurrentProjectId } = useUIStore();
   const { project } = useCurrentProject();
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
+
+  React.useEffect(() => {
+    appWindow.isMaximized().then(setIsMaximized);
+    const unlisten = appWindow.onResized(() => {
+      appWindow.isMaximized().then(setIsMaximized);
+    });
+    return () => { unlisten.then(fn => fn()); };
+  }, []);
+
+  const handleMinimize = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    appWindow.minimize();
+  }, []);
+
+  const handleMaximize = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    appWindow.toggleMaximize();
+  }, []);
+
+  const handleClose = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    appWindow.close();
+  }, []);
+
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      e.preventDefault();
+      appWindow.startDragging();
+    }
+  }, []);
+
+  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      appWindow.toggleMaximize();
+    }
+  }, []);
 
   return (
-    <header className="annotix-header">
+    <header
+      className="annotix-header"
+      onMouseDown={handleDragStart}
+      onDoubleClick={handleDoubleClick}
+    >
       {/* Left Section: Logo + Title */}
       <div className="flex items-center gap-3">
         <a
@@ -48,8 +93,6 @@ export const Header: React.FC = () => {
 
       {/* Center Section: Project Controls */}
       <div className="flex items-center gap-2">
-        <StorageIndicator />
-
         {!project && (
           <>
             <div className="h-6 w-px bg-white/30 mx-1" />
@@ -71,9 +114,19 @@ export const Header: React.FC = () => {
                 </button>
               }
             />
+            <TrainingPanel
+              trigger={
+                <button
+                  className="h-9 px-3 rounded bg-emerald-600/80 border border-emerald-500/30 text-white text-sm hover:bg-emerald-600 transition-all flex items-center gap-2"
+                  title={t('training.title')}
+                >
+                  <i className="fas fa-brain"></i>
+                  <span className="hidden sm:inline">{t('training.title')}</span>
+                </button>
+              }
+            />
             <button
               onClick={() => {
-                // Save annotations trigger
                 window.dispatchEvent(new CustomEvent('annotix:save'));
               }}
               className="h-9 px-3 rounded bg-white/10 border border-white/20 text-white text-sm hover:bg-white/20 transition-all flex items-center gap-2"
@@ -86,25 +139,51 @@ export const Header: React.FC = () => {
         )}
       </div>
 
-      {/* Right Section: Language + Help */}
-      <div className="flex items-center gap-3">
+      {/* Right Section: Tools + Window Controls */}
+      <div className="flex items-center gap-1">
         <button
           onClick={() => setShowShortcuts(true)}
-          className="h-8 w-8 rounded flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-all"
+          className="window-header-btn"
           title={t('help.shortcuts')}
         >
-          <i className="fas fa-keyboard"></i>
+          <i className="fas fa-keyboard text-[13px]"></i>
         </button>
         <LanguageSelector />
         <a
           href="https://github.com/Debaq/Annotix.git"
           target="_blank"
           rel="noopener noreferrer"
-          className="h-8 w-8 rounded flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-all"
+          className="window-header-btn"
           title="GitHub"
         >
-          <i className="fab fa-github"></i>
+          <i className="fab fa-github text-[13px]"></i>
         </a>
+
+        {/* Separator */}
+        <div className="h-5 w-px bg-white/30 mx-1.5" />
+
+        {/* Window Controls */}
+        <button
+          onClick={handleMinimize}
+          className="window-control-btn hover:bg-white/20"
+          title={t('window.minimize', 'Minimizar')}
+        >
+          <Minus size={14} strokeWidth={2} />
+        </button>
+        <button
+          onClick={handleMaximize}
+          className="window-control-btn hover:bg-white/20"
+          title={t('window.maximize', 'Maximizar')}
+        >
+          {isMaximized ? <Copy size={12} strokeWidth={2} /> : <Square size={12} strokeWidth={2} />}
+        </button>
+        <button
+          onClick={handleClose}
+          className="window-control-btn hover:bg-red-500"
+          title={t('window.close', 'Cerrar')}
+        >
+          <X size={14} strokeWidth={2} />
+        </button>
       </div>
 
       <ShortcutsModal open={showShortcuts} onOpenChange={setShowShortcuts} />

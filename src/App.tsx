@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Routes, Route, useParams, useNavigate, Navigate } from 'react-router-dom';
+import { invoke } from '@tauri-apps/api/core';
 import { AppLayout } from './features/core/components/AppLayout';
 import { ProjectList } from './features/projects/components/ProjectList';
 import { ImageGallery } from './features/gallery/components/ImageGallery';
@@ -8,6 +9,7 @@ import { ClassificationPanel } from './features/classification/components/Classi
 import { TimeSeriesGallery } from './features/timeseries/components/TimeSeriesGallery';
 import { TimeSeriesCanvas } from './features/timeseries/components/TimeSeriesCanvas';
 import { VideoView } from './features/video/components/VideoView';
+import { SetupScreen } from './features/setup/SetupScreen';
 import { useUIStore } from './features/core/store/uiStore';
 import { useKeyboardShortcuts } from './features/core/hooks/useKeyboardShortcuts';
 import { useCurrentProject } from './features/projects/hooks/useCurrentProject';
@@ -52,13 +54,10 @@ const ProjectView = () => {
   // Sync URL -> Store
   useEffect(() => {
     if (projectId) {
-      const pid = Number(projectId);
-      if (!isNaN(pid)) {
-        setCurrentProjectId(pid);
-        // Reset selections when at project root
-        setCurrentImageId(null);
-        setCurrentTimeSeriesId(null);
-      }
+      setCurrentProjectId(projectId);
+      // Reset selections when at project root
+      setCurrentImageId(null);
+      setCurrentTimeSeriesId(null);
     }
   }, [projectId, setCurrentProjectId, setCurrentImageId, setCurrentTimeSeriesId]);
 
@@ -178,8 +177,8 @@ const ImageView = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (projectId) setCurrentProjectId(Number(projectId));
-    if (imageId) setCurrentImageId(Number(imageId));
+    if (projectId) setCurrentProjectId(projectId);
+    if (imageId) setCurrentImageId(imageId);
   }, [projectId, imageId, setCurrentProjectId, setCurrentImageId]);
 
   if (!project) return null;
@@ -283,8 +282,8 @@ const TimeSeriesView = () => {
   const { setCurrentProjectId, setCurrentTimeSeriesId } = useUIStore();
   
   useEffect(() => {
-    if (projectId) setCurrentProjectId(Number(projectId));
-    if (seriesId) setCurrentTimeSeriesId(Number(seriesId));
+    if (projectId) setCurrentProjectId(projectId);
+    if (seriesId) setCurrentTimeSeriesId(seriesId);
   }, [projectId, seriesId, setCurrentProjectId, setCurrentTimeSeriesId]);
 
   return <TimeSeriesCanvas />;
@@ -294,9 +293,17 @@ const TimeSeriesView = () => {
 
 function App() {
   const { addAnnotation } = useAnnotations();
-  
+  const [setupComplete, setSetupComplete] = useState<boolean | null>(null);
+
   // Initialize keyboard shortcuts
   useKeyboardShortcuts();
+
+  // Check if setup is complete
+  useEffect(() => {
+    invoke<boolean>('is_setup_complete')
+      .then(setSetupComplete)
+      .catch(() => setSetupComplete(false));
+  }, []);
 
   // Handle annotation creation events from tools
   useEffect(() => {
@@ -322,6 +329,20 @@ function App() {
     window.addEventListener('annotix:annotation-created', handleAnnotationCreated);
     return () => window.removeEventListener('annotix:annotation-created', handleAnnotationCreated);
   }, [addAnnotation]);
+
+  // Loading state while checking setup
+  if (setupComplete === null) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <i className="fas fa-spinner fa-spin text-4xl text-muted-foreground"></i>
+      </div>
+    );
+  }
+
+  // Show setup screen if not configured
+  if (!setupComplete) {
+    return <SetupScreen onComplete={() => setSetupComplete(true)} />;
+  }
 
   return (
     <AppLayout>

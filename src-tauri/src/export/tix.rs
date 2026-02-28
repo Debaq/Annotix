@@ -1,17 +1,17 @@
-use std::io::{Write, Seek};
+use std::io::Write;
+use std::path::Path;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 use serde_json::json;
 
-use crate::db::models::{Project, AnnotixImage};
-use crate::db::Database;
+use crate::store::project_file::{ProjectFile, ImageEntry};
 use crate::utils::converters::mime_type_from_ext;
 use super::add_image_to_zip;
 
 pub fn export<F: Fn(f64)>(
-    project: &Project,
-    images: &[AnnotixImage],
-    db: &Database,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    images_dir: &Path,
     file: std::fs::File,
     emit_progress: F,
 ) -> Result<(), String> {
@@ -41,11 +41,11 @@ pub fn export<F: Fn(f64)>(
             "annotations": annotations,
             "width": img.width,
             "height": img.height,
-            "timestamp": img.metadata.uploaded,
+            "timestamp": img.uploaded,
             "metadata": {
-                "uploaded": img.metadata.uploaded,
-                "annotated": img.metadata.annotated,
-                "status": img.metadata.status,
+                "uploaded": img.uploaded,
+                "annotated": img.annotated,
+                "status": img.status,
             }
         })
     }).collect();
@@ -63,12 +63,12 @@ pub fn export<F: Fn(f64)>(
             "preprocessingConfig": {
                 "enabled": false,
             },
-            "createdAt": project.metadata.created,
-            "updatedAt": project.metadata.updated,
+            "createdAt": project.created,
+            "updatedAt": project.updated,
             "metadata": {
-                "created": project.metadata.created,
-                "updated": project.metadata.updated,
-                "version": project.metadata.version,
+                "created": project.created,
+                "updated": project.updated,
+                "version": format!("{}", project.version),
             }
         },
         "images": images_json,
@@ -81,7 +81,7 @@ pub fn export<F: Fn(f64)>(
     // Add images
     let total = images.len() as f64;
     for (i, image) in images.iter().enumerate() {
-        add_image_to_zip(&mut zip, "images", image, db)?;
+        add_image_to_zip(&mut zip, "images", image, images_dir)?;
         emit_progress(((i + 1) as f64 / total) * 100.0);
     }
 

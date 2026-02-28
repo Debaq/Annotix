@@ -4,14 +4,14 @@ import { videoService } from '../services/videoService';
 import { useTauriQuery } from '@/hooks/useTauriQuery';
 
 export function useCurrentVideo() {
-  const { currentVideoId } = useUIStore();
+  const { currentVideoId, currentProjectId } = useUIStore();
 
   const { data: video, isLoading, reload } = useTauriQuery(
     async () => {
-      if (!currentVideoId) return null;
-      return videoService.get(currentVideoId);
+      if (!currentVideoId || !currentProjectId) return null;
+      return videoService.get(currentProjectId, currentVideoId);
     },
-    [currentVideoId],
+    [currentVideoId, currentProjectId],
     ['db:videos-changed']
   );
 

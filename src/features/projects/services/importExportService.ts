@@ -4,13 +4,13 @@ import { Project } from '@/lib/db';
 // Will be implemented in later phases
 
 export const importExportService = {
-  async exportProject(projectId: number): Promise<Blob> {
+  async exportProject(projectId: string): Promise<Blob> {
     // TODO: Implement project export to .tix file
     // Should include project metadata, classes, and all images with annotations
     throw new Error('Not implemented yet');
   },
 
-  async importProject(file: File): Promise<number> {
+  async importProject(file: File): Promise<string> {
     // TODO: Implement project import from .tix file
     // Should restore project metadata, classes, and all images with annotations
     throw new Error('Not implemented yet');

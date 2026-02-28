@@ -2,17 +2,17 @@ import { TimeSeries, TimeSeriesAnnotation } from '@/lib/db';
 import * as tauriDb from '@/lib/tauriDb';
 
 export const timeseriesService = {
-  async getByProjectId(projectId: number): Promise<TimeSeries[]> {
+  async getByProjectId(projectId: string): Promise<TimeSeries[]> {
     const records = await tauriDb.listTimeseriesByProject(projectId);
     return records as unknown as TimeSeries[];
   },
 
-  async getById(id: number): Promise<TimeSeries | undefined> {
-    const record = await tauriDb.getTimeseries(id);
+  async getById(projectId: string, id: string): Promise<TimeSeries | undefined> {
+    const record = await tauriDb.getTimeseries(projectId, id);
     return (record as unknown as TimeSeries) ?? undefined;
   },
 
-  async create(timeseries: Omit<TimeSeries, 'id'>): Promise<number> {
+  async create(timeseries: Omit<TimeSeries, 'id'>): Promise<string> {
     return await tauriDb.createTimeseries(
       timeseries.projectId,
       timeseries.name,
@@ -20,28 +20,29 @@ export const timeseriesService = {
     );
   },
 
-  async delete(id: number): Promise<void> {
-    await tauriDb.deleteTimeseries(id);
+  async delete(projectId: string, id: string): Promise<void> {
+    await tauriDb.deleteTimeseries(projectId, id);
   },
 
-  async deleteByProjectId(projectId: number): Promise<void> {
+  async deleteByProjectId(projectId: string): Promise<void> {
     const records = await tauriDb.listTimeseriesByProject(projectId);
     for (const record of records) {
       if (record.id) {
-        await tauriDb.deleteTimeseries(record.id);
+        await tauriDb.deleteTimeseries(projectId, record.id);
       }
     }
   },
 
   async saveAnnotations(
-    timeseriesId: number,
+    projectId: string,
+    timeseriesId: string,
     annotations: TimeSeriesAnnotation[]
   ): Promise<void> {
-    await tauriDb.saveTsAnnotations(timeseriesId, annotations);
+    await tauriDb.saveTsAnnotations(projectId, timeseriesId, annotations);
   },
 
   async getCountByStatus(
-    projectId: number,
+    projectId: string,
     status: 'pending' | 'annotated' | 'reviewed'
   ): Promise<number> {
     const records = await tauriDb.listTimeseriesByProject(projectId);
