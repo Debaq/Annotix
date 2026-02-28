@@ -1744,6 +1744,15 @@
     "extracting": "Извлечение кадров...",
     "extractingFrame": "Извлечение кадра {{current}} / {{total}}",
     "processing": "Обработка видео",
-    "done": "Готово"
+    "done": "Готово",
+    "frame": "Кадр",
+    "tracks": "Треки",
+    "newTrack": "Новый",
+    "noTracks": "Нет треков. Создайте один, чтобы начать отслеживание.",
+    "videos": "Видео",
+    "keyframeHere": "Ключевой кадр на этом фрейме",
+    "hideTrack": "Скрыть",
+    "showTrack": "Показать",
+    "deleteTrack": "Удалить трек"
   }
 }

@@ -1744,6 +1744,15 @@
     "extracting": "Extraindo frames...",
     "extractingFrame": "Extraindo frame {{current}} / {{total}}",
     "processing": "Processando vídeo",
-    "done": "Pronto"
+    "done": "Pronto",
+    "frame": "Frame",
+    "tracks": "Tracks",
+    "newTrack": "Novo",
+    "noTracks": "Sem tracks. Crie um para começar a rastrear.",
+    "videos": "Vídeos",
+    "keyframeHere": "Keyframe neste frame",
+    "hideTrack": "Ocultar",
+    "showTrack": "Mostrar",
+    "deleteTrack": "Excluir track"
   }
 }

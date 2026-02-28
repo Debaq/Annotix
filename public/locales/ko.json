@@ -1744,6 +1744,15 @@
     "extracting": "프레임 추출 중...",
     "extractingFrame": "프레임 추출 중 {{current}} / {{total}}",
     "processing": "영상 처리 중",
-    "done": "완료"
+    "done": "완료",
+    "frame": "프레임",
+    "tracks": "트랙",
+    "newTrack": "새로 만들기",
+    "noTracks": "트랙이 없습니다. 트래킹을 시작하려면 하나를 만드세요.",
+    "videos": "영상",
+    "keyframeHere": "이 프레임의 키프레임",
+    "hideTrack": "숨기기",
+    "showTrack": "표시",
+    "deleteTrack": "트랙 삭제"
   }
 }
