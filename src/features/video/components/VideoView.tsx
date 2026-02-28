@@ -46,12 +46,44 @@ export function VideoView() {
 
   // Keyboard shortcuts for video
   useEffect(() => {
+    const { setActiveTool } = useUIStore.getState();
+
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't handle if typing in input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       const { currentFrameIndex, setCurrentFrameIndex, currentVideoId, activeClassId } = useUIStore.getState();
       if (!currentVideoId) return;
+
+      const key = e.key.toLowerCase();
+
+      // Class selection shortcuts (numbers/letters)
+      if (!e.ctrlKey && !e.metaKey) {
+        const classIndex = CLASS_SHORTCUTS.indexOf(key);
+        if (classIndex !== -1 && project?.classes[classIndex]) {
+          e.preventDefault();
+          setActiveClassId(project.classes[classIndex].id);
+          return;
+        }
+      }
+
+      // Tool shortcuts
+      if (!e.ctrlKey && !e.metaKey) {
+        switch (key) {
+          case 'v':
+            e.preventDefault();
+            setActiveTool('select');
+            return;
+          case 'h':
+            e.preventDefault();
+            setActiveTool('pan');
+            return;
+          case 'b':
+            e.preventDefault();
+            setActiveTool('bbox');
+            return;
+        }
+      }
 
       switch (e.key) {
         case 'ArrowLeft':
@@ -85,7 +117,7 @@ export function VideoView() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [totalFrames, tracks, createTrack, removeKeyframe]);
+  }, [totalFrames, tracks, createTrack, removeKeyframe, project, setActiveClassId]);
 
   if (!project || !video) {
     return (
@@ -105,6 +137,7 @@ export function VideoView() {
             interpolatedBBoxes={interpolatedBBoxes}
             tracks={tracks}
             classes={project.classes}
+            video={video}
           />
         </div>
 
