@@ -12,8 +12,8 @@ export function DataPreviewTable({ columns, rows, totalRows, targetColumn, featu
   const { t } = useTranslation();
 
   const getColumnStyle = (col: string) => {
-    if (col === targetColumn) return 'bg-emerald-50 text-emerald-800 font-semibold';
-    if (featureColumns.length > 0 && featureColumns.includes(col)) return 'bg-blue-50 text-blue-800';
+    if (col === targetColumn) return 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-semibold';
+    if (featureColumns.length > 0 && featureColumns.includes(col)) return 'bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300';
     if (featureColumns.length > 0 && !featureColumns.includes(col)) return 'opacity-40';
     return '';
   };

@@ -18,6 +18,10 @@ export const settingsService = {
     return invoke('install_pytorch', { cudaVersion });
   },
 
+  installOnnx(withGpu: boolean): Promise<void> {
+    return invoke('install_onnx', { withGpu });
+  },
+
   removeVenv(): Promise<void> {
     return invoke('remove_venv');
   },

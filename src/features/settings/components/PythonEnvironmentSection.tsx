@@ -3,6 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { listen } from '@tauri-apps/api/event';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { settingsService } from '../services/settingsService';
 import { trainingService } from '@/features/training/services/trainingService';
 import type { VenvInfo, InstalledPackage, SystemGpuInfo, PackageUpdateProgress, PytorchInstallProgress } from '../types';
@@ -20,9 +27,11 @@ export function PythonEnvironmentSection() {
   const [removingVenv, setRemovingVenv] = useState(false);
   const [updatingPackages, setUpdatingPackages] = useState(false);
   const [installingPytorch, setInstallingPytorch] = useState(false);
+  const [installingOnnx, setInstallingOnnx] = useState(false);
   const [setupProgress, setSetupProgress] = useState<{ message: string; progress: number; log?: string } | null>(null);
   const [packageProgress, setPackageProgress] = useState<PackageUpdateProgress & { log?: string } | null>(null);
   const [pytorchProgress, setPytorchProgress] = useState<PytorchInstallProgress & { log?: string } | null>(null);
+  const [onnxProgress, setOnnxProgress] = useState<{ message: string; progress: number; log?: string } | null>(null);
   const [installLogs, setInstallLogs] = useState<string[]>([]);
   const [selectedCuda, setSelectedCuda] = useState<string>('cpu');
   const [selectedPython, setSelectedPython] = useState<string>('3.10');
@@ -103,11 +112,19 @@ export function PythonEnvironmentSection() {
         if (event.payload.log) setInstallLogs(prev => [...prev, event.payload.log!]);
       }
     );
+    const unlistenOnnx = listen<{ message: string; progress: number; log?: string }>(
+      'settings:onnx-install-progress',
+      (event) => {
+        setOnnxProgress(event.payload);
+        if (event.payload.log) setInstallLogs(prev => [...prev, event.payload.log!]);
+      }
+    );
 
     return () => {
       unlistenSetup.then(fn => fn());
       unlistenPkg.then(fn => fn());
       unlistenPytorch.then(fn => fn());
+      unlistenOnnx.then(fn => fn());
     };
   }, []);
 
@@ -168,6 +185,20 @@ export function PythonEnvironmentSection() {
     }
   };
 
+  const handleInstallOnnx = async () => {
+    setInstallingOnnx(true);
+    setInstallLogs([]);
+    try {
+      await settingsService.installOnnx(!!(gpuInfo?.hasNvidia && cudaAvailable));
+      await loadAll();
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setInstallingOnnx(false);
+      setOnnxProgress(null);
+    }
+  };
+
   if (loading && !venvInfo) {
     return <div className="p-8 text-center text-muted-foreground">{t('common.loading')}</div>;
   }
@@ -184,12 +215,12 @@ export function PythonEnvironmentSection() {
     );
   }
 
-  const isBusy = creatingVenv || updatingPackages || installingPytorch;
+  const isBusy = creatingVenv || updatingPackages || installingPytorch || installingOnnx;
 
   return (
     <div className="space-y-6 max-w-4xl">
       {error && (
-        <div className="p-3 bg-red-50 text-red-600 rounded-lg border border-red-100 text-sm flex items-center gap-2">
+        <div className="p-3 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 rounded-lg border border-red-100 dark:border-red-900/50 text-sm flex items-center gap-2">
           <i className="fas fa-exclamation-circle" />
           {error}
         </div>
@@ -255,16 +286,16 @@ export function PythonEnvironmentSection() {
               
               <div className="text-left bg-[var(--annotix-white)] p-3 rounded-lg border border-[var(--annotix-border)]">
                 <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">Versión de Python</span>
-                <select 
-                  value={selectedPython}
-                  onChange={(e) => setSelectedPython(e.target.value)}
-                  className="w-full h-9 rounded-md border border-[var(--annotix-border)] bg-[var(--annotix-white)] text-sm px-2 outline-none focus:border-[var(--annotix-primary)]"
-                  disabled={isBusy}
-                >
-                  <option value="3.9">Python 3.9 (Estable ML)</option>
-                  <option value="3.10">Python 3.10 (Recomendado)</option>
-                  <option value="3.11">Python 3.11 (Más rápido)</option>
-                </select>
+                <Select value={selectedPython} onValueChange={setSelectedPython} disabled={isBusy}>
+                  <SelectTrigger className="w-full h-9 bg-[var(--annotix-white)] border-[var(--annotix-border)] text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3.9">Python 3.9 (Estable ML)</SelectItem>
+                    <SelectItem value="3.10">Python 3.10 (Recomendado)</SelectItem>
+                    <SelectItem value="3.11">Python 3.11 (Más rápido)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <Button
@@ -326,16 +357,16 @@ export function PythonEnvironmentSection() {
             <div className="flex items-center gap-3">
               <div className="flex-1">
                 <span className="text-xs text-muted-foreground block mb-1">Variante de Instalación</span>
-                <select 
-                  value={selectedCuda}
-                  onChange={(e) => setSelectedCuda(e.target.value)}
-                  className="w-full h-9 rounded-md border border-[var(--annotix-border)] bg-[var(--annotix-white)] text-sm px-2 outline-none focus:border-[var(--annotix-primary)]"
-                  disabled={isBusy}
-                >
-                  <option value="cpu">CPU (Universal)</option>
-                  <option value="12.1">CUDA 12.1 (NVIDIA)</option>
-                  <option value="12.4">CUDA 12.4 (NVIDIA)</option>
-                </select>
+                <Select value={selectedCuda} onValueChange={setSelectedCuda} disabled={isBusy}>
+                  <SelectTrigger className="w-full h-9 bg-[var(--annotix-white)] border-[var(--annotix-border)] text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cpu">CPU (Universal)</SelectItem>
+                    <SelectItem value="12.1">CUDA 12.1 (NVIDIA)</SelectItem>
+                    <SelectItem value="12.4">CUDA 12.4 (NVIDIA)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <Button 
                 onClick={handleInstallPytorch}
@@ -361,7 +392,63 @@ export function PythonEnvironmentSection() {
         </div>
       )}
 
-      {/* Card 3: Packages Table */}
+      {/* Card 3: ONNX Toolkit */}
+      {venvInfo?.exists && (
+        <div className="rounded-lg border border-[var(--annotix-border)] bg-[var(--annotix-white)] p-5 transition-colors">
+          <h3 className="text-sm font-semibold text-[var(--annotix-dark)] mb-3 flex items-center gap-2">
+            <i className="fas fa-file-export text-blue-500" />
+            ONNX Toolkit
+          </h3>
+
+          <p className="text-xs text-muted-foreground mb-3">
+            Paquetes para exportar, validar y ejecutar modelos en formato ONNX (onnx, onnxruntime, skl2onnx, onnxmltools).
+          </p>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+            {['onnx', 'onnxruntime', 'skl2onnx', 'onnxmltools'].map((name) => {
+              const pkg = packages.find(p => p.name === name || p.name === 'onnxruntime-gpu' && name === 'onnxruntime');
+              return (
+                <div key={name} className="p-2 rounded bg-[var(--annotix-light)] border border-[var(--annotix-border)] text-center">
+                  <span className="text-[10px] font-mono block">{name}</span>
+                  <span className={`text-[10px] font-bold ${pkg ? 'text-green-600' : 'text-muted-foreground'}`}>
+                    {pkg ? pkg.version : 'No instalado'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={handleInstallOnnx}
+              disabled={isBusy}
+              size="sm"
+            >
+              {installingOnnx ? <i className="fas fa-spinner fa-spin mr-2" /> : <i className="fas fa-download mr-2" />}
+              {packages.some(p => p.name === 'onnx') ? 'Reinstalar' : 'Instalar'} ONNX Toolkit
+            </Button>
+            {gpuInfo?.hasNvidia && cudaAvailable && (
+              <span className="text-[10px] text-green-600 font-medium">
+                <i className="fas fa-bolt mr-1" />
+                Se instalará onnxruntime-gpu
+              </span>
+            )}
+          </div>
+
+          {installingOnnx && (
+            <div className="space-y-2 mt-3">
+              <div className="flex items-center justify-between text-xs">
+                <span>{onnxProgress?.message || 'Iniciando...'}</span>
+                <span>{Math.round(onnxProgress?.progress || 0)}%</span>
+              </div>
+              <Progress value={onnxProgress?.progress ?? 5} className="h-1.5" />
+              <TerminalConsole logs={installLogs} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Card 4: Packages Table */}
       {venvInfo?.exists && (
         <div className="rounded-lg border border-[var(--annotix-border)] bg-[var(--annotix-white)] p-5 transition-colors">
           <div className="flex items-center justify-between mb-3">
