@@ -1089,36 +1089,36 @@
         "difficulty": "中級"
       },
       "multi-label-classification": {
-        "name": "",
-        "description": ""
+        "name": "マルチラベル分類",
+        "description": "各画像に複数のラベルを割り当て"
       },
       "timeseries-classification": {
-        "name": "",
-        "description": ""
+        "name": "時系列分類",
+        "description": "時系列全体をカテゴリに分類"
       },
       "timeseries-forecasting": {
-        "name": "",
-        "description": ""
+        "name": "時系列予測",
+        "description": "過去のデータから将来の値を予測"
       },
       "anomaly-detection": {
-        "name": "",
-        "description": ""
+        "name": "異常検知",
+        "description": "時系列の異常なパターンを検出"
       },
       "timeseries-segmentation": {
-        "name": "",
-        "description": ""
+        "name": "時系列セグメンテーション",
+        "description": "時系列を異なる領域に分割"
       },
       "pattern-recognition": {
-        "name": "",
-        "description": ""
+        "name": "パターン認識",
+        "description": "時系列の繰り返しパターンを識別"
       },
       "event-detection": {
-        "name": "",
-        "description": ""
+        "name": "イベント検出",
+        "description": "時系列の特定のイベントを検出"
       },
       "timeseries-regression": {
-        "name": "",
-        "description": ""
+        "name": "時系列回帰",
+        "description": "時系列から数値を予測"
       },
       "object3DDetection": {
         "name": "3Dオブジェクト検出",
@@ -1864,7 +1864,66 @@
       "lr_scheduler_type": "LRスケジューラタイプ",
       "lr_scheduler_typeDesc": "学習率減衰戦略",
       "crop_size": "クロップサイズ",
-      "crop_sizeDesc": "学習用ランダムクロップサイズ（ピクセル）"
+      "crop_sizeDesc": "学習用ランダムクロップサイズ（ピクセル）",
+      "input_size_h": "Input Height",
+      "input_size_hDesc": "Input height for pose estimation",
+      "input_size_w": "Input Width",
+      "input_size_wDesc": "Input width for pose estimation",
+      "angle_version": "Angle Version",
+      "angle_versionDesc": "Angle encoding for oriented bounding boxes",
+      "mixup_aug": "MixUp",
+      "mixup_augDesc": "MixUp augmentation probability",
+      "cutmix": "CutMix",
+      "cutmixDesc": "CutMix augmentation probability",
+      "label_smoothing": "Label Smoothing",
+      "label_smoothingDesc": "Label smoothing factor for regularization",
+      "drop_rate": "Dropout Rate",
+      "drop_rateDesc": "Dropout rate for regularization",
+      "window_size": "Window Size",
+      "window_sizeDesc": "Window size for time series processing",
+      "stride": "Stride",
+      "strideDesc": "Stride for sliding window",
+      "max_prediction_length": "Prediction Length",
+      "max_prediction_lengthDesc": "Maximum number of time steps to predict",
+      "max_encoder_length": "Encoder Length",
+      "max_encoder_lengthDesc": "Maximum number of time steps for encoder input",
+      "gradient_clip_val": "Gradient Clip",
+      "gradient_clip_valDesc": "Gradient clipping value to prevent exploding gradients",
+      "hidden_size": "Hidden Size",
+      "hidden_sizeDesc": "Hidden layer size for the model",
+      "dropout": "Dropout",
+      "dropoutDesc": "Dropout probability for regularization",
+      "contamination": "Contamination",
+      "contaminationDesc": "Expected fraction of anomalies in the dataset",
+      "n_estimators": "N Estimators",
+      "n_estimatorsDesc": "Number of estimators for ensemble methods",
+      "n_clusters": "N Clusters",
+      "n_clustersDesc": "Number of clusters to form",
+      "metric": "Distance Metric",
+      "metricDesc": "Distance metric for clustering",
+      "max_iter": "Max Iterations",
+      "max_iterDesc": "Maximum number of iterations for clustering",
+      "n_layers": "N Layers",
+      "n_layersDesc": "Number of transformer/RNN layers",
+      "d_model": "Model Dimension",
+      "d_modelDesc": "Dimension of the model's hidden representation",
+      "d_ffn": "FFN Dimension",
+      "d_ffnDesc": "Dimension of the feed-forward network",
+      "n_heads": "N Heads",
+      "n_headsDesc": "Number of attention heads",
+      "normalize": "Normalize",
+      "normalizeDesc": "Normalize time series before processing",
+      "detectron2Title": "Detectron2 Parameters",
+      "mmposeTitle": "MMPose Parameters",
+      "mmrotateTitle": "MMRotate Parameters",
+      "timmTitle": "timm Parameters",
+      "hfClsTitle": "HuggingFace Classification Parameters",
+      "tsaiTitle": "tsai Parameters",
+      "pytorchFcstTitle": "PyTorch Forecasting Parameters",
+      "pyodTitle": "PyOD Parameters",
+      "tslearnTitle": "tslearn Parameters",
+      "pypotsTitle": "PyPOTS Parameters",
+      "stumpyTitle": "STUMPY Parameters"
     },
     "monitor": {
       "title": "トレーニング進行中",
@@ -1941,7 +2000,20 @@
     "title": "設定",
     "back": "戻る",
     "sections": {
-      "pythonEnv": "Python環境"
+      "general": "一般",
+      "pythonEnv": "Python環境",
+      "trainingModels": "学習モデル"
+    },
+    "general": {
+      "colorMode": "外観",
+      "light": "ライト",
+      "dark": "ダーク",
+      "system": "システム",
+      "language": "言語",
+      "workDir": "作業ディレクトリ",
+      "workDirHelp": "すべてのプロジェクトとデータが保存されるフォルダです。",
+      "changeWorkDir": "新しい作業ディレクトリを選択",
+      "change": "変更"
     },
     "pythonEnv": {
       "systemPython": "システムPython",
@@ -1974,6 +2046,179 @@
       "selectVariant": "PyTorchバリアント",
       "install": "PyTorchをインストール",
       "reinstall": "PyTorchを再インストール"
+    },
+    "trainingModels": {
+      "totalModels": "モデル",
+      "tasks": "タスク",
+      "task": "タスク",
+      "model": "モデル",
+      "params": "パラメータ",
+      "sizes": "サイズ",
+      "recommended": "推奨",
+      "readOnly": "読み取り専用",
+      "searchPlaceholder": "名前、説明、バックエンドでモデルを検索...",
+      "clearFilters": "フィルターをクリア",
+      "noResults": "現在のフィルターに一致するモデルはありません",
+      "overview": "概要",
+      "selectBackend": "バックエンドを選択してモデルを探索",
+      "modelCount": "モデル",
+      "datasetFormat": "データセット",
+      "pipPackages": "パッケージ",
+      "viewScript": "スクリプトを表示",
+      "supportedTasks": "サポートされるタスク",
+      "availableSizes": "利用可能なサイズ",
+      "defaultConfig": "デフォルト設定",
+      "parameter": "パラメータ",
+      "type": "型",
+      "defaultValue": "デフォルト",
+      "range": "範囲",
+      "backTo": "戻る"
+    }
+  },
+  "wizard": {
+    "trigger": "どれを選べばいい？",
+    "title": "プロジェクトタイプアシスタント",
+    "subtitle": "いくつかの質問に答えると、最適なプロジェクトタイプをお勧めします。",
+    "bestMatch": "最適",
+    "useThis": "これを使う",
+    "noResults": "一致するタイプが見つかりません。別の回答を試してください。",
+    "resultsTitle": "おすすめ",
+    "questions": {
+      "dataType": {
+        "title": "どのようなデータを扱いますか？",
+        "options": {
+          "images": "画像",
+          "timeseries": "時系列"
+        },
+        "optionsDesc": {
+          "images": "写真、スクリーンショット、スキャン、フレーム",
+          "timeseries": "センサー、メトリクス、信号、金融データ"
+        }
+      },
+      "goalImages": {
+        "title": "画像で何をしたいですか？",
+        "options": {
+          "classify": "分類する",
+          "detectLocate": "検出・位置特定",
+          "segment": "セグメント化",
+          "pointsKeypts": "ポイントを打つ"
+        },
+        "optionsDesc": {
+          "classify": "画像全体にラベルを割り当てる",
+          "detectLocate": "ボックスでオブジェクトを見つけて位置を特定",
+          "segment": "ピクセルレベルでオブジェクトを輪郭描画",
+          "pointsKeypts": "オブジェクト上にキーポイントやランドマークを配置"
+        }
+      },
+      "goalTimeseries": {
+        "title": "時系列データで何をしたいですか？",
+        "options": {
+          "tsClassify": "分類する",
+          "tsPredict": "予測する",
+          "tsAnomaly": "異常検出",
+          "tsAnalyze": "分析する"
+        },
+        "optionsDesc": {
+          "tsClassify": "シリーズ全体にカテゴリーを割り当てる",
+          "tsPredict": "将来の値を予測またはギャップを埋める",
+          "tsAnomaly": "異常または予期しないパターンを見つける",
+          "tsAnalyze": "セグメント化、パターン検索、またはクラスタリング"
+        }
+      },
+      "classifyDetail": {
+        "title": "画像あたりのラベル数は？",
+        "options": {
+          "singleLabel": "1つのラベル",
+          "multiLabel": "複数のラベル"
+        },
+        "optionsDesc": {
+          "singleLabel": "各画像は正確に1つのクラスに属する",
+          "multiLabel": "画像に複数のラベルを同時に付けられる"
+        }
+      },
+      "detectDetail": {
+        "title": "どの種類のバウンディングボックス？",
+        "options": {
+          "axisAligned": "通常のボックス",
+          "rotated": "回転ボックス"
+        },
+        "optionsDesc": {
+          "axisAligned": "水平/垂直の長方形（最も一般的）",
+          "rotated": "任意の角度に回転できるボックス"
+        }
+      },
+      "segmentDetail": {
+        "title": "どの種類のセグメンテーション？",
+        "options": {
+          "polygonOutline": "ポリゴン輪郭",
+          "pixelMask": "ピクセルマスク",
+          "instanceSeg": "インスタンスセグメンテーション"
+        },
+        "optionsDesc": {
+          "polygonOutline": "オブジェクトの周りにポイントごとにポリゴンを描画",
+          "pixelMask": "オブジェクトにピクセルレベルのマスクをペイント",
+          "instanceSeg": "個々のオブジェクトインスタンスを分離"
+        }
+      },
+      "pointsDetail": {
+        "title": "どの種類のポイント？",
+        "options": {
+          "connectedPose": "接続されたスケルトン",
+          "freePoints": "独立したポイント"
+        },
+        "optionsDesc": {
+          "connectedPose": "線で接続されたポイント（姿勢推定）",
+          "freePoints": "接続なしの自立ポイント"
+        }
+      },
+      "tsAnalyzeDetail": {
+        "title": "どの種類の分析？",
+        "options": {
+          "tsSegment": "領域をセグメント化",
+          "tsPattern": "パターンを検索",
+          "tsEvent": "イベントを検出",
+          "tsCluster": "類似をグループ化"
+        },
+        "optionsDesc": {
+          "tsSegment": "シリーズをラベル付き領域に分割",
+          "tsPattern": "繰り返しパターンやモチーフを特定",
+          "tsEvent": "特定のイベントがいつ発生するかを検出",
+          "tsCluster": "類似のシリーズやセグメントをグループ化"
+        }
+      },
+      "tsPredictDetail": {
+        "title": "どの種類の予測？",
+        "options": {
+          "tsForecast": "将来を予測",
+          "tsRegression": "値の回帰",
+          "tsImpute": "欠損データを補完"
+        },
+        "optionsDesc": {
+          "tsForecast": "シリーズの将来の値を予測",
+          "tsRegression": "特徴から連続値を予測",
+          "tsImpute": "欠損または破損したデータポイントを再構築"
+        }
+      }
+    },
+    "reasons": {
+      "bbox": "軸に沿った矩形ボックスでオブジェクトを検出するのに最適",
+      "obb": "航空写真やテキストなどの回転したオブジェクトに最適",
+      "mask": "正確なセマンティックセグメンテーションのためのピクセルレベルマスク",
+      "polygon": "正確なオブジェクト境界のためのポリゴン輪郭を描画",
+      "instance-segmentation": "ピクセルレベルで各オブジェクトインスタンスを分離",
+      "keypoints": "姿勢推定のための接続されたスケルトンポイントをマーク",
+      "landmarks": "オブジェクト上に独立した参照ポイントを配置",
+      "classification": "シンプルな分類のための画像あたり1ラベル",
+      "multi-label-classification": "複数のラベルを同時に画像にタグ付け",
+      "timeseries-classification": "完全な時系列をカテゴリーに分類",
+      "timeseries-forecasting": "過去のデータに基づいて将来の値を予測",
+      "timeseries-regression": "時系列の特徴から連続値を予測",
+      "anomaly-detection": "データ内の異常なパターンと外れ値を検出",
+      "timeseries-segmentation": "時系列をラベル付きセグメントに分割",
+      "pattern-recognition": "繰り返しモチーフとパターンを発見",
+      "event-detection": "シリーズ内で特定のイベントがいつ発生するかを特定",
+      "clustering": "類似の時系列またはセグメントをグループ化",
+      "imputation": "欠損または破損したデータポイントを再構築"
     }
   }
 }

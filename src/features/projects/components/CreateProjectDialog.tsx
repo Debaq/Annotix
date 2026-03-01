@@ -2,6 +2,7 @@ import { ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useProjects } from '../hooks/useProjects';
 import { ProjectTypeSelector } from './ProjectTypeSelector';
+import { ProjectTypeWizard } from './ProjectTypeWizard';
 import { ClassManager } from './ClassManager';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,6 +33,7 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
     { id: 0, name: 'Object', color: '#ff0000' },
   ]);
   const [isCreating, setIsCreating] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const handleCreate = async () => {
     if (!name.trim() || classes.length === 0) {
@@ -86,8 +88,25 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label>{t('projects.type.label')}</Label>
+            <div className="flex items-center justify-between">
+              <Label>{t('projects.type.label')}</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-auto py-1 px-2 text-xs text-primary"
+                onClick={() => setWizardOpen(true)}
+              >
+                <i className="fas fa-wand-magic-sparkles mr-1.5"></i>
+                {t('wizard.trigger')}
+              </Button>
+            </div>
             <ProjectTypeSelector value={type} onChange={setType} />
+            <ProjectTypeWizard
+              open={wizardOpen}
+              onOpenChange={setWizardOpen}
+              onSelectType={setType}
+            />
           </div>
 
           <div className="space-y-2">
