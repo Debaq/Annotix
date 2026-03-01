@@ -117,6 +117,10 @@ pub fn run() {
             commands::training_commands::list_training_jobs,
             commands::training_commands::delete_training_job,
             commands::training_commands::export_trained_model,
+            commands::training_commands::get_available_backends,
+            commands::training_commands::install_backend_packages,
+            commands::training_commands::start_training_v2,
+            commands::training_commands::generate_training_package,
             // Settings
             commands::settings_commands::get_venv_info,
             commands::settings_commands::list_installed_packages,
