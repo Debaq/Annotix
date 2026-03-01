@@ -6,6 +6,8 @@ import type {
   TrainingPreset,
   YoloModelInfo,
   TrainingJob,
+  BackendInfo,
+  TrainingRequest,
 } from '../types';
 
 export const trainingService = {
@@ -51,5 +53,22 @@ export const trainingService = {
 
   exportTrainedModel(modelPath: string, format: string): Promise<string> {
     return invoke('export_trained_model', { modelPath, format });
+  },
+
+  // Multi-backend API
+  getAvailableBackends(projectType: string): Promise<BackendInfo[]> {
+    return invoke('get_available_backends', { projectType });
+  },
+
+  installBackendPackages(backend: string): Promise<void> {
+    return invoke('install_backend_packages', { backend });
+  },
+
+  startTrainingV2(projectId: string, request: TrainingRequest): Promise<string> {
+    return invoke('start_training_v2', { projectId, request });
+  },
+
+  generateTrainingPackage(projectId: string, request: TrainingRequest, outputPath: string): Promise<string> {
+    return invoke('generate_training_package', { projectId, request, outputPath });
   },
 };
