@@ -35,7 +35,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           'vendor': ['react', 'react-dom'],
-          'dexie': ['dexie'],
           'i18n': ['react-i18next', 'i18next'],
         },
       },
