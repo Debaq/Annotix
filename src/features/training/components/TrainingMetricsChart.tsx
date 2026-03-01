@@ -22,8 +22,47 @@ interface TrainingMetricsChartProps {
 export function TrainingMetricsChart({ metricsHistory }: TrainingMetricsChartProps) {
   const { t } = useTranslation();
 
+  // Detect if this is a segmentation task (has meanIoU metrics)
+  const isSegmentation = useMemo(
+    () => metricsHistory.some((m) => m.meanIoU != null),
+    [metricsHistory],
+  );
+
   const lossData = useMemo(() => {
     const labels = metricsHistory.map((_, i) => `${i + 1}`);
+
+    if (isSegmentation) {
+      return {
+        labels,
+        datasets: [
+          {
+            label: 'Train Loss',
+            data: metricsHistory.map((m) => m.trainLoss ?? null),
+            borderColor: 'rgb(239, 68, 68)',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            tension: 0.3,
+            pointRadius: 1,
+          },
+          {
+            label: 'Val Loss',
+            data: metricsHistory.map((m) => m.valLoss ?? null),
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.3,
+            pointRadius: 1,
+          },
+          {
+            label: 'Dice Loss',
+            data: metricsHistory.map((m) => m.diceLoss ?? null),
+            borderColor: 'rgb(168, 85, 247)',
+            backgroundColor: 'rgba(168, 85, 247, 0.1)',
+            tension: 0.3,
+            pointRadius: 1,
+          },
+        ],
+      };
+    }
+
     return {
       labels,
       datasets: [
@@ -53,10 +92,35 @@ export function TrainingMetricsChart({ metricsHistory }: TrainingMetricsChartPro
         },
       ],
     };
-  }, [metricsHistory]);
+  }, [metricsHistory, isSegmentation]);
 
   const mapData = useMemo(() => {
     const labels = metricsHistory.map((_, i) => `${i + 1}`);
+
+    if (isSegmentation) {
+      return {
+        labels,
+        datasets: [
+          {
+            label: 'mIoU',
+            data: metricsHistory.map((m) => m.meanIoU ?? null),
+            borderColor: 'rgb(34, 197, 94)',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            tension: 0.3,
+            pointRadius: 1,
+          },
+          {
+            label: 'Mean Accuracy',
+            data: metricsHistory.map((m) => m.meanAccuracy ?? null),
+            borderColor: 'rgb(234, 179, 8)',
+            backgroundColor: 'rgba(234, 179, 8, 0.1)',
+            tension: 0.3,
+            pointRadius: 1,
+          },
+        ],
+      };
+    }
+
     return {
       labels,
       datasets: [
@@ -96,7 +160,7 @@ export function TrainingMetricsChart({ metricsHistory }: TrainingMetricsChartPro
         },
       ],
     };
-  }, [metricsHistory]);
+  }, [metricsHistory, isSegmentation]);
 
   const options = {
     responsive: true,

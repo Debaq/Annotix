@@ -6,6 +6,8 @@ export function projectTypeToTask(projectType: string): string {
       return 'detect';
     case 'instance-segmentation':
     case 'polygon':
+    case 'mask':
+    case 'semantic-segmentation':
       return 'segment';
     case 'classification':
       return 'classify';

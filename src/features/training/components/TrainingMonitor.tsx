@@ -72,17 +72,34 @@ export function TrainingMonitor({
       {/* Current metrics */}
       {latestMetrics && (
         <div className="grid grid-cols-4 gap-3">
-          {latestMetrics.mAP50 != null && (
-            <MetricCard label="mAP50" value={latestMetrics.mAP50} format="percent" />
-          )}
-          {latestMetrics.mAP50_95 != null && (
-            <MetricCard label="mAP50-95" value={latestMetrics.mAP50_95} format="percent" />
-          )}
-          {latestMetrics.precision != null && (
-            <MetricCard label={t('training.monitor.precision')} value={latestMetrics.precision} format="percent" />
-          )}
-          {latestMetrics.recall != null && (
-            <MetricCard label={t('training.monitor.recall')} value={latestMetrics.recall} format="percent" />
+          {latestMetrics.meanIoU != null ? (
+            <>
+              <MetricCard label={t('training.monitor.mIoU')} value={latestMetrics.meanIoU} format="percent" />
+              {latestMetrics.meanAccuracy != null && (
+                <MetricCard label={t('training.monitor.meanAccuracy')} value={latestMetrics.meanAccuracy} format="percent" />
+              )}
+              {latestMetrics.trainLoss != null && (
+                <MetricCard label="Train Loss" value={latestMetrics.trainLoss} format="number" />
+              )}
+              {latestMetrics.valLoss != null && (
+                <MetricCard label="Val Loss" value={latestMetrics.valLoss} format="number" />
+              )}
+            </>
+          ) : (
+            <>
+              {latestMetrics.mAP50 != null && (
+                <MetricCard label="mAP50" value={latestMetrics.mAP50} format="percent" />
+              )}
+              {latestMetrics.mAP50_95 != null && (
+                <MetricCard label="mAP50-95" value={latestMetrics.mAP50_95} format="percent" />
+              )}
+              {latestMetrics.precision != null && (
+                <MetricCard label={t('training.monitor.precision')} value={latestMetrics.precision} format="percent" />
+              )}
+              {latestMetrics.recall != null && (
+                <MetricCard label={t('training.monitor.recall')} value={latestMetrics.recall} format="percent" />
+              )}
+            </>
           )}
         </div>
       )}

@@ -1782,6 +1782,9 @@
       "rtdetrTitle": "Parâmetros RT-DETR",
       "rfdetrTitle": "Parâmetros RF-DETR",
       "mmdetTitle": "Parâmetros MMDetection",
+      "smpTitle": "Parâmetros SMP",
+      "hfSegTitle": "Parâmetros HuggingFace Segmentação",
+      "mmsegTitle": "Parâmetros MMSegmentation",
       "resolution": "Resolução",
       "resolutionDesc": "Resolução de entrada (deve ser múltiplo de 56)",
       "lr_encoder": "LR do Encoder",
@@ -1805,7 +1808,23 @@
       "imageSize": "Tamanho da Imagem",
       "imageSizeDesc": "Resolução de entrada para o treinamento",
       "lr": "Taxa de Aprendizagem",
-      "lrDesc": "Taxa de aprendizagem base para o treinamento"
+      "lrDesc": "Taxa de aprendizagem base para o treinamento",
+      "loss_type": "Função de Perda",
+      "loss_typeDesc": "Função de perda para treino de segmentação",
+      "scheduler": "Scheduler LR",
+      "schedulerDesc": "Tipo de agendamento do learning rate",
+      "encoder_depth": "Profundidade Encoder",
+      "encoder_depthDesc": "Profundidade do backbone encoder (3-5)",
+      "freeze_encoder": "Congelar Encoder",
+      "freeze_encoderDesc": "Congelar pesos do encoder para transfer learning",
+      "do_reduce_labels": "Reduzir Labels",
+      "do_reduce_labelsDesc": "Deslocar IDs de labels em 1 (alguns datasets usam 255 para fundo)",
+      "warmup_ratio": "Ratio Warmup",
+      "warmup_ratioDesc": "Fração do treino para warmup linear",
+      "lr_scheduler_type": "Tipo Scheduler LR",
+      "lr_scheduler_typeDesc": "Estratégia de decaimento do learning rate",
+      "crop_size": "Tamanho de Corte",
+      "crop_sizeDesc": "Tamanho de corte aleatório para treino (pixels)"
     },
     "monitor": {
       "title": "Treinamento em Progresso",
@@ -1817,7 +1836,9 @@
       "recall": "Recall",
       "logs": "Logs de Treinamento",
       "waitingMetrics": "Aguardando métricas...",
-      "waitingLogs": "Aguardando logs..."
+      "waitingLogs": "Aguardando logs...",
+      "mIoU": "mIoU",
+      "meanAccuracy": "Precisão Média"
     },
     "status": {
       "pending": "Pendente",

@@ -123,6 +123,26 @@ const DEFAULT_BACKEND_PARAMS: Record<TrainingBackend, Record<string, unknown>> =
     warmup_iters: 500,
     checkpoint_interval: 1,
   },
+  smp: {
+    loss_type: 'dice+ce',
+    scheduler: 'cosine',
+    encoder_depth: 5,
+    freeze_encoder: false,
+  },
+  hf_segmentation: {
+    do_reduce_labels: false,
+    warmup_ratio: 0.05,
+    weight_decay: 0.01,
+    lr_scheduler_type: 'cosine',
+  },
+  mmsegmentation: {
+    optimizer_type: 'AdamW',
+    lr_schedule: 'poly',
+    crop_size: 512,
+    warmup_iters: 500,
+    weight_decay: 0.01,
+    checkpoint_interval: 1,
+  },
 };
 
 const DEFAULT_LR: Record<TrainingBackend, number> = {
@@ -130,6 +150,9 @@ const DEFAULT_LR: Record<TrainingBackend, number> = {
   rt_detr: 0.0002,
   rf_detr: 0.0004,
   mmdetection: 0.02,
+  smp: 0.0001,
+  hf_segmentation: 0.00006,
+  mmsegmentation: 0.0001,
 };
 
 export function useTrainingRequest(projectType: string) {

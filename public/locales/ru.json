@@ -1822,6 +1822,9 @@
       "rtdetrTitle": "Параметры RT-DETR",
       "rfdetrTitle": "Параметры RF-DETR",
       "mmdetTitle": "Параметры MMDetection",
+      "smpTitle": "Параметры SMP",
+      "hfSegTitle": "Параметры HuggingFace Сегментация",
+      "mmsegTitle": "Параметры MMSegmentation",
       "resolution": "Разрешение",
       "resolutionDesc": "Входное разрешение (должно быть кратно 56)",
       "lr_encoder": "LR энкодера",
@@ -1845,7 +1848,23 @@
       "imageSize": "Размер изображения",
       "imageSizeDesc": "Входное разрешение для обучения",
       "lr": "Скорость обучения",
-      "lrDesc": "Базовая скорость обучения для обучения"
+      "lrDesc": "Базовая скорость обучения для обучения",
+      "loss_type": "Функция потерь",
+      "loss_typeDesc": "Функция потерь для обучения сегментации",
+      "scheduler": "Планировщик LR",
+      "schedulerDesc": "Тип расписания скорости обучения",
+      "encoder_depth": "Глубина энкодера",
+      "encoder_depthDesc": "Глубина backbone энкодера (3-5)",
+      "freeze_encoder": "Заморозить энкодер",
+      "freeze_encoderDesc": "Заморозить веса энкодера для трансферного обучения",
+      "do_reduce_labels": "Уменьшить метки",
+      "do_reduce_labelsDesc": "Сдвинуть ID меток на 1 (некоторые датасеты используют 255 для фона)",
+      "warmup_ratio": "Коэффициент прогрева",
+      "warmup_ratioDesc": "Доля обучения для линейного прогрева",
+      "lr_scheduler_type": "Тип планировщика LR",
+      "lr_scheduler_typeDesc": "Стратегия уменьшения скорости обучения",
+      "crop_size": "Размер обрезки",
+      "crop_sizeDesc": "Случайный размер обрезки для обучения (пиксели)"
     },
     "monitor": {
       "title": "Обучение выполняется",
@@ -1857,7 +1876,9 @@
       "recall": "Полнота",
       "logs": "Логи обучения",
       "waitingMetrics": "Ожидание метрик...",
-      "waitingLogs": "Ожидание логов..."
+      "waitingLogs": "Ожидание логов...",
+      "mIoU": "mIoU",
+      "meanAccuracy": "Средняя точность"
     },
     "status": {
       "pending": "Ожидание",

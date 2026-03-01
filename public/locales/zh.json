@@ -1822,6 +1822,9 @@
       "rtdetrTitle": "RT-DETR 参数",
       "rfdetrTitle": "RF-DETR 参数",
       "mmdetTitle": "MMDetection 参数",
+      "smpTitle": "SMP 参数",
+      "hfSegTitle": "HuggingFace 分割参数",
+      "mmsegTitle": "MMSegmentation 参数",
       "resolution": "分辨率",
       "resolutionDesc": "输入分辨率（必须是56的倍数）",
       "lr_encoder": "编码器LR",
@@ -1845,7 +1848,23 @@
       "imageSize": "图像大小",
       "imageSizeDesc": "训练的输入分辨率",
       "lr": "学习率",
-      "lrDesc": "训练的基础学习率"
+      "lrDesc": "训练的基础学习率",
+      "loss_type": "损失函数",
+      "loss_typeDesc": "分割训练的损失函数",
+      "scheduler": "学习率调度器",
+      "schedulerDesc": "学习率调度类型",
+      "encoder_depth": "编码器深度",
+      "encoder_depthDesc": "编码器骨干深度 (3-5)",
+      "freeze_encoder": "冻结编码器",
+      "freeze_encoderDesc": "冻结编码器权重用于迁移学习",
+      "do_reduce_labels": "缩减标签",
+      "do_reduce_labelsDesc": "将标签ID偏移1（某些数据集使用255作为背景）",
+      "warmup_ratio": "预热比例",
+      "warmup_ratioDesc": "线性预热的训练比例",
+      "lr_scheduler_type": "学习率调度器类型",
+      "lr_scheduler_typeDesc": "学习率衰减策略",
+      "crop_size": "裁剪尺寸",
+      "crop_sizeDesc": "训练用随机裁剪尺寸（像素）"
     },
     "monitor": {
       "title": "训练进行中",
@@ -1857,7 +1876,9 @@
       "recall": "召回率",
       "logs": "训练日志",
       "waitingMetrics": "等待指标...",
-      "waitingLogs": "等待日志..."
+      "waitingLogs": "等待日志...",
+      "mIoU": "mIoU",
+      "meanAccuracy": "平均精度"
     },
     "status": {
       "pending": "等待中",

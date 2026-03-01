@@ -71,6 +71,50 @@ const MMDET_PARAMS: ParamDefinition[] = [
   { key: 'checkpoint_interval', type: 'number', min: 1, max: 50 },
 ];
 
+const SMP_PARAMS: ParamDefinition[] = [
+  { key: 'loss_type', type: 'select', options: [
+    { value: 'dice+ce', label: 'Dice + CE' },
+    { value: 'dice', label: 'Dice Loss' },
+    { value: 'ce', label: 'Cross Entropy' },
+    { value: 'focal', label: 'Focal Loss' },
+    { value: 'jaccard', label: 'Jaccard / IoU Loss' },
+  ]},
+  { key: 'scheduler', type: 'select', options: [
+    { value: 'cosine', label: 'Cosine Annealing' },
+    { value: 'poly', label: 'Polynomial' },
+    { value: 'step', label: 'Step LR' },
+  ]},
+  { key: 'encoder_depth', type: 'number', min: 3, max: 5 },
+  { key: 'freeze_encoder', type: 'checkbox' },
+];
+
+const HF_SEG_PARAMS: ParamDefinition[] = [
+  { key: 'do_reduce_labels', type: 'checkbox' },
+  { key: 'warmup_ratio', type: 'number', min: 0, max: 0.2, step: 0.01 },
+  { key: 'weight_decay', type: 'number', min: 0, max: 0.1, step: 0.001 },
+  { key: 'lr_scheduler_type', type: 'select', options: [
+    { value: 'cosine', label: 'Cosine' },
+    { value: 'linear', label: 'Linear' },
+    { value: 'polynomial', label: 'Polynomial' },
+  ]},
+];
+
+const MMSEG_PARAMS: ParamDefinition[] = [
+  { key: 'optimizer_type', type: 'select', options: [
+    { value: 'AdamW', label: 'AdamW' },
+    { value: 'SGD', label: 'SGD' },
+  ]},
+  { key: 'lr_schedule', type: 'select', options: [
+    { value: 'poly', label: 'Polynomial' },
+    { value: 'cosine', label: 'Cosine Annealing' },
+    { value: 'step', label: 'Step LR' },
+  ]},
+  { key: 'crop_size', type: 'number', min: 256, max: 1024, step: 32 },
+  { key: 'warmup_iters', type: 'number', min: 0, max: 5000 },
+  { key: 'weight_decay', type: 'number', min: 0, max: 0.1, step: 0.001 },
+  { key: 'checkpoint_interval', type: 'number', min: 1, max: 50 },
+];
+
 export function BackendConfigPanel({
   backend,
   commonParams,
@@ -121,6 +165,18 @@ export function BackendConfigPanel({
     case 'mmdetection':
       specificParams = MMDET_PARAMS;
       specificTitle = 'training.params.mmdetTitle';
+      break;
+    case 'smp':
+      specificParams = SMP_PARAMS;
+      specificTitle = 'training.params.smpTitle';
+      break;
+    case 'hf_segmentation':
+      specificParams = HF_SEG_PARAMS;
+      specificTitle = 'training.params.hfSegTitle';
+      break;
+    case 'mmsegmentation':
+      specificParams = MMSEG_PARAMS;
+      specificTitle = 'training.params.mmsegTitle';
       break;
   }
 

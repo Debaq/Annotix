@@ -1822,6 +1822,9 @@
       "rtdetrTitle": "RT-DETR パラメータ",
       "rfdetrTitle": "RF-DETR パラメータ",
       "mmdetTitle": "MMDetection パラメータ",
+      "smpTitle": "SMPパラメータ",
+      "hfSegTitle": "HuggingFaceセグメンテーションパラメータ",
+      "mmsegTitle": "MMSegmentationパラメータ",
       "resolution": "解像度",
       "resolutionDesc": "入力解像度（56の倍数である必要があります）",
       "lr_encoder": "エンコーダLR",
@@ -1845,7 +1848,23 @@
       "imageSize": "画像サイズ",
       "imageSizeDesc": "トレーニング用の入力解像度",
       "lr": "学習率",
-      "lrDesc": "トレーニングの基本学習率"
+      "lrDesc": "トレーニングの基本学習率",
+      "loss_type": "損失関数",
+      "loss_typeDesc": "セグメンテーション学習用の損失関数",
+      "scheduler": "LRスケジューラ",
+      "schedulerDesc": "学習率スケジュールの種類",
+      "encoder_depth": "エンコーダ深度",
+      "encoder_depthDesc": "エンコーダバックボーンの深度 (3-5)",
+      "freeze_encoder": "エンコーダ凍結",
+      "freeze_encoderDesc": "転移学習のためにエンコーダの重みを凍結",
+      "do_reduce_labels": "ラベル削減",
+      "do_reduce_labelsDesc": "ラベルIDを1シフト（背景に255を使用するデータセット用）",
+      "warmup_ratio": "ウォームアップ比率",
+      "warmup_ratioDesc": "線形ウォームアップの学習割合",
+      "lr_scheduler_type": "LRスケジューラタイプ",
+      "lr_scheduler_typeDesc": "学習率減衰戦略",
+      "crop_size": "クロップサイズ",
+      "crop_sizeDesc": "学習用ランダムクロップサイズ（ピクセル）"
     },
     "monitor": {
       "title": "トレーニング進行中",
@@ -1857,7 +1876,9 @@
       "recall": "再現率",
       "logs": "トレーニングログ",
       "waitingMetrics": "メトリクス待機中...",
-      "waitingLogs": "ログ待機中..."
+      "waitingLogs": "ログ待機中...",
+      "mIoU": "mIoU",
+      "meanAccuracy": "平均精度"
     },
     "status": {
       "pending": "待機中",

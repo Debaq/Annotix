@@ -75,7 +75,7 @@ pub fn get_training_presets(_project_type: String) -> Result<Vec<TrainingPreset>
 pub fn get_yolo_models(project_type: String) -> Result<Vec<YoloModelInfo>, String> {
     let task = match project_type.as_str() {
         "bbox" | "object-detection" => "detect",
-        "instance-segmentation" | "polygon" => "segment",
+        "instance-segmentation" | "polygon" | "mask" | "semantic-segmentation" => "segment",
         "classification" => "classify",
         "keypoints" => "pose",
         "obb" => "obb",
@@ -351,6 +351,9 @@ pub fn install_backend_packages(
         }
         "rf_detr" => vec!["rfdetr"],
         "mmdetection" => vec!["openmim", "mmengine", "mmcv", "mmdet"],
+        "smp" => vec!["segmentation-models-pytorch", "albumentations"],
+        "hf_segmentation" => vec!["transformers", "datasets", "evaluate"],
+        "mmsegmentation" => vec!["openmim", "mmengine", "mmcv", "mmsegmentation"],
         _ => return Err(format!("Backend desconocido: {}", backend)),
     };
 

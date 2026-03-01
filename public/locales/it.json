@@ -1822,6 +1822,9 @@
       "rtdetrTitle": "Parametri RT-DETR",
       "rfdetrTitle": "Parametri RF-DETR",
       "mmdetTitle": "Parametri MMDetection",
+      "smpTitle": "Parametri SMP",
+      "hfSegTitle": "Parametri HuggingFace Segmentazione",
+      "mmsegTitle": "Parametri MMSegmentation",
       "resolution": "Risoluzione",
       "resolutionDesc": "Risoluzione in ingresso (deve essere un multiplo di 56)",
       "lr_encoder": "LR dell'encoder",
@@ -1845,7 +1848,23 @@
       "imageSize": "Dimensione immagine",
       "imageSizeDesc": "Risoluzione in ingresso per l'addestramento",
       "lr": "Tasso di apprendimento",
-      "lrDesc": "Tasso di apprendimento base per l'addestramento"
+      "lrDesc": "Tasso di apprendimento base per l'addestramento",
+      "loss_type": "Funzione di Perdita",
+      "loss_typeDesc": "Funzione di perdita per addestramento segmentazione",
+      "scheduler": "Scheduler LR",
+      "schedulerDesc": "Tipo di pianificazione del learning rate",
+      "encoder_depth": "Profondità Encoder",
+      "encoder_depthDesc": "Profondità del backbone encoder (3-5)",
+      "freeze_encoder": "Congela Encoder",
+      "freeze_encoderDesc": "Congela i pesi dell'encoder per il transfer learning",
+      "do_reduce_labels": "Riduci Labels",
+      "do_reduce_labelsDesc": "Sposta gli ID delle label di 1 (alcuni dataset usano 255 per lo sfondo)",
+      "warmup_ratio": "Rapporto Warmup",
+      "warmup_ratioDesc": "Frazione dell'addestramento per il warmup lineare",
+      "lr_scheduler_type": "Tipo Scheduler LR",
+      "lr_scheduler_typeDesc": "Strategia di decadimento del learning rate",
+      "crop_size": "Dimensione Ritaglio",
+      "crop_sizeDesc": "Dimensione ritaglio casuale per addestramento (pixel)"
     },
     "monitor": {
       "title": "Addestramento in Corso",
@@ -1857,7 +1876,9 @@
       "recall": "Recall",
       "logs": "Log Addestramento",
       "waitingMetrics": "In attesa delle metriche...",
-      "waitingLogs": "In attesa dei log..."
+      "waitingLogs": "In attesa dei log...",
+      "mIoU": "mIoU",
+      "meanAccuracy": "Precisione Media"
     },
     "status": {
       "pending": "In attesa",

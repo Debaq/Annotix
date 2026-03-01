@@ -89,6 +89,9 @@ export interface PythonEnvStatus {
   cudaAvailable: boolean;
   rfdetrVersion?: string | null;
   mmdetVersion?: string | null;
+  smpVersion?: string | null;
+  hfTransformersVersion?: string | null;
+  mmsegVersion?: string | null;
 }
 
 export interface TrainingEnvInfo {
@@ -134,6 +137,11 @@ export interface TrainingEpochMetrics {
   mAP50?: number | null;
   mAP50_95?: number | null;
   lr?: number | null;
+  // Semantic segmentation metrics
+  meanIoU?: number | null;
+  meanAccuracy?: number | null;
+  diceLoss?: number | null;
+  segLoss?: number | null;
 }
 
 // ─── Training Result ────────────────────────────────────────────────────────
@@ -188,9 +196,9 @@ export interface TrainingJob {
 
 // ─── Multi-Backend Types ─────────────────────────────────────────────────────
 
-export type TrainingBackend = 'yolo' | 'rt_detr' | 'rf_detr' | 'mmdetection';
+export type TrainingBackend = 'yolo' | 'rt_detr' | 'rf_detr' | 'mmdetection' | 'smp' | 'hf_segmentation' | 'mmsegmentation';
 export type ExecutionMode = 'local' | 'download_package';
-export type DatasetFormat = 'yolo_txt' | 'coco_json';
+export type DatasetFormat = 'yolo_txt' | 'coco_json' | 'mask_png';
 
 export interface TrainingRequest {
   backend: TrainingBackend;
@@ -285,6 +293,29 @@ export interface MmDetBackendParams {
   lr_schedule: string;
   milestones: number[];
   warmup_iters: number;
+  checkpoint_interval: number;
+}
+
+export interface SmpBackendParams {
+  loss_type: string;
+  scheduler: string;
+  encoder_depth: number;
+  freeze_encoder: boolean;
+}
+
+export interface HfSegBackendParams {
+  do_reduce_labels: boolean;
+  warmup_ratio: number;
+  weight_decay: number;
+  lr_scheduler_type: string;
+}
+
+export interface MmSegBackendParams {
+  optimizer_type: string;
+  lr_schedule: string;
+  crop_size: number;
+  warmup_iters: number;
+  weight_decay: number;
   checkpoint_interval: number;
 }
 

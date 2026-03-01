@@ -15,6 +15,9 @@ const BACKEND_ICONS: Record<string, string> = {
   rt_detr: 'fas fa-atom',
   rf_detr: 'fas fa-bullseye',
   mmdetection: 'fas fa-cubes',
+  smp: 'fas fa-layer-group',
+  hf_segmentation: 'fas fa-brain',
+  mmsegmentation: 'fas fa-puzzle-piece',
 };
 
 const BACKEND_COLORS: Record<string, string> = {
@@ -22,6 +25,9 @@ const BACKEND_COLORS: Record<string, string> = {
   rt_detr: 'border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10',
   rf_detr: 'border-green-500/30 bg-green-500/5 hover:bg-green-500/10',
   mmdetection: 'border-orange-500/30 bg-orange-500/5 hover:bg-orange-500/10',
+  smp: 'border-teal-500/30 bg-teal-500/5 hover:bg-teal-500/10',
+  hf_segmentation: 'border-yellow-500/30 bg-yellow-500/5 hover:bg-yellow-500/10',
+  mmsegmentation: 'border-rose-500/30 bg-rose-500/5 hover:bg-rose-500/10',
 };
 
 const BACKEND_SELECTED_COLORS: Record<string, string> = {
@@ -29,6 +35,9 @@ const BACKEND_SELECTED_COLORS: Record<string, string> = {
   rt_detr: 'border-purple-500 bg-purple-500/20',
   rf_detr: 'border-green-500 bg-green-500/20',
   mmdetection: 'border-orange-500 bg-orange-500/20',
+  smp: 'border-teal-500 bg-teal-500/20',
+  hf_segmentation: 'border-yellow-500 bg-yellow-500/20',
+  mmsegmentation: 'border-rose-500 bg-rose-500/20',
 };
 
 export function BackendSelector({ projectType, envStatus, onSelect }: BackendSelectorProps) {
@@ -50,6 +59,15 @@ export function BackendSelector({ projectType, envStatus, onSelect }: BackendSel
     }
     if (id === 'mmdetection') {
       return envStatus?.mmdetVersion != null;
+    }
+    if (id === 'smp') {
+      return envStatus?.smpVersion != null;
+    }
+    if (id === 'hf_segmentation') {
+      return envStatus?.hfTransformersVersion != null;
+    }
+    if (id === 'mmsegmentation') {
+      return envStatus?.mmsegVersion != null;
     }
     return false;
   };

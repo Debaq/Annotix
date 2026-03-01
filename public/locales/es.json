@@ -1822,6 +1822,9 @@
       "rtdetrTitle": "Parámetros RT-DETR",
       "rfdetrTitle": "Parámetros RF-DETR",
       "mmdetTitle": "Parámetros MMDetection",
+      "smpTitle": "Parámetros SMP",
+      "hfSegTitle": "Parámetros HuggingFace Segmentación",
+      "mmsegTitle": "Parámetros MMSegmentation",
       "resolution": "Resolución",
       "resolutionDesc": "Resolución de entrada (debe ser múltiplo de 56)",
       "lr_encoder": "LR del Encoder",
@@ -1845,7 +1848,23 @@
       "imageSize": "Tamaño de Imagen",
       "imageSizeDesc": "Resolución de entrada para el entrenamiento",
       "lr": "Tasa de Aprendizaje",
-      "lrDesc": "Tasa de aprendizaje base para el entrenamiento"
+      "lrDesc": "Tasa de aprendizaje base para el entrenamiento",
+      "loss_type": "Función de Pérdida",
+      "loss_typeDesc": "Función de pérdida para entrenamiento de segmentación",
+      "scheduler": "Scheduler LR",
+      "schedulerDesc": "Tipo de programación del learning rate",
+      "encoder_depth": "Profundidad Encoder",
+      "encoder_depthDesc": "Profundidad del backbone encoder (3-5)",
+      "freeze_encoder": "Congelar Encoder",
+      "freeze_encoderDesc": "Congelar pesos del encoder para transfer learning",
+      "do_reduce_labels": "Reducir Labels",
+      "do_reduce_labelsDesc": "Desplazar IDs de label en 1 (algunos datasets usan 255 para fondo)",
+      "warmup_ratio": "Ratio Warmup",
+      "warmup_ratioDesc": "Fracción del entrenamiento para warmup lineal",
+      "lr_scheduler_type": "Tipo Scheduler LR",
+      "lr_scheduler_typeDesc": "Estrategia de decaimiento del learning rate",
+      "crop_size": "Tamaño de Recorte",
+      "crop_sizeDesc": "Tamaño de recorte aleatorio para entrenamiento (píxeles)"
     },
     "monitor": {
       "title": "Entrenamiento en Progreso",
@@ -1857,7 +1876,9 @@
       "recall": "Recall",
       "logs": "Logs de Entrenamiento",
       "waitingMetrics": "Esperando métricas...",
-      "waitingLogs": "Esperando logs..."
+      "waitingLogs": "Esperando logs...",
+      "mIoU": "mIoU",
+      "meanAccuracy": "Precisión Media"
     },
     "status": {
       "pending": "Pendiente",
