@@ -40,7 +40,7 @@ export function Sidebar() {
           <div className="rounded-md border bg-background p-3">
             <p className="font-medium">{project.name}</p>
             <p className="text-xs text-muted-foreground">
-              {t(`project.type.${project.type}`)}
+              {t(`project.types.${project.type}.name`)}
             </p>
           </div>
         </div>

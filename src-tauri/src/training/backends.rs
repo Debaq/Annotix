@@ -4,10 +4,22 @@ use super::{BackendInfo, BackendModelInfo, DatasetFormat};
 fn project_type_to_task(project_type: &str) -> &str {
     match project_type {
         "bbox" | "object-detection" => "detect",
-        "instance-segmentation" | "polygon" | "mask" | "semantic-segmentation" => "segment",
+        "mask" | "semantic-segmentation" => "segment",
+        "instance-segmentation" | "polygon" => "instance_segment",
         "classification" => "classify",
+        "multi-label-classification" => "multi_classify",
         "keypoints" => "pose",
+        "landmarks" => "landmarks",
         "obb" => "obb",
+        "timeseries-classification" => "ts_classify",
+        "timeseries-forecasting" => "ts_forecast",
+        "anomaly-detection" => "ts_anomaly",
+        "timeseries-segmentation" => "ts_segment",
+        "pattern-recognition" => "ts_pattern",
+        "event-detection" => "ts_event",
+        "timeseries-regression" => "ts_regress",
+        "clustering" => "ts_cluster",
+        "imputation" => "ts_impute",
         _ => "detect",
     }
 }
@@ -17,29 +29,67 @@ pub fn get_available_backends(project_type: &str) -> Vec<BackendInfo> {
     let task = project_type_to_task(project_type);
     let mut backends = Vec::new();
 
-    // YOLO — all tasks
-    backends.push(build_yolo_backend(task));
-
-    // RT-DETR — detect only
-    if task == "detect" {
-        backends.push(build_rtdetr_backend());
-    }
-
-    // RF-DETR — detect + segment (preview)
-    if task == "detect" || task == "segment" {
-        backends.push(build_rfdetr_backend(task));
-    }
-
-    // MMDetection — detect only
-    if task == "detect" {
-        backends.push(build_mmdet_backend());
-    }
-
-    // Semantic segmentation backends — segment only
-    if task == "segment" {
-        backends.push(build_smp_backend());
-        backends.push(build_hf_seg_backend());
-        backends.push(build_mmseg_backend());
+    match task {
+        "detect" => {
+            backends.push(build_yolo_backend(task));
+            backends.push(build_rtdetr_backend());
+            backends.push(build_rfdetr_backend(task));
+            backends.push(build_mmdet_backend());
+        }
+        "segment" => {
+            backends.push(build_yolo_backend(task));
+            backends.push(build_rfdetr_backend(task));
+            backends.push(build_smp_backend());
+            backends.push(build_hf_seg_backend());
+            backends.push(build_mmseg_backend());
+        }
+        "instance_segment" => {
+            backends.push(build_yolo_backend("segment"));
+            backends.push(build_detectron2_backend());
+            backends.push(build_mmdet_instance_backend());
+        }
+        "classify" => {
+            backends.push(build_yolo_backend(task));
+            backends.push(build_timm_backend(task));
+            backends.push(build_hf_classification_backend(task));
+        }
+        "multi_classify" => {
+            backends.push(build_timm_backend(task));
+            backends.push(build_hf_classification_backend(task));
+        }
+        "pose" => {
+            backends.push(build_yolo_backend(task));
+            backends.push(build_mmpose_backend());
+        }
+        "landmarks" => {
+            backends.push(build_mmpose_backend());
+        }
+        "obb" => {
+            backends.push(build_yolo_backend(task));
+            backends.push(build_mmrotate_backend());
+        }
+        "ts_classify" | "ts_forecast" | "ts_regress" | "ts_segment" | "ts_event" => {
+            backends.push(build_tsai_backend(task));
+            if task == "ts_forecast" {
+                backends.push(build_pytorch_forecasting_backend());
+            }
+        }
+        "ts_anomaly" => {
+            backends.push(build_tsai_backend(task));
+            backends.push(build_pyod_backend());
+        }
+        "ts_cluster" => {
+            backends.push(build_tslearn_backend());
+        }
+        "ts_impute" => {
+            backends.push(build_pypots_backend());
+        }
+        "ts_pattern" => {
+            backends.push(build_stumpy_backend());
+        }
+        _ => {
+            backends.push(build_yolo_backend("detect"));
+        }
     }
 
     backends
@@ -1001,5 +1051,936 @@ fn build_mmseg_backend() -> BackendInfo {
         models,
         dataset_format: DatasetFormat::MaskPng,
         pip_packages: vec!["openmim".into(), "mmengine".into(), "mmcv".into(), "mmsegmentation".into()],
+    }
+}
+
+// ─── Detectron2 (Instance Segmentation / Polygon) ───────────────────────────
+
+fn build_detectron2_backend() -> BackendInfo {
+    let models = vec![
+        BackendModelInfo {
+            id: "mask_rcnn_R_50_FPN_3x".into(),
+            name: "Mask R-CNN R50".into(),
+            family: "mask-rcnn".into(),
+            description: "Standard Mask R-CNN with ResNet-50 FPN".into(),
+            params_count: Some("44M".into()),
+            tasks: vec!["instance_segment".into()],
+            sizes: None,
+            recommended: true,
+        },
+        BackendModelInfo {
+            id: "mask_rcnn_R_101_FPN_3x".into(),
+            name: "Mask R-CNN R101".into(),
+            family: "mask-rcnn".into(),
+            description: "Mask R-CNN with deeper ResNet-101 backbone".into(),
+            params_count: Some("63M".into()),
+            tasks: vec!["instance_segment".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "cascade_mask_rcnn_R_50_FPN_3x".into(),
+            name: "Cascade Mask R-CNN".into(),
+            family: "cascade".into(),
+            description: "Multi-stage cascaded Mask R-CNN".into(),
+            params_count: Some("77M".into()),
+            tasks: vec!["instance_segment".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "mask2former_swin_L_IN21k".into(),
+            name: "Mask2Former Swin-L".into(),
+            family: "mask2former".into(),
+            description: "SOTA universal instance segmentation".into(),
+            params_count: Some("216M".into()),
+            tasks: vec!["instance_segment".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "pointrend_R_50_FPN_3x".into(),
+            name: "PointRend R50".into(),
+            family: "pointrend".into(),
+            description: "Point-based refinement for sharp mask boundaries".into(),
+            params_count: Some("45M".into()),
+            tasks: vec!["instance_segment".into()],
+            sizes: None,
+            recommended: false,
+        },
+    ];
+
+    BackendInfo {
+        id: "detectron2".into(),
+        name: "Detectron2".into(),
+        description: "Facebook AI instance segmentation — Mask R-CNN, Mask2Former, PointRend".into(),
+        supported_tasks: vec!["instance_segment".into()],
+        models,
+        dataset_format: DatasetFormat::CocoInstanceJson,
+        pip_packages: vec!["detectron2".into()],
+    }
+}
+
+// ─── MMDetection Instance Seg ────────────────────────────────────────────────
+
+fn build_mmdet_instance_backend() -> BackendInfo {
+    let models = vec![
+        BackendModelInfo {
+            id: "mask-rcnn_r50_fpn_ins".into(),
+            name: "Mask R-CNN (R50)".into(),
+            family: "mask-rcnn".into(),
+            description: "Classic instance segmentation with ResNet-50".into(),
+            params_count: Some("44M".into()),
+            tasks: vec!["instance_segment".into()],
+            sizes: None,
+            recommended: true,
+        },
+        BackendModelInfo {
+            id: "cascade-mask-rcnn_r50_fpn_ins".into(),
+            name: "Cascade Mask R-CNN".into(),
+            family: "cascade".into(),
+            description: "Multi-stage cascaded instance segmentation".into(),
+            params_count: Some("77M".into()),
+            tasks: vec!["instance_segment".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "solov2_r50_fpn".into(),
+            name: "SOLOv2 (R50)".into(),
+            family: "solo".into(),
+            description: "Segmenting objects by locations — direct mask prediction".into(),
+            params_count: Some("46M".into()),
+            tasks: vec!["instance_segment".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "mask2former_swin-l_ins".into(),
+            name: "Mask2Former (Swin-L)".into(),
+            family: "mask2former".into(),
+            description: "SOTA universal instance segmentation via MMDet".into(),
+            params_count: Some("216M".into()),
+            tasks: vec!["instance_segment".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "htc_r50_fpn".into(),
+            name: "HTC (R50)".into(),
+            family: "htc".into(),
+            description: "Hybrid Task Cascade — progressive refinement".into(),
+            params_count: Some("76M".into()),
+            tasks: vec!["instance_segment".into()],
+            sizes: None,
+            recommended: false,
+        },
+    ];
+
+    BackendInfo {
+        id: "mmdetection".into(),
+        name: "MMDetection".into(),
+        description: "OpenMMLab instance segmentation — Mask R-CNN, SOLOv2, Mask2Former, HTC".into(),
+        supported_tasks: vec!["instance_segment".into()],
+        models,
+        dataset_format: DatasetFormat::CocoInstanceJson,
+        pip_packages: vec!["openmim".into(), "mmengine".into(), "mmcv".into(), "mmdet".into()],
+    }
+}
+
+// ─── MMPose (Keypoints + Landmarks) ──────────────────────────────────────────
+
+fn build_mmpose_backend() -> BackendInfo {
+    let models = vec![
+        BackendModelInfo {
+            id: "rtmpose-t".into(),
+            name: "RTMPose-T".into(),
+            family: "rtmpose".into(),
+            description: "Real-time pose — tiny variant, fastest".into(),
+            params_count: Some("3.3M".into()),
+            tasks: vec!["pose".into(), "landmarks".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "rtmpose-s".into(),
+            name: "RTMPose-S".into(),
+            family: "rtmpose".into(),
+            description: "Real-time pose — small, good balance".into(),
+            params_count: Some("5.5M".into()),
+            tasks: vec!["pose".into(), "landmarks".into()],
+            sizes: None,
+            recommended: true,
+        },
+        BackendModelInfo {
+            id: "rtmpose-m".into(),
+            name: "RTMPose-M".into(),
+            family: "rtmpose".into(),
+            description: "Real-time pose — medium, higher accuracy".into(),
+            params_count: Some("13M".into()),
+            tasks: vec!["pose".into(), "landmarks".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "rtmpose-l".into(),
+            name: "RTMPose-L".into(),
+            family: "rtmpose".into(),
+            description: "Real-time pose — large, best RTMPose accuracy".into(),
+            params_count: Some("28M".into()),
+            tasks: vec!["pose".into(), "landmarks".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "hrnet-w32".into(),
+            name: "HRNet-W32".into(),
+            family: "hrnet".into(),
+            description: "High-Resolution Network — multi-scale features".into(),
+            params_count: Some("29M".into()),
+            tasks: vec!["pose".into(), "landmarks".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "hrnet-w48".into(),
+            name: "HRNet-W48".into(),
+            family: "hrnet".into(),
+            description: "HRNet wider variant — higher accuracy".into(),
+            params_count: Some("64M".into()),
+            tasks: vec!["pose".into(), "landmarks".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "vitpose-b".into(),
+            name: "ViTPose-B".into(),
+            family: "vitpose".into(),
+            description: "Vision Transformer for pose — base variant".into(),
+            params_count: Some("86M".into()),
+            tasks: vec!["pose".into(), "landmarks".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "vitpose-l".into(),
+            name: "ViTPose-L".into(),
+            family: "vitpose".into(),
+            description: "ViTPose large — maximum accuracy".into(),
+            params_count: Some("307M".into()),
+            tasks: vec!["pose".into(), "landmarks".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "simplebaseline-r50".into(),
+            name: "SimpleBaseline R50".into(),
+            family: "simplebaseline".into(),
+            description: "Simple deconv baseline with ResNet-50".into(),
+            params_count: Some("34M".into()),
+            tasks: vec!["pose".into(), "landmarks".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "litehrnet-30".into(),
+            name: "LiteHRNet-30".into(),
+            family: "litehrnet".into(),
+            description: "Lightweight HRNet — mobile-friendly".into(),
+            params_count: Some("1.8M".into()),
+            tasks: vec!["pose".into(), "landmarks".into()],
+            sizes: None,
+            recommended: false,
+        },
+    ];
+
+    BackendInfo {
+        id: "mmpose".into(),
+        name: "MMPose".into(),
+        description: "OpenMMLab pose estimation — RTMPose, HRNet, ViTPose and more".into(),
+        supported_tasks: vec!["pose".into(), "landmarks".into()],
+        models,
+        dataset_format: DatasetFormat::CocoKeypointsJson,
+        pip_packages: vec!["openmim".into(), "mmengine".into(), "mmcv".into(), "mmpose".into(), "mmdet".into()],
+    }
+}
+
+// ─── MMRotate (OBB) ──────────────────────────────────────────────────────────
+
+fn build_mmrotate_backend() -> BackendInfo {
+    let models = vec![
+        BackendModelInfo {
+            id: "oriented-rcnn_r50_fpn".into(),
+            name: "Oriented R-CNN".into(),
+            family: "oriented-rcnn".into(),
+            description: "Two-stage oriented detector with midpoint offset".into(),
+            params_count: Some("41M".into()),
+            tasks: vec!["obb".into()],
+            sizes: None,
+            recommended: true,
+        },
+        BackendModelInfo {
+            id: "rotated-faster-rcnn_r50_fpn".into(),
+            name: "Rotated Faster R-CNN".into(),
+            family: "rotated-rcnn".into(),
+            description: "Faster R-CNN adapted for rotated boxes".into(),
+            params_count: Some("41M".into()),
+            tasks: vec!["obb".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "rotated-retinanet_r50_fpn".into(),
+            name: "Rotated RetinaNet".into(),
+            family: "rotated-retinanet".into(),
+            description: "One-stage rotated detector with focal loss".into(),
+            params_count: Some("37M".into()),
+            tasks: vec!["obb".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "roi-transformer_r50_fpn".into(),
+            name: "RoI Transformer".into(),
+            family: "roi-transformer".into(),
+            description: "Learns spatial transformation for rotated RoIs".into(),
+            params_count: Some("55M".into()),
+            tasks: vec!["obb".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "gliding-vertex_r50_fpn".into(),
+            name: "Gliding Vertex".into(),
+            family: "gliding-vertex".into(),
+            description: "Gliding vertex on horizontal bounding boxes".into(),
+            params_count: Some("41M".into()),
+            tasks: vec!["obb".into()],
+            sizes: None,
+            recommended: false,
+        },
+    ];
+
+    BackendInfo {
+        id: "mmrotate".into(),
+        name: "MMRotate".into(),
+        description: "OpenMMLab rotated object detection — Oriented R-CNN, RoI Transformer".into(),
+        supported_tasks: vec!["obb".into()],
+        models,
+        dataset_format: DatasetFormat::DotaTxt,
+        pip_packages: vec!["openmim".into(), "mmengine".into(), "mmcv".into(), "mmrotate".into()],
+    }
+}
+
+// ─── timm (Classification / Multi-label) ─────────────────────────────────────
+
+fn build_timm_backend(task: &str) -> BackendInfo {
+    let tasks = if task == "multi_classify" {
+        vec!["multi_classify".into()]
+    } else {
+        vec!["classify".into(), "multi_classify".into()]
+    };
+
+    let models = vec![
+        BackendModelInfo {
+            id: "mobilenetv3_large_100".into(),
+            name: "MobileNetV3-Large".into(),
+            family: "mobilenet".into(),
+            description: "Mobile-optimized — fast inference".into(),
+            params_count: Some("5.5M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "efficientnet_b0".into(),
+            name: "EfficientNet-B0".into(),
+            family: "efficientnet".into(),
+            description: "Efficient scaling — lightweight".into(),
+            params_count: Some("5.3M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: true,
+        },
+        BackendModelInfo {
+            id: "efficientnet_b3".into(),
+            name: "EfficientNet-B3".into(),
+            family: "efficientnet".into(),
+            description: "Efficient scaling — balanced accuracy".into(),
+            params_count: Some("12M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "resnet50".into(),
+            name: "ResNet-50".into(),
+            family: "resnet".into(),
+            description: "Classic residual network — widely used baseline".into(),
+            params_count: Some("25M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "convnext_tiny".into(),
+            name: "ConvNeXt-Tiny".into(),
+            family: "convnext".into(),
+            description: "Modern pure-CNN — competitive with ViT".into(),
+            params_count: Some("28M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "vit_base_patch16_224".into(),
+            name: "ViT-Base".into(),
+            family: "vit".into(),
+            description: "Vision Transformer base — strong general accuracy".into(),
+            params_count: Some("86M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "swin_base_patch4_window7_224".into(),
+            name: "Swin-Base".into(),
+            family: "swin".into(),
+            description: "Shifted Window Transformer — hierarchical features".into(),
+            params_count: Some("88M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "eva02_large_patch14_448".into(),
+            name: "EVA-02-Large".into(),
+            family: "eva".into(),
+            description: "SOTA vision foundation model — highest accuracy".into(),
+            params_count: Some("305M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+    ];
+
+    let filtered: Vec<BackendModelInfo> = models
+        .into_iter()
+        .filter(|m| m.tasks.contains(&task.to_string()))
+        .collect();
+
+    let ds_fmt = if task == "multi_classify" {
+        DatasetFormat::MultiLabelCsv
+    } else {
+        DatasetFormat::ImageFolder
+    };
+
+    BackendInfo {
+        id: "timm".into(),
+        name: "timm".into(),
+        description: "PyTorch Image Models — MobileNet, EfficientNet, ViT, Swin, EVA".into(),
+        supported_tasks: vec!["classify".into(), "multi_classify".into()],
+        models: filtered,
+        dataset_format: ds_fmt,
+        pip_packages: vec!["timm".into(), "torch".into(), "torchvision".into()],
+    }
+}
+
+// ─── HuggingFace Classification ──────────────────────────────────────────────
+
+fn build_hf_classification_backend(task: &str) -> BackendInfo {
+    let tasks = if task == "multi_classify" {
+        vec!["multi_classify".into()]
+    } else {
+        vec!["classify".into(), "multi_classify".into()]
+    };
+
+    let models = vec![
+        BackendModelInfo {
+            id: "google/vit-base-patch16-224".into(),
+            name: "ViT-Base".into(),
+            family: "vit".into(),
+            description: "Vision Transformer — strong ImageNet baseline".into(),
+            params_count: Some("86M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: true,
+        },
+        BackendModelInfo {
+            id: "google/vit-large-patch16-224".into(),
+            name: "ViT-Large".into(),
+            family: "vit".into(),
+            description: "Vision Transformer large — higher accuracy".into(),
+            params_count: Some("307M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "facebook/convnext-base-224".into(),
+            name: "ConvNeXt-Base".into(),
+            family: "convnext".into(),
+            description: "Modern CNN competitive with transformers".into(),
+            params_count: Some("89M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "microsoft/swin-base-patch4-window7-224".into(),
+            name: "Swin-Base".into(),
+            family: "swin".into(),
+            description: "Shifted Window Transformer for classification".into(),
+            params_count: Some("88M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "facebook/deit-base-distilled-patch16-224".into(),
+            name: "DeiT-Base".into(),
+            family: "deit".into(),
+            description: "Data-efficient Image Transformer with distillation".into(),
+            params_count: Some("87M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "microsoft/beit-base-patch16-224".into(),
+            name: "BEiT-Base".into(),
+            family: "beit".into(),
+            description: "BERT pre-trained Image Transformer".into(),
+            params_count: Some("86M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+    ];
+
+    let filtered: Vec<BackendModelInfo> = models
+        .into_iter()
+        .filter(|m| m.tasks.contains(&task.to_string()))
+        .collect();
+
+    let ds_fmt = if task == "multi_classify" {
+        DatasetFormat::MultiLabelCsv
+    } else {
+        DatasetFormat::ImageFolder
+    };
+
+    BackendInfo {
+        id: "hf_classification".into(),
+        name: "HuggingFace Cls".into(),
+        description: "HuggingFace Transformers — ViT, ConvNeXt, Swin, DeiT, BEiT for classification".into(),
+        supported_tasks: vec!["classify".into(), "multi_classify".into()],
+        models: filtered,
+        dataset_format: ds_fmt,
+        pip_packages: vec!["transformers".into(), "datasets".into(), "evaluate".into(), "torch".into(), "torchvision".into()],
+    }
+}
+
+// ─── Time Series Backends ────────────────────────────────────────────────────
+
+fn build_tsai_backend(task: &str) -> BackendInfo {
+    let all_tasks = vec![
+        "ts_classify".to_string(), "ts_forecast".to_string(), "ts_regress".to_string(),
+        "ts_anomaly".to_string(), "ts_segment".to_string(), "ts_event".to_string(),
+    ];
+
+    let models = vec![
+        BackendModelInfo {
+            id: "InceptionTimePlus".into(),
+            name: "InceptionTime+".into(),
+            family: "inception".into(),
+            description: "Inception-based — robust for time series classification".into(),
+            params_count: Some("0.5M".into()),
+            tasks: all_tasks.clone(),
+            sizes: None,
+            recommended: true,
+        },
+        BackendModelInfo {
+            id: "PatchTST".into(),
+            name: "PatchTST".into(),
+            family: "transformer".into(),
+            description: "Patch-based Transformer — strong for forecasting".into(),
+            params_count: Some("2M".into()),
+            tasks: all_tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "TSTPlus".into(),
+            name: "TST+".into(),
+            family: "transformer".into(),
+            description: "Time Series Transformer — general purpose".into(),
+            params_count: Some("1.5M".into()),
+            tasks: all_tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "TSiTPlus".into(),
+            name: "TSiT+".into(),
+            family: "transformer".into(),
+            description: "Time Series image Transformer — image-like encoding".into(),
+            params_count: Some("3M".into()),
+            tasks: all_tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "ROCKET".into(),
+            name: "ROCKET".into(),
+            family: "rocket".into(),
+            description: "Random convolutional kernels — very fast training".into(),
+            params_count: None,
+            tasks: vec!["ts_classify".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "MiniRocket".into(),
+            name: "MiniRocket".into(),
+            family: "rocket".into(),
+            description: "Deterministic ROCKET variant — faster, near-identical accuracy".into(),
+            params_count: None,
+            tasks: vec!["ts_classify".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "XceptionTimePlus".into(),
+            name: "XceptionTime+".into(),
+            family: "xception".into(),
+            description: "Xception for time series — depthwise separable convolutions".into(),
+            params_count: Some("0.4M".into()),
+            tasks: all_tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "ResNetPlus".into(),
+            name: "ResNet+".into(),
+            family: "resnet".into(),
+            description: "ResNet adapted for time series".into(),
+            params_count: Some("0.5M".into()),
+            tasks: all_tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "LSTMPlus".into(),
+            name: "LSTM+".into(),
+            family: "rnn".into(),
+            description: "LSTM-based — good for sequential patterns".into(),
+            params_count: Some("0.3M".into()),
+            tasks: all_tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "GRUPlus".into(),
+            name: "GRU+".into(),
+            family: "rnn".into(),
+            description: "GRU-based — lighter than LSTM".into(),
+            params_count: Some("0.2M".into()),
+            tasks: all_tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "TCN".into(),
+            name: "TCN".into(),
+            family: "tcn".into(),
+            description: "Temporal Convolutional Network — causal convolutions".into(),
+            params_count: Some("0.3M".into()),
+            tasks: all_tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "OmniScaleCNN".into(),
+            name: "OmniScaleCNN".into(),
+            family: "cnn".into(),
+            description: "Multi-scale CNN for time series".into(),
+            params_count: Some("0.4M".into()),
+            tasks: all_tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+    ];
+
+    let filtered: Vec<BackendModelInfo> = models
+        .into_iter()
+        .filter(|m| m.tasks.contains(&task.to_string()))
+        .collect();
+
+    BackendInfo {
+        id: "tsai".into(),
+        name: "tsai".into(),
+        description: "Time series AI library — InceptionTime, PatchTST, ROCKET, LSTM and more".into(),
+        supported_tasks: vec![
+            "ts_classify".into(), "ts_forecast".into(), "ts_regress".into(),
+            "ts_anomaly".into(), "ts_segment".into(), "ts_event".into(),
+        ],
+        models: filtered,
+        dataset_format: DatasetFormat::TimeSeriesCsv,
+        pip_packages: vec!["tsai".into()],
+    }
+}
+
+fn build_pytorch_forecasting_backend() -> BackendInfo {
+    let models = vec![
+        BackendModelInfo {
+            id: "tft".into(),
+            name: "TFT".into(),
+            family: "tft".into(),
+            description: "Temporal Fusion Transformer — interpretable multi-horizon forecasting".into(),
+            params_count: Some("5M".into()),
+            tasks: vec!["ts_forecast".into()],
+            sizes: None,
+            recommended: true,
+        },
+        BackendModelInfo {
+            id: "nbeats".into(),
+            name: "N-BEATS".into(),
+            family: "nbeats".into(),
+            description: "Neural Basis Expansion — pure DL forecasting".into(),
+            params_count: Some("4M".into()),
+            tasks: vec!["ts_forecast".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "nhits".into(),
+            name: "N-HiTS".into(),
+            family: "nhits".into(),
+            description: "Neural Hierarchical Interpolation — multi-rate sampling".into(),
+            params_count: Some("3M".into()),
+            tasks: vec!["ts_forecast".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "deepar".into(),
+            name: "DeepAR".into(),
+            family: "deepar".into(),
+            description: "Probabilistic forecasting with autoregressive RNN".into(),
+            params_count: Some("2M".into()),
+            tasks: vec!["ts_forecast".into()],
+            sizes: None,
+            recommended: false,
+        },
+    ];
+
+    BackendInfo {
+        id: "pytorch_forecasting".into(),
+        name: "PyTorch Forecasting".into(),
+        description: "Time series forecasting — TFT, N-BEATS, N-HiTS, DeepAR".into(),
+        supported_tasks: vec!["ts_forecast".into()],
+        models,
+        dataset_format: DatasetFormat::TimeSeriesCsv,
+        pip_packages: vec!["pytorch-forecasting".into(), "pytorch-lightning".into(), "torch".into()],
+    }
+}
+
+fn build_pyod_backend() -> BackendInfo {
+    let models = vec![
+        BackendModelInfo {
+            id: "pyod-autoencoder".into(),
+            name: "AutoEncoder".into(),
+            family: "autoencoder".into(),
+            description: "Neural network autoencoder for anomaly detection".into(),
+            params_count: None,
+            tasks: vec!["ts_anomaly".into()],
+            sizes: None,
+            recommended: true,
+        },
+        BackendModelInfo {
+            id: "pyod-vae".into(),
+            name: "VAE".into(),
+            family: "autoencoder".into(),
+            description: "Variational AutoEncoder — probabilistic anomaly detection".into(),
+            params_count: None,
+            tasks: vec!["ts_anomaly".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "pyod-ecod".into(),
+            name: "ECOD".into(),
+            family: "statistical".into(),
+            description: "Empirical Cumulative Distribution — unsupervised, fast".into(),
+            params_count: None,
+            tasks: vec!["ts_anomaly".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "pyod-iforest".into(),
+            name: "Isolation Forest".into(),
+            family: "ensemble".into(),
+            description: "Tree-based isolation — efficient for high-dim data".into(),
+            params_count: None,
+            tasks: vec!["ts_anomaly".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "pyod-lof".into(),
+            name: "LOF".into(),
+            family: "proximity".into(),
+            description: "Local Outlier Factor — density-based anomaly detection".into(),
+            params_count: None,
+            tasks: vec!["ts_anomaly".into()],
+            sizes: None,
+            recommended: false,
+        },
+    ];
+
+    BackendInfo {
+        id: "pyod".into(),
+        name: "PyOD".into(),
+        description: "Python Outlier Detection — AutoEncoder, VAE, ECOD, Isolation Forest, LOF".into(),
+        supported_tasks: vec!["ts_anomaly".into()],
+        models,
+        dataset_format: DatasetFormat::TimeSeriesCsv,
+        pip_packages: vec!["pyod".into(), "torch".into()],
+    }
+}
+
+fn build_tslearn_backend() -> BackendInfo {
+    let models = vec![
+        BackendModelInfo {
+            id: "tslearn-kmeans-dtw".into(),
+            name: "K-Means DTW".into(),
+            family: "kmeans".into(),
+            description: "K-Means with Dynamic Time Warping distance".into(),
+            params_count: None,
+            tasks: vec!["ts_cluster".into()],
+            sizes: None,
+            recommended: true,
+        },
+        BackendModelInfo {
+            id: "tslearn-kmeans-euclidean".into(),
+            name: "K-Means Euclidean".into(),
+            family: "kmeans".into(),
+            description: "K-Means with standard Euclidean distance".into(),
+            params_count: None,
+            tasks: vec!["ts_cluster".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "tslearn-kmeans-softdtw".into(),
+            name: "K-Means Soft-DTW".into(),
+            family: "kmeans".into(),
+            description: "K-Means with differentiable Soft-DTW".into(),
+            params_count: None,
+            tasks: vec!["ts_cluster".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "tslearn-kshape".into(),
+            name: "K-Shape".into(),
+            family: "kshape".into(),
+            description: "Shape-based time series clustering".into(),
+            params_count: None,
+            tasks: vec!["ts_cluster".into()],
+            sizes: None,
+            recommended: false,
+        },
+    ];
+
+    BackendInfo {
+        id: "tslearn".into(),
+        name: "tslearn".into(),
+        description: "Time series clustering — K-Means (DTW/Euclidean/Soft-DTW), K-Shape".into(),
+        supported_tasks: vec!["ts_cluster".into()],
+        models,
+        dataset_format: DatasetFormat::TimeSeriesCsv,
+        pip_packages: vec!["tslearn".into(), "scikit-learn".into()],
+    }
+}
+
+fn build_pypots_backend() -> BackendInfo {
+    let models = vec![
+        BackendModelInfo {
+            id: "pypots-saits".into(),
+            name: "SAITS".into(),
+            family: "transformer".into(),
+            description: "Self-Attention-based Imputation — joint optimization".into(),
+            params_count: Some("1M".into()),
+            tasks: vec!["ts_impute".into()],
+            sizes: None,
+            recommended: true,
+        },
+        BackendModelInfo {
+            id: "pypots-brits".into(),
+            name: "BRITS".into(),
+            family: "rnn".into(),
+            description: "Bidirectional Recurrent Imputation — captures temporal deps".into(),
+            params_count: Some("0.5M".into()),
+            tasks: vec!["ts_impute".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "pypots-usgan".into(),
+            name: "US-GAN".into(),
+            family: "gan".into(),
+            description: "GAN-based imputation with unsupervised training".into(),
+            params_count: Some("1.5M".into()),
+            tasks: vec!["ts_impute".into()],
+            sizes: None,
+            recommended: false,
+        },
+    ];
+
+    BackendInfo {
+        id: "pypots".into(),
+        name: "PyPOTS".into(),
+        description: "Partially-Observed Time Series — SAITS, BRITS, US-GAN for imputation".into(),
+        supported_tasks: vec!["ts_impute".into()],
+        models,
+        dataset_format: DatasetFormat::TimeSeriesCsv,
+        pip_packages: vec!["pypots".into(), "torch".into()],
+    }
+}
+
+fn build_stumpy_backend() -> BackendInfo {
+    let models = vec![
+        BackendModelInfo {
+            id: "stumpy-mp".into(),
+            name: "Matrix Profile".into(),
+            family: "matrix-profile".into(),
+            description: "Matrix Profile for motif/discord discovery".into(),
+            params_count: None,
+            tasks: vec!["ts_pattern".into()],
+            sizes: None,
+            recommended: true,
+        },
+        BackendModelInfo {
+            id: "stumpy-mpdist".into(),
+            name: "MPdist".into(),
+            family: "matrix-profile".into(),
+            description: "Matrix Profile distance for similarity search".into(),
+            params_count: None,
+            tasks: vec!["ts_pattern".into()],
+            sizes: None,
+            recommended: false,
+        },
+    ];
+
+    BackendInfo {
+        id: "stumpy".into(),
+        name: "STUMPY".into(),
+        description: "Matrix Profile — motif discovery, discord detection, pattern recognition".into(),
+        supported_tasks: vec!["ts_pattern".into()],
+        models,
+        dataset_format: DatasetFormat::TimeSeriesCsv,
+        pip_packages: vec!["stumpy".into(), "numpy".into()],
     }
 }

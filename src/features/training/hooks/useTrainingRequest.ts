@@ -143,6 +143,79 @@ const DEFAULT_BACKEND_PARAMS: Record<TrainingBackend, Record<string, unknown>> =
     weight_decay: 0.01,
     checkpoint_interval: 1,
   },
+  detectron2: {
+    optimizer_type: 'SGD',
+    momentum: 0.9,
+    weight_decay: 0.0001,
+    warmup_iters: 1000,
+    checkpoint_period: 5000,
+    roi_head_batch_size: 512,
+  },
+  mmpose: {
+    optimizer_type: 'Adam',
+    weight_decay: 0.0,
+    lr_schedule: 'step',
+    warmup_iters: 500,
+    checkpoint_interval: 10,
+    flip_test: true,
+  },
+  mmrotate: {
+    optimizer_type: 'SGD',
+    momentum: 0.9,
+    weight_decay: 0.0001,
+    lr_schedule: 'step',
+    warmup_iters: 500,
+    checkpoint_interval: 1,
+  },
+  timm: {
+    optimizer_type: 'AdamW',
+    weight_decay: 0.05,
+    lr_schedule: 'cosine',
+    warmup_epochs: 5,
+    label_smoothing: 0.1,
+    mixup_alpha: 0.8,
+    cutmix_alpha: 1.0,
+  },
+  hf_classification: {
+    warmup_ratio: 0.1,
+    weight_decay: 0.01,
+    lr_scheduler_type: 'cosine',
+    gradient_accumulation_steps: 1,
+  },
+  tsai: {
+    optimizer_type: 'Adam',
+    weight_decay: 0.01,
+    lr_schedule: 'one_cycle',
+    sequence_length: 100,
+    stride: 1,
+  },
+  pytorch_forecasting: {
+    max_prediction_length: 24,
+    max_encoder_length: 96,
+    gradient_clip_val: 0.1,
+    hidden_size: 64,
+    attention_head_size: 4,
+  },
+  pyod: {
+    contamination: 0.1,
+    hidden_neurons: [64, 32],
+    n_estimators: 100,
+  },
+  tslearn: {
+    n_clusters: 3,
+    max_iter: 50,
+    metric: 'dtw',
+  },
+  pypots: {
+    n_layers: 2,
+    d_model: 256,
+    d_ffn: 128,
+    n_heads: 4,
+  },
+  stumpy: {
+    window_size: 50,
+    normalize: true,
+  },
 };
 
 const DEFAULT_LR: Record<TrainingBackend, number> = {
@@ -153,6 +226,17 @@ const DEFAULT_LR: Record<TrainingBackend, number> = {
   smp: 0.0001,
   hf_segmentation: 0.00006,
   mmsegmentation: 0.0001,
+  detectron2: 0.0025,
+  mmpose: 0.0005,
+  mmrotate: 0.01,
+  timm: 0.001,
+  hf_classification: 0.00005,
+  tsai: 0.001,
+  pytorch_forecasting: 0.001,
+  pyod: 0.001,
+  tslearn: 0.001,
+  pypots: 0.001,
+  stumpy: 0.001,
 };
 
 export function useTrainingRequest(projectType: string) {

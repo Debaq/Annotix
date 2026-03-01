@@ -117,6 +117,17 @@
     padding: 0;
     overflow: hidden;
   }
+
+  #root {
+    height: 100vh;
+    box-sizing: border-box;
+    border: 1px solid #d1d5db;
+    overflow: hidden;
+  }
+
+  .dark #root {
+    border-color: #4b5563;
+  }
 }
 
 /* ============================================
@@ -128,7 +139,7 @@
 .annotix-layout {
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr var(--right-panel-width);
-  height: calc(100vh - var(--header-height));
+  height: 100%;
   overflow: hidden;
 }
 

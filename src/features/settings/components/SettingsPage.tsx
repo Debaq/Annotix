@@ -1,14 +1,24 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { GeneralSection } from './GeneralSection';
 import { PythonEnvironmentSection } from './PythonEnvironmentSection';
+import { TrainingModelsSection } from './TrainingModelsSection';
 
-type SettingsSection = 'python-env';
+type SettingsSection = 'general' | 'python-env' | 'training-models';
 
 export function SettingsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [activeSection] = useState<SettingsSection>('python-env');
+  const [activeSection, setActiveSection] = useState<SettingsSection>('general');
+
+  const sections: { id: SettingsSection; icon: string; labelKey: string }[] = [
+    { id: 'general', icon: 'fas fa-cog', labelKey: 'settings.sections.general' },
+    { id: 'python-env', icon: 'fab fa-python', labelKey: 'settings.sections.pythonEnv' },
+    { id: 'training-models', icon: 'fas fa-brain', labelKey: 'settings.sections.trainingModels' },
+  ];
+
+  const activeLabelKey = sections.find(s => s.id === activeSection)?.labelKey ?? sections[0].labelKey;
 
   return (
     <div className="flex h-full bg-[var(--annotix-light)]">
@@ -25,27 +35,33 @@ export function SettingsPage() {
         </div>
 
         <nav className="flex-1 p-2">
-          <button
-            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-2 ${
-              activeSection === 'python-env'
-                ? 'bg-[var(--annotix-primary)]/10 text-[var(--annotix-primary)] font-medium'
-                : 'text-muted-foreground hover:bg-gray-100'
-            }`}
-          >
-            <i className="fab fa-python text-[13px]" />
-            {t('settings.sections.pythonEnv')}
-          </button>
+          {sections.map((section) => (
+            <button
+              key={section.id}
+              onClick={() => setActiveSection(section.id)}
+              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-2 ${
+                activeSection === section.id
+                  ? 'bg-[var(--annotix-primary)]/10 text-[var(--annotix-primary)] font-medium'
+                  : 'text-muted-foreground hover:bg-gray-100'
+              }`}
+            >
+              <i className={`${section.icon} text-[13px]`} />
+              {t(section.labelKey)}
+            </button>
+          ))}
         </nav>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto p-8">
+        <div className={`mx-auto p-8 ${activeSection === 'training-models' ? 'max-w-5xl' : 'max-w-3xl'}`}>
           <h2 className="text-xl font-semibold text-[var(--annotix-dark)] mb-6">
-            {t('settings.sections.pythonEnv')}
+            {t(activeLabelKey)}
           </h2>
 
+          {activeSection === 'general' && <GeneralSection />}
           {activeSection === 'python-env' && <PythonEnvironmentSection />}
+          {activeSection === 'training-models' && <TrainingModelsSection />}
         </div>
       </div>
     </div>

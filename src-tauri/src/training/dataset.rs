@@ -682,7 +682,7 @@ pub fn prepare_dataset_for_backend(
     backend: &TrainingBackend,
 ) -> Result<String, String> {
     match backend {
-        TrainingBackend::Yolo | TrainingBackend::RtDetr => {
+        TrainingBackend::Yolo | TrainingBackend::RtDetr | TrainingBackend::MmRotate => {
             prepare_dataset(images_dir, project, images, output_dir, val_split, task)
         }
         TrainingBackend::RfDetr => {
@@ -694,5 +694,482 @@ pub fn prepare_dataset_for_backend(
         TrainingBackend::Smp | TrainingBackend::HfSegmentation | TrainingBackend::MmSegmentation => {
             prepare_mask_dataset(images_dir, project, images, output_dir, val_split)
         }
+        TrainingBackend::Detectron2 => {
+            prepare_coco_instance_dataset(images_dir, project, images, output_dir, val_split)
+        }
+        TrainingBackend::MmPose => {
+            prepare_coco_keypoints_dataset(images_dir, project, images, output_dir, val_split)
+        }
+        TrainingBackend::Timm | TrainingBackend::HfClassification => {
+            if task == "multi_classify" {
+                prepare_multilabel_dataset(images_dir, project, images, output_dir, val_split)
+            } else {
+                prepare_classification_dataset_imagefolder(images_dir, project, images, output_dir, val_split)
+            }
+        }
+        TrainingBackend::Tsai | TrainingBackend::PytorchForecasting
+        | TrainingBackend::Pyod | TrainingBackend::Tslearn
+        | TrainingBackend::Pypots | TrainingBackend::Stumpy => {
+            prepare_timeseries_dataset(project, output_dir, val_split)
+        }
     }
+}
+
+// ─── COCO Instance JSON Dataset (with polygon segmentation) ──────────────────
+
+pub fn prepare_coco_instance_dataset(
+    images_dir: &Path,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    output_dir: &Path,
+    val_split: f64,
+) -> Result<String, String> {
+    let total = images.len();
+    if total == 0 {
+        return Err("No hay imágenes en el proyecto".to_string());
+    }
+
+    let mut indices: Vec<usize> = (0..total).collect();
+    let seed = project.id.bytes().fold(42usize, |acc, b| acc.wrapping_mul(31).wrapping_add(b as usize));
+    for i in (1..indices.len()).rev() {
+        let j = (seed.wrapping_mul(i).wrapping_add(7)) % (i + 1);
+        indices.swap(i, j);
+    }
+
+    let val_count = ((total as f64) * val_split).ceil() as usize;
+    let val_count = val_count.max(1).min(total - 1);
+    let train_count = total - val_count;
+    let train_indices = &indices[..train_count];
+    let val_indices = &indices[train_count..];
+
+    let categories: Vec<serde_json::Value> = project.classes.iter().enumerate().map(|(i, cls)| {
+        serde_json::json!({ "id": i + 1, "name": cls.name, "supercategory": "none" })
+    }).collect();
+
+    let train_dir = output_dir.join("train");
+    let val_dir = output_dir.join("val");
+    let ann_dir = output_dir.join("annotations");
+    std::fs::create_dir_all(&train_dir).map_err(|e| format!("Error creando train/: {}", e))?;
+    std::fs::create_dir_all(&val_dir).map_err(|e| format!("Error creando val/: {}", e))?;
+    std::fs::create_dir_all(&ann_dir).map_err(|e| format!("Error creando annotations/: {}", e))?;
+
+    let train_json = build_coco_instance_json(images_dir, project, images, train_indices, &categories, &train_dir)?;
+    let val_json = build_coco_instance_json(images_dir, project, images, val_indices, &categories, &val_dir)?;
+
+    std::fs::write(ann_dir.join("instances_train.json"), &train_json)
+        .map_err(|e| format!("Error escribiendo instances_train.json: {}", e))?;
+    std::fs::write(ann_dir.join("instances_val.json"), &val_json)
+        .map_err(|e| format!("Error escribiendo instances_val.json: {}", e))?;
+
+    Ok(output_dir.to_string_lossy().replace('\\', "/"))
+}
+
+fn build_coco_instance_json(
+    images_dir: &Path,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    indices: &[usize],
+    categories: &[serde_json::Value],
+    dest_dir: &Path,
+) -> Result<String, String> {
+    let mut coco_images: Vec<serde_json::Value> = Vec::new();
+    let mut coco_annotations: Vec<serde_json::Value> = Vec::new();
+    let mut ann_id: u64 = 1;
+
+    for (img_idx, &idx) in indices.iter().enumerate() {
+        let image = &images[idx];
+        let image_id = (img_idx + 1) as u64;
+
+        let src = images_dir.join(&image.file);
+        if !src.exists() {
+            log::warn!("Imagen no encontrada: {:?}, omitiendo", src);
+            continue;
+        }
+        let _ = std::fs::copy(&src, dest_dir.join(&image.name));
+
+        coco_images.push(serde_json::json!({
+            "id": image_id, "file_name": image.name,
+            "width": image.width, "height": image.height
+        }));
+
+        for ann in &image.annotations {
+            let class_idx = match project.classes.iter().position(|c| c.id == ann.class_id) {
+                Some(idx) => idx,
+                None => continue,
+            };
+            let category_id = (class_idx + 1) as u64;
+
+            // Extract polygon segmentation
+            if let Some(poly) = parse_polygon(&ann.data) {
+                let flat_seg: Vec<f64> = poly.points.iter()
+                    .flat_map(|(x, y)| vec![*x, *y])
+                    .collect();
+                // Compute bbox from polygon
+                let min_x = poly.points.iter().map(|p| p.0).fold(f64::MAX, f64::min);
+                let min_y = poly.points.iter().map(|p| p.1).fold(f64::MAX, f64::min);
+                let max_x = poly.points.iter().map(|p| p.0).fold(f64::MIN, f64::max);
+                let max_y = poly.points.iter().map(|p| p.1).fold(f64::MIN, f64::max);
+                let w = max_x - min_x;
+                let h = max_y - min_y;
+                // Shoelace formula for area
+                let area = polygon_area(&poly.points);
+
+                coco_annotations.push(serde_json::json!({
+                    "id": ann_id, "image_id": image_id, "category_id": category_id,
+                    "segmentation": [flat_seg],
+                    "bbox": [min_x, min_y, w, h],
+                    "area": area, "iscrowd": 0
+                }));
+                ann_id += 1;
+            } else if let Some(bbox) = parse_bbox(&ann.data) {
+                // Fallback: bbox as rectangular segmentation
+                let seg = vec![
+                    bbox.x, bbox.y,
+                    bbox.x + bbox.width, bbox.y,
+                    bbox.x + bbox.width, bbox.y + bbox.height,
+                    bbox.x, bbox.y + bbox.height,
+                ];
+                coco_annotations.push(serde_json::json!({
+                    "id": ann_id, "image_id": image_id, "category_id": category_id,
+                    "segmentation": [seg],
+                    "bbox": [bbox.x, bbox.y, bbox.width, bbox.height],
+                    "area": bbox.width * bbox.height, "iscrowd": 0
+                }));
+                ann_id += 1;
+            }
+        }
+    }
+
+    let coco = serde_json::json!({
+        "images": coco_images, "annotations": coco_annotations, "categories": categories
+    });
+    serde_json::to_string_pretty(&coco).map_err(|e| format!("Error serializando COCO Instance JSON: {}", e))
+}
+
+/// Computes polygon area using the Shoelace formula
+fn polygon_area(points: &[(f64, f64)]) -> f64 {
+    let n = points.len();
+    if n < 3 { return 0.0; }
+    let mut area = 0.0;
+    for i in 0..n {
+        let j = (i + 1) % n;
+        area += points[i].0 * points[j].1;
+        area -= points[j].0 * points[i].1;
+    }
+    (area / 2.0).abs()
+}
+
+// ─── COCO Keypoints JSON Dataset ─────────────────────────────────────────────
+
+pub fn prepare_coco_keypoints_dataset(
+    images_dir: &Path,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    output_dir: &Path,
+    val_split: f64,
+) -> Result<String, String> {
+    let total = images.len();
+    if total == 0 {
+        return Err("No hay imágenes en el proyecto".to_string());
+    }
+
+    let mut indices: Vec<usize> = (0..total).collect();
+    let seed = project.id.bytes().fold(42usize, |acc, b| acc.wrapping_mul(31).wrapping_add(b as usize));
+    for i in (1..indices.len()).rev() {
+        let j = (seed.wrapping_mul(i).wrapping_add(7)) % (i + 1);
+        indices.swap(i, j);
+    }
+
+    let val_count = ((total as f64) * val_split).ceil() as usize;
+    let val_count = val_count.max(1).min(total - 1);
+    let train_count = total - val_count;
+    let train_indices = &indices[..train_count];
+    let val_indices = &indices[train_count..];
+
+    // Build categories with keypoints info from project classes
+    let categories: Vec<serde_json::Value> = project.classes.iter().enumerate().map(|(i, cls)| {
+        // Try to parse keypoint names from class metadata
+        let kp_names: Vec<String> = cls.name.split(',').map(|s| s.trim().to_string()).collect();
+        let _num_kp = kp_names.len().max(1);
+        let skeleton: Vec<Vec<usize>> = Vec::new(); // User would configure skeleton
+        serde_json::json!({
+            "id": i + 1, "name": cls.name, "supercategory": "none",
+            "keypoints": kp_names, "skeleton": skeleton
+        })
+    }).collect();
+
+    let train_dir = output_dir.join("train");
+    let val_dir = output_dir.join("val");
+    let ann_dir = output_dir.join("annotations");
+    std::fs::create_dir_all(&train_dir).map_err(|e| format!("Error: {}", e))?;
+    std::fs::create_dir_all(&val_dir).map_err(|e| format!("Error: {}", e))?;
+    std::fs::create_dir_all(&ann_dir).map_err(|e| format!("Error: {}", e))?;
+
+    let train_json = build_coco_keypoints_json(images_dir, project, images, train_indices, &categories, &train_dir)?;
+    let val_json = build_coco_keypoints_json(images_dir, project, images, val_indices, &categories, &val_dir)?;
+
+    std::fs::write(ann_dir.join("person_keypoints_train.json"), &train_json)
+        .map_err(|e| format!("Error escribiendo keypoints train: {}", e))?;
+    std::fs::write(ann_dir.join("person_keypoints_val.json"), &val_json)
+        .map_err(|e| format!("Error escribiendo keypoints val: {}", e))?;
+
+    Ok(output_dir.to_string_lossy().replace('\\', "/"))
+}
+
+fn build_coco_keypoints_json(
+    images_dir: &Path,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    indices: &[usize],
+    categories: &[serde_json::Value],
+    dest_dir: &Path,
+) -> Result<String, String> {
+    let mut coco_images: Vec<serde_json::Value> = Vec::new();
+    let mut coco_annotations: Vec<serde_json::Value> = Vec::new();
+    let mut ann_id: u64 = 1;
+
+    for (img_idx, &idx) in indices.iter().enumerate() {
+        let image = &images[idx];
+        let image_id = (img_idx + 1) as u64;
+
+        let src = images_dir.join(&image.file);
+        if !src.exists() { continue; }
+        let _ = std::fs::copy(&src, dest_dir.join(&image.name));
+
+        coco_images.push(serde_json::json!({
+            "id": image_id, "file_name": image.name,
+            "width": image.width, "height": image.height
+        }));
+
+        for ann in &image.annotations {
+            let class_idx = match project.classes.iter().position(|c| c.id == ann.class_id) {
+                Some(idx) => idx,
+                None => continue,
+            };
+            let category_id = (class_idx + 1) as u64;
+
+            // Parse keypoints from annotation data
+            let data = &ann.data;
+            let keypoints: Vec<f64> = data.get("keypoints")
+                .and_then(|v| v.as_array())
+                .map(|arr| arr.iter().filter_map(|v| v.as_f64()).collect())
+                .unwrap_or_default();
+
+            let num_keypoints = keypoints.len() / 3; // [x, y, visibility] triplets
+
+            // Get bbox
+            let bbox = if let Some(b) = parse_bbox(&ann.data) {
+                vec![b.x, b.y, b.width, b.height]
+            } else {
+                // Compute from keypoints
+                let xs: Vec<f64> = keypoints.chunks(3).filter(|c| c.len() == 3 && c[2] > 0.0).map(|c| c[0]).collect();
+                let ys: Vec<f64> = keypoints.chunks(3).filter(|c| c.len() == 3 && c[2] > 0.0).map(|c| c[1]).collect();
+                if xs.is_empty() { continue; }
+                let min_x = xs.iter().copied().fold(f64::MAX, f64::min);
+                let min_y = ys.iter().copied().fold(f64::MAX, f64::min);
+                let max_x = xs.iter().copied().fold(f64::MIN, f64::max);
+                let max_y = ys.iter().copied().fold(f64::MIN, f64::max);
+                vec![min_x, min_y, max_x - min_x, max_y - min_y]
+            };
+
+            let area = bbox[2] * bbox[3];
+
+            coco_annotations.push(serde_json::json!({
+                "id": ann_id, "image_id": image_id, "category_id": category_id,
+                "keypoints": keypoints, "num_keypoints": num_keypoints,
+                "bbox": bbox, "area": area, "iscrowd": 0
+            }));
+            ann_id += 1;
+        }
+    }
+
+    let coco = serde_json::json!({
+        "images": coco_images, "annotations": coco_annotations, "categories": categories
+    });
+    serde_json::to_string_pretty(&coco).map_err(|e| format!("Error serializando COCO Keypoints JSON: {}", e))
+}
+
+// ─── ImageFolder Dataset (Classification) ────────────────────────────────────
+
+pub fn prepare_classification_dataset_imagefolder(
+    images_dir: &Path,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    output_dir: &Path,
+    val_split: f64,
+) -> Result<String, String> {
+    // Same as existing classification dataset but returns the base dir path
+    prepare_dataset(images_dir, project, images, output_dir, val_split, "classify")
+}
+
+// ─── MultiLabel CSV Dataset ──────────────────────────────────────────────────
+
+pub fn prepare_multilabel_dataset(
+    images_dir: &Path,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    output_dir: &Path,
+    val_split: f64,
+) -> Result<String, String> {
+    let total = images.len();
+    if total == 0 {
+        return Err("No hay imágenes en el proyecto".to_string());
+    }
+
+    let mut indices: Vec<usize> = (0..total).collect();
+    let seed = project.id.bytes().fold(42usize, |acc, b| acc.wrapping_mul(31).wrapping_add(b as usize));
+    for i in (1..indices.len()).rev() {
+        let j = (seed.wrapping_mul(i).wrapping_add(7)) % (i + 1);
+        indices.swap(i, j);
+    }
+
+    let val_count = ((total as f64) * val_split).ceil() as usize;
+    let val_count = val_count.max(1).min(total - 1);
+    let train_count = total - val_count;
+    let train_indices = &indices[..train_count];
+    let val_indices = &indices[train_count..];
+
+    let img_dir = output_dir.join("images");
+    std::fs::create_dir_all(&img_dir).map_err(|e| format!("Error: {}", e))?;
+
+    // Build CSV: image_path,class1,class2,...
+    let class_names: Vec<&str> = project.classes.iter().map(|c| c.name.as_str()).collect();
+    let mut train_rows = Vec::new();
+    let mut val_rows = Vec::new();
+
+    for &idx in train_indices {
+        let image = &images[idx];
+        let src = images_dir.join(&image.file);
+        if !src.exists() { continue; }
+        let _ = std::fs::copy(&src, img_dir.join(&image.name));
+
+        let mut labels = vec![0u8; class_names.len()];
+        for ann in &image.annotations {
+            if let Some(pos) = project.classes.iter().position(|c| c.id == ann.class_id) {
+                labels[pos] = 1;
+            }
+        }
+        let labels_str: Vec<String> = labels.iter().map(|l| l.to_string()).collect();
+        train_rows.push(format!("images/{},{}", image.name, labels_str.join(",")));
+    }
+
+    for &idx in val_indices {
+        let image = &images[idx];
+        let src = images_dir.join(&image.file);
+        if !src.exists() { continue; }
+        let _ = std::fs::copy(&src, img_dir.join(&image.name));
+
+        let mut labels = vec![0u8; class_names.len()];
+        for ann in &image.annotations {
+            if let Some(pos) = project.classes.iter().position(|c| c.id == ann.class_id) {
+                labels[pos] = 1;
+            }
+        }
+        let labels_str: Vec<String> = labels.iter().map(|l| l.to_string()).collect();
+        val_rows.push(format!("images/{},{}", image.name, labels_str.join(",")));
+    }
+
+    let header = format!("image_path,{}", class_names.join(","));
+    let train_csv = format!("{}\n{}", header, train_rows.join("\n"));
+    let val_csv = format!("{}\n{}", header, val_rows.join("\n"));
+
+    std::fs::write(output_dir.join("train.csv"), &train_csv)
+        .map_err(|e| format!("Error escribiendo train.csv: {}", e))?;
+    std::fs::write(output_dir.join("val.csv"), &val_csv)
+        .map_err(|e| format!("Error escribiendo val.csv: {}", e))?;
+
+    Ok(output_dir.to_string_lossy().replace('\\', "/"))
+}
+
+// ─── TimeSeries CSV Dataset ──────────────────────────────────────────────────
+
+pub fn prepare_timeseries_dataset(
+    project: &ProjectFile,
+    output_dir: &Path,
+    val_split: f64,
+) -> Result<String, String> {
+    let series = &project.timeseries;
+    if series.is_empty() {
+        return Err("No hay series temporales en el proyecto".to_string());
+    }
+
+    std::fs::create_dir_all(output_dir).map_err(|e| format!("Error: {}", e))?;
+
+    // Export each time series to CSV from its `data` JSON field
+    let mut all_files = Vec::new();
+    for ts in series {
+        let csv_name = format!("{}.csv", ts.id);
+        let csv_path = output_dir.join(&csv_name);
+
+        // `data` can be:
+        // - { "columns": ["col1","col2"], "rows": [[v1,v2],[v3,v4]] }
+        // - or an array of objects [{"timestamp":..., "value":...}, ...]
+        let csv_content = if let Some(columns) = ts.data.get("columns").and_then(|v| v.as_array()) {
+            let col_names: Vec<&str> = columns.iter().filter_map(|c| c.as_str()).collect();
+            let rows = ts.data.get("rows").and_then(|v| v.as_array());
+            let mut lines = vec![col_names.join(",")];
+            if let Some(rows) = rows {
+                for row in rows {
+                    if let Some(arr) = row.as_array() {
+                        let vals: Vec<String> = arr.iter().map(|v| {
+                            if let Some(f) = v.as_f64() { f.to_string() }
+                            else if let Some(s) = v.as_str() { s.to_string() }
+                            else { String::new() }
+                        }).collect();
+                        lines.push(vals.join(","));
+                    }
+                }
+            }
+            lines.join("\n")
+        } else if let Some(arr) = ts.data.as_array() {
+            // Array of objects
+            if let Some(first) = arr.first().and_then(|v| v.as_object()) {
+                let keys: Vec<&String> = first.keys().collect();
+                let header = keys.iter().map(|k| k.as_str()).collect::<Vec<_>>().join(",");
+                let mut lines = vec![header];
+                for item in arr {
+                    if let Some(obj) = item.as_object() {
+                        let vals: Vec<String> = keys.iter().map(|k| {
+                            obj.get(*k).map(|v| {
+                                if let Some(f) = v.as_f64() { f.to_string() }
+                                else if let Some(s) = v.as_str() { s.to_string() }
+                                else { v.to_string() }
+                            }).unwrap_or_default()
+                        }).collect();
+                        lines.push(vals.join(","));
+                    }
+                }
+                lines.join("\n")
+            } else {
+                // Fallback: dump raw JSON
+                serde_json::to_string(&ts.data).unwrap_or_default()
+            }
+        } else {
+            serde_json::to_string(&ts.data).unwrap_or_default()
+        };
+
+        std::fs::write(&csv_path, &csv_content)
+            .map_err(|e| format!("Error escribiendo {}: {}", csv_name, e))?;
+        all_files.push(csv_name);
+    }
+
+    // Write metadata.json
+    let annotations: Vec<serde_json::Value> = series.iter().flat_map(|ts| {
+        ts.annotations.iter().map(|a| serde_json::json!({
+            "series_id": ts.id, "type": a.annotation_type,
+            "class_id": a.class_id, "data": a.data
+        }))
+    }).collect();
+
+    let metadata = serde_json::json!({
+        "files": all_files,
+        "val_split": val_split,
+        "num_series": series.len(),
+        "classes": project.classes.iter().map(|c| &c.name).collect::<Vec<_>>(),
+        "annotations": annotations,
+    });
+    std::fs::write(output_dir.join("metadata.json"), serde_json::to_string_pretty(&metadata).unwrap_or_default())
+        .map_err(|e| format!("Error escribiendo metadata.json: {}", e))?;
+
+    Ok(output_dir.to_string_lossy().replace('\\', "/"))
 }
