@@ -162,38 +162,26 @@ pub async fn update_packages(
     cache: State<'_, TrainingEnvCache>,
     packages: Vec<String>,
 ) -> Result<(), String> {
-    let python = python_env::venv_python()?;
-    if !python.exists() {
-        return Err("El entorno virtual no existe".to_string());
-    }
-
-    let total = packages.len();
-    for (i, pkg) in packages.iter().enumerate() {
-        let _ = app.emit(
+    let pkgs_ref: Vec<&str> = packages.iter().map(|s| s.as_str()).collect();
+    
+    let app_clone = app.clone();
+    python_env::install_packages(&pkgs_ref, Some(|msg: &str, progress: f64, log: Option<String>| {
+        let _ = app_clone.emit(
             "settings:package-update-progress",
             serde_json::json!({
-                "message": format!("Actualizando {}...", pkg),
-                "progress": ((i as f64) / total as f64) * 100.0,
-                "package": pkg,
+                "message": msg,
+                "progress": progress,
+                "log": log,
             }),
         );
-
-        let output = Command::new(&python)
-            .args(["-m", "pip", "install", "--upgrade", pkg])
-            .output()
-            .map_err(|e| format!("Error actualizando {}: {}", pkg, e))?;
-
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            log::warn!("Error actualizando {}: {}", pkg, stderr);
-        }
-    }
+    }))?;
 
     let _ = app.emit(
         "settings:package-update-progress",
         serde_json::json!({
             "message": "Actualización completada",
             "progress": 100.0,
+            "log": None::<String>,
         }),
     );
 
@@ -212,75 +200,49 @@ pub async fn install_pytorch(
         return Err("El entorno virtual no existe".to_string());
     }
 
-    // Paso 1: Desinstalar torch existente
-    let _ = app.emit(
-        "settings:pytorch-install-progress",
-        serde_json::json!({
-            "message": "Desinstalando PyTorch existente...",
-            "progress": 10.0,
-        }),
-    );
+    let app_clone = app.clone();
+    let emit = move |msg: &str, progress: f64, log: Option<String>| {
+        let _ = app_clone.emit(
+            "settings:pytorch-install-progress",
+            serde_json::json!({
+                "message": msg,
+                "progress": progress,
+                "log": log,
+            }),
+        );
+    };
 
-    let _ = Command::new(&python)
-        .args([
-            "-m", "pip", "uninstall", "-y", "torch", "torchvision", "torchaudio",
-        ])
-        .output();
+    // Paso 1: Desinstalar torch existente
+    emit("Desinstalando PyTorch existente...", 10.0, None);
+
+    let mut cmd_un = Command::new(&python);
+    cmd_un.args(["-m", "pip", "uninstall", "-y", "torch", "torchvision", "torchaudio"]);
+    let _ = python_env::run_with_feedback(cmd_un, "Desinstalando", 10.0, 20.0, &emit);
 
     // Paso 2: Instalar según variante
-    let _ = app.emit(
-        "settings:pytorch-install-progress",
-        serde_json::json!({
-            "message": format!("Instalando PyTorch ({})...", if cuda_version == "cpu" { "CPU".to_string() } else { format!("CUDA {}", cuda_version) }),
-            "progress": 30.0,
-        }),
-    );
+    emit(&format!("Instalando PyTorch ({})...", if cuda_version == "cpu" { "CPU".to_string() } else { format!("CUDA {}", cuda_version) }), 30.0, None);
 
-    let mut args = vec![
-        "-m".to_string(),
-        "pip".to_string(),
-        "install".to_string(),
-        "torch".to_string(),
-        "torchvision".to_string(),
-        "torchaudio".to_string(),
-    ];
+    let mut cmd_in = Command::new(&python);
+    cmd_in.args(["-m", "pip", "install", "torch", "torchvision", "torchaudio"]);
 
     match cuda_version.as_str() {
         "cpu" => {
-            args.push("--index-url".to_string());
-            args.push("https://download.pytorch.org/whl/cpu".to_string());
+            cmd_in.args(["--index-url", "https://download.pytorch.org/whl/cpu"]);
         }
         "12.1" => {
-            args.push("--index-url".to_string());
-            args.push("https://download.pytorch.org/whl/cu121".to_string());
+            cmd_in.args(["--index-url", "https://download.pytorch.org/whl/cu121"]);
         }
         "12.4" => {
-            args.push("--index-url".to_string());
-            args.push("https://download.pytorch.org/whl/cu124".to_string());
+            cmd_in.args(["--index-url", "https://download.pytorch.org/whl/cu124"]);
         }
         _ => {
             return Err(format!("Versión CUDA no soportada: {}", cuda_version));
         }
     }
 
-    let args_ref: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
-    let output = Command::new(&python)
-        .args(&args_ref)
-        .output()
-        .map_err(|e| format!("Error instalando PyTorch: {}", e))?;
+    python_env::run_with_feedback(cmd_in, "Instalando PyTorch", 30.0, 70.0, &emit)?;
 
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("Error instalando PyTorch: {}", stderr));
-    }
-
-    let _ = app.emit(
-        "settings:pytorch-install-progress",
-        serde_json::json!({
-            "message": "PyTorch instalado correctamente",
-            "progress": 100.0,
-        }),
-    );
+    emit("PyTorch instalado correctamente", 100.0, None);
 
     cache.invalidate();
     Ok(())

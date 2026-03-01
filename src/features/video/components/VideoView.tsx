@@ -173,7 +173,7 @@ export function VideoView() {
         </div>
 
         {/* Right Panel: Classes + Tracks */}
-        <div className="w-64 border-l flex flex-col overflow-y-auto bg-white">
+        <div className="w-64 border-l border-[var(--annotix-border)] flex flex-col overflow-y-auto bg-[var(--annotix-white)] transition-colors">
           {/* Classes */}
           <div className="annotix-panel-section">
             <div className="flex items-center justify-between mb-3">
@@ -197,7 +197,7 @@ export function VideoView() {
                     "flex w-full items-center gap-2 rounded-lg border p-1.5 transition-all text-xs",
                     activeClassId === cls.id
                       ? "border-[var(--annotix-primary)] bg-[var(--annotix-primary)]/10"
-                      : "border-[var(--annotix-border)] bg-white hover:border-[var(--annotix-primary)]/50"
+                      : "border-[var(--annotix-border)] bg-[var(--annotix-white)] hover:border-[var(--annotix-primary)]/50"
                   )}
                 >
                   {index < CLASS_SHORTCUTS.length && (

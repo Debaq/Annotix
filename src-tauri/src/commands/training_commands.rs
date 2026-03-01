@@ -29,19 +29,31 @@ pub fn check_python_env(cache: State<'_, TrainingEnvCache>) -> Result<TrainingEn
 }
 
 #[tauri::command]
-pub fn setup_python_env(
+pub async fn setup_python_env(
     app: AppHandle,
     cache: State<'_, TrainingEnvCache>,
+    python_version: String,
 ) -> Result<TrainingEnvInfo, String> {
     // Invalidar caché antes de instalar
     cache.invalidate();
 
-    crate::training::python_env::setup_env(|msg, progress| {
+    // 1. Asegurar Micromamba
+    let mm = crate::training::micromamba::Micromamba::new()?;
+    if !mm.is_installed() {
+        let app_clone = app.clone();
+        mm.download(move |msg, p| {
+            let _ = app_clone.emit("training:env-setup-progress", serde_json::json!({ "message": msg, "progress": p }));
+        }).await?;
+    }
+
+    // 2. Crear entorno con versión elegida
+    crate::training::python_env::setup_env_base(&python_version, |msg, progress, log| {
         let _ = app.emit(
             "training:env-setup-progress",
             serde_json::json!({
                 "message": msg,
                 "progress": progress,
+                "log": log,
             }),
         );
     })?;
@@ -344,47 +356,72 @@ pub fn install_backend_packages(
 ) -> Result<(), String> {
     cache.invalidate();
 
-    let packages: Vec<&str> = match backend.as_str() {
-        "yolo" | "rt_detr" => {
-            // Already installed with ultralytics
-            return Ok(());
-        }
-        "rf_detr" => vec!["rfdetr"],
-        "mmdetection" => vec!["openmim", "mmengine", "mmcv", "mmdet"],
-        "smp" => vec!["segmentation-models-pytorch", "albumentations"],
-        "hf_segmentation" => vec!["transformers", "datasets", "evaluate"],
-        "mmsegmentation" => vec!["openmim", "mmengine", "mmcv", "mmsegmentation"],
-        "detectron2" => vec!["detectron2"],
-        "mmpose" => vec!["openmim", "mmengine", "mmcv", "mmpose", "mmdet"],
-        "mmrotate" => vec!["openmim", "mmengine", "mmcv", "mmrotate"],
-        "timm" => vec!["timm"],
-        "hf_classification" => vec!["transformers", "datasets", "evaluate"],
-        "tsai" => vec!["tsai"],
-        "pytorch_forecasting" => vec!["pytorch-forecasting", "pytorch-lightning"],
-        "pyod" => vec!["pyod"],
-        "tslearn" => vec!["tslearn", "scikit-learn"],
-        "pypots" => vec!["pypots"],
-        "stumpy" => vec!["stumpy", "numpy"],
+    // 1. Detectar hardware para decidir qué versión de Torch instalar
+    let (env_info, gpu_info) = crate::training::python_env::check_env_full()?;
+    
+    let mut packages: Vec<String> = match backend.as_str() {
+        "yolo" | "rt_detr" => vec!["ultralytics".to_string()],
+        "rf_detr" => vec!["rfdetr".to_string()],
+        "mmdetection" => vec!["openmim".to_string(), "mmengine".to_string(), "mmcv".to_string(), "mmdet".to_string()],
+        "smp" => vec!["segmentation-models-pytorch".to_string(), "albumentations".to_string()],
+        "hf_segmentation" => vec!["transformers".to_string(), "datasets".to_string(), "evaluate".to_string()],
+        "mmsegmentation" => vec!["openmim".to_string(), "mmengine".to_string(), "mmcv".to_string(), "mmsegmentation".to_string()],
+        "detectron2" => vec!["detectron2".to_string()],
+        "mmpose" => vec!["openmim".to_string(), "mmengine".to_string(), "mmcv".to_string(), "mmpose".to_string(), "mmdet".to_string()],
+        "mmrotate" => vec!["openmim".to_string(), "mmengine".to_string(), "mmcv".to_string(), "mmrotate".to_string()],
+        "timm" => vec!["timm".to_string()],
+        "hf_classification" => vec!["transformers".to_string(), "datasets".to_string(), "evaluate".to_string()],
+        "tsai" => vec!["tsai".to_string()],
+        "pytorch_forecasting" => vec!["pytorch-forecasting".to_string(), "pytorch-lightning".to_string()],
+        "pyod" => vec!["pyod".to_string()],
+        "tslearn" => vec!["tslearn".to_string(), "scikit-learn".to_string()],
+        "pypots" => vec!["pypots".to_string()],
+        "stumpy" => vec!["stumpy".to_string(), "numpy".to_string()],
         _ => return Err(format!("Backend desconocido: {}", backend)),
     };
 
-    let _ = app.emit(
-        "training:env-setup-progress",
-        serde_json::json!({
-            "message": format!("Instalando paquetes para {}...", backend),
-            "progress": 30.0,
-        }),
-    );
+    // 2. Si el backend usa Torch y no está instalado o queremos asegurar la versión correcta
+    let needs_torch = matches!(backend.as_str(), "yolo" | "rt_detr" | "smp" | "mmdetection" | "mmpose" | "tsai");
+    
+    if needs_torch && env_info.torch_version.is_none() {
+        let app_clone = app.clone();
+        let emit = move |msg: &str, p: f64, log: Option<String>| {
+            let _ = app_clone.emit("training:env-setup-progress", serde_json::json!({ "message": msg, "progress": p, "log": log }));
+        };
 
-    crate::training::python_env::install_packages(&packages)?;
+        emit("Preparando instalación de PyTorch...", 5.0, None);
+        
+        let python = crate::training::python_env::venv_python()?;
+        let mut cmd = std::process::Command::new(&python);
+        cmd.args(["-m", "pip", "install", "torch", "torchvision", "torchaudio"]);
 
-    let _ = app.emit(
-        "training:env-setup-progress",
-        serde_json::json!({
-            "message": "Instalación completada",
-            "progress": 100.0,
-        }),
-    );
+        // Lógica de hardware inteligente
+        if gpu_info.cuda_available {
+            emit("GPU NVIDIA detectada, usando CUDA", 10.0, Some("Hardware: NVIDIA CUDA".to_string()));
+            cmd.args(["--index-url", "https://download.pytorch.org/whl/cu121"]);
+        } else if cfg!(target_os = "macos") {
+            emit("macOS detectado, usando optimización Metal (MPS)", 10.0, Some("Hardware: Apple Silicon/Metal".to_string()));
+        } else {
+            emit("No se detectó GPU compatible, usando versión CPU", 10.0, Some("Hardware: CPU Only".to_string()));
+            cmd.args(["--index-url", "https://download.pytorch.org/whl/cpu"]);
+        }
+
+        crate::training::python_env::run_with_feedback(cmd, "Instalando PyTorch", 10.0, 40.0, &emit)?;
+    }
+
+    // 3. Instalar el resto de paquetes
+    let pkgs_ref: Vec<&str> = packages.iter().map(|s| s.as_str()).collect();
+    let app_clone = app.clone();
+    crate::training::python_env::install_packages(&pkgs_ref, Some(|msg: &str, progress: f64, log: Option<String>| {
+        let _ = app_clone.emit(
+            "training:env-setup-progress",
+            serde_json::json!({
+                "message": msg,
+                "progress": progress,
+                "log": log,
+            }),
+        );
+    }))?;
 
     Ok(())
 }

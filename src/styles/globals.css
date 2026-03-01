@@ -103,6 +103,16 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+
+    /* Annotix Legacy Dark Mode Overrides */
+    --annotix-dark: #ecf0f1;
+    --annotix-light: #1a202c;
+    --annotix-gray: #a0aec0;
+    --annotix-gray-light: #2d3748;
+    --annotix-white: #1a202c;
+    --annotix-border: #2d3748;
+    --annotix-shadow: rgba(0, 0, 0, 0.5);
+    --annotix-shadow-strong: rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -116,17 +126,20 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 
   #root {
     height: 100vh;
     box-sizing: border-box;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border);
     overflow: hidden;
+    background-color: hsl(var(--background));
   }
 
   .dark #root {
-    border-color: #4b5563;
+    border-color: var(--border);
   }
 }
 
@@ -141,6 +154,7 @@
   grid-template-columns: var(--sidebar-width) 1fr var(--right-panel-width);
   height: 100%;
   overflow: hidden;
+  background-color: hsl(var(--background));
 }
 
 /* Header con gradiente característico */

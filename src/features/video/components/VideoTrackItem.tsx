@@ -28,8 +28,8 @@ export function VideoTrackItem({
       className={cn(
         "flex items-center gap-1.5 rounded border p-1.5 text-xs transition-all",
         track.enabled
-          ? "border-[var(--annotix-border)] bg-white"
-          : "border-[var(--annotix-border)] bg-gray-50 opacity-50"
+          ? "border-[var(--annotix-border)] bg-[var(--annotix-white)]"
+          : "border-[var(--annotix-border)] bg-[var(--annotix-light)] opacity-50"
       )}
     >
       {/* Color dot */}
@@ -56,7 +56,7 @@ export function VideoTrackItem({
       {/* Toggle */}
       <button
         onClick={() => onToggle(!track.enabled)}
-        className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-100"
+        className="w-5 h-5 flex items-center justify-center rounded hover:bg-[var(--annotix-gray-light)] transition-colors"
         title={track.enabled ? t('video.hideTrack') : t('video.showTrack')}
       >
         <i className={cn("fas text-[10px]", track.enabled ? "fa-eye" : "fa-eye-slash")}></i>
