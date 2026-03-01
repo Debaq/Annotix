@@ -171,6 +171,8 @@ pub struct PythonEnvStatus {
     pub pypots_version: Option<String>,
     #[serde(rename = "stumpyVersion", skip_serializing_if = "Option::is_none")]
     pub stumpy_version: Option<String>,
+    #[serde(rename = "sklearnVersion", skip_serializing_if = "Option::is_none")]
+    pub sklearn_version: Option<String>,
 }
 
 // ─── GPU Info ───────────────────────────────────────────────────────────────
@@ -257,6 +259,13 @@ pub struct TrainingEpochMetrics {
     pub auc_roc: Option<f64>,
     #[serde(rename = "silhouetteScore", skip_serializing_if = "Option::is_none")]
     pub silhouette_score: Option<f64>,
+    // Tabular ML metrics
+    #[serde(rename = "r2Score", skip_serializing_if = "Option::is_none")]
+    pub r2_score: Option<f64>,
+    #[serde(rename = "mse", skip_serializing_if = "Option::is_none")]
+    pub mse: Option<f64>,
+    #[serde(rename = "rocAuc", skip_serializing_if = "Option::is_none")]
+    pub roc_auc: Option<f64>,
 }
 
 // ─── Training Result ────────────────────────────────────────────────────────
@@ -330,6 +339,7 @@ pub enum TrainingBackend {
     Tslearn,
     Pypots,
     Stumpy,
+    Sklearn,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -344,6 +354,7 @@ pub enum DatasetFormat {
     ImageFolder,
     MultiLabelCsv,
     TimeSeriesCsv,
+    TabularCsv,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -416,6 +427,7 @@ pub struct BackendModelInfo {
 }
 
 pub mod python_env;
+pub mod micromamba;
 pub mod gpu;
 pub mod dataset;
 pub mod scripts;

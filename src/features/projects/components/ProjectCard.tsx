@@ -50,6 +50,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
     'timeseries-regression': 'fa-chart-simple',
     clustering: 'fa-circle-nodes',
     imputation: 'fa-fill-drip',
+    tabular: 'fa-table',
   };
 
   const typeIcon = typeIconMap[project.type] || 'fa-folder';

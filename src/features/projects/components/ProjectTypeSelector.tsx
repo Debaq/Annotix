@@ -45,6 +45,10 @@ export function ProjectTypeSelector({ value, onChange }: ProjectTypeSelectorProp
     { value: 'imputation', icon: 'fa-fill-drip', colorClass: 'bg-pink-100 text-pink-600' },
   ];
 
+  const tabularTypes: ProjectTypeOption[] = [
+    { value: 'tabular', icon: 'fa-table', colorClass: 'bg-emerald-100 text-emerald-600' },
+  ];
+
   const renderOption = (option: ProjectTypeOption) => (
     <div key={option.value} className="project-type-card">
       <RadioGroupItem value={option.value} id={`type-${option.value}`}  />
@@ -98,6 +102,18 @@ export function ProjectTypeSelector({ value, onChange }: ProjectTypeSelectorProp
           </h4>
           <div className="project-type-grid">
             {timeSeriesTypes.map(renderOption)}
+          </div>
+        </div>
+
+        <Separator className="my-4" />
+
+        {/* Tabular / Classical ML Types */}
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold text-muted-foreground px-1">
+            {t('project.categories.tabular')}
+          </h4>
+          <div className="project-type-grid">
+            {tabularTypes.map(renderOption)}
           </div>
         </div>
       </RadioGroup>

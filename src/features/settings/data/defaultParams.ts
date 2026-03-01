@@ -207,6 +207,15 @@ const STUMPY_PARAMS: ParamDefinition[] = [
   { key: 'normalize', type: 'checkbox' },
 ];
 
+const SKLEARN_PARAMS: ParamDefinition[] = [
+  { key: 'valSplit', type: 'slider', min: 0.05, max: 0.5, step: 0.05 },
+  { key: 'n_estimators', type: 'number', min: 10, max: 2000 },
+  { key: 'max_depth', type: 'number', min: 0, max: 100 },
+  { key: 'n_neighbors', type: 'number', min: 1, max: 50 },
+  { key: 'C', type: 'number', min: 0.001, max: 100, step: 0.1 },
+  { key: 'alpha', type: 'number', min: 0.0001, max: 10, step: 0.01 },
+];
+
 /* ─── Backend → params mapping ───────────────────────────────────────────── */
 
 const COMMON_TS: ParamDefinition[] = COMMON_PARAMS.filter(p => ['epochs', 'batchSize', 'lr', 'valSplit', 'patience'].includes(p.key));
@@ -231,6 +240,7 @@ export const BACKEND_PARAMS: Record<string, ParamDefinition[]> = {
   tslearn: [...COMMON_PARAMS.filter(p => ['valSplit'].includes(p.key)), ...TSLEARN_PARAMS],
   pypots: [...COMMON_TS, ...PYPOTS_PARAMS],
   stumpy: [...COMMON_PARAMS.filter(p => ['valSplit'].includes(p.key)), ...STUMPY_PARAMS],
+  sklearn: SKLEARN_PARAMS,
 };
 
 /* ─── Default values per backend ─────────────────────────────────────────── */
@@ -318,5 +328,9 @@ export const DEFAULT_VALUES: Record<string, Record<string, unknown>> = {
   stumpy: {
     valSplit: 0.2,
     window_size: 50, normalize: true,
+  },
+  sklearn: {
+    valSplit: 0.2,
+    n_estimators: 100, max_depth: 0, n_neighbors: 5, C: 1.0, alpha: 1.0,
   },
 };

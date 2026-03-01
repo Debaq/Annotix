@@ -15,6 +15,8 @@ export function projectTypeToTask(projectType: string): string {
       return 'pose';
     case 'obb':
       return 'obb';
+    case 'tabular':
+      return 'tabular';
     default:
       return 'detect';
   }

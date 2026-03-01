@@ -227,7 +227,9 @@ impl TrainingProcessManager {
         std::fs::create_dir_all(&dataset_dir)
             .map_err(|e| format!("Error creando directorio de training: {}", e))?;
 
-        if pf.images.is_empty() {
+        let is_tabular = request.backend == super::TrainingBackend::Sklearn;
+
+        if !is_tabular && pf.images.is_empty() {
             state.with_project_mut(project_id, |pf| {
                 if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
                     job.status = "failed".to_string();
@@ -235,6 +237,27 @@ impl TrainingProcessManager {
                 }
             })?;
             return Err("No hay imágenes en el proyecto".to_string());
+        }
+
+        // For tabular projects, copy the CSV to the dataset dir
+        if is_tabular {
+            if let Some(tabular_entry) = pf.tabular_data.first() {
+                let tabular_dir = state.project_dir(project_id)?.join("tabular");
+                let src = tabular_dir.join(&tabular_entry.file);
+                if src.exists() {
+                    let dest = dataset_dir.join("data.csv");
+                    std::fs::copy(&src, &dest)
+                        .map_err(|e| format!("Error copiando CSV para training: {}", e))?;
+                }
+            } else {
+                state.with_project_mut(project_id, |pf| {
+                    if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
+                        job.status = "failed".to_string();
+                        job.updated_at = js_timestamp();
+                    }
+                })?;
+                return Err("No hay datos tabulares en el proyecto".to_string());
+            }
         }
 
         let images: Vec<crate::store::project_file::ImageEntry> = pf.images.iter().cloned().map(|mut img| {
@@ -245,10 +268,14 @@ impl TrainingProcessManager {
         }).collect();
 
         // Prepare dataset using backend router
-        let dataset_path = dataset::prepare_dataset_for_backend(
-            &images_dir, &pf, &images, &dataset_dir,
-            request.val_split, &request.task, &request.backend,
-        )?;
+        let dataset_path = if is_tabular {
+            dataset_dir.to_string_lossy().replace('\\', "/")
+        } else {
+            dataset::prepare_dataset_for_backend(
+                &images_dir, &pf, &images, &dataset_dir,
+                request.val_split, &request.task, &request.backend,
+            )?
+        };
 
         // Generate scripts
         let num_classes = pf.classes.len();
@@ -479,6 +506,9 @@ fn parse_metrics(v: &serde_json::Value) -> Option<TrainingEpochMetrics> {
         rmse: v["rmse"].as_f64(),
         auc_roc: v["aucRoc"].as_f64(),
         silhouette_score: v["silhouetteScore"].as_f64(),
+        r2_score: v["r2Score"].as_f64(),
+        mse: v["mse"].as_f64(),
+        roc_auc: v["rocAuc"].as_f64(),
     })
 }
 

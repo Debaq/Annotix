@@ -1267,6 +1267,10 @@
         "models": "langdetect, fastText, XLM-RoBERTa",
         "difficulty": "초급"
       },
+      "tabular": {
+        "name": "테이블 ML",
+        "description": "CSV/테이블 데이터를 활용한 클래식 ML"
+      },
       "useCasesLabel": "사용 사례",
       "modelsLabel": "추천 모델",
       "difficultyLabel": "난이도"
@@ -1274,7 +1278,8 @@
     "categories": {
       "images": "",
       "classification": "",
-      "timeSeries": ""
+      "timeSeries": "",
+      "tabular": "테이블 / 클래식 ML"
     },
     "modality": "모달리티",
     "initialClasses": "초기 클래스 (선택사항)",
@@ -1621,6 +1626,32 @@
       "event": "그래프를 클릭하여 이벤트를 표시합니다",
       "anomaly": "그래프를 클릭하여 이상을 표시합니다"
     }
+  },
+  "tabular": {
+    "datasets": "데이터셋",
+    "upload": "CSV 업로드",
+    "noData": "아직 테이블 데이터가 없습니다",
+    "uploadFirst": "CSV 파일을 업로드하세요",
+    "selectOrUpload": "데이터 선택 또는 업로드",
+    "selectOrUploadDesc": "테이블 ML을 시작하려면 CSV 파일을 업로드하세요",
+    "rows": "행",
+    "cols": "열",
+    "columns": "열",
+    "target": "타겟",
+    "preview": "데이터 미리보기",
+    "configuration": "열 구성",
+    "targetColumn": "타겟 열",
+    "targetColumnDesc": "예측할 열을 선택하세요",
+    "taskType": "작업 유형",
+    "classification": "분류",
+    "regression": "회귀",
+    "featureColumns": "특성 열",
+    "featureColumnsDesc": "입력 특성으로 사용할 열을 선택하세요",
+    "selectAll": "모두 선택",
+    "deselectAll": "모두 해제",
+    "selected": "선택됨",
+    "saveConfig": "구성 저장",
+    "showingRows": "{{total}}개 중 {{shown}}개 행 표시"
   },
   "training": {
     "title": "모델 학습",

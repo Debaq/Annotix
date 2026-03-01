@@ -59,6 +59,9 @@ export const PROJECT_TOOLS: Partial<Record<ProjectType, ToolId[]>> = {
   'clustering': [],
   'imputation': [],
 
+  // Tabular projects - no canvas tools
+  'tabular': [],
+
   // Future types (not implemented yet) will return empty array
 };
 

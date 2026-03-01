@@ -216,6 +216,16 @@ const DEFAULT_BACKEND_PARAMS: Record<TrainingBackend, Record<string, unknown>> =
     window_size: 50,
     normalize: true,
   },
+  sklearn: {
+    n_estimators: 100,
+    max_depth: null,
+    n_neighbors: 5,
+    C: 1.0,
+    alpha: 1.0,
+    target_column: '',
+    feature_columns: [],
+    task_type: '',
+  },
 };
 
 const DEFAULT_LR: Record<TrainingBackend, number> = {
@@ -237,6 +247,7 @@ const DEFAULT_LR: Record<TrainingBackend, number> = {
   tslearn: 0.001,
   pypots: 0.001,
   stumpy: 0.001,
+  sklearn: 0.001,
 };
 
 export function useTrainingRequest(projectType: string) {

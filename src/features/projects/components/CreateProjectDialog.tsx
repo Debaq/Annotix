@@ -36,7 +36,8 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
   const [wizardOpen, setWizardOpen] = useState(false);
 
   const handleCreate = async () => {
-    if (!name.trim() || classes.length === 0) {
+    const isTabular = type === 'tabular';
+    if (!name.trim() || (!isTabular && classes.length === 0)) {
       return;
     }
 
@@ -45,7 +46,7 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
       await createProject({
         name: name.trim(),
         type,
-        classes,
+        classes: type === 'tabular' ? [] : classes,
       });
 
       // Reset form
@@ -109,17 +110,19 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>{t('projects.classes')}</Label>
-            <ClassManager classes={classes} onChange={setClasses} />
-          </div>
+          {type !== 'tabular' && (
+            <div className="space-y-2">
+              <Label>{t('projects.classes')}</Label>
+              <ClassManager classes={classes} onChange={setClasses} />
+            </div>
+          )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
             {t('common.cancel')}
           </Button>
-          <Button onClick={handleCreate} disabled={isCreating || !name.trim()}>
+          <Button onClick={handleCreate} disabled={isCreating || !name.trim() || (type !== 'tabular' && classes.length === 0)}>
             {isCreating ? (
               <>
                 <i className="fas fa-spinner fa-spin mr-2"></i>

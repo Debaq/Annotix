@@ -9,6 +9,7 @@ import { ClassificationPanel } from './features/classification/components/Classi
 import { TimeSeriesGallery } from './features/timeseries/components/TimeSeriesGallery';
 import { TimeSeriesCanvas } from './features/timeseries/components/TimeSeriesCanvas';
 import { VideoView } from './features/video/components/VideoView';
+import { TabularView } from './features/tabular/components/TabularView';
 import { SettingsPage } from './features/settings/components/SettingsPage';
 import { SetupScreen } from './features/setup/SetupScreen';
 import { useUIStore } from './features/core/store/uiStore';
@@ -43,6 +44,10 @@ function isClassificationProject(type: ProjectType): boolean {
   return type === 'classification' || type === 'multi-label-classification';
 }
 
+function isTabularProject(type: ProjectType): boolean {
+  return type === 'tabular';
+}
+
 // --- Route Components ---
 
 const ProjectView = () => {
@@ -75,6 +80,10 @@ const ProjectView = () => {
         <i className="fas fa-spinner fa-spin text-4xl text-muted-foreground"></i>
       </div>
     );
+  }
+
+  if (isTabularProject(project.type)) {
+    return <TabularView />;
   }
 
   if (isTimeSeriesProject(project.type)) {
@@ -124,7 +133,7 @@ const ProjectView = () => {
                   "flex w-full items-center gap-2 rounded-lg border p-2 transition-all",
                   activeClassId === cls.id
                     ? "border-[var(--annotix-primary)] bg-[var(--annotix-primary)]/10 shadow-sm"
-                    : "border-[var(--annotix-border)] bg-white hover:border-[var(--annotix-primary)]/50"
+                    : "border-[var(--annotix-border)] bg-[var(--annotix-white)] hover:border-[var(--annotix-primary)]/50"
                 )}
               >
                 {index < CLASS_SHORTCUTS.length ? (
@@ -233,7 +242,7 @@ const ImageView = () => {
                   "flex w-full items-center gap-2 rounded-lg border p-2 transition-all",
                   activeClassId === cls.id
                     ? "border-[var(--annotix-primary)] bg-[var(--annotix-primary)]/10 shadow-sm"
-                    : "border-[var(--annotix-border)] bg-white hover:border-[var(--annotix-primary)]/50"
+                    : "border-[var(--annotix-border)] bg-[var(--annotix-white)] hover:border-[var(--annotix-primary)]/50"
                 )}
               >
                 {index < CLASS_SHORTCUTS.length ? (

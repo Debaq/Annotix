@@ -1120,6 +1120,10 @@
         "name": "时间序列回归",
         "description": "从时间序列预测数值"
       },
+      "tabular": {
+        "name": "表格ML",
+        "description": "使用CSV/表格数据的经典机器学习"
+      },
       "object3DDetection": {
         "name": "3D 目标检测",
         "description": "在 3D 点云中检测对象",
@@ -1274,7 +1278,8 @@
     "categories": {
       "images": "",
       "classification": "",
-      "timeSeries": ""
+      "timeSeries": "",
+      "tabular": "表格 / 经典ML"
     },
     "modality": "模态",
     "initialClasses": "初始类别（可选）",
@@ -1621,6 +1626,32 @@
       "event": "点击图表以标记事件",
       "anomaly": "点击图表以标记异常"
     }
+  },
+  "tabular": {
+    "datasets": "数据集",
+    "upload": "上传CSV",
+    "noData": "暂无表格数据",
+    "uploadFirst": "上传CSV文件",
+    "selectOrUpload": "选择或上传数据",
+    "selectOrUploadDesc": "上传CSV文件以开始表格机器学习",
+    "rows": "行",
+    "cols": "列",
+    "columns": "列",
+    "target": "目标",
+    "preview": "数据预览",
+    "configuration": "列配置",
+    "targetColumn": "目标列",
+    "targetColumnDesc": "选择要预测的列",
+    "taskType": "任务类型",
+    "classification": "分类",
+    "regression": "回归",
+    "featureColumns": "特征列",
+    "featureColumnsDesc": "选择用作输入特征的列",
+    "selectAll": "全选",
+    "deselectAll": "取消全选",
+    "selected": "已选择",
+    "saveConfig": "保存配置",
+    "showingRows": "显示 {{shown}} / {{total}} 行"
   },
   "training": {
     "title": "训练模型",
@@ -2088,11 +2119,13 @@
         "title": "您将使用什么类型的数据？",
         "options": {
           "images": "图像",
-          "timeseries": "时间序列"
+          "timeseries": "时间序列",
+          "tabular": "表格数据"
         },
         "optionsDesc": {
           "images": "照片、截图、扫描、帧",
-          "timeseries": "传感器、指标、信号、金融数据"
+          "timeseries": "传感器、指标、信号、金融数据",
+          "tabular": "CSV文件、电子表格、结构化表格"
         }
       },
       "goalImages": {

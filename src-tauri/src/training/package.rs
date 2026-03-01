@@ -69,6 +69,7 @@ pub fn generate_training_package(
         TrainingBackend::Tslearn => "tslearn",
         TrainingBackend::Pypots => "PyPOTS",
         TrainingBackend::Stumpy => "STUMPY",
+        TrainingBackend::Sklearn => "Scikit-learn",
     };
 
     let nb_content = notebook::script_to_notebook(

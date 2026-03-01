@@ -11,3 +11,4 @@ pub mod video_commands;
 pub mod training_commands;
 pub mod config_commands;
 pub mod settings_commands;
+pub mod tabular_commands;

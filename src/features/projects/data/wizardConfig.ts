@@ -59,6 +59,7 @@ export const PROJECT_TYPE_META: Record<ProjectType, { icon: string; colorClass: 
   'timeseries-regression':    { icon: 'fa-chart-simple',       colorClass: 'bg-sky-100 text-sky-600' },
   clustering:                 { icon: 'fa-circle-nodes',        colorClass: 'bg-lime-100 text-lime-600' },
   imputation:                 { icon: 'fa-fill-drip',          colorClass: 'bg-pink-100 text-pink-600' },
+  tabular:                    { icon: 'fa-table',              colorClass: 'bg-emerald-100 text-emerald-600' },
   'audio-classification':     { icon: 'fa-music',              colorClass: 'bg-indigo-100 text-indigo-600' },
   'speech-recognition':       { icon: 'fa-microphone',         colorClass: 'bg-blue-100 text-blue-600' },
   'sound-event-detection':    { icon: 'fa-volume-high',        colorClass: 'bg-orange-100 text-orange-600' },
@@ -76,6 +77,7 @@ export const WIZARD_CONFIG: WizardConfig = {
       options: [
         { id: 'images',     icon: 'fa-image',      colorClass: 'bg-blue-100 text-blue-600' },
         { id: 'timeseries', icon: 'fa-chart-line',  colorClass: 'bg-cyan-100 text-cyan-600' },
+        { id: 'tabular',    icon: 'fa-table',       colorClass: 'bg-emerald-100 text-emerald-600' },
         // Future: { id: 'audio', icon: 'fa-headphones', colorClass: 'bg-indigo-100 text-indigo-600' },
       ],
     },
@@ -209,6 +211,9 @@ export const WIZARD_CONFIG: WizardConfig = {
     { when: { goalTimeseries: 'tsAnalyze', tsAnalyzeDetail: 'tsPattern' },      then: { 'pattern-recognition': 10 } },
     { when: { goalTimeseries: 'tsAnalyze', tsAnalyzeDetail: 'tsEvent' },        then: { 'event-detection': 10 } },
     { when: { goalTimeseries: 'tsAnalyze', tsAnalyzeDetail: 'tsCluster' },      then: { clustering: 10 } },
+
+    // ===== TABULAR =====
+    { when: { dataType: 'tabular' },                                           then: { tabular: 15 } },
   ],
 };
 
