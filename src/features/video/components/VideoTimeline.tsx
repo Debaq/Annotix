@@ -13,21 +13,31 @@ export function VideoTimeline({ tracks, classes }: VideoTimelineProps) {
   const { t } = useTranslation();
   const { currentFrameIndex, totalFrames, goToFrame, goPrev, goNext, canPrev, canNext } = useVideoNavigation();
   const [isPlaying, setIsPlaying] = useState(false);
+  const [speed, setSpeed] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
   const playIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const SPEEDS = [1, 2, 4, 8] as const;
+  const BASE_INTERVAL = 200; // ms (~5 fps a 1x)
 
   // Play/Pause
   const togglePlay = useCallback(() => {
     setIsPlaying(prev => !prev);
   }, []);
 
+  const cycleSpeed = useCallback(() => {
+    setSpeed(prev => {
+      const idx = SPEEDS.indexOf(prev as (typeof SPEEDS)[number]);
+      return SPEEDS[(idx + 1) % SPEEDS.length];
+    });
+  }, []);
+
   useEffect(() => {
     if (isPlaying) {
       playIntervalRef.current = setInterval(() => {
-        const state = useVideoNavigation;
         goNext();
-      }, 200); // ~5 fps playback
+      }, BASE_INTERVAL / speed);
     } else {
       if (playIntervalRef.current) {
         clearInterval(playIntervalRef.current);
@@ -37,7 +47,7 @@ export function VideoTimeline({ tracks, classes }: VideoTimelineProps) {
     return () => {
       if (playIntervalRef.current) clearInterval(playIntervalRef.current);
     };
-  }, [isPlaying, goNext]);
+  }, [isPlaying, speed, goNext]);
 
   // Stop playing when reaching end
   useEffect(() => {
@@ -125,6 +135,17 @@ export function VideoTimeline({ tracks, classes }: VideoTimelineProps) {
             <i className="fas fa-step-forward text-xs"></i>
           </button>
         </div>
+
+        {/* Speed control */}
+        <button
+          onClick={cycleSpeed}
+          className={cn(
+            "px-2 h-7 rounded text-[11px] font-bold tabular-nums transition-colors",
+            speed > 1 ? "bg-white/20 text-white" : "hover:bg-white/10 text-white/60"
+          )}
+        >
+          {speed}x
+        </button>
 
         {/* Frame counter */}
         <div className="text-xs font-mono tabular-nums">

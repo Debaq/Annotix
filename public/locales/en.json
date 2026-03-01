@@ -1857,6 +1857,12 @@
     "keyframeHere": "Keyframe at this frame",
     "hideTrack": "Hide",
     "showTrack": "Show",
-    "deleteTrack": "Delete track"
+    "deleteTrack": "Delete track",
+    "deleteVideo": "Delete video",
+    "confirmDeleteVideo": "Delete this video and all its frames?",
+    "bake": "Apply tracks to frames",
+    "bakeDesc": "Writes track interpolations as annotations on each frame",
+    "baking": "Applying...",
+    "bakeDone": "Tracks applied"
   }
 }

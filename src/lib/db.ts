@@ -308,7 +308,7 @@ export interface Video {
   width: number;
   height: number;
   uploaded: number;
-  status: 'pending' | 'processing' | 'ready' | 'error';
+  status: 'pending' | 'extracting' | 'processing' | 'ready' | 'error';
   tracks: VideoTrack[];
 }
 

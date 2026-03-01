@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useUIStore } from '../../core/store/uiStore';
@@ -30,11 +30,37 @@ export function VideoView() {
   const { currentFrameIndex, totalFrames, currentFrame } = useVideoNavigation();
   const { tracks, createTrack, deleteTrack, updateTrack, setKeyframe, removeKeyframe, bake } = useVideoTracks();
 
-  // Auto-bake al salir de la vista de video
-  useEffect(() => {
-    return () => { bake(); };
-  }, [bake]);
   const { interpolatedBBoxes } = useInterpolation(tracks, currentFrameIndex);
+
+  // Contar frames cubiertos por tracks (candidatos a bake)
+  const bakeableCount = useMemo(() => {
+    const enabledTracks = tracks.filter(t => t.enabled && t.keyframes.length > 0);
+    if (enabledTracks.length === 0 || totalFrames === 0) return 0;
+
+    const covered = new Set<number>();
+    for (const track of enabledTracks) {
+      const indices = track.keyframes.map(kf => kf.frameIndex);
+      const min = Math.max(0, Math.min(...indices));
+      const max = Math.min(totalFrames - 1, Math.max(...indices));
+      for (let i = min; i <= max; i++) covered.add(i);
+    }
+    return covered.size;
+  }, [tracks, totalFrames]);
+
+  const [isBaking, setIsBaking] = useState(false);
+  const [bakeResult, setBakeResult] = useState<number | null>(null);
+
+  const handleBake = useCallback(async () => {
+    setIsBaking(true);
+    setBakeResult(null);
+    try {
+      const count = await bake();
+      setBakeResult(count);
+      setTimeout(() => setBakeResult(null), 3000);
+    } finally {
+      setIsBaking(false);
+    }
+  }, [bake]);
 
   // Sync URL -> Store
   useEffect(() => {
@@ -203,6 +229,30 @@ export function VideoView() {
 
           {/* Actions */}
           <div className="annotix-panel-section space-y-2">
+            {tracks.length > 0 && (
+              <div className="space-y-1">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="w-full"
+                  onClick={handleBake}
+                  disabled={isBaking || bakeableCount === 0}
+                  title={t('video.bakeDesc')}
+                >
+                  {isBaking ? (
+                    <><i className="fas fa-spinner fa-spin mr-2"></i>{t('video.baking')}</>
+                  ) : (
+                    <><i className="fas fa-fire mr-2"></i>{t('video.bake')} ({bakeableCount})</>
+                  )}
+                </Button>
+                {bakeResult !== null && (
+                  <p className="text-xs text-center text-green-600">
+                    <i className="fas fa-check mr-1"></i>
+                    {t('video.bakeDone')} ({bakeResult} frames)
+                  </p>
+                )}
+              </div>
+            )}
             <Button
               variant="outline"
               size="sm"

@@ -38,6 +38,9 @@ pub fn run() {
                 }
             }
 
+            // Reanudar extracciones de video interrumpidas
+            commands::video_commands::resume_pending_extractions(app.handle().clone());
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

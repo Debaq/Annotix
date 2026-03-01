@@ -39,24 +39,7 @@ export function useVideoAnnotationBridge(
     }
   }, [frameIndex]);
 
-  // --- Auto-keyframe: al llegar a un frame, solidificar bboxes interpoladas ---
-  const autoKeyframingRef = useRef(false);
-  useEffect(() => {
-    if (autoKeyframingRef.current) return;
-    if (!imageWidth || !imageHeight) return;
-
-    const nonKeyframes = interpolatedBBoxes.filter(b => !b.isKeyframe && b.enabled);
-    if (nonKeyframes.length === 0) return;
-
-    autoKeyframingRef.current = true;
-    Promise.all(
-      nonKeyframes.map(b =>
-        setKeyframe(b.trackId, frameIndex, b.bbox.x, b.bbox.y, b.bbox.width, b.bbox.height)
-      )
-    ).finally(() => {
-      autoKeyframingRef.current = false;
-    });
-  }, [frameIndex, interpolatedBBoxes, setKeyframe, imageWidth, imageHeight]);
+  // (Auto-keyframe eliminado: solo se crean keyframes al editar/mover una bbox)
 
   // Todas las bboxes del frame (incluyendo deshabilitadas)
   const allBBoxes = useMemo(() => interpolatedBBoxes, [interpolatedBBoxes]);

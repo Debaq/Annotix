@@ -62,7 +62,7 @@ export const videoService = {
     return tauriDb.toggleKeyframeEnabled(projectId, trackId, videoId, frameIndex, enabled);
   },
 
-  async bake(projectId: string, videoId: string): Promise<void> {
+  async bake(projectId: string, videoId: string): Promise<number> {
     return tauriDb.bakeVideoTracks(projectId, videoId);
   },
 };

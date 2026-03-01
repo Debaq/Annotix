@@ -51,9 +51,9 @@ export function useVideoTracks() {
     await videoService.toggleKeyframeEnabled(currentProjectId, trackId, currentVideoId, frameIndex, enabled);
   }, [currentVideoId, currentProjectId]);
 
-  const bake = useCallback(async () => {
-    if (!currentVideoId || !currentProjectId) return;
-    await videoService.bake(currentProjectId, currentVideoId);
+  const bake = useCallback(async (): Promise<number> => {
+    if (!currentVideoId || !currentProjectId) return 0;
+    return videoService.bake(currentProjectId, currentVideoId);
   }, [currentVideoId, currentProjectId]);
 
   return {
