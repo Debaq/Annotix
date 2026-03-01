@@ -57,6 +57,64 @@ fn entry_to_response(entry: &ImageEntry, project_id: &str) -> ImageResponse {
 }
 
 impl AppState {
+    /// Escribe imagen a disco y retorna (id, ImageEntry) SIN tocar project.json.
+    /// Usa width/height conocidas para evitar decodificar el archivo.
+    pub fn prepare_image_entry(
+        &self,
+        project_id: &str,
+        file_name: &str,
+        data: &[u8],
+        width: u32,
+        height: u32,
+        video_id: Option<&str>,
+        frame_index: Option<i64>,
+    ) -> Result<(String, ImageEntry), String> {
+        let images_dir = self.project_images_dir(project_id)?;
+        std::fs::create_dir_all(&images_dir)
+            .map_err(|e| format!("Error creando directorio de imágenes: {}", e))?;
+
+        let id = uuid::Uuid::new_v4().to_string();
+        let unique_name = format!("{}_{}", id, file_name);
+        let dest = images_dir.join(&unique_name);
+
+        std::fs::write(&dest, data)
+            .map_err(|e| format!("Error escribiendo imagen: {}", e))?;
+
+        let now = js_timestamp();
+
+        let entry = ImageEntry {
+            id: id.clone(),
+            name: file_name.to_string(),
+            file: unique_name,
+            width,
+            height,
+            uploaded: now,
+            annotated: None,
+            status: "pending".to_string(),
+            annotations: vec![],
+            video_id: video_id.map(|s| s.to_string()),
+            frame_index,
+        };
+
+        Ok((id, entry))
+    }
+
+    /// Inserta un batch de ImageEntry en project.json con un solo flush a disco.
+    pub fn commit_image_entries(
+        &self,
+        project_id: &str,
+        entries: Vec<ImageEntry>,
+    ) -> Result<(), String> {
+        if entries.is_empty() {
+            return Ok(());
+        }
+        let now = js_timestamp();
+        self.with_project_mut(project_id, |pf| {
+            pf.images.extend(entries);
+            pf.updated = now;
+        })
+    }
+
     pub fn upload_images(
         &self,
         project_id: &str,

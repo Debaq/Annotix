@@ -141,6 +141,9 @@ pub async fn extract_video_frames(
     Ok(result)
 }
 
+/// Tamaño del batch antes de hacer flush a disco
+const BATCH_FLUSH_SIZE: usize = 50;
+
 /// Trabajo pesado de extracción — corre en un thread separado
 fn do_extract_frames(
     app: &AppHandle,
@@ -201,8 +204,12 @@ fn do_extract_frames(
 
     let mut frame_count: i64 = 0;
     let mut next_pts: i64 = 0;
+    let mut pending_entries: Vec<crate::store::project_file::ImageEntry> = Vec::new();
 
-    let mut process_decoded = |decoder: &mut ffmpeg_the_third::decoder::Video| -> Result<(), String> {
+    let mut process_decoded = |decoder: &mut ffmpeg_the_third::decoder::Video,
+                                pending: &mut Vec<crate::store::project_file::ImageEntry>,
+                                fc: &mut i64|
+     -> Result<(), String> {
         let mut decoded_frame = ffmpeg_the_third::frame::Video::empty();
         while decoder.receive_frame(&mut decoded_frame).is_ok() {
             let pts = decoded_frame.pts().unwrap_or(0);
@@ -244,18 +251,21 @@ fn do_extract_frames(
                 "{}_{}_frame_{:06}.jpg",
                 uuid::Uuid::new_v4(),
                 video_id,
-                frame_count
+                *fc
             );
 
-            // Guardar imagen completa
-            let image_id = state.upload_image_bytes(
+            // Escribir imagen a disco sin flush a project.json
+            let (image_id, entry) = state.prepare_image_entry(
                 project_id,
                 &frame_name,
                 &jpeg_data,
-                &[],
+                w as u32,
+                h as u32,
                 Some(video_id),
-                Some(frame_count),
+                Some(*fc),
             )?;
+
+            pending.push(entry);
 
             // Generar thumbnail (256px max)
             let dynamic_img = DynamicImage::ImageRgb8(img);
@@ -263,11 +273,17 @@ fn do_extract_frames(
             let thumb_path = thumb_dir.join(format!("{}.jpg", image_id));
             let _ = thumb.save(&thumb_path);
 
-            frame_count += 1;
+            *fc += 1;
+
+            // Flush periódico cada BATCH_FLUSH_SIZE frames
+            if pending.len() >= BATCH_FLUSH_SIZE {
+                let batch = std::mem::take(pending);
+                state.commit_image_entries(project_id, batch)?;
+            }
 
             // Emitir progreso al frontend
             let progress = if estimated_total > 0 {
-                ((frame_count as f64 / estimated_total as f64) * 100.0).min(99.0) as i32
+                ((*fc as f64 / estimated_total as f64) * 100.0).min(99.0) as i32
             } else {
                 0
             };
@@ -277,7 +293,7 @@ fn do_extract_frames(
                 serde_json::json!({
                     "videoId": video_id,
                     "progress": progress,
-                    "current": frame_count,
+                    "current": *fc,
                     "total": estimated_total,
                 }),
             );
@@ -294,14 +310,19 @@ fn do_extract_frames(
         decoder
             .send_packet(&packet)
             .map_err(|e| format!("Error enviando paquete: {}", e))?;
-        process_decoded(&mut decoder)?;
+        process_decoded(&mut decoder, &mut pending_entries, &mut frame_count)?;
     }
 
     // Flush decoder
     decoder
         .send_eof()
         .map_err(|e| format!("Error enviando EOF: {}", e))?;
-    process_decoded(&mut decoder)?;
+    process_decoded(&mut decoder, &mut pending_entries, &mut frame_count)?;
+
+    // Flush final de entries pendientes
+    if !pending_entries.is_empty() {
+        state.commit_image_entries(project_id, pending_entries)?;
+    }
 
     // Actualizar estado del video
     state.update_video_status(project_id, video_id, "ready", frame_count)?;
