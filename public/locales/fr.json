@@ -1858,5 +1858,44 @@
     "hideTrack": "Masquer",
     "showTrack": "Afficher",
     "deleteTrack": "Supprimer le track"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "back": "Retour",
+    "sections": {
+      "pythonEnv": "Environnement Python"
+    },
+    "pythonEnv": {
+      "systemPython": "Python Système",
+      "systemPythonFound": "Python 3 trouvé : {{python}}",
+      "systemPythonNotFound": "Python 3 introuvable dans PATH. Veuillez installer Python 3.10+.",
+      "venv": "Environnement Virtuel",
+      "venvNotExists": "Aucun environnement virtuel créé. Créez-en un pour les fonctions d'entraînement.",
+      "status": "Statut",
+      "active": "Actif",
+      "pythonVersion": "Version Python",
+      "diskUsage": "Espace disque",
+      "path": "Chemin",
+      "createVenv": "Créer l'environnement",
+      "removeVenv": "Supprimer l'environnement"
+    },
+    "packages": {
+      "title": "Paquets installés",
+      "name": "Nom",
+      "version": "Version",
+      "updateAll": "Tout mettre à jour"
+    },
+    "pytorch": {
+      "title": "PyTorch",
+      "cudaActive": "Actif",
+      "cpuOnly": "CPU uniquement",
+      "nvidiaDetected": "GPU NVIDIA détecté",
+      "driverVersion": "Pilote",
+      "suggestedCuda": "CUDA suggéré",
+      "noNvidia": "Aucun GPU NVIDIA détecté (mode CPU utilisé)",
+      "selectVariant": "Variante PyTorch",
+      "install": "Installer PyTorch",
+      "reinstall": "Réinstaller PyTorch"
+    }
   }
 }

@@ -1858,5 +1858,44 @@
     "hideTrack": "非表示",
     "showTrack": "表示",
     "deleteTrack": "トラックを削除"
+  },
+  "settings": {
+    "title": "設定",
+    "back": "戻る",
+    "sections": {
+      "pythonEnv": "Python環境"
+    },
+    "pythonEnv": {
+      "systemPython": "システムPython",
+      "systemPythonFound": "Python 3が見つかりました: {{python}}",
+      "systemPythonNotFound": "PATHにPython 3が見つかりません。Python 3.10以上をインストールしてください。",
+      "venv": "仮想環境",
+      "venvNotExists": "仮想環境が作成されていません。トレーニング機能を使用するには作成してください。",
+      "status": "ステータス",
+      "active": "アクティブ",
+      "pythonVersion": "Pythonバージョン",
+      "diskUsage": "ディスク使用量",
+      "path": "パス",
+      "createVenv": "環境を作成",
+      "removeVenv": "環境を削除"
+    },
+    "packages": {
+      "title": "インストール済みパッケージ",
+      "name": "名前",
+      "version": "バージョン",
+      "updateAll": "すべて更新"
+    },
+    "pytorch": {
+      "title": "PyTorch",
+      "cudaActive": "アクティブ",
+      "cpuOnly": "CPUのみ",
+      "nvidiaDetected": "NVIDIA GPUを検出",
+      "driverVersion": "ドライバー",
+      "suggestedCuda": "推奨CUDA",
+      "noNvidia": "NVIDIA GPUが検出されません（CPUモードが使用されます）",
+      "selectVariant": "PyTorchバリアント",
+      "install": "PyTorchをインストール",
+      "reinstall": "PyTorchを再インストール"
+    }
   }
 }

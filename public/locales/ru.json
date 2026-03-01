@@ -1858,5 +1858,44 @@
     "hideTrack": "Скрыть",
     "showTrack": "Показать",
     "deleteTrack": "Удалить трек"
+  },
+  "settings": {
+    "title": "Настройки",
+    "back": "Назад",
+    "sections": {
+      "pythonEnv": "Среда Python"
+    },
+    "pythonEnv": {
+      "systemPython": "Системный Python",
+      "systemPythonFound": "Python 3 найден: {{python}}",
+      "systemPythonNotFound": "Python 3 не найден в PATH. Установите Python 3.10+.",
+      "venv": "Виртуальное окружение",
+      "venvNotExists": "Виртуальное окружение не создано. Создайте его для функций обучения.",
+      "status": "Статус",
+      "active": "Активно",
+      "pythonVersion": "Версия Python",
+      "diskUsage": "Использование диска",
+      "path": "Путь",
+      "createVenv": "Создать окружение",
+      "removeVenv": "Удалить окружение"
+    },
+    "packages": {
+      "title": "Установленные пакеты",
+      "name": "Название",
+      "version": "Версия",
+      "updateAll": "Обновить все"
+    },
+    "pytorch": {
+      "title": "PyTorch",
+      "cudaActive": "Активно",
+      "cpuOnly": "Только CPU",
+      "nvidiaDetected": "Обнаружен GPU NVIDIA",
+      "driverVersion": "Драйвер",
+      "suggestedCuda": "Рекомендуемый CUDA",
+      "noNvidia": "GPU NVIDIA не обнаружен (будет использоваться режим CPU)",
+      "selectVariant": "Вариант PyTorch",
+      "install": "Установить PyTorch",
+      "reinstall": "Переустановить PyTorch"
+    }
   }
 }
