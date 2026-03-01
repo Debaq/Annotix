@@ -342,6 +342,8 @@ pub mod scripts;
 pub mod runner;
 pub mod model_export;
 pub mod backends;
+pub mod package;
+pub mod notebook;
 
 /// En Windows, configura CREATE_NO_WINDOW para evitar que aparezca una ventana de consola.
 #[cfg(windows)]

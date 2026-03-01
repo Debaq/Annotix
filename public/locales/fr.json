@@ -1628,6 +1628,31 @@
     "start": "Démarrer l'entraînement",
     "starting": "Démarrage...",
     "cancel": "Annuler l'entraînement",
+    "backend": {
+      "title": "Backend d'entraînement",
+      "description": "Choisissez le framework pour entraîner votre modèle",
+      "installed": "Installé",
+      "notInstalled": "Non installé localement",
+      "install": "Installer",
+      "installing": "Installation...",
+      "installingPackages": "Installation des paquets du backend...",
+      "installingPackagesDesc": "Cela peut prendre quelques minutes. Votre configuration sera conservée.",
+      "modelsAvailable": "modèles disponibles"
+    },
+    "execution": {
+      "title": "Mode d'exécution",
+      "description": "Choisissez comment exécuter l'entraînement",
+      "local": "Entraîner sur ce PC",
+      "localDesc": "Exécuter l'entraînement localement avec votre GPU. Nécessite les paquets installés.",
+      "download": "Télécharger le paquet",
+      "downloadDesc": "Télécharger un ZIP avec le dataset, le script et le notebook pour entraîner ailleurs.",
+      "downloadPackage": "Télécharger le paquet d'entraînement"
+    },
+    "package": {
+      "generating": "Génération du paquet d'entraînement...",
+      "generated": "Paquet d'entraînement généré avec succès",
+      "error": "Erreur lors de la génération du paquet d'entraînement"
+    },
     "env": {
       "checking": "Vérification de l'environnement Python...",
       "ready": "Environnement Python prêt",
@@ -1663,7 +1688,8 @@
       "sizeDescSmall": "Rapide avec une bonne précision.",
       "sizeDescMedium": "Vitesse et précision équilibrées.",
       "sizeDescLarge": "Haute précision, entraînement plus lent.",
-      "sizeDescXLarge": "Précision maximale, entraînement le plus lent."
+      "sizeDescXLarge": "Précision maximale, entraînement le plus lent.",
+      "selectModel": "Sélectionner le modèle"
     },
     "config": {
       "title": "Configuration d'entraînement",
@@ -1791,7 +1817,35 @@
       "copy_paste": "Copier-Coller",
       "copy_pasteDesc": "Copier des objets entre images (segmentation uniquement).",
       "erasing": "Effacement",
-      "erasingDesc": "Effacement aléatoire simule l'occlusion. Réduire avec les petits objets."
+      "erasingDesc": "Effacement aléatoire simule l'occlusion. Réduire avec les petits objets.",
+      "commonTitle": "Paramètres communs",
+      "rtdetrTitle": "Paramètres RT-DETR",
+      "rfdetrTitle": "Paramètres RF-DETR",
+      "mmdetTitle": "Paramètres MMDetection",
+      "resolution": "Résolution",
+      "resolutionDesc": "Résolution d'entrée (doit être un multiple de 56)",
+      "lr_encoder": "LR de l'encodeur",
+      "lr_encoderDesc": "Taux d'apprentissage pour le backbone de l'encodeur",
+      "grad_accum_steps": "Accumulation de gradients",
+      "grad_accum_stepsDesc": "Nombre d'étapes pour accumuler les gradients",
+      "use_ema": "Utiliser EMA",
+      "use_emaDesc": "Moyenne mobile exponentielle pour les poids",
+      "early_stopping": "Early Stopping",
+      "early_stoppingDesc": "Arrêter l'entraînement quand la perte de validation stagne",
+      "gradient_checkpointing": "Gradient Checkpointing",
+      "gradient_checkpointingDesc": "Échanger du calcul contre de la mémoire — permet des modèles plus grands",
+      "optimizer_type": "Type d'optimiseur",
+      "optimizer_typeDesc": "Algorithme d'optimisation pour l'entraînement",
+      "lr_schedule": "Planning du LR",
+      "lr_scheduleDesc": "Planning de décroissance du taux d'apprentissage",
+      "warmup_iters": "Itérations de warmup",
+      "warmup_itersDesc": "Nombre d'itérations de warmup avant le LR complet",
+      "checkpoint_interval": "Intervalle de checkpoint",
+      "checkpoint_intervalDesc": "Sauvegarder un checkpoint toutes les N époques",
+      "imageSize": "Taille d'image",
+      "imageSizeDesc": "Résolution d'entrée pour l'entraînement",
+      "lr": "Taux d'apprentissage",
+      "lrDesc": "Taux d'apprentissage de base pour l'entraînement"
     },
     "monitor": {
       "title": "Entraînement en cours",

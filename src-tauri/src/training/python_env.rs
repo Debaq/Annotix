@@ -216,6 +216,7 @@ pub fn install_packages(packages: &[&str]) -> Result<(), String> {
 }
 
 /// Checks if a Python package is installed in the venv
+#[allow(dead_code)]
 pub fn is_package_installed(name: &str) -> bool {
     let python = match venv_python() {
         Ok(p) => p,

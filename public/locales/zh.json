@@ -1628,6 +1628,31 @@
     "start": "开始训练",
     "starting": "启动中...",
     "cancel": "取消训练",
+    "backend": {
+      "title": "训练后端",
+      "description": "选择用于训练模型的框架",
+      "installed": "已安装",
+      "notInstalled": "本地未安装",
+      "install": "安装",
+      "installing": "安装中...",
+      "installingPackages": "正在安装后端包...",
+      "installingPackagesDesc": "这可能需要几分钟。您的配置将被保留。",
+      "modelsAvailable": "个可用模型"
+    },
+    "execution": {
+      "title": "执行模式",
+      "description": "选择训练的执行方式",
+      "local": "在此电脑上训练",
+      "localDesc": "使用本地GPU运行训练。需要已安装的软件包。",
+      "download": "下载软件包",
+      "downloadDesc": "下载包含数据集、脚本和笔记本的ZIP文件，在其他地方进行训练。",
+      "downloadPackage": "下载训练包"
+    },
+    "package": {
+      "generating": "正在生成训练包...",
+      "generated": "训练包生成成功",
+      "error": "生成训练包时出错"
+    },
     "env": {
       "checking": "检查Python环境...",
       "ready": "Python环境就绪",
@@ -1663,7 +1688,8 @@
       "sizeDescSmall": "快速且精度不错。",
       "sizeDescMedium": "速度与精度均衡。",
       "sizeDescLarge": "高精度，训练较慢。",
-      "sizeDescXLarge": "最高精度，训练最慢。"
+      "sizeDescXLarge": "最高精度，训练最慢。",
+      "selectModel": "选择模型"
     },
     "config": {
       "title": "训练配置",
@@ -1791,7 +1817,35 @@
       "copy_paste": "复制粘贴",
       "copy_pasteDesc": "在图像间复制目标（仅分割）。",
       "erasing": "擦除",
-      "erasingDesc": "随机擦除模拟遮挡。小目标时减少。"
+      "erasingDesc": "随机擦除模拟遮挡。小目标时减少。",
+      "commonTitle": "通用参数",
+      "rtdetrTitle": "RT-DETR 参数",
+      "rfdetrTitle": "RF-DETR 参数",
+      "mmdetTitle": "MMDetection 参数",
+      "resolution": "分辨率",
+      "resolutionDesc": "输入分辨率（必须是56的倍数）",
+      "lr_encoder": "编码器LR",
+      "lr_encoderDesc": "编码器骨干网络的学习率",
+      "grad_accum_steps": "梯度累积",
+      "grad_accum_stepsDesc": "累积梯度的步数",
+      "use_ema": "使用EMA",
+      "use_emaDesc": "权重的指数移动平均",
+      "early_stopping": "早停",
+      "early_stoppingDesc": "当验证损失停滞时停止训练",
+      "gradient_checkpointing": "梯度检查点",
+      "gradient_checkpointingDesc": "以计算换内存 — 支持更大的模型",
+      "optimizer_type": "优化器类型",
+      "optimizer_typeDesc": "训练优化算法",
+      "lr_schedule": "LR调度",
+      "lr_scheduleDesc": "学习率衰减调度",
+      "warmup_iters": "Warmup迭代",
+      "warmup_itersDesc": "达到完整LR前的warmup迭代次数",
+      "checkpoint_interval": "检查点间隔",
+      "checkpoint_intervalDesc": "每N个轮次保存检查点",
+      "imageSize": "图像大小",
+      "imageSizeDesc": "训练的输入分辨率",
+      "lr": "学习率",
+      "lrDesc": "训练的基础学习率"
     },
     "monitor": {
       "title": "训练进行中",

@@ -8,7 +8,7 @@ use tauri::{AppHandle, Emitter};
 
 use crate::store::AppState;
 use crate::store::project_file::ImageEntry;
-use super::{TrainingConfig, TrainingProgressEvent, TrainingResult, ExportedModel, TrainingEpochMetrics};
+use super::{TrainingConfig, TrainingRequest, TrainingProgressEvent, TrainingResult, ExportedModel, TrainingEpochMetrics};
 use super::python_env;
 use super::dataset;
 use super::scripts;
@@ -185,6 +185,171 @@ impl TrainingProcessManager {
             }
 
             // Guardar logs finales
+            update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
+                job.logs = logs;
+                job.updated_at = js_timestamp();
+            });
+        });
+
+        Ok(())
+    }
+
+    /// Inicia entrenamiento multi-backend con TrainingRequest
+    pub fn start_training_v2(
+        &self,
+        state: &AppState,
+        app: &AppHandle,
+        project_id: &str,
+        job_id: &str,
+        request: TrainingRequest,
+    ) -> Result<(), String> {
+        let python = python_env::venv_python()?;
+        if !python.exists() {
+            return Err("Entorno Python no configurado. Ejecuta setup primero.".to_string());
+        }
+
+        let project_dir = state.project_dir(project_id)?;
+        let images_dir = state.project_images_dir(project_id)?;
+        let job_id_owned = job_id.to_string();
+
+        let pf = state.read_project_file(project_id)?;
+
+        state.with_project_mut(project_id, |pf| {
+            if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
+                job.status = "training".to_string();
+                job.updated_at = js_timestamp();
+            }
+        })?;
+
+        let dataset_dir = state.data_dir
+            .join("training")
+            .join(format!("job_{}", job_id));
+        std::fs::create_dir_all(&dataset_dir)
+            .map_err(|e| format!("Error creando directorio de training: {}", e))?;
+
+        if pf.images.is_empty() {
+            state.with_project_mut(project_id, |pf| {
+                if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
+                    job.status = "failed".to_string();
+                    job.updated_at = js_timestamp();
+                }
+            })?;
+            return Err("No hay imágenes en el proyecto".to_string());
+        }
+
+        let images: Vec<crate::store::project_file::ImageEntry> = pf.images.iter().cloned().map(|mut img| {
+            img.annotations.retain(|ann| {
+                pf.classes.iter().any(|c| c.id == ann.class_id)
+            });
+            img
+        }).collect();
+
+        // Prepare dataset using backend router
+        let dataset_path = dataset::prepare_dataset_for_backend(
+            &images_dir, &pf, &images, &dataset_dir,
+            request.val_split, &request.task, &request.backend,
+        )?;
+
+        // Generate scripts
+        let num_classes = pf.classes.len();
+        let script_files = scripts::generate_train_script_for_backend(&request, &dataset_path, num_classes);
+
+        // Write all generated files
+        for (filename, content) in &script_files {
+            let path = dataset_dir.join(filename);
+            std::fs::write(&path, content)
+                .map_err(|e| format!("Error escribiendo {}: {}", filename, e))?;
+        }
+
+        let script_path = dataset_dir.join("train.py");
+
+        let ds_str = dataset_dir.to_string_lossy().to_string();
+        let result_str = dataset_dir.join("train").to_string_lossy().to_string();
+        state.with_project_mut(project_id, |pf| {
+            if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
+                job.dataset_dir = Some(ds_str);
+                job.result_dir = Some(result_str);
+                job.updated_at = js_timestamp();
+            }
+        })?;
+
+        // Spawn Python
+        let mut cmd = Command::new(&python);
+        cmd.args(["-u", &script_path.to_string_lossy()])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        super::hide_console_window(&mut cmd);
+        let mut child = cmd.spawn()
+            .map_err(|e| format!("Error iniciando entrenamiento: {}", e))?;
+
+        let stdout = child.stdout.take();
+        let stderr = child.stderr.take();
+
+        {
+            let mut procs = self.processes.lock().map_err(|e| e.to_string())?;
+            procs.insert(job_id.to_string(), child);
+        }
+
+        let app_clone = app.clone();
+        let processes = self.processes.clone();
+        let project_dir_clone = project_dir.clone();
+        let job_id_thread = job_id.to_string();
+
+        std::thread::spawn(move || {
+            let mut logs: Vec<String> = Vec::new();
+
+            if let Some(stdout) = stdout {
+                let reader = BufReader::new(stdout);
+                for line in reader.lines().map_while(Result::ok) {
+                    if let Some(json_str) = line.strip_prefix("ANNOTIX_EVENT:") {
+                        if let Ok(event) = serde_json::from_str::<serde_json::Value>(json_str) {
+                            handle_event(&app_clone, &job_id_thread, &event, &project_dir_clone);
+                        }
+                    } else if !line.trim().is_empty() {
+                        logs.push(line.clone());
+                        let _ = app_clone.emit("training:log", serde_json::json!({
+                            "jobId": &job_id_thread,
+                            "message": line,
+                        }));
+
+                        if logs.len() % 10 == 0 {
+                            update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
+                                job.logs = logs.clone();
+                                job.updated_at = js_timestamp();
+                            });
+                        }
+                    }
+                }
+            }
+
+            {
+                let mut procs = processes.lock().unwrap();
+                if let Some(mut child) = procs.remove(&job_id_thread) {
+                    let status = child.wait();
+                    let success = status.map(|s| s.success()).unwrap_or(false);
+
+                    if !success {
+                        if let Some(stderr) = stderr {
+                            let reader = BufReader::new(stderr);
+                            let stderr_lines: Vec<String> = reader.lines()
+                                .map_while(Result::ok)
+                                .collect();
+                            let error_msg = stderr_lines.join("\n");
+
+                            let _ = app_clone.emit("training:error", serde_json::json!({
+                                "jobId": &job_id_thread,
+                                "error": error_msg,
+                            }));
+
+                            update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
+                                job.status = "failed".to_string();
+                                job.updated_at = js_timestamp();
+                            });
+                        }
+                    }
+                }
+            }
+
             update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
                 job.logs = logs;
                 job.updated_at = js_timestamp();
