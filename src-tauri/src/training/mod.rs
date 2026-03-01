@@ -2,6 +2,26 @@ use serde::{Deserialize, Serialize};
 
 // ─── Training Config ────────────────────────────────────────────────────────
 
+fn default_cos_lr() -> bool { false }
+fn default_warmup_epochs() -> f64 { 3.0 }
+fn default_warmup_momentum() -> f64 { 0.8 }
+fn default_warmup_bias_lr() -> f64 { 0.1 }
+fn default_momentum() -> f64 { 0.937 }
+fn default_weight_decay() -> f64 { 0.0005 }
+fn default_nbs() -> u32 { 64 }
+fn default_box_weight() -> f64 { 7.5 }
+fn default_cls_weight() -> f64 { 0.5 }
+fn default_dfl_weight() -> f64 { 1.5 }
+fn default_close_mosaic() -> u32 { 10 }
+fn default_max_det() -> u32 { 300 }
+fn default_multi_scale() -> f64 { 0.0 }
+fn default_rect() -> bool { false }
+fn default_cache() -> CacheOption { CacheOption::Bool(false) }
+fn default_amp() -> bool { true }
+fn default_single_cls() -> bool { false }
+fn default_pretrained() -> bool { true }
+fn default_translate() -> f64 { 0.1 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainingConfig {
     #[serde(rename = "yoloVersion")]
@@ -25,6 +45,65 @@ pub struct TrainingConfig {
     #[serde(rename = "exportFormats")]
     pub export_formats: Vec<String>,
     pub resume: bool,
+    // Optimizer
+    #[serde(default = "default_cos_lr")]
+    pub cos_lr: bool,
+    #[serde(default = "default_warmup_epochs")]
+    pub warmup_epochs: f64,
+    #[serde(default = "default_warmup_momentum")]
+    pub warmup_momentum: f64,
+    #[serde(default = "default_warmup_bias_lr")]
+    pub warmup_bias_lr: f64,
+    #[serde(default = "default_momentum")]
+    pub momentum: f64,
+    #[serde(default = "default_weight_decay")]
+    pub weight_decay: f64,
+    #[serde(default = "default_nbs")]
+    pub nbs: u32,
+    // Loss weights
+    #[serde(default = "default_box_weight", rename = "box")]
+    pub box_weight: f64,
+    #[serde(default = "default_cls_weight")]
+    pub cls: f64,
+    #[serde(default = "default_dfl_weight")]
+    pub dfl: f64,
+    // Advanced training
+    #[serde(default = "default_close_mosaic")]
+    pub close_mosaic: u32,
+    #[serde(default = "default_max_det")]
+    pub max_det: u32,
+    #[serde(default = "default_multi_scale")]
+    pub multi_scale: f64,
+    #[serde(default = "default_rect")]
+    pub rect: bool,
+    #[serde(default = "default_cache")]
+    pub cache: CacheOption,
+    #[serde(default = "default_amp")]
+    pub amp: bool,
+    #[serde(default = "default_single_cls")]
+    pub single_cls: bool,
+    // Transfer learning
+    #[serde(default = "default_pretrained")]
+    pub pretrained: bool,
+    #[serde(default)]
+    pub freeze: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CacheOption {
+    Bool(bool),
+    Str(String),
+}
+
+impl CacheOption {
+    pub fn to_python(&self) -> String {
+        match self {
+            CacheOption::Bool(true) => "\"ram\"".to_string(),
+            CacheOption::Bool(false) => "False".to_string(),
+            CacheOption::Str(s) => format!("\"{}\"", s),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -42,6 +121,8 @@ pub struct AugmentationConfig {
     pub perspective: f64,
     pub copy_paste: f64,
     pub erasing: f64,
+    #[serde(default = "default_translate")]
+    pub translate: f64,
 }
 
 // ─── Python Env Status ──────────────────────────────────────────────────────

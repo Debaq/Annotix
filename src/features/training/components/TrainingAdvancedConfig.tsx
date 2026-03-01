@@ -1,13 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { TrainingParamGroup, type ParamDefinition } from './TrainingParamGroup';
 import { OPTIMIZERS } from '../utils/presets';
 import type { TrainingConfig } from '../types';
 
@@ -16,151 +8,165 @@ interface TrainingAdvancedConfigProps {
   onChange: (partial: Partial<TrainingConfig>) => void;
 }
 
+const IMGSZ_OPTIONS = [
+  { value: '256', label: '256px' },
+  { value: '320', label: '320px' },
+  { value: '416', label: '416px' },
+  { value: '480', label: '480px' },
+  { value: '640', label: '640px' },
+  { value: '800', label: '800px' },
+  { value: '960', label: '960px' },
+  { value: '1024', label: '1024px' },
+  { value: '1280', label: '1280px' },
+];
+
+const CACHE_OPTIONS = [
+  { value: 'false', label: 'Off' },
+  { value: 'ram', label: 'RAM' },
+  { value: 'disk', label: 'Disk' },
+];
+
+const DEVICE_OPTIONS = [
+  { value: 'auto', label: 'Auto' },
+  { value: 'cpu', label: 'CPU' },
+  { value: 'cuda:0', label: 'CUDA:0' },
+  { value: 'mps', label: 'MPS (Apple)' },
+];
+
+const TRAINING_PARAMS: ParamDefinition[] = [
+  { key: 'epochs', type: 'number', min: 1, max: 9999 },
+  { key: 'batchSize', type: 'number', min: -1, max: 512 },
+  { key: 'imgsz', type: 'select', options: IMGSZ_OPTIONS },
+  { key: 'patience', type: 'number', min: 0, max: 999 },
+  { key: 'max_det', type: 'number', min: 1, max: 3000 },
+  { key: 'multi_scale', type: 'slider', min: 0, max: 1, step: 0.05 },
+  { key: 'rect', type: 'checkbox' },
+  { key: 'cache', type: 'select', options: CACHE_OPTIONS },
+];
+
+const OPTIMIZER_PARAMS: ParamDefinition[] = [
+  { key: 'optimizer', type: 'select', options: OPTIMIZERS },
+  { key: 'lr0', type: 'number', min: 0.00001, max: 0.1, step: 0.001 },
+  { key: 'lrf', type: 'number', min: 0.0001, max: 1, step: 0.001 },
+  { key: 'cos_lr', type: 'checkbox' },
+  { key: 'warmup_epochs', type: 'number', min: 0, max: 10, step: 0.5 },
+  { key: 'momentum', type: 'number', min: 0.6, max: 0.98, step: 0.001 },
+  { key: 'weight_decay', type: 'number', min: 0, max: 0.01, step: 0.0001 },
+];
+
+const LOSS_PARAMS: ParamDefinition[] = [
+  { key: 'box', type: 'number', min: 0, max: 20, step: 0.5 },
+  { key: 'cls', type: 'number', min: 0, max: 5, step: 0.1 },
+  { key: 'dfl', type: 'number', min: 0, max: 5, step: 0.1 },
+];
+
+const TRANSFER_PARAMS: ParamDefinition[] = [
+  { key: 'pretrained', type: 'checkbox' },
+  { key: 'freeze', type: 'number', min: 0, max: 30, step: 1 },
+];
+
+const ADVANCED_PARAMS: ParamDefinition[] = [
+  { key: 'amp', type: 'checkbox' },
+  { key: 'nbs', type: 'number', min: 1, max: 128 },
+  { key: 'single_cls', type: 'checkbox' },
+  { key: 'warmup_momentum', type: 'number', min: 0, max: 0.95, step: 0.01 },
+  { key: 'warmup_bias_lr', type: 'number', min: 0, max: 0.2, step: 0.01 },
+  { key: 'valSplit', type: 'number', min: 0.05, max: 0.5, step: 0.05 },
+  { key: 'workers', type: 'number', min: 0, max: 32 },
+  { key: 'device', type: 'select', options: DEVICE_OPTIONS },
+];
+
 export function TrainingAdvancedConfig({ config, onChange }: TrainingAdvancedConfigProps) {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
+
+  // Flatten config to a Record for the param groups
+  const flatValues: Record<string, unknown> = {
+    epochs: config.epochs,
+    batchSize: config.batchSize,
+    imgsz: String(config.imgsz),
+    patience: config.patience,
+    max_det: config.max_det,
+    multi_scale: config.multi_scale,
+    rect: config.rect,
+    cache: typeof config.cache === 'boolean' ? (config.cache ? 'ram' : 'false') : String(config.cache),
+    optimizer: config.optimizer,
+    lr0: config.lr0,
+    lrf: config.lrf,
+    cos_lr: config.cos_lr,
+    warmup_epochs: config.warmup_epochs,
+    momentum: config.momentum,
+    weight_decay: config.weight_decay,
+    box: config.box,
+    cls: config.cls,
+    dfl: config.dfl,
+    pretrained: config.pretrained,
+    freeze: config.freeze ?? 0,
+    amp: config.amp,
+    nbs: config.nbs,
+    single_cls: config.single_cls,
+    warmup_momentum: config.warmup_momentum,
+    warmup_bias_lr: config.warmup_bias_lr,
+    valSplit: config.valSplit,
+    workers: config.workers,
+    device: config.device,
+  };
+
+  const handleChange = (key: string, value: unknown) => {
+    if (key === 'imgsz') {
+      onChange({ imgsz: parseInt(value as string) });
+    } else if (key === 'cache') {
+      const v = value as string;
+      onChange({ cache: v === 'false' ? false : v });
+    } else if (key === 'freeze') {
+      const n = value as number;
+      onChange({ freeze: n === 0 ? null : n });
+    } else {
+      onChange({ [key]: value } as Partial<TrainingConfig>);
+    }
+  };
 
   return (
-    <div className="space-y-4">
-      <h4 className="text-sm font-medium">{t('training.config.advanced')}</h4>
-
-      <div className="grid grid-cols-2 gap-4">
-        {/* Epochs */}
-        <div className="space-y-1.5">
-          <Label>{t('training.config.epochs')}</Label>
-          <Input
-            type="number"
-            min={1}
-            max={9999}
-            value={config.epochs}
-            onChange={(e) => onChange({ epochs: parseInt(e.target.value) || 100 })}
-          />
-        </div>
-
-        {/* Batch Size */}
-        <div className="space-y-1.5">
-          <Label>{t('training.config.batchSize')}</Label>
-          <Input
-            type="number"
-            min={-1}
-            max={512}
-            value={config.batchSize}
-            onChange={(e) => onChange({ batchSize: parseInt(e.target.value) || 16 })}
-          />
-          <p className="text-[10px] text-muted-foreground">{t('training.config.batchSizeHint')}</p>
-        </div>
-
-        {/* Image Size */}
-        <div className="space-y-1.5">
-          <Label>{t('training.config.imageSize')}</Label>
-          <Select
-            value={String(config.imgsz)}
-            onValueChange={(v) => onChange({ imgsz: parseInt(v) })}
-          >
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {[320, 416, 480, 640, 800, 1024, 1280].map((s) => (
-                <SelectItem key={s} value={String(s)}>{s}px</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Optimizer */}
-        <div className="space-y-1.5">
-          <Label>{t('training.config.optimizer')}</Label>
-          <Select
-            value={config.optimizer}
-            onValueChange={(v) => onChange({ optimizer: v })}
-          >
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {OPTIMIZERS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Learning Rate */}
-        <div className="space-y-1.5">
-          <Label>{t('training.config.lr0')}</Label>
-          <Input
-            type="number"
-            step={0.001}
-            min={0.0001}
-            max={1}
-            value={config.lr0}
-            onChange={(e) => onChange({ lr0: parseFloat(e.target.value) || 0.01 })}
-          />
-        </div>
-
-        {/* LR Final */}
-        <div className="space-y-1.5">
-          <Label>{t('training.config.lrf')}</Label>
-          <Input
-            type="number"
-            step={0.001}
-            min={0.0001}
-            max={1}
-            value={config.lrf}
-            onChange={(e) => onChange({ lrf: parseFloat(e.target.value) || 0.01 })}
-          />
-        </div>
-
-        {/* Patience */}
-        <div className="space-y-1.5">
-          <Label>{t('training.config.patience')}</Label>
-          <Input
-            type="number"
-            min={0}
-            max={999}
-            value={config.patience}
-            onChange={(e) => onChange({ patience: parseInt(e.target.value) || 25 })}
-          />
-        </div>
-
-        {/* Val Split */}
-        <div className="space-y-1.5">
-          <Label>{t('training.config.valSplit')}</Label>
-          <Input
-            type="number"
-            step={0.05}
-            min={0.05}
-            max={0.5}
-            value={config.valSplit}
-            onChange={(e) => onChange({ valSplit: parseFloat(e.target.value) || 0.2 })}
-          />
-        </div>
-
-        {/* Workers */}
-        <div className="space-y-1.5">
-          <Label>{t('training.config.workers')}</Label>
-          <Input
-            type="number"
-            min={0}
-            max={32}
-            value={config.workers}
-            onChange={(e) => onChange({ workers: parseInt(e.target.value) || 4 })}
-          />
-        </div>
-
-        {/* Device */}
-        <div className="space-y-1.5">
-          <Label>{t('training.config.device')}</Label>
-          <Select
-            value={config.device}
-            onValueChange={(v) => onChange({ device: v })}
-          >
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="auto">Auto</SelectItem>
-              <SelectItem value="cpu">CPU</SelectItem>
-              <SelectItem value="cuda:0">CUDA:0</SelectItem>
-              <SelectItem value="mps">MPS (Apple)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+    <div className="space-y-2">
+      <TrainingParamGroup
+        titleKey="training.paramGroups.training"
+        icon="fas fa-dumbbell"
+        defaultOpen={true}
+        params={TRAINING_PARAMS}
+        values={flatValues}
+        onChange={handleChange}
+      />
+      <TrainingParamGroup
+        titleKey="training.paramGroups.optimizer"
+        icon="fas fa-sliders-h"
+        defaultOpen={true}
+        params={OPTIMIZER_PARAMS}
+        values={flatValues}
+        onChange={handleChange}
+      />
+      <TrainingParamGroup
+        titleKey="training.paramGroups.lossWeights"
+        icon="fas fa-balance-scale"
+        defaultOpen={false}
+        params={LOSS_PARAMS}
+        values={flatValues}
+        onChange={handleChange}
+      />
+      <TrainingParamGroup
+        titleKey="training.paramGroups.transferLearning"
+        icon="fas fa-graduation-cap"
+        defaultOpen={false}
+        params={TRANSFER_PARAMS}
+        values={flatValues}
+        onChange={handleChange}
+      />
+      <TrainingParamGroup
+        titleKey="training.paramGroups.advanced"
+        icon="fas fa-cog"
+        defaultOpen={false}
+        params={ADVANCED_PARAMS}
+        values={flatValues}
+        onChange={handleChange}
+      />
     </div>
   );
 }

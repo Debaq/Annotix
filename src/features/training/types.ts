@@ -17,6 +17,29 @@ export interface TrainingConfig {
   augmentation: AugmentationConfig;
   exportFormats: string[];
   resume: boolean;
+  // Optimizer
+  cos_lr: boolean;
+  warmup_epochs: number;
+  warmup_momentum: number;
+  warmup_bias_lr: number;
+  momentum: number;
+  weight_decay: number;
+  nbs: number;
+  // Loss weights
+  box: number;
+  cls: number;
+  dfl: number;
+  // Advanced training
+  close_mosaic: number;
+  max_det: number;
+  multi_scale: number;
+  rect: boolean;
+  cache: string | boolean;
+  amp: boolean;
+  single_cls: boolean;
+  // Transfer learning
+  pretrained: boolean;
+  freeze: number | null;
 }
 
 export interface AugmentationConfig {
@@ -33,6 +56,27 @@ export interface AugmentationConfig {
   perspective: number;
   copy_paste: number;
   erasing: number;
+  translate: number;
+}
+
+// ─── Scenario Presets ──────────────────────────────────────────────────────
+
+export type ScenarioPresetId =
+  | 'small_objects'
+  | 'industrial'
+  | 'traffic'
+  | 'edge_mobile'
+  | 'medical'
+  | 'aerial';
+
+export interface ScenarioPreset {
+  id: ScenarioPresetId;
+  icon: string;
+  color: string;
+  selectedColor: string;
+  suggestedModelSize: string;
+  suggestedImgsz: number;
+  config: Omit<TrainingConfig, 'yoloVersion' | 'task' | 'modelSize' | 'device' | 'exportFormats' | 'resume' | 'valSplit' | 'workers'>;
 }
 
 // ─── Python Env ─────────────────────────────────────────────────────────────
@@ -100,7 +144,7 @@ export interface ExportedModel {
   path: string;
 }
 
-// ─── Training Preset ────────────────────────────────────────────────────────
+// ─── Training Preset (legacy, kept for backend compat) ─────────────────────
 
 export interface TrainingPreset {
   name: string;

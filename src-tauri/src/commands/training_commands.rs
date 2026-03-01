@@ -32,34 +32,8 @@ pub fn detect_gpu() -> Result<GpuInfo, String> {
 
 #[tauri::command]
 pub fn get_training_presets(_project_type: String) -> Result<Vec<TrainingPreset>, String> {
-    let presets = vec![
-        TrainingPreset {
-            name: "quick".to_string(),
-            epochs: 50,
-            batch_size: 16,
-            image_size: 640,
-            patience: 10,
-            augmentation_level: "light".to_string(),
-        },
-        TrainingPreset {
-            name: "balanced".to_string(),
-            epochs: 100,
-            batch_size: 16,
-            image_size: 640,
-            patience: 25,
-            augmentation_level: "medium".to_string(),
-        },
-        TrainingPreset {
-            name: "full".to_string(),
-            epochs: 300,
-            batch_size: -1, // auto
-            image_size: 640,
-            patience: 50,
-            augmentation_level: "heavy".to_string(),
-        },
-    ];
-
-    Ok(presets)
+    // Presets now live in the frontend (scenario-based)
+    Ok(vec![])
 }
 
 #[tauri::command]

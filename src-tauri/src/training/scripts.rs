@@ -1,5 +1,9 @@
 use super::TrainingConfig;
 
+fn py_bool(val: bool) -> &'static str {
+    if val { "True" } else { "False" }
+}
+
 /// Genera el script train.py que se ejecutará en el virtualenv
 pub fn generate_train_script(config: &TrainingConfig, data_yaml_path: &str) -> String {
     let model_name = build_model_name(config);
@@ -12,6 +16,13 @@ pub fn generate_train_script(config: &TrainingConfig, data_yaml_path: &str) -> S
         "# Default detection task".to_string()
     };
     let export_section = generate_export_section(&config.export_formats);
+
+    let cache_value = config.cache.to_python();
+
+    let freeze_line = match config.freeze {
+        Some(n) if n > 0 => format!("        \"freeze\": {},", n),
+        _ => "        # freeze: disabled".to_string(),
+    };
 
     format!(
         r#"#!/usr/bin/env python3
@@ -47,6 +58,28 @@ def main():
         "name": "train",
         "exist_ok": True,
         "verbose": True,
+        # Optimizer
+        "cos_lr": {cos_lr},
+        "warmup_epochs": {warmup_epochs},
+        "warmup_momentum": {warmup_momentum},
+        "warmup_bias_lr": {warmup_bias_lr},
+        "momentum": {momentum},
+        "weight_decay": {weight_decay},
+        "nbs": {nbs},
+        # Loss weights
+        "box": {box_weight},
+        "cls": {cls_weight},
+        "dfl": {dfl_weight},
+        # Advanced
+        "close_mosaic": {close_mosaic},
+        "max_det": {max_det},
+        "multi_scale": {multi_scale},
+        "rect": {rect},
+        "cache": {cache_value},
+        "amp": {amp},
+        "single_cls": {single_cls},
+        "pretrained": {pretrained},
+{freeze_line}
         # Augmentation
         "mosaic": {mosaic},
         "mixup": {mixup},
@@ -61,6 +94,7 @@ def main():
         "perspective": {perspective},
         "copy_paste": {copy_paste},
         "erasing": {erasing},
+        "translate": {translate},
     }}
 
     {task_line}
@@ -158,6 +192,29 @@ if __name__ == "__main__":
         lrf = config.lrf,
         patience = config.patience,
         workers = config.workers,
+        // Optimizer
+        cos_lr = py_bool(config.cos_lr),
+        warmup_epochs = config.warmup_epochs,
+        warmup_momentum = config.warmup_momentum,
+        warmup_bias_lr = config.warmup_bias_lr,
+        momentum = config.momentum,
+        weight_decay = config.weight_decay,
+        nbs = config.nbs,
+        // Loss weights
+        box_weight = config.box_weight,
+        cls_weight = config.cls,
+        dfl_weight = config.dfl,
+        // Advanced
+        close_mosaic = config.close_mosaic,
+        max_det = config.max_det,
+        multi_scale = config.multi_scale,
+        rect = py_bool(config.rect),
+        cache_value = cache_value,
+        amp = py_bool(config.amp),
+        single_cls = py_bool(config.single_cls),
+        pretrained = py_bool(config.pretrained),
+        freeze_line = freeze_line,
+        // Augmentation
         mosaic = config.augmentation.mosaic,
         mixup = config.augmentation.mixup,
         hsv_h = config.augmentation.hsv_h,
@@ -171,6 +228,7 @@ if __name__ == "__main__":
         perspective = config.augmentation.perspective,
         copy_paste = config.augmentation.copy_paste,
         erasing = config.augmentation.erasing,
+        translate = config.augmentation.translate,
         task_line = task_line,
         export_section = export_section,
     )
