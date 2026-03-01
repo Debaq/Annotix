@@ -151,6 +151,26 @@ pub struct PythonEnvStatus {
     pub hf_transformers_version: Option<String>,
     #[serde(rename = "mmsegVersion", skip_serializing_if = "Option::is_none")]
     pub mmseg_version: Option<String>,
+    #[serde(rename = "detectron2Version", skip_serializing_if = "Option::is_none")]
+    pub detectron2_version: Option<String>,
+    #[serde(rename = "mmposeVersion", skip_serializing_if = "Option::is_none")]
+    pub mmpose_version: Option<String>,
+    #[serde(rename = "mmrotateVersion", skip_serializing_if = "Option::is_none")]
+    pub mmrotate_version: Option<String>,
+    #[serde(rename = "timmVersion", skip_serializing_if = "Option::is_none")]
+    pub timm_version: Option<String>,
+    #[serde(rename = "tsaiVersion", skip_serializing_if = "Option::is_none")]
+    pub tsai_version: Option<String>,
+    #[serde(rename = "pytorchForecastingVersion", skip_serializing_if = "Option::is_none")]
+    pub pytorch_forecasting_version: Option<String>,
+    #[serde(rename = "pyodVersion", skip_serializing_if = "Option::is_none")]
+    pub pyod_version: Option<String>,
+    #[serde(rename = "tslearnVersion", skip_serializing_if = "Option::is_none")]
+    pub tslearn_version: Option<String>,
+    #[serde(rename = "pypotsVersion", skip_serializing_if = "Option::is_none")]
+    pub pypots_version: Option<String>,
+    #[serde(rename = "stumpyVersion", skip_serializing_if = "Option::is_none")]
+    pub stumpy_version: Option<String>,
 }
 
 // ─── GPU Info ───────────────────────────────────────────────────────────────
@@ -218,6 +238,25 @@ pub struct TrainingEpochMetrics {
     pub dice_loss: Option<f64>,
     #[serde(rename = "segLoss", skip_serializing_if = "Option::is_none")]
     pub seg_loss: Option<f64>,
+    // Instance segmentation / keypoints metrics
+    #[serde(rename = "maskAP", skip_serializing_if = "Option::is_none")]
+    pub mask_ap: Option<f64>,
+    #[serde(rename = "keypointAP", skip_serializing_if = "Option::is_none")]
+    pub keypoint_ap: Option<f64>,
+    // Classification metrics
+    #[serde(rename = "accuracy", skip_serializing_if = "Option::is_none")]
+    pub accuracy: Option<f64>,
+    #[serde(rename = "f1Score", skip_serializing_if = "Option::is_none")]
+    pub f1_score: Option<f64>,
+    // Time series metrics
+    #[serde(rename = "mae", skip_serializing_if = "Option::is_none")]
+    pub mae: Option<f64>,
+    #[serde(rename = "rmse", skip_serializing_if = "Option::is_none")]
+    pub rmse: Option<f64>,
+    #[serde(rename = "aucRoc", skip_serializing_if = "Option::is_none")]
+    pub auc_roc: Option<f64>,
+    #[serde(rename = "silhouetteScore", skip_serializing_if = "Option::is_none")]
+    pub silhouette_score: Option<f64>,
 }
 
 // ─── Training Result ────────────────────────────────────────────────────────
@@ -279,6 +318,18 @@ pub enum TrainingBackend {
     Smp,
     HfSegmentation,
     MmSegmentation,
+    // New backends
+    Detectron2,
+    MmPose,
+    MmRotate,
+    Timm,
+    HfClassification,
+    Tsai,
+    PytorchForecasting,
+    Pyod,
+    Tslearn,
+    Pypots,
+    Stumpy,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -287,6 +338,12 @@ pub enum DatasetFormat {
     YoloTxt,
     CocoJson,
     MaskPng,
+    CocoInstanceJson,
+    CocoKeypointsJson,
+    DotaTxt,
+    ImageFolder,
+    MultiLabelCsv,
+    TimeSeriesCsv,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

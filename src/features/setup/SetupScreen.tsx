@@ -39,7 +39,7 @@ export function SetupScreen({ onComplete }: SetupScreenProps) {
   };
 
   return (
-    <div className="flex h-screen items-center justify-center bg-[var(--annotix-light)]">
+    <div className="flex h-full items-center justify-center bg-[var(--annotix-light)]">
       <div className="w-full max-w-lg rounded-xl border bg-white p-8 shadow-lg">
         <div className="text-center mb-8">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--annotix-primary)]/10">

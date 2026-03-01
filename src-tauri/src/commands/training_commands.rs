@@ -354,6 +354,17 @@ pub fn install_backend_packages(
         "smp" => vec!["segmentation-models-pytorch", "albumentations"],
         "hf_segmentation" => vec!["transformers", "datasets", "evaluate"],
         "mmsegmentation" => vec!["openmim", "mmengine", "mmcv", "mmsegmentation"],
+        "detectron2" => vec!["detectron2"],
+        "mmpose" => vec!["openmim", "mmengine", "mmcv", "mmpose", "mmdet"],
+        "mmrotate" => vec!["openmim", "mmengine", "mmcv", "mmrotate"],
+        "timm" => vec!["timm"],
+        "hf_classification" => vec!["transformers", "datasets", "evaluate"],
+        "tsai" => vec!["tsai"],
+        "pytorch_forecasting" => vec!["pytorch-forecasting", "pytorch-lightning"],
+        "pyod" => vec!["pyod"],
+        "tslearn" => vec!["tslearn", "scikit-learn"],
+        "pypots" => vec!["pypots"],
+        "stumpy" => vec!["stumpy", "numpy"],
         _ => return Err(format!("Backend desconocido: {}", backend)),
     };
 

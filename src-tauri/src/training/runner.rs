@@ -471,6 +471,14 @@ fn parse_metrics(v: &serde_json::Value) -> Option<TrainingEpochMetrics> {
         mean_accuracy: v["meanAccuracy"].as_f64(),
         dice_loss: v["diceLoss"].as_f64(),
         seg_loss: v["segLoss"].as_f64(),
+        mask_ap: v["maskAP"].as_f64(),
+        keypoint_ap: v["keypointAP"].as_f64(),
+        accuracy: v["accuracy"].as_f64(),
+        f1_score: v["f1Score"].as_f64(),
+        mae: v["mae"].as_f64(),
+        rmse: v["rmse"].as_f64(),
+        auc_roc: v["aucRoc"].as_f64(),
+        silhouette_score: v["silhouetteScore"].as_f64(),
     })
 }
 

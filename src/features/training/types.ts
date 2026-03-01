@@ -92,6 +92,16 @@ export interface PythonEnvStatus {
   smpVersion?: string | null;
   hfTransformersVersion?: string | null;
   mmsegVersion?: string | null;
+  detectron2Version?: string | null;
+  mmposeVersion?: string | null;
+  mmrotateVersion?: string | null;
+  timmVersion?: string | null;
+  tsaiVersion?: string | null;
+  pytorchForecastingVersion?: string | null;
+  pyodVersion?: string | null;
+  tslearnVersion?: string | null;
+  pypotsVersion?: string | null;
+  stumpyVersion?: string | null;
 }
 
 export interface TrainingEnvInfo {
@@ -142,6 +152,17 @@ export interface TrainingEpochMetrics {
   meanAccuracy?: number | null;
   diceLoss?: number | null;
   segLoss?: number | null;
+  // Instance segmentation / keypoints metrics
+  maskAP?: number | null;
+  keypointAP?: number | null;
+  // Classification metrics
+  accuracy?: number | null;
+  f1Score?: number | null;
+  // Time series metrics
+  mae?: number | null;
+  rmse?: number | null;
+  aucRoc?: number | null;
+  silhouetteScore?: number | null;
 }
 
 // ─── Training Result ────────────────────────────────────────────────────────
@@ -196,9 +217,14 @@ export interface TrainingJob {
 
 // ─── Multi-Backend Types ─────────────────────────────────────────────────────
 
-export type TrainingBackend = 'yolo' | 'rt_detr' | 'rf_detr' | 'mmdetection' | 'smp' | 'hf_segmentation' | 'mmsegmentation';
+export type TrainingBackend =
+  | 'yolo' | 'rt_detr' | 'rf_detr' | 'mmdetection' | 'smp' | 'hf_segmentation' | 'mmsegmentation'
+  | 'detectron2' | 'mmpose' | 'mmrotate' | 'timm' | 'hf_classification'
+  | 'tsai' | 'pytorch_forecasting' | 'pyod' | 'tslearn' | 'pypots' | 'stumpy';
 export type ExecutionMode = 'local' | 'download_package';
-export type DatasetFormat = 'yolo_txt' | 'coco_json' | 'mask_png';
+export type DatasetFormat = 'yolo_txt' | 'coco_json' | 'mask_png'
+  | 'coco_instance_json' | 'coco_keypoints_json' | 'dota_txt'
+  | 'image_folder' | 'multi_label_csv' | 'time_series_csv';
 
 export interface TrainingRequest {
   backend: TrainingBackend;
@@ -317,6 +343,93 @@ export interface MmSegBackendParams {
   warmup_iters: number;
   weight_decay: number;
   checkpoint_interval: number;
+}
+
+export interface Detectron2BackendParams {
+  optimizer_type: string;
+  momentum: number;
+  weight_decay: number;
+  lr_schedule: string;
+  warmup_iters: number;
+  checkpoint_interval: number;
+  mask_head: boolean;
+}
+
+export interface MmPoseBackendParams {
+  optimizer_type: string;
+  weight_decay: number;
+  lr_schedule: string;
+  warmup_iters: number;
+  input_size_h: number;
+  input_size_w: number;
+  checkpoint_interval: number;
+}
+
+export interface MmRotateBackendParams {
+  optimizer_type: string;
+  momentum: number;
+  weight_decay: number;
+  lr_schedule: string;
+  warmup_iters: number;
+  angle_version: string;
+  checkpoint_interval: number;
+}
+
+export interface TimmBackendParams {
+  optimizer_type: string;
+  weight_decay: number;
+  scheduler: string;
+  mixup: number;
+  cutmix: number;
+  label_smoothing: number;
+  drop_rate: number;
+}
+
+export interface HfClassificationBackendParams {
+  warmup_ratio: number;
+  weight_decay: number;
+  lr_scheduler_type: string;
+  label_smoothing: number;
+}
+
+export interface TsaiBackendParams {
+  optimizer_type: string;
+  weight_decay: number;
+  scheduler: string;
+  window_size: number;
+  stride: number;
+}
+
+export interface PytorchForecastingBackendParams {
+  max_prediction_length: number;
+  max_encoder_length: number;
+  gradient_clip_val: number;
+  hidden_size: number;
+  dropout: number;
+}
+
+export interface PyodBackendParams {
+  contamination: number;
+  hidden_neurons: string;
+  n_estimators: number;
+}
+
+export interface TslearnBackendParams {
+  n_clusters: number;
+  metric: string;
+  max_iter: number;
+}
+
+export interface PypotsBackendParams {
+  n_layers: number;
+  d_model: number;
+  d_ffn: number;
+  n_heads: number;
+}
+
+export interface StumpyBackendParams {
+  window_size: number;
+  normalize: boolean;
 }
 
 // ─── Training Panel State ───────────────────────────────────────────────────

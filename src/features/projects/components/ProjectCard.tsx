@@ -32,7 +32,27 @@ export function ProjectCard({ project }: ProjectCardProps) {
     }
   };
 
-  const typeIcon = project.type === 'bbox' ? 'fa-vector-square' : 'fa-paintbrush';
+  const typeIconMap: Record<string, string> = {
+    bbox: 'fa-vector-square',
+    mask: 'fa-paintbrush',
+    polygon: 'fa-draw-polygon',
+    keypoints: 'fa-sitemap',
+    landmarks: 'fa-location-dot',
+    obb: 'fa-rotate',
+    classification: 'fa-tag',
+    'multi-label-classification': 'fa-tags',
+    'timeseries-classification': 'fa-chart-line',
+    'timeseries-forecasting': 'fa-chart-area',
+    'anomaly-detection': 'fa-exclamation-triangle',
+    'timeseries-segmentation': 'fa-layer-group',
+    'pattern-recognition': 'fa-wave-square',
+    'event-detection': 'fa-bolt',
+    'timeseries-regression': 'fa-chart-simple',
+    clustering: 'fa-circle-nodes',
+    imputation: 'fa-fill-drip',
+  };
+
+  const typeIcon = typeIconMap[project.type] || 'fa-folder';
 
   return (
     <Card className="transition-shadow hover:shadow-lg">
@@ -45,7 +65,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
             <div>
               <h3 className="font-semibold">{project.name}</h3>
               <p className="text-xs text-muted-foreground">
-                {t(`projects.type.${project.type}`)}
+                {t(`project.types.${project.type}.name`)}
               </p>
             </div>
           </div>

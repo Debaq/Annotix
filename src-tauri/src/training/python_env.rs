@@ -62,6 +62,16 @@ pub fn check_env_full() -> Result<(PythonEnvStatus, super::GpuInfo), String> {
         smp_version: None,
         hf_transformers_version: None,
         mmseg_version: None,
+        detectron2_version: None,
+        mmpose_version: None,
+        mmrotate_version: None,
+        timm_version: None,
+        tsai_version: None,
+        pytorch_forecasting_version: None,
+        pyod_version: None,
+        tslearn_version: None,
+        pypots_version: None,
+        stumpy_version: None,
     };
     let no_gpu = super::GpuInfo {
         cuda_available: false,
@@ -81,7 +91,10 @@ result = {
     "ultralytics": None, "torch": None, "cuda": False,
     "cuda_version": None, "gpus": [], "mps_available": False,
     "rfdetr": None, "mmdet": None,
-    "smp": None, "hf_transformers": None, "mmseg": None
+    "smp": None, "hf_transformers": None, "mmseg": None,
+    "detectron2": None, "mmpose": None, "mmrotate": None,
+    "timm": None, "tsai": None, "pytorch_forecasting": None,
+    "pyod": None, "tslearn": None, "pypots": None, "stumpy": None
 }
 try:
     import ultralytics
@@ -111,6 +124,56 @@ except ImportError:
 try:
     import mmseg
     result["mmseg"] = mmseg.__version__
+except ImportError:
+    pass
+try:
+    import detectron2
+    result["detectron2"] = detectron2.__version__
+except ImportError:
+    pass
+try:
+    import mmpose
+    result["mmpose"] = mmpose.__version__
+except ImportError:
+    pass
+try:
+    import mmrotate
+    result["mmrotate"] = mmrotate.__version__
+except ImportError:
+    pass
+try:
+    import timm
+    result["timm"] = timm.__version__
+except ImportError:
+    pass
+try:
+    import tsai
+    result["tsai"] = tsai.__version__
+except ImportError:
+    pass
+try:
+    import pytorch_forecasting
+    result["pytorch_forecasting"] = pytorch_forecasting.__version__
+except ImportError:
+    pass
+try:
+    import pyod
+    result["pyod"] = pyod.__version__
+except ImportError:
+    pass
+try:
+    import tslearn
+    result["tslearn"] = tslearn.__version__
+except ImportError:
+    pass
+try:
+    import pypots
+    result["pypots"] = pypots.__version__
+except ImportError:
+    pass
+try:
+    import stumpy
+    result["stumpy"] = stumpy.__version__
 except ImportError:
     pass
 try:
@@ -152,6 +215,16 @@ print(json.dumps(result))
             smp_version: None,
             hf_transformers_version: None,
             mmseg_version: None,
+            detectron2_version: None,
+            mmpose_version: None,
+            mmrotate_version: None,
+            timm_version: None,
+            tsai_version: None,
+            pytorch_forecasting_version: None,
+            pyod_version: None,
+            tslearn_version: None,
+            pypots_version: None,
+            stumpy_version: None,
         };
         return Ok((env, no_gpu));
     }
@@ -168,6 +241,16 @@ print(json.dumps(result))
     let smp_version = info["smp"].as_str().map(|s| s.to_string());
     let hf_transformers_version = info["hf_transformers"].as_str().map(|s| s.to_string());
     let mmseg_version = info["mmseg"].as_str().map(|s| s.to_string());
+    let detectron2_version = info["detectron2"].as_str().map(|s| s.to_string());
+    let mmpose_version = info["mmpose"].as_str().map(|s| s.to_string());
+    let mmrotate_version = info["mmrotate"].as_str().map(|s| s.to_string());
+    let timm_version = info["timm"].as_str().map(|s| s.to_string());
+    let tsai_version = info["tsai"].as_str().map(|s| s.to_string());
+    let pytorch_forecasting_version = info["pytorch_forecasting"].as_str().map(|s| s.to_string());
+    let pyod_version = info["pyod"].as_str().map(|s| s.to_string());
+    let tslearn_version = info["tslearn"].as_str().map(|s| s.to_string());
+    let pypots_version = info["pypots"].as_str().map(|s| s.to_string());
+    let stumpy_version = info["stumpy"].as_str().map(|s| s.to_string());
     let installed = ultralytics_version.is_some();
 
     let env = PythonEnvStatus {
@@ -181,6 +264,16 @@ print(json.dumps(result))
         smp_version,
         hf_transformers_version,
         mmseg_version,
+        detectron2_version,
+        mmpose_version,
+        mmrotate_version,
+        timm_version,
+        tsai_version,
+        pytorch_forecasting_version,
+        pyod_version,
+        tslearn_version,
+        pypots_version,
+        stumpy_version,
     };
 
     let cuda_version = info["cuda_version"].as_str().map(|s| s.to_string());
@@ -220,8 +313,9 @@ pub fn install_packages(packages: &[&str]) -> Result<(), String> {
 
     for pkg in packages {
         let mut cmd = Command::new(&python);
-        // For mmcv/mmdet/mmsegmentation/mmengine we use mim install
-        if *pkg == "mmcv" || *pkg == "mmdet" || *pkg == "mmengine" || *pkg == "mmsegmentation" {
+        // For OpenMMLab packages we use mim install
+        if *pkg == "mmcv" || *pkg == "mmdet" || *pkg == "mmengine" || *pkg == "mmsegmentation"
+           || *pkg == "mmpose" || *pkg == "mmrotate" {
             cmd = Command::new(&python);
             cmd.args(["-m", "mim", "install", pkg]);
         } else {

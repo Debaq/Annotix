@@ -334,7 +334,7 @@ function App() {
   // Loading state while checking setup
   if (setupComplete === null) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         <i className="fas fa-spinner fa-spin text-4xl text-muted-foreground"></i>
       </div>
     );

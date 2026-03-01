@@ -38,9 +38,9 @@ export function ProjectTypeSelector({ value, onChange }: ProjectTypeSelectorProp
     { value: 'timeseries-forecasting', icon: 'fa-chart-area', colorClass: 'bg-teal-100 text-teal-600' },
     { value: 'anomaly-detection', icon: 'fa-exclamation-triangle', colorClass: 'bg-rose-100 text-rose-600' },
     { value: 'timeseries-segmentation', icon: 'fa-layer-group', colorClass: 'bg-emerald-100 text-emerald-600' },
-    { value: 'pattern-recognition', icon: 'fa-waveform', colorClass: 'bg-violet-100 text-violet-600' },
+    { value: 'pattern-recognition', icon: 'fa-wave-square', colorClass: 'bg-violet-100 text-violet-600' },
     { value: 'event-detection', icon: 'fa-bolt', colorClass: 'bg-fuchsia-100 text-fuchsia-600' },
-    { value: 'timeseries-regression', icon: 'fa-chart-scatter', colorClass: 'bg-sky-100 text-sky-600' },
+    { value: 'timeseries-regression', icon: 'fa-chart-simple', colorClass: 'bg-sky-100 text-sky-600' },
     { value: 'clustering', icon: 'fa-circle-nodes', colorClass: 'bg-lime-100 text-lime-600' },
     { value: 'imputation', icon: 'fa-fill-drip', colorClass: 'bg-pink-100 text-pink-600' },
   ];

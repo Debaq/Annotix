@@ -58,6 +58,17 @@ pub fn generate_training_package(
         TrainingBackend::Smp => "SMP",
         TrainingBackend::HfSegmentation => "HuggingFace Segmentation",
         TrainingBackend::MmSegmentation => "MMSegmentation",
+        TrainingBackend::Detectron2 => "Detectron2",
+        TrainingBackend::MmPose => "MMPose",
+        TrainingBackend::MmRotate => "MMRotate",
+        TrainingBackend::Timm => "timm",
+        TrainingBackend::HfClassification => "HuggingFace Classification",
+        TrainingBackend::Tsai => "tsai",
+        TrainingBackend::PytorchForecasting => "PyTorch Forecasting",
+        TrainingBackend::Pyod => "PyOD",
+        TrainingBackend::Tslearn => "tslearn",
+        TrainingBackend::Pypots => "PyPOTS",
+        TrainingBackend::Stumpy => "STUMPY",
     };
 
     let nb_content = notebook::script_to_notebook(
