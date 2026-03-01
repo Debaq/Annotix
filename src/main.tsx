@@ -13,10 +13,12 @@ function getSystemPrefersDark() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
-const isDark = savedMode === 'dark' || 
+const isDark = savedMode === 'dark' || savedMode === 'dracula' || 
   ((savedMode === 'system' || !savedMode) && getSystemPrefersDark());
+const isDracula = savedMode === 'dracula';
 
 document.documentElement.classList.toggle('dark', isDark);
+document.documentElement.classList.toggle('dracula', isDracula);
 // ────────────────────────────────────────────────────────────────────────────
 
 createRoot(document.getElementById('root')!).render(

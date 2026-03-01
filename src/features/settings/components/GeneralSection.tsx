@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 
-type ColorMode = 'light' | 'dark' | 'system';
+type ColorMode = 'light' | 'dark' | 'dracula' | 'system';
 
 const COLOR_MODE_KEY = 'annotix-color-mode';
 
@@ -22,13 +22,17 @@ function getSystemPrefersDark() {
 
 function getSavedColorMode(): ColorMode {
   const saved = localStorage.getItem(COLOR_MODE_KEY);
-  if (saved === 'light' || saved === 'dark' || saved === 'system') return saved;
+  if (saved === 'light' || saved === 'dark' || saved === 'dracula' || saved === 'system') return saved;
   return 'light';
 }
 
 function applyColorMode(mode: ColorMode) {
-  const isDark = mode === 'dark' || (mode === 'system' && getSystemPrefersDark());
+  const isDark = mode === 'dark' || mode === 'dracula' || (mode === 'system' && getSystemPrefersDark());
+  const isDracula = mode === 'dracula';
+  
   document.documentElement.classList.toggle('dark', isDark);
+  document.documentElement.classList.toggle('dracula', isDracula);
+  
   localStorage.setItem(COLOR_MODE_KEY, mode);
 }
 
@@ -83,7 +87,7 @@ export function GeneralSection() {
           {t('settings.general.colorMode')}
         </div>
         <div className="flex gap-2">
-          {(['light', 'dark', 'system'] as ColorMode[]).map((mode) => (
+          {(['light', 'dark', 'dracula', 'system'] as ColorMode[]).map((mode) => (
             <button
               key={mode}
               onClick={() => setColorMode(mode)}
@@ -93,7 +97,12 @@ export function GeneralSection() {
                   : 'border-[var(--annotix-border)] hover:border-[var(--annotix-gray)] text-muted-foreground'
               }`}
             >
-              <i className={`fas ${mode === 'light' ? 'fa-sun' : mode === 'dark' ? 'fa-moon' : 'fa-desktop'}`} />
+              <i className={`fas ${
+                mode === 'light' ? 'fa-sun' : 
+                mode === 'dark' ? 'fa-moon' : 
+                mode === 'dracula' ? 'fa-vampire' :
+                'fa-desktop'
+              }`} />
               {t(`settings.general.${mode}`)}
             </button>
           ))}

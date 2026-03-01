@@ -72,7 +72,7 @@ export function PythonEnvSetup({ onReady }: PythonEnvSetupProps) {
       {error && (
         <p className="text-sm text-red-500">{error}</p>
       )}
-      <Button onClick={setupEnv} disabled={loading}>
+      <Button onClick={() => setupEnv()} disabled={loading}>
         <i className="fas fa-download mr-2" />
         {t('training.env.setup')}
       </Button>

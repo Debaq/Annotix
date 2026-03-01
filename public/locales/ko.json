@@ -2039,6 +2039,7 @@
       "colorMode": "외관",
       "light": "라이트",
       "dark": "다크",
+      "dracula": "Dracula",
       "system": "시스템",
       "language": "언어",
       "workDir": "작업 디렉토리",

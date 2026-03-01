@@ -2039,6 +2039,7 @@
       "colorMode": "Оформление",
       "light": "Светлая",
       "dark": "Тёмная",
+      "dracula": "Dracula",
       "system": "Системная",
       "language": "Язык",
       "workDir": "Рабочая директория",

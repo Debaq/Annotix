@@ -2039,6 +2039,7 @@
       "colorMode": "外观",
       "light": "浅色",
       "dark": "深色",
+      "dracula": "Dracula",
       "system": "跟随系统",
       "language": "语言",
       "workDir": "工作目录",
