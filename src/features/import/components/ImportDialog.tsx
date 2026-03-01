@@ -187,16 +187,16 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
 
             <div className="space-y-4">
               <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition"
+                className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 dark:hover:border-gray-600 transition"
                 onClick={handleSelectFile}
               >
-                <i className="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2 block"></i>
+                <i className="fas fa-cloud-upload-alt text-3xl text-gray-400 dark:text-gray-500 mb-2 block"></i>
                 <p className="text-sm font-medium">{t('import.dragFiles')}</p>
-                <p className="text-xs text-gray-500">{t('import.orClickToSelect')}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t('import.orClickToSelect')}</p>
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 px-4 py-3 rounded">
                   {error}
                 </div>
               )}
@@ -217,7 +217,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
 
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                   {t('import.analyzing')}...
                 </p>
                 <Progress value={progress} className="h-2" />
@@ -252,14 +252,14 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
 
               <div>
                 <Label>{t('import.projectType')}</Label>
-                <div className="mt-1 p-3 bg-gray-50 rounded border border-gray-200">
+                <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-900/50 rounded border border-gray-200 dark:border-gray-800">
                   <div className="flex items-center gap-2">
-                    <i className="fas fa-cube text-blue-600"></i>
+                    <i className="fas fa-cube text-blue-600 dark:text-blue-400"></i>
                     <span className="font-medium">
                       {getProjectTypeLabel(detection.projectType)}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                     {t('import.format')}: {detection.format}
                   </p>
                 </div>
@@ -268,8 +268,8 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
               {detection.classCount && (
                 <div>
                   <Label>{t('import.classesCount')}</Label>
-                  <div className="mt-1 p-3 bg-blue-50 rounded border border-blue-200">
-                    <p className="text-sm font-medium text-blue-900">
+                  <div className="mt-1 p-3 bg-blue-50 dark:bg-blue-950/30 rounded border border-blue-200 dark:border-blue-900/50">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-300">
                       {detection.classCount} {t('import.classes')}
                     </p>
                   </div>
@@ -277,7 +277,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
               )}
 
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 px-4 py-3 rounded">
                   {error}
                 </div>
               )}
@@ -311,15 +311,15 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
 
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                   {t('import.processing')}...
                 </p>
                 <Progress value={progress} className="h-2" />
-                <p className="text-xs text-gray-500 mt-2">{Math.round(progress)}%</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{Math.round(progress)}%</p>
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 px-4 py-3 rounded">
                   {error}
                 </div>
               )}

@@ -132,6 +132,7 @@ pub fn run() {
             commands::settings_commands::list_installed_packages,
             commands::settings_commands::update_packages,
             commands::settings_commands::install_pytorch,
+            commands::settings_commands::install_onnx,
             commands::settings_commands::remove_venv,
             commands::settings_commands::detect_system_gpu,
         ])

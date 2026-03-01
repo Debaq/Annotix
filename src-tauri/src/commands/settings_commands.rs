@@ -249,6 +249,51 @@ pub async fn install_pytorch(
 }
 
 #[tauri::command]
+pub async fn install_onnx(
+    app: AppHandle,
+    cache: State<'_, TrainingEnvCache>,
+    with_gpu: bool,
+) -> Result<(), String> {
+    let python = python_env::venv_python()?;
+    if !python.exists() {
+        return Err("El entorno virtual no existe".to_string());
+    }
+
+    let app_clone = app.clone();
+    let emit = move |msg: &str, progress: f64, log: Option<String>| {
+        let _ = app_clone.emit(
+            "settings:onnx-install-progress",
+            serde_json::json!({
+                "message": msg,
+                "progress": progress,
+                "log": log,
+            }),
+        );
+    };
+
+    emit("Instalando ONNX toolkit...", 5.0, None);
+
+    let runtime_pkg = if with_gpu { "onnxruntime-gpu" } else { "onnxruntime" };
+    let packages = vec!["onnx", runtime_pkg, "skl2onnx", "onnxmltools"];
+
+    let total = packages.len();
+    for (i, pkg) in packages.iter().enumerate() {
+        let base_p = 5.0 + (i as f64 / total as f64) * 90.0;
+        let span = 90.0 / total as f64;
+        let msg = format!("Instalando {}", pkg);
+
+        let mut cmd = Command::new(&python);
+        cmd.args(["-m", "pip", "install", pkg]);
+        python_env::run_with_feedback(cmd, &msg, base_p, span, &emit)?;
+    }
+
+    emit("ONNX toolkit instalado correctamente", 100.0, None);
+
+    cache.invalidate();
+    Ok(())
+}
+
+#[tauri::command]
 pub fn remove_venv(cache: State<'_, TrainingEnvCache>) -> Result<(), String> {
     let venv = python_env::venv_dir()?;
     if venv.exists() {

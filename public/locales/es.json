@@ -2106,6 +2106,7 @@
       "selectBackend": "Selecciona un backend para explorar sus modelos",
       "modelCount": "modelos",
       "datasetFormat": "Dataset",
+      "prepareBackend": "Preparar Backend",
       "pipPackages": "Paquetes",
       "viewScript": "Ver Script",
       "supportedTasks": "Tareas soportadas",

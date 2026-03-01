@@ -128,21 +128,22 @@
     --primary: 265 89% 78%;
     --primary-foreground: 231 15% 18%;
 
-    --secondary: 231 10% 25%;
+    --secondary: 231 14% 31%;
     --secondary-foreground: 60 30% 96%;
 
-    --muted: 231 10% 25%;
-    --muted-foreground: 231 15% 60%;
+    --muted: 231 14% 31%;
+    --muted-foreground: 225 27% 51%;
 
-    --accent: 231 10% 25%;
+    --accent: 231 14% 31%;
     --accent-foreground: 60 30% 96%;
 
     --destructive: 0 100% 67%;
-    --destructive-foreground: 60 30% 96%;
+    --destructive-foreground: 231 15% 18%;
 
-    --border: 231 10% 25%;
-    --input: 231 10% 25%;
+    --border: 231 14% 31%;
+    --input: 231 14% 31%;
     --ring: 265 89% 78%;
+    --ring-offset: 231 15% 18%;
 
     /* Annotix Legacy Dracula Mode Overrides */
     --annotix-primary: #bd93f9;
