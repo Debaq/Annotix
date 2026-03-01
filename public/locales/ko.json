@@ -1822,6 +1822,9 @@
       "rtdetrTitle": "RT-DETR 파라미터",
       "rfdetrTitle": "RF-DETR 파라미터",
       "mmdetTitle": "MMDetection 파라미터",
+      "smpTitle": "SMP 파라미터",
+      "hfSegTitle": "HuggingFace 세그멘테이션 파라미터",
+      "mmsegTitle": "MMSegmentation 파라미터",
       "resolution": "해상도",
       "resolutionDesc": "입력 해상도 (56의 배수여야 합니다)",
       "lr_encoder": "인코더 LR",
@@ -1845,7 +1848,23 @@
       "imageSize": "이미지 크기",
       "imageSizeDesc": "학습용 입력 해상도",
       "lr": "학습률",
-      "lrDesc": "학습의 기본 학습률"
+      "lrDesc": "학습의 기본 학습률",
+      "loss_type": "손실 함수",
+      "loss_typeDesc": "세그멘테이션 훈련용 손실 함수",
+      "scheduler": "LR 스케줄러",
+      "schedulerDesc": "학습률 스케줄 유형",
+      "encoder_depth": "인코더 깊이",
+      "encoder_depthDesc": "인코더 백본 깊이 (3-5)",
+      "freeze_encoder": "인코더 동결",
+      "freeze_encoderDesc": "전이 학습을 위해 인코더 가중치 동결",
+      "do_reduce_labels": "레이블 축소",
+      "do_reduce_labelsDesc": "레이블 ID를 1만큼 이동 (일부 데이터셋은 배경에 255 사용)",
+      "warmup_ratio": "워밍업 비율",
+      "warmup_ratioDesc": "선형 워밍업을 위한 훈련 비율",
+      "lr_scheduler_type": "LR 스케줄러 유형",
+      "lr_scheduler_typeDesc": "학습률 감소 전략",
+      "crop_size": "크롭 크기",
+      "crop_sizeDesc": "훈련용 랜덤 크롭 크기 (픽셀)"
     },
     "monitor": {
       "title": "학습 진행 중",
@@ -1857,7 +1876,9 @@
       "recall": "재현율",
       "logs": "학습 로그",
       "waitingMetrics": "메트릭 대기 중...",
-      "waitingLogs": "로그 대기 중..."
+      "waitingLogs": "로그 대기 중...",
+      "mIoU": "mIoU",
+      "meanAccuracy": "평균 정확도"
     },
     "status": {
       "pending": "대기 중",

@@ -1,7 +1,10 @@
+use std::io::Cursor;
 use std::path::Path;
 
+use image::{GrayImage, Luma};
+
 use crate::store::project_file::{ProjectFile, ImageEntry};
-use crate::export::{parse_bbox, parse_obb, parse_polygon};
+use crate::export::{parse_bbox, parse_obb, parse_polygon, parse_mask};
 use crate::utils::converters::normalize_coordinates;
 use super::TrainingBackend;
 
@@ -454,6 +457,218 @@ fn build_coco_json(
         .map_err(|e| format!("Error serializando COCO JSON: {}", e))
 }
 
+// ─── Mask PNG Dataset (Semantic Segmentation) ───────────────────────────────
+
+/// Prepara dataset con máscaras PNG indexadas para segmentación semántica
+pub fn prepare_mask_dataset(
+    images_dir: &Path,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    output_dir: &Path,
+    val_split: f64,
+) -> Result<String, String> {
+    let total = images.len();
+    if total == 0 {
+        return Err("No hay imágenes en el proyecto".to_string());
+    }
+
+    // Shuffle (same seed as other prepare functions)
+    let mut indices: Vec<usize> = (0..total).collect();
+    let seed = project.id.bytes().fold(42usize, |acc, b| acc.wrapping_mul(31).wrapping_add(b as usize));
+    for i in (1..indices.len()).rev() {
+        let j = (seed.wrapping_mul(i).wrapping_add(7)) % (i + 1);
+        indices.swap(i, j);
+    }
+
+    let val_count = ((total as f64) * val_split).ceil() as usize;
+    let val_count = val_count.max(1).min(total - 1);
+    let train_count = total - val_count;
+
+    let train_indices = &indices[..train_count];
+    let val_indices = &indices[train_count..];
+
+    // Create directory structure
+    for split in &["train", "val"] {
+        std::fs::create_dir_all(output_dir.join("images").join(split))
+            .map_err(|e| format!("Error creando directorio images/{}: {}", split, e))?;
+        std::fs::create_dir_all(output_dir.join("masks").join(split))
+            .map_err(|e| format!("Error creando directorio masks/{}: {}", split, e))?;
+    }
+
+    // Process train split
+    for &idx in train_indices {
+        copy_image_and_mask(images_dir, project, &images[idx], output_dir, "train")?;
+    }
+
+    // Process val split
+    for &idx in val_indices {
+        copy_image_and_mask(images_dir, project, &images[idx], output_dir, "val")?;
+    }
+
+    // Generate classes.txt (sequential: 0=background, 1..N=classes)
+    let mut classes_content = "0: background\n".to_string();
+    for (i, cls) in project.classes.iter().enumerate() {
+        classes_content.push_str(&format!("{}: {}\n", i + 1, cls.name));
+    }
+    std::fs::write(output_dir.join("classes.txt"), &classes_content)
+        .map_err(|e| format!("Error escribiendo classes.txt: {}", e))?;
+
+    Ok(output_dir.to_string_lossy().replace('\\', "/"))
+}
+
+fn copy_image_and_mask(
+    images_dir: &Path,
+    project: &ProjectFile,
+    image: &ImageEntry,
+    output_dir: &Path,
+    split: &str,
+) -> Result<(), String> {
+    let src_path = images_dir.join(&image.file);
+    if !src_path.exists() {
+        log::warn!("Imagen no encontrada: {:?}, omitiendo", src_path);
+        return Ok(());
+    }
+
+    // Copy image
+    let dest = output_dir.join("images").join(split).join(&image.name);
+    std::fs::copy(&src_path, &dest)
+        .map_err(|e| format!("Error copiando imagen {}: {}", image.name, e))?;
+
+    // Generate mask PNG
+    let mask_png = generate_segmentation_mask(image, project)?;
+    let mask_name = replace_ext(&image.name, "png");
+    let mask_path = output_dir.join("masks").join(split).join(&mask_name);
+    std::fs::write(&mask_path, &mask_png)
+        .map_err(|e| format!("Error escribiendo mask {}: {}", mask_name, e))?;
+
+    Ok(())
+}
+
+/// Genera una máscara PNG grayscale con class_idx secuencial (0=bg, 1..N=clases)
+fn generate_segmentation_mask(image: &ImageEntry, project: &ProjectFile) -> Result<Vec<u8>, String> {
+    let w = image.width as u32;
+    let h = image.height as u32;
+    let mut mask_img = GrayImage::from_pixel(w, h, Luma([0u8]));
+
+    for ann in &image.annotations {
+        // Sequential class index: position in classes list + 1 (0 = background)
+        let class_idx = match project.classes.iter().position(|c| c.id == ann.class_id) {
+            Some(idx) => (idx + 1) as u8,
+            None => continue,
+        };
+
+        match ann.annotation_type.as_str() {
+            "mask" => {
+                if let Some(mask_data) = parse_mask(&ann.data) {
+                    draw_mask_on_target(&mut mask_img, &mask_data.base64png, class_idx)?;
+                }
+            }
+            "polygon" | "instance-segmentation" => {
+                if let Some(poly_data) = parse_polygon(&ann.data) {
+                    draw_polygon_on_target(&mut mask_img, &poly_data.points, class_idx);
+                }
+            }
+            "bbox" => {
+                // Convert bbox to rectangular polygon for mask
+                if let Some(bbox) = parse_bbox(&ann.data) {
+                    let points = vec![
+                        (bbox.x, bbox.y),
+                        (bbox.x + bbox.width, bbox.y),
+                        (bbox.x + bbox.width, bbox.y + bbox.height),
+                        (bbox.x, bbox.y + bbox.height),
+                    ];
+                    draw_polygon_on_target(&mut mask_img, &points, class_idx);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // Encode to PNG
+    let mut buf = Cursor::new(Vec::new());
+    mask_img.write_to(&mut buf, image::ImageFormat::Png)
+        .map_err(|e| format!("Error codificando mask PNG: {}", e))?;
+
+    Ok(buf.into_inner())
+}
+
+/// Rasteriza un polígono sobre la máscara con scanline fill
+fn draw_polygon_on_target(target: &mut GrayImage, points: &[(f64, f64)], class_value: u8) {
+    if points.len() < 3 {
+        return;
+    }
+
+    let w = target.width() as f64;
+    let h = target.height() as f64;
+
+    let min_y = points.iter().map(|p| p.1).fold(f64::MAX, f64::min).max(0.0) as u32;
+    let max_y = points.iter().map(|p| p.1).fold(f64::MIN, f64::max).min(h - 1.0) as u32;
+
+    for y in min_y..=max_y {
+        let yf = y as f64 + 0.5;
+        let mut intersections = Vec::new();
+
+        for i in 0..points.len() {
+            let j = (i + 1) % points.len();
+            let (y0, y1) = (points[i].1, points[j].1);
+            let (x0, x1) = (points[i].0, points[j].0);
+
+            if (y0 <= yf && y1 > yf) || (y1 <= yf && y0 > yf) {
+                let t = (yf - y0) / (y1 - y0);
+                let x = x0 + t * (x1 - x0);
+                intersections.push(x);
+            }
+        }
+
+        intersections.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+        for pair in intersections.chunks(2) {
+            if pair.len() == 2 {
+                let x_start = (pair[0].max(0.0)) as u32;
+                let x_end = (pair[1].min(w - 1.0)) as u32;
+                for x in x_start..=x_end {
+                    if x < target.width() {
+                        target.put_pixel(x, y, Luma([class_value]));
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Aplica una máscara base64 PNG sobre la imagen target
+fn draw_mask_on_target(target: &mut GrayImage, base64png: &str, class_value: u8) -> Result<(), String> {
+    use base64::Engine;
+    let engine = base64::engine::general_purpose::STANDARD;
+
+    let b64_str = if let Some(pos) = base64png.find(',') {
+        &base64png[pos + 1..]
+    } else {
+        base64png
+    };
+
+    let png_data = engine.decode(b64_str)
+        .map_err(|e| format!("Error decodificando base64: {}", e))?;
+
+    let mask_image = image::load_from_memory(&png_data)
+        .map_err(|e| format!("Error cargando mask PNG: {}", e))?;
+    let rgba = mask_image.to_rgba8();
+
+    let target_w = target.width().min(rgba.width());
+    let target_h = target.height().min(rgba.height());
+
+    for y in 0..target_h {
+        for x in 0..target_w {
+            let pixel = rgba.get_pixel(x, y);
+            if pixel[3] > 128 {
+                target.put_pixel(x, y, Luma([class_value]));
+            }
+        }
+    }
+
+    Ok(())
+}
+
 // ─── Dataset Router ─────────────────────────────────────────────────────────
 
 /// Prepara dataset según el backend seleccionado
@@ -475,6 +690,9 @@ pub fn prepare_dataset_for_backend(
         }
         TrainingBackend::MmDetection => {
             prepare_coco_dataset(images_dir, project, images, output_dir, val_split, CocoLayout::MmDetection)
+        }
+        TrainingBackend::Smp | TrainingBackend::HfSegmentation | TrainingBackend::MmSegmentation => {
+            prepare_mask_dataset(images_dir, project, images, output_dir, val_split)
         }
     }
 }

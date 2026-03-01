@@ -55,6 +55,9 @@ pub fn generate_training_package(
         TrainingBackend::RtDetr => "RT-DETR",
         TrainingBackend::RfDetr => "RF-DETR",
         TrainingBackend::MmDetection => "MMDetection",
+        TrainingBackend::Smp => "SMP",
+        TrainingBackend::HfSegmentation => "HuggingFace Segmentation",
+        TrainingBackend::MmSegmentation => "MMSegmentation",
     };
 
     let nb_content = notebook::script_to_notebook(

@@ -145,6 +145,12 @@ pub struct PythonEnvStatus {
     pub rfdetr_version: Option<String>,
     #[serde(rename = "mmdetVersion", skip_serializing_if = "Option::is_none")]
     pub mmdet_version: Option<String>,
+    #[serde(rename = "smpVersion", skip_serializing_if = "Option::is_none")]
+    pub smp_version: Option<String>,
+    #[serde(rename = "hfTransformersVersion", skip_serializing_if = "Option::is_none")]
+    pub hf_transformers_version: Option<String>,
+    #[serde(rename = "mmsegVersion", skip_serializing_if = "Option::is_none")]
+    pub mmseg_version: Option<String>,
 }
 
 // ─── GPU Info ───────────────────────────────────────────────────────────────
@@ -203,6 +209,15 @@ pub struct TrainingEpochMetrics {
     #[serde(rename = "mAP50_95")]
     pub map50_95: Option<f64>,
     pub lr: Option<f64>,
+    // Semantic segmentation metrics
+    #[serde(rename = "meanIoU", skip_serializing_if = "Option::is_none")]
+    pub mean_iou: Option<f64>,
+    #[serde(rename = "meanAccuracy", skip_serializing_if = "Option::is_none")]
+    pub mean_accuracy: Option<f64>,
+    #[serde(rename = "diceLoss", skip_serializing_if = "Option::is_none")]
+    pub dice_loss: Option<f64>,
+    #[serde(rename = "segLoss", skip_serializing_if = "Option::is_none")]
+    pub seg_loss: Option<f64>,
 }
 
 // ─── Training Result ────────────────────────────────────────────────────────
@@ -261,6 +276,9 @@ pub enum TrainingBackend {
     RtDetr,
     RfDetr,
     MmDetection,
+    Smp,
+    HfSegmentation,
+    MmSegmentation,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -268,6 +286,7 @@ pub enum TrainingBackend {
 pub enum DatasetFormat {
     YoloTxt,
     CocoJson,
+    MaskPng,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

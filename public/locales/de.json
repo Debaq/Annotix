@@ -1822,6 +1822,9 @@
       "rtdetrTitle": "RT-DETR Parameter",
       "rfdetrTitle": "RF-DETR Parameter",
       "mmdetTitle": "MMDetection Parameter",
+      "smpTitle": "SMP-Parameter",
+      "hfSegTitle": "HuggingFace Segmentierungsparameter",
+      "mmsegTitle": "MMSegmentation-Parameter",
       "resolution": "Auflösung",
       "resolutionDesc": "Eingangsauflösung (muss ein Vielfaches von 56 sein)",
       "lr_encoder": "Encoder LR",
@@ -1845,7 +1848,23 @@
       "imageSize": "Bildgröße",
       "imageSizeDesc": "Eingangsauflösung für das Training",
       "lr": "Lernrate",
-      "lrDesc": "Basis-Lernrate für das Training"
+      "lrDesc": "Basis-Lernrate für das Training",
+      "loss_type": "Verlustfunktion",
+      "loss_typeDesc": "Verlustfunktion für Segmentierungstraining",
+      "scheduler": "LR-Scheduler",
+      "schedulerDesc": "Lernratenplanungstyp",
+      "encoder_depth": "Encoder-Tiefe",
+      "encoder_depthDesc": "Tiefe des Encoder-Backbones (3-5)",
+      "freeze_encoder": "Encoder einfrieren",
+      "freeze_encoderDesc": "Encoder-Gewichte für Transfer-Learning einfrieren",
+      "do_reduce_labels": "Labels reduzieren",
+      "do_reduce_labelsDesc": "Label-IDs um 1 verschieben (einige Datensätze verwenden 255 für Hintergrund)",
+      "warmup_ratio": "Warmup-Verhältnis",
+      "warmup_ratioDesc": "Anteil des Trainings für lineares Warmup",
+      "lr_scheduler_type": "LR-Scheduler-Typ",
+      "lr_scheduler_typeDesc": "Strategie für Lernratenabnahme",
+      "crop_size": "Zuschnittgröße",
+      "crop_sizeDesc": "Zufällige Zuschnittgröße für Training (Pixel)"
     },
     "monitor": {
       "title": "Training läuft",
@@ -1857,7 +1876,9 @@
       "recall": "Recall",
       "logs": "Trainings-Logs",
       "waitingMetrics": "Warte auf Metriken...",
-      "waitingLogs": "Warte auf Logs..."
+      "waitingLogs": "Warte auf Logs...",
+      "mIoU": "mIoU",
+      "meanAccuracy": "Mittlere Genauigkeit"
     },
     "status": {
       "pending": "Ausstehend",

@@ -1694,7 +1694,9 @@
       "recall": "Recall",
       "logs": "Training Logs",
       "waitingMetrics": "Waiting for metrics...",
-      "waitingLogs": "Waiting for logs..."
+      "waitingLogs": "Waiting for logs...",
+      "mIoU": "Mean IoU",
+      "meanAccuracy": "Mean Accuracy"
     },
     "status": {
       "pending": "Pending",
@@ -1742,6 +1744,9 @@
       "rtdetrTitle": "RT-DETR Parameters",
       "rfdetrTitle": "RF-DETR Parameters",
       "mmdetTitle": "MMDetection Parameters",
+      "smpTitle": "SMP Parameters",
+      "hfSegTitle": "HuggingFace Segmentation Parameters",
+      "mmsegTitle": "MMSegmentation Parameters",
       "resolution": "Resolution",
       "resolutionDesc": "Input resolution (must be multiple of 56)",
       "lr_encoder": "Encoder LR",
@@ -1853,7 +1858,23 @@
       "copy_paste": "Copy-Paste",
       "copy_pasteDesc": "Copy objects between images (segmentation only).",
       "erasing": "Erasing",
-      "erasingDesc": "Random erasing simulates occlusion. Reduce with small objects."
+      "erasingDesc": "Random erasing simulates occlusion. Reduce with small objects.",
+      "loss_type": "Loss Function",
+      "loss_typeDesc": "Loss function for segmentation training",
+      "scheduler": "LR Scheduler",
+      "schedulerDesc": "Learning rate schedule type",
+      "encoder_depth": "Encoder Depth",
+      "encoder_depthDesc": "Depth of the encoder backbone (3-5)",
+      "freeze_encoder": "Freeze Encoder",
+      "freeze_encoderDesc": "Freeze encoder weights for transfer learning",
+      "do_reduce_labels": "Reduce Labels",
+      "do_reduce_labelsDesc": "Shift label IDs by 1 (some datasets use 255 for background)",
+      "warmup_ratio": "Warmup Ratio",
+      "warmup_ratioDesc": "Fraction of training for linear warmup",
+      "lr_scheduler_type": "LR Scheduler Type",
+      "lr_scheduler_typeDesc": "Learning rate decay strategy",
+      "crop_size": "Crop Size",
+      "crop_sizeDesc": "Random crop size for training (pixels)"
     },
     "model": {
       "version": "Model Version",

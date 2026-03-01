@@ -1822,6 +1822,9 @@
       "rtdetrTitle": "Paramètres RT-DETR",
       "rfdetrTitle": "Paramètres RF-DETR",
       "mmdetTitle": "Paramètres MMDetection",
+      "smpTitle": "Paramètres SMP",
+      "hfSegTitle": "Paramètres HuggingFace Segmentation",
+      "mmsegTitle": "Paramètres MMSegmentation",
       "resolution": "Résolution",
       "resolutionDesc": "Résolution d'entrée (doit être un multiple de 56)",
       "lr_encoder": "LR de l'encodeur",
@@ -1845,7 +1848,23 @@
       "imageSize": "Taille d'image",
       "imageSizeDesc": "Résolution d'entrée pour l'entraînement",
       "lr": "Taux d'apprentissage",
-      "lrDesc": "Taux d'apprentissage de base pour l'entraînement"
+      "lrDesc": "Taux d'apprentissage de base pour l'entraînement",
+      "loss_type": "Fonction de Perte",
+      "loss_typeDesc": "Fonction de perte pour l'entraînement de segmentation",
+      "scheduler": "Scheduler LR",
+      "schedulerDesc": "Type de planification du taux d'apprentissage",
+      "encoder_depth": "Profondeur Encoder",
+      "encoder_depthDesc": "Profondeur du backbone encoder (3-5)",
+      "freeze_encoder": "Geler Encoder",
+      "freeze_encoderDesc": "Geler les poids de l'encoder pour le transfer learning",
+      "do_reduce_labels": "Réduire Labels",
+      "do_reduce_labelsDesc": "Décaler les IDs de labels de 1 (certains datasets utilisent 255 pour le fond)",
+      "warmup_ratio": "Ratio Warmup",
+      "warmup_ratioDesc": "Fraction de l'entraînement pour le warmup linéaire",
+      "lr_scheduler_type": "Type Scheduler LR",
+      "lr_scheduler_typeDesc": "Stratégie de décroissance du taux d'apprentissage",
+      "crop_size": "Taille de Recadrage",
+      "crop_sizeDesc": "Taille de recadrage aléatoire pour l'entraînement (pixels)"
     },
     "monitor": {
       "title": "Entraînement en cours",
@@ -1857,7 +1876,9 @@
       "recall": "Rappel",
       "logs": "Logs d'entraînement",
       "waitingMetrics": "En attente des métriques...",
-      "waitingLogs": "En attente des logs..."
+      "waitingLogs": "En attente des logs...",
+      "mIoU": "mIoU",
+      "meanAccuracy": "Précision Moyenne"
     },
     "status": {
       "pending": "En attente",

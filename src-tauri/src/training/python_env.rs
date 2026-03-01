@@ -59,6 +59,9 @@ pub fn check_env_full() -> Result<(PythonEnvStatus, super::GpuInfo), String> {
         cuda_available: false,
         rfdetr_version: None,
         mmdet_version: None,
+        smp_version: None,
+        hf_transformers_version: None,
+        mmseg_version: None,
     };
     let no_gpu = super::GpuInfo {
         cuda_available: false,
@@ -77,7 +80,8 @@ import json
 result = {
     "ultralytics": None, "torch": None, "cuda": False,
     "cuda_version": None, "gpus": [], "mps_available": False,
-    "rfdetr": None, "mmdet": None
+    "rfdetr": None, "mmdet": None,
+    "smp": None, "hf_transformers": None, "mmseg": None
 }
 try:
     import ultralytics
@@ -92,6 +96,21 @@ except ImportError:
 try:
     import mmdet
     result["mmdet"] = mmdet.__version__
+except ImportError:
+    pass
+try:
+    import segmentation_models_pytorch as smp
+    result["smp"] = smp.__version__
+except ImportError:
+    pass
+try:
+    import transformers
+    result["hf_transformers"] = transformers.__version__
+except ImportError:
+    pass
+try:
+    import mmseg
+    result["mmseg"] = mmseg.__version__
 except ImportError:
     pass
 try:
@@ -130,6 +149,9 @@ print(json.dumps(result))
             cuda_available: false,
             rfdetr_version: None,
             mmdet_version: None,
+            smp_version: None,
+            hf_transformers_version: None,
+            mmseg_version: None,
         };
         return Ok((env, no_gpu));
     }
@@ -143,6 +165,9 @@ print(json.dumps(result))
     let cuda_available = info["cuda"].as_bool().unwrap_or(false);
     let rfdetr_version = info["rfdetr"].as_str().map(|s| s.to_string());
     let mmdet_version = info["mmdet"].as_str().map(|s| s.to_string());
+    let smp_version = info["smp"].as_str().map(|s| s.to_string());
+    let hf_transformers_version = info["hf_transformers"].as_str().map(|s| s.to_string());
+    let mmseg_version = info["mmseg"].as_str().map(|s| s.to_string());
     let installed = ultralytics_version.is_some();
 
     let env = PythonEnvStatus {
@@ -153,6 +178,9 @@ print(json.dumps(result))
         cuda_available,
         rfdetr_version,
         mmdet_version,
+        smp_version,
+        hf_transformers_version,
+        mmseg_version,
     };
 
     let cuda_version = info["cuda_version"].as_str().map(|s| s.to_string());
@@ -192,8 +220,8 @@ pub fn install_packages(packages: &[&str]) -> Result<(), String> {
 
     for pkg in packages {
         let mut cmd = Command::new(&python);
-        // For mmcv/mmdet we use mim install
-        if *pkg == "mmcv" || *pkg == "mmdet" || *pkg == "mmengine" {
+        // For mmcv/mmdet/mmsegmentation/mmengine we use mim install
+        if *pkg == "mmcv" || *pkg == "mmdet" || *pkg == "mmengine" || *pkg == "mmsegmentation" {
             cmd = Command::new(&python);
             cmd.args(["-m", "mim", "install", pkg]);
         } else {
