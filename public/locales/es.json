@@ -1089,36 +1089,36 @@
         "difficulty": "Intermedio"
       },
       "multi-label-classification": {
-        "name": "",
-        "description": ""
+        "name": "Clasificación Multi-Etiqueta",
+        "description": "Asignar múltiples etiquetas a cada imagen"
       },
       "timeseries-classification": {
-        "name": "",
-        "description": ""
+        "name": "Clasificación de Series Temporales",
+        "description": "Clasificar series temporales completas en categorías"
       },
       "timeseries-forecasting": {
-        "name": "",
-        "description": ""
+        "name": "Pronóstico de Series Temporales",
+        "description": "Predecir valores futuros a partir de datos históricos"
       },
       "anomaly-detection": {
-        "name": "",
-        "description": ""
+        "name": "Detección de Anomalías",
+        "description": "Detectar patrones inusuales en series temporales"
       },
       "timeseries-segmentation": {
-        "name": "",
-        "description": ""
+        "name": "Segmentación de Series Temporales",
+        "description": "Segmentar series temporales en regiones distintas"
       },
       "pattern-recognition": {
-        "name": "",
-        "description": ""
+        "name": "Reconocimiento de Patrones",
+        "description": "Identificar patrones recurrentes en series temporales"
       },
       "event-detection": {
-        "name": "",
-        "description": ""
+        "name": "Detección de Eventos",
+        "description": "Detectar eventos específicos en series temporales"
       },
       "timeseries-regression": {
-        "name": "",
-        "description": ""
+        "name": "Regresión de Series Temporales",
+        "description": "Predecir valores numéricos a partir de series temporales"
       },
       "object3DDetection": {
         "name": "Detección de Objetos 3D",
@@ -1864,7 +1864,66 @@
       "lr_scheduler_type": "Tipo Scheduler LR",
       "lr_scheduler_typeDesc": "Estrategia de decaimiento del learning rate",
       "crop_size": "Tamaño de Recorte",
-      "crop_sizeDesc": "Tamaño de recorte aleatorio para entrenamiento (píxeles)"
+      "crop_sizeDesc": "Tamaño de recorte aleatorio para entrenamiento (píxeles)",
+      "input_size_h": "Alto de entrada",
+      "input_size_hDesc": "Alto de entrada para estimación de pose",
+      "input_size_w": "Ancho de entrada",
+      "input_size_wDesc": "Ancho de entrada para estimación de pose",
+      "angle_version": "Versión de ángulo",
+      "angle_versionDesc": "Codificación de ángulo para bounding boxes orientados",
+      "mixup_aug": "MixUp",
+      "mixup_augDesc": "Probabilidad de augmentación MixUp",
+      "cutmix": "CutMix",
+      "cutmixDesc": "Probabilidad de augmentación CutMix",
+      "label_smoothing": "Suavizado de etiquetas",
+      "label_smoothingDesc": "Factor de suavizado para regularización",
+      "drop_rate": "Tasa de Dropout",
+      "drop_rateDesc": "Tasa de dropout para regularización",
+      "window_size": "Tamaño de ventana",
+      "window_sizeDesc": "Tamaño de ventana para series temporales",
+      "stride": "Paso",
+      "strideDesc": "Paso de la ventana deslizante",
+      "max_prediction_length": "Longitud de predicción",
+      "max_prediction_lengthDesc": "Pasos temporales máximos a predecir",
+      "max_encoder_length": "Longitud del encoder",
+      "max_encoder_lengthDesc": "Pasos temporales máximos para entrada del encoder",
+      "gradient_clip_val": "Recorte de gradiente",
+      "gradient_clip_valDesc": "Valor de recorte para prevenir gradientes explosivos",
+      "hidden_size": "Tamaño oculto",
+      "hidden_sizeDesc": "Tamaño de capa oculta del modelo",
+      "dropout": "Dropout",
+      "dropoutDesc": "Probabilidad de dropout para regularización",
+      "contamination": "Contaminación",
+      "contaminationDesc": "Fracción esperada de anomalías en el dataset",
+      "n_estimators": "N Estimadores",
+      "n_estimatorsDesc": "Número de estimadores para métodos ensemble",
+      "n_clusters": "N Clusters",
+      "n_clustersDesc": "Número de clusters a formar",
+      "metric": "Métrica de distancia",
+      "metricDesc": "Métrica de distancia para clustering",
+      "max_iter": "Iteraciones máx.",
+      "max_iterDesc": "Iteraciones máximas para clustering",
+      "n_layers": "N Capas",
+      "n_layersDesc": "Número de capas transformer/RNN",
+      "d_model": "Dimensión del modelo",
+      "d_modelDesc": "Dimensión de la representación oculta",
+      "d_ffn": "Dimensión FFN",
+      "d_ffnDesc": "Dimensión de la red feed-forward",
+      "n_heads": "N Cabezas",
+      "n_headsDesc": "Número de cabezas de atención",
+      "normalize": "Normalizar",
+      "normalizeDesc": "Normalizar series temporales antes de procesar",
+      "detectron2Title": "Parámetros de Detectron2",
+      "mmposeTitle": "Parámetros de MMPose",
+      "mmrotateTitle": "Parámetros de MMRotate",
+      "timmTitle": "Parámetros de timm",
+      "hfClsTitle": "Parámetros de HuggingFace Classification",
+      "tsaiTitle": "Parámetros de tsai",
+      "pytorchFcstTitle": "Parámetros de PyTorch Forecasting",
+      "pyodTitle": "Parámetros de PyOD",
+      "tslearnTitle": "Parámetros de tslearn",
+      "pypotsTitle": "Parámetros de PyPOTS",
+      "stumpyTitle": "Parámetros de STUMPY"
     },
     "monitor": {
       "title": "Entrenamiento en Progreso",
@@ -1947,7 +2006,20 @@
     "title": "Configuración",
     "back": "Volver",
     "sections": {
-      "pythonEnv": "Entorno Python"
+      "general": "General",
+      "pythonEnv": "Entorno Python",
+      "trainingModels": "Modelos de Entrenamiento"
+    },
+    "general": {
+      "colorMode": "Apariencia",
+      "light": "Claro",
+      "dark": "Oscuro",
+      "system": "Sistema",
+      "language": "Idioma",
+      "workDir": "Carpeta de Trabajo",
+      "workDirHelp": "Carpeta donde se almacenan todos tus proyectos y datos.",
+      "changeWorkDir": "Seleccionar nueva carpeta de trabajo",
+      "change": "Cambiar"
     },
     "pythonEnv": {
       "systemPython": "Python del Sistema",
@@ -1980,6 +2052,179 @@
       "selectVariant": "Variante de PyTorch",
       "install": "Instalar PyTorch",
       "reinstall": "Reinstalar PyTorch"
+    },
+    "trainingModels": {
+      "totalModels": "Modelos",
+      "tasks": "Tareas",
+      "task": "Tarea",
+      "model": "Modelo",
+      "params": "Params",
+      "sizes": "Tamaños",
+      "recommended": "Recomendado",
+      "readOnly": "Solo lectura",
+      "searchPlaceholder": "Buscar modelos por nombre, descripción o backend...",
+      "clearFilters": "Limpiar filtros",
+      "noResults": "Ningún modelo coincide con los filtros actuales",
+      "overview": "Vista general",
+      "selectBackend": "Selecciona un backend para explorar sus modelos",
+      "modelCount": "modelos",
+      "datasetFormat": "Dataset",
+      "pipPackages": "Paquetes",
+      "viewScript": "Ver Script",
+      "supportedTasks": "Tareas soportadas",
+      "availableSizes": "Tamaños disponibles",
+      "defaultConfig": "Configuración por defecto",
+      "parameter": "Parámetro",
+      "type": "Tipo",
+      "defaultValue": "Valor por defecto",
+      "range": "Rango",
+      "backTo": "Volver a"
+    }
+  },
+  "wizard": {
+    "trigger": "¿No sabes cuál elegir?",
+    "title": "Asistente de Tipo de Proyecto",
+    "subtitle": "Responde unas preguntas y te recomendaremos el mejor tipo de proyecto.",
+    "bestMatch": "Mejor opción",
+    "useThis": "Usar este",
+    "noResults": "No se encontró un tipo compatible. Prueba otras respuestas.",
+    "resultsTitle": "Recomendado para ti",
+    "questions": {
+      "dataType": {
+        "title": "¿Con qué tipo de datos trabajarás?",
+        "options": {
+          "images": "Imágenes",
+          "timeseries": "Series temporales"
+        },
+        "optionsDesc": {
+          "images": "Fotos, capturas, escaneos, fotogramas",
+          "timeseries": "Sensores, métricas, señales, datos financieros"
+        }
+      },
+      "goalImages": {
+        "title": "¿Qué quieres hacer con las imágenes?",
+        "options": {
+          "classify": "Clasificar",
+          "detectLocate": "Detectar y Localizar",
+          "segment": "Segmentar",
+          "pointsKeypts": "Marcar puntos"
+        },
+        "optionsDesc": {
+          "classify": "Asignar una etiqueta a toda la imagen",
+          "detectLocate": "Encontrar y localizar objetos con cajas",
+          "segment": "Delinear objetos a nivel de píxel",
+          "pointsKeypts": "Colocar keypoints o landmarks en objetos"
+        }
+      },
+      "goalTimeseries": {
+        "title": "¿Qué quieres hacer con las series temporales?",
+        "options": {
+          "tsClassify": "Clasificar",
+          "tsPredict": "Predecir",
+          "tsAnomaly": "Detectar anomalías",
+          "tsAnalyze": "Analizar"
+        },
+        "optionsDesc": {
+          "tsClassify": "Asignar una categoría a toda la serie",
+          "tsPredict": "Pronosticar valores futuros o rellenar huecos",
+          "tsAnomaly": "Encontrar patrones inusuales o inesperados",
+          "tsAnalyze": "Segmentar, buscar patrones o agrupar"
+        }
+      },
+      "classifyDetail": {
+        "title": "¿Cuántas etiquetas por imagen?",
+        "options": {
+          "singleLabel": "Una etiqueta",
+          "multiLabel": "Múltiples etiquetas"
+        },
+        "optionsDesc": {
+          "singleLabel": "Cada imagen pertenece a exactamente una clase",
+          "multiLabel": "Una imagen puede tener varias etiquetas a la vez"
+        }
+      },
+      "detectDetail": {
+        "title": "¿Qué tipo de cajas delimitadoras?",
+        "options": {
+          "axisAligned": "Cajas normales",
+          "rotated": "Cajas rotadas"
+        },
+        "optionsDesc": {
+          "axisAligned": "Rectángulos horizontales/verticales (más común)",
+          "rotated": "Cajas que pueden rotar en cualquier ángulo"
+        }
+      },
+      "segmentDetail": {
+        "title": "¿Qué tipo de segmentación?",
+        "options": {
+          "polygonOutline": "Contornos poligonales",
+          "pixelMask": "Máscaras de píxeles",
+          "instanceSeg": "Segmentación de instancias"
+        },
+        "optionsDesc": {
+          "polygonOutline": "Dibujar polígonos punto a punto alrededor de objetos",
+          "pixelMask": "Pintar máscaras a nivel de píxel sobre objetos",
+          "instanceSeg": "Separar cada instancia individual de objeto"
+        }
+      },
+      "pointsDetail": {
+        "title": "¿Qué tipo de puntos?",
+        "options": {
+          "connectedPose": "Esqueleto conectado",
+          "freePoints": "Puntos independientes"
+        },
+        "optionsDesc": {
+          "connectedPose": "Puntos conectados por líneas (estimación de pose)",
+          "freePoints": "Puntos sueltos sin conexiones"
+        }
+      },
+      "tsAnalyzeDetail": {
+        "title": "¿Qué tipo de análisis?",
+        "options": {
+          "tsSegment": "Segmentar regiones",
+          "tsPattern": "Buscar patrones",
+          "tsEvent": "Detectar eventos",
+          "tsCluster": "Agrupar similares"
+        },
+        "optionsDesc": {
+          "tsSegment": "Dividir la serie en regiones etiquetadas",
+          "tsPattern": "Identificar patrones recurrentes o motivos",
+          "tsEvent": "Encontrar cuándo ocurren eventos específicos",
+          "tsCluster": "Agrupar series o segmentos similares"
+        }
+      },
+      "tsPredictDetail": {
+        "title": "¿Qué tipo de predicción?",
+        "options": {
+          "tsForecast": "Pronosticar futuro",
+          "tsRegression": "Regresión de valores",
+          "tsImpute": "Rellenar datos faltantes"
+        },
+        "optionsDesc": {
+          "tsForecast": "Predecir valores futuros de la serie",
+          "tsRegression": "Predecir valores continuos desde características",
+          "tsImpute": "Reconstruir datos faltantes o corruptos"
+        }
+      }
+    },
+    "reasons": {
+      "bbox": "Ideal para detectar objetos con cajas rectangulares alineadas",
+      "obb": "Perfecto para objetos angulados o rotados como vistas aéreas o texto",
+      "mask": "Pintar máscaras a nivel de píxel para segmentación semántica precisa",
+      "polygon": "Dibujar contornos poligonales para límites de objetos precisos",
+      "instance-segmentation": "Separar cada instancia de objeto a nivel de píxel",
+      "keypoints": "Marcar puntos esqueléticos conectados para estimación de pose",
+      "landmarks": "Colocar puntos de referencia independientes en objetos",
+      "classification": "Asignar una etiqueta por imagen para categorización simple",
+      "multi-label-classification": "Etiquetar imágenes con múltiples etiquetas simultáneamente",
+      "timeseries-classification": "Clasificar series temporales completas en categorías",
+      "timeseries-forecasting": "Predecir valores futuros basándose en datos históricos",
+      "timeseries-regression": "Predecir valores continuos desde características de la serie",
+      "anomaly-detection": "Encontrar patrones inusuales y valores atípicos en tus datos",
+      "timeseries-segmentation": "Dividir series temporales en segmentos etiquetados",
+      "pattern-recognition": "Descubrir motivos y patrones recurrentes",
+      "event-detection": "Identificar cuándo ocurren eventos específicos en la serie",
+      "clustering": "Agrupar series temporales o segmentos similares",
+      "imputation": "Reconstruir puntos de datos faltantes o corruptos"
     }
   }
 }

@@ -1089,36 +1089,36 @@
         "difficulty": "中级"
       },
       "multi-label-classification": {
-        "name": "",
-        "description": ""
+        "name": "多标签分类",
+        "description": "为每张图像分配多个标签"
       },
       "timeseries-classification": {
-        "name": "",
-        "description": ""
+        "name": "时间序列分类",
+        "description": "将完整的时间序列分类到不同类别"
       },
       "timeseries-forecasting": {
-        "name": "",
-        "description": ""
+        "name": "时间序列预测",
+        "description": "根据历史数据预测未来值"
       },
       "anomaly-detection": {
-        "name": "",
-        "description": ""
+        "name": "异常检测",
+        "description": "检测时间序列中的异常模式"
       },
       "timeseries-segmentation": {
-        "name": "",
-        "description": ""
+        "name": "时间序列分割",
+        "description": "将时间序列分割为不同区域"
       },
       "pattern-recognition": {
-        "name": "",
-        "description": ""
+        "name": "模式识别",
+        "description": "识别时间序列中的重复模式"
       },
       "event-detection": {
-        "name": "",
-        "description": ""
+        "name": "事件检测",
+        "description": "检测时间序列中的特定事件"
       },
       "timeseries-regression": {
-        "name": "",
-        "description": ""
+        "name": "时间序列回归",
+        "description": "从时间序列预测数值"
       },
       "object3DDetection": {
         "name": "3D 目标检测",
@@ -1864,7 +1864,66 @@
       "lr_scheduler_type": "学习率调度器类型",
       "lr_scheduler_typeDesc": "学习率衰减策略",
       "crop_size": "裁剪尺寸",
-      "crop_sizeDesc": "训练用随机裁剪尺寸（像素）"
+      "crop_sizeDesc": "训练用随机裁剪尺寸（像素）",
+      "input_size_h": "Input Height",
+      "input_size_hDesc": "Input height for pose estimation",
+      "input_size_w": "Input Width",
+      "input_size_wDesc": "Input width for pose estimation",
+      "angle_version": "Angle Version",
+      "angle_versionDesc": "Angle encoding for oriented bounding boxes",
+      "mixup_aug": "MixUp",
+      "mixup_augDesc": "MixUp augmentation probability",
+      "cutmix": "CutMix",
+      "cutmixDesc": "CutMix augmentation probability",
+      "label_smoothing": "Label Smoothing",
+      "label_smoothingDesc": "Label smoothing factor for regularization",
+      "drop_rate": "Dropout Rate",
+      "drop_rateDesc": "Dropout rate for regularization",
+      "window_size": "Window Size",
+      "window_sizeDesc": "Window size for time series processing",
+      "stride": "Stride",
+      "strideDesc": "Stride for sliding window",
+      "max_prediction_length": "Prediction Length",
+      "max_prediction_lengthDesc": "Maximum number of time steps to predict",
+      "max_encoder_length": "Encoder Length",
+      "max_encoder_lengthDesc": "Maximum number of time steps for encoder input",
+      "gradient_clip_val": "Gradient Clip",
+      "gradient_clip_valDesc": "Gradient clipping value to prevent exploding gradients",
+      "hidden_size": "Hidden Size",
+      "hidden_sizeDesc": "Hidden layer size for the model",
+      "dropout": "Dropout",
+      "dropoutDesc": "Dropout probability for regularization",
+      "contamination": "Contamination",
+      "contaminationDesc": "Expected fraction of anomalies in the dataset",
+      "n_estimators": "N Estimators",
+      "n_estimatorsDesc": "Number of estimators for ensemble methods",
+      "n_clusters": "N Clusters",
+      "n_clustersDesc": "Number of clusters to form",
+      "metric": "Distance Metric",
+      "metricDesc": "Distance metric for clustering",
+      "max_iter": "Max Iterations",
+      "max_iterDesc": "Maximum number of iterations for clustering",
+      "n_layers": "N Layers",
+      "n_layersDesc": "Number of transformer/RNN layers",
+      "d_model": "Model Dimension",
+      "d_modelDesc": "Dimension of the model's hidden representation",
+      "d_ffn": "FFN Dimension",
+      "d_ffnDesc": "Dimension of the feed-forward network",
+      "n_heads": "N Heads",
+      "n_headsDesc": "Number of attention heads",
+      "normalize": "Normalize",
+      "normalizeDesc": "Normalize time series before processing",
+      "detectron2Title": "Detectron2 Parameters",
+      "mmposeTitle": "MMPose Parameters",
+      "mmrotateTitle": "MMRotate Parameters",
+      "timmTitle": "timm Parameters",
+      "hfClsTitle": "HuggingFace Classification Parameters",
+      "tsaiTitle": "tsai Parameters",
+      "pytorchFcstTitle": "PyTorch Forecasting Parameters",
+      "pyodTitle": "PyOD Parameters",
+      "tslearnTitle": "tslearn Parameters",
+      "pypotsTitle": "PyPOTS Parameters",
+      "stumpyTitle": "STUMPY Parameters"
     },
     "monitor": {
       "title": "训练进行中",
@@ -1941,7 +2000,20 @@
     "title": "设置",
     "back": "返回",
     "sections": {
-      "pythonEnv": "Python环境"
+      "general": "通用",
+      "pythonEnv": "Python环境",
+      "trainingModels": "训练模型"
+    },
+    "general": {
+      "colorMode": "外观",
+      "light": "浅色",
+      "dark": "深色",
+      "system": "跟随系统",
+      "language": "语言",
+      "workDir": "工作目录",
+      "workDirHelp": "存储所有项目和数据的文件夹。",
+      "changeWorkDir": "选择新的工作目录",
+      "change": "更改"
     },
     "pythonEnv": {
       "systemPython": "系统Python",
@@ -1974,6 +2046,179 @@
       "selectVariant": "PyTorch变体",
       "install": "安装PyTorch",
       "reinstall": "重新安装PyTorch"
+    },
+    "trainingModels": {
+      "totalModels": "模型",
+      "tasks": "任务",
+      "task": "任务",
+      "model": "模型",
+      "params": "参数",
+      "sizes": "尺寸",
+      "recommended": "推荐",
+      "readOnly": "只读",
+      "searchPlaceholder": "按名称、描述或后端搜索模型...",
+      "clearFilters": "清除筛选",
+      "noResults": "没有模型匹配当前筛选条件",
+      "overview": "概览",
+      "selectBackend": "选择一个后端来浏览其模型",
+      "modelCount": "个模型",
+      "datasetFormat": "数据集",
+      "pipPackages": "包",
+      "viewScript": "查看脚本",
+      "supportedTasks": "支持的任务",
+      "availableSizes": "可用尺寸",
+      "defaultConfig": "默认配置",
+      "parameter": "参数",
+      "type": "类型",
+      "defaultValue": "默认值",
+      "range": "范围",
+      "backTo": "返回"
+    }
+  },
+  "wizard": {
+    "trigger": "不确定选哪个？",
+    "title": "项目类型助手",
+    "subtitle": "回答几个问题，我们将为您推荐最佳项目类型。",
+    "bestMatch": "最佳匹配",
+    "useThis": "使用此项",
+    "noResults": "未找到匹配类型。请尝试不同的答案。",
+    "resultsTitle": "为您推荐",
+    "questions": {
+      "dataType": {
+        "title": "您将使用什么类型的数据？",
+        "options": {
+          "images": "图像",
+          "timeseries": "时间序列"
+        },
+        "optionsDesc": {
+          "images": "照片、截图、扫描、帧",
+          "timeseries": "传感器、指标、信号、金融数据"
+        }
+      },
+      "goalImages": {
+        "title": "您想对图像做什么？",
+        "options": {
+          "classify": "分类",
+          "detectLocate": "检测定位",
+          "segment": "分割",
+          "pointsKeypts": "标记点"
+        },
+        "optionsDesc": {
+          "classify": "为整张图像分配标签",
+          "detectLocate": "用框找到和定位对象",
+          "segment": "在像素级别勾勒对象",
+          "pointsKeypts": "在对象上放置关键点或地标"
+        }
+      },
+      "goalTimeseries": {
+        "title": "您想对时间序列做什么？",
+        "options": {
+          "tsClassify": "分类",
+          "tsPredict": "预测",
+          "tsAnomaly": "异常检测",
+          "tsAnalyze": "分析"
+        },
+        "optionsDesc": {
+          "tsClassify": "为整个序列分配类别",
+          "tsPredict": "预测未来值或填补空白",
+          "tsAnomaly": "查找异常或意外模式",
+          "tsAnalyze": "分割、查找模式或聚类"
+        }
+      },
+      "classifyDetail": {
+        "title": "每张图像多少个标签？",
+        "options": {
+          "singleLabel": "一个标签",
+          "multiLabel": "多个标签"
+        },
+        "optionsDesc": {
+          "singleLabel": "每张图像属于一个类别",
+          "multiLabel": "一张图像可以同时有多个标签"
+        }
+      },
+      "detectDetail": {
+        "title": "什么类型的边界框？",
+        "options": {
+          "axisAligned": "普通框",
+          "rotated": "旋转框"
+        },
+        "optionsDesc": {
+          "axisAligned": "水平/垂直矩形（最常见）",
+          "rotated": "可以任意角度旋转的框"
+        }
+      },
+      "segmentDetail": {
+        "title": "什么类型的分割？",
+        "options": {
+          "polygonOutline": "多边形轮廓",
+          "pixelMask": "像素掩码",
+          "instanceSeg": "实例分割"
+        },
+        "optionsDesc": {
+          "polygonOutline": "逐点绘制对象周围的多边形",
+          "pixelMask": "在对象上绘制像素级掩码",
+          "instanceSeg": "分离每个单独的对象实例"
+        }
+      },
+      "pointsDetail": {
+        "title": "什么类型的点？",
+        "options": {
+          "connectedPose": "连接骨架",
+          "freePoints": "独立点"
+        },
+        "optionsDesc": {
+          "connectedPose": "由线连接的点（姿态估计）",
+          "freePoints": "无连接的独立点"
+        }
+      },
+      "tsAnalyzeDetail": {
+        "title": "什么类型的分析？",
+        "options": {
+          "tsSegment": "分割区域",
+          "tsPattern": "查找模式",
+          "tsEvent": "检测事件",
+          "tsCluster": "分组相似"
+        },
+        "optionsDesc": {
+          "tsSegment": "将序列分为标记区域",
+          "tsPattern": "识别反复出现的模式或主题",
+          "tsEvent": "发现特定事件何时发生",
+          "tsCluster": "将相似的序列或片段分组"
+        }
+      },
+      "tsPredictDetail": {
+        "title": "什么类型的预测？",
+        "options": {
+          "tsForecast": "预测未来",
+          "tsRegression": "值回归",
+          "tsImpute": "填补缺失数据"
+        },
+        "optionsDesc": {
+          "tsForecast": "预测序列的未来值",
+          "tsRegression": "从特征预测连续值",
+          "tsImpute": "重建缺失或损坏的数据点"
+        }
+      }
+    },
+    "reasons": {
+      "bbox": "使用轴对齐矩形框检测对象的理想选择",
+      "obb": "非常适合航拍或文字等旋转对象",
+      "mask": "用于精确语义分割的像素级掩码",
+      "polygon": "绘制多边形轮廓以获得精确的对象边界",
+      "instance-segmentation": "在像素级别分离每个对象实例",
+      "keypoints": "标记连接的骨架点用于姿态估计",
+      "landmarks": "在对象上放置独立参考点",
+      "classification": "每张图像一个标签，用于简单分类",
+      "multi-label-classification": "同时为图像添加多个标签",
+      "timeseries-classification": "将完整时间序列分类到类别",
+      "timeseries-forecasting": "基于历史数据预测未来值",
+      "timeseries-regression": "从时间序列特征预测连续值",
+      "anomaly-detection": "在数据中发现异常模式和离群值",
+      "timeseries-segmentation": "将时间序列分为标记的片段",
+      "pattern-recognition": "发现反复出现的主题和模式",
+      "event-detection": "识别序列中特定事件何时发生",
+      "clustering": "将相似的时间序列或片段分组",
+      "imputation": "重建缺失或损坏的数据点"
     }
   }
 }

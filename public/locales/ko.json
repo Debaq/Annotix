@@ -1089,36 +1089,36 @@
         "difficulty": "중급"
       },
       "multi-label-classification": {
-        "name": "",
-        "description": ""
+        "name": "다중 라벨 분류",
+        "description": "각 이미지에 여러 라벨 할당"
       },
       "timeseries-classification": {
-        "name": "",
-        "description": ""
+        "name": "시계열 분류",
+        "description": "전체 시계열을 카테고리로 분류"
       },
       "timeseries-forecasting": {
-        "name": "",
-        "description": ""
+        "name": "시계열 예측",
+        "description": "과거 데이터에서 미래 값 예측"
       },
       "anomaly-detection": {
-        "name": "",
-        "description": ""
+        "name": "이상 탐지",
+        "description": "시계열의 비정상 패턴 감지"
       },
       "timeseries-segmentation": {
-        "name": "",
-        "description": ""
+        "name": "시계열 분할",
+        "description": "시계열을 구별된 영역으로 분할"
       },
       "pattern-recognition": {
-        "name": "",
-        "description": ""
+        "name": "패턴 인식",
+        "description": "시계열의 반복 패턴 식별"
       },
       "event-detection": {
-        "name": "",
-        "description": ""
+        "name": "이벤트 감지",
+        "description": "시계열의 특정 이벤트 감지"
       },
       "timeseries-regression": {
-        "name": "",
-        "description": ""
+        "name": "시계열 회귀",
+        "description": "시계열에서 수치 값 예측"
       },
       "object3DDetection": {
         "name": "3D 객체 감지",
@@ -1864,7 +1864,66 @@
       "lr_scheduler_type": "LR 스케줄러 유형",
       "lr_scheduler_typeDesc": "학습률 감소 전략",
       "crop_size": "크롭 크기",
-      "crop_sizeDesc": "훈련용 랜덤 크롭 크기 (픽셀)"
+      "crop_sizeDesc": "훈련용 랜덤 크롭 크기 (픽셀)",
+      "input_size_h": "Input Height",
+      "input_size_hDesc": "Input height for pose estimation",
+      "input_size_w": "Input Width",
+      "input_size_wDesc": "Input width for pose estimation",
+      "angle_version": "Angle Version",
+      "angle_versionDesc": "Angle encoding for oriented bounding boxes",
+      "mixup_aug": "MixUp",
+      "mixup_augDesc": "MixUp augmentation probability",
+      "cutmix": "CutMix",
+      "cutmixDesc": "CutMix augmentation probability",
+      "label_smoothing": "Label Smoothing",
+      "label_smoothingDesc": "Label smoothing factor for regularization",
+      "drop_rate": "Dropout Rate",
+      "drop_rateDesc": "Dropout rate for regularization",
+      "window_size": "Window Size",
+      "window_sizeDesc": "Window size for time series processing",
+      "stride": "Stride",
+      "strideDesc": "Stride for sliding window",
+      "max_prediction_length": "Prediction Length",
+      "max_prediction_lengthDesc": "Maximum number of time steps to predict",
+      "max_encoder_length": "Encoder Length",
+      "max_encoder_lengthDesc": "Maximum number of time steps for encoder input",
+      "gradient_clip_val": "Gradient Clip",
+      "gradient_clip_valDesc": "Gradient clipping value to prevent exploding gradients",
+      "hidden_size": "Hidden Size",
+      "hidden_sizeDesc": "Hidden layer size for the model",
+      "dropout": "Dropout",
+      "dropoutDesc": "Dropout probability for regularization",
+      "contamination": "Contamination",
+      "contaminationDesc": "Expected fraction of anomalies in the dataset",
+      "n_estimators": "N Estimators",
+      "n_estimatorsDesc": "Number of estimators for ensemble methods",
+      "n_clusters": "N Clusters",
+      "n_clustersDesc": "Number of clusters to form",
+      "metric": "Distance Metric",
+      "metricDesc": "Distance metric for clustering",
+      "max_iter": "Max Iterations",
+      "max_iterDesc": "Maximum number of iterations for clustering",
+      "n_layers": "N Layers",
+      "n_layersDesc": "Number of transformer/RNN layers",
+      "d_model": "Model Dimension",
+      "d_modelDesc": "Dimension of the model's hidden representation",
+      "d_ffn": "FFN Dimension",
+      "d_ffnDesc": "Dimension of the feed-forward network",
+      "n_heads": "N Heads",
+      "n_headsDesc": "Number of attention heads",
+      "normalize": "Normalize",
+      "normalizeDesc": "Normalize time series before processing",
+      "detectron2Title": "Detectron2 Parameters",
+      "mmposeTitle": "MMPose Parameters",
+      "mmrotateTitle": "MMRotate Parameters",
+      "timmTitle": "timm Parameters",
+      "hfClsTitle": "HuggingFace Classification Parameters",
+      "tsaiTitle": "tsai Parameters",
+      "pytorchFcstTitle": "PyTorch Forecasting Parameters",
+      "pyodTitle": "PyOD Parameters",
+      "tslearnTitle": "tslearn Parameters",
+      "pypotsTitle": "PyPOTS Parameters",
+      "stumpyTitle": "STUMPY Parameters"
     },
     "monitor": {
       "title": "학습 진행 중",
@@ -1941,7 +2000,20 @@
     "title": "설정",
     "back": "뒤로",
     "sections": {
-      "pythonEnv": "Python 환경"
+      "general": "일반",
+      "pythonEnv": "Python 환경",
+      "trainingModels": "학습 모델"
+    },
+    "general": {
+      "colorMode": "외관",
+      "light": "라이트",
+      "dark": "다크",
+      "system": "시스템",
+      "language": "언어",
+      "workDir": "작업 디렉토리",
+      "workDirHelp": "모든 프로젝트와 데이터가 저장되는 폴더입니다.",
+      "changeWorkDir": "새 작업 디렉토리 선택",
+      "change": "변경"
     },
     "pythonEnv": {
       "systemPython": "시스템 Python",
@@ -1974,6 +2046,179 @@
       "selectVariant": "PyTorch 변형",
       "install": "PyTorch 설치",
       "reinstall": "PyTorch 재설치"
+    },
+    "trainingModels": {
+      "totalModels": "모델",
+      "tasks": "태스크",
+      "task": "태스크",
+      "model": "모델",
+      "params": "매개변수",
+      "sizes": "크기",
+      "recommended": "추천",
+      "readOnly": "읽기 전용",
+      "searchPlaceholder": "이름, 설명 또는 백엔드로 모델 검색...",
+      "clearFilters": "필터 지우기",
+      "noResults": "현재 필터와 일치하는 모델이 없습니다",
+      "overview": "개요",
+      "selectBackend": "백엔드를 선택하여 모델을 탐색하세요",
+      "modelCount": "모델",
+      "datasetFormat": "데이터셋",
+      "pipPackages": "패키지",
+      "viewScript": "스크립트 보기",
+      "supportedTasks": "지원되는 태스크",
+      "availableSizes": "사용 가능한 크기",
+      "defaultConfig": "기본 설정",
+      "parameter": "매개변수",
+      "type": "유형",
+      "defaultValue": "기본값",
+      "range": "범위",
+      "backTo": "돌아가기"
+    }
+  },
+  "wizard": {
+    "trigger": "어떤 것을 선택해야 할지 모르겠나요?",
+    "title": "프로젝트 유형 도우미",
+    "subtitle": "몇 가지 질문에 답하면 최적의 프로젝트 유형을 추천해 드립니다.",
+    "bestMatch": "최적",
+    "useThis": "이것 사용",
+    "noResults": "일치하는 유형을 찾을 수 없습니다. 다른 답변을 시도하세요.",
+    "resultsTitle": "추천 결과",
+    "questions": {
+      "dataType": {
+        "title": "어떤 종류의 데이터로 작업하시나요?",
+        "options": {
+          "images": "이미지",
+          "timeseries": "시계열"
+        },
+        "optionsDesc": {
+          "images": "사진, 스크린샷, 스캔, 프레임",
+          "timeseries": "센서, 메트릭, 신호, 금융 데이터"
+        }
+      },
+      "goalImages": {
+        "title": "이미지로 무엇을 하고 싶으신가요?",
+        "options": {
+          "classify": "분류",
+          "detectLocate": "탐지 및 위치 파악",
+          "segment": "분할",
+          "pointsKeypts": "포인트 표시"
+        },
+        "optionsDesc": {
+          "classify": "전체 이미지에 라벨 할당",
+          "detectLocate": "박스로 객체를 찾고 위치 파악",
+          "segment": "픽셀 수준에서 객체 윤곽 그리기",
+          "pointsKeypts": "객체에 키포인트나 랜드마크 배치"
+        }
+      },
+      "goalTimeseries": {
+        "title": "시계열 데이터로 무엇을 하고 싶으신가요?",
+        "options": {
+          "tsClassify": "분류",
+          "tsPredict": "예측",
+          "tsAnomaly": "이상 탐지",
+          "tsAnalyze": "분석"
+        },
+        "optionsDesc": {
+          "tsClassify": "전체 시리즈에 카테고리 할당",
+          "tsPredict": "미래 값 예측 또는 갭 채우기",
+          "tsAnomaly": "비정상적이거나 예상치 못한 패턴 찾기",
+          "tsAnalyze": "분할, 패턴 찾기 또는 클러스터링"
+        }
+      },
+      "classifyDetail": {
+        "title": "이미지당 라벨 수는?",
+        "options": {
+          "singleLabel": "라벨 1개",
+          "multiLabel": "라벨 여러 개"
+        },
+        "optionsDesc": {
+          "singleLabel": "각 이미지는 정확히 하나의 클래스에 속함",
+          "multiLabel": "이미지에 여러 라벨을 동시에 부여 가능"
+        }
+      },
+      "detectDetail": {
+        "title": "어떤 종류의 바운딩 박스?",
+        "options": {
+          "axisAligned": "일반 박스",
+          "rotated": "회전 박스"
+        },
+        "optionsDesc": {
+          "axisAligned": "수평/수직 사각형 (가장 일반적)",
+          "rotated": "어떤 각도로든 회전 가능한 박스"
+        }
+      },
+      "segmentDetail": {
+        "title": "어떤 종류의 분할?",
+        "options": {
+          "polygonOutline": "폴리곤 윤곽",
+          "pixelMask": "픽셀 마스크",
+          "instanceSeg": "인스턴스 분할"
+        },
+        "optionsDesc": {
+          "polygonOutline": "객체 주위에 점으로 폴리곤 그리기",
+          "pixelMask": "객체에 픽셀 수준 마스크 페인팅",
+          "instanceSeg": "각 개별 객체 인스턴스 분리"
+        }
+      },
+      "pointsDetail": {
+        "title": "어떤 종류의 포인트?",
+        "options": {
+          "connectedPose": "연결된 스켈레톤",
+          "freePoints": "독립 포인트"
+        },
+        "optionsDesc": {
+          "connectedPose": "선으로 연결된 포인트 (자세 추정)",
+          "freePoints": "연결 없는 독립 포인트"
+        }
+      },
+      "tsAnalyzeDetail": {
+        "title": "어떤 종류의 분석?",
+        "options": {
+          "tsSegment": "영역 분할",
+          "tsPattern": "패턴 찾기",
+          "tsEvent": "이벤트 탐지",
+          "tsCluster": "유사 그룹화"
+        },
+        "optionsDesc": {
+          "tsSegment": "시리즈를 라벨이 붙은 영역으로 나누기",
+          "tsPattern": "반복되는 패턴이나 모티프 식별",
+          "tsEvent": "특정 이벤트가 언제 발생하는지 감지",
+          "tsCluster": "유사한 시리즈나 세그먼트 그룹화"
+        }
+      },
+      "tsPredictDetail": {
+        "title": "어떤 종류의 예측?",
+        "options": {
+          "tsForecast": "미래 예측",
+          "tsRegression": "값 회귀",
+          "tsImpute": "결측 데이터 보완"
+        },
+        "optionsDesc": {
+          "tsForecast": "시리즈의 미래 값 예측",
+          "tsRegression": "특성에서 연속 값 예측",
+          "tsImpute": "누락되거나 손상된 데이터 포인트 재구성"
+        }
+      }
+    },
+    "reasons": {
+      "bbox": "축 정렬 사각형 박스로 객체를 탐지하는 데 이상적",
+      "obb": "항공 뷰나 텍스트 같은 회전된 객체에 완벽",
+      "mask": "정밀한 시맨틱 분할을 위한 픽셀 수준 마스크",
+      "polygon": "정확한 객체 경계를 위한 폴리곤 윤곽 그리기",
+      "instance-segmentation": "픽셀 수준에서 각 객체 인스턴스 분리",
+      "keypoints": "자세 추정을 위한 연결된 스켈레톤 포인트 표시",
+      "landmarks": "객체에 독립 참조 포인트 배치",
+      "classification": "간단한 분류를 위한 이미지당 하나의 라벨",
+      "multi-label-classification": "여러 라벨을 동시에 이미지에 태깅",
+      "timeseries-classification": "전체 시계열을 카테고리로 분류",
+      "timeseries-forecasting": "과거 데이터 기반 미래 값 예측",
+      "timeseries-regression": "시계열 특성에서 연속 값 예측",
+      "anomaly-detection": "데이터에서 비정상적 패턴과 이상값 찾기",
+      "timeseries-segmentation": "시계열을 라벨이 붙은 세그먼트로 나누기",
+      "pattern-recognition": "반복되는 모티프와 패턴 발견",
+      "event-detection": "시리즈에서 특정 이벤트가 언제 발생하는지 식별",
+      "clustering": "유사한 시계열 또는 세그먼트 그룹화",
+      "imputation": "누락되거나 손상된 데이터 포인트 재구성"
     }
   }
 }

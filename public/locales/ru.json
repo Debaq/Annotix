@@ -1089,36 +1089,36 @@
         "difficulty": "Средний"
       },
       "multi-label-classification": {
-        "name": "",
-        "description": ""
+        "name": "Мультиклассовая классификация",
+        "description": "Назначить несколько меток каждому изображению"
       },
       "timeseries-classification": {
-        "name": "",
-        "description": ""
+        "name": "Классификация временных рядов",
+        "description": "Классифицировать целые временные ряды по категориям"
       },
       "timeseries-forecasting": {
-        "name": "",
-        "description": ""
+        "name": "Прогнозирование временных рядов",
+        "description": "Прогнозировать будущие значения на основе исторических данных"
       },
       "anomaly-detection": {
-        "name": "",
-        "description": ""
+        "name": "Обнаружение аномалий",
+        "description": "Обнаруживать необычные паттерны во временных рядах"
       },
       "timeseries-segmentation": {
-        "name": "",
-        "description": ""
+        "name": "Сегментация временных рядов",
+        "description": "Сегментировать временные ряды на отдельные области"
       },
       "pattern-recognition": {
-        "name": "",
-        "description": ""
+        "name": "Распознавание паттернов",
+        "description": "Идентифицировать повторяющиеся паттерны во временных рядах"
       },
       "event-detection": {
-        "name": "",
-        "description": ""
+        "name": "Обнаружение событий",
+        "description": "Обнаруживать определённые события во временных рядах"
       },
       "timeseries-regression": {
-        "name": "",
-        "description": ""
+        "name": "Регрессия временных рядов",
+        "description": "Прогнозировать числовые значения из временных рядов"
       },
       "object3DDetection": {
         "name": "Обнаружение 3D объектов",
@@ -1864,7 +1864,66 @@
       "lr_scheduler_type": "Тип планировщика LR",
       "lr_scheduler_typeDesc": "Стратегия уменьшения скорости обучения",
       "crop_size": "Размер обрезки",
-      "crop_sizeDesc": "Случайный размер обрезки для обучения (пиксели)"
+      "crop_sizeDesc": "Случайный размер обрезки для обучения (пиксели)",
+      "input_size_h": "Input Height",
+      "input_size_hDesc": "Input height for pose estimation",
+      "input_size_w": "Input Width",
+      "input_size_wDesc": "Input width for pose estimation",
+      "angle_version": "Angle Version",
+      "angle_versionDesc": "Angle encoding for oriented bounding boxes",
+      "mixup_aug": "MixUp",
+      "mixup_augDesc": "MixUp augmentation probability",
+      "cutmix": "CutMix",
+      "cutmixDesc": "CutMix augmentation probability",
+      "label_smoothing": "Label Smoothing",
+      "label_smoothingDesc": "Label smoothing factor for regularization",
+      "drop_rate": "Dropout Rate",
+      "drop_rateDesc": "Dropout rate for regularization",
+      "window_size": "Window Size",
+      "window_sizeDesc": "Window size for time series processing",
+      "stride": "Stride",
+      "strideDesc": "Stride for sliding window",
+      "max_prediction_length": "Prediction Length",
+      "max_prediction_lengthDesc": "Maximum number of time steps to predict",
+      "max_encoder_length": "Encoder Length",
+      "max_encoder_lengthDesc": "Maximum number of time steps for encoder input",
+      "gradient_clip_val": "Gradient Clip",
+      "gradient_clip_valDesc": "Gradient clipping value to prevent exploding gradients",
+      "hidden_size": "Hidden Size",
+      "hidden_sizeDesc": "Hidden layer size for the model",
+      "dropout": "Dropout",
+      "dropoutDesc": "Dropout probability for regularization",
+      "contamination": "Contamination",
+      "contaminationDesc": "Expected fraction of anomalies in the dataset",
+      "n_estimators": "N Estimators",
+      "n_estimatorsDesc": "Number of estimators for ensemble methods",
+      "n_clusters": "N Clusters",
+      "n_clustersDesc": "Number of clusters to form",
+      "metric": "Distance Metric",
+      "metricDesc": "Distance metric for clustering",
+      "max_iter": "Max Iterations",
+      "max_iterDesc": "Maximum number of iterations for clustering",
+      "n_layers": "N Layers",
+      "n_layersDesc": "Number of transformer/RNN layers",
+      "d_model": "Model Dimension",
+      "d_modelDesc": "Dimension of the model's hidden representation",
+      "d_ffn": "FFN Dimension",
+      "d_ffnDesc": "Dimension of the feed-forward network",
+      "n_heads": "N Heads",
+      "n_headsDesc": "Number of attention heads",
+      "normalize": "Normalize",
+      "normalizeDesc": "Normalize time series before processing",
+      "detectron2Title": "Detectron2 Parameters",
+      "mmposeTitle": "MMPose Parameters",
+      "mmrotateTitle": "MMRotate Parameters",
+      "timmTitle": "timm Parameters",
+      "hfClsTitle": "HuggingFace Classification Parameters",
+      "tsaiTitle": "tsai Parameters",
+      "pytorchFcstTitle": "PyTorch Forecasting Parameters",
+      "pyodTitle": "PyOD Parameters",
+      "tslearnTitle": "tslearn Parameters",
+      "pypotsTitle": "PyPOTS Parameters",
+      "stumpyTitle": "STUMPY Parameters"
     },
     "monitor": {
       "title": "Обучение выполняется",
@@ -1941,7 +2000,20 @@
     "title": "Настройки",
     "back": "Назад",
     "sections": {
-      "pythonEnv": "Среда Python"
+      "general": "Общие",
+      "pythonEnv": "Среда Python",
+      "trainingModels": "Модели обучения"
+    },
+    "general": {
+      "colorMode": "Оформление",
+      "light": "Светлая",
+      "dark": "Тёмная",
+      "system": "Системная",
+      "language": "Язык",
+      "workDir": "Рабочая директория",
+      "workDirHelp": "Папка, где хранятся все ваши проекты и данные.",
+      "changeWorkDir": "Выбрать новую рабочую директорию",
+      "change": "Изменить"
     },
     "pythonEnv": {
       "systemPython": "Системный Python",
@@ -1974,6 +2046,179 @@
       "selectVariant": "Вариант PyTorch",
       "install": "Установить PyTorch",
       "reinstall": "Переустановить PyTorch"
+    },
+    "trainingModels": {
+      "totalModels": "Модели",
+      "tasks": "Задачи",
+      "task": "Задача",
+      "model": "Модель",
+      "params": "Параметры",
+      "sizes": "Размеры",
+      "recommended": "Рекомендуемый",
+      "readOnly": "Только чтение",
+      "searchPlaceholder": "Поиск моделей по имени, описанию или бэкенду...",
+      "clearFilters": "Очистить фильтры",
+      "noResults": "Модели не соответствуют текущим фильтрам",
+      "overview": "Обзор",
+      "selectBackend": "Выберите бэкенд для просмотра моделей",
+      "modelCount": "моделей",
+      "datasetFormat": "Набор данных",
+      "pipPackages": "Пакеты",
+      "viewScript": "Просмотреть скрипт",
+      "supportedTasks": "Поддерживаемые задачи",
+      "availableSizes": "Доступные размеры",
+      "defaultConfig": "Конфигурация по умолчанию",
+      "parameter": "Параметр",
+      "type": "Тип",
+      "defaultValue": "По умолчанию",
+      "range": "Диапазон",
+      "backTo": "Вернуться к"
+    }
+  },
+  "wizard": {
+    "trigger": "Не знаете, что выбрать?",
+    "title": "Помощник выбора типа проекта",
+    "subtitle": "Ответьте на несколько вопросов, и мы порекомендуем лучший тип проекта.",
+    "bestMatch": "Лучший выбор",
+    "useThis": "Выбрать",
+    "noResults": "Подходящий тип не найден. Попробуйте другие ответы.",
+    "resultsTitle": "Рекомендовано для вас",
+    "questions": {
+      "dataType": {
+        "title": "С каким типом данных вы будете работать?",
+        "options": {
+          "images": "Изображения",
+          "timeseries": "Временные ряды"
+        },
+        "optionsDesc": {
+          "images": "Фото, скриншоты, сканы, кадры",
+          "timeseries": "Датчики, метрики, сигналы, финансовые данные"
+        }
+      },
+      "goalImages": {
+        "title": "Что вы хотите делать с изображениями?",
+        "options": {
+          "classify": "Классифицировать",
+          "detectLocate": "Обнаружить и Найти",
+          "segment": "Сегментировать",
+          "pointsKeypts": "Отметить точки"
+        },
+        "optionsDesc": {
+          "classify": "Присвоить метку всему изображению",
+          "detectLocate": "Найти и определить местоположение объектов рамками",
+          "segment": "Очертить объекты на уровне пикселей",
+          "pointsKeypts": "Разместить ключевые точки или ориентиры на объектах"
+        }
+      },
+      "goalTimeseries": {
+        "title": "Что вы хотите делать с временными рядами?",
+        "options": {
+          "tsClassify": "Классифицировать",
+          "tsPredict": "Предсказать",
+          "tsAnomaly": "Обнаружить аномалии",
+          "tsAnalyze": "Анализировать"
+        },
+        "optionsDesc": {
+          "tsClassify": "Присвоить категорию всему ряду",
+          "tsPredict": "Предсказать будущие значения или заполнить пробелы",
+          "tsAnomaly": "Найти необычные или неожиданные паттерны",
+          "tsAnalyze": "Сегментировать, искать паттерны или группировать"
+        }
+      },
+      "classifyDetail": {
+        "title": "Сколько меток на изображение?",
+        "options": {
+          "singleLabel": "Одна метка",
+          "multiLabel": "Несколько меток"
+        },
+        "optionsDesc": {
+          "singleLabel": "Каждое изображение принадлежит ровно одному классу",
+          "multiLabel": "Изображение может иметь несколько меток одновременно"
+        }
+      },
+      "detectDetail": {
+        "title": "Какой тип ограничивающих рамок?",
+        "options": {
+          "axisAligned": "Обычные рамки",
+          "rotated": "Повёрнутые рамки"
+        },
+        "optionsDesc": {
+          "axisAligned": "Горизонтальные/вертикальные прямоугольники (наиболее распространённые)",
+          "rotated": "Рамки, которые можно повернуть под любым углом"
+        }
+      },
+      "segmentDetail": {
+        "title": "Какой тип сегментации?",
+        "options": {
+          "polygonOutline": "Полигональные контуры",
+          "pixelMask": "Пиксельные маски",
+          "instanceSeg": "Сегментация экземпляров"
+        },
+        "optionsDesc": {
+          "polygonOutline": "Рисовать полигоны точка за точкой вокруг объектов",
+          "pixelMask": "Рисовать маски на уровне пикселей на объектах",
+          "instanceSeg": "Разделять каждый отдельный экземпляр объекта"
+        }
+      },
+      "pointsDetail": {
+        "title": "Какой тип точек?",
+        "options": {
+          "connectedPose": "Связанный скелет",
+          "freePoints": "Независимые точки"
+        },
+        "optionsDesc": {
+          "connectedPose": "Точки, соединённые линиями (оценка позы)",
+          "freePoints": "Отдельные точки без соединений"
+        }
+      },
+      "tsAnalyzeDetail": {
+        "title": "Какой тип анализа?",
+        "options": {
+          "tsSegment": "Сегментировать области",
+          "tsPattern": "Найти паттерны",
+          "tsEvent": "Обнаружить события",
+          "tsCluster": "Группировать похожие"
+        },
+        "optionsDesc": {
+          "tsSegment": "Разделить ряд на размеченные области",
+          "tsPattern": "Выявить повторяющиеся паттерны или мотивы",
+          "tsEvent": "Определить, когда происходят конкретные события",
+          "tsCluster": "Группировать похожие ряды или сегменты"
+        }
+      },
+      "tsPredictDetail": {
+        "title": "Какой тип предсказания?",
+        "options": {
+          "tsForecast": "Прогноз будущего",
+          "tsRegression": "Регрессия значений",
+          "tsImpute": "Заполнить пропуски"
+        },
+        "optionsDesc": {
+          "tsForecast": "Предсказать будущие значения ряда",
+          "tsRegression": "Предсказать непрерывные значения по признакам",
+          "tsImpute": "Восстановить отсутствующие или повреждённые точки данных"
+        }
+      }
+    },
+    "reasons": {
+      "bbox": "Идеально для обнаружения объектов с осевыми прямоугольными рамками",
+      "obb": "Идеально для наклонённых или повёрнутых объектов, как аэросъёмка или текст",
+      "mask": "Маски на уровне пикселей для точной семантической сегментации",
+      "polygon": "Полигональные контуры для точных границ объектов",
+      "instance-segmentation": "Разделение каждого экземпляра объекта на уровне пикселей",
+      "keypoints": "Отметить связанные скелетные точки для оценки позы",
+      "landmarks": "Разместить независимые опорные точки на объектах",
+      "classification": "Одна метка на изображение для простой категоризации",
+      "multi-label-classification": "Одновременная маркировка изображений несколькими метками",
+      "timeseries-classification": "Классификация полных временных рядов по категориям",
+      "timeseries-forecasting": "Предсказание будущих значений на основе исторических данных",
+      "timeseries-regression": "Предсказание непрерывных значений по признакам ряда",
+      "anomaly-detection": "Обнаружение необычных паттернов и выбросов в данных",
+      "timeseries-segmentation": "Разделение временных рядов на размеченные сегменты",
+      "pattern-recognition": "Обнаружение повторяющихся мотивов и паттернов",
+      "event-detection": "Определение моментов конкретных событий в ряду",
+      "clustering": "Группировка похожих временных рядов или сегментов",
+      "imputation": "Восстановление отсутствующих или повреждённых точек данных"
     }
   }
 }
