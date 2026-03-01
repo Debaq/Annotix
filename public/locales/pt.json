@@ -39,7 +39,11 @@
     "oneToNine": "1-9",
     "ctrlS": "Ctrl+S",
     "arrowKeys": "← →",
-    "understand": "Entendido"
+    "understand": "Entendido",
+    "all": "Todos",
+    "filters": "Filtros",
+    "starting": "Iniciando...",
+    "back": "Voltar"
   },
   "header": {
     "selectProject": "Selecionar projeto...",
@@ -1628,7 +1632,8 @@
       "installing": "Instalando...",
       "installingPackages": "Instalando pacotes do backend...",
       "installingPackagesDesc": "Isso pode levar alguns minutos. Sua configuração será preservada.",
-      "modelsAvailable": "modelos disponíveis"
+      "modelsAvailable": "modelos disponíveis",
+      "sklearn": "Scikit-learn + XGBoost + LightGBM"
     },
     "execution": {
       "title": "Modo de Execução",
@@ -2025,7 +2030,13 @@
     "keyframeHere": "Keyframe neste frame",
     "hideTrack": "Ocultar",
     "showTrack": "Mostrar",
-    "deleteTrack": "Excluir track"
+    "deleteTrack": "Excluir track",
+    "deleteVideo": "Excluir vídeo",
+    "confirmDeleteVideo": "Excluir este vídeo e todos os seus quadros?",
+    "bake": "Aplicar faixas aos quadros",
+    "bakeDesc": "Escreve as interpolações de faixa como anotações em cada quadro",
+    "baking": "Aplicando...",
+    "bakeDone": "Faixas aplicadas"
   },
   "settings": {
     "title": "Configurações",
@@ -2059,7 +2070,8 @@
       "diskUsage": "Uso de disco",
       "path": "Caminho",
       "createVenv": "Criar Ambiente",
-      "removeVenv": "Remover Ambiente"
+      "removeVenv": "Remover Ambiente",
+      "pleaseWait": "Isso pode levar vários minutos, por favor não feche o aplicativo."
     },
     "packages": {
       "title": "Pacotes Instalados",
@@ -2104,7 +2116,10 @@
       "type": "Tipo",
       "defaultValue": "Padrão",
       "range": "Faixa",
-      "backTo": "Voltar para"
+      "backTo": "Voltar para",
+      "prepareBackend": "Preparar backend",
+      "filterByTask": "Filtrar por tarefa",
+      "allModels": "Todos os modelos"
     }
   },
   "wizard": {

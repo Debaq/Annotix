@@ -42,7 +42,8 @@
     "ctrlS": "Ctrl+S",
     "arrowKeys": "← →",
     "understand": "Entendido",
-    "starting": "Iniciando..."
+    "starting": "Iniciando...",
+    "back": "Atrás"
   },
   "header": {
     "selectProject": "Seleccionar proyecto...",

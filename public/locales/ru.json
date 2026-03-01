@@ -39,7 +39,11 @@
     "oneToNine": "1-9",
     "ctrlS": "Ctrl+S",
     "arrowKeys": "← →",
-    "understand": "Понятно"
+    "understand": "Понятно",
+    "all": "Все",
+    "filters": "Фильтры",
+    "starting": "Запуск...",
+    "back": "Назад"
   },
   "header": {
     "selectProject": "Выбрать проект...",
@@ -1668,7 +1672,8 @@
       "installing": "Установка...",
       "installingPackages": "Установка пакетов бэкенда...",
       "installingPackagesDesc": "Это может занять несколько минут. Ваша конфигурация будет сохранена.",
-      "modelsAvailable": "доступных моделей"
+      "modelsAvailable": "доступных моделей",
+      "sklearn": "Scikit-learn + XGBoost + LightGBM"
     },
     "execution": {
       "title": "Режим выполнения",
@@ -2025,7 +2030,13 @@
     "keyframeHere": "Ключевой кадр на этом фрейме",
     "hideTrack": "Скрыть",
     "showTrack": "Показать",
-    "deleteTrack": "Удалить трек"
+    "deleteTrack": "Удалить трек",
+    "deleteVideo": "Удалить видео",
+    "confirmDeleteVideo": "Удалить это видео и все его кадры?",
+    "bake": "Применить треки к кадрам",
+    "bakeDesc": "Записывает интерполяции треков как аннотации на каждый кадр",
+    "baking": "Применение...",
+    "bakeDone": "Треки применены"
   },
   "settings": {
     "title": "Настройки",
@@ -2059,7 +2070,8 @@
       "diskUsage": "Использование диска",
       "path": "Путь",
       "createVenv": "Создать окружение",
-      "removeVenv": "Удалить окружение"
+      "removeVenv": "Удалить окружение",
+      "pleaseWait": "Это может занять несколько минут, пожалуйста, не закрывайте приложение."
     },
     "packages": {
       "title": "Установленные пакеты",
@@ -2104,7 +2116,10 @@
       "type": "Тип",
       "defaultValue": "По умолчанию",
       "range": "Диапазон",
-      "backTo": "Вернуться к"
+      "backTo": "Вернуться к",
+      "prepareBackend": "Подготовить бэкенд",
+      "filterByTask": "Фильтровать по задаче",
+      "allModels": "Все модели"
     }
   },
   "wizard": {
