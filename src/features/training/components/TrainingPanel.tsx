@@ -27,7 +27,7 @@ import { GpuIndicator } from './GpuIndicator';
 import { TrainingMonitor } from './TrainingMonitor';
 import { TrainingResult } from './TrainingResult';
 import { TrainingJobList } from './TrainingJobList';
-import type { TrainingPhase, PythonEnvStatus, ScenarioPresetId } from '../types';
+import type { TrainingPhase, PythonEnvStatus, ScenarioPresetId, TrainingJob, TrainingBackend } from '../types';
 import type { GpuInfo } from '../types';
 
 interface TrainingPanelProps {
@@ -44,6 +44,7 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [gpuInfo, setGpuInfo] = useState<GpuInfo | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<ScenarioPresetId | null>('small_objects');
+  const [fineTuneSource, setFineTuneSource] = useState<string | null>(null);
 
   const projectType = project?.type || 'bbox';
 
@@ -66,6 +67,8 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
     updateBackendParam,
     currentModels,
     buildRequest,
+    baseModelPath,
+    setBaseModelPath,
   } = useTrainingRequest(projectType);
 
   const {
@@ -195,7 +198,24 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
     setPhase('backend');
     setActiveJobId(null);
     resetProgress();
-  }, [resetProgress]);
+    setBaseModelPath(null);
+    setFineTuneSource(null);
+  }, [resetProgress, setBaseModelPath]);
+
+  const handleFineTune = useCallback((job: TrainingJob) => {
+    if (!job.bestModelPath) return;
+    const config = job.config as Record<string, unknown>;
+    const jobBackend = (config.backend as TrainingBackend) || 'yolo';
+    // Solo soportado para YOLO y RT-DETR
+    if (jobBackend !== 'yolo' && jobBackend !== 'rt_detr') return;
+    setBaseModelPath(job.bestModelPath);
+    const model = config.yoloVersion || config.modelId || '?';
+    const size = config.modelSize || '';
+    const date = new Date(job.createdAt).toLocaleDateString();
+    setFineTuneSource(`${String(model).toUpperCase()}${size} - ${date}`);
+    setBackend(jobBackend);
+    setPhase('config');
+  }, [setBaseModelPath, setBackend]);
 
   const handlePresetSelect = useCallback((presetId: ScenarioPresetId) => {
     setSelectedPreset(presetId);
@@ -254,7 +274,7 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
                   onSelect={handleBackendSelect}
                 />
                 <Separator />
-                <TrainingJobList projectId={project.id!} />
+                <TrainingJobList projectId={project.id!} onFineTune={handleFineTune} />
               </>
             )}
 
@@ -268,6 +288,25 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
                   </Button>
                   <GpuIndicator gpuInfo={gpuInfo} loading={false} />
                 </div>
+
+                {/* Fine-tune badge */}
+                {baseModelPath && fineTuneSource && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                    <i className="fas fa-rotate text-emerald-500 text-sm" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-emerald-500">{t('training.fineTune')}</p>
+                      <p className="text-xs text-muted-foreground truncate">{t('training.fineTuneFrom', { source: fineTuneSource })}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => { setBaseModelPath(null); setFineTuneSource(null); }}
+                      className="text-muted-foreground hover:text-foreground h-6 w-6 p-0"
+                    >
+                      <i className="fas fa-times text-xs" />
+                    </Button>
+                  </div>
+                )}
 
                 {/* YOLO Presets */}
                 {backend === 'yolo' && (

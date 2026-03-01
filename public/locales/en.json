@@ -1866,6 +1866,9 @@
       "sizeDescLarge": "High accuracy, slower training.",
       "sizeDescXLarge": "Highest accuracy, slowest training."
     },
+    "fineTune": "Fine-tune",
+    "fineTuneFrom": "Fine-tuning from: {{source}}",
+    "fineTuneDesc": "Continue training from a previously trained model",
     "jobs": {
       "title": "Training History",
       "empty": "No training jobs yet"

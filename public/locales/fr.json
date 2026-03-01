@@ -1875,6 +1875,9 @@
       "exportModel": "Exporter le modèle",
       "newTraining": "Nouvel entraînement"
     },
+    "fineTune": "Fine-tune",
+    "fineTuneFrom": "Fine-tuning depuis : {{source}}",
+    "fineTuneDesc": "Continuer l'entraînement à partir d'un modèle précédemment entraîné",
     "jobs": {
       "title": "Historique d'entraînement",
       "empty": "Aucun entraînement pour le moment"

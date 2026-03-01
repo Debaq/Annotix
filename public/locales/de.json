@@ -1875,6 +1875,9 @@
       "exportModel": "Modell exportieren",
       "newTraining": "Neues Training starten"
     },
+    "fineTune": "Feinabstimmung",
+    "fineTuneFrom": "Feinabstimmung von: {{source}}",
+    "fineTuneDesc": "Training mit einem zuvor trainierten Modell fortsetzen",
     "jobs": {
       "title": "Trainings-Verlauf",
       "empty": "Noch keine Trainings"

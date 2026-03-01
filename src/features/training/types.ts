@@ -183,6 +183,7 @@ export interface TrainingJob {
   metrics: TrainingEpochMetrics | null;
   createdAt: number;
   updatedAt: number;
+  bestModelPath?: string | null;
 }
 
 // ─── Multi-Backend Types ─────────────────────────────────────────────────────
@@ -208,6 +209,7 @@ export interface TrainingRequest {
   resume: boolean;
   exportFormats: string[];
   backendParams: Record<string, unknown>;
+  baseModelPath?: string | null;
 }
 
 export interface BackendInfo {

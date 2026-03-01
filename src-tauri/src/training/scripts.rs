@@ -252,6 +252,13 @@ print("ANNOTIX_EVENT:" + json.dumps(result), flush=True)
 }
 
 fn build_model_name(config: &TrainingConfig) -> String {
+    // Si hay un path a modelo base (fine-tune), usarlo directamente
+    if let Some(ref path) = config.base_model_path {
+        if !path.is_empty() {
+            return path.replace('\\', "/");
+        }
+    }
+
     let version = config.yolo_version.to_lowercase();
     let size = &config.model_size;
     let task = &config.task;
@@ -302,7 +309,10 @@ fn format_device(device: &str) -> String {
 
 pub fn generate_rtdetr_script(req: &TrainingRequest, data_yaml_path: &str) -> String {
     let bp = &req.backend_params;
-    let model_name = format!("{}.pt", req.model_id);
+    let model_name = match &req.base_model_path {
+        Some(path) if !path.is_empty() => path.replace('\\', "/"),
+        _ => format!("{}.pt", req.model_id),
+    };
     let device = format_device(&req.device);
     let lrf = bp.get("lrf").and_then(|v| v.as_f64()).unwrap_or(0.01);
     let optimizer = bp.get("optimizer").and_then(|v| v.as_str()).unwrap_or("AdamW");
@@ -774,6 +784,7 @@ pub fn generate_train_script_for_backend(
                 single_cls: false,
                 pretrained: true,
                 freeze: None,
+                base_model_path: req.base_model_path.clone(),
             };
             vec![("train.py".to_string(), generate_train_script(&config, dataset_path))]
         }

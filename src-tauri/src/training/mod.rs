@@ -88,6 +88,8 @@ pub struct TrainingConfig {
     pub pretrained: bool,
     #[serde(default)]
     pub freeze: Option<u32>,
+    #[serde(default, rename = "baseModelPath")]
+    pub base_model_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -304,6 +306,8 @@ pub struct TrainingRequest {
     // Backend-specific params as free JSON
     #[serde(rename = "backendParams", default)]
     pub backend_params: JsonValue,
+    #[serde(default, rename = "baseModelPath")]
+    pub base_model_path: Option<String>,
 }
 
 // ─── Backend Catalog ─────────────────────────────────────────────────────────

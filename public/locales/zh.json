@@ -1875,6 +1875,9 @@
       "exportModel": "导出模型",
       "newTraining": "开始新训练"
     },
+    "fineTune": "微调",
+    "fineTuneFrom": "微调自: {{source}}",
+    "fineTuneDesc": "基于之前训练的模型继续训练",
     "jobs": {
       "title": "训练历史",
       "empty": "暂无训练记录"
