@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import type {
   TrainingConfig,
-  PythonEnvStatus,
+  TrainingEnvInfo,
   GpuInfo,
   TrainingPreset,
   YoloModelInfo,
@@ -9,11 +9,11 @@ import type {
 } from '../types';
 
 export const trainingService = {
-  checkPythonEnv(): Promise<PythonEnvStatus> {
+  checkPythonEnv(): Promise<TrainingEnvInfo> {
     return invoke('check_python_env');
   },
 
-  setupPythonEnv(): Promise<PythonEnvStatus> {
+  setupPythonEnv(): Promise<TrainingEnvInfo> {
     return invoke('setup_python_env');
   },
 

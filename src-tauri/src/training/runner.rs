@@ -102,11 +102,12 @@ impl TrainingProcessManager {
         })?;
 
         // Spawn proceso Python
-        let mut child = Command::new(&python)
-            .args(["-u", &script_path.to_string_lossy()])
+        let mut cmd = Command::new(&python);
+        cmd.args(["-u", &script_path.to_string_lossy()])
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
+            .stderr(Stdio::piped());
+        super::hide_console_window(&mut cmd);
+        let mut child = cmd.spawn()
             .map_err(|e| format!("Error iniciando entrenamiento: {}", e))?;
 
         let stdout = child.stdout.take();

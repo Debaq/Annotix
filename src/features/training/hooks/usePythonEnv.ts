@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { trainingService } from '../services/trainingService';
-import type { PythonEnvStatus } from '../types';
+import type { PythonEnvStatus, GpuInfo } from '../types';
 
 export function usePythonEnv() {
   const [envStatus, setEnvStatus] = useState<PythonEnvStatus | null>(null);
+  const [gpuInfo, setGpuInfo] = useState<GpuInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [setupProgress, setSetupProgress] = useState<{ message: string; progress: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -13,9 +14,10 @@ export function usePythonEnv() {
     setLoading(true);
     setError(null);
     try {
-      const status = await trainingService.checkPythonEnv();
-      setEnvStatus(status);
-      return status;
+      const info = await trainingService.checkPythonEnv();
+      setEnvStatus(info.env);
+      setGpuInfo(info.gpu);
+      return info.env;
     } catch (e) {
       setError(String(e));
       return null;
@@ -37,9 +39,10 @@ export function usePythonEnv() {
     );
 
     try {
-      const status = await trainingService.setupPythonEnv();
-      setEnvStatus(status);
-      return status;
+      const info = await trainingService.setupPythonEnv();
+      setEnvStatus(info.env);
+      setGpuInfo(info.gpu);
+      return info.env;
     } catch (e) {
       setError(String(e));
       return null;
@@ -52,6 +55,7 @@ export function usePythonEnv() {
 
   return {
     envStatus,
+    gpuInfo,
     loading,
     setupProgress,
     error,

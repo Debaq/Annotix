@@ -4,16 +4,37 @@ use crate::store::AppState;
 use crate::store::project_file::TrainingJobEntry;
 use crate::training::runner::TrainingProcessManager;
 use crate::training::{
-    GpuInfo, PythonEnvStatus, TrainingConfig, TrainingPreset, YoloModelInfo,
+    GpuInfo, TrainingConfig, TrainingEnvCache, TrainingEnvInfo,
+    TrainingPreset, YoloModelInfo,
 };
 
 #[tauri::command]
-pub fn check_python_env() -> Result<PythonEnvStatus, String> {
-    crate::training::python_env::check_env()
+pub fn check_python_env(cache: State<'_, TrainingEnvCache>) -> Result<TrainingEnvInfo, String> {
+    // Devolver caché si existe (instantáneo)
+    if let Some(cached) = cache.get() {
+        return Ok(cached);
+    }
+
+    // Primera vez: ejecutar Python (un solo proceso para env + GPU)
+    let (env, gpu) = crate::training::python_env::check_env_full()?;
+    let info = TrainingEnvInfo { env, gpu };
+
+    // Cachear solo si el entorno está instalado
+    if info.env.installed {
+        cache.set(info.clone());
+    }
+
+    Ok(info)
 }
 
 #[tauri::command]
-pub fn setup_python_env(app: AppHandle) -> Result<PythonEnvStatus, String> {
+pub fn setup_python_env(
+    app: AppHandle,
+    cache: State<'_, TrainingEnvCache>,
+) -> Result<TrainingEnvInfo, String> {
+    // Invalidar caché antes de instalar
+    cache.invalidate();
+
     crate::training::python_env::setup_env(|msg, progress| {
         let _ = app.emit(
             "training:env-setup-progress",
@@ -22,11 +43,24 @@ pub fn setup_python_env(app: AppHandle) -> Result<PythonEnvStatus, String> {
                 "progress": progress,
             }),
         );
-    })
+    })?;
+
+    // Re-verificar y cachear
+    let (env, gpu) = crate::training::python_env::check_env_full()?;
+    let info = TrainingEnvInfo { env, gpu };
+    if info.env.installed {
+        cache.set(info.clone());
+    }
+    Ok(info)
 }
 
 #[tauri::command]
-pub fn detect_gpu() -> Result<GpuInfo, String> {
+pub fn detect_gpu(cache: State<'_, TrainingEnvCache>) -> Result<GpuInfo, String> {
+    // Si hay caché, devolver la info de GPU del caché
+    if let Some(cached) = cache.get() {
+        return Ok(cached.gpu);
+    }
+    // Fallback: ejecutar detección standalone
     crate::training::gpu::detect_gpu()
 }
 

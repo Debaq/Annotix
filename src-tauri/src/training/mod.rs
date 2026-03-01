@@ -251,3 +251,55 @@ pub mod dataset;
 pub mod scripts;
 pub mod runner;
 pub mod model_export;
+
+/// En Windows, configura CREATE_NO_WINDOW para evitar que aparezca una ventana de consola.
+#[cfg(windows)]
+pub fn hide_console_window(cmd: &mut std::process::Command) -> &mut std::process::Command {
+    use std::os::windows::process::CommandExt;
+    cmd.creation_flags(0x08000000) // CREATE_NO_WINDOW
+}
+
+#[cfg(not(windows))]
+pub fn hide_console_window(cmd: &mut std::process::Command) -> &mut std::process::Command {
+    cmd
+}
+
+// ─── Training Env Cache ─────────────────────────────────────────────────────
+
+use std::sync::Mutex;
+
+/// Resultado combinado de check_env + detect_gpu
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct TrainingEnvInfo {
+    pub env: PythonEnvStatus,
+    pub gpu: GpuInfo,
+}
+
+/// Cache en memoria para evitar levantar Python cada vez que se abre el modal
+pub struct TrainingEnvCache {
+    inner: Mutex<Option<TrainingEnvInfo>>,
+}
+
+impl TrainingEnvCache {
+    pub fn new() -> Self {
+        Self {
+            inner: Mutex::new(None),
+        }
+    }
+
+    pub fn get(&self) -> Option<TrainingEnvInfo> {
+        self.inner.lock().ok()?.clone()
+    }
+
+    pub fn set(&self, info: TrainingEnvInfo) {
+        if let Ok(mut cache) = self.inner.lock() {
+            *cache = Some(info);
+        }
+    }
+
+    pub fn invalidate(&self) {
+        if let Ok(mut cache) = self.inner.lock() {
+            *cache = None;
+        }
+    }
+}

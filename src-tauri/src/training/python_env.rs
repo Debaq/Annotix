@@ -29,9 +29,10 @@ pub fn find_system_python() -> Option<String> {
     };
 
     for candidate in candidates {
-        let result = Command::new(candidate)
-            .args(["--version"])
-            .output();
+        let mut cmd = Command::new(candidate);
+        cmd.args(["--version"]);
+        super::hide_console_window(&mut cmd);
+        let result = cmd.output();
 
         if let Ok(output) = result {
             if output.status.success() {
@@ -46,24 +47,35 @@ pub fn find_system_python() -> Option<String> {
     None
 }
 
-/// Verifica el estado actual del entorno Python
-pub fn check_env() -> Result<PythonEnvStatus, String> {
+/// Verifica el estado del entorno Python Y detecta GPU en un solo proceso
+pub fn check_env_full() -> Result<(PythonEnvStatus, super::GpuInfo), String> {
     let python = venv_python()?;
 
+    let no_env = PythonEnvStatus {
+        installed: false,
+        python_path: None,
+        ultralytics_version: None,
+        torch_version: None,
+        cuda_available: false,
+    };
+    let no_gpu = super::GpuInfo {
+        cuda_available: false,
+        cuda_version: None,
+        gpus: vec![],
+        mps_available: false,
+    };
+
     if !python.exists() {
-        return Ok(PythonEnvStatus {
-            installed: false,
-            python_path: None,
-            ultralytics_version: None,
-            torch_version: None,
-            cuda_available: false,
-        });
+        return Ok((no_env, no_gpu));
     }
 
-    // Verificar ultralytics y torch
+    // Un solo script que recopila env + GPU info
     let check_script = r#"
 import json
-result = {"ultralytics": None, "torch": None, "cuda": False}
+result = {
+    "ultralytics": None, "torch": None, "cuda": False,
+    "cuda_version": None, "gpus": [], "mps_available": False
+}
 try:
     import ultralytics
     result["ultralytics"] = ultralytics.__version__
@@ -73,24 +85,38 @@ try:
     import torch
     result["torch"] = torch.__version__
     result["cuda"] = torch.cuda.is_available()
+    if result["cuda"]:
+        result["cuda_version"] = torch.version.cuda
+        for i in range(torch.cuda.device_count()):
+            props = torch.cuda.get_device_properties(i)
+            result["gpus"].append({
+                "index": i,
+                "name": props.name,
+                "memory_total": props.total_mem,
+                "memory_free": props.total_mem
+            })
+    if hasattr(torch.backends, "mps"):
+        result["mps_available"] = torch.backends.mps.is_available()
 except ImportError:
     pass
 print(json.dumps(result))
 "#;
 
-    let output = Command::new(&python)
-        .args(["-c", check_script])
-        .output()
+    let mut cmd = Command::new(&python);
+    cmd.args(["-c", check_script]);
+    super::hide_console_window(&mut cmd);
+    let output = cmd.output()
         .map_err(|e| format!("Error ejecutando python: {}", e))?;
 
     if !output.status.success() {
-        return Ok(PythonEnvStatus {
+        let env = PythonEnvStatus {
             installed: true,
             python_path: Some(python.to_string_lossy().to_string()),
             ultralytics_version: None,
             torch_version: None,
             cuda_available: false,
-        });
+        };
+        return Ok((env, no_gpu));
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
@@ -102,17 +128,44 @@ print(json.dumps(result))
     let cuda_available = info["cuda"].as_bool().unwrap_or(false);
     let installed = ultralytics_version.is_some();
 
-    Ok(PythonEnvStatus {
+    let env = PythonEnvStatus {
         installed,
         python_path: Some(python.to_string_lossy().to_string()),
         ultralytics_version,
         torch_version,
         cuda_available,
-    })
+    };
+
+    let cuda_version = info["cuda_version"].as_str().map(|s| s.to_string());
+    let mps_available = info["mps_available"].as_bool().unwrap_or(false);
+    let gpus = info["gpus"]
+        .as_array()
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|g| {
+                    Some(super::GpuDevice {
+                        index: g["index"].as_u64()? as u32,
+                        name: g["name"].as_str()?.to_string(),
+                        memory_total: g["memory_total"].as_u64().unwrap_or(0),
+                        memory_free: g["memory_free"].as_u64().unwrap_or(0),
+                    })
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+
+    let gpu = super::GpuInfo {
+        cuda_available,
+        cuda_version,
+        gpus,
+        mps_available,
+    };
+
+    Ok((env, gpu))
 }
 
 /// Crea el virtualenv e instala ultralytics
-pub fn setup_env<F: Fn(&str, f64)>(emit_progress: F) -> Result<PythonEnvStatus, String> {
+pub fn setup_env<F: Fn(&str, f64)>(emit_progress: F) -> Result<(), String> {
     let system_python = find_system_python()
         .ok_or("No se encontró Python 3 en el sistema. Por favor instala Python 3.10+ primero.")?;
 
@@ -121,9 +174,10 @@ pub fn setup_env<F: Fn(&str, f64)>(emit_progress: F) -> Result<PythonEnvStatus, 
     emit_progress("Creando entorno virtual...", 10.0);
 
     // Crear venv
-    let output = Command::new(&system_python)
-        .args(["-m", "venv", &venv.to_string_lossy()])
-        .output()
+    let mut cmd = Command::new(&system_python);
+    cmd.args(["-m", "venv", &venv.to_string_lossy()]);
+    super::hide_console_window(&mut cmd);
+    let output = cmd.output()
         .map_err(|e| format!("Error creando venv: {}", e))?;
 
     if !output.status.success() {
@@ -138,9 +192,10 @@ pub fn setup_env<F: Fn(&str, f64)>(emit_progress: F) -> Result<PythonEnvStatus, 
     emit_progress("Actualizando pip...", 20.0);
 
     // Upgrade pip
-    let output = Command::new(&python)
-        .args(["-m", "pip", "install", "--upgrade", "pip"])
-        .output()
+    let mut cmd = Command::new(&python);
+    cmd.args(["-m", "pip", "install", "--upgrade", "pip"]);
+    super::hide_console_window(&mut cmd);
+    let output = cmd.output()
         .map_err(|e| format!("Error actualizando pip: {}", e))?;
 
     if !output.status.success() {
@@ -150,9 +205,10 @@ pub fn setup_env<F: Fn(&str, f64)>(emit_progress: F) -> Result<PythonEnvStatus, 
     emit_progress("Instalando ultralytics (esto puede tardar unos minutos)...", 30.0);
 
     // Install ultralytics (trae torch como dependencia)
-    let output = Command::new(&python)
-        .args(["-m", "pip", "install", "ultralytics"])
-        .output()
+    let mut cmd = Command::new(&python);
+    cmd.args(["-m", "pip", "install", "ultralytics"]);
+    super::hide_console_window(&mut cmd);
+    let output = cmd.output()
         .map_err(|e| format!("Error instalando ultralytics: {}", e))?;
 
     if !output.status.success() {
@@ -162,11 +218,7 @@ pub fn setup_env<F: Fn(&str, f64)>(emit_progress: F) -> Result<PythonEnvStatus, 
         ));
     }
 
-    emit_progress("Verificando instalación...", 90.0);
-
-    let status = check_env()?;
-
     emit_progress("Entorno listo", 100.0);
 
-    Ok(status)
+    Ok(())
 }

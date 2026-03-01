@@ -40,9 +40,10 @@ except Exception:
 print(json.dumps(result))
 "#;
 
-    let output = Command::new(&python)
-        .args(["-c", script])
-        .output()
+    let mut cmd = Command::new(&python);
+    cmd.args(["-c", script]);
+    super::hide_console_window(&mut cmd);
+    let output = cmd.output()
         .map_err(|e| format!("Error detectando GPU: {}", e))?;
 
     if !output.status.success() {
