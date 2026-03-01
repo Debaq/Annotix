@@ -39,7 +39,11 @@
     "oneToNine": "1-9",
     "ctrlS": "Ctrl+S",
     "arrowKeys": "← →",
-    "understand": "了解"
+    "understand": "了解",
+    "all": "全部",
+    "filters": "筛选",
+    "starting": "启动中...",
+    "back": "返回"
   },
   "header": {
     "selectProject": "选择项目...",
@@ -1668,7 +1672,8 @@
       "installing": "安装中...",
       "installingPackages": "正在安装后端包...",
       "installingPackagesDesc": "这可能需要几分钟。您的配置将被保留。",
-      "modelsAvailable": "个可用模型"
+      "modelsAvailable": "个可用模型",
+      "sklearn": "Scikit-learn + XGBoost + LightGBM"
     },
     "execution": {
       "title": "执行模式",
@@ -2025,7 +2030,13 @@
     "keyframeHere": "此帧的关键帧",
     "hideTrack": "隐藏",
     "showTrack": "显示",
-    "deleteTrack": "删除轨道"
+    "deleteTrack": "删除轨道",
+    "deleteVideo": "删除视频",
+    "confirmDeleteVideo": "删除此视频及其所有帧？",
+    "bake": "将轨道应用到帧",
+    "bakeDesc": "将轨道插值作为注释写入每帧",
+    "baking": "应用中...",
+    "bakeDone": "轨道已应用"
   },
   "settings": {
     "title": "设置",
@@ -2059,7 +2070,8 @@
       "diskUsage": "磁盘使用",
       "path": "路径",
       "createVenv": "创建环境",
-      "removeVenv": "删除环境"
+      "removeVenv": "删除环境",
+      "pleaseWait": "这可能需要几分钟，请不要关闭应用程序。"
     },
     "packages": {
       "title": "已安装包",
@@ -2104,7 +2116,10 @@
       "type": "类型",
       "defaultValue": "默认值",
       "range": "范围",
-      "backTo": "返回"
+      "backTo": "返回",
+      "prepareBackend": "准备后端",
+      "filterByTask": "按任务筛选",
+      "allModels": "所有模型"
     }
   },
   "wizard": {

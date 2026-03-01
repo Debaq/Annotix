@@ -1692,7 +1692,19 @@
     },
     "config": {
       "title": "Training Configuration",
-      "advanced": "Advanced Settings"
+      "advanced": "Advanced Settings",
+      "epochs": "Epochs",
+      "batchSize": "Batch Size",
+      "batchSizeHint": "-1 for automatic size",
+      "imageSize": "Image Size",
+      "optimizer": "Optimizer",
+      "lr0": "Initial LR",
+      "lrf": "Final LR",
+      "patience": "Patience",
+      "valSplit": "Validation Split",
+      "workers": "Workers",
+      "device": "Device",
+      "augmentation": "Augmentation"
     },
     "augmentation": {
       "mosaic": "Mosaic",

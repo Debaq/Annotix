@@ -39,7 +39,11 @@
     "oneToNine": "1-9",
     "ctrlS": "Ctrl+S",
     "arrowKeys": "← →",
-    "understand": "Compris"
+    "understand": "Compris",
+    "all": "Tout",
+    "filters": "Filtres",
+    "starting": "Démarrage...",
+    "back": "Retour"
   },
   "header": {
     "selectProject": "Sélectionner un projet...",
@@ -2026,7 +2030,13 @@
     "keyframeHere": "Keyframe à ce frame",
     "hideTrack": "Masquer",
     "showTrack": "Afficher",
-    "deleteTrack": "Supprimer le track"
+    "deleteTrack": "Supprimer le track",
+    "deleteVideo": "Supprimer la vidéo",
+    "confirmDeleteVideo": "Supprimer cette vidéo et toutes ses images ?",
+    "bake": "Appliquer les pistes aux images",
+    "bakeDesc": "Écrit les interpolations de piste comme annotations sur chaque image",
+    "baking": "Application...",
+    "bakeDone": "Pistes appliquées"
   },
   "settings": {
     "title": "Paramètres",
@@ -2060,7 +2070,8 @@
       "diskUsage": "Espace disque",
       "path": "Chemin",
       "createVenv": "Créer l'environnement",
-      "removeVenv": "Supprimer l'environnement"
+      "removeVenv": "Supprimer l'environnement",
+      "pleaseWait": "Cela peut prendre plusieurs minutes, veuillez ne pas fermer l'application."
     },
     "packages": {
       "title": "Paquets installés",
@@ -2105,7 +2116,10 @@
       "type": "Type",
       "defaultValue": "Défaut",
       "range": "Plage",
-      "backTo": "Retour à"
+      "backTo": "Retour à",
+      "prepareBackend": "Préparer le backend",
+      "filterByTask": "Filtrer par tâche",
+      "allModels": "Tous les modèles"
     }
   },
   "wizard": {

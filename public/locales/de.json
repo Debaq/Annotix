@@ -39,7 +39,11 @@
     "oneToNine": "1-9",
     "ctrlS": "Ctrl+S",
     "arrowKeys": "← →",
-    "understand": "Verstanden"
+    "understand": "Verstanden",
+    "all": "Alle",
+    "filters": "Filter",
+    "starting": "Starten...",
+    "back": "Zurück"
   },
   "header": {
     "selectProject": "Projekt auswählen...",
@@ -2026,7 +2030,13 @@
     "keyframeHere": "Keyframe bei diesem Frame",
     "hideTrack": "Ausblenden",
     "showTrack": "Einblenden",
-    "deleteTrack": "Track löschen"
+    "deleteTrack": "Track löschen",
+    "deleteVideo": "Video löschen",
+    "confirmDeleteVideo": "Dieses Video und alle Frames löschen?",
+    "bake": "Tracks auf Frames anwenden",
+    "bakeDesc": "Schreibt Track-Interpolationen als Annotationen auf jeden Frame",
+    "baking": "Anwenden...",
+    "bakeDone": "Tracks angewendet"
   },
   "settings": {
     "title": "Einstellungen",
@@ -2060,7 +2070,8 @@
       "diskUsage": "Speicherverbrauch",
       "path": "Pfad",
       "createVenv": "Umgebung erstellen",
-      "removeVenv": "Umgebung entfernen"
+      "removeVenv": "Umgebung entfernen",
+      "pleaseWait": "Dies kann mehrere Minuten dauern, bitte schließen Sie die Anwendung nicht."
     },
     "packages": {
       "title": "Installierte Pakete",
@@ -2105,7 +2116,10 @@
       "type": "Typ",
       "defaultValue": "Standard",
       "range": "Bereich",
-      "backTo": "Zurück zu"
+      "backTo": "Zurück zu",
+      "prepareBackend": "Backend vorbereiten",
+      "filterByTask": "Nach Aufgabe filtern",
+      "allModels": "Alle Modelle"
     }
   },
   "wizard": {

@@ -39,7 +39,11 @@
     "oneToNine": "1-9",
     "ctrlS": "Ctrl+S",
     "arrowKeys": "← →",
-    "understand": "이해했습니다"
+    "understand": "이해했습니다",
+    "all": "전체",
+    "filters": "필터",
+    "starting": "시작 중...",
+    "back": "뒤로"
   },
   "header": {
     "selectProject": "프로젝트 선택...",
@@ -1668,7 +1672,8 @@
       "installing": "설치 중...",
       "installingPackages": "백엔드 패키지 설치 중...",
       "installingPackagesDesc": "몇 분 정도 걸릴 수 있습니다. 설정은 유지됩니다.",
-      "modelsAvailable": "사용 가능한 모델"
+      "modelsAvailable": "사용 가능한 모델",
+      "sklearn": "Scikit-learn + XGBoost + LightGBM"
     },
     "execution": {
       "title": "실행 모드",
@@ -2025,7 +2030,13 @@
     "keyframeHere": "이 프레임의 키프레임",
     "hideTrack": "숨기기",
     "showTrack": "표시",
-    "deleteTrack": "트랙 삭제"
+    "deleteTrack": "트랙 삭제",
+    "deleteVideo": "비디오 삭제",
+    "confirmDeleteVideo": "이 비디오와 모든 프레임을 삭제하시겠습니까?",
+    "bake": "트랙을 프레임에 적용",
+    "bakeDesc": "트랙 보간을 각 프레임에 주석으로 기록합니다",
+    "baking": "적용 중...",
+    "bakeDone": "트랙 적용 완료"
   },
   "settings": {
     "title": "설정",
@@ -2059,7 +2070,8 @@
       "diskUsage": "디스크 사용량",
       "path": "경로",
       "createVenv": "환경 생성",
-      "removeVenv": "환경 삭제"
+      "removeVenv": "환경 삭제",
+      "pleaseWait": "몇 분 정도 걸릴 수 있습니다. 애플리케이션을 닫지 마세요."
     },
     "packages": {
       "title": "설치된 패키지",
@@ -2104,7 +2116,10 @@
       "type": "유형",
       "defaultValue": "기본값",
       "range": "범위",
-      "backTo": "돌아가기"
+      "backTo": "돌아가기",
+      "prepareBackend": "백엔드 준비",
+      "filterByTask": "작업별 필터",
+      "allModels": "모든 모델"
     }
   },
   "wizard": {
@@ -2120,11 +2135,13 @@
         "title": "어떤 종류의 데이터로 작업하시나요?",
         "options": {
           "images": "이미지",
-          "timeseries": "시계열"
+          "timeseries": "시계열",
+          "tabular": "테이블 데이터"
         },
         "optionsDesc": {
           "images": "사진, 스크린샷, 스캔, 프레임",
-          "timeseries": "센서, 메트릭, 신호, 금융 데이터"
+          "timeseries": "센서, 메트릭, 신호, 금융 데이터",
+          "tabular": "CSV 파일, 스프레드시트, 구조화된 테이블"
         }
       },
       "goalImages": {

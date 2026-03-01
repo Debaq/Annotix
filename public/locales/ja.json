@@ -39,7 +39,11 @@
     "oneToNine": "1-9",
     "ctrlS": "Ctrl+S",
     "arrowKeys": "← →",
-    "understand": "了解"
+    "understand": "了解",
+    "all": "すべて",
+    "filters": "フィルター",
+    "starting": "起動中...",
+    "back": "戻る"
   },
   "header": {
     "selectProject": "プロジェクトを選択...",
@@ -2026,7 +2030,13 @@
     "keyframeHere": "このフレームのキーフレーム",
     "hideTrack": "非表示",
     "showTrack": "表示",
-    "deleteTrack": "トラックを削除"
+    "deleteTrack": "トラックを削除",
+    "deleteVideo": "動画を削除",
+    "confirmDeleteVideo": "この動画とすべてのフレームを削除しますか？",
+    "bake": "トラックをフレームに適用",
+    "bakeDesc": "トラック補間をフレームごとのアノテーションとして書き込みます",
+    "baking": "適用中...",
+    "bakeDone": "トラック適用完了"
   },
   "settings": {
     "title": "設定",
@@ -2060,7 +2070,8 @@
       "diskUsage": "ディスク使用量",
       "path": "パス",
       "createVenv": "環境を作成",
-      "removeVenv": "環境を削除"
+      "removeVenv": "環境を削除",
+      "pleaseWait": "数分かかる場合があります。アプリケーションを閉じないでください。"
     },
     "packages": {
       "title": "インストール済みパッケージ",
@@ -2105,7 +2116,10 @@
       "type": "型",
       "defaultValue": "デフォルト",
       "range": "範囲",
-      "backTo": "戻る"
+      "backTo": "戻る",
+      "prepareBackend": "バックエンドを準備",
+      "filterByTask": "タスクでフィルター",
+      "allModels": "すべてのモデル"
     }
   },
   "wizard": {
