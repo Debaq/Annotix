@@ -514,6 +514,7 @@ fn convert_request_to_yolo_config(req: &TrainingRequest) -> TrainingConfig {
         single_cls: bp.get("single_cls").and_then(|v| v.as_bool()).unwrap_or(false),
         pretrained: bp.get("pretrained").and_then(|v| v.as_bool()).unwrap_or(true),
         freeze: bp.get("freeze").and_then(|v| v.as_u64()).map(|v| v as u32),
+        base_model_path: req.base_model_path.clone(),
     }
 }
 

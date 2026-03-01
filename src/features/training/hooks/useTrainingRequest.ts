@@ -158,6 +158,7 @@ export function useTrainingRequest(projectType: string) {
   );
 
   const [exportFormats, setExportFormats] = useState<string[]>(persisted.current?.exportFormats ?? []);
+  const [baseModelPath, setBaseModelPath] = useState<string | null>(null);
 
   // Persistir config en localStorage cuando cambia
   useEffect(() => {
@@ -232,8 +233,9 @@ export function useTrainingRequest(projectType: string) {
       resume: false,
       exportFormats,
       backendParams: params,
+      baseModelPath: baseModelPath || undefined,
     };
-  }, [backend, modelId, modelSize, task, executionMode, commonParams, backendParams, exportFormats]);
+  }, [backend, modelId, modelSize, task, executionMode, commonParams, backendParams, exportFormats, baseModelPath]);
 
   return {
     backend,
@@ -254,5 +256,7 @@ export function useTrainingRequest(projectType: string) {
     currentBackendInfo,
     currentModels,
     buildRequest,
+    baseModelPath,
+    setBaseModelPath,
   };
 }

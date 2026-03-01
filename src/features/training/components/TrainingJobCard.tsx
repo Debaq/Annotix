@@ -6,6 +6,7 @@ import type { TrainingJob } from '../types';
 interface TrainingJobCardProps {
   job: TrainingJob;
   onDelete: (jobId: string) => void;
+  onFineTune?: (job: TrainingJob) => void;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -16,7 +17,7 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: 'bg-zinc-500',
 };
 
-export function TrainingJobCard({ job, onDelete }: TrainingJobCardProps) {
+export function TrainingJobCard({ job, onDelete, onFineTune }: TrainingJobCardProps) {
   const { t } = useTranslation();
 
   const config = job.config as Record<string, unknown>;
@@ -40,6 +41,17 @@ export function TrainingJobCard({ job, onDelete }: TrainingJobCardProps) {
         )}
         {job.status === 'training' && (
           <span className="text-xs text-blue-500 font-mono">{job.progress.toFixed(0)}%</span>
+        )}
+        {job.status === 'completed' && job.bestModelPath && onFineTune && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onFineTune(job)}
+            className="text-muted-foreground hover:text-emerald-500"
+            title={t('training.fineTune')}
+          >
+            <i className="fas fa-rotate text-xs" />
+          </Button>
         )}
         <Button
           variant="ghost"

@@ -1875,6 +1875,9 @@
       "exportModel": "모델 내보내기",
       "newTraining": "새 학습 시작"
     },
+    "fineTune": "파인튜닝",
+    "fineTuneFrom": "파인튜닝 출처: {{source}}",
+    "fineTuneDesc": "이전에 학습된 모델에서 학습을 계속합니다",
     "jobs": {
       "title": "학습 기록",
       "empty": "아직 학습 기록이 없습니다"

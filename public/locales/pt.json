@@ -1835,6 +1835,9 @@
       "exportModel": "Exportar Modelo",
       "newTraining": "Novo Treinamento"
     },
+    "fineTune": "Fine-tune",
+    "fineTuneFrom": "Fine-tuning de: {{source}}",
+    "fineTuneDesc": "Continuar treinamento a partir de um modelo previamente treinado",
     "jobs": {
       "title": "Histórico de Treinamentos",
       "empty": "Nenhum treinamento ainda"

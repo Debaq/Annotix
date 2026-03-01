@@ -1875,6 +1875,9 @@
       "exportModel": "Esporta Modello",
       "newTraining": "Nuovo Addestramento"
     },
+    "fineTune": "Fine-tune",
+    "fineTuneFrom": "Fine-tuning da: {{source}}",
+    "fineTuneDesc": "Continua l'addestramento da un modello precedentemente addestrato",
     "jobs": {
       "title": "Storico Addestramenti",
       "empty": "Nessun addestramento ancora"

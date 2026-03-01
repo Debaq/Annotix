@@ -1875,6 +1875,9 @@
       "exportModel": "モデルをエクスポート",
       "newTraining": "新しいトレーニング"
     },
+    "fineTune": "ファインチューニング",
+    "fineTuneFrom": "ファインチューニング元: {{source}}",
+    "fineTuneDesc": "以前にトレーニングしたモデルからトレーニングを続行",
     "jobs": {
       "title": "トレーニング履歴",
       "empty": "トレーニングはまだありません"
