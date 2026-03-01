@@ -288,4 +288,4 @@ export interface MmDetBackendParams {
 
 // ─── Training Panel State ───────────────────────────────────────────────────
 
-export type TrainingPhase = 'setup' | 'backend' | 'config' | 'execution' | 'training' | 'completed';
+export type TrainingPhase = 'setup' | 'backend' | 'config' | 'execution' | 'installing_backend' | 'training' | 'completed';

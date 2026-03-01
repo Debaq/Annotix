@@ -1,4 +1,4 @@
-import type { ScenarioPreset, ScenarioPresetId, TrainingConfig } from '../types';
+import type { ScenarioPreset, ScenarioPresetId, TrainingConfig, TrainingBackend } from '../types';
 
 // ─── Scenario Presets ───────────────────────────────────────────────────────
 
@@ -359,3 +359,20 @@ export function getDefaultConfig(): TrainingConfig {
     augmentation: { ...base.augmentation },
   };
 }
+
+// ─── Default Common Params per Backend ────────────────────────────────────────
+
+export interface BackendDefaults {
+  epochs: number;
+  batchSize: number;
+  imageSize: number;
+  lr: number;
+  patience: number;
+}
+
+export const BACKEND_DEFAULTS: Record<TrainingBackend, BackendDefaults> = {
+  yolo: { epochs: 100, batchSize: -1, imageSize: 640, lr: 0.01, patience: 50 },
+  rt_detr: { epochs: 72, batchSize: 8, imageSize: 640, lr: 0.0002, patience: 50 },
+  rf_detr: { epochs: 50, batchSize: 8, imageSize: 560, lr: 0.0004, patience: 30 },
+  mmdetection: { epochs: 12, batchSize: 4, imageSize: 800, lr: 0.02, patience: 0 },
+};

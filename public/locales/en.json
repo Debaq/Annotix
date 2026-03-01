@@ -18,6 +18,7 @@
     "create": "Create",
     "confirm": "Confirm",
     "close": "Close",
+    "back": "Back",
     "duplicate": "Duplicate",
     "rename": "Rename",
     "exportBackup": "Export Backup",
@@ -1655,31 +1656,9 @@
       "aerial": "Aerial / Satellite",
       "aerialDesc": "Drone/satellite imagery, tiny objects, any orientation. High resolution."
     },
-    "model": {
-      "version": "YOLO Version",
-      "size": "Model Size",
-      "recommended": "Recommended",
-      "sizeDescNano": "Fastest, lower accuracy. Good for edge devices.",
-      "sizeDescSmall": "Fast with decent accuracy.",
-      "sizeDescMedium": "Balanced speed and accuracy.",
-      "sizeDescLarge": "High accuracy, slower training.",
-      "sizeDescXLarge": "Highest accuracy, slowest training."
-    },
     "config": {
       "title": "Training Configuration",
-      "advanced": "Advanced Settings",
-      "epochs": "Epochs",
-      "batchSize": "Batch Size",
-      "batchSizeHint": "-1 for auto batch size",
-      "imageSize": "Image Size",
-      "optimizer": "Optimizer",
-      "lr0": "Initial LR",
-      "lrf": "Final LR",
-      "patience": "Patience",
-      "valSplit": "Validation Split",
-      "workers": "Workers",
-      "device": "Device",
-      "augmentation": "Augmentation"
+      "advanced": "Advanced Settings"
     },
     "augmentation": {
       "mosaic": "Mosaic",
@@ -1705,7 +1684,88 @@
       "augmentation": "Augmentation",
       "advanced": "Advanced"
     },
+    "monitor": {
+      "title": "Training in Progress",
+      "epochProgress": "Epoch {{epoch}} / {{total}}",
+      "epoch": "Epoch",
+      "loss": "Loss",
+      "metrics": "Metrics",
+      "precision": "Precision",
+      "recall": "Recall",
+      "logs": "Training Logs",
+      "waitingMetrics": "Waiting for metrics...",
+      "waitingLogs": "Waiting for logs..."
+    },
+    "status": {
+      "pending": "Pending",
+      "training": "Training",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "result": {
+      "completed": "Training Complete",
+      "description": "Your model has been trained successfully.",
+      "finalMetrics": "Final Metrics",
+      "modelPaths": "Model Files",
+      "exported": "Exported Models",
+      "exportModel": "Export Model",
+      "newTraining": "Start New Training"
+    },
+    "backend": {
+      "title": "Training Backend",
+      "description": "Choose the framework for training your model",
+      "installed": "Installed",
+      "notInstalled": "Not installed locally",
+      "install": "Install",
+      "installing": "Installing...",
+      "installingPackages": "Installing backend packages...",
+      "installingPackagesDesc": "This may take a few minutes. Your configuration will be preserved.",
+      "modelsAvailable": "models available"
+    },
+    "execution": {
+      "title": "Execution Mode",
+      "description": "Choose how to run the training",
+      "local": "Train on this PC",
+      "localDesc": "Run training locally using your GPU. Requires installed packages.",
+      "download": "Download Package",
+      "downloadDesc": "Download a ZIP with dataset, script and notebook to train elsewhere.",
+      "downloadPackage": "Download Training Package"
+    },
+    "package": {
+      "generating": "Generating training package...",
+      "generated": "Training package generated successfully",
+      "error": "Error generating training package"
+    },
     "params": {
+      "commonTitle": "Common Parameters",
+      "rtdetrTitle": "RT-DETR Parameters",
+      "rfdetrTitle": "RF-DETR Parameters",
+      "mmdetTitle": "MMDetection Parameters",
+      "resolution": "Resolution",
+      "resolutionDesc": "Input resolution (must be multiple of 56)",
+      "lr_encoder": "Encoder LR",
+      "lr_encoderDesc": "Learning rate for the encoder backbone",
+      "grad_accum_steps": "Gradient Accumulation",
+      "grad_accum_stepsDesc": "Number of steps to accumulate gradients",
+      "use_ema": "Use EMA",
+      "use_emaDesc": "Exponential Moving Average for weights",
+      "early_stopping": "Early Stopping",
+      "early_stoppingDesc": "Stop training when validation loss plateaus",
+      "gradient_checkpointing": "Gradient Checkpointing",
+      "gradient_checkpointingDesc": "Trade compute for memory — enables larger models",
+      "optimizer_type": "Optimizer Type",
+      "optimizer_typeDesc": "Optimization algorithm for training",
+      "lr_schedule": "LR Schedule",
+      "lr_scheduleDesc": "Learning rate decay schedule",
+      "warmup_iters": "Warmup Iterations",
+      "warmup_itersDesc": "Number of warmup iterations before full LR",
+      "checkpoint_interval": "Checkpoint Interval",
+      "checkpoint_intervalDesc": "Save checkpoint every N epochs",
+      "imageSize": "Image Size",
+      "imageSizeDesc": "Input resolution for training",
+      "batchSize": "Batch Size",
+      "batchSizeDesc": "-1 for auto batch size",
       "epochs": "Epochs",
       "epochsDesc": "Total passes over dataset. More = better convergence but slower.",
       "batchSize": "Batch Size",
@@ -1726,6 +1786,8 @@
       "optimizerDesc": "Auto selects the best optimizer for your YOLO version.",
       "lr0": "Initial LR",
       "lr0Desc": "Initial learning rate. Higher = faster but can be unstable.",
+      "lr": "Learning Rate",
+      "lrDesc": "Base learning rate for training",
       "lrf": "Final LR",
       "lrfDesc": "Final LR as fraction of initial: lr_final = lr0 × lrf.",
       "cos_lr": "Cosine LR",
@@ -1793,33 +1855,16 @@
       "erasing": "Erasing",
       "erasingDesc": "Random erasing simulates occlusion. Reduce with small objects."
     },
-    "monitor": {
-      "title": "Training in Progress",
-      "epochProgress": "Epoch {{epoch}} / {{total}}",
-      "epoch": "Epoch",
-      "loss": "Loss",
-      "metrics": "Metrics",
-      "precision": "Precision",
-      "recall": "Recall",
-      "logs": "Training Logs",
-      "waitingMetrics": "Waiting for metrics...",
-      "waitingLogs": "Waiting for logs..."
-    },
-    "status": {
-      "pending": "Pending",
-      "training": "Training",
-      "completed": "Completed",
-      "failed": "Failed",
-      "cancelled": "Cancelled"
-    },
-    "result": {
-      "completed": "Training Complete",
-      "description": "Your model has been trained successfully.",
-      "finalMetrics": "Final Metrics",
-      "modelPaths": "Model Files",
-      "exported": "Exported Models",
-      "exportModel": "Export Model",
-      "newTraining": "Start New Training"
+    "model": {
+      "version": "Model Version",
+      "size": "Model Size",
+      "selectModel": "Select Model",
+      "recommended": "Recommended",
+      "sizeDescNano": "Fastest, lower accuracy. Good for edge devices.",
+      "sizeDescSmall": "Fast with decent accuracy.",
+      "sizeDescMedium": "Balanced speed and accuracy.",
+      "sizeDescLarge": "High accuracy, slower training.",
+      "sizeDescXLarge": "Highest accuracy, slowest training."
     },
     "jobs": {
       "title": "Training History",

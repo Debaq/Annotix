@@ -1628,6 +1628,31 @@
     "start": "トレーニング開始",
     "starting": "開始中...",
     "cancel": "トレーニングキャンセル",
+    "backend": {
+      "title": "トレーニングバックエンド",
+      "description": "モデルをトレーニングするフレームワークを選択",
+      "installed": "インストール済み",
+      "notInstalled": "ローカル未インストール",
+      "install": "インストール",
+      "installing": "インストール中...",
+      "installingPackages": "バックエンドパッケージをインストール中...",
+      "installingPackagesDesc": "数分かかる場合があります。設定は保持されます。",
+      "modelsAvailable": "利用可能なモデル"
+    },
+    "execution": {
+      "title": "実行モード",
+      "description": "トレーニングの実行方法を選択",
+      "local": "このPCでトレーニング",
+      "localDesc": "GPUを使用してローカルでトレーニングを実行。インストール済みパッケージが必要。",
+      "download": "パッケージをダウンロード",
+      "downloadDesc": "データセット、スクリプト、ノートブックを含むZIPをダウンロードして別の場所でトレーニング。",
+      "downloadPackage": "トレーニングパッケージをダウンロード"
+    },
+    "package": {
+      "generating": "トレーニングパッケージを生成中...",
+      "generated": "トレーニングパッケージが正常に生成されました",
+      "error": "トレーニングパッケージの生成中にエラーが発生しました"
+    },
     "env": {
       "checking": "Python環境を確認中...",
       "ready": "Python環境準備完了",
@@ -1663,7 +1688,8 @@
       "sizeDescSmall": "高速で適度な精度。",
       "sizeDescMedium": "速度と精度のバランス。",
       "sizeDescLarge": "高精度、遅いトレーニング。",
-      "sizeDescXLarge": "最高精度、最も遅いトレーニング。"
+      "sizeDescXLarge": "最高精度、最も遅いトレーニング。",
+      "selectModel": "モデルを選択"
     },
     "config": {
       "title": "トレーニング設定",
@@ -1791,7 +1817,35 @@
       "copy_paste": "コピーペースト",
       "copy_pasteDesc": "画像間でオブジェクトをコピー（セグメンテーションのみ）。",
       "erasing": "消去",
-      "erasingDesc": "ランダム消去でオクルージョンをシミュレート。小さいオブジェクトでは減少。"
+      "erasingDesc": "ランダム消去でオクルージョンをシミュレート。小さいオブジェクトでは減少。",
+      "commonTitle": "共通パラメータ",
+      "rtdetrTitle": "RT-DETR パラメータ",
+      "rfdetrTitle": "RF-DETR パラメータ",
+      "mmdetTitle": "MMDetection パラメータ",
+      "resolution": "解像度",
+      "resolutionDesc": "入力解像度（56の倍数である必要があります）",
+      "lr_encoder": "エンコーダLR",
+      "lr_encoderDesc": "エンコーダバックボーンの学習率",
+      "grad_accum_steps": "勾配蓄積",
+      "grad_accum_stepsDesc": "勾配を蓄積するステップ数",
+      "use_ema": "EMAを使用",
+      "use_emaDesc": "重みの指数移動平均",
+      "early_stopping": "Early Stopping",
+      "early_stoppingDesc": "検証損失が停滞した場合にトレーニングを停止",
+      "gradient_checkpointing": "勾配チェックポイント",
+      "gradient_checkpointingDesc": "計算をメモリと交換 — より大きなモデルを可能にする",
+      "optimizer_type": "オプティマイザの種類",
+      "optimizer_typeDesc": "トレーニング用の最適化アルゴリズム",
+      "lr_schedule": "LRスケジュール",
+      "lr_scheduleDesc": "学習率の減衰スケジュール",
+      "warmup_iters": "Warmupイテレーション",
+      "warmup_itersDesc": "完全なLRに達する前のWarmupイテレーション数",
+      "checkpoint_interval": "チェックポイント間隔",
+      "checkpoint_intervalDesc": "N エポックごとにチェックポイントを保存",
+      "imageSize": "画像サイズ",
+      "imageSizeDesc": "トレーニング用の入力解像度",
+      "lr": "学習率",
+      "lrDesc": "トレーニングの基本学習率"
     },
     "monitor": {
       "title": "トレーニング進行中",

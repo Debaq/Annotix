@@ -1628,6 +1628,31 @@
     "start": "학습 시작",
     "starting": "시작 중...",
     "cancel": "학습 취소",
+    "backend": {
+      "title": "학습 백엔드",
+      "description": "모델 학습에 사용할 프레임워크를 선택하세요",
+      "installed": "설치됨",
+      "notInstalled": "로컬에 설치되지 않음",
+      "install": "설치",
+      "installing": "설치 중...",
+      "installingPackages": "백엔드 패키지 설치 중...",
+      "installingPackagesDesc": "몇 분 정도 걸릴 수 있습니다. 설정은 유지됩니다.",
+      "modelsAvailable": "사용 가능한 모델"
+    },
+    "execution": {
+      "title": "실행 모드",
+      "description": "학습 실행 방법을 선택하세요",
+      "local": "이 PC에서 학습",
+      "localDesc": "GPU를 사용하여 로컬에서 학습을 실행합니다. 설치된 패키지가 필요합니다.",
+      "download": "패키지 다운로드",
+      "downloadDesc": "데이터셋, 스크립트, 노트북이 포함된 ZIP을 다운로드하여 다른 곳에서 학습합니다.",
+      "downloadPackage": "학습 패키지 다운로드"
+    },
+    "package": {
+      "generating": "학습 패키지 생성 중...",
+      "generated": "학습 패키지가 성공적으로 생성되었습니다",
+      "error": "학습 패키지 생성 중 오류 발생"
+    },
     "env": {
       "checking": "Python 환경 확인 중...",
       "ready": "Python 환경 준비 완료",
@@ -1663,7 +1688,8 @@
       "sizeDescSmall": "빠르고 적절한 정확도.",
       "sizeDescMedium": "속도와 정확도의 균형.",
       "sizeDescLarge": "높은 정확도, 느린 학습.",
-      "sizeDescXLarge": "최고 정확도, 가장 느린 학습."
+      "sizeDescXLarge": "최고 정확도, 가장 느린 학습.",
+      "selectModel": "모델 선택"
     },
     "config": {
       "title": "학습 설정",
@@ -1791,7 +1817,35 @@
       "copy_paste": "복사-붙여넣기",
       "copy_pasteDesc": "이미지 간 객체 복사 (세그멘테이션 전용).",
       "erasing": "지우기",
-      "erasingDesc": "랜덤 지우기로 가림 시뮬레이션. 작은 객체 시 감소."
+      "erasingDesc": "랜덤 지우기로 가림 시뮬레이션. 작은 객체 시 감소.",
+      "commonTitle": "공통 파라미터",
+      "rtdetrTitle": "RT-DETR 파라미터",
+      "rfdetrTitle": "RF-DETR 파라미터",
+      "mmdetTitle": "MMDetection 파라미터",
+      "resolution": "해상도",
+      "resolutionDesc": "입력 해상도 (56의 배수여야 합니다)",
+      "lr_encoder": "인코더 LR",
+      "lr_encoderDesc": "인코더 백본의 학습률",
+      "grad_accum_steps": "그래디언트 축적",
+      "grad_accum_stepsDesc": "그래디언트를 축적할 스텝 수",
+      "use_ema": "EMA 사용",
+      "use_emaDesc": "가중치의 지수 이동 평균",
+      "early_stopping": "Early Stopping",
+      "early_stoppingDesc": "검증 손실이 정체되면 학습을 중지",
+      "gradient_checkpointing": "그래디언트 체크포인팅",
+      "gradient_checkpointingDesc": "연산을 메모리로 교환 — 더 큰 모델 가능",
+      "optimizer_type": "옵티마이저 유형",
+      "optimizer_typeDesc": "학습용 최적화 알고리즘",
+      "lr_schedule": "LR 스케줄",
+      "lr_scheduleDesc": "학습률 감소 스케줄",
+      "warmup_iters": "Warmup 반복",
+      "warmup_itersDesc": "전체 LR 전 warmup 반복 횟수",
+      "checkpoint_interval": "체크포인트 간격",
+      "checkpoint_intervalDesc": "N 에폭마다 체크포인트 저장",
+      "imageSize": "이미지 크기",
+      "imageSizeDesc": "학습용 입력 해상도",
+      "lr": "학습률",
+      "lrDesc": "학습의 기본 학습률"
     },
     "monitor": {
       "title": "학습 진행 중",

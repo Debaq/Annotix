@@ -30,3 +30,4 @@ base64 = "0.22"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 quick-xml = { version = "0.37", features = ["serialize"] }
 ffmpeg-the-third = "4"
+tempfile = "3"

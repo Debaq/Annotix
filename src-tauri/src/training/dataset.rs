@@ -3,6 +3,7 @@ use std::path::Path;
 use crate::store::project_file::{ProjectFile, ImageEntry};
 use crate::export::{parse_bbox, parse_obb, parse_polygon};
 use crate::utils::converters::normalize_coordinates;
+use super::TrainingBackend;
 
 /// Prepara el dataset en disco con split train/val para entrenamiento YOLO
 pub fn prepare_dataset(
@@ -297,5 +298,183 @@ fn replace_ext(filename: &str, new_ext: &str) -> String {
     match filename.rfind('.') {
         Some(pos) => format!("{}.{}", &filename[..pos], new_ext),
         None => format!("{}.{}", filename, new_ext),
+    }
+}
+
+// ─── COCO JSON Dataset ──────────────────────────────────────────────────────
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum CocoLayout {
+    /// RF-DETR: train/_annotations.coco.json + valid/_annotations.coco.json (images beside JSON)
+    RfDetr,
+    /// MMDetection: annotations/instances_train.json + annotations/instances_val.json (images in train/val dirs)
+    MmDetection,
+}
+
+/// Prepara un dataset en formato COCO JSON
+pub fn prepare_coco_dataset(
+    images_dir: &Path,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    output_dir: &Path,
+    val_split: f64,
+    layout: CocoLayout,
+) -> Result<String, String> {
+    let total = images.len();
+    if total == 0 {
+        return Err("No hay imágenes en el proyecto".to_string());
+    }
+
+    // Shuffle (same as YOLO)
+    let mut indices: Vec<usize> = (0..total).collect();
+    let seed = project.id.bytes().fold(42usize, |acc, b| acc.wrapping_mul(31).wrapping_add(b as usize));
+    for i in (1..indices.len()).rev() {
+        let j = (seed.wrapping_mul(i).wrapping_add(7)) % (i + 1);
+        indices.swap(i, j);
+    }
+
+    let val_count = ((total as f64) * val_split).ceil() as usize;
+    let val_count = val_count.max(1).min(total - 1);
+    let train_count = total - val_count;
+
+    let train_indices = &indices[..train_count];
+    let val_indices = &indices[train_count..];
+
+    // Build categories (1-based for COCO)
+    let categories: Vec<serde_json::Value> = project.classes.iter().enumerate().map(|(i, cls)| {
+        serde_json::json!({
+            "id": i + 1,
+            "name": cls.name,
+            "supercategory": "none"
+        })
+    }).collect();
+
+    match layout {
+        CocoLayout::RfDetr => {
+            let train_dir = output_dir.join("train");
+            let valid_dir = output_dir.join("valid");
+            std::fs::create_dir_all(&train_dir).map_err(|e| format!("Error creando train/: {}", e))?;
+            std::fs::create_dir_all(&valid_dir).map_err(|e| format!("Error creando valid/: {}", e))?;
+
+            let train_json = build_coco_json(images_dir, project, images, train_indices, &categories, &train_dir)?;
+            let valid_json = build_coco_json(images_dir, project, images, val_indices, &categories, &valid_dir)?;
+
+            std::fs::write(train_dir.join("_annotations.coco.json"), &train_json)
+                .map_err(|e| format!("Error escribiendo train annotations: {}", e))?;
+            std::fs::write(valid_dir.join("_annotations.coco.json"), &valid_json)
+                .map_err(|e| format!("Error escribiendo valid annotations: {}", e))?;
+        }
+        CocoLayout::MmDetection => {
+            let train_dir = output_dir.join("train");
+            let val_dir = output_dir.join("val");
+            let ann_dir = output_dir.join("annotations");
+            std::fs::create_dir_all(&train_dir).map_err(|e| format!("Error creando train/: {}", e))?;
+            std::fs::create_dir_all(&val_dir).map_err(|e| format!("Error creando val/: {}", e))?;
+            std::fs::create_dir_all(&ann_dir).map_err(|e| format!("Error creando annotations/: {}", e))?;
+
+            let train_json = build_coco_json(images_dir, project, images, train_indices, &categories, &train_dir)?;
+            let val_json = build_coco_json(images_dir, project, images, val_indices, &categories, &val_dir)?;
+
+            std::fs::write(ann_dir.join("instances_train.json"), &train_json)
+                .map_err(|e| format!("Error escribiendo instances_train.json: {}", e))?;
+            std::fs::write(ann_dir.join("instances_val.json"), &val_json)
+                .map_err(|e| format!("Error escribiendo instances_val.json: {}", e))?;
+        }
+    }
+
+    Ok(output_dir.to_string_lossy().replace('\\', "/"))
+}
+
+fn build_coco_json(
+    images_dir: &Path,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    indices: &[usize],
+    categories: &[serde_json::Value],
+    dest_dir: &Path,
+) -> Result<String, String> {
+    let mut coco_images: Vec<serde_json::Value> = Vec::new();
+    let mut coco_annotations: Vec<serde_json::Value> = Vec::new();
+    let mut ann_id: u64 = 1;
+
+    for (img_idx, &idx) in indices.iter().enumerate() {
+        let image = &images[idx];
+        let image_id = (img_idx + 1) as u64;
+
+        // Copy image
+        let src = images_dir.join(&image.file);
+        if !src.exists() {
+            log::warn!("Imagen no encontrada: {:?}, omitiendo", src);
+            continue;
+        }
+        let _ = std::fs::copy(&src, dest_dir.join(&image.name));
+
+        coco_images.push(serde_json::json!({
+            "id": image_id,
+            "file_name": image.name,
+            "width": image.width,
+            "height": image.height
+        }));
+
+        for ann in &image.annotations {
+            let class_idx = project.classes.iter().position(|c| c.id == ann.class_id);
+            let class_idx = match class_idx {
+                Some(idx) => idx,
+                None => continue,
+            };
+            let category_id = (class_idx + 1) as u64;
+
+            if let Some(bbox) = parse_bbox(&ann.data) {
+                let x = bbox.x;
+                let y = bbox.y;
+                let w = bbox.width;
+                let h = bbox.height;
+                let area = w * h;
+
+                coco_annotations.push(serde_json::json!({
+                    "id": ann_id,
+                    "image_id": image_id,
+                    "category_id": category_id,
+                    "bbox": [x, y, w, h],
+                    "area": area,
+                    "iscrowd": 0
+                }));
+                ann_id += 1;
+            }
+        }
+    }
+
+    let coco = serde_json::json!({
+        "images": coco_images,
+        "annotations": coco_annotations,
+        "categories": categories
+    });
+
+    serde_json::to_string_pretty(&coco)
+        .map_err(|e| format!("Error serializando COCO JSON: {}", e))
+}
+
+// ─── Dataset Router ─────────────────────────────────────────────────────────
+
+/// Prepara dataset según el backend seleccionado
+pub fn prepare_dataset_for_backend(
+    images_dir: &Path,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    output_dir: &Path,
+    val_split: f64,
+    task: &str,
+    backend: &TrainingBackend,
+) -> Result<String, String> {
+    match backend {
+        TrainingBackend::Yolo | TrainingBackend::RtDetr => {
+            prepare_dataset(images_dir, project, images, output_dir, val_split, task)
+        }
+        TrainingBackend::RfDetr => {
+            prepare_coco_dataset(images_dir, project, images, output_dir, val_split, CocoLayout::RfDetr)
+        }
+        TrainingBackend::MmDetection => {
+            prepare_coco_dataset(images_dir, project, images, output_dir, val_split, CocoLayout::MmDetection)
+        }
     }
 }

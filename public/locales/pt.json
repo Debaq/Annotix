@@ -1588,6 +1588,31 @@
     "start": "Iniciar Treinamento",
     "starting": "Iniciando...",
     "cancel": "Cancelar Treinamento",
+    "backend": {
+      "title": "Backend de Treinamento",
+      "description": "Escolha o framework para treinar seu modelo",
+      "installed": "Instalado",
+      "notInstalled": "Não instalado localmente",
+      "install": "Instalar",
+      "installing": "Instalando...",
+      "installingPackages": "Instalando pacotes do backend...",
+      "installingPackagesDesc": "Isso pode levar alguns minutos. Sua configuração será preservada.",
+      "modelsAvailable": "modelos disponíveis"
+    },
+    "execution": {
+      "title": "Modo de Execução",
+      "description": "Escolha como executar o treinamento",
+      "local": "Treinar neste PC",
+      "localDesc": "Executar treinamento localmente usando sua GPU. Requer pacotes instalados.",
+      "download": "Baixar Pacote",
+      "downloadDesc": "Baixe um ZIP com dataset, script e notebook para treinar em outro lugar.",
+      "downloadPackage": "Baixar Pacote de Treinamento"
+    },
+    "package": {
+      "generating": "Gerando pacote de treinamento...",
+      "generated": "Pacote de treinamento gerado com sucesso",
+      "error": "Erro ao gerar pacote de treinamento"
+    },
     "env": {
       "checking": "Verificando ambiente Python...",
       "ready": "Ambiente Python pronto",
@@ -1623,7 +1648,8 @@
       "sizeDescSmall": "Rápido com boa precisão.",
       "sizeDescMedium": "Velocidade e precisão balanceadas.",
       "sizeDescLarge": "Alta precisão, treinamento mais lento.",
-      "sizeDescXLarge": "Máxima precisão, treinamento mais lento."
+      "sizeDescXLarge": "Máxima precisão, treinamento mais lento.",
+      "selectModel": "Selecionar Modelo"
     },
     "config": {
       "title": "Configuração de Treinamento",
@@ -1751,7 +1777,35 @@
       "copy_paste": "Copiar-Colar",
       "copy_pasteDesc": "Copiar objetos entre imagens (apenas segmentação).",
       "erasing": "Apagamento",
-      "erasingDesc": "Apagamento aleatório simula oclusão. Reduzir com objetos pequenos."
+      "erasingDesc": "Apagamento aleatório simula oclusão. Reduzir com objetos pequenos.",
+      "commonTitle": "Parâmetros Comuns",
+      "rtdetrTitle": "Parâmetros RT-DETR",
+      "rfdetrTitle": "Parâmetros RF-DETR",
+      "mmdetTitle": "Parâmetros MMDetection",
+      "resolution": "Resolução",
+      "resolutionDesc": "Resolução de entrada (deve ser múltiplo de 56)",
+      "lr_encoder": "LR do Encoder",
+      "lr_encoderDesc": "Taxa de aprendizagem para o backbone do encoder",
+      "grad_accum_steps": "Acumulação de Gradientes",
+      "grad_accum_stepsDesc": "Número de passos para acumular gradientes",
+      "use_ema": "Usar EMA",
+      "use_emaDesc": "Média Móvel Exponencial para os pesos",
+      "early_stopping": "Early Stopping",
+      "early_stoppingDesc": "Parar o treinamento quando a perda de validação estagna",
+      "gradient_checkpointing": "Gradient Checkpointing",
+      "gradient_checkpointingDesc": "Troca cálculo por memória — permite modelos maiores",
+      "optimizer_type": "Tipo de Otimizador",
+      "optimizer_typeDesc": "Algoritmo de otimização para o treinamento",
+      "lr_schedule": "Agenda de LR",
+      "lr_scheduleDesc": "Agenda de decaimento da taxa de aprendizagem",
+      "warmup_iters": "Iterações de Warmup",
+      "warmup_itersDesc": "Número de iterações de warmup antes do LR completo",
+      "checkpoint_interval": "Intervalo de Checkpoint",
+      "checkpoint_intervalDesc": "Salvar checkpoint a cada N épocas",
+      "imageSize": "Tamanho da Imagem",
+      "imageSizeDesc": "Resolução de entrada para o treinamento",
+      "lr": "Taxa de Aprendizagem",
+      "lrDesc": "Taxa de aprendizagem base para o treinamento"
     },
     "monitor": {
       "title": "Treinamento em Progresso",
