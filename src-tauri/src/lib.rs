@@ -5,6 +5,8 @@ mod store;
 mod training;
 mod utils;
 
+use tauri::Manager;
+
 use store::AppState;
 use training::runner::TrainingProcessManager;
 
@@ -27,6 +29,15 @@ pub fn run() {
                         .build(),
                 )?;
             }
+
+            // Icono de ventana (taskbar/dock en Linux)
+            if let Some(window) = app.get_webview_window("main") {
+                let icon_bytes = include_bytes!("../icons/icon.png");
+                if let Ok(icon) = tauri::image::Image::from_bytes(icon_bytes) {
+                    let _ = window.set_icon(icon);
+                }
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
