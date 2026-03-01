@@ -57,6 +57,8 @@ pub fn check_env_full() -> Result<(PythonEnvStatus, super::GpuInfo), String> {
         ultralytics_version: None,
         torch_version: None,
         cuda_available: false,
+        rfdetr_version: None,
+        mmdet_version: None,
     };
     let no_gpu = super::GpuInfo {
         cuda_available: false,
@@ -69,16 +71,27 @@ pub fn check_env_full() -> Result<(PythonEnvStatus, super::GpuInfo), String> {
         return Ok((no_env, no_gpu));
     }
 
-    // Un solo script que recopila env + GPU info
+    // Un solo script que recopila env + GPU info + extra backends
     let check_script = r#"
 import json
 result = {
     "ultralytics": None, "torch": None, "cuda": False,
-    "cuda_version": None, "gpus": [], "mps_available": False
+    "cuda_version": None, "gpus": [], "mps_available": False,
+    "rfdetr": None, "mmdet": None
 }
 try:
     import ultralytics
     result["ultralytics"] = ultralytics.__version__
+except ImportError:
+    pass
+try:
+    import rfdetr
+    result["rfdetr"] = getattr(rfdetr, "__version__", "installed")
+except ImportError:
+    pass
+try:
+    import mmdet
+    result["mmdet"] = mmdet.__version__
 except ImportError:
     pass
 try:
@@ -115,6 +128,8 @@ print(json.dumps(result))
             ultralytics_version: None,
             torch_version: None,
             cuda_available: false,
+            rfdetr_version: None,
+            mmdet_version: None,
         };
         return Ok((env, no_gpu));
     }
@@ -126,6 +141,8 @@ print(json.dumps(result))
     let ultralytics_version = info["ultralytics"].as_str().map(|s| s.to_string());
     let torch_version = info["torch"].as_str().map(|s| s.to_string());
     let cuda_available = info["cuda"].as_bool().unwrap_or(false);
+    let rfdetr_version = info["rfdetr"].as_str().map(|s| s.to_string());
+    let mmdet_version = info["mmdet"].as_str().map(|s| s.to_string());
     let installed = ultralytics_version.is_some();
 
     let env = PythonEnvStatus {
@@ -134,6 +151,8 @@ print(json.dumps(result))
         ultralytics_version,
         torch_version,
         cuda_available,
+        rfdetr_version,
+        mmdet_version,
     };
 
     let cuda_version = info["cuda_version"].as_str().map(|s| s.to_string());
@@ -162,6 +181,63 @@ print(json.dumps(result))
     };
 
     Ok((env, gpu))
+}
+
+/// Instala paquetes extra en el venv existente
+pub fn install_packages(packages: &[&str]) -> Result<(), String> {
+    let python = venv_python()?;
+    if !python.exists() {
+        return Err("Entorno Python no configurado".to_string());
+    }
+
+    for pkg in packages {
+        let mut cmd = Command::new(&python);
+        // For mmcv/mmdet we use mim install
+        if *pkg == "mmcv" || *pkg == "mmdet" || *pkg == "mmengine" {
+            cmd = Command::new(&python);
+            cmd.args(["-m", "mim", "install", pkg]);
+        } else {
+            cmd.args(["-m", "pip", "install", pkg]);
+        }
+        super::hide_console_window(&mut cmd);
+        let output = cmd.output()
+            .map_err(|e| format!("Error instalando {}: {}", pkg, e))?;
+
+        if !output.status.success() {
+            return Err(format!(
+                "Error instalando {}: {}",
+                pkg,
+                String::from_utf8_lossy(&output.stderr)
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+/// Checks if a Python package is installed in the venv
+pub fn is_package_installed(name: &str) -> bool {
+    let python = match venv_python() {
+        Ok(p) => p,
+        Err(_) => return false,
+    };
+    if !python.exists() {
+        return false;
+    }
+
+    let script = format!(
+        "try:\n    import {}\n    print('yes')\nexcept ImportError:\n    print('no')",
+        name
+    );
+    let mut cmd = Command::new(&python);
+    cmd.args(["-c", &script]);
+    super::hide_console_window(&mut cmd);
+    match cmd.output() {
+        Ok(output) if output.status.success() => {
+            String::from_utf8_lossy(&output.stdout).trim() == "yes"
+        }
+        _ => false,
+    }
 }
 
 /// Crea el virtualenv e instala ultralytics

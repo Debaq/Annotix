@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::Value as JsonValue;
 
 // ─── Training Config ────────────────────────────────────────────────────────
 
@@ -138,6 +139,10 @@ pub struct PythonEnvStatus {
     pub torch_version: Option<String>,
     #[serde(rename = "cudaAvailable")]
     pub cuda_available: bool,
+    #[serde(rename = "rfdetrVersion", skip_serializing_if = "Option::is_none")]
+    pub rfdetr_version: Option<String>,
+    #[serde(rename = "mmdetVersion", skip_serializing_if = "Option::is_none")]
+    pub mmdet_version: Option<String>,
 }
 
 // ─── GPU Info ───────────────────────────────────────────────────────────────
@@ -245,12 +250,98 @@ pub struct YoloModelInfo {
     pub recommended: bool,
 }
 
+// ─── Multi-Backend Enums ─────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum TrainingBackend {
+    Yolo,
+    RtDetr,
+    RfDetr,
+    MmDetection,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum DatasetFormat {
+    YoloTxt,
+    CocoJson,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum ExecutionMode {
+    Local,
+    DownloadPackage,
+}
+
+// ─── Training Request (multi-backend) ────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TrainingRequest {
+    pub backend: TrainingBackend,
+    #[serde(rename = "modelId")]
+    pub model_id: String,
+    pub task: String,
+    #[serde(rename = "executionMode")]
+    pub execution_mode: ExecutionMode,
+    // Common params
+    pub epochs: u32,
+    #[serde(rename = "batchSize")]
+    pub batch_size: i32,
+    #[serde(rename = "imageSize")]
+    pub image_size: u32,
+    pub device: String,
+    pub lr: f64,
+    pub patience: u32,
+    #[serde(rename = "valSplit")]
+    pub val_split: f64,
+    pub workers: u32,
+    pub amp: bool,
+    pub resume: bool,
+    #[serde(rename = "exportFormats")]
+    pub export_formats: Vec<String>,
+    // Backend-specific params as free JSON
+    #[serde(rename = "backendParams", default)]
+    pub backend_params: JsonValue,
+}
+
+// ─── Backend Catalog ─────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BackendInfo {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    #[serde(rename = "supportedTasks")]
+    pub supported_tasks: Vec<String>,
+    pub models: Vec<BackendModelInfo>,
+    #[serde(rename = "datasetFormat")]
+    pub dataset_format: DatasetFormat,
+    #[serde(rename = "pipPackages")]
+    pub pip_packages: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BackendModelInfo {
+    pub id: String,
+    pub name: String,
+    pub family: String,
+    pub description: String,
+    #[serde(rename = "paramsCount")]
+    pub params_count: Option<String>,
+    pub tasks: Vec<String>,
+    pub sizes: Option<Vec<String>>,
+    pub recommended: bool,
+}
+
 pub mod python_env;
 pub mod gpu;
 pub mod dataset;
 pub mod scripts;
 pub mod runner;
 pub mod model_export;
+pub mod backends;
 
 /// En Windows, configura CREATE_NO_WINDOW para evitar que aparezca una ventana de consola.
 #[cfg(windows)]
