@@ -7,7 +7,7 @@ import { TrainingModelSelector } from './TrainingModelSelector';
 import { TrainingAdvancedConfig } from './TrainingAdvancedConfig';
 import { TrainingAugmentation } from './TrainingAugmentation';
 import { GpuIndicator } from './GpuIndicator';
-import type { TrainingConfig, GpuInfo } from '../types';
+import type { TrainingConfig, GpuInfo, ScenarioPresetId } from '../types';
 
 interface TrainingSetupProps {
   projectType: string;
@@ -31,12 +31,11 @@ export function TrainingSetup({
   onStart,
 }: TrainingSetupProps) {
   const { t } = useTranslation();
-  const [selectedPreset, setSelectedPreset] = useState<string | null>('balanced');
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState<ScenarioPresetId | null>('small_objects');
 
-  const handlePresetSelect = (preset: string) => {
-    setSelectedPreset(preset);
-    onPresetSelect(preset);
+  const handlePresetSelect = (presetId: ScenarioPresetId) => {
+    setSelectedPreset(presetId);
+    onPresetSelect(presetId);
   };
 
   return (
@@ -50,7 +49,11 @@ export function TrainingSetup({
       {/* Presets */}
       <div>
         <label className="text-sm font-medium mb-2 block">{t('training.presets.title')}</label>
-        <TrainingPresets selected={selectedPreset} onSelect={handlePresetSelect} />
+        <TrainingPresets
+          selected={selectedPreset}
+          onSelect={handlePresetSelect}
+          currentModelSize={config.modelSize}
+        />
       </div>
 
       <Separator />
@@ -66,22 +69,16 @@ export function TrainingSetup({
 
       <Separator />
 
-      {/* Advanced toggle */}
-      <button
-        onClick={() => setShowAdvanced(!showAdvanced)}
-        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <i className={`fas fa-chevron-${showAdvanced ? 'down' : 'right'} text-xs`} />
-        {t('training.config.advanced')}
-      </button>
+      {/* Param Groups */}
+      <TrainingAdvancedConfig config={config} onChange={onConfigChange} />
 
-      {showAdvanced && (
-        <>
-          <TrainingAdvancedConfig config={config} onChange={onConfigChange} />
-          <Separator />
-          <TrainingAugmentation augmentation={config.augmentation} onChange={onAugmentationChange} />
-        </>
-      )}
+      {/* Augmentation */}
+      <TrainingAugmentation
+        augmentation={config.augmentation}
+        closeMosaic={config.close_mosaic}
+        onChange={onAugmentationChange}
+        onCloseMosaicChange={(v) => onConfigChange({ close_mosaic: v })}
+      />
 
       {/* Start button */}
       <Button onClick={onStart} className="w-full bg-emerald-600 hover:bg-emerald-700" size="lg">
