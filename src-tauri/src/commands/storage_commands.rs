@@ -69,5 +69,29 @@ fn fs_available_space(path: &std::path::Path) -> u64 {
             }
         }
     }
+    #[cfg(windows)]
+    {
+        // Extraer letra de unidad (e.g. "C:")
+        let drive = path.to_string_lossy();
+        let drive_letter = if drive.len() >= 2 && drive.as_bytes()[1] == b':' {
+            format!("{}:", drive.chars().next().unwrap())
+        } else {
+            "C:".to_string()
+        };
+
+        if let Ok(output) = std::process::Command::new("wmic")
+            .args(["logicaldisk", "where", &format!("DeviceID='{}'", drive_letter), "get", "FreeSpace", "/value"])
+            .output()
+        {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            for line in stdout.lines() {
+                if let Some(val) = line.strip_prefix("FreeSpace=") {
+                    if let Ok(bytes) = val.trim().parse::<u64>() {
+                        return bytes;
+                    }
+                }
+            }
+        }
+    }
     10_000_000_000
 }
