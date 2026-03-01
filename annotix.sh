@@ -24,6 +24,7 @@ PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TAURI_DIR="$PROJECT_DIR/src-tauri"
 DIST_DIR="$PROJECT_DIR/dist"
 BUNDLE_DIR="$TAURI_DIR/target/release/bundle"
+OUT_DIR="$PROJECT_DIR/out"
 ANDROID_DIR="$TAURI_DIR/gen/android"
 KEYSTORE_DIR="$PROJECT_DIR/.keystore"
 VERSION=$(grep '"version"' "$PROJECT_DIR/package.json" | head -1 | sed 's/.*: *"\(.*\)".*/\1/')
@@ -289,7 +290,7 @@ cmd_build() {
     fi
 
     success "Build completo en $(elapsed $start)"
-    cmd_list_artifacts
+    collect_artifacts
 }
 
 # ── Solo binario (sin empaquetar) ────────────────────────────────────────────
@@ -299,18 +300,13 @@ cmd_build_bin() {
     local start=$(date +%s)
     cd "$PROJECT_DIR"
 
-    info "Compilando frontend..."
-    npm run build
-
-    info "Compilando binario Rust release..."
-    cd "$TAURI_DIR"
-    cargo build --release
+    info "Compilando binario con frontend embebido..."
+    npx tauri build --no-bundle
 
     local bin="$TAURI_DIR/target/release/annotix"
     if [[ -f "$bin" ]]; then
         success "Binario listo en $(elapsed $start)"
-        echo -e "  ${BOLD}Ruta:${NC} $bin"
-        echo -e "  ${BOLD}Tamaño:${NC} $(du -h "$bin" | cut -f1)"
+        collect_artifacts
     else
         error "No se generó el binario"
     fi
@@ -323,9 +319,11 @@ cmd_build_appimage() { cmd_build "appimage"; }
 cmd_build_debug() {
     header "Build debug"
     cd "$PROJECT_DIR"
+    local start=$(date +%s)
     info "Compilando en modo debug..."
     npx tauri build --debug
-    success "Build debug completo"
+    success "Build debug completo en $(elapsed $start)"
+    collect_artifacts
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -719,6 +717,49 @@ cmd_android_clean() {
         info "Eliminando carpetas build..."
         find "$ANDROID_DIR" -type d -name "build" -exec rm -rf {} + 2>/dev/null
         success "Carpetas build eliminadas"
+    fi
+}
+
+# ── Recopilar artefactos en out/ ─────────────────────────────────────────────
+collect_artifacts() {
+    local tag
+    tag="$(date '+%Y-%m-%d_%H-%M')"
+    local dest="$OUT_DIR/$tag"
+
+    mkdir -p "$dest"
+
+    local found=0
+
+    # Binario
+    local bin="$TAURI_DIR/target/release/annotix"
+    if [[ -f "$bin" ]]; then
+        cp "$bin" "$dest/"
+        found=1
+    fi
+
+    # Paquetes
+    if [[ -d "$BUNDLE_DIR" ]]; then
+        for f in "$BUNDLE_DIR"/deb/*.deb "$BUNDLE_DIR"/rpm/*.rpm "$BUNDLE_DIR"/appimage/*.AppImage; do
+            [[ -f "$f" ]] && cp "$f" "$dest/" && found=1
+        done
+    fi
+
+    if [[ $found -eq 1 ]]; then
+        # Guardar info del build
+        {
+            echo "Annotix v$VERSION"
+            echo "Build: $tag"
+            echo "Branch: $(git -C "$PROJECT_DIR" branch --show-current 2>/dev/null || echo 'N/A')"
+            echo "Commit: $(git -C "$PROJECT_DIR" log --oneline -1 2>/dev/null || echo 'N/A')"
+        } > "$dest/BUILD_INFO.txt"
+
+        success "Artefactos copiados a: $dest"
+        echo ""
+        ls -lh "$dest" | tail -n +2
+    else
+        # Carpeta vacía, eliminar
+        rmdir "$dest" 2>/dev/null
+        warn "No se encontraron artefactos para copiar"
     fi
 }
 
