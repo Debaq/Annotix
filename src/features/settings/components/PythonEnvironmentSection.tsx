@@ -357,18 +357,24 @@ export function PythonEnvironmentSection() {
             <div className="flex items-center gap-3">
               <div className="flex-1">
                 <span className="text-xs text-muted-foreground block mb-1">Variante de Instalación</span>
-                <Select value={selectedCuda} onValueChange={setSelectedCuda} disabled={isBusy}>
-                  <SelectTrigger className="w-full h-9 bg-[var(--annotix-white)] border-[var(--annotix-border)] text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cpu">CPU (Universal)</SelectItem>
-                    <SelectItem value="12.1">CUDA 12.1 (NVIDIA)</SelectItem>
-                    <SelectItem value="12.4">CUDA 12.4 (NVIDIA)</SelectItem>
-                  </SelectContent>
-                </Select>
+                {gpuInfo?.hasNvidia ? (
+                  <Select value={selectedCuda} onValueChange={setSelectedCuda} disabled={isBusy}>
+                    <SelectTrigger className="w-full h-9 bg-[var(--annotix-white)] border-[var(--annotix-border)] text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cpu">CPU (sin aceleración GPU)</SelectItem>
+                      <SelectItem value="12.1">CUDA 12.1 (NVIDIA)</SelectItem>
+                      <SelectItem value="12.4">CUDA 12.4 (NVIDIA)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="h-9 flex items-center px-3 rounded-md border border-[var(--annotix-border)] bg-[var(--annotix-light)] text-sm text-muted-foreground">
+                    CPU (no se detectó GPU NVIDIA)
+                  </div>
+                )}
               </div>
-              <Button 
+              <Button
                 onClick={handleInstallPytorch}
                 disabled={isBusy}
                 className="mt-5"
