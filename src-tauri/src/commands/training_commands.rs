@@ -357,7 +357,7 @@ pub fn install_backend_packages(
     cache.invalidate();
 
     // 1. Detectar hardware para decidir qué versión de Torch instalar
-    let (env_info, gpu_info) = crate::training::python_env::check_env_full()?;
+    let (env_info, _gpu_info) = crate::training::python_env::check_env_full()?;
     
     let packages: Vec<String> = match backend.as_str() {
         "yolo" | "rt_detr" => vec!["ultralytics".to_string()],
@@ -380,9 +380,9 @@ pub fn install_backend_packages(
         _ => return Err(format!("Backend desconocido: {}", backend)),
     };
 
-    // 2. Si el backend usa Torch y no está instalado o queremos asegurar la versión correcta
-    let needs_torch = matches!(backend.as_str(), "yolo" | "rt_detr" | "smp" | "mmdetection" | "mmpose" | "tsai");
-    
+    // 2. Si el backend usa Torch y no está instalado, instalarlo
+    let needs_torch = !matches!(backend.as_str(), "tslearn" | "stumpy" | "sklearn");
+
     if needs_torch && env_info.torch_version.is_none() {
         let app_clone = app.clone();
         let emit = move |msg: &str, p: f64, log: Option<String>| {
@@ -390,13 +390,15 @@ pub fn install_backend_packages(
         };
 
         emit("Preparando instalación de PyTorch...", 5.0, None);
-        
+
         let python = crate::training::python_env::venv_python()?;
         let mut cmd = std::process::Command::new(&python);
         cmd.args(["-m", "pip", "install", "torch", "torchvision", "torchaudio"]);
 
-        // Lógica de hardware inteligente
-        if gpu_info.cuda_available {
+        // Detectar hardware real (nvidia-smi) — no depender del torch actual que aún no existe
+        let has_nvidia = detect_nvidia_hardware();
+
+        if has_nvidia {
             emit("GPU NVIDIA detectada, usando CUDA", 10.0, Some("Hardware: NVIDIA CUDA".to_string()));
             cmd.args(["--index-url", "https://download.pytorch.org/whl/cu121"]);
         } else if cfg!(target_os = "macos") {
@@ -424,6 +426,15 @@ pub fn install_backend_packages(
     }))?;
 
     Ok(())
+}
+
+/// Detecta si hay hardware NVIDIA ejecutando nvidia-smi (no depende de torch)
+fn detect_nvidia_hardware() -> bool {
+    std::process::Command::new("nvidia-smi")
+        .args(["--query-gpu=name", "--format=csv,noheader"])
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
 }
 
 #[tauri::command]
