@@ -2038,6 +2038,7 @@
       "colorMode": "Appearance",
       "light": "Light",
       "dark": "Dark",
+      "dracula": "Dracula",
       "system": "System",
       "language": "Language",
       "workDir": "Working Directory",

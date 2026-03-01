@@ -359,7 +359,7 @@ pub fn install_backend_packages(
     // 1. Detectar hardware para decidir qué versión de Torch instalar
     let (env_info, gpu_info) = crate::training::python_env::check_env_full()?;
     
-    let mut packages: Vec<String> = match backend.as_str() {
+    let packages: Vec<String> = match backend.as_str() {
         "yolo" | "rt_detr" => vec!["ultralytics".to_string()],
         "rf_detr" => vec!["rfdetr".to_string()],
         "mmdetection" => vec!["openmim".to_string(), "mmengine".to_string(), "mmcv".to_string(), "mmdet".to_string()],

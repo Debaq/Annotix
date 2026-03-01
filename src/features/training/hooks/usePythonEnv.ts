@@ -26,7 +26,7 @@ export function usePythonEnv() {
     }
   }, []);
 
-  const setupEnv = useCallback(async () => {
+  const setupEnv = useCallback(async (pythonVersion: string = '3.11') => {
     setLoading(true);
     setError(null);
     setSetupProgress({ message: 'Iniciando...', progress: 0 });
@@ -39,7 +39,7 @@ export function usePythonEnv() {
     );
 
     try {
-      const info = await trainingService.setupPythonEnv();
+      const info = await trainingService.setupPythonEnv(pythonVersion);
       setEnvStatus(info.env);
       setGpuInfo(info.gpu);
       return info.env;

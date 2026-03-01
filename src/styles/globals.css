@@ -114,6 +114,55 @@
     --annotix-shadow: rgba(0, 0, 0, 0.5);
     --annotix-shadow-strong: rgba(0, 0, 0, 0.7);
   }
+
+  .dracula {
+    --background: 231 15% 18%;
+    --foreground: 60 30% 96%;
+
+    --card: 231 15% 18%;
+    --card-foreground: 60 30% 96%;
+
+    --popover: 231 15% 18%;
+    --popover-foreground: 60 30% 96%;
+
+    --primary: 265 89% 78%;
+    --primary-foreground: 231 15% 18%;
+
+    --secondary: 231 10% 25%;
+    --secondary-foreground: 60 30% 96%;
+
+    --muted: 231 10% 25%;
+    --muted-foreground: 231 15% 60%;
+
+    --accent: 231 10% 25%;
+    --accent-foreground: 60 30% 96%;
+
+    --destructive: 0 100% 67%;
+    --destructive-foreground: 60 30% 96%;
+
+    --border: 231 10% 25%;
+    --input: 231 10% 25%;
+    --ring: 265 89% 78%;
+
+    /* Annotix Legacy Dracula Mode Overrides */
+    --annotix-primary: #bd93f9;
+    --annotix-primary-dark: #a371f7;
+    --annotix-secondary: #ff79c6;
+
+    --annotix-success: #50fa7b;
+    --annotix-danger: #ff5555;
+    --annotix-warning: #f1fa8c;
+    --annotix-info: #8be9fd;
+
+    --annotix-dark: #f8f8f2;
+    --annotix-light: #282a36;
+    --annotix-gray: #6272a4;
+    --annotix-gray-light: #44475a;
+    --annotix-white: #282a36;
+    --annotix-border: #44475a;
+    --annotix-shadow: rgba(0, 0, 0, 0.6);
+    --annotix-shadow-strong: rgba(0, 0, 0, 0.8);
+  }
 }
 
 @layer base {

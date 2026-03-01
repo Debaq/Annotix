@@ -2040,6 +2040,7 @@
       "colorMode": "Apparence",
       "light": "Clair",
       "dark": "Sombre",
+      "dracula": "Dracula",
       "system": "Système",
       "language": "Langue",
       "workDir": "Répertoire de Travail",
