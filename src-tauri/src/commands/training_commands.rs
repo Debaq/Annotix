@@ -5,7 +5,8 @@ use crate::store::project_file::TrainingJobEntry;
 use crate::training::runner::TrainingProcessManager;
 use crate::training::{
     GpuInfo, TrainingConfig, TrainingEnvCache, TrainingEnvInfo,
-    TrainingPreset, YoloModelInfo,
+    TrainingPreset, YoloModelInfo, BackendInfo, TrainingRequest,
+    TrainingBackend, ExecutionMode,
 };
 
 #[tauri::command]
