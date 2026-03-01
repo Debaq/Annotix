@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Video } from '@/lib/db';
 import { cn } from '@/lib/utils';
@@ -11,14 +12,21 @@ interface VideoCardProps {
 }
 
 export function VideoCard({ video }: VideoCardProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { projectId } = useParams();
-  const { currentVideoId } = useUIStore();
+  const { currentVideoId, setCurrentVideoId } = useUIStore();
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
 
-  // Thumbnail: usar el primer frame del video
+  const isSelected = currentVideoId === video.id;
+  const isReady = video.status === 'ready';
+  const isExtracting = video.status === 'extracting';
+  const canOpen = isReady || isExtracting;
+
+  // Thumbnail: usar el primer frame del video (disponible durante extracting o ready)
   useEffect(() => {
-    if (!projectId || !video.id || video.status !== 'ready') return;
+    if (!projectId || !video.id || !canOpen) return;
+    if (video.totalFrames === 0) return;
 
     videoService.listFrames(projectId, video.id).then((frames) => {
       if (frames.length === 0) return;
@@ -32,7 +40,7 @@ export function VideoCard({ video }: VideoCardProps) {
             .then((path) => setThumbnailUrl(convertFileSrc(path)));
         });
     });
-  }, [projectId, video.id, video.status]);
+  }, [projectId, video.id, video.status, video.totalFrames]);
 
   // Contar frames únicos con keyframes (marcados)
   const markedFrames = useMemo(() => {
@@ -51,17 +59,28 @@ export function VideoCard({ video }: VideoCardProps) {
     }
   };
 
-  const isSelected = currentVideoId === video.id;
-  const isReady = video.status === 'ready';
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!projectId || !video.id) return;
+    if (!confirm(t('video.confirmDeleteVideo'))) return;
+
+    // Si estamos viendo este video, limpiar la selección
+    if (currentVideoId === video.id) {
+      setCurrentVideoId(null);
+      navigate(`/projects/${projectId}`);
+    }
+
+    await videoService.delete(projectId, video.id);
+  };
 
   return (
     <div
       className={cn(
-        "annotix-gallery-item",
+        "annotix-gallery-item group",
         isSelected && "active",
-        !isReady && "opacity-60"
+        !canOpen && "opacity-60"
       )}
-      onClick={isReady ? handleSelect : undefined}
+      onClick={canOpen ? handleSelect : undefined}
       title={`${video.name} (${video.totalFrames} frames)`}
     >
       <div className="relative w-full h-full bg-[var(--annotix-gray-light)] flex items-center justify-center">
@@ -87,6 +106,13 @@ export function VideoCard({ video }: VideoCardProps) {
               style={{ backgroundColor: 'var(--annotix-primary)' }}
             >
               {video.totalFrames}f
+            </div>
+          ) : isExtracting ? (
+            <div
+              className="px-1.5 py-0.5 rounded text-[9px] font-bold text-white"
+              style={{ backgroundColor: 'var(--annotix-warning)' }}
+            >
+              <i className="fas fa-spinner fa-spin mr-0.5"></i>{video.totalFrames}f
             </div>
           ) : (
             <div
@@ -116,6 +142,15 @@ export function VideoCard({ video }: VideoCardProps) {
             <i className="fas fa-video"></i>
           </div>
         </div>
+
+        {/* Delete button (bottom-right, visible on hover) */}
+        <button
+          onClick={handleDelete}
+          className="absolute bottom-1 right-1 w-5 h-5 rounded-full flex items-center justify-center bg-black/50 text-white text-[10px] opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-opacity"
+          title={t('video.deleteVideo')}
+        >
+          <i className="fas fa-trash-alt"></i>
+        </button>
       </div>
     </div>
   );

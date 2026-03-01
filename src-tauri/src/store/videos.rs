@@ -230,10 +230,12 @@ impl AppState {
             pf.updated = js_timestamp();
         })?;
 
-        // Eliminar archivos físicos de imágenes (frames)
-        for (_id, file) in &image_ids_and_files {
-            let images_dir = self.project_images_dir(project_id)?;
+        // Eliminar archivos físicos de imágenes (frames) y sus thumbnails
+        let images_dir = self.project_images_dir(project_id)?;
+        let thumbs_dir = self.project_thumbnails_dir(project_id)?;
+        for (id, file) in &image_ids_and_files {
             let _ = std::fs::remove_file(images_dir.join(file));
+            let _ = std::fs::remove_file(thumbs_dir.join(format!("{}.jpg", id)));
         }
 
         // Eliminar archivo de video físico

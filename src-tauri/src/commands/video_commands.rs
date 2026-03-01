@@ -105,13 +105,22 @@ pub async fn extract_video_frames(
     project_id: String,
     video_id: String,
 ) -> Result<i64, String> {
-    // Obtener datos necesarios del state antes de spawn
+    launch_extraction(&app, &project_id, &video_id).await
+}
+
+/// Lanza la extracción (o reanudación) de frames de un video.
+/// Se usa tanto desde el command como desde el resume al iniciar la app.
+async fn launch_extraction(
+    app: &AppHandle,
+    project_id: &str,
+    video_id: &str,
+) -> Result<i64, String> {
     let state = app.state::<AppState>();
     let video = state
-        .get_video(&project_id, &video_id)?
+        .get_video(project_id, video_id)?
         .ok_or("Video no encontrado")?;
 
-    let videos_dir = state.project_videos_dir(&project_id)?;
+    let videos_dir = state.project_videos_dir(project_id)?;
     let video_path_str = videos_dir.join(&video.file).to_string_lossy().to_string();
 
     let fps_extraction = video.fps_extraction;
@@ -123,28 +132,99 @@ pub async fn extract_video_frames(
         0
     };
 
-    // Clonar AppHandle para el thread (da acceso a State internamente)
+    // Contar frames ya extraídos para este video (resume)
+    let existing_frames = state.with_project(project_id, |pf| {
+        pf.images
+            .iter()
+            .filter(|i| i.video_id.as_deref() == Some(video_id))
+            .count() as i64
+    })?;
+
     let app_bg = app.clone();
-    let pid = project_id.clone();
-    let vid = video_id.clone();
+    let pid = project_id.to_string();
+    let vid = video_id.to_string();
 
     let result = tauri::async_runtime::spawn_blocking(move || {
-        do_extract_frames(&app_bg, &pid, &vid, &video_path_str, fps_extraction, estimated_total)
+        do_extract_frames(
+            &app_bg,
+            &pid,
+            &vid,
+            &video_path_str,
+            fps_extraction,
+            estimated_total,
+            existing_frames,
+        )
     })
     .await
     .map_err(|e| format!("Error en thread de extracción: {}", e))??;
 
     // Notificar al frontend
-    let _ = app.emit("db:videos-changed", &project_id);
-    let _ = app.emit("db:images-changed", &project_id);
+    let _ = app.emit("db:videos-changed", project_id);
+    let _ = app.emit("db:images-changed", project_id);
 
     Ok(result)
+}
+
+/// Busca videos con status "extracting" en todos los proyectos y reanuda su extracción.
+pub fn resume_pending_extractions(app: AppHandle) {
+    tauri::async_runtime::spawn(async move {
+        let state = app.state::<AppState>();
+        let projects_dir = match state.projects_dir() {
+            Ok(d) => d,
+            Err(_) => return,
+        };
+
+        let entries = match std::fs::read_dir(&projects_dir) {
+            Ok(e) => e,
+            Err(_) => return,
+        };
+
+        let mut to_resume: Vec<(String, String)> = Vec::new();
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if !path.is_dir() || !path.join("project.json").exists() {
+                continue;
+            }
+
+            let project_id = match path.file_name() {
+                Some(name) => name.to_string_lossy().to_string(),
+                None => continue,
+            };
+
+            let extracting_videos = state.with_project(&project_id, |pf| {
+                pf.videos
+                    .iter()
+                    .filter(|v| v.status == "extracting")
+                    .map(|v| v.id.clone())
+                    .collect::<Vec<_>>()
+            });
+
+            if let Ok(video_ids) = extracting_videos {
+                for vid in video_ids {
+                    to_resume.push((project_id.clone(), vid));
+                }
+            }
+        }
+
+        for (project_id, video_id) in to_resume {
+            log::info!(
+                "Reanudando extracción: proyecto={}, video={}",
+                project_id,
+                video_id
+            );
+            if let Err(e) = launch_extraction(&app, &project_id, &video_id).await {
+                log::error!("Error reanudando extracción {}/{}: {}", project_id, video_id, e);
+            }
+        }
+    });
 }
 
 /// Tamaño del batch antes de hacer flush a disco
 const BATCH_FLUSH_SIZE: usize = 50;
 
-/// Trabajo pesado de extracción — corre en un thread separado
+/// Trabajo pesado de extracción — corre en un thread separado.
+/// `skip_frames`: cantidad de frames ya extraídos (para resume).
 fn do_extract_frames(
     app: &AppHandle,
     project_id: &str,
@@ -152,8 +232,13 @@ fn do_extract_frames(
     video_path: &str,
     fps_extraction: f64,
     estimated_total: i64,
+    skip_frames: i64,
 ) -> Result<i64, String> {
     let state = app.state::<AppState>();
+
+    // Marcar video como "extracting"
+    state.update_video_status(project_id, video_id, "extracting", skip_frames)?;
+    let _ = app.emit("db:videos-changed", project_id);
 
     // Preparar directorio de thumbnails
     let thumb_dir = state.project_thumbnails_dir(project_id)?;
@@ -202,7 +287,7 @@ fn do_extract_frames(
     let pts_per_second = time_base_den / time_base_num;
     let pts_interval = (pts_per_second / fps_extraction) as i64;
 
-    let mut frame_count: i64 = 0;
+    let mut frame_count: i64 = 0; // cuenta global (incluye skipped)
     let mut next_pts: i64 = 0;
     let mut pending_entries: Vec<crate::store::project_file::ImageEntry> = Vec::new();
 
@@ -218,6 +303,12 @@ fn do_extract_frames(
                 continue;
             }
             next_pts = pts + pts_interval;
+
+            // Saltar frames ya extraídos (resume)
+            if *fc < skip_frames {
+                *fc += 1;
+                continue;
+            }
 
             // Convertir a RGB
             let mut rgb_frame = ffmpeg_the_third::frame::Video::empty();
@@ -279,6 +370,9 @@ fn do_extract_frames(
             if pending.len() >= BATCH_FLUSH_SIZE {
                 let batch = std::mem::take(pending);
                 state.commit_image_entries(project_id, batch)?;
+                state.update_video_status(project_id, video_id, "extracting", *fc)?;
+                let _ = app.emit("db:images-changed", project_id);
+                let _ = app.emit("db:videos-changed", project_id);
             }
 
             // Emitir progreso al frontend
@@ -497,60 +591,75 @@ pub fn bake_video_tracks(
     app: AppHandle,
     project_id: String,
     video_id: String,
-) -> Result<(), String> {
-    let tracks = state.list_tracks(&project_id, &video_id)?;
-    let frames = state.list_frames_by_video(&project_id, &video_id)?;
+) -> Result<i64, String> {
+    // Leer tracks una vez
+    let tracks = state.with_project(&project_id, |pf| {
+        pf.videos
+            .iter()
+            .find(|v| v.id == video_id)
+            .map(|v| v.tracks.clone())
+            .unwrap_or_default()
+    })?;
 
-    for frame in &frames {
-        let frame_index = frame.frame_index.unwrap_or(0);
-        let mut annotations: Vec<AnnotationEntry> = frame.annotations.clone();
+    if tracks.is_empty() {
+        return Ok(0);
+    }
 
-        for track in &tracks {
-            if !track.enabled {
+    // Precomputar keyframe entries por track habilitado
+    let track_kfs: Vec<(i64, Vec<KeyframeEntry>)> = tracks
+        .iter()
+        .filter(|t| t.enabled && !t.keyframes.is_empty())
+        .map(|t| (t.class_id, t.keyframes.clone()))
+        .collect();
+
+    if track_kfs.is_empty() {
+        return Ok(0);
+    }
+
+    let now = crate::store::images::js_timestamp_pub();
+    let mut baked_count: i64 = 0;
+
+    // Un solo with_project_mut para todo el bake
+    state.with_project_mut(&project_id, |pf| {
+        for img in pf.images.iter_mut() {
+            if img.video_id.as_deref() != Some(&video_id) {
+                continue;
+            }
+            let frame_index = img.frame_index.unwrap_or(0);
+
+            // Calcular nuevas anotaciones de tracks para este frame
+            let mut new_annotations: Vec<AnnotationEntry> = Vec::new();
+            for (class_id, kfs) in &track_kfs {
+                if let Some((x, y, w, h, enabled)) = interpolate_bbox(kfs, frame_index) {
+                    if !enabled {
+                        continue;
+                    }
+                    new_annotations.push(AnnotationEntry {
+                        id: uuid::Uuid::new_v4().to_string(),
+                        annotation_type: "bbox".to_string(),
+                        class_id: *class_id,
+                        data: serde_json::json!({
+                            "x": x, "y": y, "width": w, "height": h,
+                        }),
+                    });
+                }
+            }
+
+            if new_annotations.is_empty() {
                 continue;
             }
 
-            let keyframe_entries: Vec<KeyframeEntry> = track
-                .keyframes
-                .iter()
-                .map(|k| KeyframeEntry {
-                    frame_index: k.frame_index,
-                    bbox_x: k.bbox_x,
-                    bbox_y: k.bbox_y,
-                    bbox_width: k.bbox_width,
-                    bbox_height: k.bbox_height,
-                    is_keyframe: k.is_keyframe,
-                    enabled: k.enabled,
-                })
-                .collect();
-
-            if let Some((x, y, w, h, bbox_enabled)) =
-                interpolate_bbox(&keyframe_entries, frame_index)
-            {
-                if !bbox_enabled {
-                    continue;
-                }
-
-                let annotation = AnnotationEntry {
-                    id: uuid::Uuid::new_v4().to_string(),
-                    annotation_type: "bbox".to_string(),
-                    class_id: track.class_id,
-                    data: serde_json::json!({
-                        "x": x,
-                        "y": y,
-                        "width": w,
-                        "height": h,
-                    }),
-                };
-                annotations.push(annotation);
-            }
+            // Reemplazar anotaciones del frame (video frames solo tienen anotaciones de bake)
+            img.annotations = new_annotations;
+            img.status = "annotated".to_string();
+            img.annotated = Some(now);
+            baked_count += 1;
         }
-
-        state.save_annotations(&project_id, &frame.id, &annotations)?;
-    }
+        pf.updated = now;
+    })?;
 
     let _ = app.emit("db:images-changed", &project_id);
-    Ok(())
+    Ok(baked_count)
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

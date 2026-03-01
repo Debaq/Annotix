@@ -190,27 +190,21 @@ export function VideoUploader({ trigger }: VideoUploaderProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Progress dialog — siempre montado, controlado por open */}
-      <Dialog open={isProcessing} onOpenChange={() => {}}>
-        <DialogContent
-          className="sm:max-w-[400px]"
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
-        >
-          <DialogHeader>
-            <DialogTitle>{t('video.processing')}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <Progress value={progress} className="h-3" />
-            <p className="text-sm text-center text-muted-foreground">
-              {progressText}
-            </p>
-            <p className="text-xs text-center text-muted-foreground/60">
-              {progress > 0 && progress < 100 && `${progress}%`}
-            </p>
+      {/* Progress toast — no bloqueante, permite trabajar mientras extrae */}
+      {isProcessing && (
+        <div className="fixed bottom-4 right-4 z-50 w-80 rounded-lg border bg-background p-4 shadow-lg">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium">{t('video.processing')}</p>
+            {progress > 0 && progress < 100 && (
+              <span className="text-xs text-muted-foreground">{progress}%</span>
+            )}
           </div>
-        </DialogContent>
-      </Dialog>
+          <Progress value={progress} className="h-2" />
+          <p className="text-xs text-muted-foreground mt-1.5">
+            {progressText}
+          </p>
+        </div>
+      )}
     </>
   );
 }

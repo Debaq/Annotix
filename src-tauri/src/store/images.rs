@@ -11,6 +11,11 @@ fn js_timestamp() -> f64 {
         .as_millis() as f64
 }
 
+/// Timestamp JS (público, para uso desde commands)
+pub fn js_timestamp_pub() -> f64 {
+    js_timestamp()
+}
+
 /// Respuesta de imagen para el frontend (compatible con TauriAnnotixImage)
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ImageResponse {

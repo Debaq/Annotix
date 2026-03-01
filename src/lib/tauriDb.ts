@@ -281,8 +281,8 @@ export async function toggleKeyframeEnabled(
   return invoke('toggle_keyframe_enabled', { projectId, trackId, videoId, frameIndex, enabled });
 }
 
-export async function bakeVideoTracks(projectId: string, videoId: string): Promise<void> {
-  return invoke('bake_video_tracks', { projectId, videoId });
+export async function bakeVideoTracks(projectId: string, videoId: string): Promise<number> {
+  return invoke<number>('bake_video_tracks', { projectId, videoId });
 }
 
 // ─── Event Listeners (reactividad) ──────────────────────────────────────────
