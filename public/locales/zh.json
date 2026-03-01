@@ -1858,5 +1858,44 @@
     "hideTrack": "隐藏",
     "showTrack": "显示",
     "deleteTrack": "删除轨道"
+  },
+  "settings": {
+    "title": "设置",
+    "back": "返回",
+    "sections": {
+      "pythonEnv": "Python环境"
+    },
+    "pythonEnv": {
+      "systemPython": "系统Python",
+      "systemPythonFound": "找到Python 3: {{python}}",
+      "systemPythonNotFound": "PATH中未找到Python 3。请安装Python 3.10+。",
+      "venv": "虚拟环境",
+      "venvNotExists": "尚未创建虚拟环境。创建一个以使用训练功能。",
+      "status": "状态",
+      "active": "活跃",
+      "pythonVersion": "Python版本",
+      "diskUsage": "磁盘使用",
+      "path": "路径",
+      "createVenv": "创建环境",
+      "removeVenv": "删除环境"
+    },
+    "packages": {
+      "title": "已安装包",
+      "name": "名称",
+      "version": "版本",
+      "updateAll": "全部更新"
+    },
+    "pytorch": {
+      "title": "PyTorch",
+      "cudaActive": "已激活",
+      "cpuOnly": "仅CPU",
+      "nvidiaDetected": "检测到NVIDIA GPU",
+      "driverVersion": "驱动程序",
+      "suggestedCuda": "建议CUDA",
+      "noNvidia": "未检测到NVIDIA GPU（将使用CPU模式）",
+      "selectVariant": "PyTorch变体",
+      "install": "安装PyTorch",
+      "reinstall": "重新安装PyTorch"
+    }
   }
 }

@@ -9,6 +9,7 @@ import { ClassificationPanel } from './features/classification/components/Classi
 import { TimeSeriesGallery } from './features/timeseries/components/TimeSeriesGallery';
 import { TimeSeriesCanvas } from './features/timeseries/components/TimeSeriesCanvas';
 import { VideoView } from './features/video/components/VideoView';
+import { SettingsPage } from './features/settings/components/SettingsPage';
 import { SetupScreen } from './features/setup/SetupScreen';
 import { useUIStore } from './features/core/store/uiStore';
 import { useKeyboardShortcuts } from './features/core/hooks/useKeyboardShortcuts';
@@ -352,6 +353,7 @@ function App() {
         <Route path="/projects/:projectId/images/:imageId" element={<ImageView />} />
         <Route path="/projects/:projectId/timeseries/:seriesId" element={<TimeSeriesView />} />
         <Route path="/projects/:projectId/videos/:videoId" element={<VideoView />} />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster />

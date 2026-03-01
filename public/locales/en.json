@@ -1864,5 +1864,44 @@
     "bakeDesc": "Writes track interpolations as annotations on each frame",
     "baking": "Applying...",
     "bakeDone": "Tracks applied"
+  },
+  "settings": {
+    "title": "Settings",
+    "back": "Back",
+    "sections": {
+      "pythonEnv": "Python Environment"
+    },
+    "pythonEnv": {
+      "systemPython": "System Python",
+      "systemPythonFound": "Python 3 found: {{python}}",
+      "systemPythonNotFound": "Python 3 not found in PATH. Please install Python 3.10+.",
+      "venv": "Virtual Environment",
+      "venvNotExists": "No virtual environment created yet. Create one to use training features.",
+      "status": "Status",
+      "active": "Active",
+      "pythonVersion": "Python Version",
+      "diskUsage": "Disk Usage",
+      "path": "Path",
+      "createVenv": "Create Environment",
+      "removeVenv": "Remove Environment"
+    },
+    "packages": {
+      "title": "Installed Packages",
+      "name": "Name",
+      "version": "Version",
+      "updateAll": "Update All"
+    },
+    "pytorch": {
+      "title": "PyTorch",
+      "cudaActive": "Active",
+      "cpuOnly": "CPU only",
+      "nvidiaDetected": "NVIDIA GPU detected",
+      "driverVersion": "Driver",
+      "suggestedCuda": "Suggested CUDA",
+      "noNvidia": "No NVIDIA GPU detected (CPU mode will be used)",
+      "selectVariant": "PyTorch Variant",
+      "install": "Install PyTorch",
+      "reinstall": "Reinstall PyTorch"
+    }
   }
 }

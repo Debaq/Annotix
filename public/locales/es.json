@@ -1864,5 +1864,44 @@
     "bakeDesc": "Escribe las interpolaciones de tracks como anotaciones en cada frame",
     "baking": "Aplicando...",
     "bakeDone": "Tracks aplicados"
+  },
+  "settings": {
+    "title": "Configuración",
+    "back": "Volver",
+    "sections": {
+      "pythonEnv": "Entorno Python"
+    },
+    "pythonEnv": {
+      "systemPython": "Python del Sistema",
+      "systemPythonFound": "Python 3 encontrado: {{python}}",
+      "systemPythonNotFound": "No se encontró Python 3 en PATH. Instala Python 3.10+.",
+      "venv": "Entorno Virtual",
+      "venvNotExists": "No hay entorno virtual creado. Crea uno para usar las funciones de entrenamiento.",
+      "status": "Estado",
+      "active": "Activo",
+      "pythonVersion": "Versión de Python",
+      "diskUsage": "Uso de disco",
+      "path": "Ruta",
+      "createVenv": "Crear Entorno",
+      "removeVenv": "Eliminar Entorno"
+    },
+    "packages": {
+      "title": "Paquetes Instalados",
+      "name": "Nombre",
+      "version": "Versión",
+      "updateAll": "Actualizar Todo"
+    },
+    "pytorch": {
+      "title": "PyTorch",
+      "cudaActive": "Activo",
+      "cpuOnly": "Solo CPU",
+      "nvidiaDetected": "GPU NVIDIA detectada",
+      "driverVersion": "Driver",
+      "suggestedCuda": "CUDA sugerida",
+      "noNvidia": "No se detectó GPU NVIDIA (se usará modo CPU)",
+      "selectVariant": "Variante de PyTorch",
+      "install": "Instalar PyTorch",
+      "reinstall": "Reinstalar PyTorch"
+    }
   }
 }

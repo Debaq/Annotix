@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { Minus, Square, X, Copy } from 'lucide-react';
 
@@ -18,6 +18,7 @@ export const Header: React.FC = () => {
   const { t } = useTranslation();
   const { setCurrentProjectId } = useUIStore();
   const { project } = useCurrentProject();
+  const navigate = useNavigate();
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
 
@@ -158,6 +159,13 @@ export const Header: React.FC = () => {
         >
           <i className="fab fa-github text-[13px]"></i>
         </a>
+        <button
+          onClick={() => navigate('/settings')}
+          className="window-header-btn"
+          title={t('settings.title')}
+        >
+          <i className="fas fa-cog text-[13px]"></i>
+        </button>
 
         {/* Separator */}
         <div className="h-5 w-px bg-white/30 mx-1.5" />

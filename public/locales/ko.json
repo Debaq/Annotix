@@ -1858,5 +1858,44 @@
     "hideTrack": "숨기기",
     "showTrack": "표시",
     "deleteTrack": "트랙 삭제"
+  },
+  "settings": {
+    "title": "설정",
+    "back": "뒤로",
+    "sections": {
+      "pythonEnv": "Python 환경"
+    },
+    "pythonEnv": {
+      "systemPython": "시스템 Python",
+      "systemPythonFound": "Python 3 발견: {{python}}",
+      "systemPythonNotFound": "PATH에서 Python 3을 찾을 수 없습니다. Python 3.10 이상을 설치하세요.",
+      "venv": "가상 환경",
+      "venvNotExists": "가상 환경이 생성되지 않았습니다. 학습 기능을 사용하려면 생성하세요.",
+      "status": "상태",
+      "active": "활성",
+      "pythonVersion": "Python 버전",
+      "diskUsage": "디스크 사용량",
+      "path": "경로",
+      "createVenv": "환경 생성",
+      "removeVenv": "환경 삭제"
+    },
+    "packages": {
+      "title": "설치된 패키지",
+      "name": "이름",
+      "version": "버전",
+      "updateAll": "모두 업데이트"
+    },
+    "pytorch": {
+      "title": "PyTorch",
+      "cudaActive": "활성",
+      "cpuOnly": "CPU만",
+      "nvidiaDetected": "NVIDIA GPU 감지됨",
+      "driverVersion": "드라이버",
+      "suggestedCuda": "권장 CUDA",
+      "noNvidia": "NVIDIA GPU가 감지되지 않음 (CPU 모드 사용)",
+      "selectVariant": "PyTorch 변형",
+      "install": "PyTorch 설치",
+      "reinstall": "PyTorch 재설치"
+    }
   }
 }
