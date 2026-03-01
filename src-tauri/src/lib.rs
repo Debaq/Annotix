@@ -121,6 +121,12 @@ pub fn run() {
             commands::training_commands::install_backend_packages,
             commands::training_commands::start_training_v2,
             commands::training_commands::generate_training_package,
+            // Tabular
+            commands::tabular_commands::upload_tabular_file,
+            commands::tabular_commands::list_tabular_data,
+            commands::tabular_commands::get_tabular_preview,
+            commands::tabular_commands::update_tabular_config,
+            commands::tabular_commands::delete_tabular_data,
             // Settings
             commands::settings_commands::get_venv_info,
             commands::settings_commands::list_installed_packages,

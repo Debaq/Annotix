@@ -31,7 +31,9 @@
     "exportDataset": "Exportar Dataset",
     "backToProjects": "Volver a Proyectos",
     "classes": "Clases",
-    "selectImageToStart": "Selecciona una imagen para comenzar a anotar",
+    "all": "Todos",
+    "filters": "Filtros",
+    "selectImageToStart": "Selecciona una imagen para empezar a anotar",
     "missingTranslations": "Traducciones Faltantes",
     "hide": "Ocultar",
     "totalKeys": "Total de Claves:",
@@ -39,7 +41,8 @@
     "oneToNine": "1-9",
     "ctrlS": "Ctrl+S",
     "arrowKeys": "← →",
-    "understand": "Entendido"
+    "understand": "Entendido",
+    "starting": "Iniciando..."
   },
   "header": {
     "selectProject": "Seleccionar proyecto...",
@@ -1267,6 +1270,10 @@
         "models": "langdetect, fastText, XLM-RoBERTa",
         "difficulty": "Principiante"
       },
+      "tabular": {
+        "name": "ML Tabular",
+        "description": "ML clásico con datos CSV/tabulares"
+      },
       "useCasesLabel": "Casos de uso",
       "modelsLabel": "Modelos recomendados",
       "difficultyLabel": "Dificultad"
@@ -1274,7 +1281,8 @@
     "categories": {
       "images": "",
       "classification": "",
-      "timeSeries": ""
+      "timeSeries": "",
+      "tabular": "Tabular / ML Clásico"
     },
     "modality": "Modalidad",
     "initialClasses": "Clases Iniciales (opcional)",
@@ -1622,6 +1630,32 @@
       "anomaly": "Haz clic en el gráfico para marcar una anomalía"
     }
   },
+  "tabular": {
+    "datasets": "Conjuntos de datos",
+    "upload": "Subir CSV",
+    "noData": "Aún no hay datos tabulares",
+    "uploadFirst": "Sube un archivo CSV",
+    "selectOrUpload": "Seleccionar o subir datos",
+    "selectOrUploadDesc": "Sube un archivo CSV para comenzar con ML tabular",
+    "rows": "filas",
+    "cols": "columnas",
+    "columns": "columnas",
+    "target": "Objetivo",
+    "preview": "Vista previa de datos",
+    "configuration": "Configuración de columnas",
+    "targetColumn": "Columna objetivo",
+    "targetColumnDesc": "Selecciona la columna que quieres predecir",
+    "taskType": "Tipo de tarea",
+    "classification": "Clasificación",
+    "regression": "Regresión",
+    "featureColumns": "Columnas de características",
+    "featureColumnsDesc": "Selecciona qué columnas usar como características de entrada",
+    "selectAll": "Seleccionar todo",
+    "deselectAll": "Deseleccionar todo",
+    "selected": "seleccionadas",
+    "saveConfig": "Guardar configuración",
+    "showingRows": "Mostrando {{shown}} de {{total}} filas"
+  },
   "training": {
     "title": "Entrenar Modelo",
     "description": "Entrena un modelo YOLO con tu dataset anotado",
@@ -1637,7 +1671,8 @@
       "installing": "Instalando...",
       "installingPackages": "Instalando paquetes del backend...",
       "installingPackagesDesc": "Esto puede tardar unos minutos. Tu configuración se conservará.",
-      "modelsAvailable": "modelos disponibles"
+      "modelsAvailable": "modelos disponibles",
+      "sklearn": "Scikit-learn + XGBoost + LightGBM"
     },
     "execution": {
       "title": "Modo de Ejecución",
@@ -2033,7 +2068,8 @@
       "diskUsage": "Uso de disco",
       "path": "Ruta",
       "createVenv": "Crear Entorno",
-      "removeVenv": "Eliminar Entorno"
+      "removeVenv": "Eliminar Entorno",
+      "pleaseWait": "Esto puede tardar varios minutos, por favor no cierres la aplicación."
     },
     "packages": {
       "title": "Paquetes Instalados",
@@ -2078,7 +2114,9 @@
       "type": "Tipo",
       "defaultValue": "Valor por defecto",
       "range": "Rango",
-      "backTo": "Volver a"
+      "backTo": "Volver a",
+      "filterByTask": "Filtrar por tarea",
+      "allModels": "Todos los modelos"
     }
   },
   "wizard": {
@@ -2094,11 +2132,13 @@
         "title": "¿Con qué tipo de datos trabajarás?",
         "options": {
           "images": "Imágenes",
-          "timeseries": "Series temporales"
+          "timeseries": "Series temporales",
+          "tabular": "Datos tabulares"
         },
         "optionsDesc": {
           "images": "Fotos, capturas, escaneos, fotogramas",
-          "timeseries": "Sensores, métricas, señales, datos financieros"
+          "timeseries": "Sensores, métricas, señales, datos financieros",
+          "tabular": "Archivos CSV, hojas de cálculo, tablas estructuradas"
         }
       },
       "goalImages": {

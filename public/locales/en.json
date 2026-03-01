@@ -32,6 +32,8 @@
     "exportDataset": "Export Dataset",
     "backToProjects": "Back to Projects",
     "classes": "Classes",
+    "all": "All",
+    "filters": "Filters",
     "selectImageToStart": "Select an image to start annotating",
     "missingTranslations": "Missing Translations",
     "hide": "Hide",
@@ -40,7 +42,8 @@
     "oneToNine": "1-9",
     "ctrlS": "Ctrl+S",
     "arrowKeys": "← →",
-    "understand": "Got it"
+    "understand": "Got it",
+    "starting": "Starting..."
   },
   "header": {
     "selectProject": "Select project...",
@@ -1268,6 +1271,10 @@
         "models": "langdetect, fastText, XLM-RoBERTa",
         "difficulty": "Beginner"
       },
+      "tabular": {
+        "name": "Tabular ML",
+        "description": "Classical ML with CSV/tabular data"
+      },
       "useCasesLabel": "Use cases",
       "modelsLabel": "Recommended models",
       "difficultyLabel": "Difficulty"
@@ -1275,7 +1282,8 @@
     "categories": {
       "images": "",
       "classification": "",
-      "timeSeries": ""
+      "timeSeries": "",
+      "tabular": "Tabular / Classical ML"
     },
     "modality": "Modality",
     "initialClasses": "Initial Classes (optional)",
@@ -1623,6 +1631,32 @@
       "anomaly": "Click on the chart to mark an anomaly"
     }
   },
+  "tabular": {
+    "datasets": "Datasets",
+    "upload": "Upload CSV",
+    "noData": "No tabular data yet",
+    "uploadFirst": "Upload a CSV file",
+    "selectOrUpload": "Select or upload data",
+    "selectOrUploadDesc": "Upload a CSV file to get started with tabular ML",
+    "rows": "rows",
+    "cols": "columns",
+    "columns": "columns",
+    "target": "Target",
+    "preview": "Data Preview",
+    "configuration": "Column Configuration",
+    "targetColumn": "Target Column",
+    "targetColumnDesc": "Select the column you want to predict",
+    "taskType": "Task Type",
+    "classification": "Classification",
+    "regression": "Regression",
+    "featureColumns": "Feature Columns",
+    "featureColumnsDesc": "Select which columns to use as input features",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "selected": "selected",
+    "saveConfig": "Save Configuration",
+    "showingRows": "Showing {{shown}} of {{total}} rows"
+  },
   "training": {
     "title": "Train Model",
     "description": "Train a YOLO model with your annotated dataset",
@@ -1723,7 +1757,8 @@
       "installing": "Installing...",
       "installingPackages": "Installing backend packages...",
       "installingPackagesDesc": "This may take a few minutes. Your configuration will be preserved.",
-      "modelsAvailable": "models available"
+      "modelsAvailable": "models available",
+      "sklearn": "Scikit-learn + XGBoost + LightGBM"
     },
     "execution": {
       "title": "Execution Mode",
@@ -2022,7 +2057,8 @@
       "diskUsage": "Disk Usage",
       "path": "Path",
       "createVenv": "Create Environment",
-      "removeVenv": "Remove Environment"
+      "removeVenv": "Remove Environment",
+      "pleaseWait": "This may take several minutes, please do not close the application."
     },
     "packages": {
       "title": "Installed Packages",
@@ -2067,7 +2103,9 @@
       "type": "Type",
       "defaultValue": "Default",
       "range": "Range",
-      "backTo": "Back to"
+      "backTo": "Back to",
+      "filterByTask": "Filter by task",
+      "allModels": "All Models"
     }
   },
   "wizard": {
@@ -2083,11 +2121,13 @@
         "title": "What type of data will you work with?",
         "options": {
           "images": "Images",
-          "timeseries": "Time series"
+          "timeseries": "Time series",
+          "tabular": "Tabular data"
         },
         "optionsDesc": {
           "images": "Photos, screenshots, scans, frames",
-          "timeseries": "Sensors, metrics, signals, financial data"
+          "timeseries": "Sensors, metrics, signals, financial data",
+          "tabular": "CSV files, spreadsheets, structured tables"
         }
       },
       "goalImages": {

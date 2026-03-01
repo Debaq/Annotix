@@ -20,6 +20,8 @@ pub struct ProjectFile {
     pub videos: Vec<VideoEntry>,
     #[serde(default)]
     pub training_jobs: Vec<TrainingJobEntry>,
+    #[serde(default)]
+    pub tabular_data: Vec<TabularDataEntry>,
 }
 
 // ─── Clases ─────────────────────────────────────────────────────────────────
@@ -134,6 +136,37 @@ pub struct KeyframeEntry {
     #[serde(rename = "isKeyframe")]
     pub is_keyframe: bool,
     pub enabled: bool,
+}
+
+// ─── Tabular Data ──────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TabularDataEntry {
+    pub id: String,
+    pub name: String,
+    pub file: String,
+    pub uploaded: f64,
+    pub rows: usize,
+    pub columns: Vec<TabularColumnInfo>,
+    #[serde(default, rename = "targetColumn")]
+    pub target_column: Option<String>,
+    #[serde(default, rename = "featureColumns")]
+    pub feature_columns: Vec<String>,
+    #[serde(default, rename = "taskType")]
+    pub task_type: Option<String>, // "classification" | "regression" | null (auto)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TabularColumnInfo {
+    pub name: String,
+    #[serde(rename = "dtype")]
+    pub dtype: String, // "numeric" | "categorical" | "text" | "datetime"
+    #[serde(rename = "uniqueCount")]
+    pub unique_count: usize,
+    #[serde(rename = "nullCount")]
+    pub null_count: usize,
+    #[serde(default)]
+    pub sample_values: Vec<String>,
 }
 
 // ─── Training Jobs ──────────────────────────────────────────────────────────

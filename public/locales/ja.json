@@ -1267,6 +1267,10 @@
         "models": "langdetect, fastText, XLM-RoBERTa",
         "difficulty": "初級"
       },
+      "tabular": {
+        "name": "テーブルML",
+        "description": "CSV/テーブルデータによる古典的ML"
+      },
       "useCasesLabel": "ユースケース",
       "modelsLabel": "推奨モデル",
       "difficultyLabel": "難易度"
@@ -1274,7 +1278,8 @@
     "categories": {
       "images": "",
       "classification": "",
-      "timeSeries": ""
+      "timeSeries": "",
+      "tabular": "テーブル / 古典的ML"
     },
     "modality": "モダリティ",
     "initialClasses": "初期クラス（オプション）",
@@ -1622,6 +1627,32 @@
       "anomaly": "グラフをクリックして異常をマーク"
     }
   },
+  "tabular": {
+    "datasets": "データセット",
+    "upload": "CSVをアップロード",
+    "noData": "テーブルデータはまだありません",
+    "uploadFirst": "CSVファイルをアップロード",
+    "selectOrUpload": "データを選択またはアップロード",
+    "selectOrUploadDesc": "テーブルMLを始めるにはCSVファイルをアップロードしてください",
+    "rows": "行",
+    "cols": "列",
+    "columns": "列",
+    "target": "ターゲット",
+    "preview": "データプレビュー",
+    "configuration": "列の設定",
+    "targetColumn": "ターゲット列",
+    "targetColumnDesc": "予測したい列を選択してください",
+    "taskType": "タスクタイプ",
+    "classification": "分類",
+    "regression": "回帰",
+    "featureColumns": "特徴量列",
+    "featureColumnsDesc": "入力特徴量として使用する列を選択してください",
+    "selectAll": "すべて選択",
+    "deselectAll": "すべて解除",
+    "selected": "選択済み",
+    "saveConfig": "設定を保存",
+    "showingRows": "{{total}}行中{{shown}}行を表示"
+  },
   "training": {
     "title": "モデルのトレーニング",
     "description": "アノテーション済みデータセットでYOLOモデルをトレーニング",
@@ -1637,7 +1668,8 @@
       "installing": "インストール中...",
       "installingPackages": "バックエンドパッケージをインストール中...",
       "installingPackagesDesc": "数分かかる場合があります。設定は保持されます。",
-      "modelsAvailable": "利用可能なモデル"
+      "modelsAvailable": "利用可能なモデル",
+      "sklearn": "Scikit-learn + XGBoost + LightGBM"
     },
     "execution": {
       "title": "実行モード",
@@ -2088,11 +2120,13 @@
         "title": "どのようなデータを扱いますか？",
         "options": {
           "images": "画像",
-          "timeseries": "時系列"
+          "timeseries": "時系列",
+          "tabular": "テーブルデータ"
         },
         "optionsDesc": {
           "images": "写真、スクリーンショット、スキャン、フレーム",
-          "timeseries": "センサー、メトリクス、信号、金融データ"
+          "timeseries": "センサー、メトリクス、信号、金融データ",
+          "tabular": "CSVファイル、スプレッドシート、構造化テーブル"
         }
       },
       "goalImages": {

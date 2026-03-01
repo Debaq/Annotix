@@ -1120,6 +1120,10 @@
         "name": "Regressão de Séries Temporais",
         "description": "Prever valores numéricos a partir de séries temporais"
       },
+      "tabular": {
+        "name": "ML Tabular",
+        "description": "ML clássico com dados CSV/tabulares"
+      },
       "object3DDetection": {
         "name": "Detecção de Objetos 3D",
         "description": "Detectar objetos em nuvens de pontos 3D",
@@ -1274,7 +1278,8 @@
     "categories": {
       "images": "",
       "classification": "",
-      "timeSeries": ""
+      "timeSeries": "",
+      "tabular": "Tabular / ML Clássico"
     },
     "modality": "Modalidade",
     "initialClasses": "Classes Iniciais (opcional)",
@@ -1581,6 +1586,32 @@
     "downloadStarted": "Download iniciado. Execute o instalador quando terminar.",
     "startTraining": "Iniciar Treinamento",
     "trainingStarted": "Treinamento iniciado corretamente"
+  },
+  "tabular": {
+    "datasets": "Conjuntos de dados",
+    "upload": "Enviar CSV",
+    "noData": "Sem dados tabulares ainda",
+    "uploadFirst": "Envie um arquivo CSV",
+    "selectOrUpload": "Selecione ou envie dados",
+    "selectOrUploadDesc": "Envie um arquivo CSV para começar com ML tabular",
+    "rows": "linhas",
+    "cols": "colunas",
+    "columns": "colunas",
+    "target": "Alvo",
+    "preview": "Pré-visualização dos Dados",
+    "configuration": "Configuração de Colunas",
+    "targetColumn": "Coluna Alvo",
+    "targetColumnDesc": "Selecione a coluna que deseja prever",
+    "taskType": "Tipo de Tarefa",
+    "classification": "Classificação",
+    "regression": "Regressão",
+    "featureColumns": "Colunas de Características",
+    "featureColumnsDesc": "Selecione quais colunas usar como características de entrada",
+    "selectAll": "Selecionar tudo",
+    "deselectAll": "Desselecionar tudo",
+    "selected": "selecionadas",
+    "saveConfig": "Salvar Configuração",
+    "showingRows": "Mostrando {{shown}} de {{total}} linhas"
   },
   "training": {
     "title": "Treinar Modelo",
@@ -2088,11 +2119,13 @@
         "title": "Com que tipo de dados você vai trabalhar?",
         "options": {
           "images": "Imagens",
-          "timeseries": "Séries temporais"
+          "timeseries": "Séries temporais",
+          "tabular": "Dados tabulares"
         },
         "optionsDesc": {
           "images": "Fotos, capturas, digitalizações, frames",
-          "timeseries": "Sensores, métricas, sinais, dados financeiros"
+          "timeseries": "Sensores, métricas, sinais, dados financeiros",
+          "tabular": "Arquivos CSV, planilhas, tabelas estruturadas"
         }
       },
       "goalImages": {

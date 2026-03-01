@@ -66,6 +66,7 @@ impl AppState {
             timeseries: vec![],
             videos: vec![],
             training_jobs: vec![],
+            tabular_data: vec![],
         };
 
         io::write_project(&project_dir, &project)?;

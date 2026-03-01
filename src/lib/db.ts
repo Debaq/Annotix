@@ -45,6 +45,8 @@ export type ProjectType =
   | 'timeseries-regression'
   | 'clustering'
   | 'imputation'
+  // Tabular ML
+  | 'tabular'
   // Future: Audio (10 types)
   | 'audio-classification'
   | 'speech-recognition'

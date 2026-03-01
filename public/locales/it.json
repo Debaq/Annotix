@@ -1267,6 +1267,10 @@
         "models": "langdetect, fastText, XLM-RoBERTa",
         "difficulty": "Principiante"
       },
+      "tabular": {
+        "name": "ML Tabellare",
+        "description": "ML classico con dati CSV/tabellari"
+      },
       "useCasesLabel": "Casi d'uso",
       "modelsLabel": "Modelli consigliati",
       "difficultyLabel": "Difficoltà"
@@ -1274,7 +1278,8 @@
     "categories": {
       "images": "",
       "classification": "",
-      "timeSeries": ""
+      "timeSeries": "",
+      "tabular": "Tabellare / ML Classico"
     },
     "modality": "Modalità",
     "initialClasses": "Classi Iniziali (opzionale)",
@@ -1622,6 +1627,32 @@
       "anomaly": "Fai clic sul grafico per segnare un'anomalia"
     }
   },
+  "tabular": {
+    "datasets": "Set di dati",
+    "upload": "Carica CSV",
+    "noData": "Nessun dato tabellare ancora",
+    "uploadFirst": "Carica un file CSV",
+    "selectOrUpload": "Seleziona o carica dati",
+    "selectOrUploadDesc": "Carica un file CSV per iniziare con il ML tabellare",
+    "rows": "righe",
+    "cols": "colonne",
+    "columns": "colonne",
+    "target": "Obiettivo",
+    "preview": "Anteprima dati",
+    "configuration": "Configurazione colonne",
+    "targetColumn": "Colonna obiettivo",
+    "targetColumnDesc": "Seleziona la colonna che vuoi prevedere",
+    "taskType": "Tipo di attività",
+    "classification": "Classificazione",
+    "regression": "Regressione",
+    "featureColumns": "Colonne delle caratteristiche",
+    "featureColumnsDesc": "Seleziona quali colonne usare come caratteristiche di input",
+    "selectAll": "Seleziona tutto",
+    "deselectAll": "Deseleziona tutto",
+    "selected": "selezionate",
+    "saveConfig": "Salva configurazione",
+    "showingRows": "Visualizzazione di {{shown}} su {{total}} righe"
+  },
   "training": {
     "title": "Addestra Modello",
     "description": "Addestra un modello YOLO con il tuo dataset annotato",
@@ -1637,7 +1668,8 @@
       "installing": "Installazione...",
       "installingPackages": "Installazione dei pacchetti del backend...",
       "installingPackagesDesc": "Potrebbe richiedere qualche minuto. La configurazione verrà preservata.",
-      "modelsAvailable": "modelli disponibili"
+      "modelsAvailable": "modelli disponibili",
+      "sklearn": "Scikit-learn + XGBoost + LightGBM"
     },
     "execution": {
       "title": "Modalità di esecuzione",
@@ -2088,11 +2120,13 @@
         "title": "Con che tipo di dati lavorerai?",
         "options": {
           "images": "Immagini",
-          "timeseries": "Serie temporali"
+          "timeseries": "Serie temporali",
+          "tabular": "Dati tabellari"
         },
         "optionsDesc": {
           "images": "Foto, screenshot, scansioni, frame",
-          "timeseries": "Sensori, metriche, segnali, dati finanziari"
+          "timeseries": "Sensori, metriche, segnali, dati finanziari",
+          "tabular": "File CSV, fogli di calcolo, tabelle strutturate"
         }
       },
       "goalImages": {

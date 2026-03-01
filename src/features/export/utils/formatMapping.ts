@@ -115,6 +115,10 @@ export function getValidFormats(projectType: ProjectType | undefined): ExportFor
     case 'sound-event-detection':
       return [];
 
+    // Tabular projects (no image export)
+    case 'tabular':
+      return [];
+
     // Time series projects (no image export applicable)
     case 'timeseries-classification':
     case 'timeseries-forecasting':

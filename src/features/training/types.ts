@@ -102,6 +102,7 @@ export interface PythonEnvStatus {
   tslearnVersion?: string | null;
   pypotsVersion?: string | null;
   stumpyVersion?: string | null;
+  sklearnVersion?: string | null;
 }
 
 export interface TrainingEnvInfo {
@@ -163,6 +164,10 @@ export interface TrainingEpochMetrics {
   rmse?: number | null;
   aucRoc?: number | null;
   silhouetteScore?: number | null;
+  // Tabular ML metrics
+  r2Score?: number | null;
+  mse?: number | null;
+  rocAuc?: number | null;
 }
 
 // ─── Training Result ────────────────────────────────────────────────────────
@@ -220,11 +225,13 @@ export interface TrainingJob {
 export type TrainingBackend =
   | 'yolo' | 'rt_detr' | 'rf_detr' | 'mmdetection' | 'smp' | 'hf_segmentation' | 'mmsegmentation'
   | 'detectron2' | 'mmpose' | 'mmrotate' | 'timm' | 'hf_classification'
-  | 'tsai' | 'pytorch_forecasting' | 'pyod' | 'tslearn' | 'pypots' | 'stumpy';
+  | 'tsai' | 'pytorch_forecasting' | 'pyod' | 'tslearn' | 'pypots' | 'stumpy'
+  | 'sklearn';
 export type ExecutionMode = 'local' | 'download_package';
 export type DatasetFormat = 'yolo_txt' | 'coco_json' | 'mask_png'
   | 'coco_instance_json' | 'coco_keypoints_json' | 'dota_txt'
-  | 'image_folder' | 'multi_label_csv' | 'time_series_csv';
+  | 'image_folder' | 'multi_label_csv' | 'time_series_csv'
+  | 'tabular_csv';
 
 export interface TrainingRequest {
   backend: TrainingBackend;
@@ -430,6 +437,17 @@ export interface PypotsBackendParams {
 export interface StumpyBackendParams {
   window_size: number;
   normalize: boolean;
+}
+
+export interface SklearnBackendParams {
+  n_estimators: number;
+  max_depth: number | null;
+  n_neighbors: number;
+  C: number;
+  alpha: number;
+  target_column: string;
+  feature_columns: string[];
+  task_type: string;
 }
 
 // ─── Training Panel State ───────────────────────────────────────────────────
