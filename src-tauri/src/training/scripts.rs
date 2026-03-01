@@ -8,7 +8,7 @@ fn py_bool(val: bool) -> &'static str {
 pub fn generate_train_script(config: &TrainingConfig, data_yaml_path: &str) -> String {
     let model_name = build_model_name(config);
     let task_suffix = task_arg(&config.task);
-    let data_yaml_path_quoted = format!("r\"{}\"", data_yaml_path.replace('\\', "\\\\"));
+    let data_yaml_path_quoted = format!("r\"{}\"", data_yaml_path.replace('\\', "/"));
     let device_quoted = format_device(&config.device);
     let task_line = if !task_suffix.is_empty() {
         format!("train_args[\"task\"] = \"{}\"", config.task)

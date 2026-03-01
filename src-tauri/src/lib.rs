@@ -9,6 +9,7 @@ use tauri::Manager;
 
 use store::AppState;
 use training::runner::TrainingProcessManager;
+use training::TrainingEnvCache;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -19,6 +20,7 @@ pub fn run() {
     tauri::Builder::default()
         .manage(app_state)
         .manage(TrainingProcessManager::new())
+        .manage(TrainingEnvCache::new())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .setup(|app| {
@@ -115,6 +117,13 @@ pub fn run() {
             commands::training_commands::list_training_jobs,
             commands::training_commands::delete_training_job,
             commands::training_commands::export_trained_model,
+            // Settings
+            commands::settings_commands::get_venv_info,
+            commands::settings_commands::list_installed_packages,
+            commands::settings_commands::update_packages,
+            commands::settings_commands::install_pytorch,
+            commands::settings_commands::remove_venv,
+            commands::settings_commands::detect_system_gpu,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

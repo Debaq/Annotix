@@ -3,20 +3,26 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { usePythonEnv } from '../hooks/usePythonEnv';
+import type { GpuInfo } from '../types';
 
 interface PythonEnvSetupProps {
-  onReady: () => void;
+  onReady: (gpu: GpuInfo | null) => void;
 }
 
 export function PythonEnvSetup({ onReady }: PythonEnvSetupProps) {
   const { t } = useTranslation();
-  const { envStatus, loading, setupProgress, error, checkEnv, setupEnv } = usePythonEnv();
+  const { envStatus, gpuInfo, loading, setupProgress, error, checkEnv, setupEnv } = usePythonEnv();
 
   useEffect(() => {
-    checkEnv().then((status) => {
-      if (status?.installed) onReady();
-    });
-  }, [checkEnv, onReady]);
+    checkEnv();
+  }, [checkEnv]);
+
+  // Cuando env+gpu están listos, notificar al padre
+  useEffect(() => {
+    if (envStatus?.installed) {
+      onReady(gpuInfo);
+    }
+  }, [envStatus, gpuInfo, onReady]);
 
   if (loading && !setupProgress) {
     return (

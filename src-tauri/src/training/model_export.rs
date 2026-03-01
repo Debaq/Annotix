@@ -16,9 +16,10 @@ pub fn export_model(model_path: &str, format: &str) -> Result<String, String> {
 
     let script = scripts::generate_export_script(model_path, format);
 
-    let output = Command::new(&python)
-        .args(["-c", &script])
-        .output()
+    let mut cmd = Command::new(&python);
+    cmd.args(["-c", &script]);
+    super::hide_console_window(&mut cmd);
+    let output = cmd.output()
         .map_err(|e| format!("Error ejecutando export: {}", e))?;
 
     if !output.status.success() {

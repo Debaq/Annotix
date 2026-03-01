@@ -89,6 +89,11 @@ export interface PythonEnvStatus {
   cudaAvailable: boolean;
 }
 
+export interface TrainingEnvInfo {
+  env: PythonEnvStatus;
+  gpu: GpuInfo;
+}
+
 // ─── GPU ────────────────────────────────────────────────────────────────────
 
 export interface GpuInfo {

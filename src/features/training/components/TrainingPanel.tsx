@@ -14,7 +14,6 @@ import {
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useTrainingConfig } from '../hooks/useTrainingConfig';
 import { useTrainingProgress } from '../hooks/useTrainingProgress';
-import { useGpuDetection } from '../hooks/useGpuDetection';
 import { trainingService } from '../services/trainingService';
 import { PythonEnvSetup } from './PythonEnvSetup';
 import { TrainingSetup } from './TrainingSetup';
@@ -22,6 +21,7 @@ import { TrainingMonitor } from './TrainingMonitor';
 import { TrainingResult } from './TrainingResult';
 import { TrainingJobList } from './TrainingJobList';
 import type { TrainingPhase } from '../types';
+import type { GpuInfo } from '../types';
 
 interface TrainingPanelProps {
   trigger?: ReactNode;
@@ -34,11 +34,12 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
   const [phase, setPhase] = useState<TrainingPhase>('setup');
   const [envReady, setEnvReady] = useState(false);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [gpuInfo, setGpuInfo] = useState<GpuInfo | null>(null);
+  const [gpuLoading] = useState(false);
 
   const { config, updateConfig, updateAugmentation, applyPreset } = useTrainingConfig(
     project?.type || 'bbox'
   );
-  const { gpuInfo, loading: gpuLoading, detectGpu } = useGpuDetection();
   const {
     progress,
     epoch,
@@ -51,12 +52,12 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
     reset: resetProgress,
   } = useTrainingProgress(activeJobId);
 
-  // Detect GPU on env ready
-  const handleEnvReady = useCallback(() => {
+  // Env check ya devuelve GPU info → transición directa
+  const handleEnvReady = useCallback((gpu: GpuInfo | null) => {
     setEnvReady(true);
     setPhase('config');
-    detectGpu();
-  }, [detectGpu]);
+    if (gpu) setGpuInfo(gpu);
+  }, []);
 
   // Watch for training completion
   useEffect(() => {
