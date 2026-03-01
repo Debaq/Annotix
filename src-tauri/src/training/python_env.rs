@@ -1,7 +1,62 @@
+use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{Command, Stdio};
+use crate::training::PythonEnvStatus;
 
-use super::PythonEnvStatus;
+/// Ejecuta un comando y emite progreso y logs detallados (para la consola de la UI)
+pub fn run_with_feedback<F: Fn(&str, f64, Option<String>)>(
+    mut cmd: Command,
+    base_msg: &str,
+    base_progress: f64,
+    progress_span: f64,
+    emit_feedback: &F,
+) -> Result<(), String> {
+    super::hide_console_window(&mut cmd);
+    cmd.stdout(Stdio::piped());
+    cmd.stderr(Stdio::piped());
+
+    let mut child = cmd.spawn().map_err(|e| format!("Fallo al iniciar comando: {}", e))?;
+    
+    let stdout = child.stdout.take().unwrap();
+    let stderr = child.stderr.take().unwrap();
+    
+    let reader_out = BufReader::new(stdout);
+    let reader_err = BufReader::new(stderr);
+
+    // Canal para combinar salidas
+    let (tx, rx) = std::sync::mpsc::channel();
+
+    let tx_out = tx.clone();
+    std::thread::spawn(move || {
+        for line in reader_out.lines().flatten() {
+            let _ = tx_out.send(line);
+        }
+    });
+
+    let tx_err = tx.clone();
+    std::thread::spawn(move || {
+        for line in reader_err.lines().flatten() {
+            let _ = tx_err.send(format!("ERR: {}", line));
+        }
+    });
+
+    drop(tx); // Cerrar el original para que rx termine cuando los hilos mueran
+
+    let mut line_count = 0;
+    while let Ok(line) = rx.recv() {
+        line_count += 1;
+        let p = base_progress + (line_count as f64 * 0.05).min(progress_span * 0.95);
+        emit_feedback(base_msg, p, Some(line));
+    }
+
+    let status = child.wait().map_err(|e| format!("Error esperando comando: {}", e))?;
+    if !status.success() {
+        return Err(format!("El comando falló con estado {}", status));
+    }
+
+    emit_feedback(base_msg, base_progress + progress_span, None);
+    Ok(())
+}
 
 /// Obtiene la ruta del directorio del virtualenv
 pub fn venv_dir() -> Result<PathBuf, String> {
@@ -72,6 +127,7 @@ pub fn check_env_full() -> Result<(PythonEnvStatus, super::GpuInfo), String> {
         tslearn_version: None,
         pypots_version: None,
         stumpy_version: None,
+        sklearn_version: None,
     };
     let no_gpu = super::GpuInfo {
         cuda_available: false,
@@ -94,7 +150,8 @@ result = {
     "smp": None, "hf_transformers": None, "mmseg": None,
     "detectron2": None, "mmpose": None, "mmrotate": None,
     "timm": None, "tsai": None, "pytorch_forecasting": None,
-    "pyod": None, "tslearn": None, "pypots": None, "stumpy": None
+    "pyod": None, "tslearn": None, "pypots": None, "stumpy": None,
+    "sklearn": None
 }
 try:
     import ultralytics
@@ -177,6 +234,11 @@ try:
 except ImportError:
     pass
 try:
+    import sklearn
+    result["sklearn"] = sklearn.__version__
+except ImportError:
+    pass
+try:
     import torch
     result["torch"] = torch.__version__
     result["cuda"] = torch.cuda.is_available()
@@ -225,6 +287,7 @@ print(json.dumps(result))
             tslearn_version: None,
             pypots_version: None,
             stumpy_version: None,
+            sklearn_version: None,
         };
         return Ok((env, no_gpu));
     }
@@ -251,7 +314,8 @@ print(json.dumps(result))
     let tslearn_version = info["tslearn"].as_str().map(|s| s.to_string());
     let pypots_version = info["pypots"].as_str().map(|s| s.to_string());
     let stumpy_version = info["stumpy"].as_str().map(|s| s.to_string());
-    let installed = ultralytics_version.is_some();
+    let sklearn_version = info["sklearn"].as_str().map(|s| s.to_string());
+    let installed = true; // Si el ejecutable existe, el entorno base está listo
 
     let env = PythonEnvStatus {
         installed,
@@ -274,6 +338,7 @@ print(json.dumps(result))
         tslearn_version,
         pypots_version,
         stumpy_version,
+        sklearn_version,
     };
 
     let cuda_version = info["cuda_version"].as_str().map(|s| s.to_string());
@@ -304,33 +369,43 @@ print(json.dumps(result))
     Ok((env, gpu))
 }
 
-/// Instala paquetes extra en el venv existente
-pub fn install_packages(packages: &[&str]) -> Result<(), String> {
+/// Instala paquetes extra en el venv existente con feedback opcional
+pub fn install_packages<F: Fn(&str, f64, Option<String>)>(packages: &[&str], emit_feedback: Option<F>) -> Result<(), String> {
     let python = venv_python()?;
     if !python.exists() {
         return Err("Entorno Python no configurado".to_string());
     }
 
-    for pkg in packages {
+    let total = packages.len();
+    for (i, pkg) in packages.iter().enumerate() {
         let mut cmd = Command::new(&python);
         // For OpenMMLab packages we use mim install
         if *pkg == "mmcv" || *pkg == "mmdet" || *pkg == "mmengine" || *pkg == "mmsegmentation"
            || *pkg == "mmpose" || *pkg == "mmrotate" {
             cmd = Command::new(&python);
-            cmd.args(["-m", "mim", "install", pkg]);
+            cmd.args(["-m", "mim", "install", *pkg]);
         } else {
-            cmd.args(["-m", "pip", "install", pkg]);
+            cmd.args(["-m", "pip", "install", *pkg]);
         }
-        super::hide_console_window(&mut cmd);
-        let output = cmd.output()
-            .map_err(|e| format!("Error instalando {}: {}", pkg, e))?;
 
-        if !output.status.success() {
-            return Err(format!(
-                "Error instalando {}: {}",
-                pkg,
-                String::from_utf8_lossy(&output.stderr)
-            ));
+        let base_p = (i as f64 / total as f64) * 100.0;
+        let span = 100.0 / total as f64;
+        let msg = format!("Instalando {}", pkg);
+
+        if let Some(ref emit) = emit_feedback {
+            run_with_feedback(cmd, &msg, base_p, span, emit)?;
+        } else {
+            super::hide_console_window(&mut cmd);
+            let output = cmd.output()
+                .map_err(|e| format!("Error instalando {}: {}", pkg, e))?;
+
+            if !output.status.success() {
+                return Err(format!(
+                    "Error instalando {}: {}",
+                    pkg,
+                    String::from_utf8_lossy(&output.stderr)
+                ));
+            }
         }
     }
 
@@ -363,61 +438,33 @@ pub fn is_package_installed(name: &str) -> bool {
     }
 }
 
-/// Crea el virtualenv e instala ultralytics
-pub fn setup_env<F: Fn(&str, f64)>(emit_progress: F) -> Result<(), String> {
-    let system_python = find_system_python()
-        .ok_or("No se encontró Python 3 en el sistema. Por favor instala Python 3.10+ primero.")?;
-
+/// Crea el virtualenv base usando Micromamba (permite elegir versión de Python)
+pub fn setup_env_base<F: Fn(&str, f64, Option<String>)>(
+    python_version: &str,
+    emit_feedback: F
+) -> Result<(), String> {
+    let mm = super::micromamba::Micromamba::new()?;
     let venv = venv_dir()?;
 
-    emit_progress("Creando entorno virtual...", 10.0);
-
-    // Crear venv
-    let mut cmd = Command::new(&system_python);
-    cmd.args(["-m", "venv", &venv.to_string_lossy()]);
-    super::hide_console_window(&mut cmd);
-    let output = cmd.output()
-        .map_err(|e| format!("Error creando venv: {}", e))?;
-
-    if !output.status.success() {
-        return Err(format!(
-            "Error creando virtualenv: {}",
-            String::from_utf8_lossy(&output.stderr)
-        ));
+    // Eliminar si existe para reinstalación limpia si se cambia versión
+    if venv.exists() {
+        let _ = std::fs::remove_dir_all(&venv);
     }
+
+    emit_feedback(&format!("Iniciando creación de entorno Python {}...", python_version), 5.0, None);
+
+    mm.create_env(&venv, python_version, &emit_feedback)?;
 
     let python = venv_python()?;
+    emit_feedback("Asegurando herramientas base (pip, wheel)...", 85.0, None);
 
-    emit_progress("Actualizando pip...", 20.0);
-
-    // Upgrade pip
+    // Upgrade base tools inside the new env
     let mut cmd = Command::new(&python);
-    cmd.args(["-m", "pip", "install", "--upgrade", "pip"]);
-    super::hide_console_window(&mut cmd);
-    let output = cmd.output()
-        .map_err(|e| format!("Error actualizando pip: {}", e))?;
+    cmd.args(["-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel", "packaging"]);
+    run_with_feedback(cmd, "Configurando herramientas base", 85.0, 10.0, &emit_feedback)?;
 
-    if !output.status.success() {
-        log::warn!("pip upgrade falló, continuando...");
-    }
-
-    emit_progress("Instalando ultralytics (esto puede tardar unos minutos)...", 30.0);
-
-    // Install ultralytics (trae torch como dependencia)
-    let mut cmd = Command::new(&python);
-    cmd.args(["-m", "pip", "install", "ultralytics"]);
-    super::hide_console_window(&mut cmd);
-    let output = cmd.output()
-        .map_err(|e| format!("Error instalando ultralytics: {}", e))?;
-
-    if !output.status.success() {
-        return Err(format!(
-            "Error instalando ultralytics: {}",
-            String::from_utf8_lossy(&output.stderr)
-        ));
-    }
-
-    emit_progress("Entorno listo", 100.0);
+    emit_feedback("Entorno base listo", 100.0, None);
 
     Ok(())
 }
+

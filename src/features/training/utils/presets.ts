@@ -387,6 +387,7 @@ export const BACKEND_DEFAULTS: Record<TrainingBackend, BackendDefaults> = {
   pytorch_forecasting: { epochs: 100, batchSize: 64, imageSize: 0, lr: 0.001, patience: 10 },
   pyod: { epochs: 100, batchSize: 64, imageSize: 0, lr: 0.001, patience: 0 },
   tslearn: { epochs: 50, batchSize: 0, imageSize: 0, lr: 0.001, patience: 0 },
-  pypots: { epochs: 100, batchSize: 32, imageSize: 0, lr: 0.001, patience: 10 },
+  pypots: { epochs: 100, batchSize: 32, imageSize: 0, lr: 0.01, patience: 10 },
   stumpy: { epochs: 1, batchSize: 0, imageSize: 0, lr: 0.001, patience: 0 },
+  sklearn: { epochs: 1, batchSize: 0, imageSize: 0, lr: 0.01, patience: 0 },
 };

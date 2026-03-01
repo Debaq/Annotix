@@ -1,9 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { listen } from '@tauri-apps/api/event';
 import {
   TASK_COLORS, TASK_LABELS, BACKEND_COLORS,
   type BackendMeta, type ModelEntry,
 } from '../../data/backendsData';
+import { trainingService } from '@/features/training/services/trainingService';
+import { TerminalConsole } from '../TerminalConsole';
+import { Progress } from '@/components/ui/progress';
 
 interface Props {
   backend: BackendMeta;
@@ -15,6 +19,9 @@ interface Props {
 
 export function BackendDetailPanel({ backend, models, search, onSelectModel, onViewScript }: Props) {
   const { t } = useTranslation();
+  const [preparing, setPreparing] = useState(false);
+  const [progress, setProgress] = useState<{ message: string; progress: number } | null>(null);
+  const [logs, setLogs] = useState<string[]>([]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -24,10 +31,33 @@ export function BackendDetailPanel({ backend, models, search, onSelectModel, onV
     );
   }, [models, search]);
 
+  useEffect(() => {
+    if (!preparing) return;
+    const unlisten = listen<{ message: string; progress: number; log?: string }>('training:env-setup-progress', (event) => {
+      setProgress(event.payload);
+      if (event.payload.log) setLogs(prev => [...prev, event.payload.log!]);
+    });
+    return () => { unlisten.then(f => f()); };
+  }, [preparing]);
+
+  const handlePrepare = async () => {
+    setPreparing(true);
+    setLogs([]);
+    try {
+      await trainingService.installBackendPackages(backend.id);
+      alert('Backend preparado con éxito');
+    } catch (e) {
+      alert(`Error: ${e}`);
+    } finally {
+      setPreparing(false);
+      setProgress(null);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b border-[var(--annotix-border)] bg-gray-50/50 shrink-0">
+      <div className="p-4 border-b border-[var(--annotix-border)] bg-[var(--annotix-light)] shrink-0 transition-colors">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${BACKEND_COLORS[backend.id]}`}>
@@ -47,14 +77,35 @@ export function BackendDetailPanel({ backend, models, search, onSelectModel, onV
               </div>
             </div>
           </div>
-          <button
-            onClick={onViewScript}
-            className="text-[12px] px-3 py-1.5 rounded-lg border border-[var(--annotix-border)] text-muted-foreground hover:text-[var(--annotix-primary)] hover:border-[var(--annotix-primary)] transition-colors flex items-center gap-1.5"
-          >
-            <i className="fas fa-code text-[10px]" />
-            {t('settings.trainingModels.viewScript')}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handlePrepare}
+              disabled={preparing}
+              className="text-[12px] px-3 py-1.5 rounded-lg bg-[var(--annotix-primary)] text-white hover:bg-[var(--annotix-primary)]/90 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+            >
+              {preparing ? <i className="fas fa-spinner fa-spin text-[10px]" /> : <i className="fas fa-tools text-[10px]" />}
+              {t('settings.trainingModels.prepareBackend', 'Preparar Backend')}
+            </button>
+            <button
+              onClick={onViewScript}
+              className="text-[12px] px-3 py-1.5 rounded-lg border border-[var(--annotix-border)] text-muted-foreground hover:text-[var(--annotix-primary)] hover:border-[var(--annotix-primary)] transition-colors flex items-center gap-1.5"
+            >
+              <i className="fas fa-code text-[10px]" />
+              {t('settings.trainingModels.viewScript')}
+            </button>
+          </div>
         </div>
+
+        {preparing && (
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="font-medium">{progress?.message || 'Iniciando...'}</span>
+              <span className="text-muted-foreground">{Math.round(progress?.progress || 0)}%</span>
+            </div>
+            <Progress value={progress?.progress ?? 5} className="h-1" />
+            <TerminalConsole logs={logs} maxHeight="150px" />
+          </div>
+        )}
       </div>
 
       {/* Model cards */}
@@ -73,7 +124,7 @@ export function BackendDetailPanel({ backend, models, search, onSelectModel, onV
               <button
                 key={m.id}
                 onClick={() => onSelectModel(m.id)}
-                className="text-left p-3 rounded-lg border border-[var(--annotix-border)] bg-white hover:border-[var(--annotix-primary)]/40 hover:shadow-sm transition-all group"
+                className="text-left p-3 rounded-lg border border-[var(--annotix-border)] bg-[var(--annotix-white)] hover:border-[var(--annotix-primary)]/40 hover:shadow-sm transition-all group"
               >
                 <div className="flex items-center gap-1.5 mb-1">
                   <span className="text-[13px] font-medium text-[var(--annotix-dark)] group-hover:text-[var(--annotix-primary)] transition-colors">{m.name}</span>
@@ -95,7 +146,7 @@ export function BackendDetailPanel({ backend, models, search, onSelectModel, onV
                 {m.sizes && (
                   <div className="flex gap-0.5 mt-1.5">
                     {m.sizes.map(s => (
-                      <span key={s} className="text-[9px] w-[16px] h-[16px] rounded flex items-center justify-center bg-gray-100 text-muted-foreground font-mono uppercase">{s}</span>
+                      <span key={s} className="text-[9px] w-[16px] h-[16px] rounded flex items-center justify-center bg-[var(--annotix-gray-light)] text-muted-foreground font-mono uppercase">{s}</span>
                     ))}
                   </div>
                 )}

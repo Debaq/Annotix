@@ -19,7 +19,7 @@ export function OverviewPanel({ onSelectBackend }: Props) {
             <button
               key={b.id}
               onClick={() => onSelectBackend(b.id)}
-              className="text-left p-4 rounded-xl border border-[var(--annotix-border)] bg-white hover:border-[var(--annotix-primary)]/40 hover:shadow-sm transition-all group"
+              className="text-left p-4 rounded-xl border border-[var(--annotix-border)] bg-[var(--annotix-white)] hover:border-[var(--annotix-primary)]/40 hover:shadow-sm transition-all group"
             >
               <div className="flex items-center gap-2 mb-2">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${BACKEND_COLORS[b.id]}`}>

@@ -40,9 +40,9 @@ export function ParamsTable({ backendId }: Props) {
   if (params.length === 0) return null;
 
   return (
-    <div className="rounded-lg border border-[var(--annotix-border)] overflow-hidden">
+    <div className="rounded-lg border border-[var(--annotix-border)] overflow-hidden transition-colors">
       <table className="w-full text-sm">
-        <thead className="bg-gray-50">
+        <thead className="bg-[var(--annotix-light)] transition-colors">
           <tr className="text-[11px] text-muted-foreground font-medium">
             <th className="text-left py-2 px-3">{t('settings.trainingModels.parameter')}</th>
             <th className="text-left py-2 px-3">{t('settings.trainingModels.type')}</th>
@@ -52,7 +52,7 @@ export function ParamsTable({ backendId }: Props) {
         </thead>
         <tbody className="divide-y divide-[var(--annotix-border)]">
           {params.map(p => (
-            <tr key={p.key} className="hover:bg-gray-50/50 transition-colors">
+            <tr key={p.key} className="hover:bg-[var(--annotix-light)] transition-colors">
               <td className="py-1.5 px-3 font-mono text-[12px] text-[var(--annotix-dark)]">{p.key}</td>
               <td className="py-1.5 px-3 text-[11px] text-muted-foreground">{formatType(p)}</td>
               <td className="py-1.5 px-3 font-mono text-[12px] text-[var(--annotix-dark)]">{formatDefault(p, defaults[p.key])}</td>

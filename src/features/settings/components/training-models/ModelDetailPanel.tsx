@@ -18,7 +18,7 @@ export function ModelDetailPanel({ model, backend, onBack, onViewScript }: Props
   return (
     <div className="flex flex-col h-full">
       {/* Breadcrumb */}
-      <div className="px-4 py-2.5 border-b border-[var(--annotix-border)] bg-gray-50/50 shrink-0">
+      <div className="px-4 py-2.5 border-b border-[var(--annotix-border)] bg-[var(--annotix-light)] shrink-0 transition-colors">
         <div className="flex items-center gap-1.5 text-[12px]">
           <button onClick={onBack} className="text-[var(--annotix-primary)] hover:underline">
             {backend.name}
@@ -45,7 +45,7 @@ export function ModelDetailPanel({ model, backend, onBack, onViewScript }: Props
             <p className="text-sm text-muted-foreground mt-1">{model.description}</p>
           </div>
           {model.params && (
-            <span className="text-sm font-mono text-muted-foreground bg-gray-100 px-2 py-1 rounded shrink-0">
+            <span className="text-sm font-mono text-muted-foreground bg-[var(--annotix-gray-light)] px-2 py-1 rounded shrink-0 transition-colors">
               {model.params}
             </span>
           )}
@@ -73,7 +73,7 @@ export function ModelDetailPanel({ model, backend, onBack, onViewScript }: Props
             </h4>
             <div className="flex gap-1.5 flex-wrap">
               {model.sizes.map(s => (
-                <span key={s} className="text-[11px] px-2.5 py-1 rounded-md bg-gray-100 text-[var(--annotix-dark)] font-mono">
+                <span key={s} className="text-[11px] px-2.5 py-1 rounded-md bg-[var(--annotix-gray-light)] text-[var(--annotix-dark)] font-mono transition-colors">
                   <span className="uppercase font-semibold">{s}</span>
                   <span className="text-muted-foreground ml-1 text-[10px]">{SIZE_LABELS[s]}</span>
                 </span>
@@ -83,7 +83,7 @@ export function ModelDetailPanel({ model, backend, onBack, onViewScript }: Props
         )}
 
         {/* Backend info */}
-        <div className="flex items-center gap-4 text-[12px] text-muted-foreground p-3 rounded-lg bg-gray-50 border border-[var(--annotix-border)]">
+        <div className="flex items-center gap-4 text-[12px] text-muted-foreground p-3 rounded-lg bg-[var(--annotix-light)] border border-[var(--annotix-border)] transition-colors">
           <div className={`w-7 h-7 rounded-md flex items-center justify-center ${BACKEND_COLORS[backend.id]}`}>
             <i className={`${backend.icon} text-xs`} />
           </div>

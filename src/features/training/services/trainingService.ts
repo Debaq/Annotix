@@ -15,8 +15,8 @@ export const trainingService = {
     return invoke('check_python_env');
   },
 
-  setupPythonEnv(): Promise<TrainingEnvInfo> {
-    return invoke('setup_python_env');
+  setupPythonEnv(pythonVersion: string): Promise<TrainingEnvInfo> {
+    return invoke('setup_python_env', { pythonVersion });
   },
 
   detectGpu(): Promise<GpuInfo> {

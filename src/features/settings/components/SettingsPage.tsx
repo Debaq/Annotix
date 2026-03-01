@@ -21,13 +21,13 @@ export function SettingsPage() {
   const activeLabelKey = sections.find(s => s.id === activeSection)?.labelKey ?? sections[0].labelKey;
 
   return (
-    <div className="flex h-full bg-[var(--annotix-light)]">
+    <div className="flex h-full bg-[var(--annotix-light)] text-[var(--annotix-dark)] transition-colors">
       {/* Sidebar */}
-      <div className="w-56 border-r border-[var(--annotix-border)] bg-white flex flex-col">
+      <div className="w-56 border-r border-[var(--annotix-border)] bg-[var(--annotix-white)] flex flex-col transition-colors">
         <div className="p-4 border-b border-[var(--annotix-border)]">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-[var(--annotix-dark)] transition-colors"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-[var(--annotix-primary)] transition-colors"
           >
             <i className="fas fa-arrow-left" />
             {t('settings.back')}
@@ -41,8 +41,8 @@ export function SettingsPage() {
               onClick={() => setActiveSection(section.id)}
               className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-2 ${
                 activeSection === section.id
-                  ? 'bg-[var(--annotix-primary)]/10 text-[var(--annotix-primary)] font-medium'
-                  : 'text-muted-foreground hover:bg-gray-100'
+                  ? 'bg-[var(--annotix-primary)]/10 text-[var(--annotix-primary)] font-medium shadow-sm'
+                  : 'text-muted-foreground hover:bg-[var(--annotix-gray-light)] hover:text-[var(--annotix-dark)]'
               }`}
             >
               <i className={`${section.icon} text-[13px]`} />

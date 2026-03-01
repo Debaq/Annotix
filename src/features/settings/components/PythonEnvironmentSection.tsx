@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { settingsService } from '../services/settingsService';
 import { trainingService } from '@/features/training/services/trainingService';
 import type { VenvInfo, InstalledPackage, SystemGpuInfo, PackageUpdateProgress, PytorchInstallProgress } from '../types';
+import { TerminalConsole } from './TerminalConsole';
 
 export function PythonEnvironmentSection() {
   const { t } = useTranslation();
@@ -19,15 +20,27 @@ export function PythonEnvironmentSection() {
   const [removingVenv, setRemovingVenv] = useState(false);
   const [updatingPackages, setUpdatingPackages] = useState(false);
   const [installingPytorch, setInstallingPytorch] = useState(false);
-  const [setupProgress, setSetupProgress] = useState<{ message: string; progress: number } | null>(null);
-  const [packageProgress, setPackageProgress] = useState<PackageUpdateProgress | null>(null);
-  const [pytorchProgress, setPytorchProgress] = useState<PytorchInstallProgress | null>(null);
+  const [setupProgress, setSetupProgress] = useState<{ message: string; progress: number; log?: string } | null>(null);
+  const [packageProgress, setPackageProgress] = useState<PackageUpdateProgress & { log?: string } | null>(null);
+  const [pytorchProgress, setPytorchProgress] = useState<PytorchInstallProgress & { log?: string } | null>(null);
+  const [installLogs, setInstallLogs] = useState<string[]>([]);
   const [selectedCuda, setSelectedCuda] = useState<string>('cpu');
+  const [selectedPython, setSelectedPython] = useState<string>('3.10');
+  const [isDesktop, setIsDesktop] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Torch info from env check
   const [torchVersion, setTorchVersion] = useState<string | null>(null);
   const [cudaAvailable, setCudaAvailable] = useState(false);
+
+  useEffect(() => {
+    // Check if we are on a desktop platform
+    // @ts-ignore
+    const platform = window.__TAURI_INTERNALS__?.metadata?.platform || 'desktop';
+    if (platform === 'android' || platform === 'ios') {
+      setIsDesktop(false);
+    }
+  }, []);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -48,7 +61,6 @@ export function PythonEnvironmentSection() {
         const pkgs = await settingsService.listInstalledPackages();
         setPackages(pkgs);
 
-        // Get torch/cuda info via training env check
         try {
           const envInfo = await trainingService.checkPythonEnv();
           setTorchVersion(envInfo.env.torchVersion);
@@ -70,17 +82,26 @@ export function PythonEnvironmentSection() {
 
   // Listen for progress events
   useEffect(() => {
-    const unlistenSetup = listen<{ message: string; progress: number }>(
+    const unlistenSetup = listen<{ message: string; progress: number; log?: string }>(
       'training:env-setup-progress',
-      (event) => setSetupProgress(event.payload)
+      (event) => {
+        setSetupProgress(event.payload);
+        if (event.payload.log) setInstallLogs(prev => [...prev, event.payload.log!]);
+      }
     );
-    const unlistenPkg = listen<PackageUpdateProgress>(
+    const unlistenPkg = listen<PackageUpdateProgress & { log?: string }>(
       'settings:package-update-progress',
-      (event) => setPackageProgress(event.payload)
+      (event) => {
+        setPackageProgress(event.payload);
+        if (event.payload.log) setInstallLogs(prev => [...prev, event.payload.log!]);
+      }
     );
-    const unlistenPytorch = listen<PytorchInstallProgress>(
+    const unlistenPytorch = listen<PytorchInstallProgress & { log?: string }>(
       'settings:pytorch-install-progress',
-      (event) => setPytorchProgress(event.payload)
+      (event) => {
+        setPytorchProgress(event.payload);
+        if (event.payload.log) setInstallLogs(prev => [...prev, event.payload.log!]);
+      }
     );
 
     return () => {
@@ -93,26 +114,23 @@ export function PythonEnvironmentSection() {
   const handleCreateVenv = async () => {
     setCreatingVenv(true);
     setError(null);
+    setInstallLogs([]);
     try {
-      await trainingService.setupPythonEnv();
+      await trainingService.setupPythonEnv(selectedPython);
       setSetupProgress(null);
       await loadAll();
     } catch (e) {
       setError(String(e));
     } finally {
       setCreatingVenv(false);
-      setSetupProgress(null);
     }
   };
 
   const handleRemoveVenv = async () => {
+    if (!confirm(t('common.deleteConfirm'))) return;
     setRemovingVenv(true);
-    setError(null);
     try {
       await settingsService.removeVenv();
-      setPackages([]);
-      setTorchVersion(null);
-      setCudaAvailable(false);
       await loadAll();
     } catch (e) {
       setError(String(e));
@@ -123,10 +141,10 @@ export function PythonEnvironmentSection() {
 
   const handleUpdatePackages = async () => {
     setUpdatingPackages(true);
-    setError(null);
+    setInstallLogs([]);
     try {
-      await settingsService.updatePackages(['ultralytics', 'torch', 'torchvision', 'torchaudio']);
-      setPackageProgress(null);
+      const names = packages.map(p => p.name);
+      await settingsService.updatePackages(names);
       await loadAll();
     } catch (e) {
       setError(String(e));
@@ -138,10 +156,9 @@ export function PythonEnvironmentSection() {
 
   const handleInstallPytorch = async () => {
     setInstallingPytorch(true);
-    setError(null);
+    setInstallLogs([]);
     try {
       await settingsService.installPytorch(selectedCuda);
-      setPytorchProgress(null);
       await loadAll();
     } catch (e) {
       setError(String(e));
@@ -151,57 +168,53 @@ export function PythonEnvironmentSection() {
     }
   };
 
-  if (loading) {
+  if (loading && !venvInfo) {
+    return <div className="p-8 text-center text-muted-foreground">{t('common.loading')}</div>;
+  }
+
+  if (!isDesktop) {
     return (
-      <div className="flex flex-col items-center gap-4 p-12">
-        <i className="fas fa-spinner fa-spin text-2xl text-blue-500" />
-        <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
+      <div className="p-8 text-center bg-amber-50 border border-amber-100 rounded-xl max-w-2xl mx-auto">
+        <i className="fas fa-desktop text-4xl text-amber-400 mb-4" />
+        <h3 className="text-lg font-bold text-amber-900">Característica no disponible</h3>
+        <p className="text-amber-800 mt-2">
+          La gestión de entornos Python locales y el entrenamiento de modelos solo están disponibles en las versiones de escritorio (Windows, macOS, Linux).
+        </p>
       </div>
     );
   }
 
+  const isBusy = creatingVenv || updatingPackages || installingPytorch;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl">
       {error && (
-        <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 text-sm">
-          <i className="fas fa-exclamation-circle mr-2" />
+        <div className="p-3 bg-red-50 text-red-600 rounded-lg border border-red-100 text-sm flex items-center gap-2">
+          <i className="fas fa-exclamation-circle" />
           {error}
         </div>
       )}
 
-      {/* Card 1: System Python */}
-      <div className="rounded-lg border border-[var(--annotix-border)] bg-white p-5">
-        <h3 className="text-sm font-semibold text-[var(--annotix-dark)] mb-3 flex items-center gap-2">
-          <i className="fas fa-terminal text-blue-500" />
-          {t('settings.pythonEnv.systemPython')}
-        </h3>
-        {venvInfo?.systemPython ? (
-          <div className="flex items-center gap-2 text-sm text-green-600">
-            <i className="fas fa-check-circle" />
-            <span>{t('settings.pythonEnv.systemPythonFound', { python: venvInfo.systemPython })}</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 text-sm text-amber-600">
-            <i className="fas fa-exclamation-triangle" />
-            <span>{t('settings.pythonEnv.systemPythonNotFound')}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Card 2: Virtual Environment */}
-      <div className="rounded-lg border border-[var(--annotix-border)] bg-white p-5">
+      {/* Card 1: Virtual Environment Status */}
+      <div className="rounded-lg border border-[var(--annotix-border)] bg-[var(--annotix-white)] p-5 transition-colors">
         <h3 className="text-sm font-semibold text-[var(--annotix-dark)] mb-3 flex items-center gap-2">
           <i className="fas fa-box text-purple-500" />
           {t('settings.pythonEnv.venv')}
         </h3>
 
-        {creatingVenv && setupProgress ? (
+        {creatingVenv ? (
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <i className="fas fa-cog fa-spin text-blue-500" />
-              <p className="text-sm">{setupProgress.message}</p>
+              <i className="fas fa-cog fa-spin text-[var(--annotix-primary)]" />
+              <p className="text-sm font-medium">
+                {setupProgress?.message || t('common.starting')}
+              </p>
             </div>
-            <Progress value={setupProgress.progress} />
+            <Progress value={setupProgress?.progress ?? 5} className="h-2" />
+            <p className="text-[10px] text-muted-foreground animate-pulse italic">
+              {t('settings.pythonEnv.pleaseWait')}
+            </p>
+            <TerminalConsole logs={installLogs} />
           </div>
         ) : venvInfo?.exists ? (
           <div className="space-y-3">
@@ -220,7 +233,7 @@ export function PythonEnvironmentSection() {
               </div>
               <div className="col-span-2">
                 <span className="text-muted-foreground">{t('settings.pythonEnv.path')}:</span>
-                <span className="ml-2 font-mono text-xs break-all">{venvInfo.path}</span>
+                <span className="ml-2 font-mono text-[10px] break-all text-[var(--annotix-dark)] opacity-70">{venvInfo.path}</span>
               </div>
             </div>
             <div className="pt-2">
@@ -228,38 +241,129 @@ export function PythonEnvironmentSection() {
                 variant="destructive"
                 size="sm"
                 onClick={handleRemoveVenv}
-                disabled={removingVenv}
+                disabled={isBusy || removingVenv}
               >
-                {removingVenv ? (
-                  <i className="fas fa-spinner fa-spin mr-2" />
-                ) : (
-                  <i className="fas fa-trash mr-2" />
-                )}
+                {removingVenv ? <i className="fas fa-spinner fa-spin mr-2" /> : <i className="fas fa-trash mr-2" />}
                 {t('settings.pythonEnv.removeVenv')}
               </Button>
             </div>
           </div>
         ) : (
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">{t('settings.pythonEnv.venvNotExists')}</p>
-            <Button
-              onClick={handleCreateVenv}
-              disabled={creatingVenv || !venvInfo?.systemPython}
-            >
-              {creatingVenv ? (
-                <i className="fas fa-spinner fa-spin mr-2" />
-              ) : (
+          <div className="space-y-4 text-center py-6 bg-[var(--annotix-light)] rounded-lg border border-dashed border-[var(--annotix-border)]">
+            <div className="max-w-xs mx-auto space-y-3">
+              <p className="text-sm text-muted-foreground px-4">{t('settings.pythonEnv.venvNotExists')}</p>
+              
+              <div className="text-left bg-[var(--annotix-white)] p-3 rounded-lg border border-[var(--annotix-border)]">
+                <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">Versión de Python</span>
+                <select 
+                  value={selectedPython}
+                  onChange={(e) => setSelectedPython(e.target.value)}
+                  className="w-full h-9 rounded-md border border-[var(--annotix-border)] bg-[var(--annotix-white)] text-sm px-2 outline-none focus:border-[var(--annotix-primary)]"
+                  disabled={isBusy}
+                >
+                  <option value="3.9">Python 3.9 (Estable ML)</option>
+                  <option value="3.10">Python 3.10 (Recomendado)</option>
+                  <option value="3.11">Python 3.11 (Más rápido)</option>
+                </select>
+              </div>
+
+              <Button
+                onClick={handleCreateVenv}
+                disabled={isBusy}
+                className="w-full"
+              >
                 <i className="fas fa-plus mr-2" />
-              )}
-              {t('settings.pythonEnv.createVenv')}
-            </Button>
+                {t('settings.pythonEnv.createVenv')}
+              </Button>
+              
+              <div className="flex items-center justify-center gap-2 pt-1">
+                <span className="text-[9px] text-muted-foreground uppercase tracking-widest font-medium">Powered by</span>
+                <div className="flex items-center gap-1 opacity-60 grayscale hover:opacity-100 hover:grayscale-0 transition-all cursor-default">
+                  <i className="fas fa-snake text-[10px] text-yellow-500" />
+                  <span className="text-[10px] font-bold bg-gradient-to-r from-yellow-600 to-green-600 bg-clip-text text-transparent">micromamba</span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Card 3: Installed Packages (solo si venv existe) */}
+      {/* Card 2: PyTorch & GPU Hardware */}
       {venvInfo?.exists && (
-        <div className="rounded-lg border border-[var(--annotix-border)] bg-white p-5">
+        <div className="rounded-lg border border-[var(--annotix-border)] bg-[var(--annotix-white)] p-5 transition-colors">
+          <h3 className="text-sm font-semibold text-[var(--annotix-dark)] mb-3 flex items-center gap-2">
+            <i className="fas fa-microchip text-red-500" />
+            PyTorch & Hardware
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="p-3 rounded-lg bg-[var(--annotix-light)] border border-[var(--annotix-border)]">
+              <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">Entorno Actual</span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-mono">{torchVersion || 'No instalado'}</span>
+                {cudaAvailable && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-bold">CUDA OK</span>
+                )}
+              </div>
+            </div>
+            
+            <div className="p-3 rounded-lg bg-[var(--annotix-light)] border border-[var(--annotix-border)]">
+              <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">Hardware Detectado</span>
+              <div className="flex items-center gap-2">
+                {gpuInfo?.hasNvidia ? (
+                  <i className="fas fa-check-circle text-green-600 text-xs" />
+                ) : (
+                  <i className="fas fa-info-circle text-blue-500 text-xs" />
+                )}
+                <span className="text-xs">
+                  {gpuInfo?.hasNvidia ? `NVIDIA (${gpuInfo.nvidiaDriverVersion})` : 'Solo CPU / Integrada'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <span className="text-xs text-muted-foreground block mb-1">Variante de Instalación</span>
+                <select 
+                  value={selectedCuda}
+                  onChange={(e) => setSelectedCuda(e.target.value)}
+                  className="w-full h-9 rounded-md border border-[var(--annotix-border)] bg-[var(--annotix-white)] text-sm px-2 outline-none focus:border-[var(--annotix-primary)]"
+                  disabled={isBusy}
+                >
+                  <option value="cpu">CPU (Universal)</option>
+                  <option value="12.1">CUDA 12.1 (NVIDIA)</option>
+                  <option value="12.4">CUDA 12.4 (NVIDIA)</option>
+                </select>
+              </div>
+              <Button 
+                onClick={handleInstallPytorch}
+                disabled={isBusy}
+                className="mt-5"
+              >
+                {installingPytorch ? <i className="fas fa-spinner fa-spin mr-2" /> : <i className="fas fa-download mr-2" />}
+                {torchVersion ? 'Reinstalar' : 'Instalar'}
+              </Button>
+            </div>
+
+            {installingPytorch && (
+              <div className="space-y-2 mt-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span>{pytorchProgress?.message || 'Iniciando...'}</span>
+                  <span>{Math.round(pytorchProgress?.progress || 0)}%</span>
+                </div>
+                <Progress value={pytorchProgress?.progress ?? 5} className="h-1.5" />
+                <TerminalConsole logs={installLogs} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Card 3: Packages Table */}
+      {venvInfo?.exists && (
+        <div className="rounded-lg border border-[var(--annotix-border)] bg-[var(--annotix-white)] p-5 transition-colors">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-[var(--annotix-dark)] flex items-center gap-2">
               <i className="fas fa-cubes text-orange-500" />
@@ -270,155 +374,38 @@ export function PythonEnvironmentSection() {
               variant="outline"
               size="sm"
               onClick={handleUpdatePackages}
-              disabled={updatingPackages}
+              disabled={isBusy || updatingPackages}
             >
-              {updatingPackages ? (
-                <i className="fas fa-spinner fa-spin mr-2" />
-              ) : (
-                <i className="fas fa-sync mr-2" />
-              )}
+              {updatingPackages ? <i className="fas fa-spinner fa-spin mr-2" /> : <i className="fas fa-sync mr-2" />}
               {t('settings.packages.updateAll')}
             </Button>
           </div>
 
-          {updatingPackages && packageProgress && (
+          {updatingPackages && (
             <div className="mb-3 space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <i className="fas fa-cog fa-spin text-blue-500" />
-                <span>{packageProgress.message}</span>
-              </div>
-              <Progress value={packageProgress.progress} />
+              <Progress value={packageProgress?.progress ?? 5} className="h-1.5" />
+              <TerminalConsole logs={installLogs} maxHeight="120px" />
             </div>
           )}
 
-          <div className="max-h-64 overflow-y-auto border border-[var(--annotix-border)] rounded">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 sticky top-0">
+          <div className="max-h-64 overflow-y-auto border border-[var(--annotix-border)] rounded transition-colors">
+            <table className="w-full text-xs">
+              <thead className="bg-[var(--annotix-light)] sticky top-0 transition-colors">
                 <tr>
                   <th className="text-left p-2 font-medium text-muted-foreground">{t('settings.packages.name')}</th>
-                  <th className="text-left p-2 font-medium text-muted-foreground">{t('settings.packages.version')}</th>
+                  <th className="text-left p-2 font-medium text-muted-foreground text-right">{t('settings.packages.version')}</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[var(--annotix-border)]">
                 {packages.map((pkg) => (
-                  <tr key={pkg.name} className="border-t border-[var(--annotix-border)] hover:bg-gray-50">
-                    <td className="p-2 font-mono text-xs">{pkg.name}</td>
-                    <td className="p-2 font-mono text-xs">{pkg.version}</td>
+                  <tr key={pkg.name} className="hover:bg-[var(--annotix-light)] transition-colors">
+                    <td className="p-2 font-mono">{pkg.name}</td>
+                    <td className="p-2 font-mono text-right text-muted-foreground">{pkg.version}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-
-      {/* Card 4: PyTorch (solo si venv existe) */}
-      {venvInfo?.exists && (
-        <div className="rounded-lg border border-[var(--annotix-border)] bg-white p-5">
-          <h3 className="text-sm font-semibold text-[var(--annotix-dark)] mb-3 flex items-center gap-2">
-            <i className="fas fa-fire text-red-500" />
-            {t('settings.pytorch.title')}
-          </h3>
-
-          {/* Current torch info */}
-          {torchVersion && (
-            <div className="mb-4 p-3 rounded bg-gray-50 text-sm space-y-1">
-              <div>
-                <span className="text-muted-foreground">PyTorch:</span>
-                <span className="ml-2 font-mono">{torchVersion}</span>
-              </div>
-              <div>
-                <span className="text-muted-foreground">CUDA:</span>
-                <span className={`ml-2 font-medium ${cudaAvailable ? 'text-green-600' : 'text-muted-foreground'}`}>
-                  {cudaAvailable ? t('settings.pytorch.cudaActive') : t('settings.pytorch.cpuOnly')}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* System GPU detection */}
-          {gpuInfo && (
-            <div className="mb-4 p-3 rounded bg-gray-50 text-sm">
-              {gpuInfo.hasNvidia ? (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-green-600">
-                    <i className="fas fa-microchip" />
-                    <span className="font-medium">{t('settings.pytorch.nvidiaDetected')}</span>
-                  </div>
-                  <div className="text-muted-foreground">
-                    {t('settings.pytorch.driverVersion')}: <span className="font-mono">{gpuInfo.nvidiaDriverVersion}</span>
-                  </div>
-                  {gpuInfo.suggestedCuda && (
-                    <div className="text-muted-foreground">
-                      {t('settings.pytorch.suggestedCuda')}: <span className="font-mono">CUDA {gpuInfo.suggestedCuda}</span>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <i className="fas fa-desktop" />
-                  <span>{t('settings.pytorch.noNvidia')}</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* CUDA variant selector */}
-          <div className="mb-4 space-y-2">
-            <label className="text-sm font-medium text-[var(--annotix-dark)]">
-              {t('settings.pytorch.selectVariant')}
-            </label>
-            <div className="flex gap-3">
-              {[
-                { value: 'cpu', label: 'CPU Only' },
-                { value: '12.1', label: 'CUDA 12.1' },
-                { value: '12.4', label: 'CUDA 12.4' },
-              ].map((opt) => (
-                <label
-                  key={opt.value}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all text-sm ${
-                    selectedCuda === opt.value
-                      ? 'border-[var(--annotix-primary)] bg-[var(--annotix-primary)]/10 text-[var(--annotix-primary)]'
-                      : 'border-[var(--annotix-border)] hover:border-[var(--annotix-primary)]/50'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="cuda-variant"
-                    value={opt.value}
-                    checked={selectedCuda === opt.value}
-                    onChange={(e) => setSelectedCuda(e.target.value)}
-                    className="sr-only"
-                  />
-                  <div className={`w-3 h-3 rounded-full border-2 ${
-                    selectedCuda === opt.value
-                      ? 'border-[var(--annotix-primary)] bg-[var(--annotix-primary)]'
-                      : 'border-gray-300'
-                  }`} />
-                  {opt.label}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {installingPytorch && pytorchProgress ? (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <i className="fas fa-cog fa-spin text-blue-500" />
-                <span>{pytorchProgress.message}</span>
-              </div>
-              <Progress value={pytorchProgress.progress} />
-            </div>
-          ) : (
-            <Button onClick={handleInstallPytorch} disabled={installingPytorch}>
-              {installingPytorch ? (
-                <i className="fas fa-spinner fa-spin mr-2" />
-              ) : (
-                <i className="fas fa-download mr-2" />
-              )}
-              {torchVersion ? t('settings.pytorch.reinstall') : t('settings.pytorch.install')}
-            </Button>
-          )}
         </div>
       )}
     </div>
