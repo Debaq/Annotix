@@ -268,8 +268,8 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[85vh]" closeLabel={t('common.close')}>
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden" closeLabel={t('common.close')}>
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <i className="fas fa-brain text-emerald-500" />
             {t('training.title')}
@@ -277,7 +277,7 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
           <DialogDescription>{t('training.description')}</DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[calc(85vh-120px)] pr-4">
+        <ScrollArea className="flex-1 min-h-0 pr-4">
           <div className="space-y-6 py-2">
             {/* Phase navigation breadcrumb */}
             {phase !== 'setup' && phase !== 'training' && phase !== 'completed' && (
