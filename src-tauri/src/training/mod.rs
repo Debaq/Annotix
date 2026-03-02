@@ -362,6 +362,31 @@ pub enum DatasetFormat {
 pub enum ExecutionMode {
     Local,
     DownloadPackage,
+    Cloud,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum CloudProvider {
+    ColabEnterprise,
+    VertexAiCustom,
+    VertexAiGeminiTuning,
+    Kaggle,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CloudTrainingConfig {
+    pub provider: CloudProvider,
+    #[serde(default, rename = "machineType")]
+    pub machine_type: Option<String>,
+    #[serde(default, rename = "acceleratorType")]
+    pub accelerator_type: Option<String>,
+    #[serde(default, rename = "acceleratorCount")]
+    pub accelerator_count: Option<u32>,
+    #[serde(default, rename = "kaggleAccelerator")]
+    pub kaggle_accelerator: Option<String>,
+    #[serde(default, rename = "maxRuntimeSeconds")]
+    pub max_runtime_seconds: Option<u64>,
 }
 
 // ─── Training Request (multi-backend) ────────────────────────────────────────
@@ -395,6 +420,8 @@ pub struct TrainingRequest {
     pub backend_params: JsonValue,
     #[serde(default, rename = "baseModelPath")]
     pub base_model_path: Option<String>,
+    #[serde(default, rename = "cloudConfig")]
+    pub cloud_config: Option<CloudTrainingConfig>,
 }
 
 // ─── Backend Catalog ─────────────────────────────────────────────────────────
@@ -436,6 +463,7 @@ pub mod model_export;
 pub mod backends;
 pub mod package;
 pub mod notebook;
+pub mod cloud;
 
 /// En Windows, configura CREATE_NO_WINDOW para evitar que aparezca una ventana de consola.
 #[cfg(windows)]

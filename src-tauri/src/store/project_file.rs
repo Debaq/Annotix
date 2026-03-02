@@ -190,4 +190,12 @@ pub struct TrainingJobEntry {
     pub best_model_path: Option<String>,
     #[serde(default, rename = "datasetDir")]
     pub dataset_dir: Option<String>,
+    #[serde(default, rename = "cloudProvider")]
+    pub cloud_provider: Option<String>,
+    #[serde(default, rename = "cloudJobId")]
+    pub cloud_job_id: Option<String>,
+    #[serde(default, rename = "cloudJobUrl")]
+    pub cloud_job_url: Option<String>,
+    #[serde(default, rename = "modelDownloadUrl")]
+    pub model_download_url: Option<String>,
 }

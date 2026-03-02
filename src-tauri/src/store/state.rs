@@ -97,6 +97,12 @@ impl AppState {
         Ok(())
     }
 
+    /// Devuelve una copia de la config actual
+    pub fn get_app_config(&self) -> Result<AppConfig, String> {
+        let config = self.config.lock().map_err(|e| e.to_string())?;
+        Ok(config.clone())
+    }
+
     /// Elimina un proyecto del cache
     pub fn evict_from_cache(&self, project_id: &str) {
         if let Ok(mut cache) = self.cache.lock() {

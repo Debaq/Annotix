@@ -43,7 +43,8 @@
     "all": "Все",
     "filters": "Фильтры",
     "starting": "Запуск...",
-    "back": "Назад"
+    "back": "Назад",
+    "browse": "Обзор"
   },
   "header": {
     "selectProject": "Выбрать проект...",
@@ -1682,7 +1683,10 @@
       "localDesc": "Запустить обучение локально с использованием GPU. Требуются установленные пакеты.",
       "download": "Скачать пакет",
       "downloadDesc": "Скачать ZIP с датасетом, скриптом и ноутбуком для обучения в другом месте.",
-      "downloadPackage": "Скачать пакет обучения"
+      "downloadPackage": "Скачать пакет обучения",
+      "cloud": "Cloud",
+      "cloudDesc": "Обучайте на облачных GPU с помощью Kaggle, Vertex AI или Colab Enterprise.",
+      "launchCloud": "Запустить в облаке"
     },
     "package": {
       "generating": "Генерация пакета обучения...",
@@ -1997,6 +2001,33 @@
     "jobs": {
       "title": "История обучения",
       "empty": "Пока нет обучений"
+    },
+    "cloud": {
+      "selectProvider": "Выбрать облачного провайдера",
+      "selectProviderDesc": "Выберите, где запустить обучение",
+      "configured": "Настроено",
+      "needsSetup": "Требуется настройка",
+      "providers": {
+        "kaggle": "Kaggle",
+        "vertex_ai_custom": "Vertex AI Custom",
+        "colab_enterprise": "Colab Enterprise",
+        "vertex_ai_gemini_tuning": "Gemini Tuning"
+      },
+      "providerDesc": {
+        "kaggle": "Бесплатные GPU T4/P100, 30 ч/неделю",
+        "vertex_ai_custom": "Пользовательское обучение с любым GPU на GCP",
+        "colab_enterprise": "Управляемые ноутбуки на Vertex AI",
+        "vertex_ai_gemini_tuning": "Тонкая настройка моделей Gemini"
+      },
+      "machineType": "Тип машины",
+      "accelerator": "GPU/Ускоритель",
+      "acceleratorCount": "Количество GPU",
+      "kaggleGpu": "Ускоритель Kaggle",
+      "maxRuntime": "Максимальное время",
+      "hours": "часов",
+      "runningOn": "Выполняется на {{provider}}",
+      "pollingInfo": "Обновление прогресса каждые 30 секунд",
+      "viewJob": "Просмотр задачи"
     }
   },
   "setup": {
@@ -2044,7 +2075,8 @@
     "sections": {
       "general": "Общие",
       "pythonEnv": "Среда Python",
-      "trainingModels": "Модели обучения"
+      "trainingModels": "Модели обучения",
+      "cloudProviders": "Облачные провайдеры"
     },
     "general": {
       "colorMode": "Оформление",
@@ -2120,6 +2152,28 @@
       "prepareBackend": "Подготовить бэкенд",
       "filterByTask": "Фильтровать по задаче",
       "allModels": "Все модели"
+    },
+    "cloud": {
+      "gcp": {
+        "title": "Google Cloud Platform",
+        "description": "Настройте учётные данные GCP для Vertex AI и Colab Enterprise",
+        "serviceAccount": "JSON сервисного аккаунта",
+        "serviceAccountPlaceholder": "Выберите JSON-файл сервисного аккаунта...",
+        "projectId": "ID проекта GCP",
+        "region": "Регион",
+        "bucket": "Корзина GCS"
+      },
+      "kaggle": {
+        "title": "Kaggle",
+        "description": "Введите ваши учётные данные API Kaggle.",
+        "getKey": "Получить API Key →",
+        "username": "Имя пользователя",
+        "apiKey": "API Key"
+      },
+      "validate": "Проверить",
+      "validating": "Проверка...",
+      "valid": "Действителен",
+      "invalid": "Недействителен"
     }
   },
   "wizard": {

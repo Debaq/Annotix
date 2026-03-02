@@ -4,8 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { GeneralSection } from './GeneralSection';
 import { PythonEnvironmentSection } from './PythonEnvironmentSection';
 import { TrainingModelsSection } from './TrainingModelsSection';
+import { CloudProvidersSection } from './CloudProvidersSection';
 
-type SettingsSection = 'general' | 'python-env' | 'training-models';
+type SettingsSection = 'general' | 'python-env' | 'training-models' | 'cloud-providers';
 
 export function SettingsPage() {
   const { t } = useTranslation();
@@ -16,6 +17,7 @@ export function SettingsPage() {
     { id: 'general', icon: 'fas fa-cog', labelKey: 'settings.sections.general' },
     { id: 'python-env', icon: 'fab fa-python', labelKey: 'settings.sections.pythonEnv' },
     { id: 'training-models', icon: 'fas fa-brain', labelKey: 'settings.sections.trainingModels' },
+    { id: 'cloud-providers', icon: 'fas fa-cloud', labelKey: 'settings.sections.cloudProviders' },
   ];
 
   const activeLabelKey = sections.find(s => s.id === activeSection)?.labelKey ?? sections[0].labelKey;
@@ -62,6 +64,7 @@ export function SettingsPage() {
           {activeSection === 'general' && <GeneralSection />}
           {activeSection === 'python-env' && <PythonEnvironmentSection />}
           {activeSection === 'training-models' && <TrainingModelsSection />}
+          {activeSection === 'cloud-providers' && <CloudProvidersSection />}
         </div>
       </div>
     </div>

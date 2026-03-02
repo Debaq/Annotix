@@ -9,6 +9,7 @@ use tauri::Manager;
 
 use store::AppState;
 use training::runner::TrainingProcessManager;
+use training::cloud::CloudTrainingManager;
 use training::TrainingEnvCache;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -20,6 +21,7 @@ pub fn run() {
     tauri::Builder::default()
         .manage(app_state)
         .manage(TrainingProcessManager::new())
+        .manage(CloudTrainingManager::new())
         .manage(TrainingEnvCache::new())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -121,6 +123,10 @@ pub fn run() {
             commands::training_commands::install_backend_packages,
             commands::training_commands::start_training_v2,
             commands::training_commands::generate_training_package,
+            commands::training_commands::get_cloud_providers_config,
+            commands::training_commands::save_cloud_provider_config,
+            commands::training_commands::validate_cloud_credentials,
+            commands::training_commands::download_cloud_model,
             // Tabular
             commands::tabular_commands::upload_tabular_file,
             commands::tabular_commands::list_tabular_data,

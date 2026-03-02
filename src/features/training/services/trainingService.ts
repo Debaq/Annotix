@@ -8,6 +8,7 @@ import type {
   TrainingJob,
   BackendInfo,
   TrainingRequest,
+  CloudProviderConfig,
 } from '../types';
 
 export const trainingService = {
@@ -70,5 +71,22 @@ export const trainingService = {
 
   generateTrainingPackage(projectId: string, request: TrainingRequest, outputPath: string): Promise<string> {
     return invoke('generate_training_package', { projectId, request, outputPath });
+  },
+
+  // Cloud provider config
+  getCloudProvidersConfig(): Promise<CloudProviderConfig> {
+    return invoke('get_cloud_providers_config');
+  },
+
+  saveCloudProviderConfig(provider: string, configData: Record<string, unknown>): Promise<void> {
+    return invoke('save_cloud_provider_config', { provider, configData });
+  },
+
+  validateCloudCredentials(provider: string): Promise<void> {
+    return invoke('validate_cloud_credentials', { provider });
+  },
+
+  downloadCloudModel(projectId: string, jobId: string, outputPath: string): Promise<string> {
+    return invoke('download_cloud_model', { projectId, jobId, outputPath });
   },
 };

@@ -5,6 +5,8 @@ import type {
   TrainingRequest,
   BackendInfo,
   BackendModelInfo,
+  CloudProvider,
+  CloudTrainingConfig,
 } from '../types';
 import { projectTypeToTask } from '../utils/modelMapping';
 import { trainingService } from '../services/trainingService';
@@ -277,6 +279,8 @@ export function useTrainingRequest(projectType: string) {
 
   const [exportFormats, setExportFormats] = useState<string[]>(persisted.current?.exportFormats ?? []);
   const [baseModelPath, setBaseModelPath] = useState<string | null>(null);
+  const [cloudProvider, setCloudProvider] = useState<CloudProvider | null>(null);
+  const [cloudConfig, setCloudConfig] = useState<CloudTrainingConfig | null>(null);
 
   // Persistir config en localStorage cuando cambia
   useEffect(() => {
@@ -328,13 +332,20 @@ export function useTrainingRequest(projectType: string) {
   const currentBackendInfo = backends.find((b) => b.id === backend) || null;
   const currentModels = currentBackendInfo?.models || [];
 
+  const updateCloudConfig = useCallback((key: string, value: unknown) => {
+    setCloudConfig((prev) => {
+      if (!prev) return null;
+      return { ...prev, [key]: value };
+    });
+  }, []);
+
   const buildRequest = useCallback((): TrainingRequest => {
     const params = { ...backendParams };
     if (backend === 'yolo') {
       params.modelSize = modelSize;
     }
 
-    return {
+    const req: TrainingRequest = {
       backend,
       modelId,
       task,
@@ -353,7 +364,13 @@ export function useTrainingRequest(projectType: string) {
       backendParams: params,
       baseModelPath: baseModelPath || undefined,
     };
-  }, [backend, modelId, modelSize, task, executionMode, commonParams, backendParams, exportFormats, baseModelPath]);
+
+    if (executionMode === 'cloud' && cloudConfig) {
+      req.cloudConfig = cloudConfig;
+    }
+
+    return req;
+  }, [backend, modelId, modelSize, task, executionMode, commonParams, backendParams, exportFormats, baseModelPath, cloudConfig]);
 
   return {
     backend,
@@ -376,5 +393,10 @@ export function useTrainingRequest(projectType: string) {
     buildRequest,
     baseModelPath,
     setBaseModelPath,
+    cloudProvider,
+    setCloudProvider,
+    cloudConfig,
+    setCloudConfig,
+    updateCloudConfig,
   };
 }
