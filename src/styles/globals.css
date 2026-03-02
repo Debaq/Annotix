@@ -514,3 +514,80 @@
   background: var(--annotix-primary);
   color: white;
 }
+
+/* ============================================
+   GALLERY ITEM OVERLAY & ACTIONS
+   ============================================ */
+
+/* Bottom gradient overlay with annotation count or class badges */
+.gallery-item-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  padding: 6px;
+  color: var(--annotix-white);
+  font-size: 0.7em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Hover action buttons (top-right) */
+.gallery-item-actions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.annotix-gallery-item:hover .gallery-item-actions {
+  display: flex;
+}
+
+/* Delete button */
+.gallery-item-delete {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85em;
+  transition: var(--annotix-transition);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  background: var(--annotix-danger);
+}
+
+.gallery-item-delete:hover {
+  background: var(--annotix-danger-dark);
+  transform: scale(1.1);
+}
+
+/* Classification badges in gallery */
+.gallery-class-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.gallery-class-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.65em;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}

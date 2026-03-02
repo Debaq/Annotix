@@ -7,7 +7,13 @@ import { GalleryFilters } from './GalleryFilters';
 
 export function ImageGallery() {
   const { t } = useTranslation();
-  const { images, isLoading } = useImages();
+  const { images, isLoading, deleteImage } = useImages();
+
+  const handleDelete = (id: number) => {
+    if (window.confirm(t('gallery.deleteConfirm'))) {
+      deleteImage(id);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -56,7 +62,7 @@ export function ImageGallery() {
             </div>
           </div>
         ) : (
-          <ImageGrid images={images} />
+          <ImageGrid images={images} onDelete={handleDelete} />
         )}
       </div>
     </div>
