@@ -159,11 +159,14 @@ impl BrowserAutomationManager {
         &self,
         app: &tauri::AppHandle,
         request: AutomationRequest,
+        auto_config: crate::store::config::BrowserAutomationConfig,
     ) -> Result<String, String> {
         let session_id = uuid::Uuid::new_v4().to_string();
 
-        // Detectar navegador
+        // Detectar navegador: request > config > auto-detect
         let browser_path = if let Some(ref path) = request.browser_path {
+            path.clone()
+        } else if let Some(ref path) = auto_config.preferred_browser_path {
             path.clone()
         } else {
             let browsers = browser_detect::detect_browsers();
@@ -224,6 +227,7 @@ impl BrowserAutomationManager {
                 runner,
                 cancelled,
                 paused,
+                auto_config,
             );
         });
 

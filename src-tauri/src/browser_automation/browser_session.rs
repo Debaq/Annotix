@@ -5,8 +5,21 @@ use std::time::Duration;
 
 /// Lanza un navegador Chromium visible (no headless) usando headless_chrome.
 /// Usa un user-data-dir separado para persistir cookies entre sesiones.
-pub fn launch_visible_browser(browser_path: &str) -> Result<Browser, String> {
-    let user_data_dir = get_user_data_dir();
+pub fn launch_visible_browser(
+    browser_path: &str,
+    custom_data_dir: Option<&str>,
+    window_size: Option<(u32, u32)>,
+) -> Result<Browser, String> {
+    let user_data_dir = match custom_data_dir {
+        Some(dir) => {
+            let p = PathBuf::from(dir);
+            let _ = std::fs::create_dir_all(&p);
+            p
+        }
+        None => get_user_data_dir(),
+    };
+
+    let size = window_size.unwrap_or((1280, 900));
 
     let launch_options = LaunchOptions {
         headless: false,
@@ -19,7 +32,7 @@ pub fn launch_visible_browser(browser_path: &str) -> Result<Browser, String> {
             OsStr::new("--disable-renderer-backgrounding"),
         ],
         user_data_dir: Some(user_data_dir),
-        window_size: Some((1280, 900)),
+        window_size: Some(size),
         idle_browser_timeout: Duration::from_secs(600),
         ..LaunchOptions::default()
     };

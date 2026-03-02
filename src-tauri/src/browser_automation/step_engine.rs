@@ -2,6 +2,7 @@ use super::{
     browser_session, ActiveBrowserSession, AutomationRequest,
     BrowserRunner, SessionState, StepState,
 };
+use crate::store::config::BrowserAutomationConfig;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -17,6 +18,7 @@ pub fn run_automation(
     mut runner: Box<dyn BrowserRunner>,
     cancelled: Arc<Mutex<bool>>,
     paused: Arc<Mutex<bool>>,
+    config: BrowserAutomationConfig,
 ) {
     let emitter = |msg: &str| {
         let _ = app.emit(
@@ -33,7 +35,11 @@ pub fn run_automation(
     emit_session_update(&app, &sessions, &session_id);
 
     // Lanzar navegador visible
-    let browser = match browser_session::launch_visible_browser(&browser_path) {
+    let browser = match browser_session::launch_visible_browser(
+        &browser_path,
+        config.user_data_dir.as_deref(),
+        Some((config.window_width, config.window_height)),
+    ) {
         Ok(b) => b,
         Err(e) => {
             emitter(&format!("Error: {}", e));
@@ -149,7 +155,7 @@ pub fn run_automation(
 
         // Ejecutar el paso
         let mut retries = 0;
-        let max_retries = 2;
+        let max_retries = config.max_retries;
 
         loop {
             // Obtener sesión actualizada para pasarla al runner
@@ -193,8 +199,8 @@ pub fn run_automation(
                     emit_session_update(&app, &sessions, &session_id);
 
                     // Polling hasta que el usuario complete la acción
-                    let mut poll_timeout = 0;
-                    let max_poll_timeout = 300; // 5 minutos
+                    let mut poll_timeout: u64 = 0;
+                    let max_poll_timeout = config.user_action_timeout_secs;
                     loop {
                         if is_cancelled(&cancelled) {
                             break;

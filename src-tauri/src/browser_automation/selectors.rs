@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -6,9 +6,8 @@ use super::BrowserProvider;
 
 // ─── Tipos TOML ─────────────────────────────────────────────────────────────
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProviderConfig {
-    #[allow(dead_code)]
     pub name: String,
     pub url: String,
     #[serde(default)]
@@ -17,7 +16,7 @@ pub struct ProviderConfig {
     pub selectors: HashMap<String, SelectorEntry>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SelectorEntry {
     pub css: String,
     #[serde(default)]

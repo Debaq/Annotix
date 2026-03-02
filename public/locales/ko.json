@@ -2132,7 +2132,8 @@
       "pythonEnv": "Python 환경",
       "trainingModels": "학습 모델",
       "cloudProviders": "클라우드 제공업체",
-      "keyboardShortcuts": "키보드 단축키"
+      "keyboardShortcuts": "키보드 단축키",
+      "browserAutomation": "브라우저 자동화"
     },
     "shortcuts": {
       "description": "키 배지를 클릭하여 재할당하세요. Escape를 눌러 취소합니다.",
@@ -2141,6 +2142,48 @@
       "resetOne": "기본값으로 초기화",
       "conflict": "이 키는 이미 \"{{name}}\"에 할당되어 있습니다.",
       "customize": "단축키 사용자 정의"
+    },
+    "automation": {
+      "browsers": {
+        "title": "브라우저 감지",
+        "description": "자동화 작업을 위한 Chromium 기반 브라우저를 감지하고 선택합니다.",
+        "detect": "브라우저 감지",
+        "detecting": "감지 중...",
+        "preferred": "선호",
+        "testLaunch": "테스트 실행",
+        "testing": "테스트 중..."
+      },
+      "provider": {
+        "title": "기본 LLM 어시스턴트",
+        "description": "브라우저 기반 AI 쿼리에 사용할 기본 LLM 어시스턴트를 선택합니다.",
+        "trainingLabel": "훈련",
+        "llmLabel": "LLM 어시스턴트",
+        "colab_free": "Google Colab (무료)",
+        "kimi": "Kimi (Moonshot)",
+        "qwen": "Qwen Chat",
+        "deepseek": "DeepSeek",
+        "huggingchat": "HuggingChat"
+      },
+      "selectors": {
+        "title": "CSS 셀렉터 편집기",
+        "description": "각 제공자의 TOML 셀렉터 파일을 편집합니다. 자동화가 각 웹사이트와 상호작용하는 방식을 정의합니다.",
+        "restore": "복원"
+      },
+      "advanced": {
+        "title": "고급 설정",
+        "description": "타임아웃, 재시도 및 브라우저 창 설정을 조정합니다.",
+        "stepTimeout": "단계 타임아웃",
+        "maxRetries": "최대 재시도 횟수",
+        "userActionTimeout": "사용자 작업 타임아웃",
+        "llmResponseTimeout": "LLM 응답 타임아웃",
+        "seconds": "초",
+        "userDataDir": "사용자 데이터 디렉토리",
+        "userDataDirPlaceholder": "기본값 (자동 관리)",
+        "windowSize": "창 크기",
+        "restoreDefaults": "기본값 복원"
+      },
+      "saved": "저장됨",
+      "saveError": "저장 오류"
     },
     "general": {
       "colorMode": "외관",

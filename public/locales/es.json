@@ -2149,7 +2149,8 @@
       "pythonEnv": "Entorno Python",
       "trainingModels": "Modelos de Entrenamiento",
       "cloudProviders": "Proveedores Cloud",
-      "keyboardShortcuts": "Atajos de Teclado"
+      "keyboardShortcuts": "Atajos de Teclado",
+      "browserAutomation": "Automatización del Navegador"
     },
     "general": {
       "colorMode": "Apariencia",
@@ -2274,6 +2275,48 @@
       "resetOne": "Restaurar al valor original",
       "conflict": "Esta tecla ya está asignada a \"{{name}}\".",
       "customize": "Personalizar atajos"
+    },
+    "automation": {
+      "browsers": {
+        "title": "Detección de Navegadores",
+        "description": "Detecta y selecciona un navegador basado en Chromium para tareas de automatización.",
+        "detect": "Detectar Navegadores",
+        "detecting": "Detectando...",
+        "preferred": "Preferido",
+        "testLaunch": "Probar Lanzamiento",
+        "testing": "Probando..."
+      },
+      "provider": {
+        "title": "Asistente LLM por Defecto",
+        "description": "Elige el asistente LLM predeterminado para consultas de IA vía navegador.",
+        "trainingLabel": "Entrenamiento",
+        "llmLabel": "Asistentes LLM",
+        "colab_free": "Google Colab (Gratis)",
+        "kimi": "Kimi (Moonshot)",
+        "qwen": "Qwen Chat",
+        "deepseek": "DeepSeek",
+        "huggingchat": "HuggingChat"
+      },
+      "selectors": {
+        "title": "Editor de Selectores CSS",
+        "description": "Edita los archivos TOML de selectores para cada proveedor. Estos definen cómo la automatización interactúa con cada sitio web.",
+        "restore": "Restaurar"
+      },
+      "advanced": {
+        "title": "Configuración Avanzada",
+        "description": "Ajusta timeouts, reintentos y configuración de la ventana del navegador.",
+        "stepTimeout": "Timeout por Paso",
+        "maxRetries": "Reintentos Máximos",
+        "userActionTimeout": "Timeout de Acción del Usuario",
+        "llmResponseTimeout": "Timeout de Respuesta LLM",
+        "seconds": "segundos",
+        "userDataDir": "Directorio de Datos de Usuario",
+        "userDataDirPlaceholder": "Por defecto (gestionado automáticamente)",
+        "windowSize": "Tamaño de Ventana",
+        "restoreDefaults": "Restaurar Valores por Defecto"
+      },
+      "saved": "Guardado",
+      "saveError": "Error al guardar"
     }
   },
   "wizard": {

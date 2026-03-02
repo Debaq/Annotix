@@ -169,6 +169,12 @@ pub fn run() {
             commands::automation_commands::resume_automation,
             commands::automation_commands::cancel_automation,
             commands::automation_commands::get_automation_session,
+            commands::automation_commands::get_browser_automation_config,
+            commands::automation_commands::save_browser_automation_config,
+            commands::automation_commands::test_launch_browser,
+            commands::automation_commands::list_provider_selectors,
+            commands::automation_commands::get_provider_selectors,
+            commands::automation_commands::save_provider_selectors,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

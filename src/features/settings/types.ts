@@ -28,3 +28,29 @@ export interface PytorchInstallProgress {
   message: string;
   progress: number;
 }
+
+export interface BrowserAutomationConfig {
+  preferredBrowserPath: string | null;
+  preferredBrowserName: string | null;
+  defaultProvider: string | null;
+  stepTimeoutMs: number;
+  maxRetries: number;
+  userActionTimeoutSecs: number;
+  llmResponseTimeoutSecs: number;
+  userDataDir: string | null;
+  windowWidth: number;
+  windowHeight: number;
+}
+
+export interface ProviderSelectorSummary {
+  key: string;
+  name: string;
+  url: string;
+  selectorCount: number;
+}
+
+export interface DetectedBrowser {
+  name: string;
+  path: string;
+  version: string | null;
+}

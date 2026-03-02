@@ -2132,7 +2132,8 @@
       "pythonEnv": "Environnement Python",
       "trainingModels": "Modèles d'entraînement",
       "cloudProviders": "Fournisseurs Cloud",
-      "keyboardShortcuts": "Raccourcis Clavier"
+      "keyboardShortcuts": "Raccourcis Clavier",
+      "browserAutomation": "Automatisation du Navigateur"
     },
     "shortcuts": {
       "description": "Cliquez sur un badge de touche pour le réassigner. Appuyez sur Échap pour annuler.",
@@ -2141,6 +2142,48 @@
       "resetOne": "Réinitialiser par défaut",
       "conflict": "Cette touche est déjà assignée à \"{{name}}\".",
       "customize": "Personnaliser les raccourcis"
+    },
+    "automation": {
+      "browsers": {
+        "title": "Détection des Navigateurs",
+        "description": "Détectez et sélectionnez un navigateur basé sur Chromium pour les tâches d'automatisation.",
+        "detect": "Détecter les Navigateurs",
+        "detecting": "Détection...",
+        "preferred": "Préféré",
+        "testLaunch": "Test de Lancement",
+        "testing": "Test en cours..."
+      },
+      "provider": {
+        "title": "Assistant LLM par Défaut",
+        "description": "Choisissez l'assistant LLM par défaut pour les requêtes IA via navigateur.",
+        "trainingLabel": "Entraînement",
+        "llmLabel": "Assistants LLM",
+        "colab_free": "Google Colab (Gratuit)",
+        "kimi": "Kimi (Moonshot)",
+        "qwen": "Qwen Chat",
+        "deepseek": "DeepSeek",
+        "huggingchat": "HuggingChat"
+      },
+      "selectors": {
+        "title": "Éditeur de Sélecteurs CSS",
+        "description": "Modifiez les fichiers TOML de sélecteurs pour chaque fournisseur. Ils définissent comment l'automatisation interagit avec chaque site web.",
+        "restore": "Restaurer"
+      },
+      "advanced": {
+        "title": "Configuration Avancée",
+        "description": "Ajustez les délais d'attente, les tentatives et les paramètres de la fenêtre du navigateur.",
+        "stepTimeout": "Délai par Étape",
+        "maxRetries": "Tentatives Max",
+        "userActionTimeout": "Délai d'Action Utilisateur",
+        "llmResponseTimeout": "Délai de Réponse LLM",
+        "seconds": "secondes",
+        "userDataDir": "Répertoire de Données Utilisateur",
+        "userDataDirPlaceholder": "Par défaut (géré automatiquement)",
+        "windowSize": "Taille de la Fenêtre",
+        "restoreDefaults": "Restaurer les Valeurs par Défaut"
+      },
+      "saved": "Enregistré",
+      "saveError": "Erreur lors de l'enregistrement"
     },
     "general": {
       "colorMode": "Apparence",

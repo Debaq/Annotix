@@ -8,11 +8,15 @@ pub fn detect_browsers() -> Vec<DetectedBrowser> {
 
     #[cfg(target_os = "linux")]
     {
+        // Rutas fijas conocidas
         let candidates = [
             ("Google Chrome", "/usr/bin/google-chrome-stable"),
             ("Google Chrome", "/usr/bin/google-chrome"),
+            ("Brave", "/usr/bin/brave"),
             ("Brave", "/usr/bin/brave-browser"),
             ("Brave", "/usr/bin/brave-browser-stable"),
+            ("Brave", "/opt/brave-bin/brave"),
+            ("Brave", "/opt/brave.com/brave/brave-browser"),
             ("Chromium", "/usr/bin/chromium"),
             ("Chromium", "/usr/bin/chromium-browser"),
             ("Microsoft Edge", "/usr/bin/microsoft-edge-stable"),
@@ -29,6 +33,37 @@ pub fn detect_browsers() -> Vec<DetectedBrowser> {
                     path: path.to_string(),
                     version,
                 });
+            }
+        }
+
+        // Fallback: buscar con `which` binarios que no estén en rutas fijas
+        let which_candidates = [
+            ("Google Chrome", &["google-chrome-stable", "google-chrome"][..]),
+            ("Brave", &["brave", "brave-browser", "brave-browser-stable"][..]),
+            ("Chromium", &["chromium", "chromium-browser"][..]),
+            ("Microsoft Edge", &["microsoft-edge-stable", "microsoft-edge"][..]),
+            ("Vivaldi", &["vivaldi-stable", "vivaldi"][..]),
+        ];
+
+        let known_paths: std::collections::HashSet<String> =
+            browsers.iter().map(|b| b.path.clone()).collect();
+
+        for (name, bins) in &which_candidates {
+            for bin in *bins {
+                if let Ok(output) = Command::new("which").arg(bin).output() {
+                    if output.status.success() {
+                        let resolved = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                        if !resolved.is_empty() && !known_paths.contains(&resolved) {
+                            let version = get_version_linux(&resolved);
+                            browsers.push(DetectedBrowser {
+                                name: name.to_string(),
+                                path: resolved,
+                                version,
+                            });
+                            break;
+                        }
+                    }
+                }
             }
         }
     }
