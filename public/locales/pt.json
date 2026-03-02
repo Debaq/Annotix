@@ -189,6 +189,47 @@
       "class9": {
         "name": "Selecionar Classe 9",
         "key": "9"
+      },
+      "toolLandmarks": {
+        "name": "Ferramenta Landmarks",
+        "description": "Selecionar ferramenta de pontos de referência"
+      },
+      "brushSize": {
+        "name": "Tamanho do Pincel",
+        "description": "Diminuir/aumentar tamanho do pincel"
+      },
+      "eraseToggle": {
+        "name": "Modo Borracha"
+      },
+      "confirmDrawing": {
+        "name": "Confirmar Desenho"
+      },
+      "cancelDrawing": {
+        "name": "Cancelar Desenho"
+      },
+      "videoNewTrack": {
+        "name": "Nova Faixa"
+      },
+      "videoPrevFrame": {
+        "name": "Quadro Anterior"
+      },
+      "videoNextFrame": {
+        "name": "Próximo Quadro"
+      },
+      "tsToolSelect": {
+        "name": "Seleção (Séries Temporais)"
+      },
+      "tsToolPoint": {
+        "name": "Ferramenta Ponto (Séries Temporais)"
+      },
+      "tsToolRange": {
+        "name": "Ferramenta Faixa (Séries Temporais)"
+      },
+      "tsToolEvent": {
+        "name": "Ferramenta Evento (Séries Temporais)"
+      },
+      "tsToolAnomaly": {
+        "name": "Ferramenta Anomalia (Séries Temporais)"
       }
     }
   },
@@ -1651,7 +1692,10 @@
       "downloadPackage": "Baixar Pacote de Treinamento",
       "cloud": "Cloud",
       "cloudDesc": "Treine em GPUs na nuvem usando Kaggle, Vertex AI, Colab Enterprise, Lightning AI, Hugging Face ou Saturn Cloud.",
-      "launchCloud": "Iniciar na Nuvem"
+      "launchCloud": "Iniciar na Nuvem",
+      "browserAutomation": "Automação do navegador",
+      "browserAutomationDesc": "Treino gratuito via Google Colab com automação do navegador",
+      "launchBrowserAutomation": "Iniciar automação"
     },
     "package": {
       "generating": "Gerando pacote de treinamento...",
@@ -2087,7 +2131,9 @@
       "general": "Geral",
       "pythonEnv": "Ambiente Python",
       "trainingModels": "Modelos de Treinamento",
-      "cloudProviders": "Provedores Cloud"
+      "cloudProviders": "Provedores Cloud",
+      "keyboardShortcuts": "Atalhos de Teclado",
+      "browserAutomation": "Automação do Navegador"
     },
     "general": {
       "colorMode": "Aparência",
@@ -2333,6 +2379,56 @@
         }
       }
     },
+    "shortcuts": {
+      "description": "Clique em um badge de tecla para reatribuí-lo. Pressione Escape para cancelar.",
+      "pressKey": "Pressione uma tecla...",
+      "resetAll": "Restaurar todos",
+      "resetOne": "Restaurar padrão",
+      "conflict": "Esta tecla já está atribuída a \"{{name}}\".",
+      "customize": "Personalizar atalhos"
+    },
+    "automation": {
+      "browsers": {
+        "title": "Detecção de Navegadores",
+        "description": "Detecte e selecione um navegador baseado em Chromium para tarefas de automação.",
+        "detect": "Detectar Navegadores",
+        "detecting": "Detectando...",
+        "preferred": "Preferido",
+        "testLaunch": "Testar Lançamento",
+        "testing": "Testando..."
+      },
+      "provider": {
+        "title": "Assistente LLM Padrão",
+        "description": "Escolha o assistente LLM padrão para consultas de IA via navegador.",
+        "trainingLabel": "Treinamento",
+        "llmLabel": "Assistentes LLM",
+        "colab_free": "Google Colab (Gratuito)",
+        "kimi": "Kimi (Moonshot)",
+        "qwen": "Qwen Chat",
+        "deepseek": "DeepSeek",
+        "huggingchat": "HuggingChat"
+      },
+      "selectors": {
+        "title": "Editor de Seletores CSS",
+        "description": "Edite os arquivos TOML de seletores para cada provedor. Eles definem como a automação interage com cada site.",
+        "restore": "Restaurar"
+      },
+      "advanced": {
+        "title": "Configuração Avançada",
+        "description": "Ajuste timeouts, tentativas e configurações da janela do navegador.",
+        "stepTimeout": "Timeout por Passo",
+        "maxRetries": "Tentativas Máximas",
+        "userActionTimeout": "Timeout de Ação do Usuário",
+        "llmResponseTimeout": "Timeout de Resposta LLM",
+        "seconds": "segundos",
+        "userDataDir": "Diretório de Dados do Usuário",
+        "userDataDirPlaceholder": "Padrão (gerenciado automaticamente)",
+        "windowSize": "Tamanho da Janela",
+        "restoreDefaults": "Restaurar Padrões"
+      },
+      "saved": "Salvo",
+      "saveError": "Erro ao salvar"
+    },
     "reasons": {
       "bbox": "Ideal para detectar objetos com caixas retangulares alinhadas",
       "obb": "Perfeito para objetos angulados ou rotacionados como vistas aéreas ou texto",
@@ -2419,6 +2515,75 @@
       "connected": "Conectado",
       "disconnected": "Desconectado",
       "error": "Erro"
+    }
+  },
+  "automation": {
+    "controlPanel": {
+      "title": "Automação do navegador",
+      "logs": "Logs",
+      "waitingLogs": "Aguardando logs...",
+      "minimize": "Minimizar",
+      "close": "Fechar"
+    },
+    "pause": "Pausar",
+    "resume": "Retomar",
+    "cancel": "Cancelar",
+    "providers": {
+      "colab_free": "Colab Gratuito",
+      "kimi": "Kimi",
+      "qwen": "Qwen",
+      "deep_seek": "DeepSeek",
+      "hugging_chat": "HuggingChat"
+    },
+    "colab": {
+      "steps": {
+        "openColab": "Abrir Google Colab",
+        "login": "Login no Google",
+        "createNotebook": "Criar notebook",
+        "configureGpu": "Configurar GPU",
+        "installDeps": "Instalar dependências",
+        "uploadDataset": "Enviar dataset",
+        "trainingCode": "Injetar código de treino",
+        "runTraining": "Executar treino",
+        "monitorProgress": "Monitorar progresso",
+        "downloadModel": "Baixar modelo"
+      }
+    },
+    "llm": {
+      "steps": {
+        "openLlm": "Abrir site do LLM",
+        "login": "Login",
+        "newConversation": "Nova conversa",
+        "sendPrompt": "Enviar prompt",
+        "waitResponse": "Aguardar resposta",
+        "extractResponse": "Extrair resposta"
+      }
+    },
+    "status": {
+      "idle": "Inativo",
+      "detecting_browser": "Detectando navegador",
+      "launching_browser": "Iniciando navegador",
+      "waiting_login": "Aguardando login",
+      "running": "Em execução",
+      "paused": "Pausado",
+      "completed": "Concluído",
+      "failed": "Falhou",
+      "cancelled": "Cancelado",
+      "waitingUser": "Ação necessária"
+    },
+    "errors": {
+      "noBrowser": "Nenhum navegador Chromium encontrado",
+      "captchaDetected": "CAPTCHA detectado",
+      "runtimeDisconnected": "Runtime desconectado",
+      "timeout": "Tempo limite excedido"
+    },
+    "instructions": {
+      "login": "Faça login na janela do navegador. A automação continuará automaticamente após o login.",
+      "captcha": "Um CAPTCHA foi detectado. Resolva-o na janela do navegador."
+    },
+    "result": {
+      "modelDownloaded": "Modelo baixado: {{path}}",
+      "llmResponse": "Resposta recebida"
     }
   }
 }

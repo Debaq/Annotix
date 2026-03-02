@@ -2,14 +2,18 @@
  * ShortcutsManager - Gestiona los atajos de teclado y su visualización
  */
 
+const STORAGE_KEY = 'annotix-keyboard-shortcuts';
+
 export interface Shortcut {
   id: string;
   nameKey: string; // Clave de traducción para el nombre
   key: string;
   descriptionKey?: string; // Clave de traducción para la descripción
   category: 'navigation' | 'tools' | 'general' | 'editing';
+  context?: string; // Contexto: 'image' | 'video' | 'timeseries' | undefined (global)
   handler?: (e: KeyboardEvent) => void;
   enabled?: boolean;
+  editable?: boolean; // false para atajos que no se pueden personalizar
 }
 
 export interface ShortcutCategory {
@@ -20,11 +24,14 @@ export interface ShortcutCategory {
 
 class ShortcutsManager {
   private shortcuts: Map<string, Shortcut> = new Map();
+  private defaultKeys: Map<string, string> = new Map(); // Mapa inmutable de defaults
   private listeners: Set<(shortcut: Shortcut) => void> = new Set();
+  private changeListeners: Set<() => void> = new Set(); // Para re-renders reactivos
   private enabled: boolean = true;
 
   constructor() {
     this.initializeDefaultShortcuts();
+    this.loadCustomBindings();
     this.setupEventListeners();
   }
 
@@ -40,6 +47,7 @@ class ShortcutsManager {
         key: 'Ctrl+S',
         category: 'general',
         enabled: true,
+        editable: true,
       },
       {
         id: 'undo',
@@ -47,6 +55,7 @@ class ShortcutsManager {
         key: 'Ctrl+Z',
         category: 'general',
         enabled: true,
+        editable: true,
       },
       {
         id: 'redo',
@@ -54,6 +63,7 @@ class ShortcutsManager {
         key: 'Ctrl+Y',
         category: 'general',
         enabled: true,
+        editable: true,
       },
       {
         id: 'delete',
@@ -62,6 +72,7 @@ class ShortcutsManager {
         descriptionKey: 'shortcuts.items.delete.description',
         category: 'editing',
         enabled: true,
+        editable: true,
       },
       {
         id: 'deselect',
@@ -69,6 +80,7 @@ class ShortcutsManager {
         key: 'Esc',
         category: 'general',
         enabled: true,
+        editable: true,
       },
 
       // Navegación
@@ -78,6 +90,7 @@ class ShortcutsManager {
         key: '←',
         category: 'navigation',
         enabled: true,
+        editable: true,
       },
       {
         id: 'next-image',
@@ -85,6 +98,7 @@ class ShortcutsManager {
         key: '→',
         category: 'navigation',
         enabled: true,
+        editable: true,
       },
       {
         id: 'zoom-in',
@@ -92,6 +106,7 @@ class ShortcutsManager {
         key: 'Ctrl++',
         category: 'navigation',
         enabled: true,
+        editable: true,
       },
       {
         id: 'zoom-out',
@@ -99,6 +114,7 @@ class ShortcutsManager {
         key: 'Ctrl+-',
         category: 'navigation',
         enabled: true,
+        editable: true,
       },
       {
         id: 'zoom-fit',
@@ -106,16 +122,19 @@ class ShortcutsManager {
         key: 'Ctrl+0',
         category: 'navigation',
         enabled: true,
+        editable: true,
       },
 
-      // Herramientas
+      // Herramientas de imagen
       {
         id: 'tool-box',
         nameKey: 'shortcuts.items.toolBox.name',
         key: 'B',
         descriptionKey: 'shortcuts.items.toolBox.description',
         category: 'tools',
+        context: 'image',
         enabled: true,
+        editable: true,
       },
       {
         id: 'tool-obb',
@@ -123,7 +142,9 @@ class ShortcutsManager {
         key: 'O',
         descriptionKey: 'shortcuts.items.toolOBB.description',
         category: 'tools',
+        context: 'image',
         enabled: true,
+        editable: true,
       },
       {
         id: 'tool-mask',
@@ -131,7 +152,9 @@ class ShortcutsManager {
         key: 'M',
         descriptionKey: 'shortcuts.items.toolMask.description',
         category: 'tools',
+        context: 'image',
         enabled: true,
+        editable: true,
       },
       {
         id: 'tool-polygon',
@@ -139,7 +162,9 @@ class ShortcutsManager {
         key: 'P',
         descriptionKey: 'shortcuts.items.toolPolygon.description',
         category: 'tools',
+        context: 'image',
         enabled: true,
+        editable: true,
       },
       {
         id: 'tool-keypoints',
@@ -147,15 +172,19 @@ class ShortcutsManager {
         key: 'K',
         descriptionKey: 'shortcuts.items.toolKeypoints.description',
         category: 'tools',
+        context: 'image',
         enabled: true,
+        editable: true,
       },
       {
         id: 'tool-landmarks',
-        nameKey: 'tools.landmarks',
+        nameKey: 'shortcuts.items.toolLandmarks.name',
         key: 'L',
-        descriptionKey: 'tools.tooltips.landmarks',
+        descriptionKey: 'shortcuts.items.toolLandmarks.description',
         category: 'tools',
+        context: 'image',
         enabled: true,
+        editable: true,
       },
       {
         id: 'tool-select',
@@ -164,6 +193,7 @@ class ShortcutsManager {
         descriptionKey: 'shortcuts.items.toolSelect.description',
         category: 'tools',
         enabled: true,
+        editable: true,
       },
       {
         id: 'tool-pan',
@@ -172,44 +202,148 @@ class ShortcutsManager {
         descriptionKey: 'shortcuts.items.toolPan.description',
         category: 'tools',
         enabled: true,
+        editable: true,
       },
       {
         id: 'mask-brush-size',
-        nameKey: 'tools.mask',
+        nameKey: 'shortcuts.items.brushSize.name',
         key: '[ / ]',
-        descriptionKey: 'shortcuts.items.toolMask.description',
+        descriptionKey: 'shortcuts.items.brushSize.description',
         category: 'tools',
+        context: 'image',
         enabled: true,
+        editable: false, // Compuesto, no editable
       },
       {
         id: 'mask-erase-toggle',
-        nameKey: 'tools.eraseMode',
+        nameKey: 'shortcuts.items.eraseToggle.name',
         key: 'E',
         category: 'tools',
+        context: 'image',
         enabled: true,
+        editable: true,
       },
       {
         id: 'rotate-left',
         nameKey: 'shortcuts.items.rotateLeft.name',
         key: 'A',
         category: 'tools',
+        context: 'image',
         enabled: true,
+        editable: true,
       },
       {
         id: 'rotate-right',
         nameKey: 'shortcuts.items.rotateRight.name',
         key: 'D',
         category: 'tools',
+        context: 'image',
         enabled: true,
+        editable: true,
+      },
+      {
+        id: 'confirm-drawing',
+        nameKey: 'shortcuts.items.confirmDrawing.name',
+        key: 'Enter',
+        category: 'editing',
+        context: 'image',
+        enabled: true,
+        editable: true,
+      },
+      {
+        id: 'cancel-drawing',
+        nameKey: 'shortcuts.items.cancelDrawing.name',
+        key: 'Esc',
+        category: 'editing',
+        context: 'image',
+        enabled: true,
+        editable: true,
       },
 
-      // Clases
+      // Video
+      {
+        id: 'video-new-track',
+        nameKey: 'shortcuts.items.videoNewTrack.name',
+        key: 'T',
+        category: 'editing',
+        context: 'video',
+        enabled: true,
+        editable: true,
+      },
+      {
+        id: 'video-prev-frame',
+        nameKey: 'shortcuts.items.videoPrevFrame.name',
+        key: '←',
+        category: 'navigation',
+        context: 'video',
+        enabled: true,
+        editable: true,
+      },
+      {
+        id: 'video-next-frame',
+        nameKey: 'shortcuts.items.videoNextFrame.name',
+        key: '→',
+        category: 'navigation',
+        context: 'video',
+        enabled: true,
+        editable: true,
+      },
+
+      // Timeseries
+      {
+        id: 'ts-tool-select',
+        nameKey: 'shortcuts.items.tsToolSelect.name',
+        key: 'V',
+        category: 'tools',
+        context: 'timeseries',
+        enabled: true,
+        editable: true,
+      },
+      {
+        id: 'ts-tool-point',
+        nameKey: 'shortcuts.items.tsToolPoint.name',
+        key: 'P',
+        category: 'tools',
+        context: 'timeseries',
+        enabled: true,
+        editable: true,
+      },
+      {
+        id: 'ts-tool-range',
+        nameKey: 'shortcuts.items.tsToolRange.name',
+        key: 'R',
+        category: 'tools',
+        context: 'timeseries',
+        enabled: true,
+        editable: true,
+      },
+      {
+        id: 'ts-tool-event',
+        nameKey: 'shortcuts.items.tsToolEvent.name',
+        key: 'E',
+        category: 'tools',
+        context: 'timeseries',
+        enabled: true,
+        editable: true,
+      },
+      {
+        id: 'ts-tool-anomaly',
+        nameKey: 'shortcuts.items.tsToolAnomaly.name',
+        key: 'A',
+        category: 'tools',
+        context: 'timeseries',
+        enabled: true,
+        editable: true,
+      },
+
+      // Clases (no editables - sistema posicional)
       {
         id: 'class-1',
         nameKey: 'shortcuts.items.class1.name',
         key: '1',
         category: 'editing',
         enabled: true,
+        editable: false,
       },
       {
         id: 'class-2',
@@ -217,6 +351,7 @@ class ShortcutsManager {
         key: '2',
         category: 'editing',
         enabled: true,
+        editable: false,
       },
       {
         id: 'class-3',
@@ -224,6 +359,7 @@ class ShortcutsManager {
         key: '3',
         category: 'editing',
         enabled: true,
+        editable: false,
       },
       {
         id: 'class-4',
@@ -231,6 +367,7 @@ class ShortcutsManager {
         key: '4',
         category: 'editing',
         enabled: true,
+        editable: false,
       },
       {
         id: 'class-5',
@@ -238,6 +375,7 @@ class ShortcutsManager {
         key: '5',
         category: 'editing',
         enabled: true,
+        editable: false,
       },
       {
         id: 'class-6',
@@ -245,6 +383,7 @@ class ShortcutsManager {
         key: '6',
         category: 'editing',
         enabled: true,
+        editable: false,
       },
       {
         id: 'class-7',
@@ -252,6 +391,7 @@ class ShortcutsManager {
         key: '7',
         category: 'editing',
         enabled: true,
+        editable: false,
       },
       {
         id: 'class-8',
@@ -259,6 +399,7 @@ class ShortcutsManager {
         key: '8',
         category: 'editing',
         enabled: true,
+        editable: false,
       },
       {
         id: 'class-9',
@@ -266,6 +407,7 @@ class ShortcutsManager {
         key: '9',
         category: 'editing',
         enabled: true,
+        editable: false,
       },
       {
         id: 'class-extended',
@@ -273,12 +415,51 @@ class ShortcutsManager {
         key: '0, Q..P',
         category: 'editing',
         enabled: true,
+        editable: false,
       },
     ];
 
     defaultShortcuts.forEach(shortcut => {
       this.shortcuts.set(shortcut.id, shortcut);
+      this.defaultKeys.set(shortcut.id, shortcut.key);
     });
+  }
+
+  /**
+   * Carga bindings personalizados desde localStorage
+   */
+  private loadCustomBindings(): void {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const bindings: Record<string, string> = JSON.parse(raw);
+      for (const [id, key] of Object.entries(bindings)) {
+        const shortcut = this.shortcuts.get(id);
+        if (shortcut && shortcut.editable !== false) {
+          shortcut.key = key;
+        }
+      }
+    } catch {
+      // Ignorar errores de localStorage corrupto
+    }
+  }
+
+  /**
+   * Guarda bindings personalizados en localStorage
+   */
+  private saveCustomBindings(): void {
+    const bindings: Record<string, string> = {};
+    this.shortcuts.forEach((shortcut, id) => {
+      const defaultKey = this.defaultKeys.get(id);
+      if (defaultKey && shortcut.key !== defaultKey && shortcut.editable !== false) {
+        bindings[id] = shortcut.key;
+      }
+    });
+    if (Object.keys(bindings).length === 0) {
+      localStorage.removeItem(STORAGE_KEY);
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(bindings));
+    }
   }
 
   /**
@@ -333,9 +514,9 @@ class ShortcutsManager {
   }
 
   /**
-   * Normaliza el nombre de la tecla para comparación
+   * Normaliza el nombre de la tecla para comparación (público para uso externo)
    */
-  private normalizeKey(key: string): string {
+  normalizeKey(key: string): string {
     return key.replace(/\s+/g, '').toUpperCase();
   }
 
@@ -355,6 +536,13 @@ class ShortcutsManager {
    */
   private notifyListeners(shortcut: Shortcut): void {
     this.listeners.forEach(listener => listener(shortcut));
+  }
+
+  /**
+   * Notifica a los change listeners (para re-renders)
+   */
+  private notifyChangeListeners(): void {
+    this.changeListeners.forEach(listener => listener());
   }
 
   /**
@@ -382,6 +570,84 @@ class ShortcutsManager {
    */
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
+  }
+
+  /**
+   * Obtiene la tecla actual de un shortcut por ID
+   */
+  getKeyForShortcut(shortcutId: string): string {
+    return this.shortcuts.get(shortcutId)?.key ?? '';
+  }
+
+  /**
+   * Verifica si un shortcut ha sido personalizado (distinto al default)
+   */
+  isCustomized(shortcutId: string): boolean {
+    const shortcut = this.shortcuts.get(shortcutId);
+    const defaultKey = this.defaultKeys.get(shortcutId);
+    if (!shortcut || !defaultKey) return false;
+    return shortcut.key !== defaultKey;
+  }
+
+  /**
+   * Busca conflicto: otro shortcut (en el mismo contexto) que ya use esa tecla
+   * Retorna el shortcut en conflicto o null.
+   */
+  findConflict(shortcutId: string, newKey: string): Shortcut | null {
+    const source = this.shortcuts.get(shortcutId);
+    if (!source) return null;
+    const normalizedNew = this.normalizeKey(newKey);
+
+    for (const [id, shortcut] of this.shortcuts) {
+      if (id === shortcutId) continue;
+      if (shortcut.enabled === false) continue;
+      // Solo conflicto si comparten contexto o alguno es global
+      const sameContext =
+        !source.context || !shortcut.context || source.context === shortcut.context;
+      if (!sameContext) continue;
+
+      // Comprobar cada alternativa del shortcut existente
+      const existingOptions = this.normalizeKey(shortcut.key).split(/[/|]/);
+      if (existingOptions.some(opt => opt === normalizedNew)) {
+        return shortcut;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Resetea un shortcut individual a su valor por defecto
+   */
+  resetShortcut(shortcutId: string): void {
+    const shortcut = this.shortcuts.get(shortcutId);
+    const defaultKey = this.defaultKeys.get(shortcutId);
+    if (shortcut && defaultKey) {
+      shortcut.key = defaultKey;
+      this.saveCustomBindings();
+      this.notifyChangeListeners();
+    }
+  }
+
+  /**
+   * Resetea todos los shortcuts a sus valores por defecto
+   */
+  resetAllShortcuts(): void {
+    this.defaultKeys.forEach((defaultKey, id) => {
+      const shortcut = this.shortcuts.get(id);
+      if (shortcut) {
+        shortcut.key = defaultKey;
+      }
+    });
+    localStorage.removeItem(STORAGE_KEY);
+    this.notifyChangeListeners();
+  }
+
+  /**
+   * Agrega un listener para cambios de bindings (para reactividad en componentes)
+   */
+  addChangeListener(listener: () => void): () => void {
+    this.changeListeners.add(listener);
+    return () => this.changeListeners.delete(listener);
   }
 
   /**
@@ -441,12 +707,16 @@ class ShortcutsManager {
   }
 
   /**
-   * Personaliza un atajo existente
+   * Personaliza un atajo existente (con persistencia)
    */
   updateShortcut(shortcutId: string, updates: Partial<Shortcut>): void {
     const shortcut = this.shortcuts.get(shortcutId);
     if (shortcut) {
       Object.assign(shortcut, updates);
+      if ('key' in updates) {
+        this.saveCustomBindings();
+        this.notifyChangeListeners();
+      }
     }
   }
 }

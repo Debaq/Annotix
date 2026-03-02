@@ -4,6 +4,7 @@ import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useImageNavigation } from '../../gallery/hooks/useImageNavigation';
 import { useAnnotations } from '../../canvas/hooks/useAnnotations';
 import { CLASS_SHORTCUTS } from '../constants';
+import { matchesShortcut } from '../utils/matchShortcut';
 
 export function useKeyboardShortcuts() {
   const { setActiveTool, setActiveClassId } = useUIStore();
@@ -36,63 +37,59 @@ export function useKeyboardShortcuts() {
       }
 
       // Tool shortcuts
-      if (key === 'b' && !e.ctrlKey && !e.metaKey) {
+      if (matchesShortcut(e, 'tool-box')) {
         e.preventDefault();
         if (project?.type === 'bbox') setActiveTool('bbox');
-      } else if (key === 'm' && !e.ctrlKey && !e.metaKey) {
+      } else if (matchesShortcut(e, 'tool-mask')) {
         e.preventDefault();
         if (project?.type === 'mask') setActiveTool('mask');
-      } else if (key === 'p' && !e.ctrlKey && !e.metaKey) {
-        // Only if not used by class
+      } else if (matchesShortcut(e, 'tool-polygon')) {
         e.preventDefault();
         if (project?.type === 'polygon') setActiveTool('polygon');
-      } else if (key === 'k' && !e.ctrlKey && !e.metaKey) {
+      } else if (matchesShortcut(e, 'tool-keypoints')) {
         e.preventDefault();
         if (project?.type === 'keypoints') setActiveTool('keypoints');
-      } else if (key === 'l' && !e.ctrlKey && !e.metaKey) {
+      } else if (matchesShortcut(e, 'tool-landmarks')) {
         e.preventDefault();
         if (project?.type === 'landmarks') setActiveTool('landmarks');
-      } else if (key === 'o' && !e.ctrlKey && !e.metaKey) {
-        // Only if not used by class
+      } else if (matchesShortcut(e, 'tool-obb')) {
         e.preventDefault();
         if (project?.type === 'obb') setActiveTool('obb');
-      } else if (key === 'v' && !e.ctrlKey && !e.metaKey) {
+      } else if (matchesShortcut(e, 'tool-select')) {
         e.preventDefault();
         setActiveTool('select');
-      } else if (key === 'h' && !e.ctrlKey && !e.metaKey) {
+      } else if (matchesShortcut(e, 'tool-pan')) {
         e.preventDefault();
         setActiveTool('pan');
       }
 
       // Navigation (only if no annotation is selected)
-      if ((e.key === 'ArrowLeft' || e.key === 'PageUp') && !e.ctrlKey && !e.metaKey) {
+      if (matchesShortcut(e, 'prev-image')) {
         if (!selectedAnnotationId) {
           e.preventDefault();
           navigatePrevious();
         }
-      } else if ((e.key === 'ArrowRight' || e.key === 'PageDown') && !e.ctrlKey && !e.metaKey) {
+      } else if (matchesShortcut(e, 'next-image')) {
         if (!selectedAnnotationId) {
           e.preventDefault();
           navigateNext();
         }
       }
 
-      // Save shortcut (Ctrl+S) - handled in canvas component
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      // Save shortcut
+      if (matchesShortcut(e, 'save')) {
         e.preventDefault();
-        // Dispatch custom event for save
         window.dispatchEvent(new CustomEvent('annotix:save'));
       }
 
-      // Undo shortcut (Ctrl+Z) - handled in canvas component
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+      // Undo shortcut
+      if (matchesShortcut(e, 'undo')) {
         e.preventDefault();
-        // Dispatch custom event for undo
         window.dispatchEvent(new CustomEvent('annotix:undo'));
       }
 
-      // Delete selected annotation (works for selection from canvas or thumbnail)
-      if ((e.key === 'Delete' || e.key === 'Backspace') && !e.ctrlKey && !e.metaKey) {
+      // Delete selected annotation
+      if (matchesShortcut(e, 'delete')) {
         if (selectedAnnotationId) {
           e.preventDefault();
           void deleteAnnotation(selectedAnnotationId);

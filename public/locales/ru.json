@@ -189,6 +189,47 @@
       "class9": {
         "name": "Выбрать Класс 9",
         "key": "9"
+      },
+      "toolLandmarks": {
+        "name": "Инструмент ориентиров",
+        "description": "Выбрать инструмент ориентиров"
+      },
+      "brushSize": {
+        "name": "Размер кисти",
+        "description": "Уменьшить/увеличить размер кисти"
+      },
+      "eraseToggle": {
+        "name": "Режим ластика"
+      },
+      "confirmDrawing": {
+        "name": "Подтвердить рисование"
+      },
+      "cancelDrawing": {
+        "name": "Отменить рисование"
+      },
+      "videoNewTrack": {
+        "name": "Новый трек"
+      },
+      "videoPrevFrame": {
+        "name": "Предыдущий кадр"
+      },
+      "videoNextFrame": {
+        "name": "Следующий кадр"
+      },
+      "tsToolSelect": {
+        "name": "Выбор (временные ряды)"
+      },
+      "tsToolPoint": {
+        "name": "Точка (временные ряды)"
+      },
+      "tsToolRange": {
+        "name": "Диапазон (временные ряды)"
+      },
+      "tsToolEvent": {
+        "name": "Событие (временные ряды)"
+      },
+      "tsToolAnomaly": {
+        "name": "Аномалия (временные ряды)"
       }
     }
   },
@@ -1691,7 +1732,10 @@
       "downloadPackage": "Скачать пакет обучения",
       "cloud": "Cloud",
       "cloudDesc": "Обучайте на облачных GPU с помощью Kaggle, Vertex AI, Colab Enterprise, Lightning AI, Hugging Face или Saturn Cloud.",
-      "launchCloud": "Запустить в облаке"
+      "launchCloud": "Запустить в облаке",
+      "browserAutomation": "Автоматизация браузера",
+      "browserAutomationDesc": "Бесплатное обучение через Google Colab с автоматизацией браузера",
+      "launchBrowserAutomation": "Запустить автоматизацию"
     },
     "package": {
       "generating": "Генерация пакета обучения...",
@@ -2087,7 +2131,9 @@
       "general": "Общие",
       "pythonEnv": "Среда Python",
       "trainingModels": "Модели обучения",
-      "cloudProviders": "Облачные провайдеры"
+      "cloudProviders": "Облачные провайдеры",
+      "keyboardShortcuts": "Горячие клавиши",
+      "browserAutomation": "Автоматизация браузера"
     },
     "general": {
       "colorMode": "Оформление",
@@ -2204,6 +2250,56 @@
       "validating": "Проверка...",
       "valid": "Действителен",
       "invalid": "Недействителен"
+    },
+    "shortcuts": {
+      "description": "Нажмите на значок клавиши, чтобы переназначить. Нажмите Escape для отмены.",
+      "pressKey": "Нажмите клавишу...",
+      "resetAll": "Сбросить все",
+      "resetOne": "Сбросить по умолчанию",
+      "conflict": "Эта клавиша уже назначена для \"{{name}}\".",
+      "customize": "Настроить горячие клавиши"
+    },
+    "automation": {
+      "browsers": {
+        "title": "Обнаружение браузеров",
+        "description": "Обнаружьте и выберите браузер на основе Chromium для задач автоматизации.",
+        "detect": "Обнаружить браузеры",
+        "detecting": "Обнаружение...",
+        "preferred": "Предпочтительный",
+        "testLaunch": "Тестовый запуск",
+        "testing": "Тестирование..."
+      },
+      "provider": {
+        "title": "LLM-ассистент по умолчанию",
+        "description": "Выберите LLM-ассистента по умолчанию для AI-запросов через браузер.",
+        "trainingLabel": "Обучение",
+        "llmLabel": "LLM-ассистенты",
+        "colab_free": "Google Colab (Бесплатно)",
+        "kimi": "Kimi (Moonshot)",
+        "qwen": "Qwen Chat",
+        "deepseek": "DeepSeek",
+        "huggingchat": "HuggingChat"
+      },
+      "selectors": {
+        "title": "Редактор CSS-селекторов",
+        "description": "Редактируйте TOML-файлы селекторов для каждого провайдера. Они определяют, как автоматизация взаимодействует с каждым сайтом.",
+        "restore": "Восстановить"
+      },
+      "advanced": {
+        "title": "Расширенная конфигурация",
+        "description": "Настройте тайм-ауты, повторные попытки и параметры окна браузера.",
+        "stepTimeout": "Тайм-аут шага",
+        "maxRetries": "Макс. повторов",
+        "userActionTimeout": "Тайм-аут действия пользователя",
+        "llmResponseTimeout": "Тайм-аут ответа LLM",
+        "seconds": "секунд",
+        "userDataDir": "Каталог данных пользователя",
+        "userDataDirPlaceholder": "По умолчанию (автоуправление)",
+        "windowSize": "Размер окна",
+        "restoreDefaults": "Восстановить значения по умолчанию"
+      },
+      "saved": "Сохранено",
+      "saveError": "Ошибка сохранения"
     }
   },
   "wizard": {
@@ -2419,6 +2515,75 @@
       "connected": "Подключено",
       "disconnected": "Отключено",
       "error": "Ошибка"
+    }
+  },
+  "automation": {
+    "controlPanel": {
+      "title": "Автоматизация браузера",
+      "logs": "Логи",
+      "waitingLogs": "Ожидание логов...",
+      "minimize": "Свернуть",
+      "close": "Закрыть"
+    },
+    "pause": "Пауза",
+    "resume": "Продолжить",
+    "cancel": "Отмена",
+    "providers": {
+      "colab_free": "Colab Бесплатно",
+      "kimi": "Kimi",
+      "qwen": "Qwen",
+      "deep_seek": "DeepSeek",
+      "hugging_chat": "HuggingChat"
+    },
+    "colab": {
+      "steps": {
+        "openColab": "Открыть Google Colab",
+        "login": "Войти в Google",
+        "createNotebook": "Создать блокнот",
+        "configureGpu": "Настроить GPU",
+        "installDeps": "Установить зависимости",
+        "uploadDataset": "Загрузить датасет",
+        "trainingCode": "Внедрить код обучения",
+        "runTraining": "Запустить обучение",
+        "monitorProgress": "Мониторинг прогресса",
+        "downloadModel": "Скачать модель"
+      }
+    },
+    "llm": {
+      "steps": {
+        "openLlm": "Открыть сайт LLM",
+        "login": "Войти",
+        "newConversation": "Новый диалог",
+        "sendPrompt": "Отправить запрос",
+        "waitResponse": "Ожидание ответа",
+        "extractResponse": "Извлечь ответ"
+      }
+    },
+    "status": {
+      "idle": "Неактивно",
+      "detecting_browser": "Обнаружение браузера",
+      "launching_browser": "Запуск браузера",
+      "waiting_login": "Ожидание входа",
+      "running": "Выполняется",
+      "paused": "Приостановлено",
+      "completed": "Завершено",
+      "failed": "Ошибка",
+      "cancelled": "Отменено",
+      "waitingUser": "Требуется действие"
+    },
+    "errors": {
+      "noBrowser": "Браузер Chromium не найден",
+      "captchaDetected": "Обнаружена CAPTCHA",
+      "runtimeDisconnected": "Runtime отключён",
+      "timeout": "Превышено время ожидания"
+    },
+    "instructions": {
+      "login": "Пожалуйста, войдите в систему в окне браузера. Автоматизация продолжится автоматически после входа.",
+      "captcha": "Обнаружена CAPTCHA. Пожалуйста, решите её в окне браузера."
+    },
+    "result": {
+      "modelDownloaded": "Модель скачана: {{path}}",
+      "llmResponse": "Ответ получен"
     }
   }
 }

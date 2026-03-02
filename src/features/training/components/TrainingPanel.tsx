@@ -27,6 +27,8 @@ import { GpuIndicator } from './GpuIndicator';
 import { TrainingMonitor } from './TrainingMonitor';
 import { TrainingResult } from './TrainingResult';
 import { TrainingJobList } from './TrainingJobList';
+import { AutomationControlPanel } from '../../browser-automation/components/AutomationControlPanel';
+import { automationService } from '../../browser-automation/services/automationService';
 import type { TrainingPhase, PythonEnvStatus, ScenarioPresetId, TrainingJob, TrainingBackend } from '../types';
 import type { GpuInfo } from '../types';
 
@@ -45,6 +47,7 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
   const [gpuInfo, setGpuInfo] = useState<GpuInfo | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<ScenarioPresetId | null>('small_objects');
   const [fineTuneSource, setFineTuneSource] = useState<string | null>(null);
+  const [automationSessionId, setAutomationSessionId] = useState<string | null>(null);
 
   const projectType = project?.type || 'bbox';
 
@@ -183,6 +186,19 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
     }
   }, [project, cloudProvider, cloudConfig, buildRequest]);
 
+  const handleStartBrowserAutomation = useCallback(async () => {
+    if (!project?.id) return;
+    try {
+      const sessionId = await automationService.startAutomation({
+        provider: 'colab_free',
+        projectId: project.id,
+      });
+      setAutomationSessionId(sessionId);
+    } catch (e) {
+      console.error('Error starting browser automation:', e);
+    }
+  }, [project]);
+
   const handleDownloadPackage = useCallback(async () => {
     if (!project?.id) return;
     try {
@@ -252,8 +268,8 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[85vh]" closeLabel={t('common.close')}>
-        <DialogHeader>
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden" closeLabel={t('common.close')}>
+        <DialogHeader className="p-6 pb-2 shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <i className="fas fa-brain text-emerald-500" />
             {t('training.title')}
@@ -261,8 +277,8 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
           <DialogDescription>{t('training.description')}</DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[calc(85vh-120px)] pr-4">
-          <div className="space-y-6 py-2">
+        <ScrollArea className="flex-1 w-full">
+          <div className="px-6 pb-8 space-y-6">
             {/* Phase navigation breadcrumb */}
             {phase !== 'setup' && phase !== 'training' && phase !== 'completed' && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -374,6 +390,7 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
                   onStartLocal={handleStartLocal}
                   onDownloadPackage={handleDownloadPackage}
                   onStartCloud={handleStartCloud}
+                  onStartBrowserAutomation={handleStartBrowserAutomation}
                   cloudProvider={cloudProvider}
                   onCloudProviderSelect={setCloudProvider}
                   cloudConfig={cloudConfig}
@@ -417,6 +434,14 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
           </div>
         </ScrollArea>
       </DialogContent>
+
+      {/* Automation control panel (floating) */}
+      {automationSessionId && (
+        <AutomationControlPanel
+          sessionId={automationSessionId}
+          onClose={() => setAutomationSessionId(null)}
+        />
+      )}
     </Dialog>
   );
 }

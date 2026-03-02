@@ -189,6 +189,47 @@
       "class9": {
         "name": "Select Class 9",
         "key": "9"
+      },
+      "toolLandmarks": {
+        "name": "Landmarks Tool",
+        "description": "Select the landmarks tool"
+      },
+      "brushSize": {
+        "name": "Brush Size",
+        "description": "Decrease/increase brush size"
+      },
+      "eraseToggle": {
+        "name": "Erase Mode Toggle"
+      },
+      "confirmDrawing": {
+        "name": "Confirm Drawing"
+      },
+      "cancelDrawing": {
+        "name": "Cancel Drawing"
+      },
+      "videoNewTrack": {
+        "name": "New Track"
+      },
+      "videoPrevFrame": {
+        "name": "Previous Frame"
+      },
+      "videoNextFrame": {
+        "name": "Next Frame"
+      },
+      "tsToolSelect": {
+        "name": "Select (Time Series)"
+      },
+      "tsToolPoint": {
+        "name": "Point Tool (Time Series)"
+      },
+      "tsToolRange": {
+        "name": "Range Tool (Time Series)"
+      },
+      "tsToolEvent": {
+        "name": "Event Tool (Time Series)"
+      },
+      "tsToolAnomaly": {
+        "name": "Anomaly Tool (Time Series)"
       }
     }
   },
@@ -1805,7 +1846,10 @@
       "downloadPackage": "Download Training Package",
       "cloud": "Cloud",
       "cloudDesc": "Train on cloud GPUs using Kaggle, Vertex AI, Colab Enterprise, Lightning AI, Hugging Face or Saturn Cloud.",
-      "launchCloud": "Launch in Cloud"
+      "launchCloud": "Launch in Cloud",
+      "browserAutomation": "Browser Automation",
+      "browserAutomationDesc": "Free training via Google Colab using browser automation",
+      "launchBrowserAutomation": "Launch Automation"
     },
     "package": {
       "generating": "Generating training package...",
@@ -2104,7 +2148,9 @@
       "general": "General",
       "pythonEnv": "Python Environment",
       "trainingModels": "Training Models",
-      "cloudProviders": "Cloud Providers"
+      "cloudProviders": "Cloud Providers",
+      "keyboardShortcuts": "Keyboard Shortcuts",
+      "browserAutomation": "Browser Automation"
     },
     "general": {
       "colorMode": "Appearance",
@@ -2221,6 +2267,56 @@
       "validating": "Validating...",
       "valid": "Valid",
       "invalid": "Invalid"
+    },
+    "shortcuts": {
+      "description": "Click on a key badge to reassign it. Press Escape to cancel.",
+      "pressKey": "Press a key...",
+      "resetAll": "Reset All",
+      "resetOne": "Reset to default",
+      "conflict": "This key is already assigned to \"{{name}}\".",
+      "customize": "Customize shortcuts"
+    },
+    "automation": {
+      "browsers": {
+        "title": "Browser Detection",
+        "description": "Detect and select a Chromium-based browser for automation tasks.",
+        "detect": "Detect Browsers",
+        "detecting": "Detecting...",
+        "preferred": "Preferred",
+        "testLaunch": "Test Launch",
+        "testing": "Testing..."
+      },
+      "provider": {
+        "title": "Default LLM Assistant",
+        "description": "Choose the default LLM assistant for browser-based AI queries.",
+        "trainingLabel": "Training",
+        "llmLabel": "LLM Assistants",
+        "colab_free": "Google Colab (Free)",
+        "kimi": "Kimi (Moonshot)",
+        "qwen": "Qwen Chat",
+        "deepseek": "DeepSeek",
+        "huggingchat": "HuggingChat"
+      },
+      "selectors": {
+        "title": "CSS Selectors Editor",
+        "description": "Edit TOML selector files for each provider. These define how the automation interacts with each website.",
+        "restore": "Restore"
+      },
+      "advanced": {
+        "title": "Advanced Configuration",
+        "description": "Fine-tune timeouts, retries, and browser window settings.",
+        "stepTimeout": "Step Timeout",
+        "maxRetries": "Max Retries",
+        "userActionTimeout": "User Action Timeout",
+        "llmResponseTimeout": "LLM Response Timeout",
+        "seconds": "seconds",
+        "userDataDir": "User Data Directory",
+        "userDataDirPlaceholder": "Default (auto-managed)",
+        "windowSize": "Window Size",
+        "restoreDefaults": "Restore Defaults"
+      },
+      "saved": "Saved",
+      "saveError": "Error saving"
     }
   },
   "wizard": {
@@ -2436,6 +2532,75 @@
       "connected": "Connected",
       "disconnected": "Disconnected",
       "error": "Error"
+    }
+  },
+  "automation": {
+    "controlPanel": {
+      "title": "Browser Automation",
+      "logs": "Logs",
+      "waitingLogs": "Waiting for logs...",
+      "minimize": "Minimize",
+      "close": "Close"
+    },
+    "pause": "Pause",
+    "resume": "Resume",
+    "cancel": "Cancel",
+    "providers": {
+      "colab_free": "Colab Free",
+      "kimi": "Kimi",
+      "qwen": "Qwen",
+      "deep_seek": "DeepSeek",
+      "hugging_chat": "HuggingChat"
+    },
+    "colab": {
+      "steps": {
+        "openColab": "Open Google Colab",
+        "login": "Login to Google",
+        "createNotebook": "Create notebook",
+        "configureGpu": "Configure GPU",
+        "installDeps": "Install dependencies",
+        "uploadDataset": "Upload dataset",
+        "trainingCode": "Inject training code",
+        "runTraining": "Run training",
+        "monitorProgress": "Monitor progress",
+        "downloadModel": "Download model"
+      }
+    },
+    "llm": {
+      "steps": {
+        "openLlm": "Open LLM website",
+        "login": "Login",
+        "newConversation": "New conversation",
+        "sendPrompt": "Send prompt",
+        "waitResponse": "Wait for response",
+        "extractResponse": "Extract response"
+      }
+    },
+    "status": {
+      "idle": "Idle",
+      "detecting_browser": "Detecting browser",
+      "launching_browser": "Launching browser",
+      "waiting_login": "Waiting for login",
+      "running": "Running",
+      "paused": "Paused",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "waitingUser": "Action required"
+    },
+    "errors": {
+      "noBrowser": "No Chromium browser found",
+      "captchaDetected": "CAPTCHA detected",
+      "runtimeDisconnected": "Runtime disconnected",
+      "timeout": "Operation timed out"
+    },
+    "instructions": {
+      "login": "Please login in the browser window. The automation will continue automatically once logged in.",
+      "captcha": "A CAPTCHA has been detected. Please solve it in the browser window."
+    },
+    "result": {
+      "modelDownloaded": "Model downloaded: {{path}}",
+      "llmResponse": "Response received"
     }
   }
 }
