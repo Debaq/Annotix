@@ -843,12 +843,14 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
         </div>
       </div>
 
-      {/* Image Navigation (Circular buttons) */}
-      <div style={{ position: 'absolute', top: '50%', left: '0', right: '0', transform: 'translateY(-50%)', zIndex: 50, pointerEvents: 'none' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 20px' }}>
-          <ImageNavigation />
+      {/* Image Navigation (Circular buttons) - hidden during video playback (timeline handles navigation) */}
+      {!videoFrameInfo && (
+        <div style={{ position: 'absolute', top: '50%', left: '0', right: '0', transform: 'translateY(-50%)', zIndex: 50, pointerEvents: 'none' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 20px' }}>
+            <ImageNavigation />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Konva Stage */}
       <Stage
