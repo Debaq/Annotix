@@ -1,0 +1,86 @@
+name: Build Windows
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Download FFmpeg
+        shell: pwsh
+        run: |
+          $url = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-lgpl-shared.zip"
+          Write-Host "Descargando FFmpeg..."
+          Invoke-WebRequest -Uri $url -OutFile C:\ffmpeg.zip
+          Expand-Archive C:\ffmpeg.zip -DestinationPath C:\ffmpeg
+          $dir = (Get-ChildItem C:\ffmpeg -Directory)[0].FullName
+          Write-Host "FFmpeg en: $dir"
+
+          # Variables para que el crate ffmpeg-the-third encuentre las libs
+          echo "FFMPEG_DIR=$dir" >> $env:GITHUB_ENV
+          echo "$dir\bin" >> $env:GITHUB_PATH
+
+          # Copiar DLLs para incluir en el instalador
+          New-Item -ItemType Directory -Force -Path src-tauri\ffmpeg-dlls | Out-Null
+          Copy-Item "$dir\bin\*.dll" src-tauri\ffmpeg-dlls\
+          Write-Host "DLLs copiadas:"
+          Get-ChildItem src-tauri\ffmpeg-dlls\*.dll | ForEach-Object { Write-Host "  $_" }
+
+      - name: Incluir FFmpeg DLLs en el bundle
+        shell: pwsh
+        run: |
+          $confPath = "src-tauri\tauri.conf.json"
+          $conf = Get-Content $confPath -Raw | ConvertFrom-Json
+          $conf.bundle | Add-Member -NotePropertyName "resources" -NotePropertyValue @("ffmpeg-dlls/*") -Force
+          $conf | ConvertTo-Json -Depth 20 | Set-Content $confPath -Encoding UTF8
+          Write-Host "tauri.conf.json actualizado con resources de FFmpeg"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Tauri
+        run: npx tauri build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: annotix-windows
+          path: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi
+          retention-days: 30
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: Annotix ${{ github.ref_name }}
+          files: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi

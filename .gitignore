@@ -35,6 +35,7 @@ env/
 
 # Tauri
 src-tauri/target/
+src-tauri/ffmpeg-dlls/
 
 # Build output
 out/
