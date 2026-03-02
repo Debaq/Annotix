@@ -1,0 +1,86 @@
+name = "Google Colab Free"
+url = "https://colab.research.google.com/"
+login_check = "div[data-email]"
+
+[selectors.new_notebook]
+css = "#new-notebook"
+fallback = "button[aria-label='New notebook']"
+wait_timeout_ms = 10000
+description = "Botón crear nuevo notebook"
+
+[selectors.runtime_menu]
+css = "#runtime-menu-button"
+fallback = "div[id='runtime-menu-button']"
+wait_timeout_ms = 5000
+description = "Menú Runtime"
+
+[selectors.change_runtime]
+css = "div[data-command='change-runtime-type']"
+fallback = "#change-runtime-type"
+wait_timeout_ms = 3000
+description = "Change runtime type"
+
+[selectors.gpu_select]
+css = "select[aria-label='Hardware accelerator']"
+fallback = "md-select[aria-label='Hardware accelerator']"
+wait_timeout_ms = 3000
+description = "Selector de GPU"
+
+[selectors.gpu_option_t4]
+css = "option[value='T4']"
+fallback = "md-option[value='T4']"
+wait_timeout_ms = 2000
+description = "Opción GPU T4"
+
+[selectors.save_runtime]
+css = "button[id='ok']"
+fallback = "mwc-button[slot='primaryAction']"
+wait_timeout_ms = 3000
+description = "Guardar configuración de runtime"
+
+[selectors.code_cell]
+css = ".cell .inputarea .CodeMirror"
+fallback = ".cell textarea"
+wait_timeout_ms = 5000
+description = "Área de código de celda"
+
+[selectors.run_button]
+css = "button[aria-label='Run cell']"
+fallback = ".cell-toolbar button:first-child"
+wait_timeout_ms = 5000
+description = "Botón ejecutar celda"
+
+[selectors.add_code_cell]
+css = "#toolbar-add-code"
+fallback = "button[aria-label='Add code cell']"
+wait_timeout_ms = 3000
+description = "Agregar celda de código"
+
+[selectors.cell_output]
+css = ".cell .output_area .output_text pre"
+fallback = ".cell .output-area pre"
+wait_timeout_ms = 5000
+description = "Output de celda"
+
+[selectors.upload_file_input]
+css = "input[type='file']"
+wait_timeout_ms = 5000
+description = "Input file para subir archivos"
+
+[selectors.file_browser]
+css = "div[class*='file-browser']"
+fallback = ".filebrowser-root"
+wait_timeout_ms = 5000
+description = "Explorador de archivos"
+
+[selectors.connect_button]
+css = "colab-connect-button"
+fallback = "#connect"
+wait_timeout_ms = 10000
+description = "Botón conectar runtime"
+
+[selectors.connected_indicator]
+css = "colab-connect-button[connected]"
+fallback = ".connected-indicator"
+wait_timeout_ms = 30000
+description = "Indicador de runtime conectado"

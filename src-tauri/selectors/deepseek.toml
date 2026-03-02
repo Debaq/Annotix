@@ -1,0 +1,39 @@
+name = "DeepSeek Chat"
+url = "https://chat.deepseek.com/"
+login_check = ".chat-input"
+
+[selectors.chat_input]
+css = "textarea#chat-input"
+fallback = ".chat-input-box textarea"
+wait_timeout_ms = 10000
+description = "Campo de texto del chat"
+
+[selectors.send_button]
+css = "button[data-testid='send-button']"
+fallback = ".chat-input-box button.send-btn"
+wait_timeout_ms = 3000
+description = "Botón enviar mensaje"
+
+[selectors.new_chat]
+css = "a[data-testid='new-chat']"
+fallback = ".sidebar .new-conversation"
+wait_timeout_ms = 5000
+description = "Botón nueva conversación"
+
+[selectors.message_list]
+css = ".chat-message-list"
+fallback = ".conversation-messages"
+wait_timeout_ms = 5000
+description = "Lista de mensajes"
+
+[selectors.last_message]
+css = ".chat-message-list .msg-item:last-child .msg-content"
+fallback = ".conversation-messages > div:last-child .markdown-body"
+wait_timeout_ms = 10000
+description = "Último mensaje de la conversación"
+
+[selectors.typing_indicator]
+css = ".typing-cursor"
+fallback = ".is-generating"
+wait_timeout_ms = 2000
+description = "Indicador de generación de respuesta"

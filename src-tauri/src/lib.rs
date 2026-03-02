@@ -1,3 +1,4 @@
+mod browser_automation;
 mod commands;
 mod export;
 mod import;
@@ -12,6 +13,7 @@ use store::AppState;
 use training::runner::TrainingProcessManager;
 use training::cloud::CloudTrainingManager;
 use training::TrainingEnvCache;
+use browser_automation::BrowserAutomationManager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -24,6 +26,7 @@ pub fn run() {
         .manage(TrainingProcessManager::new())
         .manage(CloudTrainingManager::new())
         .manage(TrainingEnvCache::new())
+        .manage(BrowserAutomationManager::new())
         .manage(p2p::node::P2pState::new())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -159,6 +162,13 @@ pub fn run() {
             commands::p2p_commands::p2p_list_peers,
             commands::p2p_commands::p2p_update_rules,
             commands::p2p_commands::p2p_get_rules,
+            // Browser Automation
+            commands::automation_commands::detect_browsers,
+            commands::automation_commands::start_browser_automation,
+            commands::automation_commands::pause_automation,
+            commands::automation_commands::resume_automation,
+            commands::automation_commands::cancel_automation,
+            commands::automation_commands::get_automation_session,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

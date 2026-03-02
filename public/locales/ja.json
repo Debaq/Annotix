@@ -1732,7 +1732,10 @@
       "downloadPackage": "トレーニングパッケージをダウンロード",
       "cloud": "Cloud",
       "cloudDesc": "Kaggle、Vertex AI、Colab Enterprise、Lightning AI、Hugging Face、Saturn Cloudを使用してクラウドGPUでトレーニング。",
-      "launchCloud": "クラウドで起動"
+      "launchCloud": "クラウドで起動",
+      "browserAutomation": "ブラウザ自動化",
+      "browserAutomationDesc": "ブラウザ自動化を使ったGoogle Colabによる無料トレーニング",
+      "launchBrowserAutomation": "自動化を起動"
     },
     "package": {
       "generating": "トレーニングパッケージを生成中...",
@@ -2469,6 +2472,75 @@
       "connected": "接続済み",
       "disconnected": "切断",
       "error": "エラー"
+    }
+  },
+  "automation": {
+    "controlPanel": {
+      "title": "ブラウザ自動化",
+      "logs": "ログ",
+      "waitingLogs": "ログを待っています...",
+      "minimize": "最小化",
+      "close": "閉じる"
+    },
+    "pause": "一時停止",
+    "resume": "再開",
+    "cancel": "キャンセル",
+    "providers": {
+      "colab_free": "Colab無料",
+      "kimi": "Kimi",
+      "qwen": "Qwen",
+      "deep_seek": "DeepSeek",
+      "hugging_chat": "HuggingChat"
+    },
+    "colab": {
+      "steps": {
+        "openColab": "Google Colabを開く",
+        "login": "Googleにログイン",
+        "createNotebook": "ノートブック作成",
+        "configureGpu": "GPU設定",
+        "installDeps": "依存関係インストール",
+        "uploadDataset": "データセットアップロード",
+        "trainingCode": "トレーニングコード注入",
+        "runTraining": "トレーニング実行",
+        "monitorProgress": "進捗監視",
+        "downloadModel": "モデルダウンロード"
+      }
+    },
+    "llm": {
+      "steps": {
+        "openLlm": "LLMサイトを開く",
+        "login": "ログイン",
+        "newConversation": "新しい会話",
+        "sendPrompt": "プロンプト送信",
+        "waitResponse": "応答待ち",
+        "extractResponse": "応答抽出"
+      }
+    },
+    "status": {
+      "idle": "待機中",
+      "detecting_browser": "ブラウザ検出中",
+      "launching_browser": "ブラウザ起動中",
+      "waiting_login": "ログイン待ち",
+      "running": "実行中",
+      "paused": "一時停止中",
+      "completed": "完了",
+      "failed": "失敗",
+      "cancelled": "キャンセル済み",
+      "waitingUser": "操作が必要です"
+    },
+    "errors": {
+      "noBrowser": "Chromiumブラウザが見つかりません",
+      "captchaDetected": "CAPTCHAが検出されました",
+      "runtimeDisconnected": "ランタイムが切断されました",
+      "timeout": "操作がタイムアウトしました"
+    },
+    "instructions": {
+      "login": "ブラウザウィンドウでログインしてください。ログイン後、自動化が自動的に続行されます。",
+      "captcha": "CAPTCHAが検出されました。ブラウザウィンドウで解決してください。"
+    },
+    "result": {
+      "modelDownloaded": "モデルダウンロード完了: {{path}}",
+      "llmResponse": "応答を受信しました"
     }
   }
 }

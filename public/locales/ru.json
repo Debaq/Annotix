@@ -1732,7 +1732,10 @@
       "downloadPackage": "Скачать пакет обучения",
       "cloud": "Cloud",
       "cloudDesc": "Обучайте на облачных GPU с помощью Kaggle, Vertex AI, Colab Enterprise, Lightning AI, Hugging Face или Saturn Cloud.",
-      "launchCloud": "Запустить в облаке"
+      "launchCloud": "Запустить в облаке",
+      "browserAutomation": "Автоматизация браузера",
+      "browserAutomationDesc": "Бесплатное обучение через Google Colab с автоматизацией браузера",
+      "launchBrowserAutomation": "Запустить автоматизацию"
     },
     "package": {
       "generating": "Генерация пакета обучения...",
@@ -2469,6 +2472,75 @@
       "connected": "Подключено",
       "disconnected": "Отключено",
       "error": "Ошибка"
+    }
+  },
+  "automation": {
+    "controlPanel": {
+      "title": "Автоматизация браузера",
+      "logs": "Логи",
+      "waitingLogs": "Ожидание логов...",
+      "minimize": "Свернуть",
+      "close": "Закрыть"
+    },
+    "pause": "Пауза",
+    "resume": "Продолжить",
+    "cancel": "Отмена",
+    "providers": {
+      "colab_free": "Colab Бесплатно",
+      "kimi": "Kimi",
+      "qwen": "Qwen",
+      "deep_seek": "DeepSeek",
+      "hugging_chat": "HuggingChat"
+    },
+    "colab": {
+      "steps": {
+        "openColab": "Открыть Google Colab",
+        "login": "Войти в Google",
+        "createNotebook": "Создать блокнот",
+        "configureGpu": "Настроить GPU",
+        "installDeps": "Установить зависимости",
+        "uploadDataset": "Загрузить датасет",
+        "trainingCode": "Внедрить код обучения",
+        "runTraining": "Запустить обучение",
+        "monitorProgress": "Мониторинг прогресса",
+        "downloadModel": "Скачать модель"
+      }
+    },
+    "llm": {
+      "steps": {
+        "openLlm": "Открыть сайт LLM",
+        "login": "Войти",
+        "newConversation": "Новый диалог",
+        "sendPrompt": "Отправить запрос",
+        "waitResponse": "Ожидание ответа",
+        "extractResponse": "Извлечь ответ"
+      }
+    },
+    "status": {
+      "idle": "Неактивно",
+      "detecting_browser": "Обнаружение браузера",
+      "launching_browser": "Запуск браузера",
+      "waiting_login": "Ожидание входа",
+      "running": "Выполняется",
+      "paused": "Приостановлено",
+      "completed": "Завершено",
+      "failed": "Ошибка",
+      "cancelled": "Отменено",
+      "waitingUser": "Требуется действие"
+    },
+    "errors": {
+      "noBrowser": "Браузер Chromium не найден",
+      "captchaDetected": "Обнаружена CAPTCHA",
+      "runtimeDisconnected": "Runtime отключён",
+      "timeout": "Превышено время ожидания"
+    },
+    "instructions": {
+      "login": "Пожалуйста, войдите в систему в окне браузера. Автоматизация продолжится автоматически после входа.",
+      "captcha": "Обнаружена CAPTCHA. Пожалуйста, решите её в окне браузера."
+    },
+    "result": {
+      "modelDownloaded": "Модель скачана: {{path}}",
+      "llmResponse": "Ответ получен"
     }
   }
 }
