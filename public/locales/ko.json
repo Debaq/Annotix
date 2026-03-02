@@ -189,6 +189,47 @@
       "class9": {
         "name": "클래스 9 선택",
         "key": "9"
+      },
+      "toolLandmarks": {
+        "name": "랜드마크 도구",
+        "description": "랜드마크 도구 선택"
+      },
+      "brushSize": {
+        "name": "브러시 크기",
+        "description": "브러시 크기 줄이기/늘리기"
+      },
+      "eraseToggle": {
+        "name": "지우개 모드"
+      },
+      "confirmDrawing": {
+        "name": "그리기 확인"
+      },
+      "cancelDrawing": {
+        "name": "그리기 취소"
+      },
+      "videoNewTrack": {
+        "name": "새 트랙"
+      },
+      "videoPrevFrame": {
+        "name": "이전 프레임"
+      },
+      "videoNextFrame": {
+        "name": "다음 프레임"
+      },
+      "tsToolSelect": {
+        "name": "선택 (시계열)"
+      },
+      "tsToolPoint": {
+        "name": "포인트 도구 (시계열)"
+      },
+      "tsToolRange": {
+        "name": "범위 도구 (시계열)"
+      },
+      "tsToolEvent": {
+        "name": "이벤트 도구 (시계열)"
+      },
+      "tsToolAnomaly": {
+        "name": "이상 도구 (시계열)"
       }
     }
   },
@@ -2087,7 +2128,16 @@
       "general": "일반",
       "pythonEnv": "Python 환경",
       "trainingModels": "학습 모델",
-      "cloudProviders": "클라우드 제공업체"
+      "cloudProviders": "클라우드 제공업체",
+      "keyboardShortcuts": "키보드 단축키"
+    },
+    "shortcuts": {
+      "description": "키 배지를 클릭하여 재할당하세요. Escape를 눌러 취소합니다.",
+      "pressKey": "키를 누르세요...",
+      "resetAll": "모두 초기화",
+      "resetOne": "기본값으로 초기화",
+      "conflict": "이 키는 이미 \"{{name}}\"에 할당되어 있습니다.",
+      "customize": "단축키 사용자 정의"
     },
     "general": {
       "colorMode": "외관",

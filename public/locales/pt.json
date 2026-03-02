@@ -189,6 +189,47 @@
       "class9": {
         "name": "Selecionar Classe 9",
         "key": "9"
+      },
+      "toolLandmarks": {
+        "name": "Ferramenta Landmarks",
+        "description": "Selecionar ferramenta de pontos de referência"
+      },
+      "brushSize": {
+        "name": "Tamanho do Pincel",
+        "description": "Diminuir/aumentar tamanho do pincel"
+      },
+      "eraseToggle": {
+        "name": "Modo Borracha"
+      },
+      "confirmDrawing": {
+        "name": "Confirmar Desenho"
+      },
+      "cancelDrawing": {
+        "name": "Cancelar Desenho"
+      },
+      "videoNewTrack": {
+        "name": "Nova Faixa"
+      },
+      "videoPrevFrame": {
+        "name": "Quadro Anterior"
+      },
+      "videoNextFrame": {
+        "name": "Próximo Quadro"
+      },
+      "tsToolSelect": {
+        "name": "Seleção (Séries Temporais)"
+      },
+      "tsToolPoint": {
+        "name": "Ferramenta Ponto (Séries Temporais)"
+      },
+      "tsToolRange": {
+        "name": "Ferramenta Faixa (Séries Temporais)"
+      },
+      "tsToolEvent": {
+        "name": "Ferramenta Evento (Séries Temporais)"
+      },
+      "tsToolAnomaly": {
+        "name": "Ferramenta Anomalia (Séries Temporais)"
       }
     }
   },
@@ -2087,7 +2128,8 @@
       "general": "Geral",
       "pythonEnv": "Ambiente Python",
       "trainingModels": "Modelos de Treinamento",
-      "cloudProviders": "Provedores Cloud"
+      "cloudProviders": "Provedores Cloud",
+      "keyboardShortcuts": "Atalhos de Teclado"
     },
     "general": {
       "colorMode": "Aparência",
@@ -2332,6 +2374,14 @@
           "tsImpute": "Reconstruir pontos de dados faltantes ou corrompidos"
         }
       }
+    },
+    "shortcuts": {
+      "description": "Clique em um badge de tecla para reatribuí-lo. Pressione Escape para cancelar.",
+      "pressKey": "Pressione uma tecla...",
+      "resetAll": "Restaurar todos",
+      "resetOne": "Restaurar padrão",
+      "conflict": "Esta tecla já está atribuída a \"{{name}}\".",
+      "customize": "Personalizar atalhos"
     },
     "reasons": {
       "bbox": "Ideal para detectar objetos com caixas retangulares alinhadas",

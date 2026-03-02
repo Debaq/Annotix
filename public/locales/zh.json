@@ -189,6 +189,47 @@
       "class9": {
         "name": "选择类别 9",
         "key": "9"
+      },
+      "toolLandmarks": {
+        "name": "地标工具",
+        "description": "选择地标工具"
+      },
+      "brushSize": {
+        "name": "画笔大小",
+        "description": "减小/增大画笔大小"
+      },
+      "eraseToggle": {
+        "name": "橡皮擦模式"
+      },
+      "confirmDrawing": {
+        "name": "确认绘制"
+      },
+      "cancelDrawing": {
+        "name": "取消绘制"
+      },
+      "videoNewTrack": {
+        "name": "新建轨道"
+      },
+      "videoPrevFrame": {
+        "name": "上一帧"
+      },
+      "videoNextFrame": {
+        "name": "下一帧"
+      },
+      "tsToolSelect": {
+        "name": "选择（时间序列）"
+      },
+      "tsToolPoint": {
+        "name": "点工具（时间序列）"
+      },
+      "tsToolRange": {
+        "name": "范围工具（时间序列）"
+      },
+      "tsToolEvent": {
+        "name": "事件工具（时间序列）"
+      },
+      "tsToolAnomaly": {
+        "name": "异常工具（时间序列）"
       }
     }
   },
@@ -2087,7 +2128,8 @@
       "general": "通用",
       "pythonEnv": "Python环境",
       "trainingModels": "训练模型",
-      "cloudProviders": "云服务商"
+      "cloudProviders": "云服务商",
+      "keyboardShortcuts": "键盘快捷键"
     },
     "general": {
       "colorMode": "外观",
@@ -2204,6 +2246,14 @@
       "validating": "验证中...",
       "valid": "有效",
       "invalid": "无效"
+    },
+    "shortcuts": {
+      "description": "点击按键标记重新分配。按Escape取消。",
+      "pressKey": "请按一个键...",
+      "resetAll": "全部重置",
+      "resetOne": "恢复默认",
+      "conflict": "此键已分配给\"{{name}}\"。",
+      "customize": "自定义快捷键"
     }
   },
   "wizard": {

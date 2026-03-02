@@ -189,6 +189,47 @@
       "class9": {
         "name": "Select Class 9",
         "key": "9"
+      },
+      "toolLandmarks": {
+        "name": "Landmarks Tool",
+        "description": "Select the landmarks tool"
+      },
+      "brushSize": {
+        "name": "Brush Size",
+        "description": "Decrease/increase brush size"
+      },
+      "eraseToggle": {
+        "name": "Erase Mode Toggle"
+      },
+      "confirmDrawing": {
+        "name": "Confirm Drawing"
+      },
+      "cancelDrawing": {
+        "name": "Cancel Drawing"
+      },
+      "videoNewTrack": {
+        "name": "New Track"
+      },
+      "videoPrevFrame": {
+        "name": "Previous Frame"
+      },
+      "videoNextFrame": {
+        "name": "Next Frame"
+      },
+      "tsToolSelect": {
+        "name": "Select (Time Series)"
+      },
+      "tsToolPoint": {
+        "name": "Point Tool (Time Series)"
+      },
+      "tsToolRange": {
+        "name": "Range Tool (Time Series)"
+      },
+      "tsToolEvent": {
+        "name": "Event Tool (Time Series)"
+      },
+      "tsToolAnomaly": {
+        "name": "Anomaly Tool (Time Series)"
       }
     }
   },
@@ -2104,7 +2145,8 @@
       "general": "General",
       "pythonEnv": "Python Environment",
       "trainingModels": "Training Models",
-      "cloudProviders": "Cloud Providers"
+      "cloudProviders": "Cloud Providers",
+      "keyboardShortcuts": "Keyboard Shortcuts"
     },
     "general": {
       "colorMode": "Appearance",
@@ -2221,6 +2263,14 @@
       "validating": "Validating...",
       "valid": "Valid",
       "invalid": "Invalid"
+    },
+    "shortcuts": {
+      "description": "Click on a key badge to reassign it. Press Escape to cancel.",
+      "pressKey": "Press a key...",
+      "resetAll": "Reset All",
+      "resetOne": "Reset to default",
+      "conflict": "This key is already assigned to \"{{name}}\".",
+      "customize": "Customize shortcuts"
     }
   },
   "wizard": {

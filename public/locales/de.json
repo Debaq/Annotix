@@ -189,6 +189,47 @@
       "class9": {
         "name": "Klasse 9 auswählen",
         "key": "9"
+      },
+      "toolLandmarks": {
+        "name": "Landmarks-Werkzeug",
+        "description": "Landmarks-Werkzeug auswählen"
+      },
+      "brushSize": {
+        "name": "Pinselgröße",
+        "description": "Pinselgröße verkleinern/vergrößern"
+      },
+      "eraseToggle": {
+        "name": "Radiermodus"
+      },
+      "confirmDrawing": {
+        "name": "Zeichnung bestätigen"
+      },
+      "cancelDrawing": {
+        "name": "Zeichnung abbrechen"
+      },
+      "videoNewTrack": {
+        "name": "Neuer Track"
+      },
+      "videoPrevFrame": {
+        "name": "Vorheriges Bild"
+      },
+      "videoNextFrame": {
+        "name": "Nächstes Bild"
+      },
+      "tsToolSelect": {
+        "name": "Auswahl (Zeitreihe)"
+      },
+      "tsToolPoint": {
+        "name": "Punkt-Werkzeug (Zeitreihe)"
+      },
+      "tsToolRange": {
+        "name": "Bereich-Werkzeug (Zeitreihe)"
+      },
+      "tsToolEvent": {
+        "name": "Ereignis-Werkzeug (Zeitreihe)"
+      },
+      "tsToolAnomaly": {
+        "name": "Anomalie-Werkzeug (Zeitreihe)"
       }
     }
   },
@@ -2087,7 +2128,8 @@
       "general": "Allgemein",
       "pythonEnv": "Python-Umgebung",
       "trainingModels": "Trainingsmodelle",
-      "cloudProviders": "Cloud-Anbieter"
+      "cloudProviders": "Cloud-Anbieter",
+      "keyboardShortcuts": "Tastaturkürzel"
     },
     "general": {
       "colorMode": "Erscheinungsbild",
@@ -2204,6 +2246,14 @@
       "validating": "Validierung...",
       "valid": "Gültig",
       "invalid": "Ungültig"
+    },
+    "shortcuts": {
+      "description": "Klicke auf ein Tastenkürzel, um es neu zuzuweisen. Drücke Escape zum Abbrechen.",
+      "pressKey": "Taste drücken...",
+      "resetAll": "Alle zurücksetzen",
+      "resetOne": "Auf Standard zurücksetzen",
+      "conflict": "Diese Taste ist bereits \"{{name}}\" zugewiesen.",
+      "customize": "Tastenkürzel anpassen"
     }
   },
   "wizard": {

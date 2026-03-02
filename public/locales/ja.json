@@ -189,6 +189,47 @@
       "class9": {
         "name": "クラス9を選択",
         "key": "9"
+      },
+      "toolLandmarks": {
+        "name": "ランドマークツール",
+        "description": "ランドマークツールを選択"
+      },
+      "brushSize": {
+        "name": "ブラシサイズ",
+        "description": "ブラシサイズを縮小/拡大"
+      },
+      "eraseToggle": {
+        "name": "消しゴムモード"
+      },
+      "confirmDrawing": {
+        "name": "描画を確定"
+      },
+      "cancelDrawing": {
+        "name": "描画をキャンセル"
+      },
+      "videoNewTrack": {
+        "name": "新規トラック"
+      },
+      "videoPrevFrame": {
+        "name": "前のフレーム"
+      },
+      "videoNextFrame": {
+        "name": "次のフレーム"
+      },
+      "tsToolSelect": {
+        "name": "選択（時系列）"
+      },
+      "tsToolPoint": {
+        "name": "ポイントツール（時系列）"
+      },
+      "tsToolRange": {
+        "name": "範囲ツール（時系列）"
+      },
+      "tsToolEvent": {
+        "name": "イベントツール（時系列）"
+      },
+      "tsToolAnomaly": {
+        "name": "異常ツール（時系列）"
       }
     }
   },
@@ -2087,7 +2128,8 @@
       "general": "一般",
       "pythonEnv": "Python環境",
       "trainingModels": "学習モデル",
-      "cloudProviders": "クラウドプロバイダー"
+      "cloudProviders": "クラウドプロバイダー",
+      "keyboardShortcuts": "キーボードショートカット"
     },
     "general": {
       "colorMode": "外観",
@@ -2204,6 +2246,14 @@
       "validating": "検証中...",
       "valid": "有効",
       "invalid": "無効"
+    },
+    "shortcuts": {
+      "description": "キーバッジをクリックして再割り当て。Escapeでキャンセル。",
+      "pressKey": "キーを押してください...",
+      "resetAll": "すべてリセット",
+      "resetOne": "デフォルトに戻す",
+      "conflict": "このキーは既に「{{name}}」に割り当てられています。",
+      "customize": "ショートカットをカスタマイズ"
     }
   },
   "wizard": {

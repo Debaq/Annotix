@@ -189,6 +189,47 @@
       "class9": {
         "name": "Seleziona Classe 9",
         "key": "9"
+      },
+      "toolLandmarks": {
+        "name": "Strumento Landmarks",
+        "description": "Seleziona lo strumento landmarks"
+      },
+      "brushSize": {
+        "name": "Dimensione Pennello",
+        "description": "Diminuisci/aumenta dimensione pennello"
+      },
+      "eraseToggle": {
+        "name": "Modalità Gomma"
+      },
+      "confirmDrawing": {
+        "name": "Conferma Disegno"
+      },
+      "cancelDrawing": {
+        "name": "Annulla Disegno"
+      },
+      "videoNewTrack": {
+        "name": "Nuova Traccia"
+      },
+      "videoPrevFrame": {
+        "name": "Fotogramma Precedente"
+      },
+      "videoNextFrame": {
+        "name": "Fotogramma Successivo"
+      },
+      "tsToolSelect": {
+        "name": "Selezione (Serie Temporali)"
+      },
+      "tsToolPoint": {
+        "name": "Strumento Punto (Serie Temporali)"
+      },
+      "tsToolRange": {
+        "name": "Strumento Intervallo (Serie Temporali)"
+      },
+      "tsToolEvent": {
+        "name": "Strumento Evento (Serie Temporali)"
+      },
+      "tsToolAnomaly": {
+        "name": "Strumento Anomalia (Serie Temporali)"
       }
     }
   },
@@ -2087,7 +2128,16 @@
       "general": "Generale",
       "pythonEnv": "Ambiente Python",
       "trainingModels": "Modelli di addestramento",
-      "cloudProviders": "Fornitori Cloud"
+      "cloudProviders": "Fornitori Cloud",
+      "keyboardShortcuts": "Scorciatoie da Tastiera"
+    },
+    "shortcuts": {
+      "description": "Clicca su un badge tasto per riassegnarlo. Premi Escape per annullare.",
+      "pressKey": "Premi un tasto...",
+      "resetAll": "Ripristina tutto",
+      "resetOne": "Ripristina predefinito",
+      "conflict": "Questo tasto è già assegnato a \"{{name}}\".",
+      "customize": "Personalizza scorciatoie"
     },
     "general": {
       "colorMode": "Aspetto",

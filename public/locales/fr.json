@@ -189,6 +189,47 @@
       "class9": {
         "name": "Sélectionner Classe 9",
         "key": "9"
+      },
+      "toolLandmarks": {
+        "name": "Outil Repères",
+        "description": "Sélectionner l'outil repères"
+      },
+      "brushSize": {
+        "name": "Taille du Pinceau",
+        "description": "Diminuer/augmenter la taille du pinceau"
+      },
+      "eraseToggle": {
+        "name": "Mode Gomme"
+      },
+      "confirmDrawing": {
+        "name": "Confirmer le Dessin"
+      },
+      "cancelDrawing": {
+        "name": "Annuler le Dessin"
+      },
+      "videoNewTrack": {
+        "name": "Nouveau Track"
+      },
+      "videoPrevFrame": {
+        "name": "Image Précédente"
+      },
+      "videoNextFrame": {
+        "name": "Image Suivante"
+      },
+      "tsToolSelect": {
+        "name": "Sélection (Séries Temporelles)"
+      },
+      "tsToolPoint": {
+        "name": "Outil Point (Séries Temporelles)"
+      },
+      "tsToolRange": {
+        "name": "Outil Plage (Séries Temporelles)"
+      },
+      "tsToolEvent": {
+        "name": "Outil Événement (Séries Temporelles)"
+      },
+      "tsToolAnomaly": {
+        "name": "Outil Anomalie (Séries Temporelles)"
       }
     }
   },
@@ -2087,7 +2128,16 @@
       "general": "Général",
       "pythonEnv": "Environnement Python",
       "trainingModels": "Modèles d'entraînement",
-      "cloudProviders": "Fournisseurs Cloud"
+      "cloudProviders": "Fournisseurs Cloud",
+      "keyboardShortcuts": "Raccourcis Clavier"
+    },
+    "shortcuts": {
+      "description": "Cliquez sur un badge de touche pour le réassigner. Appuyez sur Échap pour annuler.",
+      "pressKey": "Appuyez sur une touche...",
+      "resetAll": "Tout réinitialiser",
+      "resetOne": "Réinitialiser par défaut",
+      "conflict": "Cette touche est déjà assignée à \"{{name}}\".",
+      "customize": "Personnaliser les raccourcis"
     },
     "general": {
       "colorMode": "Apparence",

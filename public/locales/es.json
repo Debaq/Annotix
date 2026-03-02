@@ -189,6 +189,47 @@
       "class9": {
         "name": "Seleccionar Clase 9",
         "key": "9"
+      },
+      "toolLandmarks": {
+        "name": "Herramienta Landmarks",
+        "description": "Selecciona la herramienta de puntos de referencia"
+      },
+      "brushSize": {
+        "name": "Tamaño del Pincel",
+        "description": "Disminuir/aumentar tamaño del pincel"
+      },
+      "eraseToggle": {
+        "name": "Modo Borrador"
+      },
+      "confirmDrawing": {
+        "name": "Confirmar Dibujo"
+      },
+      "cancelDrawing": {
+        "name": "Cancelar Dibujo"
+      },
+      "videoNewTrack": {
+        "name": "Nuevo Track"
+      },
+      "videoPrevFrame": {
+        "name": "Frame Anterior"
+      },
+      "videoNextFrame": {
+        "name": "Frame Siguiente"
+      },
+      "tsToolSelect": {
+        "name": "Seleccionar (Series Temporales)"
+      },
+      "tsToolPoint": {
+        "name": "Herramienta Punto (Series Temporales)"
+      },
+      "tsToolRange": {
+        "name": "Herramienta Rango (Series Temporales)"
+      },
+      "tsToolEvent": {
+        "name": "Herramienta Evento (Series Temporales)"
+      },
+      "tsToolAnomaly": {
+        "name": "Herramienta Anomalía (Series Temporales)"
       }
     }
   },
@@ -2104,7 +2145,8 @@
       "general": "General",
       "pythonEnv": "Entorno Python",
       "trainingModels": "Modelos de Entrenamiento",
-      "cloudProviders": "Proveedores Cloud"
+      "cloudProviders": "Proveedores Cloud",
+      "keyboardShortcuts": "Atajos de Teclado"
     },
     "general": {
       "colorMode": "Apariencia",
@@ -2221,6 +2263,14 @@
       "validating": "Validando...",
       "valid": "Válido",
       "invalid": "Inválido"
+    },
+    "shortcuts": {
+      "description": "Haz clic en una tecla para reasignarla. Presiona Escape para cancelar.",
+      "pressKey": "Presiona una tecla...",
+      "resetAll": "Restaurar todos",
+      "resetOne": "Restaurar al valor original",
+      "conflict": "Esta tecla ya está asignada a \"{{name}}\".",
+      "customize": "Personalizar atajos"
     }
   },
   "wizard": {
