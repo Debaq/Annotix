@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import {
   Select,
   SelectContent,
@@ -250,14 +251,12 @@ export function CloudProvidersSection() {
           <div className="p-4 space-y-4">
             <p className="text-xs text-muted-foreground">
               {t('settings.cloud.kaggle.description')}{' '}
-              <a
-                href="https://www.kaggle.com/settings/account"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => openUrl('https://www.kaggle.com/settings/account')}
                 className="text-sky-500 hover:underline"
               >
                 {t('settings.cloud.kaggle.getKey')}
-              </a>
+              </button>
             </p>
 
             <div>
@@ -334,14 +333,12 @@ export function CloudProvidersSection() {
           <div className="p-4 space-y-4">
             <p className="text-xs text-muted-foreground">
               {t('settings.cloud.lightning.description')}{' '}
-              <a
-                href="https://lightning.ai/account"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => openUrl('https://lightning.ai/account')}
                 className="text-violet-500 hover:underline"
               >
                 {t('settings.cloud.lightning.getKey')}
-              </a>
+              </button>
             </p>
 
             <div>
@@ -407,14 +404,12 @@ export function CloudProvidersSection() {
           <div className="p-4 space-y-4">
             <p className="text-xs text-muted-foreground">
               {t('settings.cloud.huggingface.description')}{' '}
-              <a
-                href="https://huggingface.co/settings/tokens"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => openUrl('https://huggingface.co/settings/tokens')}
                 className="text-amber-500 hover:underline"
               >
                 {t('settings.cloud.huggingface.getToken')}
-              </a>
+              </button>
             </p>
 
             <div>
@@ -491,14 +486,12 @@ export function CloudProvidersSection() {
           <div className="p-4 space-y-4">
             <p className="text-xs text-muted-foreground">
               {t('settings.cloud.saturn.description')}{' '}
-              <a
-                href="https://saturncloud.io/docs/getting-started/"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => openUrl('https://saturncloud.io/docs/getting-started/')}
                 className="text-teal-500 hover:underline"
               >
                 {t('settings.cloud.saturn.getToken')}
-              </a>
+              </button>
             </p>
 
             <div>
