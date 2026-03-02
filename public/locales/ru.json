@@ -2132,7 +2132,8 @@
       "pythonEnv": "Среда Python",
       "trainingModels": "Модели обучения",
       "cloudProviders": "Облачные провайдеры",
-      "keyboardShortcuts": "Горячие клавиши"
+      "keyboardShortcuts": "Горячие клавиши",
+      "browserAutomation": "Автоматизация браузера"
     },
     "general": {
       "colorMode": "Оформление",
@@ -2257,6 +2258,48 @@
       "resetOne": "Сбросить по умолчанию",
       "conflict": "Эта клавиша уже назначена для \"{{name}}\".",
       "customize": "Настроить горячие клавиши"
+    },
+    "automation": {
+      "browsers": {
+        "title": "Обнаружение браузеров",
+        "description": "Обнаружьте и выберите браузер на основе Chromium для задач автоматизации.",
+        "detect": "Обнаружить браузеры",
+        "detecting": "Обнаружение...",
+        "preferred": "Предпочтительный",
+        "testLaunch": "Тестовый запуск",
+        "testing": "Тестирование..."
+      },
+      "provider": {
+        "title": "LLM-ассистент по умолчанию",
+        "description": "Выберите LLM-ассистента по умолчанию для AI-запросов через браузер.",
+        "trainingLabel": "Обучение",
+        "llmLabel": "LLM-ассистенты",
+        "colab_free": "Google Colab (Бесплатно)",
+        "kimi": "Kimi (Moonshot)",
+        "qwen": "Qwen Chat",
+        "deepseek": "DeepSeek",
+        "huggingchat": "HuggingChat"
+      },
+      "selectors": {
+        "title": "Редактор CSS-селекторов",
+        "description": "Редактируйте TOML-файлы селекторов для каждого провайдера. Они определяют, как автоматизация взаимодействует с каждым сайтом.",
+        "restore": "Восстановить"
+      },
+      "advanced": {
+        "title": "Расширенная конфигурация",
+        "description": "Настройте тайм-ауты, повторные попытки и параметры окна браузера.",
+        "stepTimeout": "Тайм-аут шага",
+        "maxRetries": "Макс. повторов",
+        "userActionTimeout": "Тайм-аут действия пользователя",
+        "llmResponseTimeout": "Тайм-аут ответа LLM",
+        "seconds": "секунд",
+        "userDataDir": "Каталог данных пользователя",
+        "userDataDirPlaceholder": "По умолчанию (автоуправление)",
+        "windowSize": "Размер окна",
+        "restoreDefaults": "Восстановить значения по умолчанию"
+      },
+      "saved": "Сохранено",
+      "saveError": "Ошибка сохранения"
     }
   },
   "wizard": {

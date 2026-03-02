@@ -2149,7 +2149,8 @@
       "pythonEnv": "Python Environment",
       "trainingModels": "Training Models",
       "cloudProviders": "Cloud Providers",
-      "keyboardShortcuts": "Keyboard Shortcuts"
+      "keyboardShortcuts": "Keyboard Shortcuts",
+      "browserAutomation": "Browser Automation"
     },
     "general": {
       "colorMode": "Appearance",
@@ -2274,6 +2275,48 @@
       "resetOne": "Reset to default",
       "conflict": "This key is already assigned to \"{{name}}\".",
       "customize": "Customize shortcuts"
+    },
+    "automation": {
+      "browsers": {
+        "title": "Browser Detection",
+        "description": "Detect and select a Chromium-based browser for automation tasks.",
+        "detect": "Detect Browsers",
+        "detecting": "Detecting...",
+        "preferred": "Preferred",
+        "testLaunch": "Test Launch",
+        "testing": "Testing..."
+      },
+      "provider": {
+        "title": "Default LLM Assistant",
+        "description": "Choose the default LLM assistant for browser-based AI queries.",
+        "trainingLabel": "Training",
+        "llmLabel": "LLM Assistants",
+        "colab_free": "Google Colab (Free)",
+        "kimi": "Kimi (Moonshot)",
+        "qwen": "Qwen Chat",
+        "deepseek": "DeepSeek",
+        "huggingchat": "HuggingChat"
+      },
+      "selectors": {
+        "title": "CSS Selectors Editor",
+        "description": "Edit TOML selector files for each provider. These define how the automation interacts with each website.",
+        "restore": "Restore"
+      },
+      "advanced": {
+        "title": "Advanced Configuration",
+        "description": "Fine-tune timeouts, retries, and browser window settings.",
+        "stepTimeout": "Step Timeout",
+        "maxRetries": "Max Retries",
+        "userActionTimeout": "User Action Timeout",
+        "llmResponseTimeout": "LLM Response Timeout",
+        "seconds": "seconds",
+        "userDataDir": "User Data Directory",
+        "userDataDirPlaceholder": "Default (auto-managed)",
+        "windowSize": "Window Size",
+        "restoreDefaults": "Restore Defaults"
+      },
+      "saved": "Saved",
+      "saveError": "Error saving"
     }
   },
   "wizard": {

@@ -2132,7 +2132,8 @@
       "pythonEnv": "Python环境",
       "trainingModels": "训练模型",
       "cloudProviders": "云服务商",
-      "keyboardShortcuts": "键盘快捷键"
+      "keyboardShortcuts": "键盘快捷键",
+      "browserAutomation": "浏览器自动化"
     },
     "general": {
       "colorMode": "外观",
@@ -2257,6 +2258,48 @@
       "resetOne": "恢复默认",
       "conflict": "此键已分配给\"{{name}}\"。",
       "customize": "自定义快捷键"
+    },
+    "automation": {
+      "browsers": {
+        "title": "浏览器检测",
+        "description": "检测并选择基于Chromium的浏览器用于自动化任务。",
+        "detect": "检测浏览器",
+        "detecting": "检测中...",
+        "preferred": "首选",
+        "testLaunch": "测试启动",
+        "testing": "测试中..."
+      },
+      "provider": {
+        "title": "默认LLM助手",
+        "description": "选择用于浏览器AI查询的默认LLM助手。",
+        "trainingLabel": "训练",
+        "llmLabel": "LLM助手",
+        "colab_free": "Google Colab（免费）",
+        "kimi": "Kimi（Moonshot）",
+        "qwen": "Qwen Chat",
+        "deepseek": "DeepSeek",
+        "huggingchat": "HuggingChat"
+      },
+      "selectors": {
+        "title": "CSS选择器编辑器",
+        "description": "编辑每个提供商的TOML选择器文件。这些定义了自动化如何与每个网站进行交互。",
+        "restore": "恢复"
+      },
+      "advanced": {
+        "title": "高级配置",
+        "description": "调整超时、重试和浏览器窗口设置。",
+        "stepTimeout": "步骤超时",
+        "maxRetries": "最大重试次数",
+        "userActionTimeout": "用户操作超时",
+        "llmResponseTimeout": "LLM响应超时",
+        "seconds": "秒",
+        "userDataDir": "用户数据目录",
+        "userDataDirPlaceholder": "默认（自动管理）",
+        "windowSize": "窗口大小",
+        "restoreDefaults": "恢复默认值"
+      },
+      "saved": "已保存",
+      "saveError": "保存错误"
     }
   },
   "wizard": {

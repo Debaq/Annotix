@@ -2132,7 +2132,8 @@
       "pythonEnv": "Ambiente Python",
       "trainingModels": "Modelos de Treinamento",
       "cloudProviders": "Provedores Cloud",
-      "keyboardShortcuts": "Atalhos de Teclado"
+      "keyboardShortcuts": "Atalhos de Teclado",
+      "browserAutomation": "Automação do Navegador"
     },
     "general": {
       "colorMode": "Aparência",
@@ -2385,6 +2386,48 @@
       "resetOne": "Restaurar padrão",
       "conflict": "Esta tecla já está atribuída a \"{{name}}\".",
       "customize": "Personalizar atalhos"
+    },
+    "automation": {
+      "browsers": {
+        "title": "Detecção de Navegadores",
+        "description": "Detecte e selecione um navegador baseado em Chromium para tarefas de automação.",
+        "detect": "Detectar Navegadores",
+        "detecting": "Detectando...",
+        "preferred": "Preferido",
+        "testLaunch": "Testar Lançamento",
+        "testing": "Testando..."
+      },
+      "provider": {
+        "title": "Assistente LLM Padrão",
+        "description": "Escolha o assistente LLM padrão para consultas de IA via navegador.",
+        "trainingLabel": "Treinamento",
+        "llmLabel": "Assistentes LLM",
+        "colab_free": "Google Colab (Gratuito)",
+        "kimi": "Kimi (Moonshot)",
+        "qwen": "Qwen Chat",
+        "deepseek": "DeepSeek",
+        "huggingchat": "HuggingChat"
+      },
+      "selectors": {
+        "title": "Editor de Seletores CSS",
+        "description": "Edite os arquivos TOML de seletores para cada provedor. Eles definem como a automação interage com cada site.",
+        "restore": "Restaurar"
+      },
+      "advanced": {
+        "title": "Configuração Avançada",
+        "description": "Ajuste timeouts, tentativas e configurações da janela do navegador.",
+        "stepTimeout": "Timeout por Passo",
+        "maxRetries": "Tentativas Máximas",
+        "userActionTimeout": "Timeout de Ação do Usuário",
+        "llmResponseTimeout": "Timeout de Resposta LLM",
+        "seconds": "segundos",
+        "userDataDir": "Diretório de Dados do Usuário",
+        "userDataDirPlaceholder": "Padrão (gerenciado automaticamente)",
+        "windowSize": "Tamanho da Janela",
+        "restoreDefaults": "Restaurar Padrões"
+      },
+      "saved": "Salvo",
+      "saveError": "Erro ao salvar"
     },
     "reasons": {
       "bbox": "Ideal para detectar objetos com caixas retangulares alinhadas",

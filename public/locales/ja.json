@@ -2132,7 +2132,8 @@
       "pythonEnv": "Python環境",
       "trainingModels": "学習モデル",
       "cloudProviders": "クラウドプロバイダー",
-      "keyboardShortcuts": "キーボードショートカット"
+      "keyboardShortcuts": "キーボードショートカット",
+      "browserAutomation": "ブラウザ自動化"
     },
     "general": {
       "colorMode": "外観",
@@ -2257,6 +2258,48 @@
       "resetOne": "デフォルトに戻す",
       "conflict": "このキーは既に「{{name}}」に割り当てられています。",
       "customize": "ショートカットをカスタマイズ"
+    },
+    "automation": {
+      "browsers": {
+        "title": "ブラウザ検出",
+        "description": "自動化タスク用のChromiumベースのブラウザを検出して選択します。",
+        "detect": "ブラウザを検出",
+        "detecting": "検出中...",
+        "preferred": "優先",
+        "testLaunch": "テスト起動",
+        "testing": "テスト中..."
+      },
+      "provider": {
+        "title": "デフォルトLLMアシスタント",
+        "description": "ブラウザベースのAIクエリに使用するデフォルトのLLMアシスタントを選択します。",
+        "trainingLabel": "トレーニング",
+        "llmLabel": "LLMアシスタント",
+        "colab_free": "Google Colab（無料）",
+        "kimi": "Kimi（Moonshot）",
+        "qwen": "Qwen Chat",
+        "deepseek": "DeepSeek",
+        "huggingchat": "HuggingChat"
+      },
+      "selectors": {
+        "title": "CSSセレクターエディター",
+        "description": "各プロバイダーのTOMLセレクターファイルを編集します。これらは自動化が各ウェブサイトとどのようにやり取りするかを定義します。",
+        "restore": "復元"
+      },
+      "advanced": {
+        "title": "詳細設定",
+        "description": "タイムアウト、リトライ、ブラウザウィンドウの設定を調整します。",
+        "stepTimeout": "ステップタイムアウト",
+        "maxRetries": "最大リトライ数",
+        "userActionTimeout": "ユーザーアクションタイムアウト",
+        "llmResponseTimeout": "LLMレスポンスタイムアウト",
+        "seconds": "秒",
+        "userDataDir": "ユーザーデータディレクトリ",
+        "userDataDirPlaceholder": "デフォルト（自動管理）",
+        "windowSize": "ウィンドウサイズ",
+        "restoreDefaults": "デフォルトに戻す"
+      },
+      "saved": "保存しました",
+      "saveError": "保存エラー"
     }
   },
   "wizard": {
