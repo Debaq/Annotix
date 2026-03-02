@@ -1,0 +1,39 @@
+name = "Qwen Chat"
+url = "https://chat.qwen.ai/"
+login_check = ".chat-input"
+
+[selectors.chat_input]
+css = "textarea#chat-input"
+fallback = ".chat-input-area textarea"
+wait_timeout_ms = 10000
+description = "Campo de texto del chat"
+
+[selectors.send_button]
+css = "button[data-testid='send-btn']"
+fallback = ".chat-input-area button[type='submit']"
+wait_timeout_ms = 3000
+description = "Botón enviar mensaje"
+
+[selectors.new_chat]
+css = "button[data-testid='new-chat']"
+fallback = ".sidebar .new-chat"
+wait_timeout_ms = 5000
+description = "Botón nueva conversación"
+
+[selectors.message_list]
+css = ".message-list"
+fallback = ".chat-messages"
+wait_timeout_ms = 5000
+description = "Lista de mensajes"
+
+[selectors.last_message]
+css = ".message-list .message-item:last-child .message-content"
+fallback = ".chat-messages > div:last-child .content"
+wait_timeout_ms = 10000
+description = "Último mensaje de la conversación"
+
+[selectors.typing_indicator]
+css = ".is-typing"
+fallback = ".generating-indicator"
+wait_timeout_ms = 2000
+description = "Indicador de generación de respuesta"

@@ -1692,7 +1692,10 @@
       "downloadPackage": "Baixar Pacote de Treinamento",
       "cloud": "Cloud",
       "cloudDesc": "Treine em GPUs na nuvem usando Kaggle, Vertex AI, Colab Enterprise, Lightning AI, Hugging Face ou Saturn Cloud.",
-      "launchCloud": "Iniciar na Nuvem"
+      "launchCloud": "Iniciar na Nuvem",
+      "browserAutomation": "Automação do navegador",
+      "browserAutomationDesc": "Treino gratuito via Google Colab com automação do navegador",
+      "launchBrowserAutomation": "Iniciar automação"
     },
     "package": {
       "generating": "Gerando pacote de treinamento...",
@@ -2469,6 +2472,75 @@
       "connected": "Conectado",
       "disconnected": "Desconectado",
       "error": "Erro"
+    }
+  },
+  "automation": {
+    "controlPanel": {
+      "title": "Automação do navegador",
+      "logs": "Logs",
+      "waitingLogs": "Aguardando logs...",
+      "minimize": "Minimizar",
+      "close": "Fechar"
+    },
+    "pause": "Pausar",
+    "resume": "Retomar",
+    "cancel": "Cancelar",
+    "providers": {
+      "colab_free": "Colab Gratuito",
+      "kimi": "Kimi",
+      "qwen": "Qwen",
+      "deep_seek": "DeepSeek",
+      "hugging_chat": "HuggingChat"
+    },
+    "colab": {
+      "steps": {
+        "openColab": "Abrir Google Colab",
+        "login": "Login no Google",
+        "createNotebook": "Criar notebook",
+        "configureGpu": "Configurar GPU",
+        "installDeps": "Instalar dependências",
+        "uploadDataset": "Enviar dataset",
+        "trainingCode": "Injetar código de treino",
+        "runTraining": "Executar treino",
+        "monitorProgress": "Monitorar progresso",
+        "downloadModel": "Baixar modelo"
+      }
+    },
+    "llm": {
+      "steps": {
+        "openLlm": "Abrir site do LLM",
+        "login": "Login",
+        "newConversation": "Nova conversa",
+        "sendPrompt": "Enviar prompt",
+        "waitResponse": "Aguardar resposta",
+        "extractResponse": "Extrair resposta"
+      }
+    },
+    "status": {
+      "idle": "Inativo",
+      "detecting_browser": "Detectando navegador",
+      "launching_browser": "Iniciando navegador",
+      "waiting_login": "Aguardando login",
+      "running": "Em execução",
+      "paused": "Pausado",
+      "completed": "Concluído",
+      "failed": "Falhou",
+      "cancelled": "Cancelado",
+      "waitingUser": "Ação necessária"
+    },
+    "errors": {
+      "noBrowser": "Nenhum navegador Chromium encontrado",
+      "captchaDetected": "CAPTCHA detectado",
+      "runtimeDisconnected": "Runtime desconectado",
+      "timeout": "Tempo limite excedido"
+    },
+    "instructions": {
+      "login": "Faça login na janela do navegador. A automação continuará automaticamente após o login.",
+      "captcha": "Um CAPTCHA foi detectado. Resolva-o na janela do navegador."
+    },
+    "result": {
+      "modelDownloaded": "Modelo baixado: {{path}}",
+      "llmResponse": "Resposta recebida"
     }
   }
 }

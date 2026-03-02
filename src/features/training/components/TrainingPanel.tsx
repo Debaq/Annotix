@@ -27,6 +27,8 @@ import { GpuIndicator } from './GpuIndicator';
 import { TrainingMonitor } from './TrainingMonitor';
 import { TrainingResult } from './TrainingResult';
 import { TrainingJobList } from './TrainingJobList';
+import { AutomationControlPanel } from '../../browser-automation/components/AutomationControlPanel';
+import { automationService } from '../../browser-automation/services/automationService';
 import type { TrainingPhase, PythonEnvStatus, ScenarioPresetId, TrainingJob, TrainingBackend } from '../types';
 import type { GpuInfo } from '../types';
 
@@ -45,6 +47,7 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
   const [gpuInfo, setGpuInfo] = useState<GpuInfo | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<ScenarioPresetId | null>('small_objects');
   const [fineTuneSource, setFineTuneSource] = useState<string | null>(null);
+  const [automationSessionId, setAutomationSessionId] = useState<string | null>(null);
 
   const projectType = project?.type || 'bbox';
 
@@ -182,6 +185,19 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
       setPhase('config');
     }
   }, [project, cloudProvider, cloudConfig, buildRequest]);
+
+  const handleStartBrowserAutomation = useCallback(async () => {
+    if (!project?.id) return;
+    try {
+      const sessionId = await automationService.startAutomation({
+        provider: 'colab_free',
+        projectId: project.id,
+      });
+      setAutomationSessionId(sessionId);
+    } catch (e) {
+      console.error('Error starting browser automation:', e);
+    }
+  }, [project]);
 
   const handleDownloadPackage = useCallback(async () => {
     if (!project?.id) return;
@@ -374,6 +390,7 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
                   onStartLocal={handleStartLocal}
                   onDownloadPackage={handleDownloadPackage}
                   onStartCloud={handleStartCloud}
+                  onStartBrowserAutomation={handleStartBrowserAutomation}
                   cloudProvider={cloudProvider}
                   onCloudProviderSelect={setCloudProvider}
                   cloudConfig={cloudConfig}
@@ -417,6 +434,14 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
           </div>
         </ScrollArea>
       </DialogContent>
+
+      {/* Automation control panel (floating) */}
+      {automationSessionId && (
+        <AutomationControlPanel
+          sessionId={automationSessionId}
+          onClose={() => setAutomationSessionId(null)}
+        />
+      )}
     </Dialog>
   );
 }

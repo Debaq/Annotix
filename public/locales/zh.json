@@ -1732,7 +1732,10 @@
       "downloadPackage": "下载训练包",
       "cloud": "Cloud",
       "cloudDesc": "使用Kaggle、Vertex AI、Colab Enterprise、Lightning AI、Hugging Face或Saturn Cloud在云端GPU上训练。",
-      "launchCloud": "在云端启动"
+      "launchCloud": "在云端启动",
+      "browserAutomation": "浏览器自动化",
+      "browserAutomationDesc": "通过浏览器自动化使用Google Colab免费训练",
+      "launchBrowserAutomation": "启动自动化"
     },
     "package": {
       "generating": "正在生成训练包...",
@@ -2469,6 +2472,75 @@
       "connected": "已连接",
       "disconnected": "已断开",
       "error": "错误"
+    }
+  },
+  "automation": {
+    "controlPanel": {
+      "title": "浏览器自动化",
+      "logs": "日志",
+      "waitingLogs": "等待日志...",
+      "minimize": "最小化",
+      "close": "关闭"
+    },
+    "pause": "暂停",
+    "resume": "继续",
+    "cancel": "取消",
+    "providers": {
+      "colab_free": "Colab免费版",
+      "kimi": "Kimi",
+      "qwen": "通义千问",
+      "deep_seek": "DeepSeek",
+      "hugging_chat": "HuggingChat"
+    },
+    "colab": {
+      "steps": {
+        "openColab": "打开Google Colab",
+        "login": "登录Google",
+        "createNotebook": "创建笔记本",
+        "configureGpu": "配置GPU",
+        "installDeps": "安装依赖",
+        "uploadDataset": "上传数据集",
+        "trainingCode": "注入训练代码",
+        "runTraining": "运行训练",
+        "monitorProgress": "监控进度",
+        "downloadModel": "下载模型"
+      }
+    },
+    "llm": {
+      "steps": {
+        "openLlm": "打开LLM网站",
+        "login": "登录",
+        "newConversation": "新建对话",
+        "sendPrompt": "发送提示",
+        "waitResponse": "等待回复",
+        "extractResponse": "提取回复"
+      }
+    },
+    "status": {
+      "idle": "空闲",
+      "detecting_browser": "检测浏览器",
+      "launching_browser": "启动浏览器",
+      "waiting_login": "等待登录",
+      "running": "运行中",
+      "paused": "已暂停",
+      "completed": "已完成",
+      "failed": "失败",
+      "cancelled": "已取消",
+      "waitingUser": "需要操作"
+    },
+    "errors": {
+      "noBrowser": "未找到Chromium浏览器",
+      "captchaDetected": "检测到验证码",
+      "runtimeDisconnected": "运行时已断开",
+      "timeout": "操作超时"
+    },
+    "instructions": {
+      "login": "请在浏览器窗口中登录。登录后自动化将自动继续。",
+      "captcha": "检测到验证码。请在浏览器窗口中解决。"
+    },
+    "result": {
+      "modelDownloaded": "模型已下载: {{path}}",
+      "llmResponse": "已收到回复"
     }
   }
 }
