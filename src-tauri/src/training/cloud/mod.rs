@@ -4,6 +4,9 @@ pub mod colab;
 pub mod vertex_custom;
 pub mod vertex_tuning;
 pub mod kaggle;
+pub mod lightning;
+pub mod huggingface;
+pub mod saturn;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -228,6 +231,29 @@ impl CloudTrainingManager {
                     sa_path, project_id, region, bucket,
                 )))
             }
+            CloudProvider::LightningAi => {
+                let lai_cfg = config.cloud_providers.lightning_ai
+                    .ok_or("Lightning AI no configurado. Ve a Settings > Cloud Providers")?;
+                let api_key = lai_cfg.api_key
+                    .ok_or("Falta API key de Lightning AI")?;
+                Ok(Box::new(lightning::LightningRunner::new(api_key)))
+            }
+            CloudProvider::HuggingFace => {
+                let hf_cfg = config.cloud_providers.huggingface
+                    .ok_or("Hugging Face no configurado. Ve a Settings > Cloud Providers")?;
+                let token = hf_cfg.token
+                    .ok_or("Falta token de Hugging Face")?;
+                let username = hf_cfg.username
+                    .ok_or("Falta username de Hugging Face")?;
+                Ok(Box::new(huggingface::HuggingFaceRunner::new(token, username)))
+            }
+            CloudProvider::SaturnCloud => {
+                let sc_cfg = config.cloud_providers.saturn_cloud
+                    .ok_or("Saturn Cloud no configurado. Ve a Settings > Cloud Providers")?;
+                let api_token = sc_cfg.api_token
+                    .ok_or("Falta API token de Saturn Cloud")?;
+                Ok(Box::new(saturn::SaturnCloudRunner::new(api_token)))
+            }
         }
     }
 
@@ -384,5 +410,8 @@ fn provider_to_string(provider: &CloudProvider) -> String {
         CloudProvider::VertexAiCustom => "vertex_ai_custom".to_string(),
         CloudProvider::VertexAiGeminiTuning => "vertex_ai_gemini_tuning".to_string(),
         CloudProvider::Kaggle => "kaggle".to_string(),
+        CloudProvider::LightningAi => "lightning_ai".to_string(),
+        CloudProvider::HuggingFace => "hugging_face".to_string(),
+        CloudProvider::SaturnCloud => "saturn_cloud".to_string(),
     }
 }

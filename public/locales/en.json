@@ -44,7 +44,10 @@
     "arrowKeys": "← →",
     "understand": "Got it",
     "starting": "Starting...",
-    "browse": "Browse"
+    "browse": "Browse",
+    "next": "Next",
+    "change": "Change",
+    "optional": "optional"
   },
   "header": {
     "selectProject": "Select project...",
@@ -195,6 +198,8 @@
     "create": "Create Project",
     "createDescription": "Start a new annotation project",
     "description": "Modify the name or manage the project classes.",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Project notes or comments...",
     "name": "Project Name",
     "namePlaceholder": "My Annotix Project",
     "type": {
@@ -1281,9 +1286,9 @@
       "difficultyLabel": "Difficulty"
     },
     "categories": {
-      "images": "",
-      "classification": "",
-      "timeSeries": "",
+      "images": "Image Annotation",
+      "classification": "Classification",
+      "timeSeries": "Time Series",
       "tabular": "Tabular / Classical ML"
     },
     "modality": "Modality",
@@ -1635,10 +1640,15 @@
   "tabular": {
     "datasets": "Datasets",
     "upload": "Upload CSV",
+    "create": "Create Table",
     "noData": "No tabular data yet",
     "uploadFirst": "Upload a CSV file",
+    "createFirst": "Create first table",
+    "createNewTitle": "Create New Table",
+    "createNewDesc": "Create a new table manually by defining its name and initial columns.",
+    "tableName": "Table Name",
     "selectOrUpload": "Select or upload data",
-    "selectOrUploadDesc": "Upload a CSV file to get started with tabular ML",
+    "selectOrUploadDesc": "Upload a CSV file or create a table to get started",
     "rows": "rows",
     "cols": "columns",
     "columns": "columns",
@@ -1656,7 +1666,19 @@
     "deselectAll": "Deselect all",
     "selected": "selected",
     "saveConfig": "Save Configuration",
-    "showingRows": "Showing {{shown}} of {{total}} rows"
+    "confirmDelete": "Are you sure you want to delete this table? This action cannot be undone.",
+    "placeholderName": "e.g. results_2024",
+    "placeholderColumns": "id, name, value, target",
+    "showingRows": "Showing {{shown}} of {{total}} rows",
+    "tabs": {
+      "view": "Preview & Config",
+      "edit": "Edit Data"
+    },
+    "editor": {
+      "title": "Edit Data",
+      "addRow": "Add Row",
+      "noRows": "No rows yet. Click \"Add Row\" to start."
+    }
   },
   "training": {
     "title": "Train Model",
@@ -1782,7 +1804,7 @@
       "downloadDesc": "Download a ZIP with dataset, script and notebook to train elsewhere.",
       "downloadPackage": "Download Training Package",
       "cloud": "Cloud",
-      "cloudDesc": "Train on cloud GPUs using Kaggle, Vertex AI or Colab Enterprise.",
+      "cloudDesc": "Train on cloud GPUs using Kaggle, Vertex AI, Colab Enterprise, Lightning AI, Hugging Face or Saturn Cloud.",
       "launchCloud": "Launch in Cloud"
     },
     "package": {
@@ -2011,13 +2033,19 @@
         "kaggle": "Kaggle",
         "vertex_ai_custom": "Vertex AI Custom",
         "colab_enterprise": "Colab Enterprise",
-        "vertex_ai_gemini_tuning": "Gemini Tuning"
+        "vertex_ai_gemini_tuning": "Gemini Tuning",
+        "lightning_ai": "Lightning AI",
+        "hugging_face": "Hugging Face",
+        "saturn_cloud": "Saturn Cloud"
       },
       "providerDesc": {
         "kaggle": "Free T4/P100 GPUs, 30h/week",
         "vertex_ai_custom": "Custom training with any GPU on GCP",
         "colab_enterprise": "Managed notebooks on Vertex AI",
-        "vertex_ai_gemini_tuning": "Fine-tune Gemini models"
+        "vertex_ai_gemini_tuning": "Fine-tune Gemini models",
+        "lightning_ai": "Free T4/L4 GPUs via Lightning Studios",
+        "hugging_face": "AutoTrain with free CPU/GPU tier",
+        "saturn_cloud": "Free T4 GPU instances for ML"
       },
       "machineType": "Machine Type",
       "accelerator": "GPU/Accelerator",
@@ -2169,6 +2197,25 @@
         "getKey": "Get API Key →",
         "username": "Username",
         "apiKey": "API Key"
+      },
+      "lightning": {
+        "title": "Lightning AI",
+        "description": "Configure Lightning AI credentials for free GPU training.",
+        "getKey": "Get API Key →",
+        "apiKey": "API Key"
+      },
+      "huggingface": {
+        "title": "Hugging Face",
+        "description": "Enter your Hugging Face credentials for AutoTrain.",
+        "getToken": "Get Token →",
+        "username": "Username",
+        "token": "Access Token"
+      },
+      "saturn": {
+        "title": "Saturn Cloud",
+        "description": "Enter your Saturn Cloud API token for free GPU instances.",
+        "getToken": "Get API Token →",
+        "apiToken": "API Token"
       },
       "validate": "Validate",
       "validating": "Validating...",
@@ -2322,6 +2369,73 @@
       "event-detection": "Identify when specific events happen in the series",
       "clustering": "Group similar time series or segments together",
       "imputation": "Reconstruct missing or corrupted data points"
+    }
+  },
+  "p2p": {
+    "collaborate": "Collaborate",
+    "description": "Work together via P2P",
+    "chooseAction": "What would you like to do?",
+    "createSession": "Create Session",
+    "createSessionDesc": "Share your project with collaborators",
+    "joinSession": "Join Session",
+    "joinSessionDesc": "Join an existing project session",
+    "configureSession": "Configure the collaboration session",
+    "displayName": "Your Name",
+    "displayNamePlaceholder": "Enter your display name",
+    "lockMode": "Lock Mode",
+    "lockIndividual": "Individual",
+    "lockIndividualDesc": "Lock one image at a time",
+    "lockBatch": "Batch",
+    "lockBatchDesc": "Host assigns image batches",
+    "startSharing": "Start Sharing",
+    "sessionReady": "Session Ready!",
+    "shareCodeInstructions": "Share this code with your collaborators",
+    "shareCode": "Share Code",
+    "copyCode": "Copy Code",
+    "waitingForPeers": "Waiting for collaborators to join...",
+    "enterShareCode": "Enter the share code provided by the host",
+    "join": "Join",
+    "syncing": "Syncing...",
+    "downloadingProject": "Downloading project data...",
+    "connected": "Connected!",
+    "connectedDesc": "You are now connected to the session",
+    "readyToAnnotate": "You can start annotating now",
+    "startAnnotating": "Start Annotating",
+    "activeSession": "P2P Session",
+    "leaveSession": "Leave Session",
+    "connectedPeers": "Connected Peers",
+    "noPeersYet": "No peers connected yet",
+    "you": "You",
+    "host": "Host",
+    "collaborator": "Collaborator",
+    "role": "Role",
+    "assignBatch": "Assign Batch",
+    "selectCollaborator": "Select collaborator",
+    "imageIds": "Image IDs",
+    "imageIdsPlaceholder": "id1, id2, id3...",
+    "imageIdsHint": "Comma-separated image IDs",
+    "assign": "Assign",
+    "lockedByYou": "Locked by you",
+    "lockedByOther": "Locked by {{name}}",
+    "share": "Share P2P",
+    "shareCodeLabel": "Collaborator code",
+    "hostKeyLabel": "Host key (save it!)",
+    "copyHostKey": "Copy host key",
+    "hostKeyWarning": "Save this key. You will need it to reconnect as host from another device.",
+    "codeOrHostKey": "Share code or host key",
+    "joiningAsHost": "You will join as host",
+    "joiningAsCollaborator": "You will join as collaborator",
+    "collaboratorPermissions": "Collaborator permissions",
+    "permUpload": "Upload images",
+    "permEditClasses": "Edit classes",
+    "permDelete": "Delete images/annotations",
+    "permExport": "Export project",
+    "status": {
+      "connecting": "Connecting",
+      "syncing": "Syncing",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "error": "Error"
     }
   }
 }

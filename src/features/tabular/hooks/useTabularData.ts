@@ -66,6 +66,22 @@ export function useTabularData(projectId: string | null) {
     }
   }, [projectId, refresh]);
 
+  const createTable = useCallback(async (name: string, columns: string[]) => {
+    if (!projectId) return null;
+    try {
+      const entry = await invoke<TabularDataEntry>('create_tabular_data', {
+        projectId,
+        name,
+        columns,
+      });
+      await refresh();
+      return entry;
+    } catch (err) {
+      console.error('Error creating tabular data:', err);
+      throw err;
+    }
+  }, [projectId, refresh]);
+
   const loadPreview = useCallback(async (dataId: string, maxRows = 100) => {
     if (!projectId) return;
     setPreviewLoading(true);
@@ -82,6 +98,22 @@ export function useTabularData(projectId: string | null) {
       setPreviewLoading(false);
     }
   }, [projectId]);
+
+  const updateRows = useCallback(async (dataId: string, rows: string[][]) => {
+    if (!projectId) return null;
+    try {
+      await invoke('update_tabular_rows', {
+        projectId,
+        dataId,
+        rows,
+      });
+      await refresh();
+      await loadPreview(dataId);
+    } catch (err) {
+      console.error('Error updating tabular rows:', err);
+      throw err;
+    }
+  }, [projectId, refresh, loadPreview]);
 
   const updateConfig = useCallback(async (
     dataId: string,
@@ -123,6 +155,8 @@ export function useTabularData(projectId: string | null) {
     preview,
     previewLoading,
     uploadFile,
+    createTable,
+    updateRows,
     loadPreview,
     updateConfig,
     deleteData,

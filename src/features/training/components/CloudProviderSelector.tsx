@@ -10,10 +10,16 @@ interface CloudProviderSelectorProps {
   onConfigChange: (config: CloudTrainingConfig) => void;
 }
 
-const PROVIDERS: { id: CloudProvider; icon: string; color: string }[] = [
+const FREE_PROVIDERS: { id: CloudProvider; icon: string; color: string }[] = [
   { id: 'kaggle', icon: 'fab fa-kaggle', color: 'sky' },
+  { id: 'lightning_ai', icon: 'fas fa-bolt', color: 'violet' },
+  { id: 'hugging_face', icon: 'fas fa-face-smile', color: 'amber' },
+  { id: 'saturn_cloud', icon: 'fas fa-ring', color: 'teal' },
+];
+
+const PAID_PROVIDERS: { id: CloudProvider; icon: string; color: string }[] = [
   { id: 'vertex_ai_custom', icon: 'fas fa-server', color: 'blue' },
-  { id: 'colab_enterprise', icon: 'fas fa-laptop-code', color: 'amber' },
+  { id: 'colab_enterprise', icon: 'fas fa-laptop-code', color: 'orange' },
   { id: 'vertex_ai_gemini_tuning', icon: 'fas fa-gem', color: 'purple' },
 ];
 
@@ -29,6 +35,10 @@ const GCP_ACCELERATORS = [
 ];
 
 const KAGGLE_ACCELERATORS = ['gpu', 'tpu', 'none'];
+
+const LIGHTNING_GPU_TYPES = ['gpu-t4', 'gpu-l4', 'gpu-a10g'];
+
+const SATURN_INSTANCE_TYPES = ['T4-4XLarge', 'T4-8XLarge'];
 
 export function CloudProviderSelector({
   selected,
@@ -57,13 +67,50 @@ export function CloudProviderSelector({
   };
 
   const isConfigured = (provider: CloudProvider): boolean => {
-    if (provider === 'kaggle') {
-      return !!(cloudProviderConfig.kaggle?.username && cloudProviderConfig.kaggle?.apiKey);
+    switch (provider) {
+      case 'kaggle':
+        return !!(cloudProviderConfig.kaggle?.username && cloudProviderConfig.kaggle?.apiKey);
+      case 'lightning_ai':
+        return !!cloudProviderConfig.lightning_ai?.apiKey;
+      case 'hugging_face':
+        return !!(cloudProviderConfig.huggingface?.token && cloudProviderConfig.huggingface?.username);
+      case 'saturn_cloud':
+        return !!cloudProviderConfig.saturn_cloud?.apiToken;
+      default:
+        return !!(cloudProviderConfig.gcp?.serviceAccountPath && cloudProviderConfig.gcp?.projectId);
     }
-    return !!(cloudProviderConfig.gcp?.serviceAccountPath && cloudProviderConfig.gcp?.projectId);
   };
 
   const isGcpProvider = selected === 'vertex_ai_custom' || selected === 'colab_enterprise' || selected === 'vertex_ai_gemini_tuning';
+
+  const renderProviderCard = (p: { id: CloudProvider; icon: string; color: string }) => (
+    <button
+      key={p.id}
+      onClick={() => handleSelect(p.id)}
+      className={`p-3 rounded-lg border-2 text-left transition-all ${
+        selected === p.id
+          ? `border-${p.color}-500 bg-${p.color}-500/10`
+          : 'border-border hover:bg-accent/50'
+      }`}
+    >
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-2">
+          <i className={`${p.icon} text-${p.color}-500`} />
+          <span className="font-semibold text-xs">{t(`training.cloud.providers.${p.id}`)}</span>
+        </div>
+        {isConfigured(p.id) ? (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-500">
+            {t('training.cloud.configured')}
+          </span>
+        ) : (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500">
+            {t('training.cloud.needsSetup')}
+          </span>
+        )}
+      </div>
+      <p className="text-[10px] text-muted-foreground">{t(`training.cloud.providerDesc.${p.id}`)}</p>
+    </button>
+  );
 
   return (
     <div className="space-y-4">
@@ -72,35 +119,26 @@ export function CloudProviderSelector({
         <p className="text-xs text-muted-foreground">{t('training.cloud.selectProviderDesc')}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        {PROVIDERS.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => handleSelect(p.id)}
-            className={`p-3 rounded-lg border-2 text-left transition-all ${
-              selected === p.id
-                ? `border-${p.color}-500 bg-${p.color}-500/10`
-                : 'border-border hover:bg-accent/50'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <i className={`${p.icon} text-${p.color}-500`} />
-                <span className="font-semibold text-xs">{t(`training.cloud.providers.${p.id}`)}</span>
-              </div>
-              {isConfigured(p.id) ? (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-500">
-                  {t('training.cloud.configured')}
-                </span>
-              ) : (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500">
-                  {t('training.cloud.needsSetup')}
-                </span>
-              )}
-            </div>
-            <p className="text-[10px] text-muted-foreground">{t(`training.cloud.providerDesc.${p.id}`)}</p>
-          </button>
-        ))}
+      {/* Free providers */}
+      <div>
+        <p className="text-[10px] uppercase font-medium text-emerald-500 mb-2 flex items-center gap-1">
+          <i className="fas fa-gift text-[9px]" />
+          {t('training.cloud.freeTier')}
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {FREE_PROVIDERS.map(renderProviderCard)}
+        </div>
+      </div>
+
+      {/* Paid providers */}
+      <div>
+        <p className="text-[10px] uppercase font-medium text-muted-foreground mb-2 flex items-center gap-1">
+          <i className="fas fa-credit-card text-[9px]" />
+          {t('training.cloud.paidTier')}
+        </p>
+        <div className="grid grid-cols-3 gap-2">
+          {PAID_PROVIDERS.map(renderProviderCard)}
+        </div>
       </div>
 
       {/* Provider-specific config */}
@@ -156,6 +194,36 @@ export function CloudProviderSelector({
               >
                 {KAGGLE_ACCELERATORS.map((a) => (
                   <option key={a} value={a}>{a === 'gpu' ? 'GPU (T4/P100)' : a === 'tpu' ? 'TPU v3-8' : 'CPU'}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {selected === 'lightning_ai' && (
+            <div>
+              <label className="text-xs font-medium">{t('training.cloud.accelerator')}</label>
+              <select
+                value={config.acceleratorType || 'gpu-t4'}
+                onChange={(e) => onConfigChange({ ...config, acceleratorType: e.target.value })}
+                className="w-full mt-1 px-2 py-1.5 text-xs rounded border border-border bg-background"
+              >
+                {LIGHTNING_GPU_TYPES.map((g) => (
+                  <option key={g} value={g}>{g.replace('gpu-', '').toUpperCase()}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {selected === 'saturn_cloud' && (
+            <div>
+              <label className="text-xs font-medium">{t('training.cloud.machineType')}</label>
+              <select
+                value={config.machineType || 'T4-4XLarge'}
+                onChange={(e) => onConfigChange({ ...config, machineType: e.target.value })}
+                className="w-full mt-1 px-2 py-1.5 text-xs rounded border border-border bg-background"
+              >
+                {SATURN_INSTANCE_TYPES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
                 ))}
               </select>
             </div>

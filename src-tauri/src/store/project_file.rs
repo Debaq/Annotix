@@ -22,6 +22,25 @@ pub struct ProjectFile {
     pub training_jobs: Vec<TrainingJobEntry>,
     #[serde(default)]
     pub tabular_data: Vec<TabularDataEntry>,
+    #[serde(default)]
+    pub p2p: Option<P2pProjectConfig>,
+}
+
+// ─── P2P ───────────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct P2pProjectConfig {
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
+    pub role: String,
+    #[serde(rename = "namespaceId")]
+    pub namespace_id: String,
+    #[serde(rename = "authorId")]
+    pub author_id: String,
+    #[serde(rename = "hostNodeId")]
+    pub host_node_id: String,
+    #[serde(rename = "lockMode")]
+    pub lock_mode: String,
 }
 
 // ─── Clases ─────────────────────────────────────────────────────────────────
@@ -51,6 +70,10 @@ pub struct ImageEntry {
     pub video_id: Option<String>,
     #[serde(default, rename = "frameIndex")]
     pub frame_index: Option<i64>,
+    #[serde(default, rename = "lockedBy")]
+    pub locked_by: Option<String>,
+    #[serde(default, rename = "lockExpires")]
+    pub lock_expires: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -22,11 +22,37 @@ pub struct KaggleConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct LightningAiConfig {
+    #[serde(default, rename = "apiKey")]
+    pub api_key: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct HuggingFaceConfig {
+    #[serde(default)]
+    pub token: Option<String>,
+    #[serde(default)]
+    pub username: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct SaturnCloudConfig {
+    #[serde(default, rename = "apiToken")]
+    pub api_token: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CloudProviderConfig {
     #[serde(default)]
     pub gcp: Option<GcpConfig>,
     #[serde(default)]
     pub kaggle: Option<KaggleConfig>,
+    #[serde(default)]
+    pub lightning_ai: Option<LightningAiConfig>,
+    #[serde(default)]
+    pub huggingface: Option<HuggingFaceConfig>,
+    #[serde(default)]
+    pub saturn_cloud: Option<SaturnCloudConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

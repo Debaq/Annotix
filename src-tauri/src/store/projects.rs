@@ -67,6 +67,7 @@ impl AppState {
             videos: vec![],
             training_jobs: vec![],
             tabular_data: vec![],
+            p2p: None,
         };
 
         io::write_project(&project_dir, &project)?;

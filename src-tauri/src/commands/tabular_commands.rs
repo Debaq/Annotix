@@ -13,6 +13,26 @@ pub fn upload_tabular_file(
 }
 
 #[tauri::command]
+pub fn create_tabular_data(
+    state: tauri::State<AppState>,
+    project_id: String,
+    name: String,
+    columns: Vec<String>,
+) -> Result<TabularDataEntry, String> {
+    state.create_tabular_data(&project_id, &name, columns)
+}
+
+#[tauri::command]
+pub fn update_tabular_rows(
+    state: tauri::State<AppState>,
+    project_id: String,
+    data_id: String,
+    rows: Vec<Vec<String>>,
+) -> Result<(), String> {
+    state.update_tabular_rows(&project_id, &data_id, rows)
+}
+
+#[tauri::command]
 pub fn list_tabular_data(
     state: tauri::State<AppState>,
     project_id: String,

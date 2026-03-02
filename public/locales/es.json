@@ -44,7 +44,10 @@
     "understand": "Entendido",
     "starting": "Iniciando...",
     "back": "Atrás",
-    "browse": "Explorar"
+    "browse": "Explorar",
+    "next": "Siguiente",
+    "change": "Cambiar",
+    "optional": "opcional"
   },
   "header": {
     "selectProject": "Seleccionar proyecto...",
@@ -195,6 +198,8 @@
     "create": "Crear Proyecto",
     "createDescription": "Comienza un nuevo proyecto de anotación",
     "description": "Modifica el nombre o gestiona las clases del proyecto.",
+    "descriptionLabel": "Descripción",
+    "descriptionPlaceholder": "Notas o comentarios del proyecto...",
     "name": "Nombre del Proyecto",
     "namePlaceholder": "Mi Proyecto Annotix",
     "type": {
@@ -1281,9 +1286,9 @@
       "difficultyLabel": "Dificultad"
     },
     "categories": {
-      "images": "",
-      "classification": "",
-      "timeSeries": "",
+      "images": "Anotación de Imágenes",
+      "classification": "Clasificación",
+      "timeSeries": "Series Temporales",
       "tabular": "Tabular / ML Clásico"
     },
     "modality": "Modalidad",
@@ -1635,10 +1640,15 @@
   "tabular": {
     "datasets": "Conjuntos de datos",
     "upload": "Subir CSV",
+    "create": "Crear Tabla",
     "noData": "Aún no hay datos tabulares",
     "uploadFirst": "Sube un archivo CSV",
+    "createFirst": "Crear primera tabla",
+    "createNewTitle": "Crear Nueva Tabla",
+    "createNewDesc": "Crea una tabla manualmente definiendo su nombre y columnas iniciales.",
+    "tableName": "Nombre de la Tabla",
     "selectOrUpload": "Seleccionar o subir datos",
-    "selectOrUploadDesc": "Sube un archivo CSV para comenzar con ML tabular",
+    "selectOrUploadDesc": "Sube un archivo CSV o crea una tabla para comenzar",
     "rows": "filas",
     "cols": "columnas",
     "columns": "columnas",
@@ -1656,7 +1666,19 @@
     "deselectAll": "Deseleccionar todo",
     "selected": "seleccionadas",
     "saveConfig": "Guardar configuración",
-    "showingRows": "Mostrando {{shown}} de {{total}} filas"
+    "confirmDelete": "¿Estás seguro de que deseas eliminar esta tabla? Esta acción no se puede deshacer.",
+    "placeholderName": "ej. resultados_2024",
+    "placeholderColumns": "id, nombre, valor, objetivo",
+    "showingRows": "Mostrando {{shown}} de {{total}} filas",
+    "tabs": {
+      "view": "Vista y Config",
+      "edit": "Editar Datos"
+    },
+    "editor": {
+      "title": "Editar Datos",
+      "addRow": "Añadir Fila",
+      "noRows": "Aún no hay filas. Haz clic en \"Añadir Fila\" para comenzar."
+    }
   },
   "training": {
     "title": "Entrenar Modelo",
@@ -1685,7 +1707,7 @@
       "downloadDesc": "Descarga un ZIP con dataset, script y notebook para entrenar en otro lugar.",
       "downloadPackage": "Descargar Paquete de Entrenamiento",
       "cloud": "Cloud",
-      "cloudDesc": "Entrena en GPUs en la nube usando Kaggle, Vertex AI o Colab Enterprise.",
+      "cloudDesc": "Entrena en GPUs en la nube usando Kaggle, Vertex AI, Colab Enterprise, Lightning AI, Hugging Face o Saturn Cloud.",
       "launchCloud": "Lanzar en la Nube"
     },
     "package": {
@@ -2011,13 +2033,19 @@
         "kaggle": "Kaggle",
         "vertex_ai_custom": "Vertex AI Custom",
         "colab_enterprise": "Colab Enterprise",
-        "vertex_ai_gemini_tuning": "Gemini Tuning"
+        "vertex_ai_gemini_tuning": "Gemini Tuning",
+        "lightning_ai": "Lightning AI",
+        "hugging_face": "Hugging Face",
+        "saturn_cloud": "Saturn Cloud"
       },
       "providerDesc": {
         "kaggle": "GPUs T4/P100 gratis, 30h/semana",
         "vertex_ai_custom": "Entrenamiento personalizado con cualquier GPU en GCP",
         "colab_enterprise": "Notebooks gestionados en Vertex AI",
-        "vertex_ai_gemini_tuning": "Ajuste fino de modelos Gemini"
+        "vertex_ai_gemini_tuning": "Ajuste fino de modelos Gemini",
+        "lightning_ai": "GPUs T4/L4 gratis vía Lightning Studios",
+        "hugging_face": "AutoTrain con nivel gratuito CPU/GPU",
+        "saturn_cloud": "Instancias T4 GPU gratuitas para ML"
       },
       "machineType": "Tipo de Máquina",
       "accelerator": "GPU/Acelerador",
@@ -2169,6 +2197,25 @@
         "getKey": "Obtener API Key →",
         "username": "Usuario",
         "apiKey": "API Key"
+      },
+      "lightning": {
+        "title": "Lightning AI",
+        "description": "Configura las credenciales de Lightning AI para entrenamiento gratuito con GPU.",
+        "getKey": "Get API Key →",
+        "apiKey": "API Key"
+      },
+      "huggingface": {
+        "title": "Hugging Face",
+        "description": "Ingresa tus credenciales de Hugging Face para AutoTrain.",
+        "getToken": "Get Token →",
+        "username": "Username",
+        "token": "Access Token"
+      },
+      "saturn": {
+        "title": "Saturn Cloud",
+        "description": "Ingresa tu API token de Saturn Cloud para instancias GPU gratuitas.",
+        "getToken": "Get API Token →",
+        "apiToken": "API Token"
       },
       "validate": "Validar",
       "validating": "Validando...",
@@ -2322,6 +2369,73 @@
       "event-detection": "Identificar cuándo ocurren eventos específicos en la serie",
       "clustering": "Agrupar series temporales o segmentos similares",
       "imputation": "Reconstruir puntos de datos faltantes o corruptos"
+    }
+  },
+  "p2p": {
+    "collaborate": "Colaborar",
+    "description": "Trabajar en conjunto vía P2P",
+    "chooseAction": "¿Qué deseas hacer?",
+    "createSession": "Crear Sesión",
+    "createSessionDesc": "Comparte tu proyecto con colaboradores",
+    "joinSession": "Unirse a Sesión",
+    "joinSessionDesc": "Únete a una sesión existente",
+    "configureSession": "Configura la sesión de colaboración",
+    "displayName": "Tu Nombre",
+    "displayNamePlaceholder": "Ingresa tu nombre",
+    "lockMode": "Modo de Bloqueo",
+    "lockIndividual": "Individual",
+    "lockIndividualDesc": "Bloquear una imagen a la vez",
+    "lockBatch": "Por Lotes",
+    "lockBatchDesc": "El host asigna lotes de imágenes",
+    "startSharing": "Iniciar Compartir",
+    "sessionReady": "¡Sesión Lista!",
+    "shareCodeInstructions": "Comparte este código con tus colaboradores",
+    "shareCode": "Código",
+    "copyCode": "Copiar Código",
+    "waitingForPeers": "Esperando a que se unan colaboradores...",
+    "enterShareCode": "Ingresa el código proporcionado por el host",
+    "join": "Unirse",
+    "syncing": "Sincronizando...",
+    "downloadingProject": "Descargando datos del proyecto...",
+    "connected": "¡Conectado!",
+    "connectedDesc": "Estás conectado a la sesión",
+    "readyToAnnotate": "Ya puedes comenzar a anotar",
+    "startAnnotating": "Comenzar a Anotar",
+    "activeSession": "Sesión P2P",
+    "leaveSession": "Abandonar Sesión",
+    "connectedPeers": "Pares Conectados",
+    "noPeersYet": "Sin pares conectados aún",
+    "you": "Tú",
+    "host": "Host",
+    "collaborator": "Colaborador",
+    "role": "Rol",
+    "assignBatch": "Asignar Lote",
+    "selectCollaborator": "Seleccionar colaborador",
+    "imageIds": "IDs de Imágenes",
+    "imageIdsPlaceholder": "id1, id2, id3...",
+    "imageIdsHint": "IDs separados por coma",
+    "assign": "Asignar",
+    "lockedByYou": "Bloqueado por ti",
+    "lockedByOther": "Bloqueado por {{name}}",
+    "share": "Compartir P2P",
+    "shareCodeLabel": "Codigo de colaborador",
+    "hostKeyLabel": "Clave de host (guárdala!)",
+    "copyHostKey": "Copiar clave de host",
+    "hostKeyWarning": "Guarda esta clave. La necesitarás para reconectarte como host desde otro dispositivo.",
+    "codeOrHostKey": "Código de compartir o clave de host",
+    "joiningAsHost": "Te unirás como host",
+    "joiningAsCollaborator": "Te unirás como colaborador",
+    "collaboratorPermissions": "Permisos de colaborador",
+    "permUpload": "Subir imágenes",
+    "permEditClasses": "Editar clases",
+    "permDelete": "Eliminar imágenes/anotaciones",
+    "permExport": "Exportar proyecto",
+    "status": {
+      "connecting": "Conectando",
+      "syncing": "Sincronizando",
+      "connected": "Conectado",
+      "disconnected": "Desconectado",
+      "error": "Error"
     }
   }
 }

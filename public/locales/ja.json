@@ -44,7 +44,10 @@
     "filters": "フィルター",
     "starting": "起動中...",
     "back": "戻る",
-    "browse": "参照"
+    "browse": "参照",
+    "next": "次へ",
+    "change": "変更",
+    "optional": "任意"
   },
   "header": {
     "selectProject": "プロジェクトを選択...",
@@ -195,6 +198,8 @@
     "create": "プロジェクト作成",
     "createDescription": "新しいアノテーションプロジェクトを開始",
     "description": "プロジェクトの名前を変更したりクラスを管理できます。",
+    "descriptionLabel": "説明",
+    "descriptionPlaceholder": "プロジェクトのメモやコメント...",
     "name": "プロジェクト名",
     "namePlaceholder": "マイAnnotixプロジェクト",
     "type": {
@@ -1281,9 +1286,9 @@
       "difficultyLabel": "難易度"
     },
     "categories": {
-      "images": "",
-      "classification": "",
-      "timeSeries": "",
+      "images": "画像アノテーション",
+      "classification": "分類",
+      "timeSeries": "時系列",
       "tabular": "テーブル / 古典的ML"
     },
     "modality": "モダリティ",
@@ -1685,7 +1690,7 @@
       "downloadDesc": "データセット、スクリプト、ノートブックを含むZIPをダウンロードして別の場所でトレーニング。",
       "downloadPackage": "トレーニングパッケージをダウンロード",
       "cloud": "Cloud",
-      "cloudDesc": "Kaggle、Vertex AI、Colab Enterpriseを使用してクラウドGPUでトレーニング。",
+      "cloudDesc": "Kaggle、Vertex AI、Colab Enterprise、Lightning AI、Hugging Face、Saturn Cloudを使用してクラウドGPUでトレーニング。",
       "launchCloud": "クラウドで起動"
     },
     "package": {
@@ -2011,13 +2016,19 @@
         "kaggle": "Kaggle",
         "vertex_ai_custom": "Vertex AI Custom",
         "colab_enterprise": "Colab Enterprise",
-        "vertex_ai_gemini_tuning": "Gemini Tuning"
+        "vertex_ai_gemini_tuning": "Gemini Tuning",
+        "lightning_ai": "Lightning AI",
+        "hugging_face": "Hugging Face",
+        "saturn_cloud": "Saturn Cloud"
       },
       "providerDesc": {
         "kaggle": "無料のT4/P100 GPU、週30時間",
         "vertex_ai_custom": "GCP上の任意のGPUでカスタムトレーニング",
         "colab_enterprise": "Vertex AI上のマネージドノートブック",
-        "vertex_ai_gemini_tuning": "Geminiモデルのファインチューニング"
+        "vertex_ai_gemini_tuning": "Geminiモデルのファインチューニング",
+        "lightning_ai": "Lightning Studios経由の無料T4/L4 GPU",
+        "hugging_face": "無料CPU/GPUティアのAutoTrain",
+        "saturn_cloud": "ML用の無料T4 GPUインスタンス"
       },
       "machineType": "マシンタイプ",
       "accelerator": "GPU/アクセラレーター",
@@ -2169,6 +2180,25 @@
         "getKey": "API Keyを取得 →",
         "username": "ユーザー名",
         "apiKey": "API Key"
+      },
+      "lightning": {
+        "title": "Lightning AI",
+        "description": "Lightning AIの認証情報を設定して無料GPU学習を行います。",
+        "getKey": "APIキーを取得 →",
+        "apiKey": "APIキー"
+      },
+      "huggingface": {
+        "title": "Hugging Face",
+        "description": "Hugging Faceの認証情報を入力してAutoTrainを使用します。",
+        "getToken": "トークンを取得 →",
+        "username": "ユーザー名",
+        "token": "アクセストークン"
+      },
+      "saturn": {
+        "title": "Saturn Cloud",
+        "description": "Saturn CloudのAPIトークンを入力して無料GPUインスタンスを使用します。",
+        "getToken": "APIトークンを取得 →",
+        "apiToken": "APIトークン"
       },
       "validate": "検証",
       "validating": "検証中...",
@@ -2322,6 +2352,73 @@
       "event-detection": "シリーズ内で特定のイベントがいつ発生するかを特定",
       "clustering": "類似の時系列またはセグメントをグループ化",
       "imputation": "欠損または破損したデータポイントを再構築"
+    }
+  },
+  "p2p": {
+    "collaborate": "コラボレーション",
+    "description": "P2Pで共同作業",
+    "chooseAction": "何をしますか？",
+    "createSession": "セッション作成",
+    "createSessionDesc": "プロジェクトを共有者と共有",
+    "joinSession": "セッション参加",
+    "joinSessionDesc": "既存のセッションに参加",
+    "configureSession": "コラボレーションセッションの設定",
+    "displayName": "表示名",
+    "displayNamePlaceholder": "名前を入力",
+    "lockMode": "ロックモード",
+    "lockIndividual": "個別",
+    "lockIndividualDesc": "一度に1つの画像をロック",
+    "lockBatch": "バッチ",
+    "lockBatchDesc": "ホストが画像バッチを割り当て",
+    "startSharing": "共有開始",
+    "sessionReady": "セッション準備完了！",
+    "shareCodeInstructions": "このコードを共有者に共有してください",
+    "shareCode": "共有コード",
+    "copyCode": "コードをコピー",
+    "waitingForPeers": "共有者の参加を待っています...",
+    "enterShareCode": "ホストから提供されたコードを入力",
+    "join": "参加",
+    "syncing": "同期中...",
+    "downloadingProject": "プロジェクトデータをダウンロード中...",
+    "connected": "接続完了！",
+    "connectedDesc": "セッションに接続されました",
+    "readyToAnnotate": "アノテーションを開始できます",
+    "startAnnotating": "アノテーション開始",
+    "activeSession": "P2Pセッション",
+    "leaveSession": "セッション退出",
+    "connectedPeers": "接続中のピア",
+    "noPeersYet": "まだピアが接続されていません",
+    "you": "自分",
+    "host": "ホスト",
+    "collaborator": "コラボレーター",
+    "role": "役割",
+    "assignBatch": "バッチ割り当て",
+    "selectCollaborator": "コラボレーターを選択",
+    "imageIds": "画像ID",
+    "imageIdsPlaceholder": "id1, id2, id3...",
+    "imageIdsHint": "カンマ区切りの画像ID",
+    "assign": "割り当て",
+    "lockedByYou": "あなたがロック中",
+    "lockedByOther": "{{name}}がロック中",
+    "share": "P2P共有",
+    "shareCodeLabel": "コラボレーターコード",
+    "hostKeyLabel": "ホストキー（保存してください！）",
+    "copyHostKey": "ホストキーをコピー",
+    "hostKeyWarning": "このキーを保存してください。別のデバイスからホストとして再接続する際に必要です。",
+    "codeOrHostKey": "共有コードまたはホストキー",
+    "joiningAsHost": "ホストとして参加します",
+    "joiningAsCollaborator": "コラボレーターとして参加します",
+    "collaboratorPermissions": "コラボレーターの権限",
+    "permUpload": "画像のアップロード",
+    "permEditClasses": "クラスの編集",
+    "permDelete": "画像/アノテーションの削除",
+    "permExport": "プロジェクトのエクスポート",
+    "status": {
+      "connecting": "接続中",
+      "syncing": "同期中",
+      "connected": "接続済み",
+      "disconnected": "切断",
+      "error": "エラー"
     }
   }
 }

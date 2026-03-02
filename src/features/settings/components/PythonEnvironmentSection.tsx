@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { listen } from '@tauri-apps/api/event';
+import { confirm } from '@/lib/dialogs';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -144,7 +145,7 @@ export function PythonEnvironmentSection() {
   };
 
   const handleRemoveVenv = async () => {
-    if (!confirm(t('common.deleteConfirm'))) return;
+    if (!await confirm(t('common.deleteConfirm'), { kind: 'warning' })) return;
     setRemovingVenv(true);
     try {
       await settingsService.removeVenv();

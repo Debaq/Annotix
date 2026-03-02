@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
+import { confirm } from '@/lib/dialogs';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +23,7 @@ export function TimeSeriesGallery() {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm(t('timeseries.deleteConfirm'))) {
+    if (await confirm(t('timeseries.deleteConfirm'), { kind: 'warning' })) {
       await deleteTimeSeries(id);
     }
   };

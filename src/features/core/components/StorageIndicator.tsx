@@ -22,8 +22,8 @@ export function StorageIndicator() {
         </p>
         <Progress 
           value={percentage} 
-          className="h-1 w-32 bg-white/20" 
-          indicatorClassName="bg-[#00BCD4]"
+          className="h-1 w-32 bg-white/10 dark:bg-black/20" 
+          indicatorClassName="bg-[var(--annotix-info)]"
         />
       </div>
       <i className="fas fa-database text-white/60"></i>
