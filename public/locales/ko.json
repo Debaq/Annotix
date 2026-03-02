@@ -44,7 +44,10 @@
     "filters": "필터",
     "starting": "시작 중...",
     "back": "뒤로",
-    "browse": "찾아보기"
+    "browse": "찾아보기",
+    "next": "다음",
+    "change": "변경",
+    "optional": "선택사항"
   },
   "header": {
     "selectProject": "프로젝트 선택...",
@@ -195,6 +198,8 @@
     "create": "프로젝트 생성",
     "createDescription": "새 주석 프로젝트를 시작합니다",
     "description": "프로젝트 이름을 수정하거나 클래스를 관리합니다.",
+    "descriptionLabel": "설명",
+    "descriptionPlaceholder": "프로젝트 메모 또는 코멘트...",
     "name": "프로젝트 이름",
     "namePlaceholder": "내 Annotix 프로젝트",
     "type": {
@@ -1281,9 +1286,9 @@
       "difficultyLabel": "난이도"
     },
     "categories": {
-      "images": "",
-      "classification": "",
-      "timeSeries": "",
+      "images": "이미지 어노테이션",
+      "classification": "분류",
+      "timeSeries": "시계열",
       "tabular": "테이블 / 클래식 ML"
     },
     "modality": "모달리티",
@@ -1685,7 +1690,7 @@
       "downloadDesc": "데이터셋, 스크립트, 노트북이 포함된 ZIP을 다운로드하여 다른 곳에서 학습합니다.",
       "downloadPackage": "학습 패키지 다운로드",
       "cloud": "Cloud",
-      "cloudDesc": "Kaggle, Vertex AI 또는 Colab Enterprise를 사용하여 클라우드 GPU에서 학습합니다.",
+      "cloudDesc": "Kaggle, Vertex AI, Colab Enterprise, Lightning AI, Hugging Face 또는 Saturn Cloud를 사용하여 클라우드 GPU에서 학습합니다.",
       "launchCloud": "클라우드에서 시작"
     },
     "package": {
@@ -2011,13 +2016,19 @@
         "kaggle": "Kaggle",
         "vertex_ai_custom": "Vertex AI Custom",
         "colab_enterprise": "Colab Enterprise",
-        "vertex_ai_gemini_tuning": "Gemini Tuning"
+        "vertex_ai_gemini_tuning": "Gemini Tuning",
+        "lightning_ai": "Lightning AI",
+        "hugging_face": "Hugging Face",
+        "saturn_cloud": "Saturn Cloud"
       },
       "providerDesc": {
         "kaggle": "무료 T4/P100 GPU, 주당 30시간",
         "vertex_ai_custom": "GCP에서 모든 GPU로 커스텀 학습",
         "colab_enterprise": "Vertex AI의 관리형 노트북",
-        "vertex_ai_gemini_tuning": "Gemini 모델 파인튜닝"
+        "vertex_ai_gemini_tuning": "Gemini 모델 파인튜닝",
+        "lightning_ai": "Lightning Studios를 통한 무료 T4/L4 GPU",
+        "hugging_face": "무료 CPU/GPU 티어 AutoTrain",
+        "saturn_cloud": "ML용 무료 T4 GPU 인스턴스"
       },
       "machineType": "머신 유형",
       "accelerator": "GPU/가속기",
@@ -2169,6 +2180,25 @@
         "getKey": "API Key 받기 →",
         "username": "사용자 이름",
         "apiKey": "API Key"
+      },
+      "lightning": {
+        "title": "Lightning AI",
+        "description": "무료 GPU 학습을 위한 Lightning AI 자격 증명을 구성합니다.",
+        "getKey": "API 키 받기 →",
+        "apiKey": "API 키"
+      },
+      "huggingface": {
+        "title": "Hugging Face",
+        "description": "AutoTrain을 위한 Hugging Face 자격 증명을 입력합니다.",
+        "getToken": "토큰 받기 →",
+        "username": "사용자 이름",
+        "token": "액세스 토큰"
+      },
+      "saturn": {
+        "title": "Saturn Cloud",
+        "description": "무료 GPU 인스턴스를 위한 Saturn Cloud API 토큰을 입력합니다.",
+        "getToken": "API 토큰 받기 →",
+        "apiToken": "API 토큰"
       },
       "validate": "검증",
       "validating": "검증 중...",
@@ -2322,6 +2352,73 @@
       "event-detection": "시리즈에서 특정 이벤트가 언제 발생하는지 식별",
       "clustering": "유사한 시계열 또는 세그먼트 그룹화",
       "imputation": "누락되거나 손상된 데이터 포인트 재구성"
+    }
+  },
+  "p2p": {
+    "collaborate": "협업",
+    "description": "P2P로 함께 작업",
+    "chooseAction": "무엇을 하시겠습니까?",
+    "createSession": "세션 생성",
+    "createSessionDesc": "협력자와 프로젝트 공유",
+    "joinSession": "세션 참여",
+    "joinSessionDesc": "기존 세션에 참여",
+    "configureSession": "협업 세션 설정",
+    "displayName": "이름",
+    "displayNamePlaceholder": "이름을 입력하세요",
+    "lockMode": "잠금 모드",
+    "lockIndividual": "개별",
+    "lockIndividualDesc": "한 번에 하나의 이미지 잠금",
+    "lockBatch": "일괄",
+    "lockBatchDesc": "호스트가 이미지 일괄 할당",
+    "startSharing": "공유 시작",
+    "sessionReady": "세션 준비 완료!",
+    "shareCodeInstructions": "이 코드를 협력자에게 공유하세요",
+    "shareCode": "공유 코드",
+    "copyCode": "코드 복사",
+    "waitingForPeers": "협력자 참여 대기 중...",
+    "enterShareCode": "호스트가 제공한 코드를 입력하세요",
+    "join": "참여",
+    "syncing": "동기화 중...",
+    "downloadingProject": "프로젝트 데이터 다운로드 중...",
+    "connected": "연결됨!",
+    "connectedDesc": "세션에 연결되었습니다",
+    "readyToAnnotate": "이제 주석을 시작할 수 있습니다",
+    "startAnnotating": "주석 시작",
+    "activeSession": "P2P 세션",
+    "leaveSession": "세션 나가기",
+    "connectedPeers": "연결된 피어",
+    "noPeersYet": "아직 연결된 피어 없음",
+    "you": "나",
+    "host": "호스트",
+    "collaborator": "협력자",
+    "role": "역할",
+    "assignBatch": "일괄 할당",
+    "selectCollaborator": "협력자 선택",
+    "imageIds": "이미지 ID",
+    "imageIdsPlaceholder": "id1, id2, id3...",
+    "imageIdsHint": "쉼표로 구분된 이미지 ID",
+    "assign": "할당",
+    "lockedByYou": "내가 잠금",
+    "lockedByOther": "{{name}}이(가) 잠금",
+    "share": "P2P 공유",
+    "shareCodeLabel": "협력자 코드",
+    "hostKeyLabel": "호스트 키 (저장하세요!)",
+    "copyHostKey": "호스트 키 복사",
+    "hostKeyWarning": "이 키를 저장하세요. 다른 기기에서 호스트로 재연결할 때 필요합니다.",
+    "codeOrHostKey": "공유 코드 또는 호스트 키",
+    "joiningAsHost": "호스트로 참여합니다",
+    "joiningAsCollaborator": "협력자로 참여합니다",
+    "collaboratorPermissions": "협력자 권한",
+    "permUpload": "이미지 업로드",
+    "permEditClasses": "클래스 편집",
+    "permDelete": "이미지/주석 삭제",
+    "permExport": "프로젝트 내보내기",
+    "status": {
+      "connecting": "연결 중",
+      "syncing": "동기화 중",
+      "connected": "연결됨",
+      "disconnected": "연결 끊김",
+      "error": "오류"
     }
   }
 }

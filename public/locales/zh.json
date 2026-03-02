@@ -44,7 +44,10 @@
     "filters": "筛选",
     "starting": "启动中...",
     "back": "返回",
-    "browse": "浏览"
+    "browse": "浏览",
+    "next": "下一步",
+    "change": "更改",
+    "optional": "可选"
   },
   "header": {
     "selectProject": "选择项目...",
@@ -195,6 +198,8 @@
     "create": "创建项目",
     "createDescription": "开始一个新的标注项目",
     "description": "修改名称或管理项目类别。",
+    "descriptionLabel": "描述",
+    "descriptionPlaceholder": "项目备注或评论...",
     "name": "项目名称",
     "namePlaceholder": "我的 Annotix 项目",
     "type": {
@@ -1281,9 +1286,9 @@
       "difficultyLabel": "难度"
     },
     "categories": {
-      "images": "",
-      "classification": "",
-      "timeSeries": "",
+      "images": "图像标注",
+      "classification": "分类",
+      "timeSeries": "时间序列",
       "tabular": "表格 / 经典ML"
     },
     "modality": "模态",
@@ -1685,7 +1690,7 @@
       "downloadDesc": "下载包含数据集、脚本和笔记本的ZIP文件，在其他地方进行训练。",
       "downloadPackage": "下载训练包",
       "cloud": "Cloud",
-      "cloudDesc": "使用Kaggle、Vertex AI或Colab Enterprise在云端GPU上训练。",
+      "cloudDesc": "使用Kaggle、Vertex AI、Colab Enterprise、Lightning AI、Hugging Face或Saturn Cloud在云端GPU上训练。",
       "launchCloud": "在云端启动"
     },
     "package": {
@@ -2011,13 +2016,19 @@
         "kaggle": "Kaggle",
         "vertex_ai_custom": "Vertex AI Custom",
         "colab_enterprise": "Colab Enterprise",
-        "vertex_ai_gemini_tuning": "Gemini Tuning"
+        "vertex_ai_gemini_tuning": "Gemini Tuning",
+        "lightning_ai": "Lightning AI",
+        "hugging_face": "Hugging Face",
+        "saturn_cloud": "Saturn Cloud"
       },
       "providerDesc": {
         "kaggle": "免费T4/P100 GPU，每周30小时",
         "vertex_ai_custom": "在GCP上使用任意GPU进行自定义训练",
         "colab_enterprise": "Vertex AI上的托管笔记本",
-        "vertex_ai_gemini_tuning": "微调Gemini模型"
+        "vertex_ai_gemini_tuning": "微调Gemini模型",
+        "lightning_ai": "通过Lightning Studios的免费T4/L4 GPU",
+        "hugging_face": "具有免费CPU/GPU层级的AutoTrain",
+        "saturn_cloud": "用于ML的免费T4 GPU实例"
       },
       "machineType": "机器类型",
       "accelerator": "GPU/加速器",
@@ -2169,6 +2180,25 @@
         "getKey": "获取API Key →",
         "username": "用户名",
         "apiKey": "API Key"
+      },
+      "lightning": {
+        "title": "Lightning AI",
+        "description": "配置Lightning AI凭据以进行免费GPU训练。",
+        "getKey": "获取API密钥 →",
+        "apiKey": "API密钥"
+      },
+      "huggingface": {
+        "title": "Hugging Face",
+        "description": "输入Hugging Face凭据以使用AutoTrain。",
+        "getToken": "获取令牌 →",
+        "username": "用户名",
+        "token": "访问令牌"
+      },
+      "saturn": {
+        "title": "Saturn Cloud",
+        "description": "输入Saturn Cloud API令牌以使用免费GPU实例。",
+        "getToken": "获取API令牌 →",
+        "apiToken": "API令牌"
       },
       "validate": "验证",
       "validating": "验证中...",
@@ -2322,6 +2352,73 @@
       "event-detection": "识别序列中特定事件何时发生",
       "clustering": "将相似的时间序列或片段分组",
       "imputation": "重建缺失或损坏的数据点"
+    }
+  },
+  "p2p": {
+    "collaborate": "协作",
+    "description": "通过P2P协同工作",
+    "chooseAction": "您想做什么？",
+    "createSession": "创建会话",
+    "createSessionDesc": "与协作者共享项目",
+    "joinSession": "加入会话",
+    "joinSessionDesc": "加入现有会话",
+    "configureSession": "配置协作会话",
+    "displayName": "您的姓名",
+    "displayNamePlaceholder": "输入您的姓名",
+    "lockMode": "锁定模式",
+    "lockIndividual": "单独",
+    "lockIndividualDesc": "一次锁定一张图像",
+    "lockBatch": "批量",
+    "lockBatchDesc": "主持人分配图像批次",
+    "startSharing": "开始共享",
+    "sessionReady": "会话就绪！",
+    "shareCodeInstructions": "与协作者分享此代码",
+    "shareCode": "共享代码",
+    "copyCode": "复制代码",
+    "waitingForPeers": "等待协作者加入...",
+    "enterShareCode": "输入主持人提供的代码",
+    "join": "加入",
+    "syncing": "同步中...",
+    "downloadingProject": "下载项目数据...",
+    "connected": "已连接！",
+    "connectedDesc": "您已连接到会话",
+    "readyToAnnotate": "您现在可以开始标注",
+    "startAnnotating": "开始标注",
+    "activeSession": "P2P会话",
+    "leaveSession": "离开会话",
+    "connectedPeers": "已连接节点",
+    "noPeersYet": "尚无已连接节点",
+    "you": "我",
+    "host": "主持人",
+    "collaborator": "协作者",
+    "role": "角色",
+    "assignBatch": "分配批次",
+    "selectCollaborator": "选择协作者",
+    "imageIds": "图像ID",
+    "imageIdsPlaceholder": "id1, id2, id3...",
+    "imageIdsHint": "逗号分隔的图像ID",
+    "assign": "分配",
+    "lockedByYou": "已被您锁定",
+    "lockedByOther": "已被{{name}}锁定",
+    "share": "P2P共享",
+    "shareCodeLabel": "协作者代码",
+    "hostKeyLabel": "主持人密钥（请保存！）",
+    "copyHostKey": "复制主持人密钥",
+    "hostKeyWarning": "请保存此密钥。从其他设备重新连接为主持人时需要使用。",
+    "codeOrHostKey": "共享代码或主持人密钥",
+    "joiningAsHost": "您将以主持人身份加入",
+    "joiningAsCollaborator": "您将以协作者身份加入",
+    "collaboratorPermissions": "协作者权限",
+    "permUpload": "上传图像",
+    "permEditClasses": "编辑类别",
+    "permDelete": "删除图像/标注",
+    "permExport": "导出项目",
+    "status": {
+      "connecting": "连接中",
+      "syncing": "同步中",
+      "connected": "已连接",
+      "disconnected": "已断开",
+      "error": "错误"
     }
   }
 }

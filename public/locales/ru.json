@@ -44,7 +44,10 @@
     "filters": "Фильтры",
     "starting": "Запуск...",
     "back": "Назад",
-    "browse": "Обзор"
+    "browse": "Обзор",
+    "next": "Далее",
+    "change": "Изменить",
+    "optional": "необязательно"
   },
   "header": {
     "selectProject": "Выбрать проект...",
@@ -195,6 +198,8 @@
     "create": "Создать проект",
     "createDescription": "Начать новый проект аннотации",
     "description": "Измените название или управляйте классами проекта.",
+    "descriptionLabel": "Описание",
+    "descriptionPlaceholder": "Заметки или комментарии к проекту...",
     "name": "Название проекта",
     "namePlaceholder": "Мой проект Annotix",
     "type": {
@@ -1281,9 +1286,9 @@
       "difficultyLabel": "Сложность"
     },
     "categories": {
-      "images": "",
-      "classification": "",
-      "timeSeries": "",
+      "images": "Аннотация изображений",
+      "classification": "Классификация",
+      "timeSeries": "Временные ряды",
       "tabular": "Табличные / Классический ML"
     },
     "modality": "Модальность",
@@ -1685,7 +1690,7 @@
       "downloadDesc": "Скачать ZIP с датасетом, скриптом и ноутбуком для обучения в другом месте.",
       "downloadPackage": "Скачать пакет обучения",
       "cloud": "Cloud",
-      "cloudDesc": "Обучайте на облачных GPU с помощью Kaggle, Vertex AI или Colab Enterprise.",
+      "cloudDesc": "Обучайте на облачных GPU с помощью Kaggle, Vertex AI, Colab Enterprise, Lightning AI, Hugging Face или Saturn Cloud.",
       "launchCloud": "Запустить в облаке"
     },
     "package": {
@@ -2011,13 +2016,19 @@
         "kaggle": "Kaggle",
         "vertex_ai_custom": "Vertex AI Custom",
         "colab_enterprise": "Colab Enterprise",
-        "vertex_ai_gemini_tuning": "Gemini Tuning"
+        "vertex_ai_gemini_tuning": "Gemini Tuning",
+        "lightning_ai": "Lightning AI",
+        "hugging_face": "Hugging Face",
+        "saturn_cloud": "Saturn Cloud"
       },
       "providerDesc": {
         "kaggle": "Бесплатные GPU T4/P100, 30 ч/неделю",
         "vertex_ai_custom": "Пользовательское обучение с любым GPU на GCP",
         "colab_enterprise": "Управляемые ноутбуки на Vertex AI",
-        "vertex_ai_gemini_tuning": "Тонкая настройка моделей Gemini"
+        "vertex_ai_gemini_tuning": "Тонкая настройка моделей Gemini",
+        "lightning_ai": "Бесплатные GPU T4/L4 через Lightning Studios",
+        "hugging_face": "AutoTrain с бесплатным уровнем CPU/GPU",
+        "saturn_cloud": "Бесплатные GPU T4 инстансы для ML"
       },
       "machineType": "Тип машины",
       "accelerator": "GPU/Ускоритель",
@@ -2169,6 +2180,25 @@
         "getKey": "Получить API Key →",
         "username": "Имя пользователя",
         "apiKey": "API Key"
+      },
+      "lightning": {
+        "title": "Lightning AI",
+        "description": "Настройте учётные данные Lightning AI для бесплатного обучения на GPU.",
+        "getKey": "Получить API-ключ →",
+        "apiKey": "API-ключ"
+      },
+      "huggingface": {
+        "title": "Hugging Face",
+        "description": "Введите учётные данные Hugging Face для AutoTrain.",
+        "getToken": "Получить токен →",
+        "username": "Имя пользователя",
+        "token": "Токен доступа"
+      },
+      "saturn": {
+        "title": "Saturn Cloud",
+        "description": "Введите API-токен Saturn Cloud для бесплатных GPU-инстансов.",
+        "getToken": "Получить API-токен →",
+        "apiToken": "API-токен"
       },
       "validate": "Проверить",
       "validating": "Проверка...",
@@ -2322,6 +2352,73 @@
       "event-detection": "Определение моментов конкретных событий в ряду",
       "clustering": "Группировка похожих временных рядов или сегментов",
       "imputation": "Восстановление отсутствующих или повреждённых точек данных"
+    }
+  },
+  "p2p": {
+    "collaborate": "Сотрудничество",
+    "description": "Совместная работа через P2P",
+    "chooseAction": "Что вы хотите сделать?",
+    "createSession": "Создать сессию",
+    "createSessionDesc": "Поделитесь проектом с коллегами",
+    "joinSession": "Присоединиться к сессии",
+    "joinSessionDesc": "Присоединиться к существующей сессии",
+    "configureSession": "Настройка сессии сотрудничества",
+    "displayName": "Ваше имя",
+    "displayNamePlaceholder": "Введите ваше имя",
+    "lockMode": "Режим блокировки",
+    "lockIndividual": "Индивидуальный",
+    "lockIndividualDesc": "Блокировать одно изображение за раз",
+    "lockBatch": "Пакетный",
+    "lockBatchDesc": "Хост назначает пакеты изображений",
+    "startSharing": "Начать общий доступ",
+    "sessionReady": "Сессия готова!",
+    "shareCodeInstructions": "Поделитесь этим кодом с коллегами",
+    "shareCode": "Код доступа",
+    "copyCode": "Копировать код",
+    "waitingForPeers": "Ожидание коллег...",
+    "enterShareCode": "Введите код, предоставленный хостом",
+    "join": "Присоединиться",
+    "syncing": "Синхронизация...",
+    "downloadingProject": "Загрузка данных проекта...",
+    "connected": "Подключено!",
+    "connectedDesc": "Вы подключены к сессии",
+    "readyToAnnotate": "Вы можете начать аннотирование",
+    "startAnnotating": "Начать аннотирование",
+    "activeSession": "P2P Сессия",
+    "leaveSession": "Покинуть сессию",
+    "connectedPeers": "Подключённые узлы",
+    "noPeersYet": "Пока нет подключённых узлов",
+    "you": "Вы",
+    "host": "Хост",
+    "collaborator": "Сотрудник",
+    "role": "Роль",
+    "assignBatch": "Назначить пакет",
+    "selectCollaborator": "Выбрать сотрудника",
+    "imageIds": "ID изображений",
+    "imageIdsPlaceholder": "id1, id2, id3...",
+    "imageIdsHint": "ID через запятую",
+    "assign": "Назначить",
+    "lockedByYou": "Заблокировано вами",
+    "lockedByOther": "Заблокировано {{name}}",
+    "share": "Поделиться P2P",
+    "shareCodeLabel": "Код сотрудника",
+    "hostKeyLabel": "Ключ хоста (сохраните!)",
+    "copyHostKey": "Копировать ключ хоста",
+    "hostKeyWarning": "Сохраните этот ключ. Он понадобится для повторного подключения в качестве хоста с другого устройства.",
+    "codeOrHostKey": "Код доступа или ключ хоста",
+    "joiningAsHost": "Вы присоединитесь как хост",
+    "joiningAsCollaborator": "Вы присоединитесь как сотрудник",
+    "collaboratorPermissions": "Права сотрудника",
+    "permUpload": "Загрузка изображений",
+    "permEditClasses": "Редактирование классов",
+    "permDelete": "Удаление изображений/аннотаций",
+    "permExport": "Экспорт проекта",
+    "status": {
+      "connecting": "Подключение",
+      "syncing": "Синхронизация",
+      "connected": "Подключено",
+      "disconnected": "Отключено",
+      "error": "Ошибка"
     }
   }
 }

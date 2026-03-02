@@ -1,10 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { confirm } from '@/lib/dialogs';
 import { Project } from '@/lib/db';
 import { useProjects } from '../hooks/useProjects';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ProjectSettingsDialog } from './ProjectSettingsDialog';
+import { P2pDialog } from '@/features/p2p/components/P2pDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +29,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
   };
 
   const handleDelete = async () => {
-    if (confirm(t('projects.confirmDelete', { name: project.name }))) {
+    if (await confirm(t('projects.confirmDelete', { name: project.name }), { kind: 'warning' })) {
       await deleteProject(project.id!);
     }
   };
@@ -56,8 +58,8 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const typeIcon = typeIconMap[project.type] || 'fa-folder';
 
   return (
-    <Card className="transition-shadow hover:shadow-lg">
-      <CardContent className="pt-6">
+    <Card className="flex h-full flex-col transition-shadow hover:shadow-lg">
+      <CardContent className="flex-1 pt-6">
         <div className="mb-4 flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -82,8 +84,18 @@ export function ProjectCard({ project }: ProjectCardProps) {
                 {t('projects.open')}
               </DropdownMenuItem>
               
-              <ProjectSettingsDialog 
-                project={project} 
+              <P2pDialog
+                projectId={project.id}
+                trigger={
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <i className="fas fa-people-arrows mr-2"></i>
+                    {t('p2p.share')}
+                  </DropdownMenuItem>
+                }
+              />
+
+              <ProjectSettingsDialog
+                project={project}
                 trigger={
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                     <i className="fas fa-cog mr-2"></i>

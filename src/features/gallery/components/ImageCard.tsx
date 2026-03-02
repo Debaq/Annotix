@@ -4,6 +4,7 @@ import { AnnotixImage } from '@/lib/db';
 import { useUIStore } from '../../core/store/uiStore';
 import { cn } from '@/lib/utils';
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
+import { ImageLockIndicator } from '@/features/p2p/components/ImageLockIndicator';
 
 interface ImageCardProps {
   image: AnnotixImage;
@@ -55,6 +56,9 @@ export function ImageCard({ image }: ImageCardProps) {
             className="w-full h-full object-cover"
           />
         )}
+
+        {/* P2P Lock indicator */}
+        {image.id && <ImageLockIndicator imageId={image.id} />}
 
         {/* Status indicator (top-right) */}
         <div className="absolute top-1 right-1">

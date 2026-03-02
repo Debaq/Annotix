@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
+import { confirm } from '@/lib/dialogs';
 import { Video } from '@/lib/db';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '../../core/store/uiStore';
@@ -62,7 +63,7 @@ export function VideoCard({ video }: VideoCardProps) {
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!projectId || !video.id) return;
-    if (!confirm(t('video.confirmDeleteVideo'))) return;
+    if (!await confirm(t('video.confirmDeleteVideo'), { kind: 'warning' })) return;
 
     // Si estamos viendo este video, limpiar la selección
     if (currentVideoId === video.id) {

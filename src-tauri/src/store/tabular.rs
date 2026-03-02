@@ -26,8 +26,15 @@ impl AppState {
     pub fn upload_tabular_file(&self, project_id: &str, source_path: &str, file_name: &str) -> Result<TabularDataEntry, String> {
         let tabular_dir = self.project_tabular_dir(project_id)?;
 
+        // Validate file size (max 500 MB)
+        let metadata = std::fs::metadata(source_path)
+            .map_err(|e| format!("Error leyendo archivo: {}", e))?;
+        if metadata.len() > 500 * 1024 * 1024 {
+            return Err("El archivo excede el límite de 500 MB".to_string());
+        }
+
         let entry_id = uuid::Uuid::new_v4().to_string();
-        let safe_name = format!("{}_{}", &entry_id[..8], file_name);
+        let safe_name = format!("{}_{}", &entry_id[..8], sanitize_filename(file_name));
         let dest = tabular_dir.join(&safe_name);
 
         // Copy file
@@ -56,6 +63,86 @@ impl AppState {
         })?;
 
         Ok(entry)
+    }
+
+    /// Create an empty tabular data entry with specific columns.
+    pub fn create_tabular_data(&self, project_id: &str, name: &str, columns: Vec<String>) -> Result<TabularDataEntry, String> {
+        let tabular_dir = self.project_tabular_dir(project_id)?;
+        let entry_id = uuid::Uuid::new_v4().to_string();
+        let file_name = format!("{}_{}.csv", &entry_id[..8], name.replace(" ", "_"));
+        let dest = tabular_dir.join(&file_name);
+
+        // Create CSV with only headers
+        let mut wtr = csv::Writer::from_path(&dest)
+            .map_err(|e| format!("Error creando archivo CSV: {}", e))?;
+        wtr.write_record(&columns)
+            .map_err(|e| format!("Error escribiendo headers: {}", e))?;
+        wtr.flush().map_err(|e| format!("Error finalizando archivo: {}", e))?;
+
+        let column_info = columns.into_iter().map(|name| TabularColumnInfo {
+            name,
+            dtype: "text".to_string(),
+            unique_count: 0,
+            null_count: 0,
+            sample_values: Vec::new(),
+        }).collect();
+
+        let now = chrono::Utc::now().timestamp_millis() as f64;
+
+        let entry = TabularDataEntry {
+            id: entry_id,
+            name: name.to_string(),
+            file: file_name,
+            uploaded: now,
+            rows: 0,
+            columns: column_info,
+            target_column: None,
+            feature_columns: Vec::new(),
+            task_type: None,
+        };
+
+        self.with_project_mut(project_id, |pf| {
+            pf.tabular_data.push(entry.clone());
+        })?;
+
+        Ok(entry)
+    }
+
+    /// Update all rows of a tabular data entry (overwrites the CSV file).
+    pub fn update_tabular_rows(&self, project_id: &str, data_id: &str, rows: Vec<Vec<String>>) -> Result<(), String> {
+        let tabular_dir = self.project_tabular_dir(project_id)?;
+
+        let (file_name, headers) = self.with_project(project_id, |pf| {
+            let entry = pf.tabular_data.iter().find(|d| d.id == data_id)
+                .ok_or_else(|| "Datos tabulares no encontrados".to_string())?;
+            let h: Vec<String> = entry.columns.iter().map(|c| c.name.clone()).collect();
+            Ok::<_, String>((entry.file.clone(), h))
+        })??;
+
+        let dest = tabular_dir.join(&file_name);
+        
+        // Rewrite CSV
+        let mut wtr = csv::Writer::from_path(&dest)
+            .map_err(|e| format!("Error abriendo archivo CSV: {}", e))?;
+        wtr.write_record(&headers)
+            .map_err(|e| format!("Error escribiendo headers: {}", e))?;
+        for row in rows {
+            wtr.write_record(&row)
+                .map_err(|e| format!("Error escribiendo fila: {}", e))?;
+        }
+        wtr.flush().map_err(|e| format!("Error finalizando archivo: {}", e))?;
+
+        // Re-parse to update metadata
+        let (columns, row_count) = parse_csv_columns(&dest)?;
+
+        self.with_project_mut(project_id, |pf| {
+            if let Some(entry) = pf.tabular_data.iter_mut().find(|d| d.id == data_id) {
+                entry.rows = row_count;
+                entry.columns = columns;
+            }
+        })?;
+
+        Ok(())
     }
 
     /// Get preview rows for a tabular data entry.
@@ -136,7 +223,17 @@ impl AppState {
     }
 }
 
+/// Sanitize a filename by removing path separators and dangerous characters.
+fn sanitize_filename(name: &str) -> String {
+    let sanitized: String = name.chars()
+        .filter(|c| !matches!(c, '/' | '\\' | '\0' | ':' | '*' | '?' | '"' | '<' | '>' | '|'))
+        .collect();
+    let sanitized = sanitized.trim_start_matches('.');
+    if sanitized.is_empty() { "data.csv".to_string() } else { sanitized.to_string() }
+}
+
 /// Parse a CSV file and return column info + row count.
+/// Column statistics are sampled from the first 10,000 rows to avoid OOM on large files.
 fn parse_csv_columns(path: &PathBuf) -> Result<(Vec<TabularColumnInfo>, usize), String> {
     let mut rdr = csv::ReaderBuilder::new()
         .has_headers(true)
@@ -156,23 +253,27 @@ fn parse_csv_columns(path: &PathBuf) -> Result<(Vec<TabularColumnInfo>, usize), 
     let mut numeric_counts: Vec<usize> = vec![0; num_cols];
     let mut row_count = 0usize;
 
+    const STATS_SAMPLE_LIMIT: usize = 10_000;
+
     for result in rdr.records() {
         let record = result.map_err(|e| format!("Error leyendo fila: {}", e))?;
         row_count += 1;
 
-        for (i, field) in record.iter().enumerate() {
-            if i >= num_cols { break; }
+        if row_count <= STATS_SAMPLE_LIMIT {
+            for (i, field) in record.iter().enumerate() {
+                if i >= num_cols { break; }
 
-            let val = field.trim();
-            if val.is_empty() || val.eq_ignore_ascii_case("null") || val.eq_ignore_ascii_case("nan") || val == "NA" {
-                null_counts[i] += 1;
-            } else {
-                unique_sets[i].insert(val.to_string());
-                if sample_values[i].len() < 5 {
-                    sample_values[i].push(val.to_string());
-                }
-                if val.parse::<f64>().is_ok() {
-                    numeric_counts[i] += 1;
+                let val = field.trim();
+                if val.is_empty() || val.eq_ignore_ascii_case("null") || val.eq_ignore_ascii_case("nan") || val == "NA" {
+                    null_counts[i] += 1;
+                } else {
+                    unique_sets[i].insert(val.to_string());
+                    if sample_values[i].len() < 5 {
+                        sample_values[i].push(val.to_string());
+                    }
+                    if val.parse::<f64>().is_ok() {
+                        numeric_counts[i] += 1;
+                    }
                 }
             }
         }

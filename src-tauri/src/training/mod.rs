@@ -372,6 +372,9 @@ pub enum CloudProvider {
     VertexAiCustom,
     VertexAiGeminiTuning,
     Kaggle,
+    LightningAi,
+    HuggingFace,
+    SaturnCloud,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

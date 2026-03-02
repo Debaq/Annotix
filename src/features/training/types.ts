@@ -232,7 +232,7 @@ export type TrainingBackend =
   | 'tsai' | 'pytorch_forecasting' | 'pyod' | 'tslearn' | 'pypots' | 'stumpy'
   | 'sklearn';
 export type ExecutionMode = 'local' | 'download_package' | 'cloud';
-export type CloudProvider = 'colab_enterprise' | 'vertex_ai_custom' | 'vertex_ai_gemini_tuning' | 'kaggle';
+export type CloudProvider = 'colab_enterprise' | 'vertex_ai_custom' | 'vertex_ai_gemini_tuning' | 'kaggle' | 'lightning_ai' | 'hugging_face' | 'saturn_cloud';
 
 export interface CloudTrainingConfig {
   provider: CloudProvider;
@@ -243,9 +243,25 @@ export interface CloudTrainingConfig {
   maxRuntimeSeconds?: number;
 }
 
+export interface LightningAiConfig {
+  apiKey?: string;
+}
+
+export interface HuggingFaceConfig {
+  token?: string;
+  username?: string;
+}
+
+export interface SaturnCloudConfig {
+  apiToken?: string;
+}
+
 export interface CloudProviderConfig {
   gcp?: GcpConfig;
   kaggle?: KaggleConfig;
+  lightning_ai?: LightningAiConfig;
+  huggingface?: HuggingFaceConfig;
+  saturn_cloud?: SaturnCloudConfig;
 }
 
 export interface GcpConfig {

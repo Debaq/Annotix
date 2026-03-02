@@ -1,7 +1,7 @@
 use tauri::{AppHandle, Emitter, State};
 
 use crate::store::AppState;
-use crate::store::config::{CloudProviderConfig, GcpConfig, KaggleConfig};
+use crate::store::config::{CloudProviderConfig, GcpConfig, KaggleConfig, LightningAiConfig, HuggingFaceConfig, SaturnCloudConfig};
 use crate::store::project_file::TrainingJobEntry;
 use crate::training::runner::TrainingProcessManager;
 use crate::training::cloud::CloudTrainingManager;
@@ -686,6 +686,21 @@ pub fn save_cloud_provider_config(
                 .map_err(|e| format!("Error parseando config Kaggle: {}", e))?;
             app_config.cloud_providers.kaggle = Some(kaggle);
         }
+        "lightning_ai" => {
+            let lai: LightningAiConfig = serde_json::from_value(config_data)
+                .map_err(|e| format!("Error parseando config Lightning AI: {}", e))?;
+            app_config.cloud_providers.lightning_ai = Some(lai);
+        }
+        "huggingface" => {
+            let hf: HuggingFaceConfig = serde_json::from_value(config_data)
+                .map_err(|e| format!("Error parseando config Hugging Face: {}", e))?;
+            app_config.cloud_providers.huggingface = Some(hf);
+        }
+        "saturn_cloud" => {
+            let sc: SaturnCloudConfig = serde_json::from_value(config_data)
+                .map_err(|e| format!("Error parseando config Saturn Cloud: {}", e))?;
+            app_config.cloud_providers.saturn_cloud = Some(sc);
+        }
         _ => return Err(format!("Proveedor desconocido: {}", provider)),
     }
 
@@ -720,6 +735,24 @@ pub fn validate_cloud_credentials(
             let api_key = kaggle.api_key.ok_or("Falta API key")?;
             crate::training::cloud::kaggle::validate_credentials(&username, &api_key)
         }
+        "lightning_ai" => {
+            let lai = config.cloud_providers.lightning_ai
+                .ok_or("Lightning AI no configurado")?;
+            let api_key = lai.api_key.ok_or("Falta API key")?;
+            crate::training::cloud::lightning::validate_credentials(&api_key)
+        }
+        "huggingface" => {
+            let hf = config.cloud_providers.huggingface
+                .ok_or("Hugging Face no configurado")?;
+            let token = hf.token.ok_or("Falta token")?;
+            crate::training::cloud::huggingface::validate_credentials(&token)
+        }
+        "saturn_cloud" => {
+            let sc = config.cloud_providers.saturn_cloud
+                .ok_or("Saturn Cloud no configurado")?;
+            let api_token = sc.api_token.ok_or("Falta API token")?;
+            crate::training::cloud::saturn::validate_credentials(&api_token)
+        }
         _ => Err(format!("Proveedor desconocido: {}", provider)),
     }
 }
@@ -745,6 +778,10 @@ pub fn download_cloud_model(
     match provider {
         "kaggle" => {
             // For Kaggle, model is already downloaded or available via output endpoint
+            Ok(download_url.to_string())
+        }
+        "lightning_ai" | "hugging_face" | "saturn_cloud" => {
+            // These providers store the download URL directly
             Ok(download_url.to_string())
         }
         "vertex_ai_custom" | "colab_enterprise" | "vertex_ai_gemini_tuning" => {

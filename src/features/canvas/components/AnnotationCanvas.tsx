@@ -96,9 +96,10 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
 
   // Initialize handlers
   const classColor = useMemo(() => {
-    if (activeClassId === null) return '#FF6B6B';
+    const DEFAULT_COLOR = '#667eea'; // annotix-primary
+    if (activeClassId === null) return DEFAULT_COLOR;
     const classInfo = project?.classes.find(c => c.id === activeClassId);
-    return classInfo?.color || '#FF6B6B';
+    return classInfo?.color || DEFAULT_COLOR;
   }, [activeClassId, project]);
 
   const bboxHandlerRef = useRef<BBoxHandler | null>(null);
@@ -133,7 +134,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   
   const maskHandlerRef = useRef<MaskHandler | null>(null);
   if (!maskHandlerRef.current) {
-    maskHandlerRef.current = new MaskHandler(null, addAnnotation, '#FF6B6B');
+    maskHandlerRef.current = new MaskHandler(null, addAnnotation, '#667eea');
   }
   const maskHandler = maskHandlerRef.current;
 
@@ -1121,7 +1122,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
                   x={kp.x * scale + imageOffset.x}
                   y={kp.y * scale + imageOffset.y}
                   radius={keypointsHandler.getSelectedIndex() === idx ? 7 : 5}
-                  fill={keypointsHandler.getSelectedIndex() === idx ? "#FF0000" : classColor}
+                  fill={classColor}
                   stroke="white"
                   strokeWidth={2}
                 />

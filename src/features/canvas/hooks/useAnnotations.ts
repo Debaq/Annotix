@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { create } from 'zustand';
+import { confirm } from '@/lib/dialogs';
 import { Annotation } from '@/lib/db';
 import { useCurrentImage } from '../../gallery/hooks/useCurrentImage';
 import { useUIStore } from '../../core/store/uiStore';
@@ -193,7 +194,7 @@ export function useAnnotations() {
   }, [setSelectedAnnotationId]);
 
   const clearAnnotations = useCallback(async () => {
-    if (confirm(t('common.clearConfirm'))) {
+    if (await confirm(t('common.clearConfirm'), { kind: 'warning' })) {
       clearAnnotationsState();
       await saveAnnotations([]);
     }

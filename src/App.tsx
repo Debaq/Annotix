@@ -20,6 +20,8 @@ import { ExportDialog } from './features/export/components/ExportDialog';
 import { Button } from './components/ui/button';
 import { ProjectType } from './lib/db';
 import { Toaster } from '@/components/ui/toaster';
+import { ConfirmDialog } from './features/core/components/ConfirmDialog';
+import { useP2pSession } from './features/p2p/hooks/useP2pSession';
 import { useTranslation } from 'react-i18next';
 import { ManageClassesDialog } from './features/projects/components/ManageClassesDialog';
 import { CLASS_SHORTCUTS } from './features/core/constants';
@@ -308,6 +310,9 @@ function App() {
   // Initialize keyboard shortcuts
   useKeyboardShortcuts();
 
+  // Initialize P2P event listeners
+  useP2pSession();
+
   // Check if setup is complete
   useEffect(() => {
     invoke<boolean>('is_setup_complete')
@@ -366,6 +371,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster />
+      <ConfirmDialog />
     </AppLayout>
   );
 }

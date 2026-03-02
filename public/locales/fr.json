@@ -44,7 +44,10 @@
     "filters": "Filtres",
     "starting": "Démarrage...",
     "back": "Retour",
-    "browse": "Parcourir"
+    "browse": "Parcourir",
+    "next": "Suivant",
+    "change": "Modifier",
+    "optional": "facultatif"
   },
   "header": {
     "selectProject": "Sélectionner un projet...",
@@ -195,6 +198,8 @@
     "create": "Créer un Projet",
     "createDescription": "Commencez un nouveau projet d'annotation",
     "description": "Modifiez le nom ou gérez les classes du projet.",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Notes ou commentaires du projet...",
     "name": "Nom du Projet",
     "namePlaceholder": "Mon Projet Annotix",
     "type": {
@@ -1281,9 +1286,9 @@
       "difficultyLabel": "Difficulté"
     },
     "categories": {
-      "images": "",
-      "classification": "",
-      "timeSeries": "",
+      "images": "Annotation d'images",
+      "classification": "Classification",
+      "timeSeries": "Séries temporelles",
       "tabular": "Tabulaire / ML Classique"
     },
     "modality": "Modalité",
@@ -1685,7 +1690,7 @@
       "downloadDesc": "Télécharger un ZIP avec le dataset, le script et le notebook pour entraîner ailleurs.",
       "downloadPackage": "Télécharger le paquet d'entraînement",
       "cloud": "Cloud",
-      "cloudDesc": "Entraînez sur des GPUs cloud avec Kaggle, Vertex AI ou Colab Enterprise.",
+      "cloudDesc": "Entraînez sur des GPUs cloud avec Kaggle, Vertex AI, Colab Enterprise, Lightning AI, Hugging Face ou Saturn Cloud.",
       "launchCloud": "Lancer dans le Cloud"
     },
     "package": {
@@ -2011,13 +2016,19 @@
         "kaggle": "Kaggle",
         "vertex_ai_custom": "Vertex AI Custom",
         "colab_enterprise": "Colab Enterprise",
-        "vertex_ai_gemini_tuning": "Gemini Tuning"
+        "vertex_ai_gemini_tuning": "Gemini Tuning",
+        "lightning_ai": "Lightning AI",
+        "hugging_face": "Hugging Face",
+        "saturn_cloud": "Saturn Cloud"
       },
       "providerDesc": {
         "kaggle": "GPUs T4/P100 gratuits, 30h/semaine",
         "vertex_ai_custom": "Entraînement personnalisé avec n'importe quel GPU sur GCP",
         "colab_enterprise": "Notebooks gérés sur Vertex AI",
-        "vertex_ai_gemini_tuning": "Affiner les modèles Gemini"
+        "vertex_ai_gemini_tuning": "Affiner les modèles Gemini",
+        "lightning_ai": "GPUs T4/L4 gratuits via Lightning Studios",
+        "hugging_face": "AutoTrain avec niveau gratuit CPU/GPU",
+        "saturn_cloud": "Instances T4 GPU gratuites pour ML"
       },
       "machineType": "Type de machine",
       "accelerator": "GPU/Accélérateur",
@@ -2169,6 +2180,25 @@
         "getKey": "Obtenir la clé API →",
         "username": "Nom d'utilisateur",
         "apiKey": "Clé API"
+      },
+      "lightning": {
+        "title": "Lightning AI",
+        "description": "Configurez les identifiants Lightning AI pour l'entraînement GPU gratuit.",
+        "getKey": "Get API Key →",
+        "apiKey": "API Key"
+      },
+      "huggingface": {
+        "title": "Hugging Face",
+        "description": "Entrez vos identifiants Hugging Face pour AutoTrain.",
+        "getToken": "Get Token →",
+        "username": "Username",
+        "token": "Access Token"
+      },
+      "saturn": {
+        "title": "Saturn Cloud",
+        "description": "Entrez votre jeton API Saturn Cloud pour des instances GPU gratuites.",
+        "getToken": "Get API Token →",
+        "apiToken": "API Token"
       },
       "validate": "Valider",
       "validating": "Validation...",
@@ -2322,6 +2352,73 @@
       "event-detection": "Identifier quand des événements spécifiques se produisent",
       "clustering": "Regrouper des séries temporelles ou segments similaires",
       "imputation": "Reconstruire des points de données manquants ou corrompus"
+    }
+  },
+  "p2p": {
+    "collaborate": "Collaborer",
+    "description": "Travailler ensemble via P2P",
+    "chooseAction": "Que souhaitez-vous faire ?",
+    "createSession": "Créer une session",
+    "createSessionDesc": "Partagez votre projet avec des collaborateurs",
+    "joinSession": "Rejoindre une session",
+    "joinSessionDesc": "Rejoindre une session existante",
+    "configureSession": "Configurer la session de collaboration",
+    "displayName": "Votre nom",
+    "displayNamePlaceholder": "Entrez votre nom",
+    "lockMode": "Mode de verrouillage",
+    "lockIndividual": "Individuel",
+    "lockIndividualDesc": "Verrouiller une image à la fois",
+    "lockBatch": "Par lots",
+    "lockBatchDesc": "L'hôte attribue des lots d'images",
+    "startSharing": "Commencer le partage",
+    "sessionReady": "Session prête !",
+    "shareCodeInstructions": "Partagez ce code avec vos collaborateurs",
+    "shareCode": "Code de partage",
+    "copyCode": "Copier le code",
+    "waitingForPeers": "En attente des collaborateurs...",
+    "enterShareCode": "Entrez le code fourni par l'hôte",
+    "join": "Rejoindre",
+    "syncing": "Synchronisation...",
+    "downloadingProject": "Téléchargement des données...",
+    "connected": "Connecté !",
+    "connectedDesc": "Vous êtes connecté à la session",
+    "readyToAnnotate": "Vous pouvez commencer à annoter",
+    "startAnnotating": "Commencer l'annotation",
+    "activeSession": "Session P2P",
+    "leaveSession": "Quitter la session",
+    "connectedPeers": "Pairs connectés",
+    "noPeersYet": "Aucun pair connecté",
+    "you": "Vous",
+    "host": "Hôte",
+    "collaborator": "Collaborateur",
+    "role": "Rôle",
+    "assignBatch": "Attribuer un lot",
+    "selectCollaborator": "Sélectionner un collaborateur",
+    "imageIds": "IDs d'images",
+    "imageIdsPlaceholder": "id1, id2, id3...",
+    "imageIdsHint": "IDs séparés par des virgules",
+    "assign": "Attribuer",
+    "lockedByYou": "Verrouillé par vous",
+    "lockedByOther": "Verrouillé par {{name}}",
+    "share": "Partager P2P",
+    "shareCodeLabel": "Code collaborateur",
+    "hostKeyLabel": "Clé hôte (sauvegardez-la !)",
+    "copyHostKey": "Copier la clé hôte",
+    "hostKeyWarning": "Sauvegardez cette clé. Vous en aurez besoin pour vous reconnecter en tant qu'hôte depuis un autre appareil.",
+    "codeOrHostKey": "Code de partage ou clé hôte",
+    "joiningAsHost": "Vous rejoindrez en tant qu'hôte",
+    "joiningAsCollaborator": "Vous rejoindrez en tant que collaborateur",
+    "collaboratorPermissions": "Permissions du collaborateur",
+    "permUpload": "Téléverser des images",
+    "permEditClasses": "Modifier les classes",
+    "permDelete": "Supprimer images/annotations",
+    "permExport": "Exporter le projet",
+    "status": {
+      "connecting": "Connexion",
+      "syncing": "Synchronisation",
+      "connected": "Connecté",
+      "disconnected": "Déconnecté",
+      "error": "Erreur"
     }
   }
 }

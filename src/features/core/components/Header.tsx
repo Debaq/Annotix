@@ -4,13 +4,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { Minus, Square, X, Copy } from 'lucide-react';
 
-import { LanguageSelector } from './LanguageSelector';
 import { ShortcutsModal } from './ShortcutsModal';
 import { useUIStore } from '../store/uiStore';
 import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
 import { ExportDialog } from '@/features/export/components/ExportDialog';
-import { ImportDialog } from '@/features/import/components/ImportDialog';
 import { TrainingPanel } from '@/features/training/components/TrainingPanel';
+import { P2pStatusIndicator } from '@/features/p2p/components/P2pStatusIndicator';
 
 const appWindow = getCurrentWindow();
 
@@ -46,15 +45,13 @@ export const Header: React.FC = () => {
   }, []);
 
   const handleDragStart = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      e.preventDefault();
-      appWindow.startDragging();
-    }
-  }, []);
-
-  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    const target = e.target as HTMLElement;
+    if (target.closest('a, button, input, [role="button"]')) return;
+    e.preventDefault();
+    if (e.detail === 2) {
       appWindow.toggleMaximize();
+    } else {
+      appWindow.startDragging();
     }
   }, []);
 
@@ -62,7 +59,6 @@ export const Header: React.FC = () => {
     <header
       className="annotix-header"
       onMouseDown={handleDragStart}
-      onDoubleClick={handleDoubleClick}
     >
       {/* Left Section: Logo + Title */}
       <div className="flex items-center gap-3">
@@ -94,13 +90,6 @@ export const Header: React.FC = () => {
 
       {/* Center Section: Project Controls */}
       <div className="flex items-center gap-2">
-        {!project && (
-          <>
-            <div className="h-6 w-px bg-white/30 mx-1" />
-            <ImportDialog />
-          </>
-        )}
-
         {project && (
           <>
             <div className="h-6 w-px bg-white/30 mx-1" />
@@ -142,6 +131,7 @@ export const Header: React.FC = () => {
 
       {/* Right Section: Tools + Window Controls */}
       <div className="flex items-center gap-1">
+        <P2pStatusIndicator />
         <button
           onClick={() => setShowShortcuts(true)}
           className="window-header-btn"
@@ -149,7 +139,6 @@ export const Header: React.FC = () => {
         >
           <i className="fas fa-keyboard text-[13px]"></i>
         </button>
-        <LanguageSelector />
         <a
           href="https://github.com/Debaq/Annotix.git"
           target="_blank"

@@ -1,16 +1,29 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { trainingService } from '../../training/services/trainingService';
-import type { GcpConfig, KaggleConfig } from '../../training/types';
+import type { GcpConfig, KaggleConfig, LightningAiConfig, HuggingFaceConfig, SaturnCloudConfig } from '../../training/types';
 
 export function CloudProvidersSection() {
   const { t } = useTranslation();
 
   const [gcp, setGcp] = useState<GcpConfig>({});
   const [kaggle, setKaggle] = useState<KaggleConfig>({});
+  const [lightning, setLightning] = useState<LightningAiConfig>({});
+  const [huggingface, setHuggingface] = useState<HuggingFaceConfig>({});
+  const [saturn, setSaturn] = useState<SaturnCloudConfig>({});
   const [gcpExpanded, setGcpExpanded] = useState(true);
   const [kaggleExpanded, setKaggleExpanded] = useState(true);
+  const [lightningExpanded, setLightningExpanded] = useState(true);
+  const [huggingfaceExpanded, setHuggingfaceExpanded] = useState(true);
+  const [saturnExpanded, setSaturnExpanded] = useState(true);
   const [validating, setValidating] = useState<string | null>(null);
   const [validationResult, setValidationResult] = useState<Record<string, 'success' | 'error' | null>>({});
   const [saving, setSaving] = useState(false);
@@ -19,6 +32,9 @@ export function CloudProvidersSection() {
     trainingService.getCloudProvidersConfig().then((config) => {
       if (config.gcp) setGcp(config.gcp);
       if (config.kaggle) setKaggle(config.kaggle);
+      if (config.lightning_ai) setLightning(config.lightning_ai);
+      if (config.huggingface) setHuggingface(config.huggingface);
+      if (config.saturn_cloud) setSaturn(config.saturn_cloud);
     }).catch(() => {});
   }, []);
 
@@ -36,6 +52,36 @@ export function CloudProvidersSection() {
     setSaving(true);
     try {
       await trainingService.saveCloudProviderConfig('kaggle', kaggle as unknown as Record<string, unknown>);
+    } catch (e) {
+      console.error(e);
+    }
+    setSaving(false);
+  };
+
+  const handleSaveLightning = async () => {
+    setSaving(true);
+    try {
+      await trainingService.saveCloudProviderConfig('lightning_ai', lightning as unknown as Record<string, unknown>);
+    } catch (e) {
+      console.error(e);
+    }
+    setSaving(false);
+  };
+
+  const handleSaveHuggingface = async () => {
+    setSaving(true);
+    try {
+      await trainingService.saveCloudProviderConfig('huggingface', huggingface as unknown as Record<string, unknown>);
+    } catch (e) {
+      console.error(e);
+    }
+    setSaving(false);
+  };
+
+  const handleSaveSaturn = async () => {
+    setSaving(true);
+    try {
+      await trainingService.saveCloudProviderConfig('saturn_cloud', saturn as unknown as Record<string, unknown>);
     } catch (e) {
       console.error(e);
     }
@@ -126,15 +172,19 @@ export function CloudProvidersSection() {
 
             <div>
               <label className="text-xs font-medium block mb-1">{t('settings.cloud.gcp.region')}</label>
-              <select
-                value={gcp.region || 'us-central1'}
-                onChange={(e) => setGcp((prev) => ({ ...prev, region: e.target.value }))}
-                className="w-full px-3 py-2 text-xs rounded border border-border bg-background"
+              <Select 
+                value={gcp.region || 'us-central1'} 
+                onValueChange={(val) => setGcp((prev) => ({ ...prev, region: val }))}
               >
-                {GCP_REGIONS.map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full h-8 text-xs bg-background border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {GCP_REGIONS.map((r) => (
+                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -255,6 +305,236 @@ export function CloudProvidersSection() {
                 <span className="text-xs text-emerald-500"><i className="fas fa-check mr-1" />{t('settings.cloud.valid')}</span>
               )}
               {validationResult.kaggle === 'error' && (
+                <span className="text-xs text-red-500"><i className="fas fa-times mr-1" />{t('settings.cloud.invalid')}</span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Lightning AI Section */}
+      <div className="border border-border rounded-lg overflow-hidden">
+        <button
+          onClick={() => setLightningExpanded(!lightningExpanded)}
+          className="w-full px-4 py-3 flex items-center justify-between bg-accent/30 hover:bg-accent/50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <i className="fas fa-bolt text-violet-500" />
+            <span className="font-medium text-sm">{t('settings.cloud.lightning.title')}</span>
+            {lightning.apiKey && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-500">
+                {t('training.cloud.configured')}
+              </span>
+            )}
+          </div>
+          <i className={`fas fa-chevron-${lightningExpanded ? 'up' : 'down'} text-xs text-muted-foreground`} />
+        </button>
+
+        {lightningExpanded && (
+          <div className="p-4 space-y-4">
+            <p className="text-xs text-muted-foreground">
+              {t('settings.cloud.lightning.description')}{' '}
+              <a
+                href="https://lightning.ai/account"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-violet-500 hover:underline"
+              >
+                {t('settings.cloud.lightning.getKey')}
+              </a>
+            </p>
+
+            <div>
+              <label className="text-xs font-medium block mb-1">{t('settings.cloud.lightning.apiKey')}</label>
+              <input
+                type="password"
+                value={lightning.apiKey || ''}
+                onChange={(e) => setLightning((prev) => ({ ...prev, apiKey: e.target.value }))}
+                placeholder="lai-xxxxxxxxxxxxxxxx"
+                className="w-full px-3 py-2 text-xs rounded border border-border bg-background"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSaveLightning}
+                disabled={saving}
+                className="px-4 py-2 text-xs rounded bg-violet-600 hover:bg-violet-700 text-white transition-colors disabled:opacity-50"
+              >
+                {t('common.save')}
+              </button>
+              <button
+                onClick={() => handleValidate('lightning_ai')}
+                disabled={!!validating || !lightning.apiKey}
+                className="px-4 py-2 text-xs rounded border border-border hover:bg-accent transition-colors disabled:opacity-50"
+              >
+                {validating === 'lightning_ai' ? (
+                  <><i className="fas fa-spinner fa-spin mr-1" />{t('settings.cloud.validating')}</>
+                ) : (
+                  <><i className="fas fa-check-circle mr-1" />{t('settings.cloud.validate')}</>
+                )}
+              </button>
+              {validationResult.lightning_ai === 'success' && (
+                <span className="text-xs text-emerald-500"><i className="fas fa-check mr-1" />{t('settings.cloud.valid')}</span>
+              )}
+              {validationResult.lightning_ai === 'error' && (
+                <span className="text-xs text-red-500"><i className="fas fa-times mr-1" />{t('settings.cloud.invalid')}</span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Hugging Face Section */}
+      <div className="border border-border rounded-lg overflow-hidden">
+        <button
+          onClick={() => setHuggingfaceExpanded(!huggingfaceExpanded)}
+          className="w-full px-4 py-3 flex items-center justify-between bg-accent/30 hover:bg-accent/50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <i className="fas fa-face-smile text-amber-500" />
+            <span className="font-medium text-sm">{t('settings.cloud.huggingface.title')}</span>
+            {huggingface.token && huggingface.username && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-500">
+                {t('training.cloud.configured')}
+              </span>
+            )}
+          </div>
+          <i className={`fas fa-chevron-${huggingfaceExpanded ? 'up' : 'down'} text-xs text-muted-foreground`} />
+        </button>
+
+        {huggingfaceExpanded && (
+          <div className="p-4 space-y-4">
+            <p className="text-xs text-muted-foreground">
+              {t('settings.cloud.huggingface.description')}{' '}
+              <a
+                href="https://huggingface.co/settings/tokens"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-amber-500 hover:underline"
+              >
+                {t('settings.cloud.huggingface.getToken')}
+              </a>
+            </p>
+
+            <div>
+              <label className="text-xs font-medium block mb-1">{t('settings.cloud.huggingface.username')}</label>
+              <input
+                type="text"
+                value={huggingface.username || ''}
+                onChange={(e) => setHuggingface((prev) => ({ ...prev, username: e.target.value }))}
+                placeholder="your_username"
+                className="w-full px-3 py-2 text-xs rounded border border-border bg-background"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium block mb-1">{t('settings.cloud.huggingface.token')}</label>
+              <input
+                type="password"
+                value={huggingface.token || ''}
+                onChange={(e) => setHuggingface((prev) => ({ ...prev, token: e.target.value }))}
+                placeholder="hf_xxxxxxxxxxxxxxxx"
+                className="w-full px-3 py-2 text-xs rounded border border-border bg-background"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSaveHuggingface}
+                disabled={saving}
+                className="px-4 py-2 text-xs rounded bg-amber-600 hover:bg-amber-700 text-white transition-colors disabled:opacity-50"
+              >
+                {t('common.save')}
+              </button>
+              <button
+                onClick={() => handleValidate('huggingface')}
+                disabled={!!validating || !huggingface.token || !huggingface.username}
+                className="px-4 py-2 text-xs rounded border border-border hover:bg-accent transition-colors disabled:opacity-50"
+              >
+                {validating === 'huggingface' ? (
+                  <><i className="fas fa-spinner fa-spin mr-1" />{t('settings.cloud.validating')}</>
+                ) : (
+                  <><i className="fas fa-check-circle mr-1" />{t('settings.cloud.validate')}</>
+                )}
+              </button>
+              {validationResult.huggingface === 'success' && (
+                <span className="text-xs text-emerald-500"><i className="fas fa-check mr-1" />{t('settings.cloud.valid')}</span>
+              )}
+              {validationResult.huggingface === 'error' && (
+                <span className="text-xs text-red-500"><i className="fas fa-times mr-1" />{t('settings.cloud.invalid')}</span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Saturn Cloud Section */}
+      <div className="border border-border rounded-lg overflow-hidden">
+        <button
+          onClick={() => setSaturnExpanded(!saturnExpanded)}
+          className="w-full px-4 py-3 flex items-center justify-between bg-accent/30 hover:bg-accent/50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <i className="fas fa-ring text-teal-500" />
+            <span className="font-medium text-sm">{t('settings.cloud.saturn.title')}</span>
+            {saturn.apiToken && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-500">
+                {t('training.cloud.configured')}
+              </span>
+            )}
+          </div>
+          <i className={`fas fa-chevron-${saturnExpanded ? 'up' : 'down'} text-xs text-muted-foreground`} />
+        </button>
+
+        {saturnExpanded && (
+          <div className="p-4 space-y-4">
+            <p className="text-xs text-muted-foreground">
+              {t('settings.cloud.saturn.description')}{' '}
+              <a
+                href="https://saturncloud.io/docs/getting-started/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-teal-500 hover:underline"
+              >
+                {t('settings.cloud.saturn.getToken')}
+              </a>
+            </p>
+
+            <div>
+              <label className="text-xs font-medium block mb-1">{t('settings.cloud.saturn.apiToken')}</label>
+              <input
+                type="password"
+                value={saturn.apiToken || ''}
+                onChange={(e) => setSaturn((prev) => ({ ...prev, apiToken: e.target.value }))}
+                placeholder="xxxxxxxxxxxxxxxx"
+                className="w-full px-3 py-2 text-xs rounded border border-border bg-background"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSaveSaturn}
+                disabled={saving}
+                className="px-4 py-2 text-xs rounded bg-teal-600 hover:bg-teal-700 text-white transition-colors disabled:opacity-50"
+              >
+                {t('common.save')}
+              </button>
+              <button
+                onClick={() => handleValidate('saturn_cloud')}
+                disabled={!!validating || !saturn.apiToken}
+                className="px-4 py-2 text-xs rounded border border-border hover:bg-accent transition-colors disabled:opacity-50"
+              >
+                {validating === 'saturn_cloud' ? (
+                  <><i className="fas fa-spinner fa-spin mr-1" />{t('settings.cloud.validating')}</>
+                ) : (
+                  <><i className="fas fa-check-circle mr-1" />{t('settings.cloud.validate')}</>
+                )}
+              </button>
+              {validationResult.saturn_cloud === 'success' && (
+                <span className="text-xs text-emerald-500"><i className="fas fa-check mr-1" />{t('settings.cloud.valid')}</span>
+              )}
+              {validationResult.saturn_cloud === 'error' && (
                 <span className="text-xs text-red-500"><i className="fas fa-times mr-1" />{t('settings.cloud.invalid')}</span>
               )}
             </div>

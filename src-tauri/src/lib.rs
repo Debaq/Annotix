@@ -1,6 +1,7 @@
 mod commands;
 mod export;
 mod import;
+mod p2p;
 mod store;
 mod training;
 mod utils;
@@ -23,6 +24,7 @@ pub fn run() {
         .manage(TrainingProcessManager::new())
         .manage(CloudTrainingManager::new())
         .manage(TrainingEnvCache::new())
+        .manage(p2p::node::P2pState::new())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .setup(|app| {
@@ -129,6 +131,8 @@ pub fn run() {
             commands::training_commands::download_cloud_model,
             // Tabular
             commands::tabular_commands::upload_tabular_file,
+            commands::tabular_commands::create_tabular_data,
+            commands::tabular_commands::update_tabular_rows,
             commands::tabular_commands::list_tabular_data,
             commands::tabular_commands::get_tabular_preview,
             commands::tabular_commands::update_tabular_config,
@@ -141,6 +145,19 @@ pub fn run() {
             commands::settings_commands::install_onnx,
             commands::settings_commands::remove_venv,
             commands::settings_commands::detect_system_gpu,
+            // P2P
+            commands::p2p_commands::p2p_create_session,
+            commands::p2p_commands::p2p_join_session,
+            commands::p2p_commands::p2p_leave_session,
+            commands::p2p_commands::p2p_get_session_info,
+            commands::p2p_commands::p2p_lock_image,
+            commands::p2p_commands::p2p_unlock_image,
+            commands::p2p_commands::p2p_get_image_lock,
+            commands::p2p_commands::p2p_assign_batch,
+            commands::p2p_commands::p2p_sync_annotations,
+            commands::p2p_commands::p2p_list_peers,
+            commands::p2p_commands::p2p_update_rules,
+            commands::p2p_commands::p2p_get_rules,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
