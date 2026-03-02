@@ -14,6 +14,9 @@ interface TrainingMonitorProps {
   phase: string;
   error: string | null;
   onCancel: () => void;
+  isCloud?: boolean;
+  cloudProvider?: string | null;
+  cloudJobUrl?: string | null;
 }
 
 export function TrainingMonitor({
@@ -25,6 +28,9 @@ export function TrainingMonitor({
   phase,
   error,
   onCancel,
+  isCloud,
+  cloudProvider,
+  cloudJobUrl,
 }: TrainingMonitorProps) {
   const { t } = useTranslation();
 
@@ -62,6 +68,32 @@ export function TrainingMonitor({
           </Button>
         )}
       </div>
+
+      {/* Cloud banner */}
+      {isCloud && cloudProvider && (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-sky-500/10 border border-sky-500/20">
+          <i className="fas fa-cloud text-sky-500" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-sky-500">
+              {t('training.cloud.runningOn', { provider: cloudProvider })}
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              {t('training.cloud.pollingInfo')}
+            </p>
+          </div>
+          {cloudJobUrl && (
+            <a
+              href={cloudJobUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-sky-500 hover:underline flex items-center gap-1"
+            >
+              <i className="fas fa-external-link-alt text-[10px]" />
+              {t('training.cloud.viewJob')}
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Progress bar */}
       <div className="space-y-1">

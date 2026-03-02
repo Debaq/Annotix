@@ -1,8 +1,10 @@
 use tauri::{AppHandle, Emitter, State};
 
 use crate::store::AppState;
+use crate::store::config::{CloudProviderConfig, GcpConfig, KaggleConfig};
 use crate::store::project_file::TrainingJobEntry;
 use crate::training::runner::TrainingProcessManager;
+use crate::training::cloud::CloudTrainingManager;
 use crate::training::{
     GpuInfo, TrainingConfig, TrainingEnvCache, TrainingEnvInfo,
     TrainingPreset, YoloModelInfo, BackendInfo, TrainingRequest,
@@ -243,6 +245,10 @@ pub fn start_training(
             result_dir: None,
             best_model_path: None,
             dataset_dir: None,
+            cloud_provider: None,
+            cloud_job_id: None,
+            cloud_job_url: None,
+            model_download_url: None,
         });
         pf.updated = now;
     })?;
@@ -442,12 +448,75 @@ pub fn start_training_v2(
     state: State<'_, AppState>,
     app: AppHandle,
     manager: State<'_, TrainingProcessManager>,
+    cloud_manager: State<'_, CloudTrainingManager>,
     project_id: String,
     request: TrainingRequest,
 ) -> Result<String, String> {
     // For download-package mode, delegate to package generation
     if request.execution_mode == ExecutionMode::DownloadPackage {
         return Err("Usa generate_training_package para modo descarga".to_string());
+    }
+
+    // For cloud mode, delegate to CloudTrainingManager
+    if request.execution_mode == ExecutionMode::Cloud {
+        let cloud_config = request.cloud_config.as_ref()
+            .ok_or("Falta cloudConfig para modo cloud")?;
+
+        let config_json = serde_json::to_value(&request).map_err(|e| e.to_string())?;
+        let now = js_timestamp();
+        let job_id = uuid::Uuid::new_v4().to_string();
+        let job_id_clone = job_id.clone();
+
+        // Read project for classes and dataset
+        let pf = state.read_project_file(&project_id)?;
+        let classes: Vec<String> = pf.classes.iter().map(|c| c.name.clone()).collect();
+
+        // Create job entry
+        state.with_project_mut(&project_id, |pf| {
+            pf.training_jobs.push(TrainingJobEntry {
+                id: job_id_clone,
+                status: "pending".to_string(),
+                config: config_json,
+                progress: 0.0,
+                logs: vec![],
+                metrics: None,
+                created_at: now,
+                updated_at: now,
+                result_dir: None,
+                best_model_path: None,
+                dataset_dir: None,
+                cloud_provider: None,
+                cloud_job_id: None,
+                cloud_job_url: None,
+                model_download_url: None,
+            });
+            pf.updated = now;
+        })?;
+
+        // Prepare dataset (reuse existing package logic to create a zip)
+        let images_dir = state.project_images_dir(&project_id)?;
+        let temp_dir = tempfile::tempdir().map_err(|e| e.to_string())?;
+        let dataset_zip = temp_dir.path().join("dataset.zip");
+        let dataset_zip_str = dataset_zip.to_string_lossy().to_string();
+
+        let images: Vec<crate::store::project_file::ImageEntry> = pf.images.iter().cloned().map(|mut img| {
+            img.annotations.retain(|ann| {
+                pf.classes.iter().any(|c| c.id == ann.class_id)
+            });
+            img
+        }).collect();
+
+        crate::training::package::generate_training_package(
+            &images_dir, &pf, &images, &request, &dataset_zip_str,
+        )?;
+
+        // Start cloud training
+        cloud_manager.start_cloud_training(
+            &app, &state, &project_id, &job_id,
+            &request, cloud_config, &dataset_zip_str, &classes,
+        )?;
+
+        return Ok(job_id);
     }
 
     // For YOLO backend with local execution, convert to legacy TrainingConfig for backward compat
@@ -471,6 +540,10 @@ pub fn start_training_v2(
                 result_dir: None,
                 best_model_path: None,
                 dataset_dir: None,
+                cloud_provider: None,
+                cloud_job_id: None,
+                cloud_job_url: None,
+                model_download_url: None,
             });
             pf.updated = now;
         })?;
@@ -498,6 +571,10 @@ pub fn start_training_v2(
             result_dir: None,
             best_model_path: None,
             dataset_dir: None,
+            cloud_provider: None,
+            cloud_job_id: None,
+            cloud_job_url: None,
+            model_download_url: None,
         });
         pf.updated = now;
     })?;
@@ -577,6 +654,115 @@ fn convert_request_to_yolo_config(req: &TrainingRequest) -> TrainingConfig {
         pretrained: bp.get("pretrained").and_then(|v| v.as_bool()).unwrap_or(true),
         freeze: bp.get("freeze").and_then(|v| v.as_u64()).map(|v| v as u32),
         base_model_path: req.base_model_path.clone(),
+    }
+}
+
+// ─── Cloud Provider Config Commands ──────────────────────────────────────────
+
+#[tauri::command]
+pub fn get_cloud_providers_config(
+    state: State<'_, AppState>,
+) -> Result<CloudProviderConfig, String> {
+    let config = state.get_app_config()?;
+    Ok(config.cloud_providers)
+}
+
+#[tauri::command]
+pub fn save_cloud_provider_config(
+    state: State<'_, AppState>,
+    provider: String,
+    config_data: serde_json::Value,
+) -> Result<(), String> {
+    let mut app_config = state.get_app_config()?;
+
+    match provider.as_str() {
+        "gcp" => {
+            let gcp: GcpConfig = serde_json::from_value(config_data)
+                .map_err(|e| format!("Error parseando config GCP: {}", e))?;
+            app_config.cloud_providers.gcp = Some(gcp);
+        }
+        "kaggle" => {
+            let kaggle: KaggleConfig = serde_json::from_value(config_data)
+                .map_err(|e| format!("Error parseando config Kaggle: {}", e))?;
+            app_config.cloud_providers.kaggle = Some(kaggle);
+        }
+        _ => return Err(format!("Proveedor desconocido: {}", provider)),
+    }
+
+    app_config.save(&state.data_dir)?;
+
+    // Update in-memory config
+    let mut config = state.config.lock().map_err(|e| e.to_string())?;
+    *config = app_config;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn validate_cloud_credentials(
+    state: State<'_, AppState>,
+    provider: String,
+) -> Result<(), String> {
+    let config = state.get_app_config()?;
+
+    match provider.as_str() {
+        "gcp" => {
+            let gcp = config.cloud_providers.gcp
+                .ok_or("GCP no configurado")?;
+            let sa_path = gcp.service_account_path
+                .ok_or("Falta Service Account JSON path")?;
+            crate::training::cloud::gcp_auth::validate_credentials(&sa_path)
+        }
+        "kaggle" => {
+            let kaggle = config.cloud_providers.kaggle
+                .ok_or("Kaggle no configurado")?;
+            let username = kaggle.username.ok_or("Falta username")?;
+            let api_key = kaggle.api_key.ok_or("Falta API key")?;
+            crate::training::cloud::kaggle::validate_credentials(&username, &api_key)
+        }
+        _ => Err(format!("Proveedor desconocido: {}", provider)),
+    }
+}
+
+#[tauri::command]
+pub fn download_cloud_model(
+    state: State<'_, AppState>,
+    project_id: String,
+    job_id: String,
+    output_path: String,
+) -> Result<String, String> {
+    let pf = state.read_project_file(&project_id)?;
+    let job = pf.training_jobs.iter()
+        .find(|j| j.id == job_id)
+        .ok_or("Job no encontrado")?;
+
+    let download_url = job.model_download_url.as_deref()
+        .ok_or("No hay URL de descarga del modelo")?;
+
+    let config = state.get_app_config()?;
+    let provider = job.cloud_provider.as_deref().unwrap_or("");
+
+    match provider {
+        "kaggle" => {
+            // For Kaggle, model is already downloaded or available via output endpoint
+            Ok(download_url.to_string())
+        }
+        "vertex_ai_custom" | "colab_enterprise" | "vertex_ai_gemini_tuning" => {
+            let gcp = config.cloud_providers.gcp
+                .ok_or("GCP no configurado")?;
+            let sa_path = gcp.service_account_path
+                .ok_or("Falta Service Account path")?;
+            let token = crate::training::cloud::gcp_auth::get_access_token(&sa_path)?;
+
+            if let Some(uri) = download_url.strip_prefix("gs://") {
+                let (bucket, object) = uri.split_once('/')
+                    .ok_or("URI GCS inválida")?;
+                crate::training::cloud::gcs::download_file(&token, bucket, object, &output_path)
+            } else {
+                Ok(download_url.to_string())
+            }
+        }
+        _ => Err(format!("Proveedor desconocido: {}", provider)),
     }
 }
 

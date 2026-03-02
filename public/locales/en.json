@@ -43,7 +43,8 @@
     "ctrlS": "Ctrl+S",
     "arrowKeys": "← →",
     "understand": "Got it",
-    "starting": "Starting..."
+    "starting": "Starting...",
+    "browse": "Browse"
   },
   "header": {
     "selectProject": "Select project...",
@@ -1779,7 +1780,10 @@
       "localDesc": "Run training locally using your GPU. Requires installed packages.",
       "download": "Download Package",
       "downloadDesc": "Download a ZIP with dataset, script and notebook to train elsewhere.",
-      "downloadPackage": "Download Training Package"
+      "downloadPackage": "Download Training Package",
+      "cloud": "Cloud",
+      "cloudDesc": "Train on cloud GPUs using Kaggle, Vertex AI or Colab Enterprise.",
+      "launchCloud": "Launch in Cloud"
     },
     "package": {
       "generating": "Generating training package...",
@@ -1997,6 +2001,33 @@
     "jobs": {
       "title": "Training History",
       "empty": "No training jobs yet"
+    },
+    "cloud": {
+      "selectProvider": "Select Cloud Provider",
+      "selectProviderDesc": "Choose where to run your training job",
+      "configured": "Configured",
+      "needsSetup": "Needs setup",
+      "providers": {
+        "kaggle": "Kaggle",
+        "vertex_ai_custom": "Vertex AI Custom",
+        "colab_enterprise": "Colab Enterprise",
+        "vertex_ai_gemini_tuning": "Gemini Tuning"
+      },
+      "providerDesc": {
+        "kaggle": "Free T4/P100 GPUs, 30h/week",
+        "vertex_ai_custom": "Custom training with any GPU on GCP",
+        "colab_enterprise": "Managed notebooks on Vertex AI",
+        "vertex_ai_gemini_tuning": "Fine-tune Gemini models"
+      },
+      "machineType": "Machine Type",
+      "accelerator": "GPU/Accelerator",
+      "acceleratorCount": "GPU Count",
+      "kaggleGpu": "Kaggle Accelerator",
+      "maxRuntime": "Max Runtime",
+      "hours": "hours",
+      "runningOn": "Running on {{provider}}",
+      "pollingInfo": "Progress updates every 30 seconds",
+      "viewJob": "View Job"
     }
   },
   "setup": {
@@ -2044,7 +2075,8 @@
     "sections": {
       "general": "General",
       "pythonEnv": "Python Environment",
-      "trainingModels": "Training Models"
+      "trainingModels": "Training Models",
+      "cloudProviders": "Cloud Providers"
     },
     "general": {
       "colorMode": "Appearance",
@@ -2120,6 +2152,28 @@
       "backTo": "Back to",
       "filterByTask": "Filter by task",
       "allModels": "All Models"
+    },
+    "cloud": {
+      "gcp": {
+        "title": "Google Cloud Platform",
+        "description": "Configure GCP credentials for Vertex AI and Colab Enterprise",
+        "serviceAccount": "Service Account JSON",
+        "serviceAccountPlaceholder": "Select service account JSON file...",
+        "projectId": "GCP Project ID",
+        "region": "Region",
+        "bucket": "GCS Bucket"
+      },
+      "kaggle": {
+        "title": "Kaggle",
+        "description": "Enter your Kaggle API credentials.",
+        "getKey": "Get API Key →",
+        "username": "Username",
+        "apiKey": "API Key"
+      },
+      "validate": "Validate",
+      "validating": "Validating...",
+      "valid": "Valid",
+      "invalid": "Invalid"
     }
   },
   "wizard": {

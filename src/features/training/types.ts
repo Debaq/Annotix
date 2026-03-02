@@ -218,6 +218,10 @@ export interface TrainingJob {
   createdAt: number;
   updatedAt: number;
   bestModelPath?: string | null;
+  cloudProvider?: string | null;
+  cloudJobId?: string | null;
+  cloudJobUrl?: string | null;
+  modelDownloadUrl?: string | null;
 }
 
 // ─── Multi-Backend Types ─────────────────────────────────────────────────────
@@ -227,7 +231,34 @@ export type TrainingBackend =
   | 'detectron2' | 'mmpose' | 'mmrotate' | 'timm' | 'hf_classification'
   | 'tsai' | 'pytorch_forecasting' | 'pyod' | 'tslearn' | 'pypots' | 'stumpy'
   | 'sklearn';
-export type ExecutionMode = 'local' | 'download_package';
+export type ExecutionMode = 'local' | 'download_package' | 'cloud';
+export type CloudProvider = 'colab_enterprise' | 'vertex_ai_custom' | 'vertex_ai_gemini_tuning' | 'kaggle';
+
+export interface CloudTrainingConfig {
+  provider: CloudProvider;
+  machineType?: string;
+  acceleratorType?: string;
+  acceleratorCount?: number;
+  kaggleAccelerator?: string;
+  maxRuntimeSeconds?: number;
+}
+
+export interface CloudProviderConfig {
+  gcp?: GcpConfig;
+  kaggle?: KaggleConfig;
+}
+
+export interface GcpConfig {
+  serviceAccountPath?: string;
+  projectId?: string;
+  region?: string;
+  gcsBucket?: string;
+}
+
+export interface KaggleConfig {
+  username?: string;
+  apiKey?: string;
+}
 export type DatasetFormat = 'yolo_txt' | 'coco_json' | 'mask_png'
   | 'coco_instance_json' | 'coco_keypoints_json' | 'dota_txt'
   | 'image_folder' | 'multi_label_csv' | 'time_series_csv'
@@ -251,6 +282,7 @@ export interface TrainingRequest {
   exportFormats: string[];
   backendParams: Record<string, unknown>;
   baseModelPath?: string | null;
+  cloudConfig?: CloudTrainingConfig;
 }
 
 export interface BackendInfo {

@@ -69,6 +69,10 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
     buildRequest,
     baseModelPath,
     setBaseModelPath,
+    cloudProvider,
+    setCloudProvider,
+    cloudConfig,
+    setCloudConfig,
   } = useTrainingRequest(projectType);
 
   const {
@@ -164,6 +168,20 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
     // Go back to config — user can press "start" again now that env is ready
     setPhase('config');
   }, []);
+
+  const handleStartCloud = useCallback(async () => {
+    if (!project?.id || !cloudProvider || !cloudConfig) return;
+
+    try {
+      const request = buildRequest();
+      const jobId = await trainingService.startTrainingV2(project.id, request);
+      setActiveJobId(jobId);
+      setPhase('training');
+    } catch (e) {
+      console.error('Error starting cloud training:', e);
+      setPhase('config');
+    }
+  }, [project, cloudProvider, cloudConfig, buildRequest]);
 
   const handleDownloadPackage = useCallback(async () => {
     if (!project?.id) return;
@@ -355,6 +373,11 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
                   onSelect={setExecutionMode}
                   onStartLocal={handleStartLocal}
                   onDownloadPackage={handleDownloadPackage}
+                  onStartCloud={handleStartCloud}
+                  cloudProvider={cloudProvider}
+                  onCloudProviderSelect={setCloudProvider}
+                  cloudConfig={cloudConfig}
+                  onCloudConfigChange={setCloudConfig}
                 />
               </>
             )}
