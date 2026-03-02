@@ -43,20 +43,21 @@ jobs:
           echo "FFMPEG_DIR=$dir" >> $env:GITHUB_ENV
           echo "$dir\bin" >> $env:GITHUB_PATH
 
-          # Copiar DLLs para incluir en el instalador
-          New-Item -ItemType Directory -Force -Path src-tauri\ffmpeg-dlls | Out-Null
-          Copy-Item "$dir\bin\*.dll" src-tauri\ffmpeg-dlls\
-          Write-Host "DLLs copiadas:"
-          Get-ChildItem src-tauri\ffmpeg-dlls\*.dll | ForEach-Object { Write-Host "  $_" }
+          # Copiar DLLs directamente a src-tauri/ para que queden junto al .exe
+          Copy-Item "$dir\bin\*.dll" src-tauri\
+          Write-Host "DLLs copiadas a src-tauri/:"
+          Get-ChildItem src-tauri\*.dll | ForEach-Object { Write-Host "  $($_.Name)" }
 
       - name: Incluir FFmpeg DLLs en el bundle
         shell: pwsh
         run: |
           $confPath = "src-tauri\tauri.conf.json"
           $conf = Get-Content $confPath -Raw | ConvertFrom-Json
-          $conf.bundle | Add-Member -NotePropertyName "resources" -NotePropertyValue @("ffmpeg-dlls/*") -Force
+          # Listar solo las DLLs de FFmpeg (av*, sw*) para incluir junto al exe
+          $dlls = Get-ChildItem src-tauri\*.dll | Where-Object { $_.Name -match '^(av|sw)' } | ForEach-Object { $_.Name }
+          $conf.bundle | Add-Member -NotePropertyName "resources" -NotePropertyValue $dlls -Force
           $conf | ConvertTo-Json -Depth 20 | Set-Content $confPath -Encoding UTF8
-          Write-Host "tauri.conf.json actualizado con resources de FFmpeg"
+          Write-Host "tauri.conf.json resources: $($dlls -join ', ')"
 
       - name: Install dependencies
         run: npm ci
