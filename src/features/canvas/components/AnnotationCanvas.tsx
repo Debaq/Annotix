@@ -26,6 +26,7 @@ import { PolygonRenderer } from './renderers/PolygonRenderer';
 import { KeypointsRenderer } from './renderers/KeypointsRenderer';
 import { LandmarksRenderer } from './renderers/LandmarksRenderer';
 import { MaskRenderer } from './renderers/MaskRenderer';
+import { matchesShortcut } from '../../core/utils/matchShortcut';
 
 const ZOOM_WHEEL_FACTOR = 1.05;
 const MIN_ZOOM_SCALE = 0.1;
@@ -570,16 +571,16 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     const handleKeyDown = (e: KeyboardEvent) => {
       // Handler specific shortcuts (Enter/Escape)
       if (currentHandler && currentHandler.isActive()) {
-        if (e.key === 'Enter' && currentHandler.finish) {
+        if (matchesShortcut(e, 'confirm-drawing') && currentHandler.finish) {
           currentHandler.finish();
-        } else if (e.key === 'Escape' && currentHandler.cancel) {
+        } else if (matchesShortcut(e, 'cancel-drawing') && currentHandler.cancel) {
           currentHandler.cancel();
         }
       }
 
       // Mask-specific shortcuts (solo en proyectos mask)
       if (project?.type === 'mask' && maskHandler) {
-        // [: Disminuir tamaño de pincel
+        // [ / ]: Ajustar tamaño de pincel (no editable, se comparan directamente)
         if (e.key === '[') {
           e.preventDefault();
           const currentSize = maskHandler.getBrushSize();
@@ -588,8 +589,6 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
           setMaskBrushSize(maskHandler.getBrushSize());
           return;
         }
-        
-        // ]: Aumentar tamaño de pincel
         if (e.key === ']') {
           e.preventDefault();
           const currentSize = maskHandler.getBrushSize();
@@ -598,9 +597,9 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
           setMaskBrushSize(maskHandler.getBrushSize());
           return;
         }
-        
+
         // E: Toggle modo borrador
-        if (e.key === 'e' || e.key === 'E') {
+        if (matchesShortcut(e, 'mask-erase-toggle')) {
           e.preventDefault();
           const newMode = maskHandler.toggleEraseMode();
           setMaskEraseMode(newMode);
@@ -844,12 +843,14 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
         </div>
       </div>
 
-      {/* Image Navigation (Circular buttons) */}
-      <div style={{ position: 'absolute', top: '50%', left: '0', right: '0', transform: 'translateY(-50%)', zIndex: 50, pointerEvents: 'none' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 20px' }}>
-          <ImageNavigation />
+      {/* Image Navigation (Circular buttons) - hidden during video playback (timeline handles navigation) */}
+      {!videoFrameInfo && (
+        <div style={{ position: 'absolute', top: '50%', left: '0', right: '0', transform: 'translateY(-50%)', zIndex: 50, pointerEvents: 'none' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 20px' }}>
+            <ImageNavigation />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Konva Stage */}
       <Stage

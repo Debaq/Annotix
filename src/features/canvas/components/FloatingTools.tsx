@@ -3,7 +3,28 @@ import { useTranslation } from 'react-i18next';
 import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
 import { useUIStore } from '@/features/core/store/uiStore';
 import { getAvailableTools } from '../config/toolsConfig';
+import { useShortcutKey } from '@/features/core/hooks/useShortcutKey';
+import { shortcutsManager } from '@/features/core/utils/ShortcutsManager';
 import { cn } from '@/lib/utils';
+import type { ToolId } from '../config/toolsConfig';
+
+// Mapeo de toolId a shortcutId
+const TOOL_SHORTCUT_MAP: Record<ToolId, string> = {
+  select: 'tool-select',
+  pan: 'tool-pan',
+  bbox: 'tool-box',
+  mask: 'tool-mask',
+  polygon: 'tool-polygon',
+  keypoints: 'tool-keypoints',
+  landmarks: 'tool-landmarks',
+  obb: 'tool-obb',
+};
+
+function ToolShortcutKey({ toolId }: { toolId: ToolId }) {
+  const shortcutId = TOOL_SHORTCUT_MAP[toolId];
+  const key = useShortcutKey(shortcutId);
+  return <>{key}</>;
+}
 
 interface FloatingToolsProps {
   maskBrushSize?: number;
@@ -54,7 +75,7 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
                   'annotix-tool-btn',
                   activeTool === tool.id && 'active'
                 )}
-                title={`${t(tool.name)} (${tool.key})`}
+                title={`${t(tool.name)} (${shortcutsManager.getKeyForShortcut(TOOL_SHORTCUT_MAP[tool.id])})`}
               >
                 <i className={`fas ${tool.icon}`}></i>
               </button>
@@ -70,7 +91,7 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
                     event.stopPropagation();
                     onMaskToggleErase?.();
                   }}
-                  title="E"
+                  title={shortcutsManager.getKeyForShortcut('mask-erase-toggle')}
                 >
                   <i className={`fas ${maskEraseMode ? 'fa-eraser' : 'fa-paint-brush'}`}></i>
                 </button>
@@ -87,7 +108,7 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
                 }}
                 className="h-24 w-2"
                 style={{ writingMode: 'vertical-lr', direction: 'rtl' }}
-                title="[ / ]"
+                title={shortcutsManager.getKeyForShortcut('mask-brush-size')}
               />
               <span className="text-xs font-medium">{maskBrushSize}</span>
             </div>

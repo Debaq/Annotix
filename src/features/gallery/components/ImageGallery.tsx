@@ -16,14 +16,15 @@ export function ImageGallery() {
   const { currentProjectId } = useUIStore();
   const { project } = useCurrentProject();
 
-  const isBboxProject = project?.type === 'bbox';
+  const CANVAS_IMAGE_TYPES = ['bbox', 'mask', 'polygon', 'keypoints', 'landmarks', 'obb', 'instance-segmentation'];
+  const isCanvasImageProject = CANVAS_IMAGE_TYPES.includes(project?.type ?? '');
 
   const { data: videos } = useTauriQuery(
     async () => {
-      if (!currentProjectId || !isBboxProject) return [];
+      if (!currentProjectId || !isCanvasImageProject) return [];
       return videoService.listByProject(currentProjectId);
     },
-    [currentProjectId, isBboxProject],
+    [currentProjectId, isCanvasImageProject],
     ['db:videos-changed', 'db:tracks-changed']
   );
 
@@ -48,7 +49,7 @@ export function ImageGallery() {
             {t('gallery.upload')}
           </button>
         } />
-        {isBboxProject && (
+        {isCanvasImageProject && (
           <div className="mt-2">
             <VideoUploader />
           </div>
@@ -56,7 +57,7 @@ export function ImageGallery() {
       </div>
 
       {/* Videos Section */}
-      {isBboxProject && videos && videos.length > 0 && (
+      {isCanvasImageProject && videos && videos.length > 0 && (
         <div className="annotix-panel-section">
           <h4 className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--annotix-gray)' }}>
             <i className="fas fa-video mr-1"></i>

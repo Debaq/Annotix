@@ -363,6 +363,7 @@ pub enum ExecutionMode {
     Local,
     DownloadPackage,
     Cloud,
+    BrowserAutomation,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

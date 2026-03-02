@@ -13,6 +13,22 @@ import {
   Trash2
 } from 'lucide-react';
 import { TSAnnotationTool } from '../hooks/useTSAnnotations';
+import { useShortcutKey } from '@/features/core/hooks/useShortcutKey';
+
+// Mapeo de herramienta TS a shortcut ID
+const TS_TOOL_SHORTCUT_MAP: Record<string, string> = {
+  select: 'ts-tool-select',
+  point: 'ts-tool-point',
+  range: 'ts-tool-range',
+  event: 'ts-tool-event',
+  anomaly: 'ts-tool-anomaly',
+};
+
+function TSToolShortcutLabel({ toolId }: { toolId: string }) {
+  const shortcutId = TS_TOOL_SHORTCUT_MAP[toolId];
+  const key = useShortcutKey(shortcutId);
+  return <span className="text-muted-foreground">({key})</span>;
+}
 
 interface TimeSeriesToolsProps {
   activeTool: TSAnnotationTool;
@@ -34,31 +50,26 @@ export function TimeSeriesTools({
       id: 'select' as TSAnnotationTool,
       icon: MousePointer2,
       label: t('timeseries.tools.select'),
-      shortcut: 'V',
     },
     {
       id: 'point' as TSAnnotationTool,
       icon: MapPin,
       label: t('timeseries.tools.point'),
-      shortcut: 'P',
     },
     {
       id: 'range' as TSAnnotationTool,
       icon: MoveHorizontal,
       label: t('timeseries.tools.range'),
-      shortcut: 'R',
     },
     {
       id: 'event' as TSAnnotationTool,
       icon: Zap,
       label: t('timeseries.tools.event'),
-      shortcut: 'E',
     },
     {
       id: 'anomaly' as TSAnnotationTool,
       icon: AlertTriangle,
       label: t('timeseries.tools.anomaly'),
-      shortcut: 'A',
     },
   ];
 
@@ -85,7 +96,7 @@ export function TimeSeriesTools({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>
-                    {tool.label} <span className="text-muted-foreground">({tool.shortcut})</span>
+                    {tool.label} <TSToolShortcutLabel toolId={tool.id} />
                   </p>
                 </TooltipContent>
               </Tooltip>

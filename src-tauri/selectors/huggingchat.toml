@@ -1,0 +1,45 @@
+name = "HuggingChat"
+url = "https://huggingface.co/chat/"
+login_check = "textarea[placeholder]"
+
+[selectors.chat_input]
+css = "textarea[placeholder*='message']"
+fallback = "form textarea"
+wait_timeout_ms = 10000
+description = "Campo de texto del chat"
+
+[selectors.send_button]
+css = "form button[type='submit']"
+fallback = "button[aria-label='Send']"
+wait_timeout_ms = 3000
+description = "Botón enviar mensaje"
+
+[selectors.new_chat]
+css = "a[href='/chat/']"
+fallback = "nav a[data-testid='new-chat']"
+wait_timeout_ms = 5000
+description = "Botón nueva conversación"
+
+[selectors.message_list]
+css = ".chat-container"
+fallback = ".messages-container"
+wait_timeout_ms = 5000
+description = "Lista de mensajes"
+
+[selectors.last_message]
+css = ".chat-container .message:last-child .prose"
+fallback = ".messages-container > div:last-child .prose"
+wait_timeout_ms = 10000
+description = "Último mensaje de la conversación"
+
+[selectors.typing_indicator]
+css = ".message.assistant .loading"
+fallback = ".assistant-message .animate-pulse"
+wait_timeout_ms = 2000
+description = "Indicador de generación de respuesta"
+
+[selectors.model_selector]
+css = "button[data-testid='model-selector']"
+fallback = ".model-selector"
+wait_timeout_ms = 5000
+description = "Selector de modelo"

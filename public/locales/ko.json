@@ -189,6 +189,47 @@
       "class9": {
         "name": "클래스 9 선택",
         "key": "9"
+      },
+      "toolLandmarks": {
+        "name": "랜드마크 도구",
+        "description": "랜드마크 도구 선택"
+      },
+      "brushSize": {
+        "name": "브러시 크기",
+        "description": "브러시 크기 줄이기/늘리기"
+      },
+      "eraseToggle": {
+        "name": "지우개 모드"
+      },
+      "confirmDrawing": {
+        "name": "그리기 확인"
+      },
+      "cancelDrawing": {
+        "name": "그리기 취소"
+      },
+      "videoNewTrack": {
+        "name": "새 트랙"
+      },
+      "videoPrevFrame": {
+        "name": "이전 프레임"
+      },
+      "videoNextFrame": {
+        "name": "다음 프레임"
+      },
+      "tsToolSelect": {
+        "name": "선택 (시계열)"
+      },
+      "tsToolPoint": {
+        "name": "포인트 도구 (시계열)"
+      },
+      "tsToolRange": {
+        "name": "범위 도구 (시계열)"
+      },
+      "tsToolEvent": {
+        "name": "이벤트 도구 (시계열)"
+      },
+      "tsToolAnomaly": {
+        "name": "이상 도구 (시계열)"
       }
     }
   },
@@ -1691,7 +1732,10 @@
       "downloadPackage": "학습 패키지 다운로드",
       "cloud": "Cloud",
       "cloudDesc": "Kaggle, Vertex AI, Colab Enterprise, Lightning AI, Hugging Face 또는 Saturn Cloud를 사용하여 클라우드 GPU에서 학습합니다.",
-      "launchCloud": "클라우드에서 시작"
+      "launchCloud": "클라우드에서 시작",
+      "browserAutomation": "브라우저 자동화",
+      "browserAutomationDesc": "브라우저 자동화를 통한 Google Colab 무료 훈련",
+      "launchBrowserAutomation": "자동화 실행"
     },
     "package": {
       "generating": "학습 패키지 생성 중...",
@@ -2087,7 +2131,59 @@
       "general": "일반",
       "pythonEnv": "Python 환경",
       "trainingModels": "학습 모델",
-      "cloudProviders": "클라우드 제공업체"
+      "cloudProviders": "클라우드 제공업체",
+      "keyboardShortcuts": "키보드 단축키",
+      "browserAutomation": "브라우저 자동화"
+    },
+    "shortcuts": {
+      "description": "키 배지를 클릭하여 재할당하세요. Escape를 눌러 취소합니다.",
+      "pressKey": "키를 누르세요...",
+      "resetAll": "모두 초기화",
+      "resetOne": "기본값으로 초기화",
+      "conflict": "이 키는 이미 \"{{name}}\"에 할당되어 있습니다.",
+      "customize": "단축키 사용자 정의"
+    },
+    "automation": {
+      "browsers": {
+        "title": "브라우저 감지",
+        "description": "자동화 작업을 위한 Chromium 기반 브라우저를 감지하고 선택합니다.",
+        "detect": "브라우저 감지",
+        "detecting": "감지 중...",
+        "preferred": "선호",
+        "testLaunch": "테스트 실행",
+        "testing": "테스트 중..."
+      },
+      "provider": {
+        "title": "기본 LLM 어시스턴트",
+        "description": "브라우저 기반 AI 쿼리에 사용할 기본 LLM 어시스턴트를 선택합니다.",
+        "trainingLabel": "훈련",
+        "llmLabel": "LLM 어시스턴트",
+        "colab_free": "Google Colab (무료)",
+        "kimi": "Kimi (Moonshot)",
+        "qwen": "Qwen Chat",
+        "deepseek": "DeepSeek",
+        "huggingchat": "HuggingChat"
+      },
+      "selectors": {
+        "title": "CSS 셀렉터 편집기",
+        "description": "각 제공자의 TOML 셀렉터 파일을 편집합니다. 자동화가 각 웹사이트와 상호작용하는 방식을 정의합니다.",
+        "restore": "복원"
+      },
+      "advanced": {
+        "title": "고급 설정",
+        "description": "타임아웃, 재시도 및 브라우저 창 설정을 조정합니다.",
+        "stepTimeout": "단계 타임아웃",
+        "maxRetries": "최대 재시도 횟수",
+        "userActionTimeout": "사용자 작업 타임아웃",
+        "llmResponseTimeout": "LLM 응답 타임아웃",
+        "seconds": "초",
+        "userDataDir": "사용자 데이터 디렉토리",
+        "userDataDirPlaceholder": "기본값 (자동 관리)",
+        "windowSize": "창 크기",
+        "restoreDefaults": "기본값 복원"
+      },
+      "saved": "저장됨",
+      "saveError": "저장 오류"
     },
     "general": {
       "colorMode": "외관",
@@ -2419,6 +2515,75 @@
       "connected": "연결됨",
       "disconnected": "연결 끊김",
       "error": "오류"
+    }
+  },
+  "automation": {
+    "controlPanel": {
+      "title": "브라우저 자동화",
+      "logs": "로그",
+      "waitingLogs": "로그 대기 중...",
+      "minimize": "최소화",
+      "close": "닫기"
+    },
+    "pause": "일시정지",
+    "resume": "재개",
+    "cancel": "취소",
+    "providers": {
+      "colab_free": "Colab 무료",
+      "kimi": "Kimi",
+      "qwen": "Qwen",
+      "deep_seek": "DeepSeek",
+      "hugging_chat": "HuggingChat"
+    },
+    "colab": {
+      "steps": {
+        "openColab": "Google Colab 열기",
+        "login": "Google 로그인",
+        "createNotebook": "노트북 생성",
+        "configureGpu": "GPU 설정",
+        "installDeps": "종속성 설치",
+        "uploadDataset": "데이터셋 업로드",
+        "trainingCode": "훈련 코드 삽입",
+        "runTraining": "훈련 실행",
+        "monitorProgress": "진행 상황 모니터링",
+        "downloadModel": "모델 다운로드"
+      }
+    },
+    "llm": {
+      "steps": {
+        "openLlm": "LLM 웹사이트 열기",
+        "login": "로그인",
+        "newConversation": "새 대화",
+        "sendPrompt": "프롬프트 전송",
+        "waitResponse": "응답 대기",
+        "extractResponse": "응답 추출"
+      }
+    },
+    "status": {
+      "idle": "대기",
+      "detecting_browser": "브라우저 감지 중",
+      "launching_browser": "브라우저 실행 중",
+      "waiting_login": "로그인 대기 중",
+      "running": "실행 중",
+      "paused": "일시정지",
+      "completed": "완료",
+      "failed": "실패",
+      "cancelled": "취소됨",
+      "waitingUser": "조치 필요"
+    },
+    "errors": {
+      "noBrowser": "Chromium 브라우저를 찾을 수 없습니다",
+      "captchaDetected": "CAPTCHA 감지됨",
+      "runtimeDisconnected": "런타임 연결 해제",
+      "timeout": "작업 시간 초과"
+    },
+    "instructions": {
+      "login": "브라우저 창에서 로그인하세요. 로그인 후 자동화가 자동으로 계속됩니다.",
+      "captcha": "CAPTCHA가 감지되었습니다. 브라우저 창에서 해결하세요."
+    },
+    "result": {
+      "modelDownloaded": "모델 다운로드 완료: {{path}}",
+      "llmResponse": "응답 수신됨"
     }
   }
 }

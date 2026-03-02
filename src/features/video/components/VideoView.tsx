@@ -10,10 +10,12 @@ import { useInterpolation } from '../hooks/useInterpolation';
 import { VideoTimeline } from './VideoTimeline';
 import { VideoAnnotationCanvas } from './VideoAnnotationCanvas';
 import { VideoTrackList } from './VideoTrackList';
+import { AnnotationCanvas } from '../../canvas/components/AnnotationCanvas';
 import { Button } from '@/components/ui/button';
 import { ManageClassesDialog } from '../../projects/components/ManageClassesDialog';
 import { cn } from '@/lib/utils';
 import { CLASS_SHORTCUTS } from '../../core/constants';
+import { matchesShortcut } from '../../core/utils/matchShortcut';
 
 export function VideoView() {
   const { projectId, videoId } = useParams();
@@ -30,7 +32,9 @@ export function VideoView() {
   const { currentFrameIndex, totalFrames, currentFrame } = useVideoNavigation();
   const { tracks, createTrack, deleteTrack, updateTrack, setKeyframe, removeKeyframe, bake } = useVideoTracks();
 
-  const { interpolatedBBoxes } = useInterpolation(tracks, currentFrameIndex);
+  const isBboxProject = project?.type === 'bbox';
+
+  const { interpolatedBBoxes } = useInterpolation(isBboxProject ? tracks : [], currentFrameIndex);
 
   // Contar frames cubiertos por tracks (candidatos a bake)
   const bakeableCount = useMemo(() => {
@@ -99,42 +103,46 @@ export function VideoView() {
       }
 
       // Tool shortcuts
-      if (!e.ctrlKey && !e.metaKey) {
-        switch (key) {
-          case 'v':
-            e.preventDefault();
-            setActiveTool('select');
-            return;
-          case 'h':
-            e.preventDefault();
-            setActiveTool('pan');
-            return;
-          case 'b':
-            e.preventDefault();
-            setActiveTool('bbox');
-            return;
-        }
+      if (matchesShortcut(e, 'tool-select')) {
+        e.preventDefault();
+        setActiveTool('select');
+        return;
+      }
+      if (matchesShortcut(e, 'tool-pan')) {
+        e.preventDefault();
+        setActiveTool('pan');
+        return;
+      }
+      if (matchesShortcut(e, 'tool-box')) {
+        e.preventDefault();
+        setActiveTool('bbox');
+        return;
       }
 
-      switch (e.key) {
-        case 'ArrowLeft':
-          e.preventDefault();
-          if (currentFrameIndex > 0) setCurrentFrameIndex(currentFrameIndex - 1);
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          if (currentFrameIndex < totalFrames - 1) setCurrentFrameIndex(currentFrameIndex + 1);
-          break;
-        case 't':
-        case 'T':
-          // Create new track with active class
+      // Video navigation
+      if (matchesShortcut(e, 'video-prev-frame')) {
+        e.preventDefault();
+        if (currentFrameIndex > 0) setCurrentFrameIndex(currentFrameIndex - 1);
+        return;
+      }
+      if (matchesShortcut(e, 'video-next-frame')) {
+        e.preventDefault();
+        if (currentFrameIndex < totalFrames - 1) setCurrentFrameIndex(currentFrameIndex + 1);
+        return;
+      }
+
+      // Track-only shortcuts (bbox mode)
+      if (isBboxProject) {
+        // New track
+        if (matchesShortcut(e, 'video-new-track')) {
           if (activeClassId !== null) {
             createTrack(activeClassId);
           }
-          break;
-        case 'Delete':
-        case 'Backspace':
-          // Delete keyframe on current frame for first track that has one
+          return;
+        }
+
+        // Delete keyframe
+        if (matchesShortcut(e, 'delete')) {
           for (const track of tracks) {
             const hasKf = track.keyframes.some(kf => kf.frameIndex === currentFrameIndex);
             if (hasKf && track.id) {
@@ -142,13 +150,13 @@ export function VideoView() {
               break;
             }
           }
-          break;
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [totalFrames, tracks, createTrack, removeKeyframe, project, setActiveClassId]);
+  }, [totalFrames, tracks, createTrack, removeKeyframe, project, setActiveClassId, isBboxProject]);
 
   if (!project || !video) {
     return (
@@ -164,15 +172,21 @@ export function VideoView() {
       <div className="flex-1 flex min-h-0">
         {/* Center: Canvas */}
         <div className="flex-1 min-w-0">
-          <VideoAnnotationCanvas
-            interpolatedBBoxes={interpolatedBBoxes}
-            tracks={tracks}
-            classes={project.classes}
-            video={video}
-          />
+          {isBboxProject ? (
+            <VideoAnnotationCanvas
+              interpolatedBBoxes={interpolatedBBoxes}
+              tracks={tracks}
+              classes={project.classes}
+              video={video}
+            />
+          ) : (
+            <AnnotationCanvas
+              videoFrameInfo={{ frameIndex: currentFrameIndex, fps: video.fpsExtraction }}
+            />
+          )}
         </div>
 
-        {/* Right Panel: Classes + Tracks */}
+        {/* Right Panel: Classes + Tracks (bbox) / Classes only (other types) */}
         <div className="w-64 border-l border-[var(--annotix-border)] flex flex-col overflow-y-auto bg-[var(--annotix-white)] transition-colors">
           {/* Classes */}
           <div className="annotix-panel-section">
@@ -215,21 +229,23 @@ export function VideoView() {
             </div>
           </div>
 
-          {/* Tracks */}
-          <div className="annotix-panel-section flex-1">
-            <VideoTrackList
-              tracks={tracks}
-              classes={project.classes}
-              currentFrameIndex={currentFrameIndex}
-              onCreateTrack={createTrack}
-              onDeleteTrack={deleteTrack}
-              onUpdateTrack={updateTrack}
-            />
-          </div>
+          {/* Tracks (bbox only) */}
+          {isBboxProject && (
+            <div className="annotix-panel-section flex-1">
+              <VideoTrackList
+                tracks={tracks}
+                classes={project.classes}
+                currentFrameIndex={currentFrameIndex}
+                onCreateTrack={createTrack}
+                onDeleteTrack={deleteTrack}
+                onUpdateTrack={updateTrack}
+              />
+            </div>
+          )}
 
           {/* Actions */}
           <div className="annotix-panel-section space-y-2">
-            {tracks.length > 0 && (
+            {isBboxProject && tracks.length > 0 && (
               <div className="space-y-1">
                 <Button
                   variant="default"
@@ -267,7 +283,7 @@ export function VideoView() {
       </div>
 
       {/* Bottom: Timeline */}
-      <VideoTimeline tracks={tracks} classes={project.classes} />
+      <VideoTimeline tracks={isBboxProject ? tracks : []} classes={project.classes} />
     </div>
   );
 }

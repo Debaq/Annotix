@@ -8,6 +8,7 @@ interface ExecutionModeSelectorProps {
   onStartLocal: () => void;
   onDownloadPackage: () => void;
   onStartCloud?: () => void;
+  onStartBrowserAutomation?: () => void;
   cloudProvider?: CloudProvider | null;
   onCloudProviderSelect?: (provider: CloudProvider) => void;
   cloudConfig?: CloudTrainingConfig | null;
@@ -20,6 +21,7 @@ export function ExecutionModeSelector({
   onStartLocal,
   onDownloadPackage,
   onStartCloud,
+  onStartBrowserAutomation,
   cloudProvider,
   onCloudProviderSelect,
   cloudConfig,
@@ -34,7 +36,7 @@ export function ExecutionModeSelector({
         <p className="text-xs text-muted-foreground">{t('training.execution.description')}</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         {/* Local training */}
         <button
           onClick={() => onSelect('local')}
@@ -82,6 +84,22 @@ export function ExecutionModeSelector({
           </div>
           <p className="text-xs text-muted-foreground">{t('training.execution.cloudDesc')}</p>
         </button>
+
+        {/* Browser automation (free) */}
+        <button
+          onClick={() => onSelect('browser_automation')}
+          className={`p-4 rounded-lg border-2 text-left transition-all ${
+            selected === 'browser_automation'
+              ? 'border-amber-500 bg-amber-500/10'
+              : 'border-border hover:bg-accent/50'
+          }`}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <i className="fas fa-robot text-lg text-amber-500" />
+            <span className="font-semibold text-sm">{t('training.execution.browserAutomation')}</span>
+          </div>
+          <p className="text-xs text-muted-foreground">{t('training.execution.browserAutomationDesc')}</p>
+        </button>
       </div>
 
       {/* Cloud provider selector */}
@@ -121,6 +139,15 @@ export function ExecutionModeSelector({
           >
             <i className="fas fa-cloud-upload-alt" />
             {t('training.execution.launchCloud')}
+          </button>
+        )}
+        {selected === 'browser_automation' && onStartBrowserAutomation && (
+          <button
+            onClick={onStartBrowserAutomation}
+            className="px-6 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm transition-colors flex items-center gap-2"
+          >
+            <i className="fas fa-robot" />
+            {t('training.execution.launchBrowserAutomation')}
           </button>
         )}
       </div>
