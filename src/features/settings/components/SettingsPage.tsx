@@ -5,8 +5,9 @@ import { GeneralSection } from './GeneralSection';
 import { PythonEnvironmentSection } from './PythonEnvironmentSection';
 import { TrainingModelsSection } from './TrainingModelsSection';
 import { CloudProvidersSection } from './CloudProvidersSection';
+import { KeyboardShortcutsSection } from './KeyboardShortcutsSection';
 
-type SettingsSection = 'general' | 'python-env' | 'training-models' | 'cloud-providers';
+type SettingsSection = 'general' | 'python-env' | 'training-models' | 'cloud-providers' | 'keyboard-shortcuts';
 
 export function SettingsPage() {
   const { t } = useTranslation();
@@ -18,6 +19,7 @@ export function SettingsPage() {
     { id: 'python-env', icon: 'fab fa-python', labelKey: 'settings.sections.pythonEnv' },
     { id: 'training-models', icon: 'fas fa-brain', labelKey: 'settings.sections.trainingModels' },
     { id: 'cloud-providers', icon: 'fas fa-cloud', labelKey: 'settings.sections.cloudProviders' },
+    { id: 'keyboard-shortcuts', icon: 'fas fa-keyboard', labelKey: 'settings.sections.keyboardShortcuts' },
   ];
 
   const activeLabelKey = sections.find(s => s.id === activeSection)?.labelKey ?? sections[0].labelKey;
@@ -65,6 +67,7 @@ export function SettingsPage() {
           {activeSection === 'python-env' && <PythonEnvironmentSection />}
           {activeSection === 'training-models' && <TrainingModelsSection />}
           {activeSection === 'cloud-providers' && <CloudProvidersSection />}
+          {activeSection === 'keyboard-shortcuts' && <KeyboardShortcutsSection />}
         </div>
       </div>
     </div>

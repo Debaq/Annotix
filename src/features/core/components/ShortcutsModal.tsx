@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +15,23 @@ interface ShortcutsModalProps {
 
 export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ open, onOpenChange }) => {
   const { t } = useTranslation();
-  const [categories] = useState<ShortcutCategory[]>(shortcutsManager.getShortcutsByCategory());
+  const navigate = useNavigate();
+  const [categories, setCategories] = useState<ShortcutCategory[]>(shortcutsManager.getShortcutsByCategory());
+
+  const refreshCategories = useCallback(() => {
+    setCategories(shortcutsManager.getShortcutsByCategory());
+  }, []);
+
+  // Reaccionar a cambios de bindings
+  useEffect(() => {
+    const unsubscribe = shortcutsManager.addChangeListener(refreshCategories);
+    return unsubscribe;
+  }, [refreshCategories]);
+
+  // Refrescar al abrir
+  useEffect(() => {
+    if (open) refreshCategories();
+  }, [open, refreshCategories]);
 
   const getCategoryIcon = (categoryKey: string): string => {
     const categoryToIcon: Record<string, string> = {
@@ -31,6 +48,11 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ open, onOpenChan
     // Extraemos solo la última parte
     const parts = categoryKey.split('.');
     return parts[parts.length - 1] || 'general';
+  };
+
+  const handleCustomize = () => {
+    onOpenChange(false);
+    navigate('/settings');
   };
 
   return (
@@ -70,7 +92,14 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ open, onOpenChan
                         )}
                       </div>
                     </div>
-                    <Badge variant="secondary" className="shortcut-key">
+                    <Badge
+                      variant={shortcutsManager.isCustomized(shortcut.id) ? 'default' : 'secondary'}
+                      className={`shortcut-key ${
+                        shortcutsManager.isCustomized(shortcut.id)
+                          ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-300'
+                          : ''
+                      }`}
+                    >
                       {shortcut.key}
                     </Badge>
                   </div>
@@ -80,8 +109,14 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ open, onOpenChan
           ))}
         </Tabs>
 
-        <div className="mt-4 p-3 bg-muted rounded-lg text-sm text-muted-foreground">
-          💡 <strong>Tip:</strong> {t('shortcuts.tip')}
+        <div className="mt-4 p-3 bg-muted rounded-lg text-sm text-muted-foreground flex items-center justify-between">
+          <span>💡 <strong>Tip:</strong> {t('shortcuts.tip')}</span>
+          <button
+            onClick={handleCustomize}
+            className="text-xs text-[var(--annotix-primary)] hover:underline whitespace-nowrap ml-4"
+          >
+            {t('settings.shortcuts.customize')}
+          </button>
         </div>
       </DialogContent>
     </Dialog>

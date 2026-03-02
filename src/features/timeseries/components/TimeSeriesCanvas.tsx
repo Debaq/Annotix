@@ -33,6 +33,7 @@ import {
   AnomalyAnnotation,
 } from '@/lib/db';
 import { useUIStore } from '@/features/core/store/uiStore';
+import { matchesShortcut } from '@/features/core/utils/matchShortcut';
 
 // Register Chart.js components
 ChartJS.register(
@@ -78,28 +79,20 @@ export function TimeSeriesCanvas() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isDrawing) {
         cancelDrawing();
-      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+      } else if (matchesShortcut(e, 'delete')) {
         if (selectedAnnotationId) {
           deleteAnnotation(selectedAnnotationId);
         }
-      } else if (!e.ctrlKey && !e.metaKey) {
-        switch (e.key.toLowerCase()) {
-          case 'v':
-            setActiveTool('select');
-            break;
-          case 'p':
-            setActiveTool('point');
-            break;
-          case 'r':
-            setActiveTool('range');
-            break;
-          case 'e':
-            setActiveTool('event');
-            break;
-          case 'a':
-            setActiveTool('anomaly');
-            break;
-        }
+      } else if (matchesShortcut(e, 'ts-tool-select')) {
+        setActiveTool('select');
+      } else if (matchesShortcut(e, 'ts-tool-point')) {
+        setActiveTool('point');
+      } else if (matchesShortcut(e, 'ts-tool-range')) {
+        setActiveTool('range');
+      } else if (matchesShortcut(e, 'ts-tool-event')) {
+        setActiveTool('event');
+      } else if (matchesShortcut(e, 'ts-tool-anomaly')) {
+        setActiveTool('anomaly');
       }
     };
 

@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { ManageClassesDialog } from '../../projects/components/ManageClassesDialog';
 import { cn } from '@/lib/utils';
 import { CLASS_SHORTCUTS } from '../../core/constants';
+import { matchesShortcut } from '../../core/utils/matchShortcut';
 
 export function VideoView() {
   const { projectId, videoId } = useParams();
@@ -99,50 +100,51 @@ export function VideoView() {
       }
 
       // Tool shortcuts
-      if (!e.ctrlKey && !e.metaKey) {
-        switch (key) {
-          case 'v':
-            e.preventDefault();
-            setActiveTool('select');
-            return;
-          case 'h':
-            e.preventDefault();
-            setActiveTool('pan');
-            return;
-          case 'b':
-            e.preventDefault();
-            setActiveTool('bbox');
-            return;
-        }
+      if (matchesShortcut(e, 'tool-select')) {
+        e.preventDefault();
+        setActiveTool('select');
+        return;
+      }
+      if (matchesShortcut(e, 'tool-pan')) {
+        e.preventDefault();
+        setActiveTool('pan');
+        return;
+      }
+      if (matchesShortcut(e, 'tool-box')) {
+        e.preventDefault();
+        setActiveTool('bbox');
+        return;
       }
 
-      switch (e.key) {
-        case 'ArrowLeft':
-          e.preventDefault();
-          if (currentFrameIndex > 0) setCurrentFrameIndex(currentFrameIndex - 1);
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          if (currentFrameIndex < totalFrames - 1) setCurrentFrameIndex(currentFrameIndex + 1);
-          break;
-        case 't':
-        case 'T':
-          // Create new track with active class
-          if (activeClassId !== null) {
-            createTrack(activeClassId);
+      // Video navigation
+      if (matchesShortcut(e, 'video-prev-frame')) {
+        e.preventDefault();
+        if (currentFrameIndex > 0) setCurrentFrameIndex(currentFrameIndex - 1);
+        return;
+      }
+      if (matchesShortcut(e, 'video-next-frame')) {
+        e.preventDefault();
+        if (currentFrameIndex < totalFrames - 1) setCurrentFrameIndex(currentFrameIndex + 1);
+        return;
+      }
+
+      // New track
+      if (matchesShortcut(e, 'video-new-track')) {
+        if (activeClassId !== null) {
+          createTrack(activeClassId);
+        }
+        return;
+      }
+
+      // Delete keyframe
+      if (matchesShortcut(e, 'delete')) {
+        for (const track of tracks) {
+          const hasKf = track.keyframes.some(kf => kf.frameIndex === currentFrameIndex);
+          if (hasKf && track.id) {
+            removeKeyframe(track.id, currentFrameIndex);
+            break;
           }
-          break;
-        case 'Delete':
-        case 'Backspace':
-          // Delete keyframe on current frame for first track that has one
-          for (const track of tracks) {
-            const hasKf = track.keyframes.some(kf => kf.frameIndex === currentFrameIndex);
-            if (hasKf && track.id) {
-              removeKeyframe(track.id, currentFrameIndex);
-              break;
-            }
-          }
-          break;
+        }
       }
     };
 

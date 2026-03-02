@@ -189,6 +189,47 @@
       "class9": {
         "name": "Выбрать Класс 9",
         "key": "9"
+      },
+      "toolLandmarks": {
+        "name": "Инструмент ориентиров",
+        "description": "Выбрать инструмент ориентиров"
+      },
+      "brushSize": {
+        "name": "Размер кисти",
+        "description": "Уменьшить/увеличить размер кисти"
+      },
+      "eraseToggle": {
+        "name": "Режим ластика"
+      },
+      "confirmDrawing": {
+        "name": "Подтвердить рисование"
+      },
+      "cancelDrawing": {
+        "name": "Отменить рисование"
+      },
+      "videoNewTrack": {
+        "name": "Новый трек"
+      },
+      "videoPrevFrame": {
+        "name": "Предыдущий кадр"
+      },
+      "videoNextFrame": {
+        "name": "Следующий кадр"
+      },
+      "tsToolSelect": {
+        "name": "Выбор (временные ряды)"
+      },
+      "tsToolPoint": {
+        "name": "Точка (временные ряды)"
+      },
+      "tsToolRange": {
+        "name": "Диапазон (временные ряды)"
+      },
+      "tsToolEvent": {
+        "name": "Событие (временные ряды)"
+      },
+      "tsToolAnomaly": {
+        "name": "Аномалия (временные ряды)"
       }
     }
   },
@@ -2087,7 +2128,8 @@
       "general": "Общие",
       "pythonEnv": "Среда Python",
       "trainingModels": "Модели обучения",
-      "cloudProviders": "Облачные провайдеры"
+      "cloudProviders": "Облачные провайдеры",
+      "keyboardShortcuts": "Горячие клавиши"
     },
     "general": {
       "colorMode": "Оформление",
@@ -2204,6 +2246,14 @@
       "validating": "Проверка...",
       "valid": "Действителен",
       "invalid": "Недействителен"
+    },
+    "shortcuts": {
+      "description": "Нажмите на значок клавиши, чтобы переназначить. Нажмите Escape для отмены.",
+      "pressKey": "Нажмите клавишу...",
+      "resetAll": "Сбросить все",
+      "resetOne": "Сбросить по умолчанию",
+      "conflict": "Эта клавиша уже назначена для \"{{name}}\".",
+      "customize": "Настроить горячие клавиши"
     }
   },
   "wizard": {
