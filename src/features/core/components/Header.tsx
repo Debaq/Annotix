@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { Minus, Square, X, Copy } from 'lucide-react';
+import { openUrl } from '@tauri-apps/plugin-opener';
 
 import { ShortcutsModal } from './ShortcutsModal';
 import { useUIStore } from '../store/uiStore';
@@ -62,10 +63,8 @@ export const Header: React.FC = () => {
     >
       {/* Left Section: Logo + Title */}
       <div className="flex items-center gap-3">
-        <a
-          href="https://www.uach.cl"
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={() => openUrl('https://www.uach.cl')}
           className="transition-opacity hover:opacity-80"
           title="Universidad Austral de Chile"
         >
@@ -74,7 +73,7 @@ export const Header: React.FC = () => {
             alt="UACH"
             className="h-8 object-contain"
           />
-        </a>
+        </button>
 
         <div className="h-8 w-px bg-white/30" />
 
@@ -139,15 +138,13 @@ export const Header: React.FC = () => {
         >
           <i className="fas fa-keyboard text-[13px]"></i>
         </button>
-        <a
-          href="https://github.com/Debaq/Annotix.git"
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={() => openUrl('https://github.com/Debaq/Annotix')}
           className="window-header-btn"
           title="GitHub"
         >
           <i className="fab fa-github text-[13px]"></i>
-        </a>
+        </button>
         <button
           onClick={() => navigate('/settings')}
           className="window-header-btn"

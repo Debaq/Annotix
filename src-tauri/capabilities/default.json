@@ -37,6 +37,7 @@
         { "path": "$DESKTOP/**" },
         { "path": "/tmp/**" }
       ]
-    }
+    },
+    "opener:default"
   ]
 }
