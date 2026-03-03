@@ -211,5 +211,38 @@
       }
     ],
     "issues": []
+  },
+  {
+    "code": "zvvjf",
+    "version": "2.0.2",
+    "buildNumber": 14,
+    "date": "2026-03-03T14:11:18Z",
+    "commits": [
+      {
+        "hash": "e5c0ac4",
+        "message": "Release Annotix v2.0.2 (mmvta)"
+      },
+      {
+        "hash": "d5213b3",
+        "message": "CI Windows: instalar LLVM 18 para evitar crash de bindgen con clang 20"
+      },
+      {
+        "hash": "c34d043",
+        "message": "Release Annotix v2.0.2 (fdzva)"
+      },
+      {
+        "hash": "304836b",
+        "message": "Release Annotix v2.0.2 (qkskw)"
+      },
+      {
+        "hash": "f86ea6c",
+        "message": "CI: generar BUILD_CODE y changelog.ts en workflows Linux y Windows"
+      },
+      {
+        "hash": "8036a68",
+        "message": "Release flow: mergear PR antes de crear tag sobre main"
+      }
+    ],
+    "issues": []
   }
 ]
