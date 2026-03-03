@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { useP2pStore } from '../store/p2pStore';
 import type { P2pSessionInfo, ImageLockInfo, PeerInfo, BatchInfo, SyncProgress, SessionStatus, SessionRules, DownloadProgress, WorkDistribution, PendingApproval } from '../types';
@@ -21,6 +21,7 @@ export function useP2pSession() {
     setDistribution,
     addPendingApproval,
     removePendingApproval,
+    setHostStopped,
   } = useP2pStore();
 
   // Listeners globales (no dependen de activeSession)
@@ -117,6 +118,12 @@ export function useP2pSession() {
       );
 
       unlisteners.push(
+        await listen<{ reason: string }>('p2p:host-stopped', (_event) => {
+          setHostStopped(true);
+        })
+      );
+
+      unlisteners.push(
         await listen<SessionRules>('p2p:rules-updated', (event) => {
           updateRules(event.payload);
         })
@@ -159,6 +166,30 @@ export function useP2pSession() {
     return () => {
       unlisteners.forEach((unlisten) => unlisten());
     };
+  }, [activeSession?.sessionId]);
+
+  // Verificar presencia de peers cada 15s
+  useEffect(() => {
+    if (!activeSession) return;
+
+    const interval = setInterval(() => {
+      const { peers, setPeers } = useP2pStore.getState();
+      const now = Date.now();
+      const TIMEOUT = 90_000; // 90 segundos
+      let changed = false;
+      const updated = peers.map(p => {
+        if (p.online && p.lastSeen && now - p.lastSeen > TIMEOUT) {
+          changed = true;
+          return { ...p, online: false };
+        }
+        return p;
+      });
+      if (changed) {
+        setPeers(updated);
+      }
+    }, 15_000);
+
+    return () => clearInterval(interval);
   }, [activeSession?.sessionId]);
 
   return { activeSession };

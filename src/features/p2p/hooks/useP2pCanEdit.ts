@@ -61,8 +61,18 @@ export function useP2pPermission(permission: P2pPermission): boolean {
 export function useP2pCanEdit(itemId?: string, videoId?: string | null): boolean {
   const activeSession = useP2pStore((s) => s.activeSession);
   const distribution = useP2pStore((s) => s.distribution);
+  const hostStopped = useP2pStore((s) => s.hostStopped);
 
-  if (!activeSession || !distribution) return true;
+  // Si no hay sesión activa, siempre permitir edición
+  if (!activeSession) return true;
+
+  // Si el host detuvo la sesión, bloquear edición para no-hosts
+  if (hostStopped && activeSession.role !== 'lead_researcher') return false;
+
+  // Si está desconectado, bloquear edición para no-hosts
+  if (activeSession.status === 'disconnected' && activeSession.role !== 'lead_researcher') return false;
+
+  if (!distribution) return true;
   if (!itemId) return true;
 
   const checkId = videoId || itemId;

@@ -7,6 +7,9 @@ interface P2pStore {
   updateSessionStatus: (status: SessionStatus) => void;
   updateRules: (rules: SessionRules) => void;
 
+  hostStopped: boolean;
+  setHostStopped: (stopped: boolean) => void;
+
   peers: PeerInfo[];
   addPeer: (peer: PeerInfo) => void;
   removePeer: (nodeId: string) => void;
@@ -56,13 +59,16 @@ export const useP2pStore = create<P2pStore>((set, get) => ({
     activeSession: state.activeSession ? { ...state.activeSession, rules } : null,
   })),
 
+  hostStopped: false,
+  setHostStopped: (stopped) => set({ hostStopped: stopped }),
+
   peers: [],
   addPeer: (peer) => set((state) => {
     const exists = state.peers.find(p => p.nodeId === peer.nodeId);
     if (exists) {
-      return { peers: state.peers.map(p => p.nodeId === peer.nodeId ? peer : p) };
+      return { peers: state.peers.map(p => p.nodeId === peer.nodeId ? { ...p, ...peer, online: true, lastSeen: peer.lastSeen || Date.now() } : p) };
     }
-    return { peers: [...state.peers, peer] };
+    return { peers: [...state.peers, { ...peer, online: true, lastSeen: peer.lastSeen || Date.now() }] };
   }),
   removePeer: (nodeId) => set((state) => ({
     peers: state.peers.filter(p => p.nodeId !== nodeId),
@@ -162,6 +168,7 @@ export const useP2pStore = create<P2pStore>((set, get) => ({
 
   reset: () => set({
     activeSession: null,
+    hostStopped: false,
     peers: [],
     imageLocks: new Map(),
     batches: [],

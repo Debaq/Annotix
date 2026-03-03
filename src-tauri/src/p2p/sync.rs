@@ -422,11 +422,6 @@ pub async fn download_project_images(
     let images_dir = app_state.project_images_dir(project_id)?;
     let _ = std::fs::create_dir_all(&images_dir);
 
-    // Esperar a que iroh sincronice los blobs desde el peer remoto
-    // Los entries (hashes) llegan rápido pero el contenido de los blobs tarda más
-    log::info!("Esperando 5s para que iroh sincronice blobs ({} imágenes)...", total);
-    tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-
     // Obtener doc y blobs del p2p state
     let (namespace_id, node) = {
         let session = p2p.session.read().await;
@@ -443,8 +438,24 @@ pub async fn download_project_images(
 
     let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
 
+    // Leer host_node_id para descarga explícita de blobs
+    let host_endpoint_id: iroh::EndpointId = {
+        let entry = doc
+            .get_one(iroh_docs::store::Query::key_exact(b"meta/host_node_id"))
+            .await
+            .map_err(|e| format!("Error leyendo host_node_id: {}", e))?
+            .ok_or("meta/host_node_id no encontrado")?;
+        let bytes = read_entry_bytes(&entry, blobs).await?;
+        let id_str = String::from_utf8_lossy(&bytes).to_string();
+        id_str.parse().map_err(|e| format!("Error parseando host EndpointId: {}", e))?
+    };
+
+    // Crear downloader para descarga explícita de blobs desde el host
+    let downloader = blobs.downloader(&node.endpoint);
+    log::info!("Downloader creado para {} imágenes desde host {}", total, host_endpoint_id);
+
     let mut downloaded = 0;
-    let max_retries: u32 = 5;
+    let max_retries: u32 = 8;
     let retry_delay = std::time::Duration::from_secs(3);
 
     for (img_id, file_name) in &pending_images {
@@ -472,7 +483,16 @@ pub async fn download_project_images(
                 }
             };
 
-            match read_entry_bytes(&entry, blobs).await {
+            let hash = entry.content_hash();
+
+            // Descargar explícitamente el blob desde el host
+            if let Err(e) = downloader.download(hash, vec![host_endpoint_id]).await {
+                log::warn!("Error descargando blob {} del host (intento {}): {}", img_id, attempt + 1, e);
+                continue;
+            }
+
+            // Leer el blob ya disponible localmente
+            match blobs.blobs().get_bytes(hash).await {
                 Ok(blob_data) => {
                     let dest = images_dir.join(file_name);
                     let tmp_dest = images_dir.join(format!("{}.tmp", file_name));
@@ -488,7 +508,7 @@ pub async fn download_project_images(
                     break;
                 }
                 Err(e) => {
-                    log::warn!("Error leyendo blob {} (intento {}): {}", img_id, attempt + 1, e);
+                    log::warn!("Error leyendo blob local {} (intento {}): {}", img_id, attempt + 1, e);
                     continue;
                 }
             }
@@ -821,13 +841,27 @@ pub fn start_doc_watcher(
                         if let Ok(content) = read_entry_bytes(&entry, blobs).await {
                             if let Ok(peer_info) = serde_json::from_slice::<serde_json::Value>(&content) {
                                 let node_id = key.strip_prefix("meta/peers/").unwrap_or("");
-                                let _ = app_handle.emit("p2p:peer-joined", serde_json::json!({
-                                    "nodeId": node_id,
-                                    "displayName": peer_info["display_name"],
-                                    "role": peer_info["role"],
-                                }));
+                                // Detectar si el peer salió
+                                if peer_info.get("left").and_then(|v| v.as_bool()) == Some(true) {
+                                    let _ = app_handle.emit("p2p:peer-left", serde_json::json!({
+                                        "nodeId": node_id,
+                                    }));
+                                } else {
+                                    let _ = app_handle.emit("p2p:peer-joined", serde_json::json!({
+                                        "nodeId": node_id,
+                                        "displayName": peer_info["display_name"],
+                                        "role": peer_info["role"],
+                                        "lastSeen": peer_info["last_seen"],
+                                    }));
+                                }
                             }
                         }
+                    }
+                    else if key == "meta/session_closed" {
+                        log::info!("Sesión cerrada por el host");
+                        let _ = app_handle.emit("p2p:host-stopped", serde_json::json!({
+                            "reason": "host_stopped",
+                        }));
                     }
                     else if key == "meta/rules" {
                         if let Ok(content) = read_entry_bytes(&entry, blobs).await {
@@ -881,6 +915,62 @@ pub fn start_doc_watcher(
                 _ => {}
             }
         }
-        log::info!("Doc watcher finalizado");
+        // Stream cerrado: el doc fue cerrado o la conexión se perdió
+        log::info!("Doc watcher finalizado — emitiendo desconexión");
+        let _ = app_handle.emit("p2p:session-status", serde_json::json!({
+            "status": "disconnected",
+        }));
+    });
+}
+
+/// Inicia un heartbeat periódico que escribe `last_seen` en el doc para indicar presencia
+pub fn start_heartbeat(
+    namespace_id: iroh_docs::NamespaceId,
+    author_id: iroh_docs::AuthorId,
+    my_node_id: String,
+    display_name: String,
+    role: String,
+    docs: iroh_docs::protocol::Docs,
+) {
+    tokio::spawn(async move {
+        let joined_at = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as f64;
+
+        loop {
+            tokio::time::sleep(std::time::Duration::from_secs(30)).await;
+
+            let doc = match docs.open(namespace_id).await {
+                Ok(Some(doc)) => doc,
+                _ => {
+                    log::info!("Heartbeat: doc cerrado, finalizando");
+                    break;
+                }
+            };
+
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_millis() as f64;
+
+            let peer_info = serde_json::json!({
+                "display_name": display_name,
+                "role": role,
+                "joined_at": joined_at,
+                "last_seen": now,
+            });
+
+            let peer_key = format!("meta/peers/{}", my_node_id);
+            if doc.set_bytes(
+                author_id,
+                peer_key.into_bytes(),
+                serde_json::to_vec(&peer_info).unwrap(),
+            ).await.is_err() {
+                log::info!("Heartbeat: error escribiendo, finalizando");
+                break;
+            }
+        }
+        log::info!("Heartbeat finalizado para {}", my_node_id);
     });
 }

@@ -17,6 +17,7 @@ export interface PeerInfo {
   role: PeerRole;
   joinedAt: number;
   online: boolean;
+  lastSeen?: number;
 }
 
 export interface ImageLockInfo {

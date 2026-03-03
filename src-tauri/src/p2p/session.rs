@@ -105,6 +105,16 @@ impl P2pState {
         // Iniciar watcher de cambios remotos
         sync::start_doc_watcher(namespace_id, node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
 
+        // Iniciar heartbeat para presencia
+        sync::start_heartbeat(
+            namespace_id,
+            author,
+            my_node_id.clone(),
+            display_name.to_string(),
+            "lead_researcher".to_string(),
+            node.docs.clone(),
+        );
+
         let host_key = ticket::encode_host_key(&host_secret, &share_code);
 
         // Persistir config P2P en project.json para auto-resume
@@ -259,6 +269,16 @@ impl P2pState {
         sync::start_doc_watcher(namespace_id, node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
         sync::emit_existing_peers(namespace_id, &node.docs, &node.blobs_store, app_handle, &my_node_id).await;
 
+        // Iniciar heartbeat para presencia
+        sync::start_heartbeat(
+            namespace_id,
+            author,
+            my_node_id.clone(),
+            display_name.to_string(),
+            role_str.clone(),
+            node.docs.clone(),
+        );
+
         // Fase 1: Reconstruir proyecto desde el doc (solo metadata, sin blobs)
         let projects_dir = app_state.projects_dir()?;
         let project = sync::doc_to_project_metadata(self, &projects_dir).await?;
@@ -357,8 +377,42 @@ impl P2pState {
         let project_id = session.project_id.clone();
         let session_id = session.session_id.clone();
 
-        // Dejar de sincronizar el doc (pero NO borramos datos iroh del disco)
+        // Notificar a los peers que la sesión se cierra
         if let Ok(Some(doc)) = session.node.docs.open(session.namespace_id).await {
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_millis() as f64;
+
+            // Marcar este peer como "left"
+            let peer_key = format!("meta/peers/{}", session.my_node_id);
+            let left_info = serde_json::json!({
+                "display_name": session.my_display_name,
+                "role": session.role.to_string(),
+                "left": true,
+                "left_at": now,
+            });
+            let _ = doc.set_bytes(
+                session.author_id,
+                peer_key.into_bytes(),
+                serde_json::to_vec(&left_info).unwrap(),
+            ).await;
+
+            // Si somos host, notificar cierre de sesión
+            if session.role.can_manage() {
+                let close_info = serde_json::json!({
+                    "timestamp": now,
+                    "reason": "host_paused",
+                });
+                let _ = doc.set_bytes(
+                    session.author_id,
+                    b"meta/session_closed".to_vec(),
+                    serde_json::to_vec(&close_info).unwrap(),
+                ).await;
+            }
+
+            // Breve espera para propagación
+            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
             let _ = doc.leave().await;
             let _ = doc.close().await;
         }
@@ -380,8 +434,42 @@ impl P2pState {
             let session_id = session.session_id.clone();
             let project_id = session.project_id.clone();
 
-            // Dejar de sincronizar el doc
+            // Notificar a los peers que este peer sale
             if let Ok(Some(doc)) = session.node.docs.open(session.namespace_id).await {
+                let now = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis() as f64;
+
+                // Marcar este peer como "left"
+                let peer_key = format!("meta/peers/{}", session.my_node_id);
+                let left_info = serde_json::json!({
+                    "display_name": session.my_display_name,
+                    "role": session.role.to_string(),
+                    "left": true,
+                    "left_at": now,
+                });
+                let _ = doc.set_bytes(
+                    session.author_id,
+                    peer_key.into_bytes(),
+                    serde_json::to_vec(&left_info).unwrap(),
+                ).await;
+
+                // Si somos host, notificar cierre de sesión
+                if session.role.can_manage() {
+                    let close_info = serde_json::json!({
+                        "timestamp": now,
+                        "reason": "host_left",
+                    });
+                    let _ = doc.set_bytes(
+                        session.author_id,
+                        b"meta/session_closed".to_vec(),
+                        serde_json::to_vec(&close_info).unwrap(),
+                    ).await;
+                }
+
+                // Breve espera para propagación
+                tokio::time::sleep(std::time::Duration::from_millis(500)).await;
                 let _ = doc.leave().await;
                 let _ = doc.close().await;
             }
@@ -560,6 +648,16 @@ impl P2pState {
         // Iniciar watcher de cambios remotos y emitir peers existentes
         sync::start_doc_watcher(ns_id, node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
         sync::emit_existing_peers(ns_id, &node.docs, &node.blobs_store, app_handle, &my_node_id).await;
+
+        // Iniciar heartbeat para presencia
+        sync::start_heartbeat(
+            ns_id,
+            author,
+            my_node_id.clone(),
+            config.display_name.clone(),
+            config.role.clone(),
+            node.docs.clone(),
+        );
 
         let info = P2pSessionInfo {
             session_id,
