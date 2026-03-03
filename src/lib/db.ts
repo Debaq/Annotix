@@ -16,6 +16,7 @@ export interface Project {
     version: string;
   };
   imageCount?: number;
+  p2pDownload?: { totalImages: number; downloadedImages: number };
 }
 
 export interface ClassDefinition {
@@ -292,6 +293,7 @@ export interface AnnotixImage {
   };
   videoId?: string | null;
   frameIndex?: number | null;
+  downloadStatus?: string;
 }
 
 // ============================================================================

@@ -37,6 +37,8 @@ pub struct ImageResponse {
     pub locked_by: Option<String>,
     #[serde(rename = "lockExpires")]
     pub lock_expires: Option<f64>,
+    #[serde(rename = "downloadStatus", skip_serializing_if = "Option::is_none")]
+    pub download_status: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -64,6 +66,7 @@ fn entry_to_response(entry: &ImageEntry, project_id: &str) -> ImageResponse {
         frame_index: entry.frame_index,
         locked_by: entry.locked_by.clone(),
         lock_expires: entry.lock_expires,
+        download_status: entry.download_status.clone(),
     }
 }
 
@@ -107,6 +110,7 @@ impl AppState {
             frame_index,
             locked_by: None,
             lock_expires: None,
+            download_status: None,
         };
 
         Ok((id, entry))
@@ -171,6 +175,7 @@ impl AppState {
                 frame_index: None,
                 locked_by: None,
                 lock_expires: None,
+                download_status: None,
             });
         }
 
@@ -222,6 +227,7 @@ impl AppState {
             frame_index,
             locked_by: None,
             lock_expires: None,
+            download_status: None,
         };
 
         self.with_project_mut(project_id, |pf| {

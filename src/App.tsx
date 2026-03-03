@@ -20,6 +20,7 @@ import { ExportDialog } from './features/export/components/ExportDialog';
 import { Button } from './components/ui/button';
 import { ProjectType } from './lib/db';
 import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { ConfirmDialog } from './features/core/components/ConfirmDialog';
 import { useP2pSession } from './features/p2p/hooks/useP2pSession';
 import { useTranslation } from 'react-i18next';
@@ -360,19 +361,21 @@ function App() {
   }
 
   return (
-    <AppLayout>
-      <Routes>
-        <Route path="/" element={<ProjectList />} />
-        <Route path="/projects/:projectId" element={<ProjectView />} />
-        <Route path="/projects/:projectId/images/:imageId" element={<ImageView />} />
-        <Route path="/projects/:projectId/timeseries/:seriesId" element={<TimeSeriesView />} />
-        <Route path="/projects/:projectId/videos/:videoId" element={<VideoView />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-      <Toaster />
-      <ConfirmDialog />
-    </AppLayout>
+    <TooltipProvider>
+      <AppLayout>
+        <Routes>
+          <Route path="/" element={<ProjectList />} />
+          <Route path="/projects/:projectId" element={<ProjectView />} />
+          <Route path="/projects/:projectId/images/:imageId" element={<ImageView />} />
+          <Route path="/projects/:projectId/timeseries/:seriesId" element={<TimeSeriesView />} />
+          <Route path="/projects/:projectId/videos/:videoId" element={<VideoView />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+        <Toaster />
+        <ConfirmDialog />
+      </AppLayout>
+    </TooltipProvider>
   );
 }
 

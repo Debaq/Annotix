@@ -1,7 +1,7 @@
-use tauri::State;
+use tauri::{Manager, State};
 
 use crate::p2p::node::P2pState;
-use crate::p2p::{BatchInfo, ImageLockInfo, P2pSessionInfo, PeerInfo, SessionRules};
+use crate::p2p::{sync, BatchInfo, ImageLockInfo, P2pSessionInfo, PeerInfo, PeerWorkStats, SessionRules, WorkDistribution};
 use crate::store::project_file::AnnotationEntry;
 use crate::store::state::AppState;
 
@@ -30,8 +30,9 @@ pub async fn p2p_join_session(
 #[tauri::command]
 pub async fn p2p_leave_session(
     p2p: State<'_, P2pState>,
+    app_state: State<'_, AppState>,
 ) -> Result<(), String> {
-    p2p.leave_session().await
+    p2p.leave_session(&app_state).await
 }
 
 #[tauri::command]
@@ -103,4 +104,65 @@ pub async fn p2p_get_rules(
     p2p: State<'_, P2pState>,
 ) -> Result<SessionRules, String> {
     p2p.get_rules().await
+}
+
+#[tauri::command]
+pub async fn p2p_resume_download(
+    app_state: State<'_, AppState>,
+    app_handle: tauri::AppHandle,
+    project_id: String,
+) -> Result<(), String> {
+    // Verificar que hay imágenes pendientes
+    let has_pending = app_state.with_project(&project_id, |pf| {
+        pf.p2p_download.is_some()
+    })?;
+
+    if !has_pending {
+        return Ok(());
+    }
+
+    let app_handle_bg = app_handle.clone();
+    let project_id_bg = project_id.clone();
+    tokio::spawn(async move {
+        let p2p = app_handle_bg.state::<P2pState>();
+        let state = app_handle_bg.state::<AppState>();
+        if let Err(e) = sync::download_project_images(&p2p, &state, &project_id_bg, &app_handle_bg).await {
+            log::warn!("Error en p2p_resume_download: {}", e);
+        }
+    });
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn p2p_distribute_work(
+    p2p: State<'_, P2pState>,
+    app_state: State<'_, AppState>,
+) -> Result<WorkDistribution, String> {
+    p2p.distribute_work(&app_state).await
+}
+
+#[tauri::command]
+pub async fn p2p_adjust_assignment(
+    p2p: State<'_, P2pState>,
+    item_ids: Vec<String>,
+    item_type: String,
+    target_node_id: String,
+) -> Result<WorkDistribution, String> {
+    p2p.adjust_assignment(item_ids, item_type, target_node_id).await
+}
+
+#[tauri::command]
+pub async fn p2p_get_distribution(
+    p2p: State<'_, P2pState>,
+) -> Result<Option<WorkDistribution>, String> {
+    p2p.read_distribution().await
+}
+
+#[tauri::command]
+pub async fn p2p_get_work_stats(
+    p2p: State<'_, P2pState>,
+    app_state: State<'_, AppState>,
+) -> Result<Vec<PeerWorkStats>, String> {
+    p2p.get_work_stats(&app_state).await
 }

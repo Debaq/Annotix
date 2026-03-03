@@ -196,8 +196,8 @@ pub async fn project_to_doc(
             .map_err(|e| format!("Error escribiendo clase: {}", e))?;
     }
 
-    // images
-    for img in &project.images {
+    // images (skip video frames — only sync standalone images)
+    for img in project.images.iter().filter(|i| i.video_id.is_none()) {
         let img_meta = serde_json::json!({
             "id": img.id,
             "name": img.name,
@@ -237,11 +237,11 @@ pub async fn project_to_doc(
     Ok(())
 }
 
-/// Reconstruye un ProjectFile desde un iroh-doc (usado por colaborador al unirse)
-pub async fn doc_to_project(
+/// Fase 1: Reconstruye un ProjectFile desde un iroh-doc, solo metadata (sin descargar blobs de imágenes).
+/// Las imágenes se crean con download_status = Some("pending").
+pub async fn doc_to_project_metadata(
     p2p: &P2pState,
     target_dir: &std::path::Path,
-    app_handle: &tauri::AppHandle,
 ) -> Result<ProjectFile, String> {
     let session = p2p.session.read().await;
     let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
@@ -289,7 +289,7 @@ pub async fn doc_to_project(
         }
     }
 
-    // Leer imágenes (meta + annots + blob)
+    // Leer imágenes (solo meta + annots, sin blobs)
     let mut images: Vec<ImageEntry> = Vec::new();
     let img_entries = doc
         .get_many(iroh_docs::store::Query::key_prefix(b"images/"))
@@ -307,7 +307,8 @@ pub async fn doc_to_project(
             let img_id = parts[1].to_string();
             let field = parts[2].to_string();
 
-            if field == "lock" {
+            // Skip blobs y locks — solo metadata y anotaciones
+            if field == "blob" || field == "lock" {
                 continue;
             }
 
@@ -326,9 +327,6 @@ pub async fn doc_to_project(
     let images_dir = project_dir.join("images");
     let _ = std::fs::create_dir_all(&images_dir);
 
-    let total_images = img_data.len();
-    let mut processed = 0;
-
     for (img_id, fields) in &img_data {
         if let Some(meta_bytes) = fields.get("meta") {
             let meta: serde_json::Value = serde_json::from_slice(meta_bytes)
@@ -340,11 +338,6 @@ pub async fn doc_to_project(
                 .unwrap_or_default();
 
             let file_name = meta["file"].as_str().unwrap_or(&format!("{}.jpg", img_id)).to_string();
-            if let Some(blob_data) = fields.get("blob") {
-                let dest = images_dir.join(&file_name);
-                std::fs::write(&dest, blob_data)
-                    .map_err(|e| format!("Error escribiendo imagen: {}", e))?;
-            }
 
             let now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -365,21 +358,26 @@ pub async fn doc_to_project(
                 frame_index: None,
                 locked_by: None,
                 lock_expires: None,
+                download_status: Some("pending".to_string()),
             });
-
-            processed += 1;
-            let _ = app_handle.emit("p2p:sync-progress", serde_json::json!({
-                "current": processed,
-                "total": total_images,
-                "phase": "downloading",
-            }));
         }
     }
+
+    let total_images = images.len();
 
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_millis() as f64;
+
+    let p2p_download = if total_images > 0 {
+        Some(crate::store::project_file::P2pDownloadStatus {
+            total_images,
+            downloaded_images: 0,
+        })
+    } else {
+        None
+    };
 
     Ok(ProjectFile {
         version,
@@ -395,7 +393,114 @@ pub async fn doc_to_project(
         training_jobs: vec![],
         tabular_data: vec![],
         p2p: None,
+        p2p_download,
     })
+}
+
+/// Fase 2: Descarga blobs de imágenes pendientes uno a uno en background.
+/// Emite eventos de progreso y actualiza cada ImageEntry al completar.
+pub async fn download_project_images(
+    p2p: &P2pState,
+    app_state: &crate::store::state::AppState,
+    project_id: &str,
+    app_handle: &tauri::AppHandle,
+) -> Result<(), String> {
+    // Leer las imágenes pendientes y el namespace
+    let pending_images: Vec<(String, String)> = app_state.with_project(project_id, |pf| {
+        pf.images.iter()
+            .filter(|i| i.download_status.as_deref() == Some("pending"))
+            .map(|i| (i.id.clone(), i.file.clone()))
+            .collect()
+    })?;
+
+    if pending_images.is_empty() {
+        return Ok(());
+    }
+
+    let total = pending_images.len();
+    let images_dir = app_state.project_images_dir(project_id)?;
+    let _ = std::fs::create_dir_all(&images_dir);
+
+    // Obtener doc y blobs del p2p state
+    let (namespace_id, node) = {
+        let session = p2p.session.read().await;
+        let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+        (session.namespace_id, session.node.clone())
+    };
+
+    let doc = node
+        .docs
+        .open(namespace_id)
+        .await
+        .map_err(|e| format!("Error abriendo doc: {}", e))?
+        .ok_or("Documento no encontrado")?;
+
+    let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
+
+    let mut downloaded = 0;
+
+    for (img_id, file_name) in &pending_images {
+        let blob_key = format!("images/{}/blob", img_id);
+        let entry = doc
+            .get_one(iroh_docs::store::Query::key_exact(blob_key.as_bytes()))
+            .await
+            .map_err(|e| format!("Error buscando blob {}: {}", img_id, e))?;
+
+        if let Some(entry) = entry {
+            match read_entry_bytes(&entry, blobs).await {
+                Ok(blob_data) => {
+                    let dest = images_dir.join(file_name);
+                    // Escritura atómica: .tmp → rename
+                    let tmp_dest = images_dir.join(format!("{}.tmp", file_name));
+                    if let Err(e) = std::fs::write(&tmp_dest, &blob_data) {
+                        log::warn!("Error escribiendo imagen tmp {}: {}", img_id, e);
+                        continue;
+                    }
+                    if let Err(e) = std::fs::rename(&tmp_dest, &dest) {
+                        log::warn!("Error renombrando imagen {}: {}", img_id, e);
+                        continue;
+                    }
+                }
+                Err(e) => {
+                    log::warn!("Error descargando blob {}: {}", img_id, e);
+                    continue;
+                }
+            }
+        } else {
+            log::warn!("Blob no encontrado para imagen {}", img_id);
+            continue;
+        }
+
+        // Actualizar ImageEntry: download_status = None
+        let img_id_clone = img_id.clone();
+        let _ = app_state.with_project_mut(project_id, |pf| {
+            if let Some(img) = pf.images.iter_mut().find(|i| i.id == img_id_clone) {
+                img.download_status = None;
+            }
+            if let Some(ref mut dl) = pf.p2p_download {
+                dl.downloaded_images += 1;
+            }
+        });
+
+        downloaded += 1;
+        let _ = app_handle.emit("p2p:download-progress", serde_json::json!({
+            "projectId": project_id,
+            "current": downloaded,
+            "total": total,
+        }));
+    }
+
+    // Limpiar p2p_download del proyecto
+    let _ = app_state.with_project_mut(project_id, |pf| {
+        pf.p2p_download = None;
+    });
+
+    let _ = app_handle.emit("p2p:download-complete", serde_json::json!({
+        "projectId": project_id,
+    }));
+
+    log::info!("Descarga P2P completada: {}/{} imágenes para proyecto {}", downloaded, total, project_id);
+    Ok(())
 }
 
 /// Sincroniza anotaciones locales al iroh-doc
@@ -514,6 +619,13 @@ pub fn start_doc_watcher(
                         if let Ok(content) = read_entry_bytes(&entry, blobs).await {
                             if let Ok(batch) = serde_json::from_slice::<super::BatchInfo>(&content) {
                                 let _ = app_handle.emit("p2p:batch-assigned", &batch);
+                            }
+                        }
+                    }
+                    else if key == "work/distribution" {
+                        if let Ok(content) = read_entry_bytes(&entry, blobs).await {
+                            if let Ok(dist) = serde_json::from_slice::<super::WorkDistribution>(&content) {
+                                let _ = app_handle.emit("p2p:distribution-updated", &dist);
                             }
                         }
                     }

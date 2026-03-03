@@ -4,6 +4,7 @@ pub mod sync;
 pub mod locks;
 pub mod ticket;
 pub mod protocol;
+pub mod distribution;
 
 use serde::{Deserialize, Serialize};
 
@@ -115,6 +116,37 @@ pub struct BatchInfo {
     pub assigned_to_name: String,
     #[serde(rename = "createdAt")]
     pub created_at: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkAssignment {
+    pub node_id: String,
+    pub display_name: String,
+    pub video_ids: Vec<String>,
+    pub image_ids: Vec<String>,
+    pub updated_at: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkDistribution {
+    pub version: u64,
+    pub assignments: Vec<WorkAssignment>,
+    pub created_by: String,
+    pub created_at: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PeerWorkStats {
+    pub node_id: String,
+    pub display_name: String,
+    pub videos_assigned: usize,
+    pub videos_completed: usize,
+    pub images_assigned: usize,
+    pub images_completed: usize,
+    pub progress_percent: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

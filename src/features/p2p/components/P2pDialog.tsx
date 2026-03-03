@@ -15,13 +15,17 @@ import type { P2pSessionInfo, LockMode, SessionRules } from '../types';
 interface P2pDialogProps {
   trigger?: React.ReactNode;
   projectId?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 type Step = 'choose' | 'create-configure' | 'create-ready' | 'join-enter-code' | 'join-downloading' | 'connected';
 
-export function P2pDialog({ trigger, projectId }: P2pDialogProps) {
+export function P2pDialog({ trigger, projectId, open: controlledOpen, onOpenChange }: P2pDialogProps) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [step, setStep] = useState<Step>('choose');
   const [displayName, setDisplayName] = useState('');
   const [lockMode, setLockMode] = useState<LockMode>('individual');
@@ -86,7 +90,8 @@ export function P2pDialog({ trigger, projectId }: P2pDialogProps) {
       setSessionInfo(session);
       setActiveSession(session);
       setCurrentProjectId(session.projectId);
-      setStep('connected');
+      // La descarga de imágenes continúa en background, cerrar modal directamente
+      handleClose();
     } catch (err) {
       setError(String(err));
       setStep('join-enter-code');
@@ -102,16 +107,21 @@ export function P2pDialog({ trigger, projectId }: P2pDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else setOpen(true); }}>
-      <DialogTrigger asChild>
-        {trigger || (
+      {trigger && (
+        <DialogTrigger asChild>
+          {trigger}
+        </DialogTrigger>
+      )}
+      {!trigger && controlledOpen === undefined && (
+        <DialogTrigger asChild>
           <Button variant="outline">
             <i className="fas fa-people-arrows mr-2" />
             {t('p2p.collaborate')}
           </Button>
-        )}
-      </DialogTrigger>
+        </DialogTrigger>
+      )}
 
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" preventClose={step === 'join-downloading'}>
         {/* Step: Choose */}
         {step === 'choose' && (
           <>
