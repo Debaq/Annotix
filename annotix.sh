@@ -354,6 +354,7 @@ cmd_build() {
 
     success "Build completo en $(elapsed $start)"
     collect_artifacts
+    auto_record_release
 }
 
 # ── Solo binario (sin empaquetar) ────────────────────────────────────────────
@@ -372,6 +373,7 @@ cmd_build_bin() {
     if [[ -f "$bin" ]]; then
         success "Binario listo en $(elapsed $start)"
         collect_artifacts
+        auto_record_release
     else
         error "No se generó el binario"
     fi
@@ -392,6 +394,7 @@ cmd_build_debug() {
     npx tauri build --debug
     success "Build debug completo en $(elapsed $start)"
     collect_artifacts
+    auto_record_release
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -450,6 +453,8 @@ cmd_android_build_debug() {
     local start=$(date +%s)
     cd "$PROJECT_DIR"
 
+    generate_build_info
+
     info "Compilando APK debug..."
     npx tauri android build --debug
 
@@ -462,6 +467,7 @@ cmd_android_build_debug() {
         echo -e "  ${BOLD}APK:${NC} $apk"
         echo -e "  ${BOLD}Tamaño:${NC} $(du -h "$apk" | cut -f1)"
     fi
+    auto_record_release
 }
 
 cmd_android_build_release() {
@@ -475,6 +481,8 @@ cmd_android_build_release() {
     local start=$(date +%s)
     cd "$PROJECT_DIR"
 
+    generate_build_info
+
     info "Compilando APK/AAB release..."
     npx tauri android build
 
@@ -486,6 +494,7 @@ cmd_android_build_release() {
 
     [[ -n "$apk" ]] && echo -e "  ${BOLD}APK:${NC} $apk ($(du -h "$apk" | cut -f1))"
     [[ -n "$aab" ]] && echo -e "  ${BOLD}AAB:${NC} $aab ($(du -h "$aab" | cut -f1))"
+    auto_record_release
 }
 
 cmd_android_create_keystore() {
@@ -1082,6 +1091,24 @@ cmd_update() {
 }
 
 # ── Registro de releases ─────────────────────────────────────────────────────
+
+# Llamar después de cada build exitoso para registrar en releases.json
+auto_record_release() {
+    local build_json="$PROJECT_DIR/build.json"
+    if [[ ! -f "$build_json" ]]; then
+        return
+    fi
+    local build_code build_num
+    build_code=$(python3 -c "import json; print(json.load(open('$build_json')).get('buildCode', ''))" 2>/dev/null || echo "")
+    build_num=$(python3 -c "import json; print(json.load(open('$build_json'))['buildNumber'])" 2>/dev/null || echo 0)
+    if [[ -z "$build_code" || "$build_num" == "0" ]]; then
+        return
+    fi
+    local last_tag
+    last_tag=$(git -C "$PROJECT_DIR" describe --tags --abbrev=0 2>/dev/null || echo "")
+    record_release "$build_code" "$build_num" "$last_tag"
+}
+
 record_release() {
     local code="$1"
     local build_num="$2"
@@ -1216,7 +1243,10 @@ cmd_release() {
         cmd_build "appimage"
     fi
 
-    # 5. Commit automático
+    # 5. Registrar en releases.json
+    record_release "$build_code" "$build_num" "$last_tag"
+
+    # 6. Commit automático
     echo ""
     echo -ne "  ¿Crear commit de release? [S/n]: "
     read -r do_commit
@@ -1227,9 +1257,6 @@ cmd_release() {
         git commit -m "Release Annotix v$VERSION ($build_code)"
         success "Commit creado"
     fi
-
-    # 6. Registrar en releases.json
-    record_release "$build_code" "$build_num" "$last_tag"
 
     # 7. Push
     echo -ne "  ¿Push rama '$branch'? [S/n]: "
