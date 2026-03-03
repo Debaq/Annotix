@@ -1343,15 +1343,36 @@ PRBODY
                         echo -ne "  ¿Crear tag v$VERSION en main? (dispara builds CI) [S/n]: "
                         read -r do_tag
                         if [[ "$do_tag" != "n" && "$do_tag" != "N" ]]; then
+                            # Actualizar refs remotas después del merge
+                            git fetch origin main --quiet 2>/dev/null
+
+                            # Verificar si el tag ya existe
+                            if git tag -l "v$VERSION" | grep -q "v$VERSION"; then
+                                warn "El tag v$VERSION ya existe localmente"
+                                echo -ne "  ¿Eliminar y recrear sobre main? [S/n]: "
+                                read -r do_retag
+                                if [[ "$do_retag" != "n" && "$do_retag" != "N" ]]; then
+                                    git tag -d "v$VERSION" 2>/dev/null
+                                    git push origin --delete "v$VERSION" 2>/dev/null
+                                else
+                                    info "Tag existente conservado"
+                                fi
+                            fi
+
                             # Crear tag sobre main sin cambiar de rama
-                            local main_sha
-                            main_sha=$(git rev-parse origin/main 2>/dev/null)
-                            if [[ -n "$main_sha" ]]; then
-                                git tag "v$VERSION" "$main_sha"
-                                git push origin "v$VERSION"
-                                success "Tag v$VERSION creado sobre main → CI se disparará"
-                            else
-                                error "No se pudo resolver origin/main"
+                            if ! git tag -l "v$VERSION" | grep -q "v$VERSION"; then
+                                local main_sha
+                                main_sha=$(git rev-parse origin/main 2>/dev/null)
+                                if [[ -n "$main_sha" ]]; then
+                                    git tag "v$VERSION" "$main_sha"
+                                    if git push origin "v$VERSION"; then
+                                        success "Tag v$VERSION creado sobre main → CI se disparará"
+                                    else
+                                        error "No se pudo pushear el tag v$VERSION"
+                                    fi
+                                else
+                                    error "No se pudo resolver origin/main"
+                                fi
                             fi
                         fi
                     else
