@@ -66,8 +66,23 @@ jobs:
         shell: pwsh
         run: |
           $build = Get-Content build.json | ConvertFrom-Json
+          $code = if ($build.buildCode) { $build.buildCode } else { "" }
           $date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-          "// Auto-generado por CI`nexport const BUILD_NUMBER = $($build.buildNumber);`nexport const BUILD_DATE = `"$date`";" | Set-Content src/lib/buildInfo.ts
+          "// Auto-generado por CI`nexport const BUILD_NUMBER = $($build.buildNumber);`nexport const BUILD_CODE = `"$code`";`nexport const BUILD_DATE = `"$date`";" | Set-Content src/lib/buildInfo.ts
+
+      - name: Generate changelog
+        shell: pwsh
+        run: |
+          $log = git log --oneline -30 --format="%h|%s"
+          $commits = @()
+          foreach ($line in $log) {
+              $parts = $line -split '\|', 2
+              if ($parts.Count -eq 2) {
+                  $commits += @{ hash = $parts[0]; message = $parts[1] }
+              }
+          }
+          $json = $commits | ConvertTo-Json -Compress -AsArray
+          "// Auto-generado por CI`nexport const CHANGELOG: { hash: string; message: string }[] = $json;" | Set-Content src/lib/changelog.ts
 
       - name: Build Tauri
         run: npx tauri build

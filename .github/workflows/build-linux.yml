@@ -53,8 +53,25 @@ jobs:
       - name: Generate build info
         run: |
           BUILD_NUM=$(python3 -c "import json; print(json.load(open('build.json'))['buildNumber'])")
+          BUILD_CODE=$(python3 -c "import json; print(json.load(open('build.json')).get('buildCode', ''))")
           BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          printf '// Auto-generado por CI\nexport const BUILD_NUMBER = %s;\nexport const BUILD_DATE = "%s";\n' "$BUILD_NUM" "$BUILD_DATE" > src/lib/buildInfo.ts
+          printf '// Auto-generado por CI\nexport const BUILD_NUMBER = %s;\nexport const BUILD_CODE = "%s";\nexport const BUILD_DATE = "%s";\n' "$BUILD_NUM" "$BUILD_CODE" "$BUILD_DATE" > src/lib/buildInfo.ts
+
+      - name: Generate changelog
+        run: |
+          python3 -c "
+          import json
+          commits = []
+          import subprocess
+          result = subprocess.run(['git', 'log', '--oneline', '-30', '--format=%h|%s'], capture_output=True, text=True)
+          for line in result.stdout.strip().split('\n'):
+              if '|' in line:
+                  h, m = line.split('|', 1)
+                  commits.append({'hash': h, 'message': m})
+          with open('src/lib/changelog.ts', 'w') as f:
+              f.write('// Auto-generado por CI\n')
+              f.write('export const CHANGELOG: { hash: string; message: string }[] = ' + json.dumps(commits, ensure_ascii=False) + ';\n')
+          "
 
       - name: Build Tauri (binary + AppImage)
         run: npx tauri build --bundles appimage
