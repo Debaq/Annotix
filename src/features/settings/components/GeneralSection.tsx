@@ -5,6 +5,7 @@ import { getVersion } from '@tauri-apps/api/app';
 import { open } from '@tauri-apps/plugin-dialog';
 import { availableLanguages } from '@/lib/i18n';
 import { BUILD_CODE, BUILD_DATE } from '@/lib/buildInfo';
+import { CHANGELOG } from '@/lib/changelog';
 import {
   Select,
   SelectContent,
@@ -176,6 +177,22 @@ export function GeneralSection() {
             </span>
           )}
         </div>
+
+        {CHANGELOG.length > 0 && (
+          <div className="space-y-1.5 pt-2 border-t">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Changelog
+            </span>
+            <div className="max-h-48 overflow-y-auto space-y-0.5">
+              {CHANGELOG.map((c) => (
+                <div key={c.hash} className="flex items-center gap-2 text-xs font-mono leading-5">
+                  <span className="shrink-0 text-[var(--annotix-primary)]">{c.hash}</span>
+                  <span className="truncate text-muted-foreground">{c.message}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
     </div>

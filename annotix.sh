@@ -108,6 +108,26 @@ export const BUILD_CODE = "$build_code";
 export const BUILD_DATE = "$build_date";
 BINFO
 
+    # Generar changelog.ts con últimos 30 commits
+    local changelog_ts="$PROJECT_DIR/src/lib/changelog.ts"
+    local commits_arr
+    commits_arr=$(git -C "$PROJECT_DIR" log --oneline -30 --format='%h|%s' 2>/dev/null | python3 -c "
+import sys, json
+commits = []
+for line in sys.stdin:
+    line = line.strip()
+    if not line: continue
+    parts = line.split('|', 1)
+    if len(parts) == 2:
+        commits.append({'hash': parts[0], 'message': parts[1]})
+print(json.dumps(commits, ensure_ascii=False))
+" 2>/dev/null || echo "[]")
+
+    cat > "$changelog_ts" <<CLTS
+// Auto-generado por annotix.sh — no editar manualmente
+export const CHANGELOG: { hash: string; message: string }[] = $commits_arr;
+CLTS
+
     info "Build info: $build_code (#$build_num) — $build_date"
 }
 
@@ -1252,7 +1272,7 @@ cmd_release() {
     read -r do_commit
     if [[ "$do_commit" != "n" && "$do_commit" != "N" ]]; then
         cd "$PROJECT_DIR"
-        git add build.json releases.json src/lib/buildInfo.ts
+        git add build.json releases.json src/lib/buildInfo.ts src/lib/changelog.ts
         git add -u
         git commit -m "Release Annotix v$VERSION ($build_code)"
         success "Commit creado"
