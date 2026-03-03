@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { useP2pStore } from '../store/p2pStore';
-import type { P2pSessionInfo, ImageLockInfo, PeerInfo, BatchInfo, SyncProgress, SessionStatus, SessionRules, DownloadProgress, WorkDistribution } from '../types';
+import type { P2pSessionInfo, ImageLockInfo, PeerInfo, BatchInfo, SyncProgress, SessionStatus, SessionRules, DownloadProgress, WorkDistribution, PendingApproval } from '../types';
 import { p2pService } from '../services/p2pService';
 
 export function useP2pSession() {
@@ -19,11 +19,24 @@ export function useP2pSession() {
     setDownloadProgress,
     clearDownloadProgress,
     setDistribution,
+    addPendingApproval,
+    removePendingApproval,
   } = useP2pStore();
 
   // Listeners globales (no dependen de activeSession)
   useEffect(() => {
     const unlisteners: (() => void)[] = [];
+
+    // Consultar proactivamente si ya hay sesión activa (evita race condition con evento)
+    p2pService.getSessionInfo().then(async (session) => {
+      if (session) {
+        setActiveSession(session);
+        try {
+          const dist = await p2pService.getDistribution();
+          if (dist) setDistribution(dist);
+        } catch {}
+      }
+    }).catch(() => {});
 
     listen<P2pSessionInfo>('p2p:session-restored', async (event) => {
       setActiveSession(event.payload);
@@ -112,6 +125,31 @@ export function useP2pSession() {
       unlisteners.push(
         await listen<WorkDistribution>('p2p:distribution-updated', (event) => {
           setDistribution(event.payload);
+        })
+      );
+
+      // Nuevos listeners para roles y aprobación de datos
+      unlisteners.push(
+        await listen<PeerInfo>('p2p:peer-role-changed', (event) => {
+          addPeer(event.payload);
+        })
+      );
+
+      unlisteners.push(
+        await listen<PendingApproval>('p2p:data-submitted', (event) => {
+          addPendingApproval(event.payload);
+        })
+      );
+
+      unlisteners.push(
+        await listen<{ itemId: string }>('p2p:data-approved', (event) => {
+          removePendingApproval(event.payload.itemId);
+        })
+      );
+
+      unlisteners.push(
+        await listen<{ itemId: string }>('p2p:data-rejected', (event) => {
+          removePendingApproval(event.payload.itemId);
         })
       );
     };

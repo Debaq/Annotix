@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { P2pSessionInfo, PeerInfo, ImageLockInfo, BatchInfo, SessionStatus, SyncProgress, SessionRules, DownloadProgress, WorkDistribution, WorkAssignment, PeerWorkStats } from '../types';
+import type { P2pSessionInfo, PeerInfo, ImageLockInfo, BatchInfo, SessionStatus, SyncProgress, SessionRules, DownloadProgress, WorkDistribution, WorkAssignment, PeerWorkStats, PendingApproval } from '../types';
 
 interface P2pStore {
   activeSession: P2pSessionInfo | null;
@@ -33,6 +33,11 @@ interface P2pStore {
   setDistribution: (dist: WorkDistribution | null) => void;
   workStats: PeerWorkStats[];
   setWorkStats: (stats: PeerWorkStats[]) => void;
+
+  pendingApprovals: PendingApproval[];
+  setPendingApprovals: (approvals: PendingApproval[]) => void;
+  addPendingApproval: (approval: PendingApproval) => void;
+  removePendingApproval: (itemId: string) => void;
 
   myAssignment: () => WorkAssignment | null;
   isItemAssignedToMe: (id: string, type: 'video' | 'image') => boolean;
@@ -116,6 +121,19 @@ export const useP2pStore = create<P2pStore>((set, get) => ({
   workStats: [],
   setWorkStats: (stats) => set({ workStats: stats }),
 
+  pendingApprovals: [],
+  setPendingApprovals: (approvals) => set({ pendingApprovals: approvals }),
+  addPendingApproval: (approval) => set((state) => {
+    const exists = state.pendingApprovals.find(a => a.itemId === approval.itemId);
+    if (exists) {
+      return { pendingApprovals: state.pendingApprovals.map(a => a.itemId === approval.itemId ? approval : a) };
+    }
+    return { pendingApprovals: [...state.pendingApprovals, approval] };
+  }),
+  removePendingApproval: (itemId) => set((state) => ({
+    pendingApprovals: state.pendingApprovals.filter(a => a.itemId !== itemId),
+  })),
+
   myAssignment: () => {
     const state = get();
     if (!state.distribution || !state.activeSession) return null;
@@ -151,5 +169,6 @@ export const useP2pStore = create<P2pStore>((set, get) => ({
     downloadProgress: {},
     distribution: null,
     workStats: [],
+    pendingApprovals: [],
   }),
 }));

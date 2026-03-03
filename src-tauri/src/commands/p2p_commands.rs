@@ -1,7 +1,8 @@
 use tauri::{Manager, State};
 
 use crate::p2p::node::P2pState;
-use crate::p2p::{sync, BatchInfo, ImageLockInfo, P2pSessionInfo, PeerInfo, PeerWorkStats, SessionRules, WorkDistribution};
+use crate::p2p::P2pPermission;
+use crate::p2p::{sync, BatchInfo, ImageLockInfo, P2pSessionInfo, PeerInfo, PeerRole, PeerWorkStats, PendingApproval, SessionRules, WorkDistribution};
 use crate::store::project_file::AnnotationEntry;
 use crate::store::state::AppState;
 
@@ -9,11 +10,12 @@ use crate::store::state::AppState;
 pub async fn p2p_create_session(
     p2p: State<'_, P2pState>,
     app_state: State<'_, AppState>,
+    app_handle: tauri::AppHandle,
     project_id: String,
     display_name: String,
     rules: SessionRules,
 ) -> Result<P2pSessionInfo, String> {
-    p2p.create_session(&app_state, &project_id, &display_name, rules).await
+    p2p.create_session(&app_state, &app_handle, &project_id, &display_name, rules).await
 }
 
 #[tauri::command]
@@ -33,6 +35,27 @@ pub async fn p2p_leave_session(
     app_state: State<'_, AppState>,
 ) -> Result<(), String> {
     p2p.leave_session(&app_state).await
+}
+
+#[tauri::command]
+pub async fn p2p_pause_session(
+    p2p: State<'_, P2pState>,
+) -> Result<String, String> {
+    p2p.pause_session().await
+}
+
+#[tauri::command]
+pub async fn p2p_resume_session(
+    p2p: State<'_, P2pState>,
+    app_state: State<'_, AppState>,
+    app_handle: tauri::AppHandle,
+    project_id: String,
+) -> Result<P2pSessionInfo, String> {
+    let config = app_state.with_project(&project_id, |pf| {
+        pf.p2p.clone()
+    })?.ok_or("El proyecto no tiene configuración P2P guardada")?;
+
+    p2p.resume_session(&app_state, &app_handle, &project_id, config).await
 }
 
 #[tauri::command]
@@ -72,6 +95,7 @@ pub async fn p2p_assign_batch(
     image_ids: Vec<String>,
     assign_to: String,
 ) -> Result<BatchInfo, String> {
+    p2p.check_permission(P2pPermission::Manage).await?;
     p2p.assign_batch(image_ids, &assign_to).await
 }
 
@@ -165,4 +189,47 @@ pub async fn p2p_get_work_stats(
     app_state: State<'_, AppState>,
 ) -> Result<Vec<PeerWorkStats>, String> {
     p2p.get_work_stats(&app_state).await
+}
+
+#[tauri::command]
+pub async fn p2p_update_peer_role(
+    p2p: State<'_, P2pState>,
+    node_id: String,
+    new_role: PeerRole,
+) -> Result<(), String> {
+    p2p.update_peer_role(&node_id, new_role).await
+}
+
+#[tauri::command]
+pub async fn p2p_submit_data(
+    p2p: State<'_, P2pState>,
+    item_id: String,
+    item_type: String,
+) -> Result<(), String> {
+    sync::submit_data_for_approval(&p2p, &item_id, &item_type).await
+}
+
+#[tauri::command]
+pub async fn p2p_approve_data(
+    p2p: State<'_, P2pState>,
+    item_id: String,
+) -> Result<(), String> {
+    p2p.check_permission(P2pPermission::Manage).await?;
+    sync::approve_data(&p2p, &item_id).await
+}
+
+#[tauri::command]
+pub async fn p2p_reject_data(
+    p2p: State<'_, P2pState>,
+    item_id: String,
+) -> Result<(), String> {
+    p2p.check_permission(P2pPermission::Manage).await?;
+    sync::reject_data(&p2p, &item_id).await
+}
+
+#[tauri::command]
+pub async fn p2p_list_pending_approvals(
+    p2p: State<'_, P2pState>,
+) -> Result<Vec<PendingApproval>, String> {
+    sync::list_pending_approvals(&p2p).await
 }

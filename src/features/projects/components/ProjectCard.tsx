@@ -32,8 +32,24 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const [p2pOpen, setP2pOpen] = useState(false);
   const { activeSession, peers, reset, downloadProgress } = useP2pStore();
   const isSharing = activeSession?.projectId === project.id;
+  const isHost = isSharing && activeSession?.role === 'lead_researcher';
+  const isCollaborator = isSharing && activeSession?.role !== 'lead_researcher';
   const [stopping, setStopping] = useState(false);
+  const [resuming, setResuming] = useState(false);
   const dlProgress = downloadProgress[project.id!];
+  const hasPausedP2p = !isSharing && project.hasP2pConfig;
+
+  const handleResumeP2p = async () => {
+    setResuming(true);
+    try {
+      const info = await p2pService.resumeSession(project.id!);
+      useP2pStore.getState().setActiveSession(info);
+    } catch (err) {
+      console.error('Error resuming P2P session:', err);
+    } finally {
+      setResuming(false);
+    }
+  };
 
   const handleStopSharing = async () => {
     if (!await confirm(t('p2p.confirmStop'), { kind: 'warning' })) return;
@@ -84,65 +100,109 @@ export function ProjectCard({ project }: ProjectCardProps) {
   return (
     <Card className={`flex h-full flex-col transition-shadow hover:shadow-lg ${isSharing ? 'ring-2 ring-violet-500/50' : ''}`}>
       <CardContent className="flex-1 pt-6">
-        {isSharing && (
-          <div className="mb-3 flex items-center justify-between rounded-lg bg-violet-500/10 px-3 py-2">
-            <div className="flex items-center gap-2 text-xs text-violet-600 dark:text-violet-400">
+        {hasPausedP2p && (
+          <div className="mb-3 rounded-lg bg-amber-500/10 px-3 py-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
+                <i className="fas fa-pause-circle" />
+                <span className="font-medium">{t('p2p.pausedSession')}</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 text-xs"
+                onClick={handleResumeP2p}
+                disabled={resuming || !!activeSession}
+              >
+                {resuming
+                  ? <i className="fas fa-spinner fa-spin mr-1" />
+                  : <i className="fas fa-play mr-1" />
+                }
+                {t('p2p.resumeSession')}
+              </Button>
+            </div>
+          </div>
+        )}
+        {isHost && (
+          <div className="mb-3 rounded-lg bg-violet-500/10 px-3 py-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs text-violet-600 dark:text-violet-400">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-violet-500" />
+                </span>
+                <i className="fas fa-broadcast-tower" />
+                <span className="font-medium">{t('p2p.sharing')}</span>
+                <span className="text-muted-foreground">· {peers.length + 1} {t('p2p.peers')}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      className="text-xs text-violet-500 hover:text-violet-700 dark:hover:text-violet-300"
+                      onClick={() => {
+                        if (activeSession?.shareCode) {
+                          navigator.clipboard.writeText(activeSession.shareCode);
+                        }
+                      }}
+                    >
+                      <i className="fas fa-copy" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('p2p.copyCode')}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      className="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-300"
+                      onClick={handleStopSharing}
+                      disabled={stopping}
+                    >
+                      <i className={`fas ${stopping ? 'fa-spinner fa-spin' : 'fa-stop'}`} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('p2p.stopSharing')}</TooltipContent>
+                </Tooltip>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-violet-600 dark:text-violet-400 mt-1.5 pt-1.5 border-t border-violet-500/20">
+              <i className="fas fa-images" />
+              <span>{project.imageCount ?? 0} {t('p2p.totalImages')}</span>
+            </div>
+          </div>
+        )}
+        {isCollaborator && (
+          <div className="mb-3 rounded-lg bg-blue-500/10 px-3 py-2">
+            <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-violet-500" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
               </span>
-              <i className="fas fa-broadcast-tower" />
-              <span className="font-medium">{t('p2p.sharing')}</span>
+              <i className="fas fa-link" />
+              <span className="font-medium">{t('p2p.connected')}</span>
               <span className="text-muted-foreground">· {peers.length + 1} {t('p2p.peers')}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    className="text-xs text-violet-500 hover:text-violet-700 dark:hover:text-violet-300"
-                    onClick={() => {
-                      if (activeSession?.shareCode) {
-                        navigator.clipboard.writeText(activeSession.shareCode);
-                      }
-                    }}
-                  >
-                    <i className="fas fa-copy" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>{t('p2p.copyCode')}</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    className="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-300"
-                    onClick={handleStopSharing}
-                    disabled={stopping}
-                  >
-                    <i className={`fas ${stopping ? 'fa-spinner fa-spin' : 'fa-stop'}`} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>{t('p2p.stopSharing')}</TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
-        )}
-        {dlProgress && (
-          <div className="mb-3 rounded-lg bg-blue-500/10 px-3 py-2">
-            <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 mb-1.5">
-              <i className="fas fa-cloud-download-alt" />
-              <span className="font-medium">{t('p2p.downloadingImages')}</span>
-              <span className="ml-auto">{dlProgress.current} / {dlProgress.total}</span>
-            </div>
-            <Progress value={(dlProgress.current / Math.max(dlProgress.total, 1)) * 100} className="h-1.5" />
-          </div>
-        )}
-        {!dlProgress && project.p2pDownload && (
-          <div className="mb-3 rounded-lg bg-amber-500/10 px-3 py-2">
-            <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
-              <i className="fas fa-exclamation-triangle" />
-              <span className="font-medium">{t('p2p.pendingDownload')}</span>
-              <span className="ml-auto">{project.p2pDownload.downloadedImages} / {project.p2pDownload.totalImages}</span>
-            </div>
+            {dlProgress ? (
+              <div className="mt-1.5 pt-1.5 border-t border-blue-500/20">
+                <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 mb-1">
+                  <i className="fas fa-cloud-download-alt" />
+                  <span>{t('p2p.downloadingImages')}</span>
+                  <span className="ml-auto font-medium">{dlProgress.current} / {dlProgress.total}</span>
+                </div>
+                <Progress value={(dlProgress.current / Math.max(dlProgress.total, 1)) * 100} className="h-1.5" />
+              </div>
+            ) : project.p2pDownload ? (
+              <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 mt-1.5 pt-1.5 border-t border-blue-500/20">
+                <i className="fas fa-exclamation-triangle" />
+                <span>{t('p2p.pendingDownload')}</span>
+                <span className="ml-auto font-medium">{project.p2pDownload.downloadedImages} / {project.p2pDownload.totalImages}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 mt-1.5 pt-1.5 border-t border-blue-500/20">
+                <i className="fas fa-images" />
+                <span>{project.imageCount ?? 0} {t('p2p.totalImages')}</span>
+              </div>
+            )}
           </div>
         )}
         <div className="mb-4 flex items-start justify-between">
@@ -157,40 +217,51 @@ export function ProjectCard({ project }: ProjectCardProps) {
               </p>
             </div>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <i className="fas fa-ellipsis-v"></i>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleOpen}>
-                <i className="fas fa-folder-open mr-2"></i>
-                {t('projects.open')}
-              </DropdownMenuItem>
-              
-              <DropdownMenuItem onSelect={() => setP2pOpen(true)}>
-                <i className="fas fa-people-arrows mr-2"></i>
-                {t('p2p.share')}
-              </DropdownMenuItem>
+          {!isCollaborator && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <i className="fas fa-ellipsis-v"></i>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleOpen}>
+                  <i className="fas fa-folder-open mr-2"></i>
+                  {t('projects.open')}
+                </DropdownMenuItem>
 
-              <ProjectSettingsDialog
-                project={project}
-                trigger={
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <i className="fas fa-cog mr-2"></i>
-                    {t('projects.configure')}
+                {!isSharing && (
+                  <DropdownMenuItem onSelect={() => setP2pOpen(true)}>
+                    <i className="fas fa-people-arrows mr-2"></i>
+                    {t('p2p.share')}
                   </DropdownMenuItem>
-                }
-              />
+                )}
 
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-                <i className="fas fa-trash mr-2"></i>
-                {t('projects.delete')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {isSharing && (
+                  <DropdownMenuItem onClick={() => navigate(`/projects/${project.id}/team`)}>
+                    <i className="fas fa-users mr-2"></i>
+                    {t('p2p.manageTeam')}
+                  </DropdownMenuItem>
+                )}
+
+                <ProjectSettingsDialog
+                  project={project}
+                  trigger={
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      <i className="fas fa-cog mr-2"></i>
+                      {t('projects.configure')}
+                    </DropdownMenuItem>
+                  }
+                />
+
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+                  <i className="fas fa-trash mr-2"></i>
+                  {t('projects.delete')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         <div className="space-y-2">

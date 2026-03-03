@@ -4,6 +4,8 @@ use image::codecs::jpeg::JpegEncoder;
 use image::{DynamicImage, RgbImage};
 use tauri::{AppHandle, Emitter, Manager, State};
 
+use crate::p2p::node::P2pState;
+use crate::p2p::P2pPermission;
 use crate::store::project_file::{AnnotationEntry, KeyframeEntry};
 use crate::store::images::ImageResponse;
 use crate::store::videos::{TrackResponse, VideoInfo, VideoResponse};
@@ -57,13 +59,15 @@ pub fn get_video_info(path: String) -> Result<VideoInfo, String> {
 // ─── upload_video ────────────────────────────────────────────────────────────
 
 #[tauri::command]
-pub fn upload_video(
+pub async fn upload_video(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     project_id: String,
     file_path: String,
     fps_extraction: f64,
 ) -> Result<String, String> {
+    p2p.check_permission(P2pPermission::UploadData).await?;
     let info = get_video_info(file_path.clone())?;
 
     let source = std::path::PathBuf::from(&file_path);
@@ -101,10 +105,12 @@ pub fn upload_video(
 
 #[tauri::command]
 pub async fn extract_video_frames(
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     project_id: String,
     video_id: String,
 ) -> Result<i64, String> {
+    p2p.check_permission(P2pPermission::UploadData).await?;
     launch_extraction(&app, &project_id, &video_id).await
 }
 
@@ -453,12 +459,14 @@ pub fn list_frames_by_video(
 }
 
 #[tauri::command]
-pub fn delete_video(
+pub async fn delete_video(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     project_id: String,
     video_id: String,
 ) -> Result<(), String> {
+    p2p.check_permission(P2pPermission::Delete).await?;
     state.delete_video(&project_id, &video_id)?;
     let _ = app.emit("db:videos-changed", &project_id);
     let _ = app.emit("db:images-changed", &project_id);
@@ -468,8 +476,9 @@ pub fn delete_video(
 // ─── Track Commands ──────────────────────────────────────────────────────────
 
 #[tauri::command]
-pub fn create_track(
+pub async fn create_track(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     project_id: String,
     video_id: String,
@@ -477,6 +486,7 @@ pub fn create_track(
     class_id: i64,
     label: Option<String>,
 ) -> Result<String, String> {
+    p2p.check_permission(P2pPermission::Annotate).await?;
     let id =
         state.create_track(&project_id, &video_id, &track_uuid, class_id, label.as_deref())?;
     let _ = app.emit("db:tracks-changed", &video_id);
@@ -493,8 +503,9 @@ pub fn list_tracks_by_video(
 }
 
 #[tauri::command]
-pub fn update_track(
+pub async fn update_track(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     project_id: String,
     video_id: String,
@@ -503,6 +514,7 @@ pub fn update_track(
     label: Option<String>,
     enabled: Option<bool>,
 ) -> Result<(), String> {
+    p2p.check_permission(P2pPermission::Annotate).await?;
     let label_update = label.map(|l| Some(l));
     state.update_track(
         &project_id,
@@ -517,21 +529,24 @@ pub fn update_track(
 }
 
 #[tauri::command]
-pub fn delete_track(
+pub async fn delete_track(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     project_id: String,
     video_id: String,
     track_id: String,
 ) -> Result<(), String> {
+    p2p.check_permission(P2pPermission::Delete).await?;
     state.delete_track(&project_id, &video_id, &track_id)?;
     let _ = app.emit("db:tracks-changed", &video_id);
     Ok(())
 }
 
 #[tauri::command]
-pub fn set_keyframe(
+pub async fn set_keyframe(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     project_id: String,
     video_id: String,
@@ -542,6 +557,7 @@ pub fn set_keyframe(
     bbox_width: f64,
     bbox_height: f64,
 ) -> Result<String, String> {
+    p2p.check_permission(P2pPermission::Annotate).await?;
     let id = state.set_keyframe(
         &project_id,
         &video_id,
@@ -557,22 +573,25 @@ pub fn set_keyframe(
 }
 
 #[tauri::command]
-pub fn delete_keyframe(
+pub async fn delete_keyframe(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     project_id: String,
     video_id: String,
     track_id: String,
     frame_index: i64,
 ) -> Result<(), String> {
+    p2p.check_permission(P2pPermission::Annotate).await?;
     state.delete_keyframe(&project_id, &video_id, &track_id, frame_index)?;
     let _ = app.emit("db:tracks-changed", &video_id);
     Ok(())
 }
 
 #[tauri::command]
-pub fn toggle_keyframe_enabled(
+pub async fn toggle_keyframe_enabled(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     project_id: String,
     video_id: String,
@@ -580,18 +599,21 @@ pub fn toggle_keyframe_enabled(
     frame_index: i64,
     enabled: bool,
 ) -> Result<(), String> {
+    p2p.check_permission(P2pPermission::Annotate).await?;
     state.toggle_keyframe_enabled(&project_id, &video_id, &track_id, frame_index, enabled)?;
     let _ = app.emit("db:tracks-changed", &video_id);
     Ok(())
 }
 
 #[tauri::command]
-pub fn bake_video_tracks(
+pub async fn bake_video_tracks(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     project_id: String,
     video_id: String,
 ) -> Result<i64, String> {
+    p2p.check_permission(P2pPermission::Annotate).await?;
     // Leer tracks una vez
     let tracks = state.with_project(&project_id, |pf| {
         pf.videos

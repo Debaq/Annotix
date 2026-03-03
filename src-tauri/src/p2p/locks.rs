@@ -134,7 +134,7 @@ impl P2pState {
         let session = self.session.read().await;
         let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
 
-        if session.role != super::PeerRole::Host {
+        if !session.role.can_manage() {
             return Err("Solo el host puede asignar lotes".to_string());
         }
 
