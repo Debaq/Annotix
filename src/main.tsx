@@ -4,6 +4,7 @@ import { HashRouter } from 'react-router-dom'
 import './styles/globals.css'
 import './lib/i18n' // Initialize i18n
 import App from './App.tsx'
+import { ErrorBoundary } from './features/core/components/ErrorBoundary'
 
 // ─── Color Mode Initialization ──────────────────────────────────────────────
 const COLOR_MODE_KEY = 'annotix-color-mode';
@@ -23,8 +24,10 @@ document.documentElement.classList.toggle('dracula', isDracula);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <HashRouter>
-      <App />
-    </HashRouter>
+    <ErrorBoundary>
+      <HashRouter>
+        <App />
+      </HashRouter>
+    </ErrorBoundary>
   </StrictMode>,
 )

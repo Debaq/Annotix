@@ -1,0 +1,185 @@
+{
+  "title": "Настройки",
+  "back": "Назад",
+  "sections": {
+    "general": "Общие",
+    "pythonEnv": "Среда Python",
+    "trainingModels": "Модели обучения",
+    "cloudProviders": "Облачные провайдеры",
+    "keyboardShortcuts": "Горячие клавиши",
+    "browserAutomation": "Автоматизация браузера"
+  },
+  "general": {
+    "colorMode": "Оформление",
+    "light": "Светлая",
+    "dark": "Тёмная",
+    "dracula": "Dracula",
+    "system": "Системная",
+    "language": "Язык",
+    "workDir": "Рабочая директория",
+    "workDirHelp": "Папка, где хранятся все ваши проекты и данные.",
+    "changeWorkDir": "Выбрать новую рабочую директорию",
+    "change": "Изменить",
+    "about": "О программе",
+    "buildDate": "Дата сборки",
+    "aboutDescription": "Разработано в лаборатории <strong>TecMedHub</strong> Университета Аустраль де Чили в рамках докторского проекта по биоинженерии Итальянской больницы Буэнос-Айреса <strong>Николас Байер</strong>.",
+    "team": "Команда",
+    "changelog": "История изменений",
+    "roleNicolas": "Разработка и руководство",
+    "roleFelipe": "Стажёр 2026, Компьютерная инженерия, UACh"
+  },
+  "pythonEnv": {
+    "systemPython": "Системный Python",
+    "systemPythonFound": "Python 3 найден: {{python}}",
+    "systemPythonNotFound": "Python 3 не найден в PATH. Установите Python 3.10+.",
+    "venv": "Виртуальное окружение",
+    "venvNotExists": "Виртуальное окружение не создано. Создайте его для функций обучения.",
+    "status": "Статус",
+    "active": "Активно",
+    "pythonVersion": "Версия Python",
+    "diskUsage": "Использование диска",
+    "path": "Путь",
+    "createVenv": "Создать окружение",
+    "removeVenv": "Удалить окружение",
+    "pleaseWait": "Это может занять несколько минут, пожалуйста, не закрывайте приложение."
+  },
+  "packages": {
+    "title": "Установленные пакеты",
+    "name": "Название",
+    "version": "Версия",
+    "updateAll": "Обновить все"
+  },
+  "pytorch": {
+    "title": "PyTorch",
+    "cudaActive": "Активно",
+    "cpuOnly": "Только CPU",
+    "nvidiaDetected": "Обнаружен GPU NVIDIA",
+    "driverVersion": "Драйвер",
+    "suggestedCuda": "Рекомендуемый CUDA",
+    "noNvidia": "GPU NVIDIA не обнаружен (будет использоваться режим CPU)",
+    "selectVariant": "Вариант PyTorch",
+    "install": "Установить PyTorch",
+    "reinstall": "Переустановить PyTorch"
+  },
+  "trainingModels": {
+    "totalModels": "Модели",
+    "tasks": "Задачи",
+    "task": "Задача",
+    "model": "Модель",
+    "params": "Параметры",
+    "sizes": "Размеры",
+    "recommended": "Рекомендуемый",
+    "readOnly": "Только чтение",
+    "searchPlaceholder": "Поиск моделей по имени, описанию или бэкенду...",
+    "clearFilters": "Очистить фильтры",
+    "noResults": "Модели не соответствуют текущим фильтрам",
+    "overview": "Обзор",
+    "selectBackend": "Выберите бэкенд для просмотра моделей",
+    "modelCount": "моделей",
+    "datasetFormat": "Набор данных",
+    "pipPackages": "Пакеты",
+    "viewScript": "Просмотреть скрипт",
+    "supportedTasks": "Поддерживаемые задачи",
+    "availableSizes": "Доступные размеры",
+    "defaultConfig": "Конфигурация по умолчанию",
+    "parameter": "Параметр",
+    "type": "Тип",
+    "defaultValue": "По умолчанию",
+    "range": "Диапазон",
+    "backTo": "Вернуться к",
+    "prepareBackend": "Подготовить бэкенд",
+    "filterByTask": "Фильтровать по задаче",
+    "allModels": "Все модели"
+  },
+  "cloud": {
+    "gcp": {
+      "title": "Google Cloud Platform",
+      "description": "Настройте учётные данные GCP для Vertex AI и Colab Enterprise",
+      "serviceAccount": "JSON сервисного аккаунта",
+      "serviceAccountPlaceholder": "Выберите JSON-файл сервисного аккаунта...",
+      "projectId": "ID проекта GCP",
+      "region": "Регион",
+      "bucket": "Корзина GCS"
+    },
+    "kaggle": {
+      "title": "Kaggle",
+      "description": "Введите ваши учётные данные API Kaggle.",
+      "getKey": "Получить API Key →",
+      "username": "Имя пользователя",
+      "apiKey": "API Key"
+    },
+    "lightning": {
+      "title": "Lightning AI",
+      "description": "Настройте учётные данные Lightning AI для бесплатного обучения на GPU.",
+      "getKey": "Получить API-ключ →",
+      "apiKey": "API-ключ"
+    },
+    "huggingface": {
+      "title": "Hugging Face",
+      "description": "Введите учётные данные Hugging Face для AutoTrain.",
+      "getToken": "Получить токен →",
+      "username": "Имя пользователя",
+      "token": "Токен доступа"
+    },
+    "saturn": {
+      "title": "Saturn Cloud",
+      "description": "Введите API-токен Saturn Cloud для бесплатных GPU-инстансов.",
+      "getToken": "Получить API-токен →",
+      "apiToken": "API-токен"
+    },
+    "validate": "Проверить",
+    "validating": "Проверка...",
+    "valid": "Действителен",
+    "invalid": "Недействителен"
+  },
+  "shortcuts": {
+    "description": "Нажмите на значок клавиши, чтобы переназначить. Нажмите Escape для отмены.",
+    "pressKey": "Нажмите клавишу...",
+    "resetAll": "Сбросить все",
+    "resetOne": "Сбросить по умолчанию",
+    "conflict": "Эта клавиша уже назначена для \"{{name}}\".",
+    "customize": "Настроить горячие клавиши"
+  },
+  "automation": {
+    "browsers": {
+      "title": "Обнаружение браузеров",
+      "description": "Обнаружьте и выберите браузер на основе Chromium для задач автоматизации.",
+      "detect": "Обнаружить браузеры",
+      "detecting": "Обнаружение...",
+      "preferred": "Предпочтительный",
+      "testLaunch": "Тестовый запуск",
+      "testing": "Тестирование..."
+    },
+    "provider": {
+      "title": "LLM-ассистент по умолчанию",
+      "description": "Выберите LLM-ассистента по умолчанию для AI-запросов через браузер.",
+      "trainingLabel": "Обучение",
+      "llmLabel": "LLM-ассистенты",
+      "colab_free": "Google Colab (Бесплатно)",
+      "kimi": "Kimi (Moonshot)",
+      "qwen": "Qwen Chat",
+      "deepseek": "DeepSeek",
+      "huggingchat": "HuggingChat"
+    },
+    "selectors": {
+      "title": "Редактор CSS-селекторов",
+      "description": "Редактируйте TOML-файлы селекторов для каждого провайдера. Они определяют, как автоматизация взаимодействует с каждым сайтом.",
+      "restore": "Восстановить"
+    },
+    "advanced": {
+      "title": "Расширенная конфигурация",
+      "description": "Настройте тайм-ауты, повторные попытки и параметры окна браузера.",
+      "stepTimeout": "Тайм-аут шага",
+      "maxRetries": "Макс. повторов",
+      "userActionTimeout": "Тайм-аут действия пользователя",
+      "llmResponseTimeout": "Тайм-аут ответа LLM",
+      "seconds": "секунд",
+      "userDataDir": "Каталог данных пользователя",
+      "userDataDirPlaceholder": "По умолчанию (автоуправление)",
+      "windowSize": "Размер окна",
+      "restoreDefaults": "Восстановить значения по умолчанию"
+    },
+    "saved": "Сохранено",
+    "saveError": "Ошибка сохранения"
+  }
+}

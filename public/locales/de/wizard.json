@@ -1,0 +1,148 @@
+{
+  "trigger": "Nicht sicher, welchen Typ?",
+  "title": "Projekttyp-Assistent",
+  "subtitle": "Beantworte ein paar Fragen und wir empfehlen den besten Projekttyp.",
+  "bestMatch": "Beste Wahl",
+  "useThis": "Verwenden",
+  "noResults": "Kein passender Typ gefunden. Versuche andere Antworten.",
+  "resultsTitle": "Empfohlen für dich",
+  "questions": {
+    "dataType": {
+      "title": "Mit welcher Art von Daten arbeitest du?",
+      "options": {
+        "images": "Bilder",
+        "timeseries": "Zeitreihen",
+        "tabular": "Tabellarische Daten"
+      },
+      "optionsDesc": {
+        "images": "Fotos, Screenshots, Scans, Frames",
+        "timeseries": "Sensoren, Metriken, Signale, Finanzdaten",
+        "tabular": "CSV-Dateien, Tabellen, strukturierte Daten"
+      }
+    },
+    "goalImages": {
+      "title": "Was möchtest du mit den Bildern machen?",
+      "options": {
+        "classify": "Klassifizieren",
+        "detectLocate": "Erkennen & Lokalisieren",
+        "segment": "Segmentieren",
+        "pointsKeypts": "Punkte markieren"
+      },
+      "optionsDesc": {
+        "classify": "Dem gesamten Bild ein Label zuweisen",
+        "detectLocate": "Objekte mit Boxen finden und lokalisieren",
+        "segment": "Objekte auf Pixelebene umreißen",
+        "pointsKeypts": "Keypoints oder Landmarks auf Objekten platzieren"
+      }
+    },
+    "goalTimeseries": {
+      "title": "Was möchtest du mit den Zeitreihen machen?",
+      "options": {
+        "tsClassify": "Klassifizieren",
+        "tsPredict": "Vorhersagen",
+        "tsAnomaly": "Anomalien erkennen",
+        "tsAnalyze": "Analysieren"
+      },
+      "optionsDesc": {
+        "tsClassify": "Der gesamten Reihe eine Kategorie zuweisen",
+        "tsPredict": "Zukünftige Werte vorhersagen oder Lücken füllen",
+        "tsAnomaly": "Ungewöhnliche oder unerwartete Muster finden",
+        "tsAnalyze": "Segmentieren, Muster finden oder gruppieren"
+      }
+    },
+    "classifyDetail": {
+      "title": "Wie viele Labels pro Bild?",
+      "options": {
+        "singleLabel": "Ein Label",
+        "multiLabel": "Mehrere Labels"
+      },
+      "optionsDesc": {
+        "singleLabel": "Jedes Bild gehört zu genau einer Klasse",
+        "multiLabel": "Ein Bild kann mehrere Labels gleichzeitig haben"
+      }
+    },
+    "detectDetail": {
+      "title": "Welche Art von Begrenzungsboxen?",
+      "options": {
+        "axisAligned": "Normale Boxen",
+        "rotated": "Rotierte Boxen"
+      },
+      "optionsDesc": {
+        "axisAligned": "Horizontale/vertikale Rechtecke (am häufigsten)",
+        "rotated": "Boxen, die in jedem Winkel rotiert werden können"
+      }
+    },
+    "segmentDetail": {
+      "title": "Welche Art von Segmentierung?",
+      "options": {
+        "polygonOutline": "Polygon-Umrisse",
+        "pixelMask": "Pixel-Masken",
+        "instanceSeg": "Instanzsegmentierung"
+      },
+      "optionsDesc": {
+        "polygonOutline": "Polygone Punkt für Punkt um Objekte zeichnen",
+        "pixelMask": "Pixelgenaue Masken auf Objekte malen",
+        "instanceSeg": "Jede einzelne Objektinstanz trennen"
+      }
+    },
+    "pointsDetail": {
+      "title": "Welche Art von Punkten?",
+      "options": {
+        "connectedPose": "Verbundenes Skelett",
+        "freePoints": "Unabhängige Punkte"
+      },
+      "optionsDesc": {
+        "connectedPose": "Durch Linien verbundene Punkte (Pose-Schätzung)",
+        "freePoints": "Freistehende Punkte ohne Verbindungen"
+      }
+    },
+    "tsAnalyzeDetail": {
+      "title": "Welche Art von Analyse?",
+      "options": {
+        "tsSegment": "Regionen segmentieren",
+        "tsPattern": "Muster finden",
+        "tsEvent": "Ereignisse erkennen",
+        "tsCluster": "Ähnliche gruppieren"
+      },
+      "optionsDesc": {
+        "tsSegment": "Die Reihe in beschriftete Regionen teilen",
+        "tsPattern": "Wiederkehrende Muster oder Motive identifizieren",
+        "tsEvent": "Erkennen, wann bestimmte Ereignisse auftreten",
+        "tsCluster": "Ähnliche Reihen oder Segmente gruppieren"
+      }
+    },
+    "tsPredictDetail": {
+      "title": "Welche Art von Vorhersage?",
+      "options": {
+        "tsForecast": "Zukunft vorhersagen",
+        "tsRegression": "Wertregression",
+        "tsImpute": "Fehlende Daten ergänzen"
+      },
+      "optionsDesc": {
+        "tsForecast": "Zukünftige Werte der Reihe vorhersagen",
+        "tsRegression": "Kontinuierliche Werte aus Merkmalen vorhersagen",
+        "tsImpute": "Fehlende oder beschädigte Datenpunkte rekonstruieren"
+      }
+    }
+  },
+  "reasons": {
+    "bbox": "Ideal zum Erkennen von Objekten mit achsenausgerichteten Boxen",
+    "obb": "Perfekt für abgewinkelte oder rotierte Objekte wie Luftaufnahmen oder Text",
+    "mask": "Pixelgenaue Masken für präzise semantische Segmentierung",
+    "polygon": "Polygon-Umrisse für genaue Objektgrenzen zeichnen",
+    "instance-segmentation": "Jede Objektinstanz auf Pixelebene trennen",
+    "keypoints": "Verbundene Skelettpunkte für Pose-Schätzung markieren",
+    "landmarks": "Unabhängige Referenzpunkte auf Objekten platzieren",
+    "classification": "Ein Label pro Bild für einfache Kategorisierung",
+    "multi-label-classification": "Bilder gleichzeitig mit mehreren Labels versehen",
+    "timeseries-classification": "Komplette Zeitreihen in Kategorien klassifizieren",
+    "timeseries-forecasting": "Zukünftige Werte basierend auf historischen Daten vorhersagen",
+    "timeseries-regression": "Kontinuierliche Werte aus Zeitreihenmerkmalen vorhersagen",
+    "anomaly-detection": "Ungewöhnliche Muster und Ausreißer in Daten finden",
+    "timeseries-segmentation": "Zeitreihen in beschriftete Segmente teilen",
+    "pattern-recognition": "Wiederkehrende Motive und Muster entdecken",
+    "event-detection": "Erkennen, wann bestimmte Ereignisse in der Reihe auftreten",
+    "clustering": "Ähnliche Zeitreihen oder Segmente gruppieren",
+    "imputation": "Fehlende oder beschädigte Datenpunkte rekonstruieren"
+  }
+}

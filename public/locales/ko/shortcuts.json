@@ -1,0 +1,173 @@
+{
+  "title": "키보드 단축키",
+  "tip": "단축키는 캔버스에서 작업하는 동안에도 사용할 수 있습니다. 언제든지 ?를 눌러 이 모달을 열 수 있습니다.",
+  "categories": {
+    "general": "일반",
+    "navigation": "탐색",
+    "tools": "도구",
+    "editing": "편집"
+  },
+  "items": {
+    "save": {
+      "name": "저장",
+      "key": "Ctrl+S"
+    },
+    "undo": {
+      "name": "실행 취소",
+      "key": "Ctrl+Z"
+    },
+    "redo": {
+      "name": "다시 실행",
+      "key": "Ctrl+Y"
+    },
+    "delete": {
+      "name": "삭제",
+      "description": "선택한 요소를 삭제합니다",
+      "key": "Del / Backspace"
+    },
+    "deselect": {
+      "name": "선택 해제",
+      "key": "Esc"
+    },
+    "prevImage": {
+      "name": "이전 이미지",
+      "key": "←"
+    },
+    "nextImage": {
+      "name": "다음 이미지",
+      "key": "→"
+    },
+    "zoomIn": {
+      "name": "확대",
+      "key": "Ctrl++"
+    },
+    "zoomOut": {
+      "name": "축소",
+      "key": "Ctrl+-"
+    },
+    "zoomFit": {
+      "name": "화면 맞춤",
+      "key": "Ctrl+0"
+    },
+    "toolBox": {
+      "name": "박스 도구",
+      "description": "박스 도구 선택",
+      "key": "B"
+    },
+    "toolOBB": {
+      "name": "OBB 도구",
+      "description": "OBB 도구 선택",
+      "key": "O"
+    },
+    "toolMask": {
+      "name": "마스크 도구",
+      "description": "마스크 도구 선택",
+      "key": "M"
+    },
+    "toolPolygon": {
+      "name": "폴리곤 도구",
+      "description": "폴리곤 도구 선택",
+      "key": "P"
+    },
+    "toolKeypoints": {
+      "name": "키포인트 도구",
+      "description": "키포인트 도구 선택",
+      "key": "K"
+    },
+    "toolSelect": {
+      "name": "선택 도구",
+      "description": "선택 도구 선택",
+      "key": "V"
+    },
+    "toolPan": {
+      "name": "이동 도구",
+      "description": "이동/팬 도구 선택",
+      "key": "H"
+    },
+    "rotateLeft": {
+      "name": "왼쪽 회전",
+      "key": "A"
+    },
+    "rotateRight": {
+      "name": "오른쪽 회전",
+      "key": "D"
+    },
+    "class1": {
+      "name": "클래스 1 선택",
+      "key": "1"
+    },
+    "class2": {
+      "name": "클래스 2 선택",
+      "key": "2"
+    },
+    "class3": {
+      "name": "클래스 3 선택",
+      "key": "3"
+    },
+    "class4": {
+      "name": "클래스 4 선택",
+      "key": "4"
+    },
+    "class5": {
+      "name": "클래스 5 선택",
+      "key": "5"
+    },
+    "class6": {
+      "name": "클래스 6 선택",
+      "key": "6"
+    },
+    "class7": {
+      "name": "클래스 7 선택",
+      "key": "7"
+    },
+    "class8": {
+      "name": "클래스 8 선택",
+      "key": "8"
+    },
+    "class9": {
+      "name": "클래스 9 선택",
+      "key": "9"
+    },
+    "toolLandmarks": {
+      "name": "랜드마크 도구",
+      "description": "랜드마크 도구 선택"
+    },
+    "brushSize": {
+      "name": "브러시 크기",
+      "description": "브러시 크기 줄이기/늘리기"
+    },
+    "eraseToggle": {
+      "name": "지우개 모드"
+    },
+    "confirmDrawing": {
+      "name": "그리기 확인"
+    },
+    "cancelDrawing": {
+      "name": "그리기 취소"
+    },
+    "videoNewTrack": {
+      "name": "새 트랙"
+    },
+    "videoPrevFrame": {
+      "name": "이전 프레임"
+    },
+    "videoNextFrame": {
+      "name": "다음 프레임"
+    },
+    "tsToolSelect": {
+      "name": "선택 (시계열)"
+    },
+    "tsToolPoint": {
+      "name": "포인트 도구 (시계열)"
+    },
+    "tsToolRange": {
+      "name": "범위 도구 (시계열)"
+    },
+    "tsToolEvent": {
+      "name": "이벤트 도구 (시계열)"
+    },
+    "tsToolAnomaly": {
+      "name": "이상 도구 (시계열)"
+    }
+  }
+}

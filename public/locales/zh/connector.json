@@ -1,0 +1,17 @@
+{
+  "connected": "Connector",
+  "disconnected": "无 Connector",
+  "connectedMessage": "Connector 在线 — 端口 5000",
+  "checking": "正在检查 Connector 连接...",
+  "connectedReady": "已连接 — 准备训练",
+  "notConnected": "无法连接到伴侣引擎",
+  "notConnectedHint": "请确保它正在运行",
+  "offlineMessage": "无法连接到伴侣引擎。\n\n您是否已下载并运行了桌面应用程序？\n请确保 'motor_server.exe' 正在您的 PC 上运行。",
+  "downloadTitle": "未检测到伴侣引擎",
+  "downloadMessage": "要在本地训练模型，您需要下载并安装 Annotix 伴侣引擎。",
+  "downloadHint": "伴侣引擎将在您的 PC 上后台运行，并允许您使用标注数据训练模型。",
+  "download": "下载伴侣引擎",
+  "downloadStarted": "下载已开始。完成后运行安装程序。",
+  "startTraining": "开始训练",
+  "trainingStarted": "训练已成功开始"
+}

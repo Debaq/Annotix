@@ -1,0 +1,13 @@
+{
+  "zoomIn": "Zoom In",
+  "zoomOut": "Zoom Out",
+  "resetZoom": "Redefinir Zoom",
+  "fitScreen": "Ajustar à tela",
+  "toggleLabels": "Mostrar/Ocultar Rótulos",
+  "toggleGrid": "Mostrar/Ocultar Grade",
+  "prevImage": "Imagem Anterior (← / RePag)",
+  "nextImage": "Próxima Imagem (→ / AvPag)",
+  "reset": "Reiniciar",
+  "tools": "Ferramentas",
+  "zoom": "Zoom"
+}

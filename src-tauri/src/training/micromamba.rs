@@ -220,6 +220,7 @@ fn find_system_conda() -> Option<(String, CondaBackend)> {
     } else {
         std::env::var_os("HOME").map(PathBuf::from)
     }?;
+    #[cfg(not(windows))]
     let well_known: Vec<(PathBuf, CondaBackend)> = vec![
         // micromamba
         (home.join(".local/bin/micromamba"), CondaBackend::Micromamba),

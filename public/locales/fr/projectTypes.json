@@ -1,0 +1,9 @@
+{
+  "classification": "Classification Simple",
+  "multiLabel": "Classification Multi-Étiquettes",
+  "detection": "Détection d'Objets",
+  "segmentation": "Segmentation Sémantique",
+  "instanceSeg": "Segmentation d'Instances",
+  "keypoints": "Points Clés",
+  "obb": "Boîtes Orientées (OBB)"
+}

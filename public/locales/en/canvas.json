@@ -1,0 +1,13 @@
+{
+  "zoomIn": "Zoom In",
+  "zoomOut": "Zoom Out",
+  "resetZoom": "Reset Zoom",
+  "fitScreen": "Fit to screen",
+  "toggleLabels": "Show/Hide Labels",
+  "toggleGrid": "Show/Hide Grid",
+  "prevImage": "Previous Image (← / PgUp)",
+  "nextImage": "Next Image (→ / PgDn)",
+  "reset": "Reset",
+  "tools": "Tools",
+  "zoom": "Zoom"
+}

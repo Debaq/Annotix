@@ -1,0 +1,34 @@
+{
+  "title": "Projects",
+  "subtitle": "Manage your annotation projects",
+  "create": "Create Project",
+  "createDescription": "Start a new annotation project",
+  "description": "Modify the name or manage the project classes.",
+  "descriptionLabel": "Description",
+  "descriptionPlaceholder": "Project notes or comments...",
+  "name": "Project Name",
+  "namePlaceholder": "My Annotix Project",
+  "type": {
+    "label": "Project Type",
+    "bbox": "Bounding Box",
+    "bboxDescription": "Object detection with bounding boxes",
+    "mask": "Mask",
+    "maskDescription": "Instance segmentation with masks"
+  },
+  "typeSelectHelper": "Select the annotation type based on your training goal",
+  "classes": "Classes",
+  "open": "Open",
+  "delete": "Delete",
+  "settings": "Project Settings",
+  "configure": "Configure",
+  "edit": "Edit Project",
+  "saveChanges": "Save Changes",
+  "stats": {
+    "classes": "Classes"
+  },
+  "empty": {
+    "title": "No projects",
+    "description": "Create your first project to start annotating"
+  },
+  "confirmDelete": "Confirm project deletion"
+}

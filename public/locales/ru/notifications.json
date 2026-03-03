@@ -1,0 +1,33 @@
+{
+  "imageSaved": "Изображение сохранено",
+  "imagesLoaded": "{count} изображений загружено",
+  "datasetDownloaded": "Dataset скачан",
+  "classesDownloaded": "classes.txt скачан",
+  "noClasses": "Нет классов для скачивания",
+  "noImages": "Нет изображений в проекте",
+  "noAnnotations": "Нет аннотаций для скачивания",
+  "appStarted": "Приложение запущено",
+  "classDeleted": "Класс и все его аннотации удалены",
+  "error": {
+    "createProject": "Ошибка при создании проекта",
+    "loadProject": "Ошибка при загрузке проекта",
+    "updateProject": "Ошибка при обновлении проекта",
+    "deleteProject": "Ошибка при удалении проекта",
+    "duplicateProject": "Ошибка при дублировании проекта",
+    "renameProject": "Ошибка при переименовании проекта",
+    "loadProjects": "Ошибка при загрузке проектов",
+    "exportProject": "Ошибка при экспорте проекта",
+    "exportConfig": "Ошибка при экспорте конфигурации",
+    "importConfig": "Ошибка при импорте конфигурации",
+    "importProject": "Ошибка при импорте проекта",
+    "loadImage": "Ошибка при загрузке изображения",
+    "saveImage": "Ошибка при сохранении изображения",
+    "deleteImage": "Ошибка при удалении изображения",
+    "loadImages": "Ошибка при загрузке изображений",
+    "downloadDataset": "Ошибка при скачивании dataset",
+    "initApp": "Ошибка при запуске приложения",
+    "export": "Ошибка при экспорте",
+    "noImages": "Ошибка: изображения не найдены"
+  },
+  "imageDeleted": "notifications.imageDeleted"
+}

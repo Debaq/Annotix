@@ -1,0 +1,25 @@
+{
+  "title": "Strumenti",
+  "bbox": "Box",
+  "obb": "OBB",
+  "mask": "Maschera",
+  "polygon": "Poligono",
+  "keypoints": "Keypoints",
+  "landmarks": "Landmarks",
+  "select": "Seleziona",
+  "pan": "Pan",
+  "eraseMode": "Gomma",
+  "newInstance": "Nuova Istanza",
+  "tooltips": {
+    "bbox": "Bounding Box (B)",
+    "obb": "Oriented Box (O)",
+    "mask": "Maschera (M)",
+    "polygon": "Poligono (P)",
+    "keypoints": "Keypoints (K)",
+    "landmarks": "Landmarks (L)",
+    "point": "Punto (P)",
+    "range": "Intervallo (R)",
+    "select": "Seleziona (V)",
+    "pan": "Pan (H)"
+  }
+}

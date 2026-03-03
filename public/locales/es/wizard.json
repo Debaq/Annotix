@@ -1,0 +1,148 @@
+{
+  "trigger": "¿No sabes cuál elegir?",
+  "title": "Asistente de Tipo de Proyecto",
+  "subtitle": "Responde unas preguntas y te recomendaremos el mejor tipo de proyecto.",
+  "bestMatch": "Mejor opción",
+  "useThis": "Usar este",
+  "noResults": "No se encontró un tipo compatible. Prueba otras respuestas.",
+  "resultsTitle": "Recomendado para ti",
+  "questions": {
+    "dataType": {
+      "title": "¿Con qué tipo de datos trabajarás?",
+      "options": {
+        "images": "Imágenes",
+        "timeseries": "Series temporales",
+        "tabular": "Datos tabulares"
+      },
+      "optionsDesc": {
+        "images": "Fotos, capturas, escaneos, fotogramas",
+        "timeseries": "Sensores, métricas, señales, datos financieros",
+        "tabular": "Archivos CSV, hojas de cálculo, tablas estructuradas"
+      }
+    },
+    "goalImages": {
+      "title": "¿Qué quieres hacer con las imágenes?",
+      "options": {
+        "classify": "Clasificar",
+        "detectLocate": "Detectar y Localizar",
+        "segment": "Segmentar",
+        "pointsKeypts": "Marcar puntos"
+      },
+      "optionsDesc": {
+        "classify": "Asignar una etiqueta a toda la imagen",
+        "detectLocate": "Encontrar y localizar objetos con cajas",
+        "segment": "Delinear objetos a nivel de píxel",
+        "pointsKeypts": "Colocar keypoints o landmarks en objetos"
+      }
+    },
+    "goalTimeseries": {
+      "title": "¿Qué quieres hacer con las series temporales?",
+      "options": {
+        "tsClassify": "Clasificar",
+        "tsPredict": "Predecir",
+        "tsAnomaly": "Detectar anomalías",
+        "tsAnalyze": "Analizar"
+      },
+      "optionsDesc": {
+        "tsClassify": "Asignar una categoría a toda la serie",
+        "tsPredict": "Pronosticar valores futuros o rellenar huecos",
+        "tsAnomaly": "Encontrar patrones inusuales o inesperados",
+        "tsAnalyze": "Segmentar, buscar patrones o agrupar"
+      }
+    },
+    "classifyDetail": {
+      "title": "¿Cuántas etiquetas por imagen?",
+      "options": {
+        "singleLabel": "Una etiqueta",
+        "multiLabel": "Múltiples etiquetas"
+      },
+      "optionsDesc": {
+        "singleLabel": "Cada imagen pertenece a exactamente una clase",
+        "multiLabel": "Una imagen puede tener varias etiquetas a la vez"
+      }
+    },
+    "detectDetail": {
+      "title": "¿Qué tipo de cajas delimitadoras?",
+      "options": {
+        "axisAligned": "Cajas normales",
+        "rotated": "Cajas rotadas"
+      },
+      "optionsDesc": {
+        "axisAligned": "Rectángulos horizontales/verticales (más común)",
+        "rotated": "Cajas que pueden rotar en cualquier ángulo"
+      }
+    },
+    "segmentDetail": {
+      "title": "¿Qué tipo de segmentación?",
+      "options": {
+        "polygonOutline": "Contornos poligonales",
+        "pixelMask": "Máscaras de píxeles",
+        "instanceSeg": "Segmentación de instancias"
+      },
+      "optionsDesc": {
+        "polygonOutline": "Dibujar polígonos punto a punto alrededor de objetos",
+        "pixelMask": "Pintar máscaras a nivel de píxel sobre objetos",
+        "instanceSeg": "Separar cada instancia individual de objeto"
+      }
+    },
+    "pointsDetail": {
+      "title": "¿Qué tipo de puntos?",
+      "options": {
+        "connectedPose": "Esqueleto conectado",
+        "freePoints": "Puntos independientes"
+      },
+      "optionsDesc": {
+        "connectedPose": "Puntos conectados por líneas (estimación de pose)",
+        "freePoints": "Puntos sueltos sin conexiones"
+      }
+    },
+    "tsAnalyzeDetail": {
+      "title": "¿Qué tipo de análisis?",
+      "options": {
+        "tsSegment": "Segmentar regiones",
+        "tsPattern": "Buscar patrones",
+        "tsEvent": "Detectar eventos",
+        "tsCluster": "Agrupar similares"
+      },
+      "optionsDesc": {
+        "tsSegment": "Dividir la serie en regiones etiquetadas",
+        "tsPattern": "Identificar patrones recurrentes o motivos",
+        "tsEvent": "Encontrar cuándo ocurren eventos específicos",
+        "tsCluster": "Agrupar series o segmentos similares"
+      }
+    },
+    "tsPredictDetail": {
+      "title": "¿Qué tipo de predicción?",
+      "options": {
+        "tsForecast": "Pronosticar futuro",
+        "tsRegression": "Regresión de valores",
+        "tsImpute": "Rellenar datos faltantes"
+      },
+      "optionsDesc": {
+        "tsForecast": "Predecir valores futuros de la serie",
+        "tsRegression": "Predecir valores continuos desde características",
+        "tsImpute": "Reconstruir datos faltantes o corruptos"
+      }
+    }
+  },
+  "reasons": {
+    "bbox": "Ideal para detectar objetos con cajas rectangulares alineadas",
+    "obb": "Perfecto para objetos angulados o rotados como vistas aéreas o texto",
+    "mask": "Pintar máscaras a nivel de píxel para segmentación semántica precisa",
+    "polygon": "Dibujar contornos poligonales para límites de objetos precisos",
+    "instance-segmentation": "Separar cada instancia de objeto a nivel de píxel",
+    "keypoints": "Marcar puntos esqueléticos conectados para estimación de pose",
+    "landmarks": "Colocar puntos de referencia independientes en objetos",
+    "classification": "Asignar una etiqueta por imagen para categorización simple",
+    "multi-label-classification": "Etiquetar imágenes con múltiples etiquetas simultáneamente",
+    "timeseries-classification": "Clasificar series temporales completas en categorías",
+    "timeseries-forecasting": "Predecir valores futuros basándose en datos históricos",
+    "timeseries-regression": "Predecir valores continuos desde características de la serie",
+    "anomaly-detection": "Encontrar patrones inusuales y valores atípicos en tus datos",
+    "timeseries-segmentation": "Dividir series temporales en segmentos etiquetados",
+    "pattern-recognition": "Descubrir motivos y patrones recurrentes",
+    "event-detection": "Identificar cuándo ocurren eventos específicos en la serie",
+    "clustering": "Agrupar series temporales o segmentos similares",
+    "imputation": "Reconstruir puntos de datos faltantes o corruptos"
+  }
+}

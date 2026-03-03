@@ -1,0 +1,14 @@
+{
+  "title": "Shortcuts",
+  "save": "Save",
+  "undo": "Undo",
+  "delete": "Delete",
+  "navigation": "Navigation",
+  "bbox": "Bbox",
+  "mask": "Mask",
+  "select": "Select",
+  "pan": "Pan",
+  "classes": "Class 1-9",
+  "navigateImages": "shortcuts.navigateImages",
+  "selectClass": "shortcuts.selectClass"
+}

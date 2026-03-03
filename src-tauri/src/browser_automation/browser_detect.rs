@@ -1,5 +1,6 @@
 use super::DetectedBrowser;
 use std::path::Path;
+#[cfg(not(target_os = "windows"))]
 use std::process::Command;
 
 /// Detecta navegadores Chromium instalados en el sistema.

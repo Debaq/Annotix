@@ -1,0 +1,9 @@
+{
+  "classification": "Classificazione Semplice",
+  "multiLabel": "Classificazione Multi-Etichetta",
+  "detection": "Rilevamento di Oggetti",
+  "segmentation": "Segmentazione Semantica",
+  "instanceSeg": "Segmentazione di Istanze",
+  "keypoints": "Punti Chiave",
+  "obb": "Riquadri Ruotati (OBB)"
+}

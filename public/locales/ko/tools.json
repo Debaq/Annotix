@@ -1,0 +1,25 @@
+{
+  "title": "도구",
+  "bbox": "Box",
+  "obb": "OBB",
+  "mask": "Mask",
+  "polygon": "폴리곤",
+  "keypoints": "Keypoints",
+  "landmarks": "Landmarks",
+  "select": "Select",
+  "pan": "Pan",
+  "eraseMode": "지우개",
+  "newInstance": "새 인스턴스",
+  "tooltips": {
+    "bbox": "Bounding Box (B)",
+    "obb": "Oriented Box (O)",
+    "mask": "마스크 (M)",
+    "polygon": "폴리곤 (P)",
+    "keypoints": "Keypoints (K)",
+    "landmarks": "Landmarks (L)",
+    "point": "포인트 (P)",
+    "range": "범위 (R)",
+    "select": "선택 (V)",
+    "pan": "Pan (H)"
+  }
+}

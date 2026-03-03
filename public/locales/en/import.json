@@ -1,0 +1,28 @@
+{
+  "title": "Import Dataset",
+  "button": "Import",
+  "selectFile": "Select a ZIP file containing your annotated dataset",
+  "dragFiles": "Drag ZIP files here",
+  "orClickToSelect": "or click to select",
+  "analyzing": "Analyzing Dataset",
+  "configureProject": "Configure your imported project",
+  "projectName": "Project Name",
+  "projectType": "Project Type",
+  "classesCount": "Classes",
+  "classes": "classes",
+  "format": "Detected Format",
+  "import": "Import Project",
+  "importing": "Importing Dataset...",
+  "processing": "Processing your dataset...",
+  "success": "Project Imported Successfully",
+  "successMessage": "Your dataset has been imported and is ready to use",
+  "openProject": "Open Project",
+  "error": {
+    "noFile": "Please select a ZIP file",
+    "invalidZip": "Please select a valid ZIP file",
+    "unsupportedFormat": "Unsupported dataset format. Supported formats: YOLO, COCO, Pascal VOC, CSV, Folders by Class, U-Net Masks",
+    "corruptedData": "Dataset appears to be corrupted or incomplete",
+    "parse": "Error parsing dataset. Please check the file format",
+    "invalidProjectName": "Project name contains invalid characters. Use only alphanumeric characters, hyphens, underscores, and dots"
+  }
+}

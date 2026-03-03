@@ -1,0 +1,33 @@
+{
+  "addKeypointClass": "Agregar Clase de Keypoints",
+  "step1": "Paso 1: Información Básica",
+  "step2": "Paso 2: Seleccionar Preset de Esqueleto",
+  "className": "Nombre de la Clase",
+  "classNamePlaceholder": "ej: Persona, Mano, Rostro",
+  "classColor": "Color de la Clase",
+  "selectPreset": "Selecciona un preset de esqueleto para esta clase:",
+  "presetInfo": "Cada clase puede tener su propio esqueleto. Esto te permite anotar diferentes tipos de objetos en el mismo proyecto.",
+  "points": "puntos",
+  "connections": "conexiones",
+  "previous": "Anterior",
+  "next": "Siguiente",
+  "finish": "Finalizar",
+  "presets": {
+    "coco17": "COCO 17 Keypoints",
+    "coco17Desc": "Esqueleto humano completo (COCO dataset)",
+    "mediapipePose": "MediaPipe Pose 33",
+    "mediapipePoseDesc": "Pose detallada de cuerpo completo",
+    "mediapipeHand": "MediaPipe Hand 21",
+    "mediapipeHandDesc": "Articulaciones de mano detalladas",
+    "openpose25": "OpenPose 25",
+    "openpose25Desc": "Esqueleto OpenPose con manos",
+    "facial68": "Facial Landmarks 68",
+    "facial68Desc": "Puntos faciales detallados",
+    "facial5": "Facial 5 Points",
+    "facial5Desc": "Puntos faciales básicos (ojos, nariz, boca)",
+    "animalQuad": "Animal Cuadrúpedo",
+    "animalQuadDesc": "Esqueleto para animales de 4 patas",
+    "custom": "Personalizado",
+    "customDesc": "Define tu propio esqueleto"
+  }
+}

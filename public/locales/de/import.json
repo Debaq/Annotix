@@ -1,0 +1,28 @@
+{
+  "title": "Dataset importieren",
+  "button": "Importieren",
+  "selectFile": "Wähle eine ZIP-Datei mit deinem annotierten Datensatz",
+  "dragFiles": "ZIP-Dateien hierher ziehen",
+  "orClickToSelect": "oder klicken zum Auswählen",
+  "analyzing": "Dataset wird analysiert",
+  "configureProject": "Konfiguriere dein importiertes Projekt",
+  "projectName": "Projektname",
+  "projectType": "Projekttyp",
+  "classesCount": "Klassen",
+  "classes": "Klassen",
+  "format": "Erkanntes Format",
+  "import": "Projekt importieren",
+  "importing": "Dataset wird importiert...",
+  "processing": "Dein Dataset wird verarbeitet...",
+  "success": "Projekt erfolgreich importiert",
+  "successMessage": "Dein Dataset wurde importiert und ist einsatzbereit",
+  "openProject": "Projekt öffnen",
+  "error": {
+    "noFile": "Bitte wähle eine ZIP-Datei aus",
+    "invalidZip": "Bitte wähle eine gültige ZIP-Datei aus",
+    "unsupportedFormat": "Nicht unterstütztes Datensatzformat. Unterstützte Formate: YOLO, COCO, Pascal VOC, CSV, Ordner nach Klasse, U-Net-Masken",
+    "corruptedData": "Der Datensatz scheint beschädigt oder unvollständig zu sein",
+    "parse": "Fehler beim Analysieren des Datensatzes. Bitte überprüfe das Dateiformat",
+    "invalidProjectName": "Der Projektname enthält ungültige Zeichen. Verwende nur alphanumerische Zeichen, Bindestriche, Unterstriche und Punkte"
+  }
+}

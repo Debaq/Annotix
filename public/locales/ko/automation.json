@@ -1,0 +1,69 @@
+{
+  "controlPanel": {
+    "title": "브라우저 자동화",
+    "logs": "로그",
+    "waitingLogs": "로그 대기 중...",
+    "minimize": "최소화",
+    "close": "닫기"
+  },
+  "pause": "일시정지",
+  "resume": "재개",
+  "cancel": "취소",
+  "providers": {
+    "colab_free": "Colab 무료",
+    "kimi": "Kimi",
+    "qwen": "Qwen",
+    "deep_seek": "DeepSeek",
+    "hugging_chat": "HuggingChat"
+  },
+  "colab": {
+    "steps": {
+      "openColab": "Google Colab 열기",
+      "login": "Google 로그인",
+      "createNotebook": "노트북 생성",
+      "configureGpu": "GPU 설정",
+      "installDeps": "종속성 설치",
+      "uploadDataset": "데이터셋 업로드",
+      "trainingCode": "훈련 코드 삽입",
+      "runTraining": "훈련 실행",
+      "monitorProgress": "진행 상황 모니터링",
+      "downloadModel": "모델 다운로드"
+    }
+  },
+  "llm": {
+    "steps": {
+      "openLlm": "LLM 웹사이트 열기",
+      "login": "로그인",
+      "newConversation": "새 대화",
+      "sendPrompt": "프롬프트 전송",
+      "waitResponse": "응답 대기",
+      "extractResponse": "응답 추출"
+    }
+  },
+  "status": {
+    "idle": "대기",
+    "detecting_browser": "브라우저 감지 중",
+    "launching_browser": "브라우저 실행 중",
+    "waiting_login": "로그인 대기 중",
+    "running": "실행 중",
+    "paused": "일시정지",
+    "completed": "완료",
+    "failed": "실패",
+    "cancelled": "취소됨",
+    "waitingUser": "조치 필요"
+  },
+  "errors": {
+    "noBrowser": "Chromium 브라우저를 찾을 수 없습니다",
+    "captchaDetected": "CAPTCHA 감지됨",
+    "runtimeDisconnected": "런타임 연결 해제",
+    "timeout": "작업 시간 초과"
+  },
+  "instructions": {
+    "login": "브라우저 창에서 로그인하세요. 로그인 후 자동화가 자동으로 계속됩니다.",
+    "captcha": "CAPTCHA가 감지되었습니다. 브라우저 창에서 해결하세요."
+  },
+  "result": {
+    "modelDownloaded": "모델 다운로드 완료: {{path}}",
+    "llmResponse": "응답 수신됨"
+  }
+}

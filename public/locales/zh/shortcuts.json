@@ -1,0 +1,173 @@
+{
+  "title": "键盘快捷键",
+  "tip": "快捷键在画布上工作时同样有效。随时按 ? 打开此窗口。",
+  "categories": {
+    "general": "通用",
+    "navigation": "导航",
+    "tools": "工具",
+    "editing": "编辑"
+  },
+  "items": {
+    "save": {
+      "name": "保存",
+      "key": "Ctrl+S"
+    },
+    "undo": {
+      "name": "撤销",
+      "key": "Ctrl+Z"
+    },
+    "redo": {
+      "name": "重做",
+      "key": "Ctrl+Y"
+    },
+    "delete": {
+      "name": "删除",
+      "description": "删除选中的元素",
+      "key": "Del / Backspace"
+    },
+    "deselect": {
+      "name": "取消选择",
+      "key": "Esc"
+    },
+    "prevImage": {
+      "name": "上一张图像",
+      "key": "←"
+    },
+    "nextImage": {
+      "name": "下一张图像",
+      "key": "→"
+    },
+    "zoomIn": {
+      "name": "放大",
+      "key": "Ctrl++"
+    },
+    "zoomOut": {
+      "name": "缩小",
+      "key": "Ctrl+-"
+    },
+    "zoomFit": {
+      "name": "适应",
+      "key": "Ctrl+0"
+    },
+    "toolBox": {
+      "name": "Box 工具",
+      "description": "选择边界框工具",
+      "key": "B"
+    },
+    "toolOBB": {
+      "name": "OBB 工具",
+      "description": "选择OBB工具",
+      "key": "O"
+    },
+    "toolMask": {
+      "name": "Mask 工具",
+      "description": "选择遮罩工具",
+      "key": "M"
+    },
+    "toolPolygon": {
+      "name": "多边形工具",
+      "description": "选择多边形工具",
+      "key": "P"
+    },
+    "toolKeypoints": {
+      "name": "关键点工具",
+      "description": "选择关键点工具",
+      "key": "K"
+    },
+    "toolSelect": {
+      "name": "选择工具",
+      "description": "选择选取工具",
+      "key": "V"
+    },
+    "toolPan": {
+      "name": "Pan 工具",
+      "description": "选择平移工具",
+      "key": "H"
+    },
+    "rotateLeft": {
+      "name": "向左旋转",
+      "key": "A"
+    },
+    "rotateRight": {
+      "name": "向右旋转",
+      "key": "D"
+    },
+    "class1": {
+      "name": "选择类别 1",
+      "key": "1"
+    },
+    "class2": {
+      "name": "选择类别 2",
+      "key": "2"
+    },
+    "class3": {
+      "name": "选择类别 3",
+      "key": "3"
+    },
+    "class4": {
+      "name": "选择类别 4",
+      "key": "4"
+    },
+    "class5": {
+      "name": "选择类别 5",
+      "key": "5"
+    },
+    "class6": {
+      "name": "选择类别 6",
+      "key": "6"
+    },
+    "class7": {
+      "name": "选择类别 7",
+      "key": "7"
+    },
+    "class8": {
+      "name": "选择类别 8",
+      "key": "8"
+    },
+    "class9": {
+      "name": "选择类别 9",
+      "key": "9"
+    },
+    "toolLandmarks": {
+      "name": "地标工具",
+      "description": "选择地标工具"
+    },
+    "brushSize": {
+      "name": "画笔大小",
+      "description": "减小/增大画笔大小"
+    },
+    "eraseToggle": {
+      "name": "橡皮擦模式"
+    },
+    "confirmDrawing": {
+      "name": "确认绘制"
+    },
+    "cancelDrawing": {
+      "name": "取消绘制"
+    },
+    "videoNewTrack": {
+      "name": "新建轨道"
+    },
+    "videoPrevFrame": {
+      "name": "上一帧"
+    },
+    "videoNextFrame": {
+      "name": "下一帧"
+    },
+    "tsToolSelect": {
+      "name": "选择（时间序列）"
+    },
+    "tsToolPoint": {
+      "name": "点工具（时间序列）"
+    },
+    "tsToolRange": {
+      "name": "范围工具（时间序列）"
+    },
+    "tsToolEvent": {
+      "name": "事件工具（时间序列）"
+    },
+    "tsToolAnomaly": {
+      "name": "异常工具（时间序列）"
+    }
+  }
+}

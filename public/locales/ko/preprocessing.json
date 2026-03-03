@@ -1,0 +1,29 @@
+{
+  "title": "이미지 전처리",
+  "detected": "정사각형이 아닌 이미지 {count}개 감지됨",
+  "description": "학습을 최적화하기 위해 이미지를 정사각형 크기로 조정합니다. 리사이즈 전략을 선택하세요:",
+  "targetSize": "목표 크기 (픽셀)",
+  "recommended": "권장: {size}px",
+  "strategy": "리사이즈 전략",
+  "strategies": {
+    "resize": {
+      "name": "리사이즈 + 패딩",
+      "description": "이미지를 축소하고 패딩을 추가합니다 (공간 및 메모리 최적화)"
+    },
+    "padding": {
+      "name": "패딩만",
+      "description": "원본 크기를 유지하고 패딩을 추가합니다 (최상의 품질)"
+    }
+  },
+  "options": {
+    "apply": "전처리 적용",
+    "skip": "전처리 없이 업로드"
+  },
+  "progress": "이미지 {current}/{total} 처리 중...",
+  "complete": "{count}개 이미지가 성공적으로 전처리되었습니다",
+  "preview": "미리보기",
+  "original": "원본",
+  "processed": "처리됨",
+  "aspectRatio": "원본 종횡비 유지됨",
+  "paddingInfo": "대칭적인 검은색 패딩이 추가됩니다"
+}

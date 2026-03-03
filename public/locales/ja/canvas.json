@@ -1,0 +1,13 @@
+{
+  "zoomIn": "ズームイン",
+  "zoomOut": "ズームアウト",
+  "resetZoom": "ズームリセット",
+  "fitScreen": "画面にフィット",
+  "toggleLabels": "ラベル表示/非表示",
+  "toggleGrid": "グリッド表示/非表示",
+  "prevImage": "前の画像 (← / PageUp)",
+  "nextImage": "次の画像 (→ / PageDown)",
+  "reset": "リセット",
+  "tools": "ツール",
+  "zoom": "ズーム"
+}

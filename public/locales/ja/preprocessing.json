@@ -1,0 +1,29 @@
+{
+  "title": "画像の前処理",
+  "detected": "正方形でない画像が{count}枚検出されました",
+  "description": "トレーニングを最適化するために、画像を正方形サイズに調整します。リサイズ戦略を選択してください：",
+  "targetSize": "ターゲットサイズ（ピクセル）",
+  "recommended": "推奨：{size}px",
+  "strategy": "リサイズ戦略",
+  "strategies": {
+    "resize": {
+      "name": "リサイズ + パディング",
+      "description": "画像を縮小しパディングを追加（スペースとメモリを最適化）"
+    },
+    "padding": {
+      "name": "パディングのみ",
+      "description": "元のサイズを維持しパディングを追加（高品質）"
+    }
+  },
+  "options": {
+    "apply": "前処理を適用",
+    "skip": "前処理なしでアップロード"
+  },
+  "progress": "画像 {current}/{total} を処理中...",
+  "complete": "{count}枚の画像が正常に前処理されました",
+  "preview": "プレビュー",
+  "original": "オリジナル",
+  "processed": "処理済み",
+  "aspectRatio": "元のアスペクト比を維持",
+  "paddingInfo": "対称的な黒パディングが追加されます"
+}

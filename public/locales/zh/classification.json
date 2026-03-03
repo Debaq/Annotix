@@ -1,0 +1,16 @@
+{
+  "selectOne": "选择正确的标签",
+  "selectMultiple": "选择适用的标签",
+  "singleHint": "只能选择一个标签",
+  "multiHint": "可以选择多个标签",
+  "noLabels": "未分配标签",
+  "labeled": "已标记",
+  "selectLabel": "选择一个标签",
+  "selectLabels": "选择标签",
+  "selected": "已选择",
+  "multiLabel": "多标签分类",
+  "singleLabel": "简单分类",
+  "noImageSelected": "未选择图像。请从图库中选择一张图像。",
+  "multiLabelInstructions": "选择一个或多个适用于此图像的标签。按 Ctrl+S 保存。",
+  "singleLabelInstructions": "选择最能描述此图像的标签。按 Ctrl+S 保存。"
+}

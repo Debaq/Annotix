@@ -1,0 +1,9 @@
+{
+  "toolName": "多边形",
+  "clickToAdd": "点击添加点。双击或按 Enter 闭合。",
+  "needMinPoints": "创建多边形至少需要 {min} 个点",
+  "created": "多边形已创建",
+  "cancelled": "绘制已取消",
+  "cannotDeletePoint": "无法删除点。至少需要 {min} 个点。",
+  "pointDeleted": "点已删除"
+}

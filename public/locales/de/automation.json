@@ -1,0 +1,69 @@
+{
+  "controlPanel": {
+    "title": "Browser-Automatisierung",
+    "logs": "Logs",
+    "waitingLogs": "Warte auf Logs...",
+    "minimize": "Minimieren",
+    "close": "Schließen"
+  },
+  "pause": "Pause",
+  "resume": "Fortsetzen",
+  "cancel": "Abbrechen",
+  "providers": {
+    "colab_free": "Colab Kostenlos",
+    "kimi": "Kimi",
+    "qwen": "Qwen",
+    "deep_seek": "DeepSeek",
+    "hugging_chat": "HuggingChat"
+  },
+  "colab": {
+    "steps": {
+      "openColab": "Google Colab öffnen",
+      "login": "Bei Google anmelden",
+      "createNotebook": "Notebook erstellen",
+      "configureGpu": "GPU konfigurieren",
+      "installDeps": "Abhängigkeiten installieren",
+      "uploadDataset": "Dataset hochladen",
+      "trainingCode": "Trainingscode einfügen",
+      "runTraining": "Training starten",
+      "monitorProgress": "Fortschritt überwachen",
+      "downloadModel": "Modell herunterladen"
+    }
+  },
+  "llm": {
+    "steps": {
+      "openLlm": "LLM-Website öffnen",
+      "login": "Anmelden",
+      "newConversation": "Neue Konversation",
+      "sendPrompt": "Prompt senden",
+      "waitResponse": "Auf Antwort warten",
+      "extractResponse": "Antwort extrahieren"
+    }
+  },
+  "status": {
+    "idle": "Inaktiv",
+    "detecting_browser": "Browser erkennen",
+    "launching_browser": "Browser starten",
+    "waiting_login": "Warte auf Anmeldung",
+    "running": "Läuft",
+    "paused": "Pausiert",
+    "completed": "Abgeschlossen",
+    "failed": "Fehlgeschlagen",
+    "cancelled": "Abgebrochen",
+    "waitingUser": "Aktion erforderlich"
+  },
+  "errors": {
+    "noBrowser": "Kein Chromium-Browser gefunden",
+    "captchaDetected": "CAPTCHA erkannt",
+    "runtimeDisconnected": "Runtime getrennt",
+    "timeout": "Zeitüberschreitung"
+  },
+  "instructions": {
+    "login": "Bitte melden Sie sich im Browserfenster an. Die Automatisierung wird nach der Anmeldung automatisch fortgesetzt.",
+    "captcha": "Ein CAPTCHA wurde erkannt. Bitte lösen Sie es im Browserfenster."
+  },
+  "result": {
+    "modelDownloaded": "Modell heruntergeladen: {{path}}",
+    "llmResponse": "Antwort erhalten"
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "controlPanel": {
+    "title": "Automatisation du navigateur",
+    "logs": "Logs",
+    "waitingLogs": "En attente des logs...",
+    "minimize": "Minimiser",
+    "close": "Fermer"
+  },
+  "pause": "Pause",
+  "resume": "Reprendre",
+  "cancel": "Annuler",
+  "providers": {
+    "colab_free": "Colab Gratuit",
+    "kimi": "Kimi",
+    "qwen": "Qwen",
+    "deep_seek": "DeepSeek",
+    "hugging_chat": "HuggingChat"
+  },
+  "colab": {
+    "steps": {
+      "openColab": "Ouvrir Google Colab",
+      "login": "Connexion à Google",
+      "createNotebook": "Créer un notebook",
+      "configureGpu": "Configurer le GPU",
+      "installDeps": "Installer les dépendances",
+      "uploadDataset": "Télécharger le dataset",
+      "trainingCode": "Injecter le code d'entraînement",
+      "runTraining": "Lancer l'entraînement",
+      "monitorProgress": "Surveiller la progression",
+      "downloadModel": "Télécharger le modèle"
+    }
+  },
+  "llm": {
+    "steps": {
+      "openLlm": "Ouvrir le site du LLM",
+      "login": "Connexion",
+      "newConversation": "Nouvelle conversation",
+      "sendPrompt": "Envoyer le prompt",
+      "waitResponse": "Attendre la réponse",
+      "extractResponse": "Extraire la réponse"
+    }
+  },
+  "status": {
+    "idle": "Inactif",
+    "detecting_browser": "Détection du navigateur",
+    "launching_browser": "Lancement du navigateur",
+    "waiting_login": "En attente de connexion",
+    "running": "En cours",
+    "paused": "En pause",
+    "completed": "Terminé",
+    "failed": "Échoué",
+    "cancelled": "Annulé",
+    "waitingUser": "Action requise"
+  },
+  "errors": {
+    "noBrowser": "Aucun navigateur Chromium trouvé",
+    "captchaDetected": "CAPTCHA détecté",
+    "runtimeDisconnected": "Runtime déconnecté",
+    "timeout": "Délai d'attente dépassé"
+  },
+  "instructions": {
+    "login": "Veuillez vous connecter dans la fenêtre du navigateur. L'automatisation reprendra automatiquement.",
+    "captcha": "Un CAPTCHA a été détecté. Veuillez le résoudre dans la fenêtre du navigateur."
+  },
+  "result": {
+    "modelDownloaded": "Modèle téléchargé : {{path}}",
+    "llmResponse": "Réponse reçue"
+  }
+}

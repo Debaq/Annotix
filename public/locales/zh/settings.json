@@ -1,0 +1,185 @@
+{
+  "title": "设置",
+  "back": "返回",
+  "sections": {
+    "general": "通用",
+    "pythonEnv": "Python环境",
+    "trainingModels": "训练模型",
+    "cloudProviders": "云服务商",
+    "keyboardShortcuts": "键盘快捷键",
+    "browserAutomation": "浏览器自动化"
+  },
+  "general": {
+    "colorMode": "外观",
+    "light": "浅色",
+    "dark": "深色",
+    "dracula": "Dracula",
+    "system": "跟随系统",
+    "language": "语言",
+    "workDir": "工作目录",
+    "workDirHelp": "存储所有项目和数据的文件夹。",
+    "changeWorkDir": "选择新的工作目录",
+    "change": "更改",
+    "about": "关于",
+    "buildDate": "构建日期",
+    "aboutDescription": "由<strong>Nicolás Baier</strong>在智利南方大学<strong>TecMedHub</strong>实验室开发，作为布宜诺斯艾利斯意大利医院生物工程博士项目的一部分。",
+    "team": "团队",
+    "changelog": "更新日志",
+    "roleNicolas": "开发与指导",
+    "roleFelipe": "2026年实习生，计算机工程，UACh"
+  },
+  "pythonEnv": {
+    "systemPython": "系统Python",
+    "systemPythonFound": "找到Python 3: {{python}}",
+    "systemPythonNotFound": "PATH中未找到Python 3。请安装Python 3.10+。",
+    "venv": "虚拟环境",
+    "venvNotExists": "尚未创建虚拟环境。创建一个以使用训练功能。",
+    "status": "状态",
+    "active": "活跃",
+    "pythonVersion": "Python版本",
+    "diskUsage": "磁盘使用",
+    "path": "路径",
+    "createVenv": "创建环境",
+    "removeVenv": "删除环境",
+    "pleaseWait": "这可能需要几分钟，请不要关闭应用程序。"
+  },
+  "packages": {
+    "title": "已安装包",
+    "name": "名称",
+    "version": "版本",
+    "updateAll": "全部更新"
+  },
+  "pytorch": {
+    "title": "PyTorch",
+    "cudaActive": "已激活",
+    "cpuOnly": "仅CPU",
+    "nvidiaDetected": "检测到NVIDIA GPU",
+    "driverVersion": "驱动程序",
+    "suggestedCuda": "建议CUDA",
+    "noNvidia": "未检测到NVIDIA GPU（将使用CPU模式）",
+    "selectVariant": "PyTorch变体",
+    "install": "安装PyTorch",
+    "reinstall": "重新安装PyTorch"
+  },
+  "trainingModels": {
+    "totalModels": "模型",
+    "tasks": "任务",
+    "task": "任务",
+    "model": "模型",
+    "params": "参数",
+    "sizes": "尺寸",
+    "recommended": "推荐",
+    "readOnly": "只读",
+    "searchPlaceholder": "按名称、描述或后端搜索模型...",
+    "clearFilters": "清除筛选",
+    "noResults": "没有模型匹配当前筛选条件",
+    "overview": "概览",
+    "selectBackend": "选择一个后端来浏览其模型",
+    "modelCount": "个模型",
+    "datasetFormat": "数据集",
+    "pipPackages": "包",
+    "viewScript": "查看脚本",
+    "supportedTasks": "支持的任务",
+    "availableSizes": "可用尺寸",
+    "defaultConfig": "默认配置",
+    "parameter": "参数",
+    "type": "类型",
+    "defaultValue": "默认值",
+    "range": "范围",
+    "backTo": "返回",
+    "prepareBackend": "准备后端",
+    "filterByTask": "按任务筛选",
+    "allModels": "所有模型"
+  },
+  "cloud": {
+    "gcp": {
+      "title": "Google Cloud Platform",
+      "description": "配置Vertex AI和Colab Enterprise的GCP凭据",
+      "serviceAccount": "服务账号JSON",
+      "serviceAccountPlaceholder": "选择服务账号JSON文件...",
+      "projectId": "GCP项目ID",
+      "region": "区域",
+      "bucket": "GCS存储桶"
+    },
+    "kaggle": {
+      "title": "Kaggle",
+      "description": "输入你的Kaggle API凭据。",
+      "getKey": "获取API Key →",
+      "username": "用户名",
+      "apiKey": "API Key"
+    },
+    "lightning": {
+      "title": "Lightning AI",
+      "description": "配置Lightning AI凭据以进行免费GPU训练。",
+      "getKey": "获取API密钥 →",
+      "apiKey": "API密钥"
+    },
+    "huggingface": {
+      "title": "Hugging Face",
+      "description": "输入Hugging Face凭据以使用AutoTrain。",
+      "getToken": "获取令牌 →",
+      "username": "用户名",
+      "token": "访问令牌"
+    },
+    "saturn": {
+      "title": "Saturn Cloud",
+      "description": "输入Saturn Cloud API令牌以使用免费GPU实例。",
+      "getToken": "获取API令牌 →",
+      "apiToken": "API令牌"
+    },
+    "validate": "验证",
+    "validating": "验证中...",
+    "valid": "有效",
+    "invalid": "无效"
+  },
+  "shortcuts": {
+    "description": "点击按键标记重新分配。按Escape取消。",
+    "pressKey": "请按一个键...",
+    "resetAll": "全部重置",
+    "resetOne": "恢复默认",
+    "conflict": "此键已分配给\"{{name}}\"。",
+    "customize": "自定义快捷键"
+  },
+  "automation": {
+    "browsers": {
+      "title": "浏览器检测",
+      "description": "检测并选择基于Chromium的浏览器用于自动化任务。",
+      "detect": "检测浏览器",
+      "detecting": "检测中...",
+      "preferred": "首选",
+      "testLaunch": "测试启动",
+      "testing": "测试中..."
+    },
+    "provider": {
+      "title": "默认LLM助手",
+      "description": "选择用于浏览器AI查询的默认LLM助手。",
+      "trainingLabel": "训练",
+      "llmLabel": "LLM助手",
+      "colab_free": "Google Colab（免费）",
+      "kimi": "Kimi（Moonshot）",
+      "qwen": "Qwen Chat",
+      "deepseek": "DeepSeek",
+      "huggingchat": "HuggingChat"
+    },
+    "selectors": {
+      "title": "CSS选择器编辑器",
+      "description": "编辑每个提供商的TOML选择器文件。这些定义了自动化如何与每个网站进行交互。",
+      "restore": "恢复"
+    },
+    "advanced": {
+      "title": "高级配置",
+      "description": "调整超时、重试和浏览器窗口设置。",
+      "stepTimeout": "步骤超时",
+      "maxRetries": "最大重试次数",
+      "userActionTimeout": "用户操作超时",
+      "llmResponseTimeout": "LLM响应超时",
+      "seconds": "秒",
+      "userDataDir": "用户数据目录",
+      "userDataDirPlaceholder": "默认（自动管理）",
+      "windowSize": "窗口大小",
+      "restoreDefaults": "恢复默认值"
+    },
+    "saved": "已保存",
+    "saveError": "保存错误"
+  }
+}

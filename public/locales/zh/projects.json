@@ -1,0 +1,34 @@
+{
+  "title": "项目",
+  "subtitle": "管理您的标注项目",
+  "create": "创建项目",
+  "createDescription": "开始一个新的标注项目",
+  "description": "修改名称或管理项目类别。",
+  "descriptionLabel": "描述",
+  "descriptionPlaceholder": "项目备注或评论...",
+  "name": "项目名称",
+  "namePlaceholder": "我的 Annotix 项目",
+  "type": {
+    "label": "项目类型",
+    "bbox": "Bounding Box",
+    "bboxDescription": "使用边界框进行目标检测",
+    "mask": "遮罩",
+    "maskDescription": "使用遮罩进行实例分割"
+  },
+  "typeSelectHelper": "根据训练目标选择标注类型",
+  "classes": "类别",
+  "open": "打开",
+  "delete": "删除",
+  "settings": "项目设置",
+  "configure": "配置",
+  "edit": "编辑项目",
+  "saveChanges": "保存更改",
+  "stats": {
+    "classes": "类别"
+  },
+  "empty": {
+    "title": "没有项目",
+    "description": "创建您的第一个项目以开始标注"
+  },
+  "confirmDelete": "确认删除项目"
+}

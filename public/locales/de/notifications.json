@@ -1,0 +1,33 @@
+{
+  "imageSaved": "Bild gespeichert",
+  "imagesLoaded": "{count} Bilder geladen",
+  "datasetDownloaded": "Dataset heruntergeladen",
+  "classesDownloaded": "classes.txt heruntergeladen",
+  "noClasses": "Keine Klassen zum Herunterladen",
+  "noImages": "Keine Bilder im Projekt",
+  "noAnnotations": "Keine Annotationen zum Herunterladen",
+  "appStarted": "Anwendung gestartet",
+  "classDeleted": "Klasse und alle zugehörigen Annotationen gelöscht",
+  "error": {
+    "createProject": "Fehler beim Erstellen des Projekts",
+    "loadProject": "Fehler beim Laden des Projekts",
+    "updateProject": "Fehler beim Aktualisieren des Projekts",
+    "deleteProject": "Fehler beim Löschen des Projekts",
+    "duplicateProject": "Fehler beim Duplizieren des Projekts",
+    "renameProject": "Fehler beim Umbenennen des Projekts",
+    "loadProjects": "Fehler beim Laden der Projekte",
+    "exportProject": "Fehler beim Exportieren des Projekts",
+    "exportConfig": "Fehler beim Exportieren der Konfiguration",
+    "importConfig": "Fehler beim Importieren der Konfiguration",
+    "importProject": "Fehler beim Importieren des Projekts",
+    "loadImage": "Fehler beim Laden des Bildes",
+    "saveImage": "Fehler beim Speichern des Bildes",
+    "deleteImage": "Fehler beim Löschen des Bildes",
+    "loadImages": "Fehler beim Laden der Bilder",
+    "downloadDataset": "Fehler beim Herunterladen des Datasets",
+    "initApp": "Fehler beim Starten der Anwendung",
+    "export": "Fehler beim Exportieren",
+    "noImages": "Fehler: keine Bilder gefunden"
+  },
+  "imageDeleted": "notifications.imageDeleted"
+}

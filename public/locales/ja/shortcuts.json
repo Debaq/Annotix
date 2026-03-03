@@ -1,0 +1,173 @@
+{
+  "title": "キーボードショートカット",
+  "tip": "ショートカットはキャンバスで作業中も使用できます。?を押すといつでもこのモーダルを開けます。",
+  "categories": {
+    "general": "一般",
+    "navigation": "ナビゲーション",
+    "tools": "ツール",
+    "editing": "編集"
+  },
+  "items": {
+    "save": {
+      "name": "保存",
+      "key": "Ctrl+S"
+    },
+    "undo": {
+      "name": "元に戻す",
+      "key": "Ctrl+Z"
+    },
+    "redo": {
+      "name": "やり直し",
+      "key": "Ctrl+Y"
+    },
+    "delete": {
+      "name": "削除",
+      "description": "選択した要素を削除",
+      "key": "Del / Backspace"
+    },
+    "deselect": {
+      "name": "選択解除",
+      "key": "Esc"
+    },
+    "prevImage": {
+      "name": "前の画像",
+      "key": "←"
+    },
+    "nextImage": {
+      "name": "次の画像",
+      "key": "→"
+    },
+    "zoomIn": {
+      "name": "拡大",
+      "key": "Ctrl++"
+    },
+    "zoomOut": {
+      "name": "縮小",
+      "key": "Ctrl+-"
+    },
+    "zoomFit": {
+      "name": "フィット",
+      "key": "Ctrl+0"
+    },
+    "toolBox": {
+      "name": "ボックスツール",
+      "description": "ボックスツールを選択",
+      "key": "B"
+    },
+    "toolOBB": {
+      "name": "OBBツール",
+      "description": "OBBツールを選択",
+      "key": "O"
+    },
+    "toolMask": {
+      "name": "マスクツール",
+      "description": "マスクツールを選択",
+      "key": "M"
+    },
+    "toolPolygon": {
+      "name": "ポリゴンツール",
+      "description": "ポリゴンツールを選択",
+      "key": "P"
+    },
+    "toolKeypoints": {
+      "name": "キーポイントツール",
+      "description": "キーポイントツールを選択",
+      "key": "K"
+    },
+    "toolSelect": {
+      "name": "選択ツール",
+      "description": "選択ツールを選択",
+      "key": "V"
+    },
+    "toolPan": {
+      "name": "パンツール",
+      "description": "パン/移動ツールを選択",
+      "key": "H"
+    },
+    "rotateLeft": {
+      "name": "左に回転",
+      "key": "A"
+    },
+    "rotateRight": {
+      "name": "右に回転",
+      "key": "D"
+    },
+    "class1": {
+      "name": "クラス1を選択",
+      "key": "1"
+    },
+    "class2": {
+      "name": "クラス2を選択",
+      "key": "2"
+    },
+    "class3": {
+      "name": "クラス3を選択",
+      "key": "3"
+    },
+    "class4": {
+      "name": "クラス4を選択",
+      "key": "4"
+    },
+    "class5": {
+      "name": "クラス5を選択",
+      "key": "5"
+    },
+    "class6": {
+      "name": "クラス6を選択",
+      "key": "6"
+    },
+    "class7": {
+      "name": "クラス7を選択",
+      "key": "7"
+    },
+    "class8": {
+      "name": "クラス8を選択",
+      "key": "8"
+    },
+    "class9": {
+      "name": "クラス9を選択",
+      "key": "9"
+    },
+    "toolLandmarks": {
+      "name": "ランドマークツール",
+      "description": "ランドマークツールを選択"
+    },
+    "brushSize": {
+      "name": "ブラシサイズ",
+      "description": "ブラシサイズを縮小/拡大"
+    },
+    "eraseToggle": {
+      "name": "消しゴムモード"
+    },
+    "confirmDrawing": {
+      "name": "描画を確定"
+    },
+    "cancelDrawing": {
+      "name": "描画をキャンセル"
+    },
+    "videoNewTrack": {
+      "name": "新規トラック"
+    },
+    "videoPrevFrame": {
+      "name": "前のフレーム"
+    },
+    "videoNextFrame": {
+      "name": "次のフレーム"
+    },
+    "tsToolSelect": {
+      "name": "選択（時系列）"
+    },
+    "tsToolPoint": {
+      "name": "ポイントツール（時系列）"
+    },
+    "tsToolRange": {
+      "name": "範囲ツール（時系列）"
+    },
+    "tsToolEvent": {
+      "name": "イベントツール（時系列）"
+    },
+    "tsToolAnomaly": {
+      "name": "異常ツール（時系列）"
+    }
+  }
+}

@@ -1,0 +1,539 @@
+{
+  "new": "新規プロジェクト",
+  "name": "プロジェクト名",
+  "namePlaceholder": "マイAnnotixプロジェクト",
+  "type": "アノテーションタイプ",
+  "typeSelectHelper": "トレーニング目的に応じてアノテーションタイプを選択",
+  "types": {
+    "classification": {
+      "name": "シンプル分類",
+      "description": "画像全体に1つのラベルを割り当て",
+      "useCases": "画像の内容を識別（例：猫、犬、車）",
+      "models": "ResNet, VGG, EfficientNet, MobileNet",
+      "difficulty": "初級"
+    },
+    "bbox": {
+      "name": "バウンディングボックス",
+      "description": "バウンディングボックスによるオブジェクト検出",
+      "useCases": "画像内のオブジェクトを検出・位置特定",
+      "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+      "difficulty": "初級"
+    },
+    "mask": {
+      "name": "マスク",
+      "description": "ピクセルマスクによるインスタンスセグメンテーション",
+      "useCases": "ピクセルレベルでオブジェクトを分離",
+      "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+      "difficulty": "中級"
+    },
+    "multiLabel": {
+      "name": "マルチラベル分類",
+      "description": "各画像に複数のラベルを割り当て",
+      "useCases": "複数の要素を含む画像（例：公園 + 犬 + 空）",
+      "models": "ResNet, VGG マルチラベル出力付き",
+      "difficulty": "初級"
+    },
+    "detection": {
+      "name": "オブジェクト検出",
+      "description": "矩形ボックス（バウンディングボックス）でオブジェクトを位置特定",
+      "useCases": "画像内の特定オブジェクトを検出・位置特定",
+      "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+      "difficulty": "中級"
+    },
+    "segmentation": {
+      "name": "セマンティックセグメンテーション",
+      "description": "画像の各ピクセルをクラスで分類",
+      "useCases": "領域を分離（例：道路、空、建物）",
+      "models": "U-Net, DeepLab, FCN",
+      "difficulty": "上級"
+    },
+    "instanceSeg": {
+      "name": "インスタンスセグメンテーション",
+      "description": "各オブジェクトの輪郭を描画",
+      "useCases": "ピクセルレベルで個々のオブジェクトを分離",
+      "models": "Mask R-CNN, YOLACT, YOLOv8-seg",
+      "difficulty": "上級"
+    },
+    "keypoints": {
+      "name": "キーポイント",
+      "description": "オブジェクト上の特定ポイントをマーク",
+      "useCases": "ポーズ推定、顔認識、解剖学",
+      "models": "OpenPose, HRNet, MediaPipe",
+      "difficulty": "中級"
+    },
+    "polygon": {
+      "name": "ポリゴンセグメンテーション",
+      "description": "精密なセグメンテーションのためにポイントごとにポリゴンを描画",
+      "useCases": "精密な輪郭、幾何学的形状、マスクより軽量",
+      "models": "YOLOv8-seg, Mask R-CNN, SOLO",
+      "difficulty": "中級"
+    },
+    "landmarks": {
+      "name": "ランドマーク",
+      "description": "接続なしで独立したポイントを配置",
+      "useCases": "オブジェクトの中心、参照点、カウント、位置",
+      "models": "検出モデル、カスタムポイント検出器",
+      "difficulty": "初級"
+    },
+    "obb": {
+      "name": "回転ボックス (OBB)",
+      "description": "自由回転付きバウンディングボックス",
+      "useCases": "角度のあるテキスト、航空オブジェクト、衛星",
+      "models": "Rotated-YOLO, RRPN",
+      "difficulty": "上級"
+    },
+    "semanticSeg": {
+      "name": "ピュアセマンティックセグメンテーション",
+      "description": "インスタンスを区別せずに各ピクセルを分類",
+      "useCases": "セグメンテーションマップ、風景、都市シーン",
+      "models": "U-Net, DeepLabV3+, SegFormer",
+      "difficulty": "上級"
+    },
+    "panopticSeg": {
+      "name": "パノプティックセグメンテーション",
+      "description": "セマンティックセグメンテーションとインスタンスセグメンテーションを結合",
+      "useCases": "自動運転、完全なシーン分析",
+      "models": "Panoptic-FPN, DETR, MaskFormer",
+      "difficulty": "上級"
+    },
+    "ocr": {
+      "name": "OCR（テキスト認識）",
+      "description": "画像内のテキストを検出・認識",
+      "useCases": "文書、標識、看板、請求書",
+      "models": "CRAFT, EasyOCR, Tesseract, PaddleOCR",
+      "difficulty": "中級"
+    },
+    "depthEstimation": {
+      "name": "深度推定",
+      "description": "各ピクセルからカメラまでの距離を予測",
+      "useCases": "ロボティクス、AR/VR、3D再構築",
+      "models": "MiDaS, DPT, Depth Anything",
+      "difficulty": "上級"
+    },
+    "audioClassification": {
+      "name": "音声分類",
+      "description": "オーディオクリップにラベルを割り当て",
+      "useCases": "音楽分類、環境音",
+      "models": "AudioSet, PANNs, YAMNet",
+      "difficulty": "中級"
+    },
+    "speechRecognition": {
+      "name": "音声認識",
+      "description": "音声をテキストに書き起こし",
+      "useCases": "字幕、音声アシスタント、文字起こし",
+      "models": "Whisper, Wav2Vec2, DeepSpeech",
+      "difficulty": "上級"
+    },
+    "soundEventDetection": {
+      "name": "音響イベント検出",
+      "description": "音声中のイベントを特定・位置特定",
+      "useCases": "セキュリティモニタリング、都市分析",
+      "models": "CRNN, CNN14, SED-CRNN",
+      "difficulty": "上級"
+    },
+    "speakerIdentification": {
+      "name": "話者識別",
+      "description": "誰が話しているかを認識",
+      "useCases": "セキュリティ、会議のダイアライゼーション",
+      "models": "x-vector, ECAPA-TDNN, SpeakerNet",
+      "difficulty": "上級"
+    },
+    "audioTagging": {
+      "name": "オーディオタギング",
+      "description": "音声に複数のラベルを割り当て",
+      "useCases": "音響シーン分析",
+      "models": "VGGish, PANNs, AudioSet",
+      "difficulty": "中級"
+    },
+    "musicGenreClassification": {
+      "name": "音楽ジャンル分類",
+      "description": "曲の音楽ジャンルを識別",
+      "useCases": "音楽ライブラリの整理",
+      "models": "MusiCNN, CNN-Spectrograms",
+      "difficulty": "中級"
+    },
+    "emotionRecognition": {
+      "name": "感情認識",
+      "description": "音声中の感情を検出",
+      "useCases": "カスタマーサービス、感情分析",
+      "models": "OpenSMILE, EmotiW, SER-CNN",
+      "difficulty": "上級"
+    },
+    "voiceActivityDetection": {
+      "name": "音声活動検出 (VAD)",
+      "description": "音声中に発話があるかを検出",
+      "useCases": "音声前処理、電話システム",
+      "models": "WebRTC VAD, Silero VAD",
+      "difficulty": "初級"
+    },
+    "keywordSpotting": {
+      "name": "キーワード検出",
+      "description": "音声中の特定の単語を検出",
+      "useCases": "音声アシスタント（Hey Siri、OK Google）",
+      "models": "CNN-KWS, Depthwise Separable CNNs",
+      "difficulty": "中級"
+    },
+    "environmentalSound": {
+      "name": "環境音分類",
+      "description": "環境の音を分類",
+      "useCases": "都市モニタリング、野生動物保護",
+      "models": "ESC-CNN, UrbanSound8K models",
+      "difficulty": "中級"
+    },
+    "actionRecognition": {
+      "name": "行動認識",
+      "description": "動画中の行動を識別",
+      "useCases": "スポーツ分析、監視、人間の相互作用",
+      "models": "C3D, I3D, SlowFast, X3D",
+      "difficulty": "上級"
+    },
+    "objectTracking": {
+      "name": "オブジェクト追跡",
+      "description": "フレーム間でオブジェクトを追跡",
+      "useCases": "監視、交通分析、スポーツ",
+      "models": "SORT, DeepSORT, ByteTrack, BoT-SORT",
+      "difficulty": "上級"
+    },
+    "temporalActionLocalization": {
+      "name": "時間的行動位置特定",
+      "description": "動画内で行動が発生する時間を検出",
+      "useCases": "動画分析、自動要約",
+      "models": "BMN, TSN, ActionFormer",
+      "difficulty": "上級"
+    },
+    "videoClassification": {
+      "name": "動画分類",
+      "description": "動画全体にカテゴリを割り当て",
+      "useCases": "コンテンツ整理、レコメンデーション",
+      "models": "3D-CNN, Two-Stream Networks, TimeSformer",
+      "difficulty": "中級"
+    },
+    "videoSegmentation": {
+      "name": "動画セグメンテーション",
+      "description": "動画中のオブジェクトをフレームごとにセグメント化",
+      "useCases": "動画編集、特殊効果",
+      "models": "STM, XMem, SAM-Track",
+      "difficulty": "上級"
+    },
+    "activityDetection": {
+      "name": "活動検出",
+      "description": "特定の人間の活動を検出",
+      "useCases": "高齢者モニタリング、セキュリティ",
+      "models": "ActivityNet models, TSM",
+      "difficulty": "上級"
+    },
+    "poseTracking": {
+      "name": "ポーズ追跡",
+      "description": "動画中の体のキーポイントを追跡",
+      "useCases": "動作分析、フィットネス、スポーツ",
+      "models": "AlphaPose, OpenPose, MMPose",
+      "difficulty": "上級"
+    },
+    "videoAnomalyDetection": {
+      "name": "動画異常検出",
+      "description": "動画中の異常なイベントを検出",
+      "useCases": "監視、産業品質管理",
+      "models": "AnomalyNet, Future Frame Prediction",
+      "difficulty": "上級"
+    },
+    "spatiotemporalAction": {
+      "name": "時空間行動検出",
+      "description": "空間と時間における行動を検出",
+      "useCases": "詳細な動画分析、YOLO-Act",
+      "models": "AVA models, SlowFast, YOLO-Act",
+      "difficulty": "上級"
+    },
+    "timeSeriesClassification": {
+      "name": "時系列分類",
+      "description": "各時系列全体にクラスを割り当て（グローバル分類モード）",
+      "useCases": "医療診断、ジェスチャー認識、ECG分類",
+      "models": "InceptionTime, ROCKET, ResNet",
+      "difficulty": "中級"
+    },
+    "timeSeriesForecasting": {
+      "name": "時系列予測",
+      "description": "範囲を使用して過去のウィンドウと予測ホライゾンをマーク",
+      "useCases": "売上予測、天気、エネルギー需要",
+      "models": "LSTM, Transformer, N-BEATS, Prophet",
+      "difficulty": "上級"
+    },
+    "anomalyDetection": {
+      "name": "異常検出",
+      "description": "時系列中の異常ポイントをマーク",
+      "useCases": "不正検出、機器障害、健康モニタリング",
+      "models": "AutoEncoder, Isolation Forest, LSTM-AE",
+      "difficulty": "上級"
+    },
+    "timeSeriesSegmentation": {
+      "name": "時系列セグメンテーション",
+      "description": "範囲を使用して系列をクラス付きセグメントに分割",
+      "useCases": "行動分析、レジーム変化、活動状態",
+      "models": "ClaSP, FLUSS, Seasonal-Trend Decomposition",
+      "difficulty": "上級"
+    },
+    "patternRecognition": {
+      "name": "パターン認識",
+      "description": "範囲を使用して繰り返しパターン/モチーフをマーク",
+      "useCases": "株式分析、生体信号、サイクル検出",
+      "models": "Matrix Profile, STOMP, SAX",
+      "difficulty": "中級"
+    },
+    "eventDetection": {
+      "name": "イベント検出",
+      "description": "ポイントを使用して時間中の離散イベントをマーク",
+      "useCases": "センサーモニタリング、アラート、状態変化",
+      "models": "Change Point Detection, Event Detection CNN",
+      "difficulty": "中級"
+    },
+    "timeSeriesRegression": {
+      "name": "時系列回帰",
+      "description": "数値ターゲット値でポイントをマーク",
+      "useCases": "需要推定、動的価格設定、値予測",
+      "models": "XGBoost, Random Forest, Neural Networks",
+      "difficulty": "中級"
+    },
+    "clustering": {
+      "name": "系列クラスタリング",
+      "description": "各時系列全体にクラスタを割り当て（グローバル分類モード）",
+      "useCases": "顧客セグメンテーション、パターン分析、行動グルーピング",
+      "models": "K-Shape, DTW-KMeans, K-Means",
+      "difficulty": "中級"
+    },
+    "imputation": {
+      "name": "欠損値補完",
+      "description": "範囲を使用して補完すべき欠損データセクションをマーク",
+      "useCases": "センサーデータのクリーニング、測定のギャップ埋め",
+      "models": "MICE, KNN, Interpolation, BRITS",
+      "difficulty": "中級"
+    },
+    "multi-label-classification": {
+      "name": "マルチラベル分類",
+      "description": "各画像に複数のラベルを割り当て"
+    },
+    "timeseries-classification": {
+      "name": "時系列分類",
+      "description": "時系列全体をカテゴリに分類"
+    },
+    "timeseries-forecasting": {
+      "name": "時系列予測",
+      "description": "過去のデータから将来の値を予測"
+    },
+    "anomaly-detection": {
+      "name": "異常検知",
+      "description": "時系列の異常なパターンを検出"
+    },
+    "timeseries-segmentation": {
+      "name": "時系列セグメンテーション",
+      "description": "時系列を異なる領域に分割"
+    },
+    "pattern-recognition": {
+      "name": "パターン認識",
+      "description": "時系列の繰り返しパターンを識別"
+    },
+    "event-detection": {
+      "name": "イベント検出",
+      "description": "時系列の特定のイベントを検出"
+    },
+    "timeseries-regression": {
+      "name": "時系列回帰",
+      "description": "時系列から数値を予測"
+    },
+    "object3DDetection": {
+      "name": "3Dオブジェクト検出",
+      "description": "3D点群内のオブジェクトを検出",
+      "useCases": "自動運転、ロボティクス",
+      "models": "PointNet++, VoxelNet, PointPillars",
+      "difficulty": "上級"
+    },
+    "semantic3DSegmentation": {
+      "name": "3Dセマンティックセグメンテーション",
+      "description": "3D点群内のポイントを分類",
+      "useCases": "都市マッピング、BIM、建物スキャン",
+      "models": "PointNet, MinkowskiNet, KPConv",
+      "difficulty": "上級"
+    },
+    "instance3DSegmentation": {
+      "name": "3Dインスタンスセグメンテーション",
+      "description": "3D内の個々のオブジェクトを分離",
+      "useCases": "ロボティクス、オブジェクト操作",
+      "models": "PointGroup, SoftGroup, Mask3D",
+      "difficulty": "上級"
+    },
+    "pointCloudClassification": {
+      "name": "点群分類",
+      "description": "点群全体を分類",
+      "useCases": "3Dオブジェクト認識",
+      "models": "PointNet, DGCNN, PointTransformer",
+      "difficulty": "上級"
+    },
+    "meshSegmentation": {
+      "name": "メッシュセグメンテーション",
+      "description": "3Dポリゴンメッシュをセグメント化",
+      "useCases": "3Dモデリング、幾何学的分析",
+      "models": "MeshCNN, TextureNet",
+      "difficulty": "上級"
+    },
+    "pose3DEstimation": {
+      "name": "3Dポーズ推定",
+      "description": "3Dでの人体ポーズを推定",
+      "useCases": "モーションキャプチャ、アニメーション",
+      "models": "VideoPose3D, VoxelPose",
+      "difficulty": "上級"
+    },
+    "keypoint3DDetection": {
+      "name": "3Dキーポイント検出",
+      "description": "3D内の興味ポイントを検出",
+      "useCases": "点群レジストレーション、SLAM",
+      "models": "D3Feat, FCGF, Predator",
+      "difficulty": "上級"
+    },
+    "surfaceReconstruction": {
+      "name": "表面再構築",
+      "description": "点からの表面を再構築",
+      "useCases": "3Dスキャン、文化遺産",
+      "models": "Poisson Surface Reconstruction, COLMAP",
+      "difficulty": "上級"
+    },
+    "slamAnnotation": {
+      "name": "SLAMアノテーション",
+      "description": "位置推定とマッピング用データにアノテーション",
+      "useCases": "モバイルロボティクス、自律ナビゲーション",
+      "models": "ORB-SLAM, LiDAR-SLAM",
+      "difficulty": "上級"
+    },
+    "textClassification": {
+      "name": "テキスト分類",
+      "description": "テキストにカテゴリを割り当て",
+      "useCases": "ニュース分類、スパム検出",
+      "models": "BERT, RoBERTa, DistilBERT",
+      "difficulty": "中級"
+    },
+    "namedEntityRecognition": {
+      "name": "固有表現認識 (NER)",
+      "description": "名前、場所、組織を識別",
+      "useCases": "情報抽出、文書分析",
+      "models": "SpaCy, Flair, BERT-NER",
+      "difficulty": "中級"
+    },
+    "sentimentAnalysis": {
+      "name": "感情分析",
+      "description": "感情を検出（ポジティブ/ネガティブ/ニュートラル）",
+      "useCases": "意見分析、SNS",
+      "models": "VADER, TextBlob, RoBERTa-Sentiment",
+      "difficulty": "中級"
+    },
+    "intentClassification": {
+      "name": "意図分類",
+      "description": "ユーザーの意図を識別",
+      "useCases": "チャットボット、バーチャルアシスタント",
+      "models": "DIET, Rasa NLU, BERT-Intent",
+      "difficulty": "中級"
+    },
+    "relationExtraction": {
+      "name": "関係抽出",
+      "description": "エンティティ間の関係を識別",
+      "useCases": "知識グラフ、テキスト分析",
+      "models": "SpanBERT, LUKE, Relation Extraction BERT",
+      "difficulty": "上級"
+    },
+    "posTagging": {
+      "name": "品詞タグ付け (POS)",
+      "description": "文法カテゴリを識別",
+      "useCases": "言語分析、NLP前処理",
+      "models": "SpaCy, NLTK, Flair",
+      "difficulty": "初級"
+    },
+    "dependencyParsing": {
+      "name": "依存構造解析",
+      "description": "構文構造を分析",
+      "useCases": "言語理解、翻訳",
+      "models": "SpaCy, Stanford Parser",
+      "difficulty": "上級"
+    },
+    "questionAnswering": {
+      "name": "質問応答",
+      "description": "テキストに関する質問に回答",
+      "useCases": "QAアシスタント、情報検索",
+      "models": "BERT-QA, RoBERTa-QA, T5",
+      "difficulty": "上級"
+    },
+    "keyphraseExtraction": {
+      "name": "キーフレーズ抽出",
+      "description": "重要なフレーズを識別",
+      "useCases": "要約、文書索引",
+      "models": "YAKE, KeyBERT, RAKE",
+      "difficulty": "中級"
+    },
+    "entityLinking": {
+      "name": "エンティティリンキング",
+      "description": "エンティティを知識ベースにリンク",
+      "useCases": "データ強化、知識グラフ",
+      "models": "BLINK, ELQ, GENRE",
+      "difficulty": "上級"
+    },
+    "toxicityClassification": {
+      "name": "有害性分類",
+      "description": "有害または攻撃的なコンテンツを検出",
+      "useCases": "コンテンツモデレーション、フィルター",
+      "models": "Perspective API, Detoxify, RoBERTa-Toxicity",
+      "difficulty": "中級"
+    },
+    "languageIdentification": {
+      "name": "言語識別",
+      "description": "テキストの言語を検出",
+      "useCases": "多言語処理、翻訳",
+      "models": "langdetect, fastText, XLM-RoBERTa",
+      "difficulty": "初級"
+    },
+    "tabular": {
+      "name": "テーブルML",
+      "description": "CSV/テーブルデータによる古典的ML"
+    },
+    "useCasesLabel": "ユースケース",
+    "modelsLabel": "推奨モデル",
+    "difficultyLabel": "難易度"
+  },
+  "categories": {
+    "images": "画像アノテーション",
+    "classification": "分類",
+    "timeSeries": "時系列",
+    "tabular": "テーブル / 古典的ML"
+  },
+  "modality": "モダリティ",
+  "initialClasses": "初期クラス（オプション）",
+  "classesPlaceholder": "クラス1, クラス2, クラス3",
+  "classesHelp": "カンマ区切り。後で追加できます。",
+  "imageDimensions": "画像の寸法",
+  "dimensionsAuto": "自動 - 任意のサイズを受け入れ",
+  "dimensionsFixed": "固定 - すべての画像をリサイズ",
+  "targetSize": "ターゲットサイズ",
+  "resizeStrategy": "戦略",
+  "enterName": "プロジェクト名を入力してください",
+  "created": "プロジェクト \"{name}\" が作成されました",
+  "updated": "更新済み",
+  "loaded": "プロジェクト \"{name}\" が読み込まれました",
+  "deleted": "プロジェクトが削除されました",
+  "duplicated": "プロジェクト \"{name}\" が複製されました",
+  "renamed": "プロジェクト名が変更されました",
+  "imported": "プロジェクト \"{name}\" がインポートされました",
+  "exported": "プロジェクトがエクスポートされました",
+  "configExported": "設定がエクスポートされました",
+  "selectFirst": "まずプロジェクトを選択してください",
+  "noProjects": "利用可能なプロジェクトがありません",
+  "manageProjects": "プロジェクト管理",
+  "renameProject": "プロジェクト名変更",
+  "newName": "新しい名前",
+  "images": "画像",
+  "annotations": "アノテーション",
+  "exportBackup": "削除前に.tixバックアップをダウンロード",
+  "deleteWarning": {
+    "title": "⚠️ 警告：永久的な削除",
+    "confirmTitle": "削除を確認しますか？",
+    "projectName": "プロジェクト：",
+    "message": "このプロジェクトを永久的に削除しようとしています。",
+    "permanent": "この操作は元に戻せません",
+    "allData": "すべての画像とアノテーションが削除されます",
+    "noUndo": "削除されたデータを復元する方法はありません",
+    "recommendation": "💡 推奨：削除前にプロジェクトを.tix形式でバックアップとしてエクスポートしてください"
+  }
+}

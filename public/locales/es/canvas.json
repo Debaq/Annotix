@@ -1,0 +1,13 @@
+{
+  "zoomIn": "Zoom In",
+  "zoomOut": "Zoom Out",
+  "resetZoom": "Restablecer Zoom",
+  "fitScreen": "Ajustar a pantalla",
+  "toggleLabels": "Mostrar/Ocultar Etiquetas",
+  "toggleGrid": "Mostrar/Ocultar Grilla",
+  "prevImage": "Imagen Anterior (← / RePag)",
+  "nextImage": "Imagen Siguiente (→ / AvPag)",
+  "reset": "Reiniciar",
+  "tools": "Herramientas",
+  "zoom": "Zoom"
+}

@@ -1,0 +1,9 @@
+{
+  "title": "Статистика",
+  "images": "Изображения",
+  "annotated": "Аннотировано",
+  "labels": "Метки",
+  "classes": "Классы",
+  "progress": "изображений аннотировано",
+  "annotations": "stats.annotations"
+}
