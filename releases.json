@@ -127,5 +127,39 @@
       }
     ],
     "issues": []
+  },
+  {
+    "code": "mtfki",
+    "version": "2.0.2",
+    "buildNumber": 9,
+    "date": "2026-03-03T13:44:12Z",
+    "commits": [
+      {
+        "hash": "f86ea6c",
+        "message": "CI: generar BUILD_CODE y changelog.ts en workflows Linux y Windows"
+      },
+      {
+        "hash": "8036a68",
+        "message": "Release flow: mergear PR antes de crear tag sobre main"
+      }
+    ],
+    "issues": []
+  },
+  {
+    "code": "qkskw",
+    "version": "2.0.2",
+    "buildNumber": 8,
+    "date": "2026-03-03T13:44:12Z",
+    "commits": [
+      {
+        "hash": "f86ea6c",
+        "message": "CI: generar BUILD_CODE y changelog.ts en workflows Linux y Windows"
+      },
+      {
+        "hash": "8036a68",
+        "message": "Release flow: mergear PR antes de crear tag sobre main"
+      }
+    ],
+    "issues": []
   }
 ]
