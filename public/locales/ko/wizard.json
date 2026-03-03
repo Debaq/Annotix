@@ -1,0 +1,148 @@
+{
+  "trigger": "어떤 것을 선택해야 할지 모르겠나요?",
+  "title": "프로젝트 유형 도우미",
+  "subtitle": "몇 가지 질문에 답하면 최적의 프로젝트 유형을 추천해 드립니다.",
+  "bestMatch": "최적",
+  "useThis": "이것 사용",
+  "noResults": "일치하는 유형을 찾을 수 없습니다. 다른 답변을 시도하세요.",
+  "resultsTitle": "추천 결과",
+  "questions": {
+    "dataType": {
+      "title": "어떤 종류의 데이터로 작업하시나요?",
+      "options": {
+        "images": "이미지",
+        "timeseries": "시계열",
+        "tabular": "테이블 데이터"
+      },
+      "optionsDesc": {
+        "images": "사진, 스크린샷, 스캔, 프레임",
+        "timeseries": "센서, 메트릭, 신호, 금융 데이터",
+        "tabular": "CSV 파일, 스프레드시트, 구조화된 테이블"
+      }
+    },
+    "goalImages": {
+      "title": "이미지로 무엇을 하고 싶으신가요?",
+      "options": {
+        "classify": "분류",
+        "detectLocate": "탐지 및 위치 파악",
+        "segment": "분할",
+        "pointsKeypts": "포인트 표시"
+      },
+      "optionsDesc": {
+        "classify": "전체 이미지에 라벨 할당",
+        "detectLocate": "박스로 객체를 찾고 위치 파악",
+        "segment": "픽셀 수준에서 객체 윤곽 그리기",
+        "pointsKeypts": "객체에 키포인트나 랜드마크 배치"
+      }
+    },
+    "goalTimeseries": {
+      "title": "시계열 데이터로 무엇을 하고 싶으신가요?",
+      "options": {
+        "tsClassify": "분류",
+        "tsPredict": "예측",
+        "tsAnomaly": "이상 탐지",
+        "tsAnalyze": "분석"
+      },
+      "optionsDesc": {
+        "tsClassify": "전체 시리즈에 카테고리 할당",
+        "tsPredict": "미래 값 예측 또는 갭 채우기",
+        "tsAnomaly": "비정상적이거나 예상치 못한 패턴 찾기",
+        "tsAnalyze": "분할, 패턴 찾기 또는 클러스터링"
+      }
+    },
+    "classifyDetail": {
+      "title": "이미지당 라벨 수는?",
+      "options": {
+        "singleLabel": "라벨 1개",
+        "multiLabel": "라벨 여러 개"
+      },
+      "optionsDesc": {
+        "singleLabel": "각 이미지는 정확히 하나의 클래스에 속함",
+        "multiLabel": "이미지에 여러 라벨을 동시에 부여 가능"
+      }
+    },
+    "detectDetail": {
+      "title": "어떤 종류의 바운딩 박스?",
+      "options": {
+        "axisAligned": "일반 박스",
+        "rotated": "회전 박스"
+      },
+      "optionsDesc": {
+        "axisAligned": "수평/수직 사각형 (가장 일반적)",
+        "rotated": "어떤 각도로든 회전 가능한 박스"
+      }
+    },
+    "segmentDetail": {
+      "title": "어떤 종류의 분할?",
+      "options": {
+        "polygonOutline": "폴리곤 윤곽",
+        "pixelMask": "픽셀 마스크",
+        "instanceSeg": "인스턴스 분할"
+      },
+      "optionsDesc": {
+        "polygonOutline": "객체 주위에 점으로 폴리곤 그리기",
+        "pixelMask": "객체에 픽셀 수준 마스크 페인팅",
+        "instanceSeg": "각 개별 객체 인스턴스 분리"
+      }
+    },
+    "pointsDetail": {
+      "title": "어떤 종류의 포인트?",
+      "options": {
+        "connectedPose": "연결된 스켈레톤",
+        "freePoints": "독립 포인트"
+      },
+      "optionsDesc": {
+        "connectedPose": "선으로 연결된 포인트 (자세 추정)",
+        "freePoints": "연결 없는 독립 포인트"
+      }
+    },
+    "tsAnalyzeDetail": {
+      "title": "어떤 종류의 분석?",
+      "options": {
+        "tsSegment": "영역 분할",
+        "tsPattern": "패턴 찾기",
+        "tsEvent": "이벤트 탐지",
+        "tsCluster": "유사 그룹화"
+      },
+      "optionsDesc": {
+        "tsSegment": "시리즈를 라벨이 붙은 영역으로 나누기",
+        "tsPattern": "반복되는 패턴이나 모티프 식별",
+        "tsEvent": "특정 이벤트가 언제 발생하는지 감지",
+        "tsCluster": "유사한 시리즈나 세그먼트 그룹화"
+      }
+    },
+    "tsPredictDetail": {
+      "title": "어떤 종류의 예측?",
+      "options": {
+        "tsForecast": "미래 예측",
+        "tsRegression": "값 회귀",
+        "tsImpute": "결측 데이터 보완"
+      },
+      "optionsDesc": {
+        "tsForecast": "시리즈의 미래 값 예측",
+        "tsRegression": "특성에서 연속 값 예측",
+        "tsImpute": "누락되거나 손상된 데이터 포인트 재구성"
+      }
+    }
+  },
+  "reasons": {
+    "bbox": "축 정렬 사각형 박스로 객체를 탐지하는 데 이상적",
+    "obb": "항공 뷰나 텍스트 같은 회전된 객체에 완벽",
+    "mask": "정밀한 시맨틱 분할을 위한 픽셀 수준 마스크",
+    "polygon": "정확한 객체 경계를 위한 폴리곤 윤곽 그리기",
+    "instance-segmentation": "픽셀 수준에서 각 객체 인스턴스 분리",
+    "keypoints": "자세 추정을 위한 연결된 스켈레톤 포인트 표시",
+    "landmarks": "객체에 독립 참조 포인트 배치",
+    "classification": "간단한 분류를 위한 이미지당 하나의 라벨",
+    "multi-label-classification": "여러 라벨을 동시에 이미지에 태깅",
+    "timeseries-classification": "전체 시계열을 카테고리로 분류",
+    "timeseries-forecasting": "과거 데이터 기반 미래 값 예측",
+    "timeseries-regression": "시계열 특성에서 연속 값 예측",
+    "anomaly-detection": "데이터에서 비정상적 패턴과 이상값 찾기",
+    "timeseries-segmentation": "시계열을 라벨이 붙은 세그먼트로 나누기",
+    "pattern-recognition": "반복되는 모티프와 패턴 발견",
+    "event-detection": "시리즈에서 특정 이벤트가 언제 발생하는지 식별",
+    "clustering": "유사한 시계열 또는 세그먼트 그룹화",
+    "imputation": "누락되거나 손상된 데이터 포인트 재구성"
+  }
+}

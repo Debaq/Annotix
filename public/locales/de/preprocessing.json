@@ -1,0 +1,29 @@
+{
+  "title": "Bilder vorverarbeiten",
+  "detected": "{count} nicht-quadratische Bilder erkannt",
+  "description": "Die Bilder werden auf eine quadratische Größe angepasst, um das Training zu optimieren. Wähle die Skalierungsstrategie:",
+  "targetSize": "Zielgröße (Pixel)",
+  "recommended": "Empfohlen: {size}px",
+  "strategy": "Skalierungsstrategie",
+  "strategies": {
+    "resize": {
+      "name": "Skalieren + Padding",
+      "description": "Verkleinert das Bild und fügt Padding hinzu (optimiert Speicher und Platz)"
+    },
+    "padding": {
+      "name": "Nur Padding",
+      "description": "Behält die Originalgröße bei und fügt Padding hinzu (bessere Qualität)"
+    }
+  },
+  "options": {
+    "apply": "Vorverarbeitung anwenden",
+    "skip": "Ohne Vorverarbeitung hochladen"
+  },
+  "progress": "Verarbeite Bild {current} von {total}...",
+  "complete": "{count} Bilder erfolgreich vorverarbeitet",
+  "preview": "Vorschau",
+  "original": "Original",
+  "processed": "Verarbeitet",
+  "aspectRatio": "Originales Seitenverhältnis beibehalten",
+  "paddingInfo": "Symmetrisches schwarzes Padding wird hinzugefügt"
+}

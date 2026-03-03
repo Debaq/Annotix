@@ -1,0 +1,29 @@
+{
+  "title": "图像预处理",
+  "detected": "检测到 {count} 张非正方形图像",
+  "description": "图像将被调整为正方形以优化训练。选择调整大小策略：",
+  "targetSize": "目标大小（像素）",
+  "recommended": "推荐：{size}px",
+  "strategy": "调整大小策略",
+  "strategies": {
+    "resize": {
+      "name": "调整大小 + 填充",
+      "description": "缩小图像并添加填充（优化空间和内存）"
+    },
+    "padding": {
+      "name": "仅填充",
+      "description": "保持原始大小并添加填充（更好的质量）"
+    }
+  },
+  "options": {
+    "apply": "应用预处理",
+    "skip": "不预处理直接上传"
+  },
+  "progress": "正在处理图像 {current} / {total}...",
+  "complete": "{count} 张图像预处理成功",
+  "preview": "预览",
+  "original": "原始",
+  "processed": "已处理",
+  "aspectRatio": "原始宽高比已保留",
+  "paddingInfo": "将添加对称的黑色填充"
+}

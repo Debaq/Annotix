@@ -1,0 +1,25 @@
+{
+  "title": "工具",
+  "bbox": "Box",
+  "obb": "OBB",
+  "mask": "Mask",
+  "polygon": "多边形",
+  "keypoints": "Keypoints",
+  "landmarks": "Landmarks",
+  "select": "Select",
+  "pan": "Pan",
+  "eraseMode": "橡皮擦",
+  "newInstance": "新实例",
+  "tooltips": {
+    "bbox": "Bounding Box (B)",
+    "obb": "Oriented Box (O)",
+    "mask": "遮罩 (M)",
+    "polygon": "多边形 (P)",
+    "keypoints": "Keypoints (K)",
+    "landmarks": "Landmarks (L)",
+    "point": "点 (P)",
+    "range": "范围 (R)",
+    "select": "选择 (V)",
+    "pan": "Pan (H)"
+  }
+}

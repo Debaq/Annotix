@@ -1,0 +1,40 @@
+{
+  "noProjectSelected": "未选择项目。请选择一个时间序列项目。",
+  "importCSV": "导入 CSV 文件",
+  "importSuccess": "CSV 导入成功！",
+  "selectCSV": "选择 CSV 文件",
+  "hasHeader": "第一行包含表头",
+  "timestampColumn": "时间戳列（基于 0 的索引）",
+  "timestampColumnHelp": "时间戳的列索引（默认：0 = 第一列）",
+  "import": "导入",
+  "csvFormatInfo": "CSV 格式：第一列应为时间戳，其余列为数值。例如：时间,值1,值2",
+  "noSeriesSelected": "未选择时间序列。请从图库中选择一个序列。",
+  "dataPoints": "个数据点",
+  "series": "个序列",
+  "annotations": "标注",
+  "annotationsCount": "个标注",
+  "addAnnotation": "添加标注",
+  "totalSeries": "总序列数",
+  "annotated": "已标注",
+  "pending": "待处理",
+  "seriesList": "时间序列列表",
+  "noSeriesYet": "暂无时间序列",
+  "importCSVToStart": "导入 CSV 文件以开始",
+  "deleteConfirm": "确定要删除此时间序列吗？",
+  "tools": {
+    "select": "选择",
+    "point": "点",
+    "range": "范围",
+    "event": "事件",
+    "anomaly": "异常",
+    "classification": "分类"
+  },
+  "clearAnnotations": "清除所有标注",
+  "noAnnotations": "暂无标注。选择一个工具并点击图表以添加标注。",
+  "instructions": {
+    "point": "点击图表以标记标注点",
+    "range": "点击设置起点，然后再次点击设置终点",
+    "event": "点击图表以标记事件",
+    "anomaly": "点击图表以标记异常"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "title": "データセットをインポート",
+  "button": "インポート",
+  "selectFile": "アノテーション済みデータセットを含むZIPファイルを選択",
+  "dragFiles": "ZIPファイルをここにドラッグ",
+  "orClickToSelect": "またはクリックして選択",
+  "analyzing": "データセットを分析中",
+  "configureProject": "インポートされたプロジェクトを設定",
+  "projectName": "プロジェクト名",
+  "projectType": "プロジェクトタイプ",
+  "classesCount": "クラス",
+  "classes": "クラス",
+  "format": "検出されたフォーマット",
+  "import": "プロジェクトをインポート",
+  "importing": "データセットをインポート中...",
+  "processing": "データセットを処理中...",
+  "success": "プロジェクトのインポートに成功しました",
+  "successMessage": "データセットがインポートされ、使用準備ができました",
+  "openProject": "プロジェクトを開く",
+  "error": {
+    "noFile": "ZIPファイルを選択してください",
+    "invalidZip": "有効なZIPファイルを選択してください",
+    "unsupportedFormat": "サポートされていないデータセット形式です。サポート形式：YOLO、COCO、Pascal VOC、CSV、クラス別フォルダ、U-Netマスク",
+    "corruptedData": "データセットが破損しているか不完全です",
+    "parse": "データセットの解析エラーです。ファイル形式を確認してください",
+    "invalidProjectName": "プロジェクト名に無効な文字が含まれています。英数字、ハイフン、アンダースコア、ドットのみを使用してください"
+  }
+}

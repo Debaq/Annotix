@@ -1,0 +1,40 @@
+{
+  "noProjectSelected": "Kein Projekt ausgewählt. Bitte wähle ein Zeitreihenprojekt aus.",
+  "importCSV": "CSV-Datei importieren",
+  "importSuccess": "CSV erfolgreich importiert!",
+  "selectCSV": "CSV-Datei auswählen",
+  "hasHeader": "Die erste Zeile enthält Überschriften",
+  "timestampColumn": "Timestamp-Spalte (0-basierter Index)",
+  "timestampColumnHelp": "Spaltenindex für Timestamps (Standard: 0 = erste Spalte)",
+  "import": "Importieren",
+  "csvFormatInfo": "CSV-Format: Die erste Spalte sollte Timestamps enthalten, die restlichen Spalten sind Werte. Beispiel: zeit,wert1,wert2",
+  "noSeriesSelected": "Keine Zeitreihe ausgewählt. Bitte wähle eine Serie aus der Galerie.",
+  "dataPoints": "Datenpunkte",
+  "series": "Serien",
+  "annotations": "Annotationen",
+  "annotationsCount": "Annotationen",
+  "addAnnotation": "Annotation hinzufügen",
+  "totalSeries": "Serien gesamt",
+  "annotated": "Annotiert",
+  "pending": "Ausstehend",
+  "seriesList": "Zeitreihenliste",
+  "noSeriesYet": "Noch keine Zeitreihen",
+  "importCSVToStart": "Importiere eine CSV-Datei, um zu beginnen",
+  "deleteConfirm": "Bist du sicher, dass du diese Zeitreihe löschen möchtest?",
+  "tools": {
+    "select": "Auswählen",
+    "point": "Punkt",
+    "range": "Bereich",
+    "event": "Ereignis",
+    "anomaly": "Anomalie",
+    "classification": "Klassifikation"
+  },
+  "clearAnnotations": "Alle Annotationen löschen",
+  "noAnnotations": "Noch keine Annotationen. Wähle ein Werkzeug und klicke auf das Diagramm, um Annotationen hinzuzufügen.",
+  "instructions": {
+    "point": "Klicke auf das Diagramm, um einen Annotationspunkt zu markieren",
+    "range": "Klicke, um den Startpunkt festzulegen, dann klicke erneut für den Endpunkt",
+    "event": "Klicke auf das Diagramm, um ein Ereignis zu markieren",
+    "anomaly": "Klicke auf das Diagramm, um eine Anomalie zu markieren"
+  }
+}

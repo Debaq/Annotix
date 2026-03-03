@@ -1,0 +1,11 @@
+{
+  "toolName": "Landmark",
+  "placed": "Landmark \"{name}\" placed",
+  "selectFirst": "Select a landmark first",
+  "enterName": "Please enter a name",
+  "renamed": "Landmark renamed",
+  "renumbered": "{count} landmarks renumbered",
+  "renameLandmark": "Rename Landmark",
+  "landmarkName": "Landmark Name:",
+  "namePlaceholder": "e.g., Center, Top-Left, Entrance"
+}

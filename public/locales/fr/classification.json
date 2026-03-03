@@ -1,0 +1,16 @@
+{
+  "selectOne": "Sélectionnez l'étiquette correcte",
+  "selectMultiple": "Sélectionnez les étiquettes applicables",
+  "singleHint": "Vous ne pouvez sélectionner qu'une seule étiquette",
+  "multiHint": "Vous pouvez sélectionner plusieurs étiquettes",
+  "noLabels": "Aucune étiquette assignée",
+  "labeled": "Étiquetée",
+  "selectLabel": "Sélectionnez une étiquette",
+  "selectLabels": "Sélectionnez des étiquettes",
+  "selected": "sélectionnées",
+  "multiLabel": "Classification Multi-Étiquettes",
+  "singleLabel": "Classification Simple",
+  "noImageSelected": "Aucune image sélectionnée. Veuillez sélectionner une image depuis la galerie.",
+  "multiLabelInstructions": "Sélectionnez une ou plusieurs étiquettes applicables à cette image. Appuyez sur Ctrl+S pour enregistrer.",
+  "singleLabelInstructions": "Sélectionnez l'étiquette qui décrit le mieux cette image. Appuyez sur Ctrl+S pour enregistrer."
+}

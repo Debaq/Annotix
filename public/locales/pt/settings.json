@@ -1,0 +1,135 @@
+{
+  "title": "Configurações",
+  "back": "Voltar",
+  "sections": {
+    "general": "Geral",
+    "pythonEnv": "Ambiente Python",
+    "trainingModels": "Modelos de Treinamento",
+    "cloudProviders": "Provedores Cloud",
+    "keyboardShortcuts": "Atalhos de Teclado",
+    "browserAutomation": "Automação do Navegador"
+  },
+  "general": {
+    "colorMode": "Aparência",
+    "light": "Claro",
+    "dark": "Escuro",
+    "dracula": "Dracula",
+    "system": "Sistema",
+    "language": "Idioma",
+    "workDir": "Diretório de Trabalho",
+    "workDirHelp": "Pasta onde todos os seus projetos e dados são armazenados.",
+    "changeWorkDir": "Selecionar novo diretório de trabalho",
+    "change": "Alterar",
+    "about": "Sobre",
+    "buildDate": "Data de compilação",
+    "aboutDescription": "Desenvolvido no laboratório <strong>TecMedHub</strong> da Universidad Austral de Chile, como parte do projeto doutoral em Bioengenharia do Hospital Italiano de Buenos Aires por <strong>Nicolás Baier</strong>.",
+    "team": "Equipe",
+    "changelog": "Changelog",
+    "roleNicolas": "Desenvolvimento & direção",
+    "roleFelipe": "Estagiário 2026 Eng. da Computação, UACh"
+  },
+  "pythonEnv": {
+    "systemPython": "Python do Sistema",
+    "systemPythonFound": "Python 3 encontrado: {{python}}",
+    "systemPythonNotFound": "Python 3 não encontrado no PATH. Instale Python 3.10+.",
+    "venv": "Ambiente Virtual",
+    "venvNotExists": "Nenhum ambiente virtual criado. Crie um para usar as funções de treinamento.",
+    "status": "Status",
+    "active": "Ativo",
+    "pythonVersion": "Versão Python",
+    "diskUsage": "Uso de disco",
+    "path": "Caminho",
+    "createVenv": "Criar Ambiente",
+    "removeVenv": "Remover Ambiente",
+    "pleaseWait": "Isso pode levar vários minutos, por favor não feche o aplicativo."
+  },
+  "packages": {
+    "title": "Pacotes Instalados",
+    "name": "Nome",
+    "version": "Versão",
+    "updateAll": "Atualizar Tudo"
+  },
+  "pytorch": {
+    "title": "PyTorch",
+    "cudaActive": "Ativo",
+    "cpuOnly": "Somente CPU",
+    "nvidiaDetected": "GPU NVIDIA detectada",
+    "driverVersion": "Driver",
+    "suggestedCuda": "CUDA sugerido",
+    "noNvidia": "Nenhuma GPU NVIDIA detectada (modo CPU será usado)",
+    "selectVariant": "Variante PyTorch",
+    "install": "Instalar PyTorch",
+    "reinstall": "Reinstalar PyTorch"
+  },
+  "trainingModels": {
+    "totalModels": "Modelos",
+    "tasks": "Tarefas",
+    "task": "Tarefa",
+    "model": "Modelo",
+    "params": "Params",
+    "sizes": "Tamanhos",
+    "recommended": "Recomendado",
+    "readOnly": "Somente leitura",
+    "searchPlaceholder": "Pesquisar modelos por nome, descrição ou backend...",
+    "clearFilters": "Limpar filtros",
+    "noResults": "Nenhum modelo corresponde aos filtros atuais",
+    "overview": "Visão geral",
+    "selectBackend": "Selecione um backend para explorar seus modelos",
+    "modelCount": "modelos",
+    "datasetFormat": "Dataset",
+    "pipPackages": "Pacotes",
+    "viewScript": "Ver Script",
+    "supportedTasks": "Tarefas suportadas",
+    "availableSizes": "Tamanhos disponíveis",
+    "defaultConfig": "Configuração padrão",
+    "parameter": "Parâmetro",
+    "type": "Tipo",
+    "defaultValue": "Padrão",
+    "range": "Faixa",
+    "backTo": "Voltar para",
+    "prepareBackend": "Preparar backend",
+    "filterByTask": "Filtrar por tarefa",
+    "allModels": "Todos os modelos"
+  },
+  "cloud": {
+    "gcp": {
+      "title": "Google Cloud Platform",
+      "description": "Configure as credenciais GCP para Vertex AI e Colab Enterprise",
+      "serviceAccount": "JSON da Conta de Serviço",
+      "serviceAccountPlaceholder": "Selecionar arquivo JSON da conta de serviço...",
+      "projectId": "ID do Projeto GCP",
+      "region": "Região",
+      "bucket": "Bucket GCS"
+    },
+    "kaggle": {
+      "title": "Kaggle",
+      "description": "Insira suas credenciais de API do Kaggle.",
+      "getKey": "Obter API Key →",
+      "username": "Nome de usuário",
+      "apiKey": "API Key"
+    },
+    "lightning": {
+      "title": "Lightning AI",
+      "description": "Configure as credenciais do Lightning AI para treinamento GPU gratuito.",
+      "getKey": "Get API Key →",
+      "apiKey": "API Key"
+    },
+    "huggingface": {
+      "title": "Hugging Face",
+      "description": "Insira suas credenciais do Hugging Face para AutoTrain.",
+      "getToken": "Get Token →",
+      "username": "Username",
+      "token": "Access Token"
+    },
+    "saturn": {
+      "title": "Saturn Cloud",
+      "description": "Insira seu token API do Saturn Cloud para instâncias GPU gratuitas.",
+      "getToken": "Get API Token →",
+      "apiToken": "API Token"
+    },
+    "validate": "Validar",
+    "validating": "Validando...",
+    "valid": "Válido",
+    "invalid": "Inválido"
+  }
+}

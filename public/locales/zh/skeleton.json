@@ -1,0 +1,33 @@
+{
+  "addKeypointClass": "添加关键点类别",
+  "step1": "步骤 1：基本信息",
+  "step2": "步骤 2：选择骨架预设",
+  "className": "类别名称",
+  "classNamePlaceholder": "例如：人物、手、面部",
+  "classColor": "类别颜色",
+  "selectPreset": "为此类别选择一个骨架预设：",
+  "presetInfo": "每个类别可以有自己的骨架。这允许您在同一项目中标注不同类型的对象。",
+  "points": "个点",
+  "connections": "个连接",
+  "previous": "上一步",
+  "next": "下一步",
+  "finish": "完成",
+  "presets": {
+    "coco17": "COCO 17 Keypoints",
+    "coco17Desc": "完整人体骨架（COCO 数据集）",
+    "mediapipePose": "MediaPipe Pose 33",
+    "mediapipePoseDesc": "详细的全身姿态",
+    "mediapipeHand": "MediaPipe Hand 21",
+    "mediapipeHandDesc": "详细的手部关节",
+    "openpose25": "OpenPose 25",
+    "openpose25Desc": "带手部的 OpenPose 骨架",
+    "facial68": "Facial Landmarks 68",
+    "facial68Desc": "详细的面部特征点",
+    "facial5": "Facial 5 Points",
+    "facial5Desc": "基本面部特征点（眼睛、鼻子、嘴巴）",
+    "animalQuad": "四足动物",
+    "animalQuadDesc": "四足动物骨架",
+    "custom": "自定义",
+    "customDesc": "定义您自己的骨架"
+  }
+}

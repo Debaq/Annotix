@@ -1,0 +1,9 @@
+{
+  "toolName": "Polígono",
+  "clickToAdd": "Click para agregar puntos. Doble click o Enter para cerrar.",
+  "needMinPoints": "Necesitas al menos {min} puntos para crear un polígono",
+  "created": "Polígono creado",
+  "cancelled": "Dibujo cancelado",
+  "cannotDeletePoint": "No se puede eliminar punto. Se requieren mínimo {min} puntos.",
+  "pointDeleted": "Punto eliminado"
+}

@@ -1,0 +1,25 @@
+{
+  "title": "ツール",
+  "bbox": "ボックス",
+  "obb": "OBB",
+  "mask": "マスク",
+  "polygon": "ポリゴン",
+  "keypoints": "キーポイント",
+  "landmarks": "ランドマーク",
+  "select": "選択",
+  "pan": "パン",
+  "eraseMode": "消しゴム",
+  "newInstance": "新しいインスタンス",
+  "tooltips": {
+    "bbox": "バウンディングボックス (B)",
+    "obb": "回転ボックス (O)",
+    "mask": "マスク (M)",
+    "polygon": "ポリゴン (P)",
+    "keypoints": "キーポイント (K)",
+    "landmarks": "ランドマーク (L)",
+    "point": "ポイント (P)",
+    "range": "範囲 (R)",
+    "select": "選択 (V)",
+    "pan": "パン (H)"
+  }
+}

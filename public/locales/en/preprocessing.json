@@ -1,0 +1,29 @@
+{
+  "title": "Preprocess Images",
+  "detected": "Detected {count} non-square images",
+  "description": "Images will be adjusted to a square size to optimize training. Choose the resizing strategy:",
+  "targetSize": "Target size (pixels)",
+  "recommended": "Recommended: {size}px",
+  "strategy": "Resizing strategy",
+  "strategies": {
+    "resize": {
+      "name": "Resize + Padding",
+      "description": "Scales down the image and adds padding (optimizes space and memory)"
+    },
+    "padding": {
+      "name": "Padding Only",
+      "description": "Keeps original size and adds padding (better quality)"
+    }
+  },
+  "options": {
+    "apply": "Apply preprocessing",
+    "skip": "Upload without preprocessing"
+  },
+  "progress": "Processing image {current} of {total}...",
+  "complete": "{count} images preprocessed successfully",
+  "preview": "Preview",
+  "original": "Original",
+  "processed": "Processed",
+  "aspectRatio": "Original aspect ratio preserved",
+  "paddingInfo": "Symmetric black padding will be added"
+}

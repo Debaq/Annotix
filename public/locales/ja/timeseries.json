@@ -1,0 +1,40 @@
+{
+  "noProjectSelected": "プロジェクトが選択されていません。時系列プロジェクトを選択してください。",
+  "importCSV": "CSVファイルをインポート",
+  "importSuccess": "CSVが正常にインポートされました！",
+  "selectCSV": "CSVファイルを選択",
+  "hasHeader": "最初の行にヘッダーが含まれている",
+  "timestampColumn": "タイムスタンプ列（0始まりのインデックス）",
+  "timestampColumnHelp": "タイムスタンプの列インデックス（デフォルト：0 = 最初の列）",
+  "import": "インポート",
+  "csvFormatInfo": "CSV形式：最初の列はタイムスタンプ、残りの列は値。例：時間,値1,値2",
+  "noSeriesSelected": "時系列が選択されていません。ギャラリーから系列を選択してください。",
+  "dataPoints": "データポイント",
+  "series": "系列",
+  "annotations": "アノテーション",
+  "annotationsCount": "アノテーション",
+  "addAnnotation": "アノテーションを追加",
+  "totalSeries": "系列合計",
+  "annotated": "アノテーション済み",
+  "pending": "保留中",
+  "seriesList": "時系列リスト",
+  "noSeriesYet": "まだ時系列がありません",
+  "importCSVToStart": "CSVファイルをインポートして開始",
+  "deleteConfirm": "この時系列を削除してもよろしいですか？",
+  "tools": {
+    "select": "選択",
+    "point": "ポイント",
+    "range": "範囲",
+    "event": "イベント",
+    "anomaly": "異常",
+    "classification": "分類"
+  },
+  "clearAnnotations": "すべてのアノテーションをクリア",
+  "noAnnotations": "まだアノテーションがありません。ツールを選択してグラフをクリックしてアノテーションを追加。",
+  "instructions": {
+    "point": "グラフをクリックしてアノテーションポイントをマーク",
+    "range": "クリックして開始点を設定し、再度クリックして終了点を設定",
+    "event": "グラフをクリックしてイベントをマーク",
+    "anomaly": "グラフをクリックして異常をマーク"
+  }
+}

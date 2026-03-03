@@ -1,0 +1,34 @@
+{
+  "title": "Projekte",
+  "subtitle": "Verwalte deine Annotationsprojekte",
+  "create": "Projekt erstellen",
+  "createDescription": "Starte ein neues Annotationsprojekt",
+  "description": "Ändere den Namen oder verwalte die Klassen des Projekts.",
+  "descriptionLabel": "Beschreibung",
+  "descriptionPlaceholder": "Projektnotizen oder Kommentare...",
+  "name": "Projektname",
+  "namePlaceholder": "Mein Annotix-Projekt",
+  "type": {
+    "label": "Projekttyp",
+    "bbox": "Bounding Box",
+    "bboxDescription": "Objekterkennung mit Begrenzungsrahmen",
+    "mask": "Maske",
+    "maskDescription": "Instanzsegmentierung mit Masken"
+  },
+  "typeSelectHelper": "Wähle den Annotationstyp entsprechend deinem Trainingsziel",
+  "classes": "Klassen",
+  "open": "Öffnen",
+  "delete": "Löschen",
+  "settings": "Projekteinstellungen",
+  "configure": "Konfigurieren",
+  "edit": "Projekt bearbeiten",
+  "saveChanges": "Änderungen speichern",
+  "stats": {
+    "classes": "Klassen"
+  },
+  "empty": {
+    "title": "Keine Projekte",
+    "description": "Erstelle dein erstes Projekt, um mit der Annotation zu beginnen"
+  },
+  "confirmDelete": "Projektlöschung bestätigen"
+}

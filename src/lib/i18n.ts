@@ -41,16 +41,37 @@ export function saveLanguage(code: string) {
   }
 }
 
-// Load a single locale JSON from public/locales/
+// Namespace files inside public/locales/{lang}/
+const NAMESPACES = [
+  'app', 'common', 'header', 'help', 'shortcuts', 'projects', 'tools',
+  'gallery', 'classes', 'annotations', 'polygon', 'landmarks', 'skeleton',
+  'images', 'actions', 'shortcut', 'canvas', 'stats', 'export', 'import',
+  'projectTypes', 'project', 'notifications', 'tour', 'imageInfo',
+  'preprocessing', 'classification', 'augmentation', 'pwa', 'storage',
+  'inference', 'connector', 'timeseries', 'tabular', 'training', 'setup',
+  'video', 'settings', 'wizard', 'p2p', 'automation',
+] as const;
+
+// Load all namespace files for a locale and merge into one resource bundle
 const loadLocale = async (code: string) => {
-  try {
-    const res = await fetch(`locales/${code}.json`);
-    if (!res.ok) return;
-    const data = await res.json();
-    i18n.addResourceBundle(code, 'translation', data, true, true);
-  } catch {
-    // ignore missing files
+  const entries = await Promise.all(
+    NAMESPACES.map(async (ns) => {
+      try {
+        const res = await fetch(`locales/${code}/${ns}.json`);
+        if (!res.ok) return [ns, {}] as const;
+        return [ns, await res.json()] as const;
+      } catch {
+        return [ns, {}] as const;
+      }
+    }),
+  );
+
+  const merged: Record<string, unknown> = {};
+  for (const [ns, data] of entries) {
+    merged[ns] = data;
   }
+
+  i18n.addResourceBundle(code, 'translation', merged, true, true);
 };
 
 const initialLang = getSavedLanguage();

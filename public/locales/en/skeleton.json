@@ -1,0 +1,33 @@
+{
+  "addKeypointClass": "Add Keypoint Class",
+  "step1": "Step 1: Basic Information",
+  "step2": "Step 2: Select Skeleton Preset",
+  "className": "Class Name",
+  "classNamePlaceholder": "e.g., Person, Hand, Face",
+  "classColor": "Class Color",
+  "selectPreset": "Select a skeleton preset for this class:",
+  "presetInfo": "Each class can have its own skeleton. This allows you to annotate different types of objects in the same project.",
+  "points": "points",
+  "connections": "connections",
+  "previous": "Previous",
+  "next": "Next",
+  "finish": "Finish",
+  "presets": {
+    "coco17": "COCO 17 Keypoints",
+    "coco17Desc": "Full human skeleton (COCO dataset)",
+    "mediapipePose": "MediaPipe Pose 33",
+    "mediapipePoseDesc": "Detailed full body pose",
+    "mediapipeHand": "MediaPipe Hand 21",
+    "mediapipeHandDesc": "Detailed hand joints",
+    "openpose25": "OpenPose 25",
+    "openpose25Desc": "OpenPose skeleton with hands",
+    "facial68": "Facial Landmarks 68",
+    "facial68Desc": "Detailed facial points",
+    "facial5": "Facial 5 Points",
+    "facial5Desc": "Basic facial points (eyes, nose, mouth)",
+    "animalQuad": "Animal Quadruped",
+    "animalQuadDesc": "Skeleton for 4-legged animals",
+    "custom": "Custom",
+    "customDesc": "Define your own skeleton"
+  }
+}

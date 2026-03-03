@@ -1,0 +1,9 @@
+{
+  "welcome": "Bienvenido a Annotix",
+  "description": "Elige una carpeta donde se guardarán tus proyectos. Cada proyecto será una subcarpeta con sus imágenes, anotaciones y configuración.",
+  "selectFolder": "Seleccionar Carpeta de Proyectos",
+  "selectedFolder": "Carpeta seleccionada",
+  "confirm": "Comenzar",
+  "noFolder": "Ninguna carpeta seleccionada",
+  "changeFolder": "Cambiar Carpeta"
+}

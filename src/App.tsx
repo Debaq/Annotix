@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { ManageClassesDialog } from './features/projects/components/ManageClassesDialog';
 import { CLASS_SHORTCUTS } from './features/core/constants';
 import { cn } from '@/lib/utils';
+import { SplashScreen } from './features/core/components/SplashScreen';
 
 // Helper functions
 function isTimeSeriesProject(type: ProjectType): boolean {
@@ -347,18 +348,19 @@ function App() {
     return () => window.removeEventListener('annotix:annotation-created', handleAnnotationCreated);
   }, [addAnnotation]);
 
-  // Loading state while checking setup
+  // Show splash while checking setup
   if (setupComplete === null) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <i className="fas fa-spinner fa-spin text-4xl text-muted-foreground"></i>
-      </div>
-    );
+    return <SplashScreen visible={true} />;
   }
 
   // Show setup screen if not configured
   if (!setupComplete) {
-    return <SetupScreen onComplete={() => setSetupComplete(true)} />;
+    return (
+      <>
+        <SplashScreen visible={false} />
+        <SetupScreen onComplete={() => setSetupComplete(true)} />
+      </>
+    );
   }
 
   return (

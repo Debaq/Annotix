@@ -1,0 +1,185 @@
+{
+  "title": "Configuración",
+  "back": "Volver",
+  "sections": {
+    "general": "General",
+    "pythonEnv": "Entorno Python",
+    "trainingModels": "Modelos de Entrenamiento",
+    "cloudProviders": "Proveedores Cloud",
+    "keyboardShortcuts": "Atajos de Teclado",
+    "browserAutomation": "Automatización del Navegador"
+  },
+  "general": {
+    "colorMode": "Apariencia",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "dracula": "Dracula",
+    "system": "Sistema",
+    "language": "Idioma",
+    "workDir": "Carpeta de Trabajo",
+    "workDirHelp": "Carpeta donde se almacenan todos tus proyectos y datos.",
+    "changeWorkDir": "Seleccionar nueva carpeta de trabajo",
+    "change": "Cambiar",
+    "about": "Acerca de",
+    "buildDate": "Fecha de compilación",
+    "aboutDescription": "Desarrollado en el laboratorio <strong>TecMedHub</strong> de la Universidad Austral de Chile, como parte del proyecto doctoral en Bioingeniería del Hospital Italiano de Buenos Aires de <strong>Nicolás Baier</strong>.",
+    "team": "Equipo",
+    "changelog": "Changelog",
+    "roleNicolas": "Desarrollo & dirección",
+    "roleFelipe": "Interno 2026 Ing. Civil Informática, UACh"
+  },
+  "pythonEnv": {
+    "systemPython": "Python del Sistema",
+    "systemPythonFound": "Python 3 encontrado: {{python}}",
+    "systemPythonNotFound": "No se encontró Python 3 en PATH. Instala Python 3.10+.",
+    "venv": "Entorno Virtual",
+    "venvNotExists": "No hay entorno virtual creado. Crea uno para usar las funciones de entrenamiento.",
+    "status": "Estado",
+    "active": "Activo",
+    "pythonVersion": "Versión de Python",
+    "diskUsage": "Uso de disco",
+    "path": "Ruta",
+    "createVenv": "Crear Entorno",
+    "removeVenv": "Eliminar Entorno",
+    "pleaseWait": "Esto puede tardar varios minutos, por favor no cierres la aplicación."
+  },
+  "packages": {
+    "title": "Paquetes Instalados",
+    "name": "Nombre",
+    "version": "Versión",
+    "updateAll": "Actualizar Todo"
+  },
+  "pytorch": {
+    "title": "PyTorch",
+    "cudaActive": "Activo",
+    "cpuOnly": "Solo CPU",
+    "nvidiaDetected": "GPU NVIDIA detectada",
+    "driverVersion": "Driver",
+    "suggestedCuda": "CUDA sugerida",
+    "noNvidia": "No se detectó GPU NVIDIA (se usará modo CPU)",
+    "selectVariant": "Variante de PyTorch",
+    "install": "Instalar PyTorch",
+    "reinstall": "Reinstalar PyTorch"
+  },
+  "trainingModels": {
+    "totalModels": "Modelos",
+    "tasks": "Tareas",
+    "task": "Tarea",
+    "model": "Modelo",
+    "params": "Params",
+    "sizes": "Tamaños",
+    "recommended": "Recomendado",
+    "readOnly": "Solo lectura",
+    "searchPlaceholder": "Buscar modelos por nombre, descripción o backend...",
+    "clearFilters": "Limpiar filtros",
+    "noResults": "Ningún modelo coincide con los filtros actuales",
+    "overview": "Vista general",
+    "selectBackend": "Selecciona un backend para explorar sus modelos",
+    "modelCount": "modelos",
+    "datasetFormat": "Dataset",
+    "prepareBackend": "Preparar Backend",
+    "pipPackages": "Paquetes",
+    "viewScript": "Ver Script",
+    "supportedTasks": "Tareas soportadas",
+    "availableSizes": "Tamaños disponibles",
+    "defaultConfig": "Configuración por defecto",
+    "parameter": "Parámetro",
+    "type": "Tipo",
+    "defaultValue": "Valor por defecto",
+    "range": "Rango",
+    "backTo": "Volver a",
+    "filterByTask": "Filtrar por tarea",
+    "allModels": "Todos los modelos"
+  },
+  "cloud": {
+    "gcp": {
+      "title": "Google Cloud Platform",
+      "description": "Configura las credenciales de GCP para Vertex AI y Colab Enterprise",
+      "serviceAccount": "JSON de Cuenta de Servicio",
+      "serviceAccountPlaceholder": "Seleccionar archivo JSON de cuenta de servicio...",
+      "projectId": "ID de Proyecto GCP",
+      "region": "Región",
+      "bucket": "Bucket GCS"
+    },
+    "kaggle": {
+      "title": "Kaggle",
+      "description": "Ingresa tus credenciales de API de Kaggle.",
+      "getKey": "Obtener API Key →",
+      "username": "Usuario",
+      "apiKey": "API Key"
+    },
+    "lightning": {
+      "title": "Lightning AI",
+      "description": "Configura las credenciales de Lightning AI para entrenamiento gratuito con GPU.",
+      "getKey": "Get API Key →",
+      "apiKey": "API Key"
+    },
+    "huggingface": {
+      "title": "Hugging Face",
+      "description": "Ingresa tus credenciales de Hugging Face para AutoTrain.",
+      "getToken": "Get Token →",
+      "username": "Username",
+      "token": "Access Token"
+    },
+    "saturn": {
+      "title": "Saturn Cloud",
+      "description": "Ingresa tu API token de Saturn Cloud para instancias GPU gratuitas.",
+      "getToken": "Get API Token →",
+      "apiToken": "API Token"
+    },
+    "validate": "Validar",
+    "validating": "Validando...",
+    "valid": "Válido",
+    "invalid": "Inválido"
+  },
+  "shortcuts": {
+    "description": "Haz clic en una tecla para reasignarla. Presiona Escape para cancelar.",
+    "pressKey": "Presiona una tecla...",
+    "resetAll": "Restaurar todos",
+    "resetOne": "Restaurar al valor original",
+    "conflict": "Esta tecla ya está asignada a \"{{name}}\".",
+    "customize": "Personalizar atajos"
+  },
+  "automation": {
+    "browsers": {
+      "title": "Detección de Navegadores",
+      "description": "Detecta y selecciona un navegador basado en Chromium para tareas de automatización.",
+      "detect": "Detectar Navegadores",
+      "detecting": "Detectando...",
+      "preferred": "Preferido",
+      "testLaunch": "Probar Lanzamiento",
+      "testing": "Probando..."
+    },
+    "provider": {
+      "title": "Asistente LLM por Defecto",
+      "description": "Elige el asistente LLM predeterminado para consultas de IA vía navegador.",
+      "trainingLabel": "Entrenamiento",
+      "llmLabel": "Asistentes LLM",
+      "colab_free": "Google Colab (Gratis)",
+      "kimi": "Kimi (Moonshot)",
+      "qwen": "Qwen Chat",
+      "deepseek": "DeepSeek",
+      "huggingchat": "HuggingChat"
+    },
+    "selectors": {
+      "title": "Editor de Selectores CSS",
+      "description": "Edita los archivos TOML de selectores para cada proveedor. Estos definen cómo la automatización interactúa con cada sitio web.",
+      "restore": "Restaurar"
+    },
+    "advanced": {
+      "title": "Configuración Avanzada",
+      "description": "Ajusta timeouts, reintentos y configuración de la ventana del navegador.",
+      "stepTimeout": "Timeout por Paso",
+      "maxRetries": "Reintentos Máximos",
+      "userActionTimeout": "Timeout de Acción del Usuario",
+      "llmResponseTimeout": "Timeout de Respuesta LLM",
+      "seconds": "segundos",
+      "userDataDir": "Directorio de Datos de Usuario",
+      "userDataDirPlaceholder": "Por defecto (gestionado automáticamente)",
+      "windowSize": "Tamaño de Ventana",
+      "restoreDefaults": "Restaurar Valores por Defecto"
+    },
+    "saved": "Guardado",
+    "saveError": "Error al guardar"
+  }
+}

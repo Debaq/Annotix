@@ -1,0 +1,17 @@
+{
+  "connected": "Connector",
+  "disconnected": "Sem Connector",
+  "connectedMessage": "Connector online - Porta 5000",
+  "checking": "Verificando conexão com Connector...",
+  "connectedReady": "Conectado - Pronto para treinar",
+  "notConnected": "Não foi possível conectar com o Motor Acompanhante",
+  "notConnectedHint": "Certifique-se de que esteja em execução",
+  "offlineMessage": "Não foi possível conectar com o Motor Acompanhante.\n\nVocê baixou e executou o aplicativo de desktop?\nCertifique-se de que 'motor_server.exe' esteja rodando no seu PC.",
+  "downloadTitle": "Motor Acompanhante Não Detectado",
+  "downloadMessage": "Para treinar modelos localmente, você precisa baixar e instalar o Motor Acompanhante do Annotix.",
+  "downloadHint": "O Motor Acompanhante será executado em segundo plano no seu PC e permitirá treinar modelos com seus dados anotados.",
+  "download": "Baixar Motor Acompanhante",
+  "downloadStarted": "Download iniciado. Execute o instalador quando terminar.",
+  "startTraining": "Iniciar Treinamento",
+  "trainingStarted": "Treinamento iniciado corretamente"
+}

@@ -1,0 +1,14 @@
+{
+  "title": "Raccourcis",
+  "save": "Enregistrer",
+  "undo": "Annuler",
+  "delete": "Supprimer",
+  "navigation": "Navigation",
+  "bbox": "Bbox",
+  "mask": "Mask",
+  "select": "Select",
+  "pan": "Pan",
+  "classes": "Classe 1-9",
+  "navigateImages": "shortcuts.navigateImages",
+  "selectClass": "shortcuts.selectClass"
+}

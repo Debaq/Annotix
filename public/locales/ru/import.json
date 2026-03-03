@@ -1,0 +1,28 @@
+{
+  "title": "Импорт Dataset",
+  "button": "Импорт",
+  "selectFile": "Выберите ZIP-файл с аннотированным dataset",
+  "dragFiles": "Перетащите ZIP-файлы сюда",
+  "orClickToSelect": "или нажмите для выбора",
+  "analyzing": "Анализ Dataset",
+  "configureProject": "Настройте импортированный проект",
+  "projectName": "Название проекта",
+  "projectType": "Тип проекта",
+  "classesCount": "Классы",
+  "classes": "классов",
+  "format": "Обнаруженный формат",
+  "import": "Импортировать проект",
+  "importing": "Импорт Dataset...",
+  "processing": "Обработка dataset...",
+  "success": "Проект успешно импортирован",
+  "successMessage": "Ваш dataset импортирован и готов к использованию",
+  "openProject": "Открыть проект",
+  "error": {
+    "noFile": "Пожалуйста, выберите ZIP-файл",
+    "invalidZip": "Пожалуйста, выберите действительный ZIP-файл",
+    "unsupportedFormat": "Неподдерживаемый формат dataset. Поддерживаемые форматы: YOLO, COCO, Pascal VOC, CSV, Папки по классам, Маски U-Net",
+    "corruptedData": "Dataset повреждён или неполный",
+    "parse": "Ошибка анализа dataset. Пожалуйста, проверьте формат файла",
+    "invalidProjectName": "Название проекта содержит недопустимые символы. Используйте только буквенно-цифровые символы, дефисы, подчёркивания и точки"
+  }
+}

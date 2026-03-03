@@ -1,0 +1,34 @@
+{
+  "title": "프로젝트",
+  "subtitle": "주석 프로젝트 관리",
+  "create": "프로젝트 생성",
+  "createDescription": "새 주석 프로젝트를 시작합니다",
+  "description": "프로젝트 이름을 수정하거나 클래스를 관리합니다.",
+  "descriptionLabel": "설명",
+  "descriptionPlaceholder": "프로젝트 메모 또는 코멘트...",
+  "name": "프로젝트 이름",
+  "namePlaceholder": "내 Annotix 프로젝트",
+  "type": {
+    "label": "프로젝트 유형",
+    "bbox": "바운딩 박스",
+    "bboxDescription": "바운딩 박스를 사용한 객체 감지",
+    "mask": "마스크",
+    "maskDescription": "마스크를 사용한 인스턴스 분할"
+  },
+  "typeSelectHelper": "학습 목표에 맞는 주석 유형을 선택하세요",
+  "classes": "클래스",
+  "open": "열기",
+  "delete": "삭제",
+  "settings": "프로젝트 설정",
+  "configure": "구성",
+  "edit": "프로젝트 편집",
+  "saveChanges": "변경사항 저장",
+  "stats": {
+    "classes": "클래스"
+  },
+  "empty": {
+    "title": "프로젝트 없음",
+    "description": "주석을 시작하려면 첫 프로젝트를 만드세요"
+  },
+  "confirmDelete": "프로젝트 삭제 확인"
+}

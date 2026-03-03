@@ -1,0 +1,16 @@
+{
+  "selectOne": "Selecione o rótulo correto",
+  "selectMultiple": "Selecione os rótulos que se aplicam",
+  "singleHint": "Você pode selecionar apenas um rótulo",
+  "multiHint": "Você pode selecionar múltiplos rótulos",
+  "noLabels": "Sem rótulos atribuídos",
+  "labeled": "Rotulada",
+  "selectLabel": "Selecione um rótulo",
+  "selectLabels": "Selecione rótulos",
+  "selected": "selecionados",
+  "multiLabel": "Classificação Multi-Rótulo",
+  "singleLabel": "Classificação Simples",
+  "noImageSelected": "Nenhuma imagem selecionada. Por favor, selecione uma imagem da galeria.",
+  "multiLabelInstructions": "Selecione um ou mais rótulos que se apliquem a esta imagem. Pressione Ctrl+S para salvar.",
+  "singleLabelInstructions": "Selecione o rótulo que melhor descreva esta imagem. Pressione Ctrl+S para salvar."
+}

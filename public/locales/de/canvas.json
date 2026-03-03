@@ -1,0 +1,13 @@
+{
+  "zoomIn": "Vergrößern",
+  "zoomOut": "Verkleinern",
+  "resetZoom": "Zoom zurücksetzen",
+  "fitScreen": "An Bildschirm anpassen",
+  "toggleLabels": "Beschriftungen ein-/ausblenden",
+  "toggleGrid": "Raster ein-/ausblenden",
+  "prevImage": "Vorheriges Bild (← / Bild↑)",
+  "nextImage": "Nächstes Bild (→ / Bild↓)",
+  "reset": "Zurücksetzen",
+  "tools": "Werkzeuge",
+  "zoom": "Zoom"
+}

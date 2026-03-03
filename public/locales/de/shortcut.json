@@ -1,0 +1,14 @@
+{
+  "title": "Tastenkürzel",
+  "save": "Speichern",
+  "undo": "Rückgängig",
+  "delete": "Löschen",
+  "navigation": "Navigation",
+  "bbox": "Bbox",
+  "mask": "Mask",
+  "select": "Select",
+  "pan": "Pan",
+  "classes": "Klasse 1-9",
+  "navigateImages": "shortcuts.navigateImages",
+  "selectClass": "shortcuts.selectClass"
+}

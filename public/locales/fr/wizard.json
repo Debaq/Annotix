@@ -1,0 +1,148 @@
+{
+  "trigger": "Pas sûr lequel choisir ?",
+  "title": "Assistant de Type de Projet",
+  "subtitle": "Répondez à quelques questions et nous vous recommanderons le meilleur type.",
+  "bestMatch": "Meilleur choix",
+  "useThis": "Utiliser",
+  "noResults": "Aucun type correspondant trouvé. Essayez d'autres réponses.",
+  "resultsTitle": "Recommandé pour vous",
+  "questions": {
+    "dataType": {
+      "title": "Avec quel type de données travaillerez-vous ?",
+      "options": {
+        "images": "Images",
+        "timeseries": "Séries temporelles",
+        "tabular": "Données tabulaires"
+      },
+      "optionsDesc": {
+        "images": "Photos, captures, scans, images",
+        "timeseries": "Capteurs, métriques, signaux, données financières",
+        "tabular": "Fichiers CSV, feuilles de calcul, tables structurées"
+      }
+    },
+    "goalImages": {
+      "title": "Que voulez-vous faire avec les images ?",
+      "options": {
+        "classify": "Classifier",
+        "detectLocate": "Détecter et Localiser",
+        "segment": "Segmenter",
+        "pointsKeypts": "Marquer des points"
+      },
+      "optionsDesc": {
+        "classify": "Attribuer un label à l'image entière",
+        "detectLocate": "Trouver et localiser des objets avec des boîtes",
+        "segment": "Délimiter des objets au niveau pixel",
+        "pointsKeypts": "Placer des keypoints ou landmarks sur les objets"
+      }
+    },
+    "goalTimeseries": {
+      "title": "Que voulez-vous faire avec les séries temporelles ?",
+      "options": {
+        "tsClassify": "Classifier",
+        "tsPredict": "Prédire",
+        "tsAnomaly": "Détecter anomalies",
+        "tsAnalyze": "Analyser"
+      },
+      "optionsDesc": {
+        "tsClassify": "Attribuer une catégorie à toute la série",
+        "tsPredict": "Prévoir des valeurs futures ou combler des lacunes",
+        "tsAnomaly": "Trouver des motifs inhabituels ou inattendus",
+        "tsAnalyze": "Segmenter, trouver des motifs ou regrouper"
+      }
+    },
+    "classifyDetail": {
+      "title": "Combien de labels par image ?",
+      "options": {
+        "singleLabel": "Un label",
+        "multiLabel": "Plusieurs labels"
+      },
+      "optionsDesc": {
+        "singleLabel": "Chaque image appartient à exactement une classe",
+        "multiLabel": "Une image peut avoir plusieurs labels à la fois"
+      }
+    },
+    "detectDetail": {
+      "title": "Quel type de boîtes englobantes ?",
+      "options": {
+        "axisAligned": "Boîtes normales",
+        "rotated": "Boîtes rotatives"
+      },
+      "optionsDesc": {
+        "axisAligned": "Rectangles horizontaux/verticaux (le plus courant)",
+        "rotated": "Boîtes pouvant pivoter à n'importe quel angle"
+      }
+    },
+    "segmentDetail": {
+      "title": "Quel type de segmentation ?",
+      "options": {
+        "polygonOutline": "Contours polygonaux",
+        "pixelMask": "Masques de pixels",
+        "instanceSeg": "Segmentation d'instances"
+      },
+      "optionsDesc": {
+        "polygonOutline": "Dessiner des polygones point par point autour des objets",
+        "pixelMask": "Peindre des masques au niveau pixel sur les objets",
+        "instanceSeg": "Séparer chaque instance individuelle d'objet"
+      }
+    },
+    "pointsDetail": {
+      "title": "Quel type de points ?",
+      "options": {
+        "connectedPose": "Squelette connecté",
+        "freePoints": "Points indépendants"
+      },
+      "optionsDesc": {
+        "connectedPose": "Points reliés par des lignes (estimation de pose)",
+        "freePoints": "Points autonomes sans connexions"
+      }
+    },
+    "tsAnalyzeDetail": {
+      "title": "Quel type d'analyse ?",
+      "options": {
+        "tsSegment": "Segmenter régions",
+        "tsPattern": "Trouver motifs",
+        "tsEvent": "Détecter événements",
+        "tsCluster": "Grouper similaires"
+      },
+      "optionsDesc": {
+        "tsSegment": "Diviser la série en régions étiquetées",
+        "tsPattern": "Identifier des motifs récurrents",
+        "tsEvent": "Trouver quand des événements spécifiques se produisent",
+        "tsCluster": "Regrouper des séries ou segments similaires"
+      }
+    },
+    "tsPredictDetail": {
+      "title": "Quel type de prédiction ?",
+      "options": {
+        "tsForecast": "Prévoir le futur",
+        "tsRegression": "Régression de valeurs",
+        "tsImpute": "Combler données manquantes"
+      },
+      "optionsDesc": {
+        "tsForecast": "Prédire les valeurs futures de la série",
+        "tsRegression": "Prédire des valeurs continues à partir de caractéristiques",
+        "tsImpute": "Reconstruire des points de données manquants ou corrompus"
+      }
+    }
+  },
+  "reasons": {
+    "bbox": "Idéal pour détecter des objets avec des boîtes rectangulaires alignées",
+    "obb": "Parfait pour les objets inclinés ou pivotés comme les vues aériennes ou le texte",
+    "mask": "Masques au niveau pixel pour une segmentation sémantique précise",
+    "polygon": "Contours polygonaux pour des limites d'objets précises",
+    "instance-segmentation": "Séparer chaque instance d'objet au niveau pixel",
+    "keypoints": "Marquer des points squelettiques connectés pour l'estimation de pose",
+    "landmarks": "Placer des points de référence indépendants sur les objets",
+    "classification": "Un label par image pour une catégorisation simple",
+    "multi-label-classification": "Étiqueter les images avec plusieurs labels simultanément",
+    "timeseries-classification": "Classifier des séries temporelles complètes en catégories",
+    "timeseries-forecasting": "Prédire des valeurs futures basées sur des données historiques",
+    "timeseries-regression": "Prédire des valeurs continues à partir de caractéristiques",
+    "anomaly-detection": "Trouver des motifs inhabituels et des valeurs aberrantes",
+    "timeseries-segmentation": "Diviser des séries temporelles en segments étiquetés",
+    "pattern-recognition": "Découvrir des motifs et patterns récurrents",
+    "event-detection": "Identifier quand des événements spécifiques se produisent",
+    "clustering": "Regrouper des séries temporelles ou segments similaires",
+    "imputation": "Reconstruire des points de données manquants ou corrompus"
+  }
+}

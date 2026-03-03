@@ -1,0 +1,17 @@
+{
+  "connected": "Connector",
+  "disconnected": "No Connector",
+  "connectedMessage": "Connector online - Port 5000",
+  "checking": "Checking Connector connection...",
+  "connectedReady": "Connected - Ready to train",
+  "notConnected": "Could not connect to Companion Engine",
+  "notConnectedHint": "Make sure it is running",
+  "offlineMessage": "Could not connect to Companion Engine.\n\nHave you downloaded and run the desktop application?\nMake sure 'motor_server.exe' is running on your PC.",
+  "downloadTitle": "Companion Engine Not Detected",
+  "downloadMessage": "To train models locally, you need to download and install the Annotix Companion Engine.",
+  "downloadHint": "The Companion Engine will run in the background on your PC and allow training models with your annotated data.",
+  "download": "Download Companion Engine",
+  "downloadStarted": "Download started. Run the installer when finished.",
+  "startTraining": "Start Training",
+  "trainingStarted": "Training started successfully"
+}

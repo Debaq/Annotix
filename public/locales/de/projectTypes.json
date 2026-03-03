@@ -1,0 +1,9 @@
+{
+  "classification": "Einfache Klassifikation",
+  "multiLabel": "Multi-Label-Klassifikation",
+  "detection": "Objekterkennung",
+  "segmentation": "Semantische Segmentierung",
+  "instanceSeg": "Instanzsegmentierung",
+  "keypoints": "Schlüsselpunkte",
+  "obb": "Rotierte Boxen (OBB)"
+}

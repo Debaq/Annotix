@@ -1,0 +1,11 @@
+{
+  "toolName": "Punto di Riferimento",
+  "placed": "Punto di riferimento \"{name}\" posizionato",
+  "selectFirst": "Seleziona prima un punto di riferimento",
+  "enterName": "Per favore inserisci un nome",
+  "renamed": "Punto di riferimento rinominato",
+  "renumbered": "{count} punti rinumerati",
+  "renameLandmark": "Rinomina Punto di Riferimento",
+  "landmarkName": "Nome del Punto:",
+  "namePlaceholder": "es: Centro, In alto a sinistra, Ingresso"
+}

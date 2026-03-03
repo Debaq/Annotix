@@ -1,0 +1,11 @@
+{
+  "toolName": "ランドマーク",
+  "placed": "ランドマーク \"{name}\" を配置しました",
+  "selectFirst": "まずランドマークを選択してください",
+  "enterName": "名前を入力してください",
+  "renamed": "ランドマークの名前が変更されました",
+  "renumbered": "{count}ポイントが再番号付けされました",
+  "renameLandmark": "ランドマーク名変更",
+  "landmarkName": "ポイント名:",
+  "namePlaceholder": "例: 中心、左上、入口"
+}

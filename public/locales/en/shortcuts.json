@@ -1,0 +1,173 @@
+{
+  "title": "Keyboard Shortcuts",
+  "tip": "Shortcuts also work while working on the canvas. Press ? to open this modal at any time.",
+  "categories": {
+    "general": "General",
+    "navigation": "Navigation",
+    "tools": "Tools",
+    "editing": "Editing"
+  },
+  "items": {
+    "save": {
+      "name": "Save",
+      "key": "Ctrl+S"
+    },
+    "undo": {
+      "name": "Undo",
+      "key": "Ctrl+Z"
+    },
+    "redo": {
+      "name": "Redo",
+      "key": "Ctrl+Y"
+    },
+    "delete": {
+      "name": "Delete",
+      "description": "Deletes the selected element",
+      "key": "Del / Backspace"
+    },
+    "deselect": {
+      "name": "Deselect",
+      "key": "Esc"
+    },
+    "prevImage": {
+      "name": "Previous image",
+      "key": "←"
+    },
+    "nextImage": {
+      "name": "Next image",
+      "key": "→"
+    },
+    "zoomIn": {
+      "name": "Zoom in",
+      "key": "Ctrl++"
+    },
+    "zoomOut": {
+      "name": "Zoom out",
+      "key": "Ctrl+-"
+    },
+    "zoomFit": {
+      "name": "Fit",
+      "key": "Ctrl+0"
+    },
+    "toolBox": {
+      "name": "Box Tool",
+      "description": "Select the box tool",
+      "key": "B"
+    },
+    "toolOBB": {
+      "name": "OBB Tool",
+      "description": "Select the OBB tool",
+      "key": "O"
+    },
+    "toolMask": {
+      "name": "Mask Tool",
+      "description": "Select the mask tool",
+      "key": "M"
+    },
+    "toolPolygon": {
+      "name": "Polygon Tool",
+      "description": "Select the polygon tool",
+      "key": "P"
+    },
+    "toolKeypoints": {
+      "name": "Keypoints Tool",
+      "description": "Select the keypoints tool",
+      "key": "K"
+    },
+    "toolSelect": {
+      "name": "Select Tool",
+      "description": "Select the selection tool",
+      "key": "V"
+    },
+    "toolPan": {
+      "name": "Pan Tool",
+      "description": "Select the pan/move tool",
+      "key": "H"
+    },
+    "rotateLeft": {
+      "name": "Rotate left",
+      "key": "A"
+    },
+    "rotateRight": {
+      "name": "Rotate right",
+      "key": "D"
+    },
+    "class1": {
+      "name": "Select Class 1",
+      "key": "1"
+    },
+    "class2": {
+      "name": "Select Class 2",
+      "key": "2"
+    },
+    "class3": {
+      "name": "Select Class 3",
+      "key": "3"
+    },
+    "class4": {
+      "name": "Select Class 4",
+      "key": "4"
+    },
+    "class5": {
+      "name": "Select Class 5",
+      "key": "5"
+    },
+    "class6": {
+      "name": "Select Class 6",
+      "key": "6"
+    },
+    "class7": {
+      "name": "Select Class 7",
+      "key": "7"
+    },
+    "class8": {
+      "name": "Select Class 8",
+      "key": "8"
+    },
+    "class9": {
+      "name": "Select Class 9",
+      "key": "9"
+    },
+    "toolLandmarks": {
+      "name": "Landmarks Tool",
+      "description": "Select the landmarks tool"
+    },
+    "brushSize": {
+      "name": "Brush Size",
+      "description": "Decrease/increase brush size"
+    },
+    "eraseToggle": {
+      "name": "Erase Mode Toggle"
+    },
+    "confirmDrawing": {
+      "name": "Confirm Drawing"
+    },
+    "cancelDrawing": {
+      "name": "Cancel Drawing"
+    },
+    "videoNewTrack": {
+      "name": "New Track"
+    },
+    "videoPrevFrame": {
+      "name": "Previous Frame"
+    },
+    "videoNextFrame": {
+      "name": "Next Frame"
+    },
+    "tsToolSelect": {
+      "name": "Select (Time Series)"
+    },
+    "tsToolPoint": {
+      "name": "Point Tool (Time Series)"
+    },
+    "tsToolRange": {
+      "name": "Range Tool (Time Series)"
+    },
+    "tsToolEvent": {
+      "name": "Event Tool (Time Series)"
+    },
+    "tsToolAnomaly": {
+      "name": "Anomaly Tool (Time Series)"
+    }
+  }
+}

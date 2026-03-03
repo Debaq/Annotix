@@ -1,0 +1,33 @@
+{
+  "imageSaved": "Image enregistrée",
+  "imagesLoaded": "{count} images chargées",
+  "datasetDownloaded": "Dataset téléchargé",
+  "classesDownloaded": "classes.txt téléchargé",
+  "noClasses": "Aucune classe à télécharger",
+  "noImages": "Aucune image dans le projet",
+  "noAnnotations": "Aucune annotation à télécharger",
+  "appStarted": "Application démarrée",
+  "classDeleted": "Classe et toutes ses annotations supprimées",
+  "error": {
+    "createProject": "Erreur lors de la création du projet",
+    "loadProject": "Erreur lors du chargement du projet",
+    "updateProject": "Erreur lors de la mise à jour du projet",
+    "deleteProject": "Erreur lors de la suppression du projet",
+    "duplicateProject": "Erreur lors de la duplication du projet",
+    "renameProject": "Erreur lors du renommage du projet",
+    "loadProjects": "Erreur lors du chargement des projets",
+    "exportProject": "Erreur lors de l'exportation du projet",
+    "exportConfig": "Erreur lors de l'exportation de la configuration",
+    "importConfig": "Erreur lors de l'importation de la configuration",
+    "importProject": "Erreur lors de l'importation du projet",
+    "loadImage": "Erreur lors du chargement de l'image",
+    "saveImage": "Erreur lors de l'enregistrement de l'image",
+    "deleteImage": "Erreur lors de la suppression de l'image",
+    "loadImages": "Erreur lors du chargement des images",
+    "downloadDataset": "Erreur lors du téléchargement du dataset",
+    "initApp": "Erreur lors du démarrage de l'application",
+    "export": "Erreur lors de l'exportation",
+    "noImages": "Erreur : aucune image trouvée"
+  },
+  "imageDeleted": "notifications.imageDeleted"
+}

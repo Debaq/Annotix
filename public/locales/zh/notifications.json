@@ -1,0 +1,33 @@
+{
+  "imageSaved": "图像已保存",
+  "imagesLoaded": "{count} 张图像已加载",
+  "datasetDownloaded": "数据集已下载",
+  "classesDownloaded": "classes.txt 已下载",
+  "noClasses": "没有可下载的类别",
+  "noImages": "项目中没有图像",
+  "noAnnotations": "没有可下载的标注",
+  "appStarted": "应用程序已启动",
+  "classDeleted": "类别及其所有标注已删除",
+  "error": {
+    "createProject": "创建项目时出错",
+    "loadProject": "加载项目时出错",
+    "updateProject": "更新项目时出错",
+    "deleteProject": "删除项目时出错",
+    "duplicateProject": "复制项目时出错",
+    "renameProject": "重命名项目时出错",
+    "loadProjects": "加载项目列表时出错",
+    "exportProject": "导出项目时出错",
+    "exportConfig": "导出配置时出错",
+    "importConfig": "导入配置时出错",
+    "importProject": "导入项目时出错",
+    "loadImage": "加载图像时出错",
+    "saveImage": "保存图像时出错",
+    "deleteImage": "删除图像时出错",
+    "loadImages": "加载图像时出错",
+    "downloadDataset": "下载数据集时出错",
+    "initApp": "启动应用程序时出错",
+    "export": "导出时出错",
+    "noImages": "错误：未找到图像"
+  },
+  "imageDeleted": "notifications.imageDeleted"
+}

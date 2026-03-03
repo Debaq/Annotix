@@ -1,0 +1,40 @@
+{
+  "noProjectSelected": "Aucun projet sélectionné. Veuillez sélectionner un projet de séries temporelles.",
+  "importCSV": "Importer un Fichier CSV",
+  "importSuccess": "CSV importé avec succès !",
+  "selectCSV": "Sélectionner un Fichier CSV",
+  "hasHeader": "La première ligne contient des en-têtes",
+  "timestampColumn": "Colonne de Timestamp (index base 0)",
+  "timestampColumnHelp": "Index de colonne pour les timestamps (par défaut : 0 = première colonne)",
+  "import": "Importer",
+  "csvFormatInfo": "Format CSV : La première colonne doit être les timestamps, les colonnes restantes sont les valeurs. Exemple : temps,valeur1,valeur2",
+  "noSeriesSelected": "Aucune série temporelle sélectionnée. Veuillez sélectionner une série depuis la galerie.",
+  "dataPoints": "points de données",
+  "series": "séries",
+  "annotations": "Annotations",
+  "annotationsCount": "annotations",
+  "addAnnotation": "Ajouter une Annotation",
+  "totalSeries": "Séries Totales",
+  "annotated": "Annotées",
+  "pending": "En attente",
+  "seriesList": "Liste des Séries Temporelles",
+  "noSeriesYet": "Pas encore de séries temporelles",
+  "importCSVToStart": "Importez un fichier CSV pour commencer",
+  "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette série temporelle ?",
+  "tools": {
+    "select": "Sélectionner",
+    "point": "Point",
+    "range": "Plage",
+    "event": "Événement",
+    "anomaly": "Anomalie",
+    "classification": "Classification"
+  },
+  "clearAnnotations": "Effacer Toutes les Annotations",
+  "noAnnotations": "Pas encore d'annotations. Sélectionnez un outil et cliquez sur le graphique pour ajouter des annotations.",
+  "instructions": {
+    "point": "Cliquez sur le graphique pour marquer un point d'annotation",
+    "range": "Cliquez pour définir le point de départ, puis cliquez à nouveau pour définir le point final",
+    "event": "Cliquez sur le graphique pour marquer un événement",
+    "anomaly": "Cliquez sur le graphique pour marquer une anomalie"
+  }
+}

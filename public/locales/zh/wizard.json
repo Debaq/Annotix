@@ -1,0 +1,148 @@
+{
+  "trigger": "不确定选哪个？",
+  "title": "项目类型助手",
+  "subtitle": "回答几个问题，我们将为您推荐最佳项目类型。",
+  "bestMatch": "最佳匹配",
+  "useThis": "使用此项",
+  "noResults": "未找到匹配类型。请尝试不同的答案。",
+  "resultsTitle": "为您推荐",
+  "questions": {
+    "dataType": {
+      "title": "您将使用什么类型的数据？",
+      "options": {
+        "images": "图像",
+        "timeseries": "时间序列",
+        "tabular": "表格数据"
+      },
+      "optionsDesc": {
+        "images": "照片、截图、扫描、帧",
+        "timeseries": "传感器、指标、信号、金融数据",
+        "tabular": "CSV文件、电子表格、结构化表格"
+      }
+    },
+    "goalImages": {
+      "title": "您想对图像做什么？",
+      "options": {
+        "classify": "分类",
+        "detectLocate": "检测定位",
+        "segment": "分割",
+        "pointsKeypts": "标记点"
+      },
+      "optionsDesc": {
+        "classify": "为整张图像分配标签",
+        "detectLocate": "用框找到和定位对象",
+        "segment": "在像素级别勾勒对象",
+        "pointsKeypts": "在对象上放置关键点或地标"
+      }
+    },
+    "goalTimeseries": {
+      "title": "您想对时间序列做什么？",
+      "options": {
+        "tsClassify": "分类",
+        "tsPredict": "预测",
+        "tsAnomaly": "异常检测",
+        "tsAnalyze": "分析"
+      },
+      "optionsDesc": {
+        "tsClassify": "为整个序列分配类别",
+        "tsPredict": "预测未来值或填补空白",
+        "tsAnomaly": "查找异常或意外模式",
+        "tsAnalyze": "分割、查找模式或聚类"
+      }
+    },
+    "classifyDetail": {
+      "title": "每张图像多少个标签？",
+      "options": {
+        "singleLabel": "一个标签",
+        "multiLabel": "多个标签"
+      },
+      "optionsDesc": {
+        "singleLabel": "每张图像属于一个类别",
+        "multiLabel": "一张图像可以同时有多个标签"
+      }
+    },
+    "detectDetail": {
+      "title": "什么类型的边界框？",
+      "options": {
+        "axisAligned": "普通框",
+        "rotated": "旋转框"
+      },
+      "optionsDesc": {
+        "axisAligned": "水平/垂直矩形（最常见）",
+        "rotated": "可以任意角度旋转的框"
+      }
+    },
+    "segmentDetail": {
+      "title": "什么类型的分割？",
+      "options": {
+        "polygonOutline": "多边形轮廓",
+        "pixelMask": "像素掩码",
+        "instanceSeg": "实例分割"
+      },
+      "optionsDesc": {
+        "polygonOutline": "逐点绘制对象周围的多边形",
+        "pixelMask": "在对象上绘制像素级掩码",
+        "instanceSeg": "分离每个单独的对象实例"
+      }
+    },
+    "pointsDetail": {
+      "title": "什么类型的点？",
+      "options": {
+        "connectedPose": "连接骨架",
+        "freePoints": "独立点"
+      },
+      "optionsDesc": {
+        "connectedPose": "由线连接的点（姿态估计）",
+        "freePoints": "无连接的独立点"
+      }
+    },
+    "tsAnalyzeDetail": {
+      "title": "什么类型的分析？",
+      "options": {
+        "tsSegment": "分割区域",
+        "tsPattern": "查找模式",
+        "tsEvent": "检测事件",
+        "tsCluster": "分组相似"
+      },
+      "optionsDesc": {
+        "tsSegment": "将序列分为标记区域",
+        "tsPattern": "识别反复出现的模式或主题",
+        "tsEvent": "发现特定事件何时发生",
+        "tsCluster": "将相似的序列或片段分组"
+      }
+    },
+    "tsPredictDetail": {
+      "title": "什么类型的预测？",
+      "options": {
+        "tsForecast": "预测未来",
+        "tsRegression": "值回归",
+        "tsImpute": "填补缺失数据"
+      },
+      "optionsDesc": {
+        "tsForecast": "预测序列的未来值",
+        "tsRegression": "从特征预测连续值",
+        "tsImpute": "重建缺失或损坏的数据点"
+      }
+    }
+  },
+  "reasons": {
+    "bbox": "使用轴对齐矩形框检测对象的理想选择",
+    "obb": "非常适合航拍或文字等旋转对象",
+    "mask": "用于精确语义分割的像素级掩码",
+    "polygon": "绘制多边形轮廓以获得精确的对象边界",
+    "instance-segmentation": "在像素级别分离每个对象实例",
+    "keypoints": "标记连接的骨架点用于姿态估计",
+    "landmarks": "在对象上放置独立参考点",
+    "classification": "每张图像一个标签，用于简单分类",
+    "multi-label-classification": "同时为图像添加多个标签",
+    "timeseries-classification": "将完整时间序列分类到类别",
+    "timeseries-forecasting": "基于历史数据预测未来值",
+    "timeseries-regression": "从时间序列特征预测连续值",
+    "anomaly-detection": "在数据中发现异常模式和离群值",
+    "timeseries-segmentation": "将时间序列分为标记的片段",
+    "pattern-recognition": "发现反复出现的主题和模式",
+    "event-detection": "识别序列中特定事件何时发生",
+    "clustering": "将相似的时间序列或片段分组",
+    "imputation": "重建缺失或损坏的数据点"
+  }
+}

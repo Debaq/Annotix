@@ -1,0 +1,40 @@
+{
+  "noProjectSelected": "No project selected. Please select a time series project.",
+  "importCSV": "Import CSV File",
+  "importSuccess": "CSV imported successfully!",
+  "selectCSV": "Select CSV File",
+  "hasHeader": "First row contains headers",
+  "timestampColumn": "Timestamp Column (0-indexed)",
+  "timestampColumnHelp": "Column index for timestamps (default: 0 = first column)",
+  "import": "Import",
+  "csvFormatInfo": "CSV format: First column should be timestamps, remaining columns are values. Example: time,value1,value2",
+  "noSeriesSelected": "No time series selected. Please select a series from the gallery.",
+  "dataPoints": "data points",
+  "series": "series",
+  "annotations": "Annotations",
+  "annotationsCount": "annotations",
+  "addAnnotation": "Add Annotation",
+  "totalSeries": "Total Series",
+  "annotated": "Annotated",
+  "pending": "Pending",
+  "seriesList": "Time Series List",
+  "noSeriesYet": "No time series yet",
+  "importCSVToStart": "Import a CSV file to get started",
+  "deleteConfirm": "Are you sure you want to delete this time series?",
+  "tools": {
+    "select": "Select",
+    "point": "Point",
+    "range": "Range",
+    "event": "Event",
+    "anomaly": "Anomaly",
+    "classification": "Classification"
+  },
+  "clearAnnotations": "Clear All Annotations",
+  "noAnnotations": "No annotations yet. Select a tool and click on the chart to add annotations.",
+  "instructions": {
+    "point": "Click on the chart to mark a point annotation",
+    "range": "Click to set start point, then click again to set end point",
+    "event": "Click on the chart to mark an event",
+    "anomaly": "Click on the chart to mark an anomaly"
+  }
+}

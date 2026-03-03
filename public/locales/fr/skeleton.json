@@ -1,0 +1,33 @@
+{
+  "addKeypointClass": "Ajouter une Classe de Keypoints",
+  "step1": "Étape 1 : Informations de Base",
+  "step2": "Étape 2 : Sélectionner un Preset de Squelette",
+  "className": "Nom de la Classe",
+  "classNamePlaceholder": "ex : Personne, Main, Visage",
+  "classColor": "Couleur de la Classe",
+  "selectPreset": "Sélectionnez un preset de squelette pour cette classe :",
+  "presetInfo": "Chaque classe peut avoir son propre squelette. Cela vous permet d'annoter différents types d'objets dans le même projet.",
+  "points": "points",
+  "connections": "connexions",
+  "previous": "Précédent",
+  "next": "Suivant",
+  "finish": "Terminer",
+  "presets": {
+    "coco17": "COCO 17 Keypoints",
+    "coco17Desc": "Squelette humain complet (dataset COCO)",
+    "mediapipePose": "MediaPipe Pose 33",
+    "mediapipePoseDesc": "Pose détaillée du corps complet",
+    "mediapipeHand": "MediaPipe Hand 21",
+    "mediapipeHandDesc": "Articulations détaillées de la main",
+    "openpose25": "OpenPose 25",
+    "openpose25Desc": "Squelette OpenPose avec mains",
+    "facial68": "Facial Landmarks 68",
+    "facial68Desc": "Points faciaux détaillés",
+    "facial5": "Facial 5 Points",
+    "facial5Desc": "Points faciaux basiques (yeux, nez, bouche)",
+    "animalQuad": "Animal Quadrupède",
+    "animalQuadDesc": "Squelette pour animaux à 4 pattes",
+    "custom": "Personnalisé",
+    "customDesc": "Définissez votre propre squelette"
+  }
+}

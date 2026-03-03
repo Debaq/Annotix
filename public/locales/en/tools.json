@@ -1,0 +1,25 @@
+{
+  "title": "Tools",
+  "bbox": "Box",
+  "obb": "OBB",
+  "mask": "Mask",
+  "polygon": "Polygon",
+  "keypoints": "Keypoints",
+  "landmarks": "Landmarks",
+  "select": "Select",
+  "pan": "Pan",
+  "eraseMode": "Eraser",
+  "newInstance": "New Instance",
+  "tooltips": {
+    "bbox": "Bounding Box (B)",
+    "obb": "Oriented Box (O)",
+    "mask": "Mask (M)",
+    "polygon": "Polygon (P)",
+    "keypoints": "Keypoints (K)",
+    "landmarks": "Landmarks (L)",
+    "point": "Point (P)",
+    "range": "Range (R)",
+    "select": "Select (V)",
+    "pan": "Pan (H)"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "imageCount": "{{count}} 张图像",
+  "imageCount_plural": "{{count}} 张图像",
+  "empty": {
+    "title": "没有图像",
+    "description": "上传图像以开始标注",
+    "upload": "上传图像"
+  },
+  "title": "图库",
+  "all": "全部",
+  "annotated": "已标注",
+  "unannotated": "未标注",
+  "deleteConfirm": "删除此图像？",
+  "annotate": "标注",
+  "upload": "选择图像",
+  "noImages": "没有图像",
+  "filter": {
+    "all": "全部",
+    "annotated": "已标注",
+    "unannotated": "未标注"
+  },
+  "backToGallery": "返回图库",
+  "selectImage": "选择一张图像",
+  "uploadOrSelect": "上传或选择一张图像",
+  "uploading": "上传图像中"
+}

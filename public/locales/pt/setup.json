@@ -1,0 +1,9 @@
+{
+  "welcome": "Bem-vindo ao Annotix",
+  "description": "Escolha uma pasta onde seus projetos serão armazenados. Cada projeto será uma subpasta com suas imagens, anotações e configuração.",
+  "selectFolder": "Selecionar Pasta de Projetos",
+  "selectedFolder": "Pasta selecionada",
+  "confirm": "Começar",
+  "noFolder": "Nenhuma pasta selecionada",
+  "changeFolder": "Mudar Pasta"
+}
