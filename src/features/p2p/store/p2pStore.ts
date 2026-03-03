@@ -1,11 +1,14 @@
 import { create } from 'zustand';
-import type { P2pSessionInfo, PeerInfo, ImageLockInfo, BatchInfo, SessionStatus, SyncProgress, SessionRules } from '../types';
+import type { P2pSessionInfo, PeerInfo, ImageLockInfo, BatchInfo, SessionStatus, SyncProgress, SessionRules, DownloadProgress, WorkDistribution, WorkAssignment, PeerWorkStats, PendingApproval } from '../types';
 
 interface P2pStore {
   activeSession: P2pSessionInfo | null;
   setActiveSession: (session: P2pSessionInfo | null) => void;
   updateSessionStatus: (status: SessionStatus) => void;
   updateRules: (rules: SessionRules) => void;
+
+  hostStopped: boolean;
+  setHostStopped: (stopped: boolean) => void;
 
   peers: PeerInfo[];
   addPeer: (peer: PeerInfo) => void;
@@ -25,6 +28,24 @@ interface P2pStore {
   syncProgress: SyncProgress | null;
   setSyncProgress: (progress: SyncProgress | null) => void;
 
+  downloadProgress: Record<string, DownloadProgress>;
+  setDownloadProgress: (progress: DownloadProgress) => void;
+  clearDownloadProgress: (projectId: string) => void;
+
+  distribution: WorkDistribution | null;
+  setDistribution: (dist: WorkDistribution | null) => void;
+  workStats: PeerWorkStats[];
+  setWorkStats: (stats: PeerWorkStats[]) => void;
+
+  pendingApprovals: PendingApproval[];
+  setPendingApprovals: (approvals: PendingApproval[]) => void;
+  addPendingApproval: (approval: PendingApproval) => void;
+  removePendingApproval: (itemId: string) => void;
+
+  myAssignment: () => WorkAssignment | null;
+  isItemAssignedToMe: (id: string, type: 'video' | 'image') => boolean;
+  getItemAssignee: (id: string, type: 'video' | 'image') => { nodeId: string; displayName: string } | null;
+
   reset: () => void;
 }
 
@@ -38,13 +59,16 @@ export const useP2pStore = create<P2pStore>((set, get) => ({
     activeSession: state.activeSession ? { ...state.activeSession, rules } : null,
   })),
 
+  hostStopped: false,
+  setHostStopped: (stopped) => set({ hostStopped: stopped }),
+
   peers: [],
   addPeer: (peer) => set((state) => {
     const exists = state.peers.find(p => p.nodeId === peer.nodeId);
     if (exists) {
-      return { peers: state.peers.map(p => p.nodeId === peer.nodeId ? peer : p) };
+      return { peers: state.peers.map(p => p.nodeId === peer.nodeId ? { ...p, ...peer, online: true, lastSeen: peer.lastSeen || Date.now() } : p) };
     }
-    return { peers: [...state.peers, peer] };
+    return { peers: [...state.peers, { ...peer, online: true, lastSeen: peer.lastSeen || Date.now() }] };
   }),
   removePeer: (nodeId) => set((state) => ({
     peers: state.peers.filter(p => p.nodeId !== nodeId),
@@ -89,11 +113,69 @@ export const useP2pStore = create<P2pStore>((set, get) => ({
   syncProgress: null,
   setSyncProgress: (progress) => set({ syncProgress: progress }),
 
+  downloadProgress: {},
+  setDownloadProgress: (progress) => set((state) => ({
+    downloadProgress: { ...state.downloadProgress, [progress.projectId]: progress },
+  })),
+  clearDownloadProgress: (projectId) => set((state) => {
+    const { [projectId]: _, ...rest } = state.downloadProgress;
+    return { downloadProgress: rest };
+  }),
+
+  distribution: null,
+  setDistribution: (dist) => set({ distribution: dist }),
+  workStats: [],
+  setWorkStats: (stats) => set({ workStats: stats }),
+
+  pendingApprovals: [],
+  setPendingApprovals: (approvals) => set({ pendingApprovals: approvals }),
+  addPendingApproval: (approval) => set((state) => {
+    const exists = state.pendingApprovals.find(a => a.itemId === approval.itemId);
+    if (exists) {
+      return { pendingApprovals: state.pendingApprovals.map(a => a.itemId === approval.itemId ? approval : a) };
+    }
+    return { pendingApprovals: [...state.pendingApprovals, approval] };
+  }),
+  removePendingApproval: (itemId) => set((state) => ({
+    pendingApprovals: state.pendingApprovals.filter(a => a.itemId !== itemId),
+  })),
+
+  myAssignment: () => {
+    const state = get();
+    if (!state.distribution || !state.activeSession) return null;
+    return state.distribution.assignments.find(a => a.nodeId === state.activeSession!.myNodeId) || null;
+  },
+
+  isItemAssignedToMe: (id, type) => {
+    const state = get();
+    if (!state.distribution || !state.activeSession) return true;
+    const my = state.distribution.assignments.find(a => a.nodeId === state.activeSession!.myNodeId);
+    if (!my) return false;
+    return type === 'video' ? my.videoIds.includes(id) : my.imageIds.includes(id);
+  },
+
+  getItemAssignee: (id, type) => {
+    const state = get();
+    if (!state.distribution) return null;
+    for (const a of state.distribution.assignments) {
+      const found = type === 'video'
+        ? a.videoIds.includes(id)
+        : a.imageIds.includes(id);
+      if (found) return { nodeId: a.nodeId, displayName: a.displayName };
+    }
+    return null;
+  },
+
   reset: () => set({
     activeSession: null,
+    hostStopped: false,
     peers: [],
     imageLocks: new Map(),
     batches: [],
     syncProgress: null,
+    downloadProgress: {},
+    distribution: null,
+    workStats: [],
+    pendingApprovals: [],
   }),
 }));

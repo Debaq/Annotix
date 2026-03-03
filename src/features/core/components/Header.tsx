@@ -11,6 +11,7 @@ import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
 import { ExportDialog } from '@/features/export/components/ExportDialog';
 import { TrainingPanel } from '@/features/training/components/TrainingPanel';
 import { P2pStatusIndicator } from '@/features/p2p/components/P2pStatusIndicator';
+import { P2pGuard } from '@/features/p2p/components/P2pGuard';
 
 const appWindow = getCurrentWindow();
 
@@ -92,17 +93,19 @@ export const Header: React.FC = () => {
         {project && (
           <>
             <div className="h-6 w-px bg-white/30 mx-1" />
-            <ExportDialog
-              trigger={
-                <button
-                  className="h-9 px-3 rounded bg-white/10 border border-white/20 text-white text-sm hover:bg-white/20 transition-all flex items-center gap-2"
-                  title={t('common.exportDataset')}
-                >
-                  <i className="fas fa-download"></i>
-                  <span className="hidden sm:inline">{t('export.title')}</span>
-                </button>
-              }
-            />
+            <P2pGuard permission="export">
+              <ExportDialog
+                trigger={
+                  <button
+                    className="h-9 px-3 rounded bg-white/10 border border-white/20 text-white text-sm hover:bg-white/20 transition-all flex items-center gap-2"
+                    title={t('common.exportDataset')}
+                  >
+                    <i className="fas fa-download"></i>
+                    <span className="hidden sm:inline">{t('export.title')}</span>
+                  </button>
+                }
+              />
+            </P2pGuard>
             <TrainingPanel
               trigger={
                 <button

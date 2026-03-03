@@ -1,30 +1,36 @@
 use tauri::{AppHandle, Emitter, State};
 
+use crate::p2p::node::P2pState;
+use crate::p2p::P2pPermission;
 use crate::store::images::ImageResponse;
 use crate::store::project_file::AnnotationEntry;
 use crate::store::AppState;
 
 #[tauri::command]
-pub fn upload_images(
+pub async fn upload_images(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     project_id: String,
     file_paths: Vec<String>,
 ) -> Result<Vec<String>, String> {
+    p2p.check_permission(P2pPermission::UploadData).await?;
     let ids = state.upload_images(&project_id, &file_paths)?;
     let _ = app.emit("db:images-changed", &project_id);
     Ok(ids)
 }
 
 #[tauri::command]
-pub fn upload_image_bytes(
+pub async fn upload_image_bytes(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     project_id: String,
     file_name: String,
     data: Vec<u8>,
     annotations: Vec<AnnotationEntry>,
 ) -> Result<String, String> {
+    p2p.check_permission(P2pPermission::UploadData).await?;
     let id = state.upload_image_bytes(&project_id, &file_name, &data, &annotations, None, None)?;
     let _ = app.emit("db:images-changed", &project_id);
     Ok(id)
@@ -68,25 +74,29 @@ pub fn get_image_file_path(
 }
 
 #[tauri::command]
-pub fn save_annotations(
+pub async fn save_annotations(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     project_id: String,
     image_id: String,
     annotations: Vec<AnnotationEntry>,
 ) -> Result<(), String> {
+    p2p.check_permission(P2pPermission::Annotate).await?;
     state.save_annotations(&project_id, &image_id, &annotations)?;
     let _ = app.emit("db:images-changed", &project_id);
     Ok(())
 }
 
 #[tauri::command]
-pub fn delete_image(
+pub async fn delete_image(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     project_id: String,
     id: String,
 ) -> Result<(), String> {
+    p2p.check_permission(P2pPermission::Delete).await?;
     state.delete_image(&project_id, &id)?;
     let _ = app.emit("db:images-changed", &project_id);
     Ok(())

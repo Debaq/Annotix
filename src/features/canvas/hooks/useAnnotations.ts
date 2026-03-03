@@ -7,6 +7,7 @@ import { useUIStore } from '../../core/store/uiStore';
 import { annotationService } from '../services/annotationService';
 import { useToast } from '@/components/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
+import { useP2pStore } from '@/features/p2p/store/p2pStore';
 
 // Store global para control de guardado válido
 interface SaveGuardStore {
@@ -108,6 +109,16 @@ export function useAnnotations() {
     if (!image?.id || !currentProjectId) {
       console.log('[useAnnotations] saveAnnotations - no image.id o projectId, cancelando');
       return;
+    }
+
+    // P2P read-only guard: no guardar si el item no está asignado a mí
+    const p2pState = useP2pStore.getState();
+    if (p2pState.activeSession && p2pState.distribution) {
+      const checkId = image.videoId || image.id;
+      const checkType: 'video' | 'image' = image.videoId ? 'video' : 'image';
+      if (checkId && !p2pState.isItemAssignedToMe(checkId, checkType)) {
+        return;
+      }
     }
 
     const annsToSave = targetAnnotations ?? useAnnotationStore.getState().annotations;

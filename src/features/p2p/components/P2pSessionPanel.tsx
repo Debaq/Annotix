@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -7,19 +8,34 @@ import { Label } from '@/components/ui/label';
 import { useP2pStore } from '../store/p2pStore';
 import { p2pService } from '../services/p2pService';
 import { PeerList } from './PeerList';
-import { BatchAssignDialog } from './BatchAssignDialog';
+import { WorkDistributionPanel } from './WorkDistributionPanel';
+import { canManage } from '../hooks/useP2pCanEdit';
 import type { SessionRules } from '../types';
 
 export function P2pSessionPanel() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { activeSession, peers, reset, updateRules } = useP2pStore();
   const [leaving, setLeaving] = useState(false);
+  const [pausing, setPausing] = useState(false);
   const [savingRules, setSavingRules] = useState(false);
 
   if (!activeSession) return null;
 
-  const isHost = activeSession.role === 'host';
+  const isManager = canManage(activeSession.role);
   const rules = activeSession.rules;
+
+  const handlePause = async () => {
+    setPausing(true);
+    try {
+      await p2pService.pauseSession();
+      reset();
+    } catch (err) {
+      console.error('Error pausing session:', err);
+    } finally {
+      setPausing(false);
+    }
+  };
 
   const handleLeave = async () => {
     setLeaving(true);
@@ -50,8 +66,8 @@ export function P2pSessionPanel() {
     <div className="border rounded-lg p-4 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {isHost
-            ? <i className="fas fa-crown text-amber-500" />
+          {isManager
+            ? <i className="fas fa-flask text-violet-500" />
             : <i className="fas fa-people-arrows text-violet-500" />
           }
           <span className="font-semibold text-sm">{t('p2p.activeSession')}</span>
@@ -65,10 +81,7 @@ export function P2pSessionPanel() {
         <div className="flex justify-between">
           <span>{t('p2p.role')}:</span>
           <span className="font-medium">
-            {isHost
-              ? <><i className="fas fa-crown text-amber-500 mr-1" />{t('p2p.host')}</>
-              : t('p2p.collaborator')
-            }
+            {t(`p2p.role_${activeSession.role}`)}
           </span>
         </div>
         <div className="flex justify-between">
@@ -79,8 +92,8 @@ export function P2pSessionPanel() {
         </div>
       </div>
 
-      {/* Código de compartir (solo host) */}
-      {isHost && activeSession.shareCode && (
+      {/* Share code (only manager) */}
+      {isManager && activeSession.shareCode && (
         <div className="rounded border bg-muted/50 p-2 text-center">
           <p className="text-xs text-muted-foreground">{t('p2p.shareCodeLabel')}</p>
           <p className="font-mono text-xs font-bold select-all break-all">{activeSession.shareCode}</p>
@@ -96,7 +109,7 @@ export function P2pSessionPanel() {
         </div>
       )}
 
-      {/* Reglas (editable solo por host, visible para todos) */}
+      {/* Rules (editable only by manager, visible for all) */}
       <div>
         <p className="text-xs font-medium mb-2">{t('p2p.collaboratorPermissions')}</p>
         <div className="space-y-2">
@@ -104,7 +117,7 @@ export function P2pSessionPanel() {
             <Checkbox
               checked={rules.canUpload}
               onCheckedChange={(v) => handleUpdateRule('canUpload', v === true)}
-              disabled={!isHost || savingRules}
+              disabled={!isManager || savingRules}
             />
             <Label className="text-xs cursor-pointer">{t('p2p.permUpload')}</Label>
           </div>
@@ -112,7 +125,7 @@ export function P2pSessionPanel() {
             <Checkbox
               checked={rules.canEditClasses}
               onCheckedChange={(v) => handleUpdateRule('canEditClasses', v === true)}
-              disabled={!isHost || savingRules}
+              disabled={!isManager || savingRules}
             />
             <Label className="text-xs cursor-pointer">{t('p2p.permEditClasses')}</Label>
           </div>
@@ -120,7 +133,7 @@ export function P2pSessionPanel() {
             <Checkbox
               checked={rules.canDelete}
               onCheckedChange={(v) => handleUpdateRule('canDelete', v === true)}
-              disabled={!isHost || savingRules}
+              disabled={!isManager || savingRules}
             />
             <Label className="text-xs cursor-pointer">{t('p2p.permDelete')}</Label>
           </div>
@@ -128,7 +141,7 @@ export function P2pSessionPanel() {
             <Checkbox
               checked={rules.canExport}
               onCheckedChange={(v) => handleUpdateRule('canExport', v === true)}
-              disabled={!isHost || savingRules}
+              disabled={!isManager || savingRules}
             />
             <Label className="text-xs cursor-pointer">{t('p2p.permExport')}</Label>
           </div>
@@ -140,20 +153,41 @@ export function P2pSessionPanel() {
         <PeerList peers={peers} myNodeId={activeSession.myNodeId} />
       </div>
 
-      {isHost && rules.lockMode === 'batch' && (
-        <BatchAssignDialog peers={peers} />
-      )}
+      <WorkDistributionPanel />
 
+      {/* Link to Team View */}
       <Button
-        variant="destructive"
+        variant="outline"
         size="sm"
         className="w-full"
-        onClick={handleLeave}
-        disabled={leaving}
+        onClick={() => navigate(`/projects/${activeSession.projectId}/team`)}
       >
-        {leaving ? <i className="fas fa-spinner fa-spin mr-2" /> : <i className="fas fa-sign-out-alt mr-2" />}
-        {t('p2p.leaveSession')}
+        <i className="fas fa-users mr-2" />
+        {t('p2p.manageTeam')}
       </Button>
+
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1"
+          onClick={handlePause}
+          disabled={pausing || leaving}
+        >
+          {pausing ? <i className="fas fa-spinner fa-spin mr-2" /> : <i className="fas fa-pause mr-2" />}
+          {t('p2p.pauseSession')}
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          className="flex-1"
+          onClick={handleLeave}
+          disabled={leaving || pausing}
+        >
+          {leaving ? <i className="fas fa-spinner fa-spin mr-2" /> : <i className="fas fa-sign-out-alt mr-2" />}
+          {t('p2p.leaveSession')}
+        </Button>
+      </div>
     </div>
   );
 }

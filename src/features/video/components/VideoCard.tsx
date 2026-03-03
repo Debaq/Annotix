@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { useUIStore } from '../../core/store/uiStore';
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { videoService } from '../services/videoService';
+import { useP2pStore } from '@/features/p2p/store/p2pStore';
+import { useP2pPermission } from '@/features/p2p/hooks/useP2pCanEdit';
 
 interface VideoCardProps {
   video: Video;
@@ -23,6 +25,11 @@ export function VideoCard({ video }: VideoCardProps) {
   const isReady = video.status === 'ready';
   const isExtracting = video.status === 'extracting';
   const canOpen = isReady || isExtracting;
+  const vidId = video.id || '';
+  const assignee = useP2pStore.getState().getItemAssignee(vidId, 'video');
+  const isAssignedToMe = useP2pStore.getState().isItemAssignedToMe(vidId, 'video');
+  const hasDistribution = !!useP2pStore.getState().distribution;
+  const canDelete = useP2pPermission('delete');
 
   // Thumbnail: usar el primer frame del video (disponible durante extracting o ready)
   useEffect(() => {
@@ -144,14 +151,27 @@ export function VideoCard({ video }: VideoCardProps) {
           </div>
         </div>
 
+        {/* P2P Assignment badge */}
+        {hasDistribution && assignee && (
+          <div className="absolute top-1 left-1 z-10" style={{ top: markedFrames > 0 ? '22px' : undefined }}>
+            <div className={`px-1 py-0.5 rounded text-[8px] font-bold text-white truncate max-w-[60px] ${
+              isAssignedToMe ? 'bg-blue-500' : 'bg-gray-500'
+            }`}>
+              {isAssignedToMe ? 'Tú' : assignee.displayName}
+            </div>
+          </div>
+        )}
+
         {/* Delete button (bottom-right, visible on hover) */}
-        <button
-          onClick={handleDelete}
-          className="absolute bottom-1 right-1 w-5 h-5 rounded-full flex items-center justify-center bg-black/50 text-white text-[10px] opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-opacity"
-          title={t('video.deleteVideo')}
-        >
-          <i className="fas fa-trash-alt"></i>
-        </button>
+        {canDelete && (
+          <button
+            onClick={handleDelete}
+            className="absolute bottom-1 right-1 w-5 h-5 rounded-full flex items-center justify-center bg-black/50 text-white text-[10px] opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-opacity"
+            title={t('video.deleteVideo')}
+          >
+            <i className="fas fa-trash-alt"></i>
+          </button>
+        )}
       </div>
     </div>
   );

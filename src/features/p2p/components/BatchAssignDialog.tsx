@@ -22,7 +22,7 @@ export function BatchAssignDialog({ peers }: BatchAssignDialogProps) {
   const [loading, setLoading] = useState(false);
   const { addBatch } = useP2pStore();
 
-  const collaborators = peers.filter(p => p.role === 'collaborator');
+  const collaborators = peers.filter(p => p.role === 'annotator' || p.role === 'data_curator');
 
   const handleAssign = async () => {
     if (!selectedPeer || !imageIdsText.trim()) return;

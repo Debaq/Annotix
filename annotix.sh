@@ -50,6 +50,87 @@ pause_after() {
     read -r
 }
 
+# ── Build info (auto-incremento + código único) ─────────────────────────────
+generate_build_code() {
+    local releases_json="$PROJECT_DIR/releases.json"
+    local existing_codes=""
+    if [[ -f "$releases_json" ]]; then
+        existing_codes=$(python3 -c "
+import json
+with open('$releases_json') as f:
+    releases = json.load(f)
+for r in releases:
+    print(r.get('code', ''))
+" 2>/dev/null || echo "")
+    fi
+
+    local code
+    while true; do
+        code=$(cat /dev/urandom | tr -dc 'a-z' | head -c 5)
+        if ! echo "$existing_codes" | grep -qx "$code"; then
+            break
+        fi
+    done
+    echo "$code"
+}
+
+generate_build_info() {
+    local build_json="$PROJECT_DIR/build.json"
+    local build_ts="$PROJECT_DIR/src/lib/buildInfo.ts"
+
+    # Leer buildNumber actual
+    local build_num=0
+    if [[ -f "$build_json" ]]; then
+        build_num=$(python3 -c "import json; print(json.load(open('$build_json'))['buildNumber'])" 2>/dev/null || echo 0)
+    fi
+
+    # Incrementar
+    build_num=$((build_num + 1))
+    local build_date
+    build_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    local build_code
+    build_code=$(generate_build_code)
+
+    # Escribir build.json
+    cat > "$build_json" <<BJSON
+{
+  "buildNumber": $build_num,
+  "buildCode": "$build_code",
+  "lastBuildDate": "$build_date"
+}
+BJSON
+
+    # Generar buildInfo.ts
+    cat > "$build_ts" <<BINFO
+// Auto-generado por annotix.sh — no editar manualmente
+export const BUILD_NUMBER = $build_num;
+export const BUILD_CODE = "$build_code";
+export const BUILD_DATE = "$build_date";
+BINFO
+
+    # Generar changelog.ts con últimos 30 commits
+    local changelog_ts="$PROJECT_DIR/src/lib/changelog.ts"
+    local commits_arr
+    commits_arr=$(git -C "$PROJECT_DIR" log --oneline -30 --format='%h|%s' 2>/dev/null | python3 -c "
+import sys, json
+commits = []
+for line in sys.stdin:
+    line = line.strip()
+    if not line: continue
+    parts = line.split('|', 1)
+    if len(parts) == 2:
+        commits.append({'hash': parts[0], 'message': parts[1]})
+print(json.dumps(commits, ensure_ascii=False))
+" 2>/dev/null || echo "[]")
+
+    cat > "$changelog_ts" <<CLTS
+// Auto-generado por annotix.sh — no editar manualmente
+export const CHANGELOG: { hash: string; message: string }[] = $commits_arr;
+CLTS
+
+    info "Build info: $build_code (#$build_num) — $build_date"
+}
+
 # ── Verificación de dependencias ─────────────────────────────────────────────
 check_deps() {
     header "Verificando dependencias"
@@ -281,6 +362,8 @@ cmd_build() {
     local start=$(date +%s)
     cd "$PROJECT_DIR"
 
+    generate_build_info
+
     if [[ -n "$targets" ]]; then
         info "Compilando paquete: $targets"
         npx tauri build --bundles "$targets"
@@ -291,6 +374,7 @@ cmd_build() {
 
     success "Build completo en $(elapsed $start)"
     collect_artifacts
+    auto_record_release
 }
 
 # ── Solo binario (sin empaquetar) ────────────────────────────────────────────
@@ -300,6 +384,8 @@ cmd_build_bin() {
     local start=$(date +%s)
     cd "$PROJECT_DIR"
 
+    generate_build_info
+
     info "Compilando binario con frontend embebido..."
     npx tauri build --no-bundle
 
@@ -307,6 +393,7 @@ cmd_build_bin() {
     if [[ -f "$bin" ]]; then
         success "Binario listo en $(elapsed $start)"
         collect_artifacts
+        auto_record_release
     else
         error "No se generó el binario"
     fi
@@ -320,10 +407,14 @@ cmd_build_debug() {
     header "Build debug"
     cd "$PROJECT_DIR"
     local start=$(date +%s)
+
+    generate_build_info
+
     info "Compilando en modo debug..."
     npx tauri build --debug
     success "Build debug completo en $(elapsed $start)"
     collect_artifacts
+    auto_record_release
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -382,6 +473,8 @@ cmd_android_build_debug() {
     local start=$(date +%s)
     cd "$PROJECT_DIR"
 
+    generate_build_info
+
     info "Compilando APK debug..."
     npx tauri android build --debug
 
@@ -394,6 +487,7 @@ cmd_android_build_debug() {
         echo -e "  ${BOLD}APK:${NC} $apk"
         echo -e "  ${BOLD}Tamaño:${NC} $(du -h "$apk" | cut -f1)"
     fi
+    auto_record_release
 }
 
 cmd_android_build_release() {
@@ -407,6 +501,8 @@ cmd_android_build_release() {
     local start=$(date +%s)
     cd "$PROJECT_DIR"
 
+    generate_build_info
+
     info "Compilando APK/AAB release..."
     npx tauri android build
 
@@ -418,6 +514,7 @@ cmd_android_build_release() {
 
     [[ -n "$apk" ]] && echo -e "  ${BOLD}APK:${NC} $apk ($(du -h "$apk" | cut -f1))"
     [[ -n "$aab" ]] && echo -e "  ${BOLD}AAB:${NC} $aab ($(du -h "$aab" | cut -f1))"
+    auto_record_release
 }
 
 cmd_android_create_keystore() {
@@ -722,6 +819,17 @@ cmd_android_clean() {
 
 # ── Recopilar artefactos en out/ ─────────────────────────────────────────────
 collect_artifacts() {
+    # Leer código de build actual
+    local build_code=""
+    if [[ -f "$PROJECT_DIR/build.json" ]]; then
+        build_code=$(python3 -c "import json; print(json.load(open('$PROJECT_DIR/build.json')).get('buildCode', ''))" 2>/dev/null || echo "")
+    fi
+    # Prefijo para los archivos: Annotix_VERSION_CODE
+    local prefix="Annotix_${VERSION}"
+    if [[ -n "$build_code" ]]; then
+        prefix="${prefix}_${build_code}"
+    fi
+
     local tag
     tag="$(date '+%Y-%m-%d_%H-%M')"
     local dest="$OUT_DIR/$tag"
@@ -733,21 +841,27 @@ collect_artifacts() {
     # Binario
     local bin="$TAURI_DIR/target/release/annotix"
     if [[ -f "$bin" ]]; then
-        cp "$bin" "$dest/"
+        cp "$bin" "$dest/${prefix}"
         found=1
     fi
 
-    # Paquetes
+    # Paquetes — renombrar con prefijo
     if [[ -d "$BUNDLE_DIR" ]]; then
-        for f in "$BUNDLE_DIR"/deb/*.deb "$BUNDLE_DIR"/rpm/*.rpm "$BUNDLE_DIR"/appimage/*.AppImage; do
-            [[ -f "$f" ]] && cp "$f" "$dest/" && found=1
+        for f in "$BUNDLE_DIR"/deb/*.deb; do
+            [[ -f "$f" ]] && cp "$f" "$dest/${prefix}.deb" && found=1
+        done
+        for f in "$BUNDLE_DIR"/rpm/*.rpm; do
+            [[ -f "$f" ]] && cp "$f" "$dest/${prefix}.rpm" && found=1
+        done
+        for f in "$BUNDLE_DIR"/appimage/*.AppImage; do
+            [[ -f "$f" ]] && cp "$f" "$dest/${prefix}.AppImage" && found=1
         done
     fi
 
     if [[ $found -eq 1 ]]; then
         # Guardar info del build
         {
-            echo "Annotix v$VERSION"
+            echo "Annotix v$VERSION ($build_code)"
             echo "Build: $tag"
             echo "Branch: $(git -C "$PROJECT_DIR" branch --show-current 2>/dev/null || echo 'N/A')"
             echo "Commit: $(git -C "$PROJECT_DIR" log --oneline -1 2>/dev/null || echo 'N/A')"
@@ -996,6 +1110,264 @@ cmd_update() {
     esac
 }
 
+# ── Registro de releases ─────────────────────────────────────────────────────
+
+# Llamar después de cada build exitoso para registrar en releases.json
+auto_record_release() {
+    local build_json="$PROJECT_DIR/build.json"
+    if [[ ! -f "$build_json" ]]; then
+        return
+    fi
+    local build_code build_num
+    build_code=$(python3 -c "import json; print(json.load(open('$build_json')).get('buildCode', ''))" 2>/dev/null || echo "")
+    build_num=$(python3 -c "import json; print(json.load(open('$build_json'))['buildNumber'])" 2>/dev/null || echo 0)
+    if [[ -z "$build_code" || "$build_num" == "0" ]]; then
+        return
+    fi
+    local last_tag
+    last_tag=$(git -C "$PROJECT_DIR" describe --tags --abbrev=0 2>/dev/null || echo "")
+    record_release "$build_code" "$build_num" "$last_tag"
+}
+
+record_release() {
+    local code="$1"
+    local build_num="$2"
+    local last_tag="$3"
+    local releases_json="$PROJECT_DIR/releases.json"
+
+    # Recopilar commits desde último tag
+    local commits_json="[]"
+    if [[ -n "$last_tag" ]]; then
+        commits_json=$(git -C "$PROJECT_DIR" log "$last_tag"..HEAD --format='{"hash":"%h","message":"%s"}' 2>/dev/null | python3 -c "
+import sys, json
+lines = [l.strip() for l in sys.stdin if l.strip()]
+commits = []
+for l in lines:
+    try:
+        commits.append(json.loads(l))
+    except: pass
+print(json.dumps(commits))
+" 2>/dev/null || echo "[]")
+    else
+        commits_json=$(git -C "$PROJECT_DIR" log --oneline -30 --format='{"hash":"%h","message":"%s"}' 2>/dev/null | python3 -c "
+import sys, json
+lines = [l.strip() for l in sys.stdin if l.strip()]
+commits = []
+for l in lines:
+    try:
+        commits.append(json.loads(l))
+    except: pass
+print(json.dumps(commits))
+" 2>/dev/null || echo "[]")
+    fi
+
+    # Detectar issues cerrados en los commits
+    local issues_json
+    issues_json=$(echo "$commits_json" | python3 -c "
+import sys, json, re
+commits = json.load(sys.stdin)
+issues = set()
+for c in commits:
+    found = re.findall(r'(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)', c['message'], re.IGNORECASE)
+    issues.update(found)
+    # También capturar #N sueltos
+    refs = re.findall(r'#(\d+)', c['message'])
+    issues.update(refs)
+print(json.dumps(sorted(issues)))
+" 2>/dev/null || echo "[]")
+
+    # Agregar al releases.json
+    python3 -c "
+import json
+releases_path = '$releases_json'
+try:
+    with open(releases_path) as f:
+        releases = json.load(f)
+except:
+    releases = []
+
+entry = {
+    'code': '$code',
+    'version': '$VERSION',
+    'buildNumber': $build_num,
+    'date': '$(date -u +"%Y-%m-%dT%H:%M:%SZ")',
+    'commits': $commits_json,
+    'issues': $issues_json
+}
+releases.append(entry)
+
+with open(releases_path, 'w') as f:
+    json.dump(releases, f, indent=2, ensure_ascii=False)
+" 2>/dev/null
+
+    if [[ $? -eq 0 ]]; then
+        local n_commits
+        n_commits=$(echo "$commits_json" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "?")
+        local n_issues
+        n_issues=$(echo "$issues_json" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+        success "Release $code registrado en releases.json ($n_commits commits, $n_issues issues)"
+    else
+        warn "No se pudo registrar en releases.json"
+    fi
+}
+
+# ── Release ──────────────────────────────────────────────────────────────────
+cmd_release() {
+    header "Release Annotix"
+
+    local branch
+    branch=$(git -C "$PROJECT_DIR" branch --show-current 2>/dev/null || echo "unknown")
+    local last_tag
+    last_tag=$(git -C "$PROJECT_DIR" describe --tags --abbrev=0 2>/dev/null || echo "")
+    local build_num=0
+    local build_code=""
+    if [[ -f "$PROJECT_DIR/build.json" ]]; then
+        build_num=$(python3 -c "import json; print(json.load(open('$PROJECT_DIR/build.json'))['buildNumber'])" 2>/dev/null || echo 0)
+        build_code=$(python3 -c "import json; print(json.load(open('$PROJECT_DIR/build.json')).get('buildCode', ''))" 2>/dev/null || echo "")
+    fi
+
+    # 1. Mostrar estado
+    echo -e "${BOLD}Estado actual:${NC}"
+    echo -e "  Versión:      ${CYAN}$VERSION${NC}"
+    echo -e "  Build:        ${CYAN}${build_code:-sin código} (#$build_num)${NC}"
+    echo -e "  Rama:         ${CYAN}$branch${NC}"
+    if [[ -n "$last_tag" ]]; then
+        local commit_count
+        commit_count=$(git -C "$PROJECT_DIR" rev-list "$last_tag"..HEAD --count 2>/dev/null || echo "?")
+        echo -e "  Último tag:   ${CYAN}$last_tag${NC} ($commit_count commits desde entonces)"
+    else
+        echo -e "  Último tag:   ${DIM}(ninguno)${NC}"
+    fi
+    echo ""
+
+    # 2. Pregunta nueva versión
+    echo -ne "  Nueva versión (ENTER para mantener ${BOLD}$VERSION${NC}): "
+    read -r new_ver
+    if [[ -n "$new_ver" && "$new_ver" != "$VERSION" ]]; then
+        cmd_bump "$new_ver"
+    fi
+
+    # 3. Generar build info (código único)
+    generate_build_info
+    build_num=$(python3 -c "import json; print(json.load(open('$PROJECT_DIR/build.json'))['buildNumber'])" 2>/dev/null || echo "$((build_num + 1))")
+    build_code=$(python3 -c "import json; print(json.load(open('$PROJECT_DIR/build.json')).get('buildCode', ''))" 2>/dev/null || echo "")
+
+    echo ""
+    success "Release: Annotix v$VERSION ($build_code)"
+    echo ""
+
+    # 4. ¿Compilar localmente?
+    echo -ne "  ¿Compilar localmente (AppImage)? [s/N]: "
+    read -r do_build
+    if [[ "$do_build" == "s" || "$do_build" == "S" ]]; then
+        cmd_build "appimage"
+    fi
+
+    # 5. Registrar en releases.json
+    record_release "$build_code" "$build_num" "$last_tag"
+
+    # 6. Commit automático
+    echo ""
+    echo -ne "  ¿Crear commit de release? [S/n]: "
+    read -r do_commit
+    if [[ "$do_commit" != "n" && "$do_commit" != "N" ]]; then
+        cd "$PROJECT_DIR"
+        git add build.json releases.json src/lib/buildInfo.ts src/lib/changelog.ts
+        git add -u
+        git commit -m "Release Annotix v$VERSION ($build_code)"
+        success "Commit creado"
+    fi
+
+    # 7. Push
+    echo -ne "  ¿Push rama '$branch'? [S/n]: "
+    read -r do_push
+    if [[ "$do_push" != "n" && "$do_push" != "N" ]]; then
+        git push origin "$branch"
+        success "Push completado"
+    fi
+
+    # 8. ¿Crear PR + merge + tag?
+    echo ""
+    echo -ne "  ¿Crear PR hacia main? [s/N]: "
+    read -r do_pr
+    if [[ "$do_pr" == "s" || "$do_pr" == "S" ]]; then
+        if ! command -v gh &>/dev/null; then
+            error "gh CLI no encontrado. Instala GitHub CLI: https://cli.github.com"
+        else
+            local pr_title="Release Annotix v$VERSION ($build_code)"
+            local changelog=""
+            if [[ -n "$last_tag" ]]; then
+                changelog=$(git -C "$PROJECT_DIR" log "$last_tag"..HEAD --oneline 2>/dev/null || echo "")
+            else
+                changelog=$(git -C "$PROJECT_DIR" log --oneline -20 2>/dev/null || echo "")
+            fi
+            # Issues cerrados
+            local issues_text=""
+            local closed_issues
+            closed_issues=$(echo "$changelog" | grep -oiE '(close[sd]?|fix(e[sd])?|resolve[sd]?) #[0-9]+' | grep -oE '#[0-9]+' | sort -u)
+            if [[ -n "$closed_issues" ]]; then
+                issues_text="### Issues resueltos
+$(echo "$closed_issues" | sed 's/^/- /')
+"
+            fi
+            local pr_body
+            pr_body=$(cat <<PRBODY
+## Release Annotix v$VERSION ($build_code)
+
+**Build:** $build_code (#$build_num)
+**Fecha:** $(date -u +"%Y-%m-%d %H:%M UTC")
+**Rama:** $branch
+
+### Changelog
+$(echo "$changelog" | sed 's/^/- /')
+
+$issues_text
+PRBODY
+)
+            local pr_url
+            pr_url=$(gh pr create --title "$pr_title" --body "$pr_body" --base main 2>&1)
+            if [[ $? -eq 0 ]]; then
+                success "PR creado: $pr_url"
+
+                # 9. ¿Mergear PR?
+                echo ""
+                echo -ne "  ¿Mergear PR en main? [S/n]: "
+                read -r do_merge
+                if [[ "$do_merge" != "n" && "$do_merge" != "N" ]]; then
+                    gh pr merge --merge --delete-branch=false
+                    if [[ $? -eq 0 ]]; then
+                        success "PR mergeado en main"
+
+                        # 10. ¿Crear tag sobre main?
+                        echo ""
+                        echo -ne "  ¿Crear tag v$VERSION en main? (dispara builds CI) [S/n]: "
+                        read -r do_tag
+                        if [[ "$do_tag" != "n" && "$do_tag" != "N" ]]; then
+                            # Crear tag sobre main sin cambiar de rama
+                            local main_sha
+                            main_sha=$(git rev-parse origin/main 2>/dev/null)
+                            if [[ -n "$main_sha" ]]; then
+                                git tag "v$VERSION" "$main_sha"
+                                git push origin "v$VERSION"
+                                success "Tag v$VERSION creado sobre main → CI se disparará"
+                            else
+                                error "No se pudo resolver origin/main"
+                            fi
+                        fi
+                    else
+                        error "No se pudo mergear el PR"
+                    fi
+                fi
+            else
+                error "No se pudo crear el PR: $pr_url"
+            fi
+        fi
+    fi
+
+    echo ""
+    success "Proceso de release completado"
+}
+
 # ══════════════════════════════════════════════════════════════════════════════
 # ── MENÚ INTERACTIVO ─────────────────────────────────────────────────────────
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1056,6 +1428,9 @@ show_menu() {
     echo -e " ${MAGENTA}31${NC})  Ejecutar app         ${DIM}Lanzar binario release${NC}"
     echo -e " ${MAGENTA}32${NC})  Listar artefactos    ${DIM}Ver paquetes generados${NC}"
     echo -e " ${MAGENTA}33${NC})  Análisis tamaño      ${DIM}Tamaño binario + dependencias${NC}"
+    echo ""
+    echo -e "${BOLD} RELEASE${NC}"
+    echo -e " ${CYAN}40${NC})  Release              ${DIM}Bump + build info + PR + tag CI${NC}"
     echo ""
     echo -e "${BOLD} LIMPIEZA${NC}"
     echo -e " ${RED}34${NC})  Limpiar todo         ${DIM}dist + target + bundles${NC}"
@@ -1122,6 +1497,9 @@ menu_loop() {
             31) cmd_run;              pause_after ;;
             32) cmd_list_artifacts;   pause_after ;;
             33) cmd_size;             pause_after ;;
+
+            # Release
+            40) cmd_release;          pause_after ;;
 
             # Limpieza
             34) cmd_clean "all";      pause_after ;;
@@ -1191,6 +1569,9 @@ cmd_help() {
     echo "  info                 Información del proyecto y herramientas"
     echo "  deps                 Verificar dependencias del sistema"
     echo ""
+    echo -e "${BOLD}Release:${NC}"
+    echo "  release              Release interactivo (bump + build info + PR + tag)"
+    echo ""
     echo -e "${BOLD}Artefactos:${NC}"
     echo "  run                  Ejecutar binario release compilado"
     echo "  artifacts            Listar artefactos generados"
@@ -1249,6 +1630,9 @@ main() {
         android:deps)       check_android_deps "$@" ;;
         android:targets)    cmd_android_install_targets "$@" ;;
         android:clean)      cmd_android_clean "$@" ;;
+
+        # Release
+        release)            cmd_release "$@" ;;
 
         # Gestión
         install)            cmd_install "$@" ;;
