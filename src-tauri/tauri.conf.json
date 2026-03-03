@@ -50,6 +50,28 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "windows": {
+      "nsis": {
+        "headerImage": "icons/nsis-header.bmp",
+        "sidebarImage": "icons/nsis-sidebar.bmp",
+        "installerIcon": "icons/icon.ico",
+        "installMode": "both",
+        "displayLanguageSelector": true,
+        "languages": [
+          "English",
+          "Spanish",
+          "French",
+          "German",
+          "Italian",
+          "Japanese",
+          "Korean",
+          "PortugueseBR",
+          "Russian",
+          "SimpChinese"
+        ],
+        "compression": "lzma"
+      }
+    }
   }
 }
