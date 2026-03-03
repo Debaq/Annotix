@@ -1,5 +1,7 @@
 use tauri::{AppHandle, Emitter, State};
 
+use crate::p2p::node::P2pState;
+use crate::p2p::P2pPermission;
 use crate::store::AppState;
 use crate::store::config::{CloudProviderConfig, GcpConfig, KaggleConfig, LightningAiConfig, HuggingFaceConfig, SaturnCloudConfig};
 use crate::store::project_file::TrainingJobEntry;
@@ -219,13 +221,15 @@ pub fn get_yolo_models(project_type: String) -> Result<Vec<YoloModelInfo>, Strin
 }
 
 #[tauri::command]
-pub fn start_training(
+pub async fn start_training(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     manager: State<'_, TrainingProcessManager>,
     project_id: String,
     config: TrainingConfig,
 ) -> Result<String, String> {
+    p2p.check_permission(P2pPermission::Manage).await?;
     let config_json = serde_json::to_value(&config).map_err(|e| e.to_string())?;
     let now = js_timestamp();
     let job_id = uuid::Uuid::new_v4().to_string();
@@ -260,13 +264,15 @@ pub fn start_training(
 }
 
 #[tauri::command]
-pub fn cancel_training(
+pub async fn cancel_training(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     manager: State<'_, TrainingProcessManager>,
     project_id: String,
     job_id: String,
 ) -> Result<(), String> {
+    p2p.check_permission(P2pPermission::Manage).await?;
     manager.cancel_training(&job_id)?;
 
     state.with_project_mut(&project_id, |pf| {
@@ -306,12 +312,14 @@ pub fn list_training_jobs(
 }
 
 #[tauri::command]
-pub fn delete_training_job(
+pub async fn delete_training_job(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     manager: State<'_, TrainingProcessManager>,
     project_id: String,
     job_id: String,
 ) -> Result<(), String> {
+    p2p.check_permission(P2pPermission::Delete).await?;
     // Cancelar si está corriendo
     if manager.is_running(&job_id) {
         let _ = manager.cancel_training(&job_id);
@@ -444,14 +452,16 @@ fn detect_nvidia_hardware() -> bool {
 }
 
 #[tauri::command]
-pub fn start_training_v2(
+pub async fn start_training_v2(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     manager: State<'_, TrainingProcessManager>,
     cloud_manager: State<'_, CloudTrainingManager>,
     project_id: String,
     request: TrainingRequest,
 ) -> Result<String, String> {
+    p2p.check_permission(P2pPermission::Manage).await?;
     // For download-package mode, delegate to package generation
     if request.execution_mode == ExecutionMode::DownloadPackage {
         return Err("Usa generate_training_package para modo descarga".to_string());

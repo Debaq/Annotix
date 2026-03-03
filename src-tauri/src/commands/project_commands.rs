@@ -1,5 +1,7 @@
 use tauri::{AppHandle, Emitter, State};
 
+use crate::p2p::node::P2pState;
+use crate::p2p::P2pPermission;
 use crate::store::project_file::ClassDef;
 use crate::store::projects::ProjectSummary;
 use crate::store::AppState;
@@ -31,14 +33,18 @@ pub fn list_projects(state: State<'_, AppState>) -> Result<Vec<ProjectSummary>, 
 }
 
 #[tauri::command]
-pub fn update_project(
+pub async fn update_project(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     id: String,
     name: Option<String>,
     project_type: Option<String>,
     classes: Option<Vec<ClassDef>>,
 ) -> Result<(), String> {
+    if classes.is_some() {
+        p2p.check_permission(P2pPermission::EditClasses).await?;
+    }
     state.update_project(
         &id,
         name.as_deref(),
@@ -50,11 +56,13 @@ pub fn update_project(
 }
 
 #[tauri::command]
-pub fn delete_project(
+pub async fn delete_project(
     state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
     app: AppHandle,
     id: String,
 ) -> Result<(), String> {
+    p2p.check_permission(P2pPermission::Manage).await?;
     state.delete_project(&id)?;
     let _ = app.emit("db:projects-changed", ());
     let _ = app.emit("db:images-changed", ());

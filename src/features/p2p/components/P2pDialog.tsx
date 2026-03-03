@@ -15,13 +15,17 @@ import type { P2pSessionInfo, LockMode, SessionRules } from '../types';
 interface P2pDialogProps {
   trigger?: React.ReactNode;
   projectId?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 type Step = 'choose' | 'create-configure' | 'create-ready' | 'join-enter-code' | 'join-downloading' | 'connected';
 
-export function P2pDialog({ trigger, projectId }: P2pDialogProps) {
+export function P2pDialog({ trigger, projectId, open: controlledOpen, onOpenChange }: P2pDialogProps) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [step, setStep] = useState<Step>('choose');
   const [displayName, setDisplayName] = useState('');
   const [lockMode, setLockMode] = useState<LockMode>('individual');
@@ -29,6 +33,7 @@ export function P2pDialog({ trigger, projectId }: P2pDialogProps) {
   const [canEditClasses, setCanEditClasses] = useState(false);
   const [canDelete, setCanDelete] = useState(false);
   const [canExport, setCanExport] = useState(true);
+  const [requireDataApproval, setRequireDataApproval] = useState(false);
   const [shareCode, setShareCode] = useState('');
   const [sessionInfo, setSessionInfo] = useState<P2pSessionInfo | null>(null);
   const [error, setError] = useState('');
@@ -45,6 +50,7 @@ export function P2pDialog({ trigger, projectId }: P2pDialogProps) {
     setCanEditClasses(false);
     setCanDelete(false);
     setCanExport(true);
+    setRequireDataApproval(false);
     setShareCode('');
     setSessionInfo(null);
     setError('');
@@ -63,6 +69,7 @@ export function P2pDialog({ trigger, projectId }: P2pDialogProps) {
         canEditClasses,
         canDelete,
         canExport,
+        requireDataApproval,
       };
       const session = await p2pService.createSession(projectId, displayName.trim(), rules);
       setSessionInfo(session);
@@ -86,7 +93,8 @@ export function P2pDialog({ trigger, projectId }: P2pDialogProps) {
       setSessionInfo(session);
       setActiveSession(session);
       setCurrentProjectId(session.projectId);
-      setStep('connected');
+      // La descarga de imágenes continúa en background, cerrar modal directamente
+      handleClose();
     } catch (err) {
       setError(String(err));
       setStep('join-enter-code');
@@ -102,16 +110,21 @@ export function P2pDialog({ trigger, projectId }: P2pDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else setOpen(true); }}>
-      <DialogTrigger asChild>
-        {trigger || (
+      {trigger && (
+        <DialogTrigger asChild>
+          {trigger}
+        </DialogTrigger>
+      )}
+      {!trigger && controlledOpen === undefined && (
+        <DialogTrigger asChild>
           <Button variant="outline">
             <i className="fas fa-people-arrows mr-2" />
             {t('p2p.collaborate')}
           </Button>
-        )}
-      </DialogTrigger>
+        </DialogTrigger>
+      )}
 
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" preventClose={step === 'join-downloading'}>
         {/* Step: Choose */}
         {step === 'choose' && (
           <>
@@ -206,6 +219,13 @@ export function P2pDialog({ trigger, projectId }: P2pDialogProps) {
                   <div className="flex items-center gap-2">
                     <Checkbox id="perm-export" checked={canExport} onCheckedChange={(v) => setCanExport(v === true)} />
                     <Label htmlFor="perm-export" className="text-sm cursor-pointer">{t('p2p.permExport')}</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox id="perm-approval" checked={requireDataApproval} onCheckedChange={(v) => setRequireDataApproval(v === true)} />
+                    <Label htmlFor="perm-approval" className="text-sm cursor-pointer">
+                      {t('p2p.requireDataApproval')}
+                      <span className="text-xs text-muted-foreground ml-1">{t('p2p.requireDataApprovalDesc')}</span>
+                    </Label>
                   </div>
                 </div>
               </div>
@@ -307,8 +327,8 @@ export function P2pDialog({ trigger, projectId }: P2pDialogProps) {
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   {shareCode.startsWith('ANN-HOST')
-                    ? <><i className="fas fa-key text-amber-500 mr-1" />{t('p2p.joiningAsHost')}</>
-                    : <><i className="fas fa-user text-blue-500 mr-1" />{t('p2p.joiningAsCollaborator')}</>
+                    ? <><i className="fas fa-flask text-violet-500 mr-1" />{t('p2p.joiningAsLeadResearcher')}</>
+                    : <><i className="fas fa-pen text-blue-500 mr-1" />{t('p2p.joiningAsAnnotator')}</>
                   }
                 </p>
               </div>
@@ -364,10 +384,8 @@ export function P2pDialog({ trigger, projectId }: P2pDialogProps) {
               <div className="text-sm text-center text-muted-foreground space-y-1">
                 <p>{t('p2p.readyToAnnotate')}</p>
                 <p className="font-medium">
-                  {sessionInfo.role === 'host'
-                    ? <><i className="fas fa-crown text-amber-500 mr-1" />{t('p2p.host')}</>
-                    : <><i className="fas fa-user text-blue-500 mr-1" />{t('p2p.collaborator')}</>
-                  }
+                  <i className={`fas ${sessionInfo.role === 'lead_researcher' ? 'fa-flask text-violet-500' : sessionInfo.role === 'data_curator' ? 'fa-database text-amber-500' : 'fa-pen text-blue-500'} mr-1`} />
+                  {t(`p2p.role_${sessionInfo.role}`)}
                 </p>
               </div>
               <Button className="w-full" onClick={handleClose}>

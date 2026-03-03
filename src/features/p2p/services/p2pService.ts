@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { P2pSessionInfo, PeerInfo, ImageLockInfo, BatchInfo, SessionRules } from '../types';
+import type { P2pSessionInfo, PeerInfo, PeerRole, ImageLockInfo, BatchInfo, SessionRules, WorkDistribution, PeerWorkStats, PendingApproval } from '../types';
 
 export const p2pService = {
   createSession(projectId: string, displayName: string, rules: SessionRules): Promise<P2pSessionInfo> {
@@ -12,6 +12,14 @@ export const p2pService = {
 
   leaveSession(): Promise<void> {
     return invoke('p2p_leave_session');
+  },
+
+  pauseSession(): Promise<string> {
+    return invoke('p2p_pause_session');
+  },
+
+  resumeSession(projectId: string): Promise<P2pSessionInfo> {
+    return invoke('p2p_resume_session', { projectId });
   },
 
   getSessionInfo(): Promise<P2pSessionInfo | null> {
@@ -48,5 +56,45 @@ export const p2pService = {
 
   getRules(): Promise<SessionRules> {
     return invoke('p2p_get_rules');
+  },
+
+  resumeDownload(projectId: string): Promise<void> {
+    return invoke('p2p_resume_download', { projectId });
+  },
+
+  distributeWork(): Promise<WorkDistribution> {
+    return invoke('p2p_distribute_work');
+  },
+
+  adjustAssignment(itemIds: string[], itemType: 'video' | 'image', targetNodeId: string): Promise<WorkDistribution> {
+    return invoke('p2p_adjust_assignment', { itemIds, itemType, targetNodeId });
+  },
+
+  getDistribution(): Promise<WorkDistribution | null> {
+    return invoke('p2p_get_distribution');
+  },
+
+  getWorkStats(): Promise<PeerWorkStats[]> {
+    return invoke('p2p_get_work_stats');
+  },
+
+  updatePeerRole(nodeId: string, newRole: PeerRole): Promise<void> {
+    return invoke('p2p_update_peer_role', { nodeId, newRole });
+  },
+
+  submitData(itemId: string, itemType: string): Promise<void> {
+    return invoke('p2p_submit_data', { itemId, itemType });
+  },
+
+  approveData(itemId: string): Promise<void> {
+    return invoke('p2p_approve_data', { itemId });
+  },
+
+  rejectData(itemId: string): Promise<void> {
+    return invoke('p2p_reject_data', { itemId });
+  },
+
+  listPendingApprovals(): Promise<PendingApproval[]> {
+    return invoke('p2p_list_pending_approvals');
   },
 };

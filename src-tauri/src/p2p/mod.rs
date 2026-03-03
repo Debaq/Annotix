@@ -4,23 +4,61 @@ pub mod sync;
 pub mod locks;
 pub mod ticket;
 pub mod protocol;
+pub mod distribution;
 
 use serde::{Deserialize, Serialize};
 
 // ─── Tipos base P2P ──────────────────────────────────────────────────────────
 
+/// Permisos verificables en sesión P2P
+#[derive(Debug, Clone, PartialEq)]
+pub enum P2pPermission {
+    Annotate,
+    UploadData,
+    Export,
+    EditClasses,
+    Delete,
+    Manage,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum PeerRole {
-    Host,
-    Collaborator,
+    #[serde(alias = "host")]
+    LeadResearcher,
+    #[serde(alias = "collaborator")]
+    Annotator,
+    DataCurator,
+}
+
+impl PeerRole {
+    /// Puede gestionar la sesión (cambiar roles, reglas, distribuir trabajo)
+    pub fn can_manage(&self) -> bool {
+        matches!(self, PeerRole::LeadResearcher)
+    }
+
+    /// Puede anotar imágenes/videos
+    pub fn can_annotate(&self) -> bool {
+        matches!(self, PeerRole::LeadResearcher | PeerRole::Annotator)
+    }
+
+    /// Puede subir datos (imágenes/videos)
+    pub fn can_upload_data(&self) -> bool {
+        matches!(self, PeerRole::LeadResearcher | PeerRole::DataCurator)
+    }
+
+    /// Puede exportar el proyecto
+    pub fn can_export(&self) -> bool {
+        matches!(self, PeerRole::LeadResearcher | PeerRole::DataCurator)
+    }
 }
 
 impl std::fmt::Display for PeerRole {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            PeerRole::Host => write!(f, "host"),
-            PeerRole::Collaborator => write!(f, "collaborator"),
+            PeerRole::LeadResearcher => write!(f, "lead_researcher"),
+            PeerRole::Annotator => write!(f, "annotator"),
+            PeerRole::DataCurator => write!(f, "data_curator"),
         }
     }
 }
@@ -51,7 +89,7 @@ impl LockMode {
     }
 }
 
-/// Reglas de la sesión configurables por el host
+/// Reglas de la sesión configurables por el lead researcher
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionRules {
@@ -64,6 +102,9 @@ pub struct SessionRules {
     pub can_delete: bool,
     /// Colaboradores pueden exportar el proyecto
     pub can_export: bool,
+    /// Datos subidos requieren aprobación del lead researcher
+    #[serde(default)]
+    pub require_data_approval: bool,
 }
 
 impl Default for SessionRules {
@@ -74,8 +115,30 @@ impl Default for SessionRules {
             can_edit_classes: false,
             can_delete: false,
             can_export: true,
+            require_data_approval: false,
         }
     }
+}
+
+/// Estado de aprobación de un dato subido
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum ApprovalStatus {
+    Pending,
+    Approved,
+    Rejected,
+}
+
+/// Información de un dato pendiente de aprobación
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PendingApproval {
+    pub item_id: String,
+    pub item_type: String,
+    pub submitted_by: String,
+    pub submitted_by_name: String,
+    pub submitted_at: f64,
+    pub status: ApprovalStatus,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -115,6 +178,37 @@ pub struct BatchInfo {
     pub assigned_to_name: String,
     #[serde(rename = "createdAt")]
     pub created_at: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkAssignment {
+    pub node_id: String,
+    pub display_name: String,
+    pub video_ids: Vec<String>,
+    pub image_ids: Vec<String>,
+    pub updated_at: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkDistribution {
+    pub version: u64,
+    pub assignments: Vec<WorkAssignment>,
+    pub created_by: String,
+    pub created_at: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PeerWorkStats {
+    pub node_id: String,
+    pub display_name: String,
+    pub videos_assigned: usize,
+    pub videos_completed: usize,
+    pub images_assigned: usize,
+    pub images_completed: usize,
+    pub progress_percent: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

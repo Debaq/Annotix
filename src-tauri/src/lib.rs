@@ -51,6 +51,9 @@ pub fn run() {
             // Reanudar extracciones de video interrumpidas
             commands::video_commands::resume_pending_extractions(app.handle().clone());
 
+            // Reanudar sesión P2P si hay proyecto con p2p activa
+            resume_p2p_session(app.handle().clone());
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -153,6 +156,8 @@ pub fn run() {
             commands::p2p_commands::p2p_create_session,
             commands::p2p_commands::p2p_join_session,
             commands::p2p_commands::p2p_leave_session,
+            commands::p2p_commands::p2p_pause_session,
+            commands::p2p_commands::p2p_resume_session,
             commands::p2p_commands::p2p_get_session_info,
             commands::p2p_commands::p2p_lock_image,
             commands::p2p_commands::p2p_unlock_image,
@@ -162,6 +167,16 @@ pub fn run() {
             commands::p2p_commands::p2p_list_peers,
             commands::p2p_commands::p2p_update_rules,
             commands::p2p_commands::p2p_get_rules,
+            commands::p2p_commands::p2p_resume_download,
+            commands::p2p_commands::p2p_distribute_work,
+            commands::p2p_commands::p2p_adjust_assignment,
+            commands::p2p_commands::p2p_get_distribution,
+            commands::p2p_commands::p2p_get_work_stats,
+            commands::p2p_commands::p2p_update_peer_role,
+            commands::p2p_commands::p2p_submit_data,
+            commands::p2p_commands::p2p_approve_data,
+            commands::p2p_commands::p2p_reject_data,
+            commands::p2p_commands::p2p_list_pending_approvals,
             // Browser Automation
             commands::automation_commands::detect_browsers,
             commands::automation_commands::start_browser_automation,
@@ -178,4 +193,64 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+/// Busca un proyecto con sesión P2P persistida y la reanuda en background
+fn resume_p2p_session(app: tauri::AppHandle) {
+    tauri::async_runtime::spawn(async move {
+        let app_state = app.state::<store::AppState>();
+        let projects_dir = match app_state.projects_dir() {
+            Ok(d) => d,
+            Err(_) => return,
+        };
+
+        if !projects_dir.exists() {
+            return;
+        }
+
+        let entries = match std::fs::read_dir(&projects_dir) {
+            Ok(e) => e,
+            Err(_) => return,
+        };
+
+        // Buscar el primer proyecto con p2p: Some(...)
+        let mut found: Option<(String, store::project_file::P2pProjectConfig)> = None;
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if !path.is_dir() || !path.join("project.json").exists() {
+                continue;
+            }
+            if let Ok(pf) = store::io::read_project(&path) {
+                if let Some(p2p_config) = pf.p2p {
+                    found = Some((pf.id, p2p_config));
+                    break;
+                }
+            }
+        }
+
+        let (project_id, config) = match found {
+            Some(f) => f,
+            None => return,
+        };
+
+        log::info!("Reanudando sesión P2P para proyecto: {}", project_id);
+
+        let p2p = app.state::<p2p::node::P2pState>();
+        match p2p.resume_session(&app_state, &app, &project_id, config).await {
+            Ok(info) => {
+                log::info!(
+                    "Sesión P2P restaurada: {} (share_code: {})",
+                    info.project_name,
+                    info.share_code
+                );
+            }
+            Err(e) => {
+                log::warn!("No se pudo restaurar sesión P2P: {}", e);
+                // Limpiar config p2p del proyecto si falló
+                let _ = app_state.with_project_mut(&project_id, |pf| {
+                    pf.p2p = None;
+                });
+            }
+        }
+    });
 }

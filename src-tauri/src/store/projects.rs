@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use crate::store::io;
-use crate::store::project_file::{ClassDef, ProjectFile};
+use crate::store::project_file::{ClassDef, P2pDownloadStatus, ProjectFile};
 use crate::store::state::AppState;
 
 use super::project_file::ImageEntry;
@@ -25,6 +25,10 @@ pub struct ProjectSummary {
     pub metadata: ProjectMetadata,
     #[serde(rename = "imageCount")]
     pub image_count: usize,
+    #[serde(rename = "p2pDownload", skip_serializing_if = "Option::is_none")]
+    pub p2p_download: Option<P2pDownloadStatus>,
+    #[serde(rename = "hasP2pConfig")]
+    pub has_p2p_config: bool,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -68,6 +72,7 @@ impl AppState {
             training_jobs: vec![],
             tabular_data: vec![],
             p2p: None,
+            p2p_download: None,
         };
 
         io::write_project(&project_dir, &project)?;
@@ -109,6 +114,8 @@ impl AppState {
             // Leer summary ligero sin cargar todo en cache
             match io::read_project(&path) {
                 Ok(pf) => {
+                    let p2p_download = pf.p2p_download.clone();
+                    let has_p2p_config = pf.p2p.is_some();
                     summaries.push(ProjectSummary {
                         id: pf.id,
                         name: pf.name,
@@ -120,6 +127,8 @@ impl AppState {
                             updated: pf.updated,
                             version: format!("{}", pf.version),
                         },
+                        p2p_download,
+                        has_p2p_config,
                     });
                 }
                 Err(e) => {
@@ -152,6 +161,8 @@ impl AppState {
                     updated: pf.updated,
                     version: format!("{}", pf.version),
                 },
+                p2p_download: pf.p2p_download.clone(),
+                has_p2p_config: pf.p2p.is_some(),
             }
         }).map(Some)
     }

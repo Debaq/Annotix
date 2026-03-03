@@ -176,7 +176,7 @@ pub async fn project_to_doc(
     // meta/peers/{node_id}
     let peer_info = serde_json::json!({
         "display_name": session.my_display_name,
-        "role": "host",
+        "role": "lead_researcher",
         "joined_at": std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
@@ -196,8 +196,8 @@ pub async fn project_to_doc(
             .map_err(|e| format!("Error escribiendo clase: {}", e))?;
     }
 
-    // images
-    for img in &project.images {
+    // images (skip video frames — only sync standalone images)
+    for img in project.images.iter().filter(|i| i.video_id.is_none()) {
         let img_meta = serde_json::json!({
             "id": img.id,
             "name": img.name,
@@ -237,11 +237,11 @@ pub async fn project_to_doc(
     Ok(())
 }
 
-/// Reconstruye un ProjectFile desde un iroh-doc (usado por colaborador al unirse)
-pub async fn doc_to_project(
+/// Fase 1: Reconstruye un ProjectFile desde un iroh-doc, solo metadata (sin descargar blobs de imágenes).
+/// Las imágenes se crean con download_status = Some("pending").
+pub async fn doc_to_project_metadata(
     p2p: &P2pState,
     target_dir: &std::path::Path,
-    app_handle: &tauri::AppHandle,
 ) -> Result<ProjectFile, String> {
     let session = p2p.session.read().await;
     let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
@@ -289,7 +289,7 @@ pub async fn doc_to_project(
         }
     }
 
-    // Leer imágenes (meta + annots + blob)
+    // Leer imágenes (solo meta + annots, sin blobs)
     let mut images: Vec<ImageEntry> = Vec::new();
     let img_entries = doc
         .get_many(iroh_docs::store::Query::key_prefix(b"images/"))
@@ -307,7 +307,8 @@ pub async fn doc_to_project(
             let img_id = parts[1].to_string();
             let field = parts[2].to_string();
 
-            if field == "lock" {
+            // Skip blobs y locks — solo metadata y anotaciones
+            if field == "blob" || field == "lock" {
                 continue;
             }
 
@@ -326,9 +327,6 @@ pub async fn doc_to_project(
     let images_dir = project_dir.join("images");
     let _ = std::fs::create_dir_all(&images_dir);
 
-    let total_images = img_data.len();
-    let mut processed = 0;
-
     for (img_id, fields) in &img_data {
         if let Some(meta_bytes) = fields.get("meta") {
             let meta: serde_json::Value = serde_json::from_slice(meta_bytes)
@@ -340,11 +338,6 @@ pub async fn doc_to_project(
                 .unwrap_or_default();
 
             let file_name = meta["file"].as_str().unwrap_or(&format!("{}.jpg", img_id)).to_string();
-            if let Some(blob_data) = fields.get("blob") {
-                let dest = images_dir.join(&file_name);
-                std::fs::write(&dest, blob_data)
-                    .map_err(|e| format!("Error escribiendo imagen: {}", e))?;
-            }
 
             let now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -365,21 +358,26 @@ pub async fn doc_to_project(
                 frame_index: None,
                 locked_by: None,
                 lock_expires: None,
+                download_status: Some("pending".to_string()),
             });
-
-            processed += 1;
-            let _ = app_handle.emit("p2p:sync-progress", serde_json::json!({
-                "current": processed,
-                "total": total_images,
-                "phase": "downloading",
-            }));
         }
     }
+
+    let total_images = images.len();
 
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_millis() as f64;
+
+    let p2p_download = if total_images > 0 {
+        Some(crate::store::project_file::P2pDownloadStatus {
+            total_images,
+            downloaded_images: 0,
+        })
+    } else {
+        None
+    };
 
     Ok(ProjectFile {
         version,
@@ -395,7 +393,317 @@ pub async fn doc_to_project(
         training_jobs: vec![],
         tabular_data: vec![],
         p2p: None,
+        p2p_download,
     })
+}
+
+/// Fase 2: Descarga blobs de imágenes pendientes uno a uno en background.
+/// Emite eventos de progreso y actualiza cada ImageEntry al completar.
+/// Incluye espera inicial para que iroh sincronice los blobs y retries por imagen.
+pub async fn download_project_images(
+    p2p: &P2pState,
+    app_state: &crate::store::state::AppState,
+    project_id: &str,
+    app_handle: &tauri::AppHandle,
+) -> Result<(), String> {
+    // Leer las imágenes pendientes
+    let pending_images: Vec<(String, String)> = app_state.with_project(project_id, |pf| {
+        pf.images.iter()
+            .filter(|i| i.download_status.as_deref() == Some("pending"))
+            .map(|i| (i.id.clone(), i.file.clone()))
+            .collect()
+    })?;
+
+    if pending_images.is_empty() {
+        return Ok(());
+    }
+
+    let total = pending_images.len();
+    let images_dir = app_state.project_images_dir(project_id)?;
+    let _ = std::fs::create_dir_all(&images_dir);
+
+    // Obtener doc y blobs del p2p state
+    let (namespace_id, node) = {
+        let session = p2p.session.read().await;
+        let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+        (session.namespace_id, session.node.clone())
+    };
+
+    let doc = node
+        .docs
+        .open(namespace_id)
+        .await
+        .map_err(|e| format!("Error abriendo doc: {}", e))?
+        .ok_or("Documento no encontrado")?;
+
+    let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
+
+    // Leer host_node_id para descarga explícita de blobs
+    let host_endpoint_id: iroh::EndpointId = {
+        let entry = doc
+            .get_one(iroh_docs::store::Query::key_exact(b"meta/host_node_id"))
+            .await
+            .map_err(|e| format!("Error leyendo host_node_id: {}", e))?
+            .ok_or("meta/host_node_id no encontrado")?;
+        let bytes = read_entry_bytes(&entry, blobs).await?;
+        let id_str = String::from_utf8_lossy(&bytes).to_string();
+        id_str.parse().map_err(|e| format!("Error parseando host EndpointId: {}", e))?
+    };
+
+    // Crear downloader para descarga explícita de blobs desde el host
+    let downloader = blobs.downloader(&node.endpoint);
+    log::info!("Downloader creado para {} imágenes desde host {}", total, host_endpoint_id);
+
+    let mut downloaded = 0;
+    let max_retries: u32 = 8;
+    let retry_delay = std::time::Duration::from_secs(3);
+
+    for (img_id, file_name) in &pending_images {
+        let blob_key = format!("images/{}/blob", img_id);
+
+        let mut success = false;
+        for attempt in 0..max_retries {
+            if attempt > 0 {
+                log::info!("Reintento {}/{} para imagen {}", attempt + 1, max_retries, img_id);
+                tokio::time::sleep(retry_delay).await;
+            }
+
+            let entry = match doc
+                .get_one(iroh_docs::store::Query::key_exact(blob_key.as_bytes()))
+                .await
+            {
+                Ok(Some(entry)) => entry,
+                Ok(None) => {
+                    log::warn!("Blob entry no encontrado para imagen {} (intento {})", img_id, attempt + 1);
+                    continue;
+                }
+                Err(e) => {
+                    log::warn!("Error buscando blob {} (intento {}): {}", img_id, attempt + 1, e);
+                    continue;
+                }
+            };
+
+            let hash = entry.content_hash();
+
+            // Descargar explícitamente el blob desde el host
+            if let Err(e) = downloader.download(hash, vec![host_endpoint_id]).await {
+                log::warn!("Error descargando blob {} del host (intento {}): {}", img_id, attempt + 1, e);
+                continue;
+            }
+
+            // Leer el blob ya disponible localmente
+            match blobs.blobs().get_bytes(hash).await {
+                Ok(blob_data) => {
+                    let dest = images_dir.join(file_name);
+                    let tmp_dest = images_dir.join(format!("{}.tmp", file_name));
+                    if let Err(e) = std::fs::write(&tmp_dest, &blob_data) {
+                        log::warn!("Error escribiendo imagen tmp {}: {}", img_id, e);
+                        continue;
+                    }
+                    if let Err(e) = std::fs::rename(&tmp_dest, &dest) {
+                        log::warn!("Error renombrando imagen {}: {}", img_id, e);
+                        continue;
+                    }
+                    success = true;
+                    break;
+                }
+                Err(e) => {
+                    log::warn!("Error leyendo blob local {} (intento {}): {}", img_id, attempt + 1, e);
+                    continue;
+                }
+            }
+        }
+
+        if !success {
+            log::warn!("No se pudo descargar imagen {} después de {} intentos", img_id, max_retries);
+            continue;
+        }
+
+        // Actualizar ImageEntry: download_status = None
+        let img_id_clone = img_id.clone();
+        let _ = app_state.with_project_mut(project_id, |pf| {
+            if let Some(img) = pf.images.iter_mut().find(|i| i.id == img_id_clone) {
+                img.download_status = None;
+            }
+            if let Some(ref mut dl) = pf.p2p_download {
+                dl.downloaded_images += 1;
+            }
+        });
+
+        downloaded += 1;
+        let _ = app_handle.emit("p2p:download-progress", serde_json::json!({
+            "projectId": project_id,
+            "current": downloaded,
+            "total": total,
+        }));
+    }
+
+    // Solo limpiar p2p_download si se descargaron TODAS las imágenes
+    if downloaded == total {
+        let _ = app_state.with_project_mut(project_id, |pf| {
+            pf.p2p_download = None;
+        });
+
+        let _ = app_handle.emit("p2p:download-complete", serde_json::json!({
+            "projectId": project_id,
+        }));
+
+        log::info!("Descarga P2P completada: {}/{} imágenes para proyecto {}", downloaded, total, project_id);
+    } else {
+        log::warn!(
+            "Descarga P2P parcial: {}/{} imágenes para proyecto {}. Las pendientes se reintentarán al reiniciar.",
+            downloaded, total, project_id
+        );
+        // Emitir progreso final para que el frontend actualice el banner
+        let _ = app_handle.emit("p2p:download-progress", serde_json::json!({
+            "projectId": project_id,
+            "current": downloaded,
+            "total": total,
+        }));
+    }
+
+    Ok(())
+}
+
+/// Envía un dato para aprobación
+pub async fn submit_data_for_approval(
+    p2p: &P2pState,
+    item_id: &str,
+    item_type: &str,
+) -> Result<(), String> {
+    let session = p2p.session.read().await;
+    let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+
+    let doc = session
+        .node
+        .docs
+        .open(session.namespace_id)
+        .await
+        .map_err(|e| format!("Error abriendo doc: {}", e))?
+        .ok_or("Documento no encontrado")?;
+
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as f64;
+
+    let approval = super::PendingApproval {
+        item_id: item_id.to_string(),
+        item_type: item_type.to_string(),
+        submitted_by: session.my_node_id.clone(),
+        submitted_by_name: session.my_display_name.clone(),
+        submitted_at: now,
+        status: super::ApprovalStatus::Pending,
+    };
+
+    let key = format!("approval/{}", item_id);
+    let json = serde_json::to_vec(&approval)
+        .map_err(|e| format!("Error serializando aprobación: {}", e))?;
+
+    doc.set_bytes(session.author_id, key.into_bytes(), json)
+        .await
+        .map_err(|e| format!("Error escribiendo aprobación: {}", e))?;
+
+    Ok(())
+}
+
+/// Aprueba un dato pendiente
+pub async fn approve_data(
+    p2p: &P2pState,
+    item_id: &str,
+) -> Result<(), String> {
+    update_approval_status(p2p, item_id, super::ApprovalStatus::Approved).await
+}
+
+/// Rechaza un dato pendiente
+pub async fn reject_data(
+    p2p: &P2pState,
+    item_id: &str,
+) -> Result<(), String> {
+    update_approval_status(p2p, item_id, super::ApprovalStatus::Rejected).await
+}
+
+/// Helper interno para cambiar el estado de aprobación
+async fn update_approval_status(
+    p2p: &P2pState,
+    item_id: &str,
+    new_status: super::ApprovalStatus,
+) -> Result<(), String> {
+    let session = p2p.session.read().await;
+    let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+
+    if !session.role.can_manage() {
+        return Err("Solo el investigador principal puede aprobar/rechazar datos".to_string());
+    }
+
+    let doc = session
+        .node
+        .docs
+        .open(session.namespace_id)
+        .await
+        .map_err(|e| format!("Error abriendo doc: {}", e))?
+        .ok_or("Documento no encontrado")?;
+
+    let blobs: &iroh_blobs::api::Store = &*session.node.blobs_store;
+    let key = format!("approval/{}", item_id);
+
+    let entry = doc
+        .get_one(iroh_docs::store::Query::key_exact(key.as_bytes()))
+        .await
+        .map_err(|e| format!("Error leyendo aprobación: {}", e))?
+        .ok_or("Aprobación no encontrada")?;
+
+    let content = read_entry_bytes(&entry, blobs).await?;
+    let mut approval: super::PendingApproval = serde_json::from_slice(&content)
+        .map_err(|e| format!("Error deserializando aprobación: {}", e))?;
+
+    approval.status = new_status;
+
+    let json = serde_json::to_vec(&approval)
+        .map_err(|e| format!("Error serializando aprobación: {}", e))?;
+
+    doc.set_bytes(session.author_id, key.into_bytes(), json)
+        .await
+        .map_err(|e| format!("Error actualizando aprobación: {}", e))?;
+
+    Ok(())
+}
+
+/// Lista todas las aprobaciones pendientes
+pub async fn list_pending_approvals(
+    p2p: &P2pState,
+) -> Result<Vec<super::PendingApproval>, String> {
+    let session = p2p.session.read().await;
+    let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+
+    let doc = session
+        .node
+        .docs
+        .open(session.namespace_id)
+        .await
+        .map_err(|e| format!("Error abriendo doc: {}", e))?
+        .ok_or("Documento no encontrado")?;
+
+    let blobs: &iroh_blobs::api::Store = &*session.node.blobs_store;
+
+    let entries = doc
+        .get_many(iroh_docs::store::Query::key_prefix(b"approval/"))
+        .await
+        .map_err(|e| format!("Error leyendo aprobaciones: {}", e))?;
+
+    use futures_lite::StreamExt;
+    pin!(entries);
+
+    let mut approvals = Vec::new();
+    while let Some(entry) = entries.next().await {
+        let entry = entry.map_err(|e| format!("Error en stream: {}", e))?;
+        let content = read_entry_bytes(&entry, blobs).await?;
+        if let Ok(approval) = serde_json::from_slice::<super::PendingApproval>(&content) {
+            approvals.push(approval);
+        }
+    }
+
+    Ok(approvals)
 }
 
 /// Sincroniza anotaciones locales al iroh-doc
@@ -426,8 +734,46 @@ pub async fn sync_annotations_to_doc(
     Ok(())
 }
 
+/// Lee peers existentes del doc y emite eventos p2p:peer-joined para cada uno (excepto self)
+pub async fn emit_existing_peers(
+    namespace_id: iroh_docs::NamespaceId,
+    docs: &iroh_docs::protocol::Docs,
+    blobs_store: &iroh_blobs::store::fs::FsStore,
+    app_handle: &tauri::AppHandle,
+    my_node_id: &str,
+) {
+    let doc = match docs.open(namespace_id).await {
+        Ok(Some(doc)) => doc,
+        _ => return,
+    };
+
+    let blobs: &iroh_blobs::api::Store = &*blobs_store;
+    let peer_entries = match doc.get_many(iroh_docs::store::Query::key_prefix(b"meta/peers/")).await {
+        Ok(entries) => entries,
+        Err(_) => return,
+    };
+
+    use futures_lite::StreamExt;
+    pin!(peer_entries);
+    while let Some(Ok(entry)) = peer_entries.next().await {
+        let key = String::from_utf8_lossy(entry.key()).to_string();
+        let node_id = match key.strip_prefix("meta/peers/") {
+            Some(id) if !id.is_empty() && id != my_node_id => id,
+            _ => continue,
+        };
+        if let Ok(content) = read_entry_bytes(&entry, blobs).await {
+            if let Ok(peer_info) = serde_json::from_slice::<serde_json::Value>(&content) {
+                let _ = app_handle.emit("p2p:peer-joined", serde_json::json!({
+                    "nodeId": node_id,
+                    "displayName": peer_info["display_name"],
+                    "role": peer_info["role"],
+                }));
+            }
+        }
+    }
+}
+
 /// Inicia el watcher de cambios remotos en el iroh-doc
-#[allow(dead_code)]
 pub fn start_doc_watcher(
     namespace_id: iroh_docs::NamespaceId,
     docs: iroh_docs::protocol::Docs,
@@ -495,13 +841,27 @@ pub fn start_doc_watcher(
                         if let Ok(content) = read_entry_bytes(&entry, blobs).await {
                             if let Ok(peer_info) = serde_json::from_slice::<serde_json::Value>(&content) {
                                 let node_id = key.strip_prefix("meta/peers/").unwrap_or("");
-                                let _ = app_handle.emit("p2p:peer-joined", serde_json::json!({
-                                    "nodeId": node_id,
-                                    "displayName": peer_info["display_name"],
-                                    "role": peer_info["role"],
-                                }));
+                                // Detectar si el peer salió
+                                if peer_info.get("left").and_then(|v| v.as_bool()) == Some(true) {
+                                    let _ = app_handle.emit("p2p:peer-left", serde_json::json!({
+                                        "nodeId": node_id,
+                                    }));
+                                } else {
+                                    let _ = app_handle.emit("p2p:peer-joined", serde_json::json!({
+                                        "nodeId": node_id,
+                                        "displayName": peer_info["display_name"],
+                                        "role": peer_info["role"],
+                                        "lastSeen": peer_info["last_seen"],
+                                    }));
+                                }
                             }
                         }
+                    }
+                    else if key == "meta/session_closed" {
+                        log::info!("Sesión cerrada por el host");
+                        let _ = app_handle.emit("p2p:host-stopped", serde_json::json!({
+                            "reason": "host_stopped",
+                        }));
                     }
                     else if key == "meta/rules" {
                         if let Ok(content) = read_entry_bytes(&entry, blobs).await {
@@ -517,6 +877,34 @@ pub fn start_doc_watcher(
                             }
                         }
                     }
+                    else if key == "work/distribution" {
+                        if let Ok(content) = read_entry_bytes(&entry, blobs).await {
+                            if let Ok(dist) = serde_json::from_slice::<super::WorkDistribution>(&content) {
+                                let _ = app_handle.emit("p2p:distribution-updated", &dist);
+                            }
+                        }
+                    }
+                    else if key.starts_with("approval/") {
+                        if let Ok(content) = read_entry_bytes(&entry, blobs).await {
+                            if let Ok(approval) = serde_json::from_slice::<super::PendingApproval>(&content) {
+                                match approval.status {
+                                    super::ApprovalStatus::Pending => {
+                                        let _ = app_handle.emit("p2p:data-submitted", &approval);
+                                    }
+                                    super::ApprovalStatus::Approved => {
+                                        let _ = app_handle.emit("p2p:data-approved", serde_json::json!({
+                                            "itemId": approval.item_id,
+                                        }));
+                                    }
+                                    super::ApprovalStatus::Rejected => {
+                                        let _ = app_handle.emit("p2p:data-rejected", serde_json::json!({
+                                            "itemId": approval.item_id,
+                                        }));
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 Ok(iroh_docs::engine::LiveEvent::SyncFinished(sync_event)) => {
                     let _ = app_handle.emit("p2p:session-status", serde_json::json!({
@@ -527,6 +915,62 @@ pub fn start_doc_watcher(
                 _ => {}
             }
         }
-        log::info!("Doc watcher finalizado");
+        // Stream cerrado: el doc fue cerrado o la conexión se perdió
+        log::info!("Doc watcher finalizado — emitiendo desconexión");
+        let _ = app_handle.emit("p2p:session-status", serde_json::json!({
+            "status": "disconnected",
+        }));
+    });
+}
+
+/// Inicia un heartbeat periódico que escribe `last_seen` en el doc para indicar presencia
+pub fn start_heartbeat(
+    namespace_id: iroh_docs::NamespaceId,
+    author_id: iroh_docs::AuthorId,
+    my_node_id: String,
+    display_name: String,
+    role: String,
+    docs: iroh_docs::protocol::Docs,
+) {
+    tokio::spawn(async move {
+        let joined_at = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as f64;
+
+        loop {
+            tokio::time::sleep(std::time::Duration::from_secs(30)).await;
+
+            let doc = match docs.open(namespace_id).await {
+                Ok(Some(doc)) => doc,
+                _ => {
+                    log::info!("Heartbeat: doc cerrado, finalizando");
+                    break;
+                }
+            };
+
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_millis() as f64;
+
+            let peer_info = serde_json::json!({
+                "display_name": display_name,
+                "role": role,
+                "joined_at": joined_at,
+                "last_seen": now,
+            });
+
+            let peer_key = format!("meta/peers/{}", my_node_id);
+            if doc.set_bytes(
+                author_id,
+                peer_key.into_bytes(),
+                serde_json::to_vec(&peer_info).unwrap(),
+            ).await.is_err() {
+                log::info!("Heartbeat: error escribiendo, finalizando");
+                break;
+            }
+        }
+        log::info!("Heartbeat finalizado para {}", my_node_id);
     });
 }

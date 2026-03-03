@@ -1,11 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { useP2pStore } from '../store/p2pStore';
-import type { ImageLockInfo, PeerInfo, BatchInfo, SyncProgress, SessionStatus, SessionRules } from '../types';
+import type { P2pSessionInfo, ImageLockInfo, PeerInfo, BatchInfo, SyncProgress, SessionStatus, SessionRules, DownloadProgress, WorkDistribution, PendingApproval } from '../types';
+import { p2pService } from '../services/p2pService';
 
 export function useP2pSession() {
   const {
     activeSession,
+    setActiveSession,
     setImageLock,
     removeImageLock,
     addPeer,
@@ -14,7 +16,49 @@ export function useP2pSession() {
     setSyncProgress,
     updateSessionStatus,
     updateRules,
+    setDownloadProgress,
+    clearDownloadProgress,
+    setDistribution,
+    addPendingApproval,
+    removePendingApproval,
+    setHostStopped,
   } = useP2pStore();
+
+  // Listeners globales (no dependen de activeSession)
+  useEffect(() => {
+    const unlisteners: (() => void)[] = [];
+
+    // Consultar proactivamente si ya hay sesión activa (evita race condition con evento)
+    p2pService.getSessionInfo().then(async (session) => {
+      if (session) {
+        setActiveSession(session);
+        try {
+          const dist = await p2pService.getDistribution();
+          if (dist) setDistribution(dist);
+        } catch {}
+      }
+    }).catch(() => {});
+
+    listen<P2pSessionInfo>('p2p:session-restored', async (event) => {
+      setActiveSession(event.payload);
+      try {
+        const dist = await p2pService.getDistribution();
+        if (dist) setDistribution(dist);
+      } catch {}
+    }).then((fn) => unlisteners.push(fn));
+
+    listen<DownloadProgress>('p2p:download-progress', (event) => {
+      setDownloadProgress(event.payload);
+    }).then((fn) => unlisteners.push(fn));
+
+    listen<{ projectId: string }>('p2p:download-complete', (event) => {
+      clearDownloadProgress(event.payload.projectId);
+    }).then((fn) => unlisteners.push(fn));
+
+    return () => {
+      unlisteners.forEach((fn) => fn());
+    };
+  }, []);
 
   useEffect(() => {
     if (!activeSession) return;
@@ -74,8 +118,45 @@ export function useP2pSession() {
       );
 
       unlisteners.push(
+        await listen<{ reason: string }>('p2p:host-stopped', (_event) => {
+          setHostStopped(true);
+        })
+      );
+
+      unlisteners.push(
         await listen<SessionRules>('p2p:rules-updated', (event) => {
           updateRules(event.payload);
+        })
+      );
+
+      unlisteners.push(
+        await listen<WorkDistribution>('p2p:distribution-updated', (event) => {
+          setDistribution(event.payload);
+        })
+      );
+
+      // Nuevos listeners para roles y aprobación de datos
+      unlisteners.push(
+        await listen<PeerInfo>('p2p:peer-role-changed', (event) => {
+          addPeer(event.payload);
+        })
+      );
+
+      unlisteners.push(
+        await listen<PendingApproval>('p2p:data-submitted', (event) => {
+          addPendingApproval(event.payload);
+        })
+      );
+
+      unlisteners.push(
+        await listen<{ itemId: string }>('p2p:data-approved', (event) => {
+          removePendingApproval(event.payload.itemId);
+        })
+      );
+
+      unlisteners.push(
+        await listen<{ itemId: string }>('p2p:data-rejected', (event) => {
+          removePendingApproval(event.payload.itemId);
         })
       );
     };
@@ -85,6 +166,30 @@ export function useP2pSession() {
     return () => {
       unlisteners.forEach((unlisten) => unlisten());
     };
+  }, [activeSession?.sessionId]);
+
+  // Verificar presencia de peers cada 15s
+  useEffect(() => {
+    if (!activeSession) return;
+
+    const interval = setInterval(() => {
+      const { peers, setPeers } = useP2pStore.getState();
+      const now = Date.now();
+      const TIMEOUT = 90_000; // 90 segundos
+      let changed = false;
+      const updated = peers.map(p => {
+        if (p.online && p.lastSeen && now - p.lastSeen > TIMEOUT) {
+          changed = true;
+          return { ...p, online: false };
+        }
+        return p;
+      });
+      if (changed) {
+        setPeers(updated);
+      }
+    }, 15_000);
+
+    return () => clearInterval(interval);
   }, [activeSession?.sessionId]);
 
   return { activeSession };

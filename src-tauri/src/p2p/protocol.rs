@@ -40,6 +40,29 @@ pub enum GossipMessage {
         #[serde(rename = "toName")]
         to_name: String,
     },
+    PeerRoleChanged {
+        #[serde(rename = "nodeId")]
+        node_id: String,
+        #[serde(rename = "newRole")]
+        new_role: String,
+    },
+    DataSubmitted {
+        #[serde(rename = "itemId")]
+        item_id: String,
+        #[serde(rename = "itemType")]
+        item_type: String,
+        by: String,
+        #[serde(rename = "byName")]
+        by_name: String,
+    },
+    DataApproved {
+        #[serde(rename = "itemId")]
+        item_id: String,
+    },
+    DataRejected {
+        #[serde(rename = "itemId")]
+        item_id: String,
+    },
 }
 
 impl GossipMessage {
