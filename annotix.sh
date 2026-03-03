@@ -1286,7 +1286,7 @@ cmd_release() {
         success "Push completado"
     fi
 
-    # 8. ¿Crear PR?
+    # 8. ¿Crear PR + merge + tag?
     echo ""
     echo -ne "  ¿Crear PR hacia main? [s/N]: "
     read -r do_pr
@@ -1324,23 +1324,43 @@ $(echo "$changelog" | sed 's/^/- /')
 $issues_text
 PRBODY
 )
-            gh pr create --title "$pr_title" --body "$pr_body" --base main
-            success "PR creado"
-        fi
-    fi
+            local pr_url
+            pr_url=$(gh pr create --title "$pr_title" --body "$pr_body" --base main 2>&1)
+            if [[ $? -eq 0 ]]; then
+                success "PR creado: $pr_url"
 
-    # 9. ¿Crear tag?
-    echo ""
-    echo -ne "  ¿Crear tag v$VERSION? (dispara builds CI) [s/N]: "
-    read -r do_tag
-    if [[ "$do_tag" == "s" || "$do_tag" == "S" ]]; then
-        warn "El tag debe crearse sobre main después de mergear el PR"
-        echo -ne "  ¿Continuar de todas formas? [s/N]: "
-        read -r confirm_tag
-        if [[ "$confirm_tag" == "s" || "$confirm_tag" == "S" ]]; then
-            git tag "v$VERSION"
-            git push origin "v$VERSION"
-            success "Tag v$VERSION creado y pusheado → CI se disparará"
+                # 9. ¿Mergear PR?
+                echo ""
+                echo -ne "  ¿Mergear PR en main? [S/n]: "
+                read -r do_merge
+                if [[ "$do_merge" != "n" && "$do_merge" != "N" ]]; then
+                    gh pr merge --merge --delete-branch=false
+                    if [[ $? -eq 0 ]]; then
+                        success "PR mergeado en main"
+
+                        # 10. ¿Crear tag sobre main?
+                        echo ""
+                        echo -ne "  ¿Crear tag v$VERSION en main? (dispara builds CI) [S/n]: "
+                        read -r do_tag
+                        if [[ "$do_tag" != "n" && "$do_tag" != "N" ]]; then
+                            # Crear tag sobre main sin cambiar de rama
+                            local main_sha
+                            main_sha=$(git rev-parse origin/main 2>/dev/null)
+                            if [[ -n "$main_sha" ]]; then
+                                git tag "v$VERSION" "$main_sha"
+                                git push origin "v$VERSION"
+                                success "Tag v$VERSION creado sobre main → CI se disparará"
+                            else
+                                error "No se pudo resolver origin/main"
+                            fi
+                        fi
+                    else
+                        error "No se pudo mergear el PR"
+                    fi
+                fi
+            else
+                error "No se pudo crear el PR: $pr_url"
+            fi
         fi
     fi
 
