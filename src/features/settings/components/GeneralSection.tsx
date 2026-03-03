@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { invoke } from '@tauri-apps/api/core';
+import { getVersion } from '@tauri-apps/api/app';
 import { open } from '@tauri-apps/plugin-dialog';
 import { availableLanguages } from '@/lib/i18n';
+import { BUILD_CODE, BUILD_DATE } from '@/lib/buildInfo';
 import {
   Select,
   SelectContent,
@@ -41,11 +43,13 @@ export function GeneralSection() {
   const [colorMode, setColorMode] = useState<ColorMode>(getSavedColorMode);
   const [projectsDir, setProjectsDir] = useState<string>('');
   const [changingDir, setChangingDir] = useState(false);
+  const [appVersion, setAppVersion] = useState<string>('');
 
   useEffect(() => {
     invoke<{ projects_dir: string | null }>('get_config').then((cfg) => {
       if (cfg.projects_dir) setProjectsDir(cfg.projects_dir);
     });
+    getVersion().then(setAppVersion);
   }, []);
 
   useEffect(() => {
@@ -154,6 +158,24 @@ export function GeneralSection() {
         <p className="text-xs text-muted-foreground">
           {t('settings.general.workDirHelp')}
         </p>
+      </div>
+
+      {/* About */}
+      <div className="rounded-lg border p-4 space-y-3">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <i className="fas fa-info-circle text-[var(--annotix-primary)]" />
+          {t('settings.general.about')}
+        </div>
+        <div className="flex flex-col gap-1 text-sm">
+          <span className="font-semibold">
+            Annotix v{appVersion}{BUILD_CODE && ` (${BUILD_CODE})`}
+          </span>
+          {BUILD_DATE && (
+            <span className="text-muted-foreground text-xs">
+              {t('settings.general.buildDate')}: {new Date(BUILD_DATE).toLocaleString()}
+            </span>
+          )}
+        </div>
       </div>
 
     </div>

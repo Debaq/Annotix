@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useP2pStore } from '../store/p2pStore';
 import { p2pService } from '../services/p2pService';
+import { canManage } from '../hooks/useP2pCanEdit';
 import type { PeerWorkStats } from '../types';
 
 export function WorkDistributionPanel() {
@@ -14,7 +15,7 @@ export function WorkDistributionPanel() {
   const [loading, setLoading] = useState(false);
   const [adjustTarget, setAdjustTarget] = useState<string | null>(null);
 
-  const isHost = activeSession?.role === 'host';
+  const isHost = activeSession ? canManage(activeSession.role) : false;
 
   // Cargar stats cuando hay distribución
   useEffect(() => {

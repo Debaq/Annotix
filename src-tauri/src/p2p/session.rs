@@ -15,6 +15,7 @@ impl P2pState {
     pub async fn create_session(
         &self,
         app_state: &AppState,
+        app_handle: &tauri::AppHandle,
         project_id: &str,
         display_name: &str,
         rules: SessionRules,
@@ -68,7 +69,7 @@ impl P2pState {
             project_id: project_id.to_string(),
             project_name: project.name.clone(),
             share_code: share_code.clone(),
-            role: PeerRole::Host,
+            role: PeerRole::LeadResearcher,
             rules: rules.clone(),
             my_display_name: display_name.to_string(),
             my_node_id: my_node_id.clone(),
@@ -101,12 +102,15 @@ impl P2pState {
             .await
             .map_err(|e| format!("Error iniciando sync: {}", e))?;
 
+        // Iniciar watcher de cambios remotos
+        sync::start_doc_watcher(namespace_id, node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
+
         let host_key = ticket::encode_host_key(&host_secret, &share_code);
 
         // Persistir config P2P en project.json para auto-resume
         app_state.with_project_mut(project_id, |pf| {
             pf.p2p = Some(P2pProjectConfig {
-                role: "host".to_string(),
+                role: "lead_researcher".to_string(),
                 host_secret: Some(host_secret.clone()),
                 display_name: display_name.to_string(),
                 namespace_id: format!("{}", namespace_id),
@@ -127,7 +131,7 @@ impl P2pState {
             project_name: project.name,
             share_code,
             host_key: Some(host_key),
-            role: PeerRole::Host,
+            role: PeerRole::LeadResearcher,
             rules,
             my_node_id,
             my_display_name: display_name.to_string(),
@@ -187,16 +191,16 @@ impl P2pState {
         // Esperar para que se sincronicen las entradas iniciales
         tokio::time::sleep(std::time::Duration::from_secs(3)).await;
 
-        // Verificar si es host (si proporcionó host key)
+        // Verificar si es lead researcher (si proporcionó host key)
         let (role, verified_secret) = if let Some(ref secret) = host_secret {
             let is_valid = sync::verify_host_secret(self, secret, &node, namespace_id).await;
             if is_valid {
-                (PeerRole::Host, Some(secret.clone()))
+                (PeerRole::LeadResearcher, Some(secret.clone()))
             } else {
                 return Err("Clave de host inválida".to_string());
             }
         } else {
-            (PeerRole::Collaborator, None)
+            (PeerRole::Annotator, None)
         };
 
         // Leer reglas del doc
@@ -237,13 +241,10 @@ impl P2pState {
         }
 
         // Registrar este peer en el doc
-        let role_str = match role {
-            PeerRole::Host => "host",
-            PeerRole::Collaborator => "collaborator",
-        };
+        let role_str = role.to_string();
         let peer_info_json = serde_json::json!({
             "display_name": display_name,
-            "role": role_str,
+            "role": &role_str,
             "joined_at": std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
@@ -253,6 +254,10 @@ impl P2pState {
         doc.set_bytes(author, peer_key.into_bytes(), serde_json::to_vec(&peer_info_json).unwrap())
             .await
             .map_err(|e| format!("Error registrando peer: {}", e))?;
+
+        // Iniciar watcher de cambios remotos y emitir peers existentes
+        sync::start_doc_watcher(namespace_id, node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
+        sync::emit_existing_peers(namespace_id, &node.docs, &node.blobs_store, app_handle, &my_node_id).await;
 
         // Fase 1: Reconstruir proyecto desde el doc (solo metadata, sin blobs)
         let projects_dir = app_state.projects_dir()?;
@@ -275,6 +280,9 @@ impl P2pState {
         // Insertar en cache del AppState
         app_state.insert_into_cache(&project_id, project, project_dir);
 
+        // Notificar al frontend que hay un nuevo proyecto
+        let _ = app_handle.emit("db:projects-changed", ());
+
         // Actualizar sesión con project_id
         {
             let mut session_guard = self.session.write().await;
@@ -295,7 +303,7 @@ impl P2pState {
             role_str
         );
 
-        let host_key = if role == PeerRole::Host {
+        let host_key = if role == PeerRole::LeadResearcher {
             host_secret.as_ref().map(|s| ticket::encode_host_key(s, &clean_share_code))
         } else {
             None
@@ -304,7 +312,7 @@ impl P2pState {
         // Persistir config P2P en project.json para auto-resume (todos los roles)
         let _ = app_state.with_project_mut(&project_id, |pf| {
             pf.p2p = Some(P2pProjectConfig {
-                role: role_str.to_string(),
+                role: role_str.clone(),
                 host_secret: host_secret.clone(),
                 display_name: display_name.to_string(),
                 namespace_id: format!("{}", namespace_id),
@@ -340,6 +348,31 @@ impl P2pState {
         })
     }
 
+    /// Pausa la sesión P2P activa sin borrar datos (permite reanudar después)
+    pub async fn pause_session(&self) -> Result<String, String> {
+        let mut session_guard = self.session.write().await;
+        let session = session_guard.take()
+            .ok_or("No hay sesión P2P activa")?;
+
+        let project_id = session.project_id.clone();
+        let session_id = session.session_id.clone();
+
+        // Dejar de sincronizar el doc (pero NO borramos datos iroh del disco)
+        if let Ok(Some(doc)) = session.node.docs.open(session.namespace_id).await {
+            let _ = doc.leave().await;
+            let _ = doc.close().await;
+        }
+
+        // Liberar la sesión de memoria
+        drop(session);
+
+        // NO borramos iroh/ del disco
+        // NO limpiamos p2p del project.json (necesario para resume)
+
+        log::info!("Sesión P2P pausada: {} (proyecto: {})", session_id, project_id);
+        Ok(project_id)
+    }
+
     /// Abandona la sesión P2P activa y limpia datos de iroh
     pub async fn leave_session(&self, app_state: &AppState) -> Result<(), String> {
         let mut session_guard = self.session.write().await;
@@ -356,16 +389,6 @@ impl P2pState {
             // Cerrar docs engine y nodo
             drop(session);
 
-            // Limpiar datos de iroh del disco
-            let iroh_dir = self.data_dir.join("iroh");
-            if iroh_dir.exists() {
-                if let Err(e) = std::fs::remove_dir_all(&iroh_dir) {
-                    log::warn!("No se pudo limpiar directorio iroh: {}", e);
-                } else {
-                    log::info!("Datos iroh limpiados: {:?}", iroh_dir);
-                }
-            }
-
             // Limpiar p2p del project.json
             if !project_id.is_empty() {
                 let _ = app_state.with_project_mut(&project_id, |pf| {
@@ -373,9 +396,49 @@ impl P2pState {
                 });
             }
 
+            // Solo borrar iroh/ si no hay otros proyectos con p2p config
+            let has_other_p2p = self.other_projects_have_p2p(app_state, &project_id);
+            let iroh_dir = self.data_dir.join("iroh");
+            if iroh_dir.exists() && !has_other_p2p {
+                if let Err(e) = std::fs::remove_dir_all(&iroh_dir) {
+                    log::warn!("No se pudo limpiar directorio iroh: {}", e);
+                } else {
+                    log::info!("Datos iroh limpiados: {:?}", iroh_dir);
+                }
+            } else if has_other_p2p {
+                log::info!("No se borran datos iroh: hay otros proyectos con sesiones P2P pausadas");
+            }
+
             log::info!("Sesión P2P abandonada: {}", session_id);
         }
         Ok(())
+    }
+
+    /// Verifica si hay otros proyectos (distintos de `exclude_id`) con config p2p
+    fn other_projects_have_p2p(&self, app_state: &AppState, exclude_id: &str) -> bool {
+        let projects_dir = match app_state.projects_dir() {
+            Ok(d) => d,
+            Err(_) => return false,
+        };
+        if !projects_dir.exists() {
+            return false;
+        }
+        let entries = match std::fs::read_dir(&projects_dir) {
+            Ok(e) => e,
+            Err(_) => return false,
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if !path.is_dir() || !path.join("project.json").exists() {
+                continue;
+            }
+            if let Ok(pf) = io::read_project(&path) {
+                if pf.id != exclude_id && pf.p2p.is_some() {
+                    return true;
+                }
+            }
+        }
+        false
     }
 
     /// Reanuda una sesión P2P persistida (auto-resume al startup, host o collaborator)
@@ -395,8 +458,12 @@ impl P2pState {
         }
 
         let project = app_state.read_project_file(project_id)?;
-        let is_host = config.role == "host";
-        let role = if is_host { PeerRole::Host } else { PeerRole::Collaborator };
+        let is_host = config.role == "host" || config.role == "lead_researcher";
+        let role = match config.role.as_str() {
+            "host" | "lead_researcher" => PeerRole::LeadResearcher,
+            "data_curator" => PeerRole::DataCurator,
+            _ => PeerRole::Annotator,
+        };
 
         // Iniciar nodo iroh (carga docs persistidos del disco)
         let node = self.start_node().await?;
@@ -490,6 +557,10 @@ impl P2pState {
             .await
             .map_err(|e| format!("Error registrando peer: {}", e))?;
 
+        // Iniciar watcher de cambios remotos y emitir peers existentes
+        sync::start_doc_watcher(ns_id, node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
+        sync::emit_existing_peers(ns_id, &node.docs, &node.blobs_store, app_handle, &my_node_id).await;
+
         let info = P2pSessionInfo {
             session_id,
             project_id: project_id.to_string(),
@@ -550,8 +621,8 @@ impl P2pState {
         {
             let session = self.session.read().await;
             let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
-            if session.role != PeerRole::Host {
-                return Err("Solo el host puede modificar las reglas".to_string());
+            if !session.role.can_manage() {
+                return Err("Solo el investigador principal puede modificar las reglas".to_string());
             }
         }
 
@@ -574,5 +645,50 @@ impl P2pState {
         let session = self.session.read().await;
         let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
         Ok(session.rules.clone())
+    }
+
+    /// Actualiza el rol de un peer (solo LeadResearcher puede cambiar roles)
+    pub async fn update_peer_role(&self, node_id: &str, new_role: PeerRole) -> Result<(), String> {
+        let session = self.session.read().await;
+        let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+
+        if !session.role.can_manage() {
+            return Err("Solo el investigador principal puede cambiar roles".to_string());
+        }
+
+        let doc = session.node.docs.open(session.namespace_id)
+            .await
+            .map_err(|e| format!("Error abriendo doc: {}", e))?
+            .ok_or("Documento no encontrado")?;
+
+        let blobs: &iroh_blobs::api::Store = &*session.node.blobs_store;
+
+        // Leer peer info existente
+        let peer_key = format!("meta/peers/{}", node_id);
+        let entry = doc
+            .get_one(iroh_docs::store::Query::key_exact(peer_key.as_bytes()))
+            .await
+            .map_err(|e| format!("Error leyendo peer: {}", e))?
+            .ok_or("Peer no encontrado")?;
+
+        let content = blobs.blobs().get_bytes(entry.content_hash())
+            .await
+            .map_err(|e| format!("Error leyendo blob: {}", e))?;
+
+        let mut peer_info: serde_json::Value = serde_json::from_slice(&content)
+            .map_err(|e| format!("Error deserializando peer: {}", e))?;
+
+        // Actualizar rol
+        peer_info["role"] = serde_json::Value::String(new_role.to_string());
+
+        doc.set_bytes(
+            session.author_id,
+            peer_key.into_bytes(),
+            serde_json::to_vec(&peer_info).unwrap(),
+        )
+        .await
+        .map_err(|e| format!("Error actualizando rol: {}", e))?;
+
+        Ok(())
     }
 }

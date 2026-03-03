@@ -50,6 +50,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate build info
+        run: |
+          BUILD_NUM=$(python3 -c "import json; print(json.load(open('build.json'))['buildNumber'])")
+          BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          printf '// Auto-generado por CI\nexport const BUILD_NUMBER = %s;\nexport const BUILD_DATE = "%s";\n' "$BUILD_NUM" "$BUILD_DATE" > src/lib/buildInfo.ts
+
       - name: Build Tauri (binary + AppImage)
         run: npx tauri build --bundles appimage
 

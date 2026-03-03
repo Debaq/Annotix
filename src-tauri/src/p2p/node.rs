@@ -11,7 +11,7 @@ use iroh_docs::protocol::Docs;
 use iroh_gossip::net::Gossip;
 use tokio::sync::RwLock;
 
-use super::{P2pSessionInfo, PeerInfo, PeerRole, SessionRules, SessionStatus};
+use super::{P2pPermission, P2pSessionInfo, PeerInfo, PeerRole, SessionRules, SessionStatus};
 
 /// Nodo iroh activo con todos los protocolos
 pub struct IrohNode {
@@ -75,6 +75,43 @@ impl P2pState {
         Self {
             session: RwLock::new(None),
             data_dir,
+        }
+    }
+
+    /// Verifica si la acción está permitida según rol + reglas de sesión.
+    /// Si no hay sesión activa (modo local), todo se permite.
+    pub async fn check_permission(&self, perm: P2pPermission) -> Result<(), String> {
+        let session = self.session.read().await;
+        let session = match session.as_ref() {
+            Some(s) => s,
+            None => return Ok(()),
+        };
+
+        if session.role == PeerRole::LeadResearcher {
+            return Ok(());
+        }
+
+        let allowed = match perm {
+            P2pPermission::Annotate => session.role.can_annotate(),
+            P2pPermission::UploadData => session.role.can_upload_data() || session.rules.can_upload,
+            P2pPermission::Export => session.role.can_export() || session.rules.can_export,
+            P2pPermission::EditClasses => session.rules.can_edit_classes,
+            P2pPermission::Delete => session.rules.can_delete,
+            P2pPermission::Manage => false,
+        };
+
+        if allowed {
+            Ok(())
+        } else {
+            let msg = match perm {
+                P2pPermission::Annotate => "No tienes permiso para anotar en esta sesión",
+                P2pPermission::UploadData => "No tienes permiso para subir datos en esta sesión",
+                P2pPermission::Export => "No tienes permiso para exportar en esta sesión",
+                P2pPermission::EditClasses => "No tienes permiso para editar clases en esta sesión",
+                P2pPermission::Delete => "No tienes permiso para eliminar datos en esta sesión",
+                P2pPermission::Manage => "Solo el investigador principal puede gestionar la sesión",
+            };
+            Err(msg.to_string())
         }
     }
 

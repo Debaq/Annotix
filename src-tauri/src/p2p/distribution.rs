@@ -4,7 +4,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::store::state::AppState;
 
 use super::node::P2pState;
-use super::{PeerRole, WorkAssignment, WorkDistribution, PeerWorkStats};
+use super::{WorkAssignment, WorkDistribution, PeerWorkStats};
 
 fn now_ms() -> f64 {
     SystemTime::now()
@@ -24,7 +24,7 @@ impl P2pState {
         let session = self.session.read().await;
         let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
 
-        if session.role != PeerRole::Host {
+        if !session.role.can_manage() {
             return Err("Solo el host puede distribuir trabajo".to_string());
         }
 
@@ -178,7 +178,7 @@ impl P2pState {
         let session = self.session.read().await;
         let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
 
-        if session.role != PeerRole::Host {
+        if !session.role.can_manage() {
             return Err("Solo el host puede ajustar asignaciones".to_string());
         }
 
