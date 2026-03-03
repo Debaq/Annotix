@@ -9,6 +9,7 @@ import { useUIStore } from '../../core/store/uiStore';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useTauriQuery } from '@/hooks/useTauriQuery';
 import { videoService } from '../../video/services/videoService';
+import { P2pGuard } from '../../p2p/components/P2pGuard';
 
 export function ImageGallery() {
   const { t } = useTranslation();
@@ -43,15 +44,19 @@ export function ImageGallery() {
     <div className="flex h-full flex-col">
       {/* Upload Buttons Section */}
       <div className="annotix-panel-section">
-        <ImageUploader trigger={
-          <button className="annotix-btn annotix-btn-primary w-full">
-            <i className="fas fa-folder-open mr-2"></i>
-            {t('gallery.upload')}
-          </button>
-        } />
+        <P2pGuard permission="upload_data">
+          <ImageUploader trigger={
+            <button className="annotix-btn annotix-btn-primary w-full">
+              <i className="fas fa-folder-open mr-2"></i>
+              {t('gallery.upload')}
+            </button>
+          } />
+        </P2pGuard>
         {isCanvasImageProject && (
           <div className="mt-2">
-            <VideoUploader />
+            <P2pGuard permission="upload_data">
+              <VideoUploader />
+            </P2pGuard>
           </div>
         )}
       </div>
