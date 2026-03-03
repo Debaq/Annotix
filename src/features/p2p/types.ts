@@ -53,3 +53,34 @@ export interface SyncProgress {
   total: number;
   phase: 'downloading' | 'syncing';
 }
+
+export interface DownloadProgress {
+  projectId: string;
+  current: number;
+  total: number;
+}
+
+export interface WorkAssignment {
+  nodeId: string;
+  displayName: string;
+  videoIds: string[];
+  imageIds: string[];
+  updatedAt: number;
+}
+
+export interface WorkDistribution {
+  version: number;
+  assignments: WorkAssignment[];
+  createdBy: string;
+  createdAt: number;
+}
+
+export interface PeerWorkStats {
+  nodeId: string;
+  displayName: string;
+  videosAssigned: number;
+  videosCompleted: number;
+  imagesAssigned: number;
+  imagesCompleted: number;
+  progressPercent: number;
+}

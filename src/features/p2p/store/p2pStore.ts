@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { P2pSessionInfo, PeerInfo, ImageLockInfo, BatchInfo, SessionStatus, SyncProgress, SessionRules } from '../types';
+import type { P2pSessionInfo, PeerInfo, ImageLockInfo, BatchInfo, SessionStatus, SyncProgress, SessionRules, DownloadProgress, WorkDistribution, WorkAssignment, PeerWorkStats } from '../types';
 
 interface P2pStore {
   activeSession: P2pSessionInfo | null;
@@ -24,6 +24,19 @@ interface P2pStore {
 
   syncProgress: SyncProgress | null;
   setSyncProgress: (progress: SyncProgress | null) => void;
+
+  downloadProgress: Record<string, DownloadProgress>;
+  setDownloadProgress: (progress: DownloadProgress) => void;
+  clearDownloadProgress: (projectId: string) => void;
+
+  distribution: WorkDistribution | null;
+  setDistribution: (dist: WorkDistribution | null) => void;
+  workStats: PeerWorkStats[];
+  setWorkStats: (stats: PeerWorkStats[]) => void;
+
+  myAssignment: () => WorkAssignment | null;
+  isItemAssignedToMe: (id: string, type: 'video' | 'image') => boolean;
+  getItemAssignee: (id: string, type: 'video' | 'image') => { nodeId: string; displayName: string } | null;
 
   reset: () => void;
 }
@@ -89,11 +102,54 @@ export const useP2pStore = create<P2pStore>((set, get) => ({
   syncProgress: null,
   setSyncProgress: (progress) => set({ syncProgress: progress }),
 
+  downloadProgress: {},
+  setDownloadProgress: (progress) => set((state) => ({
+    downloadProgress: { ...state.downloadProgress, [progress.projectId]: progress },
+  })),
+  clearDownloadProgress: (projectId) => set((state) => {
+    const { [projectId]: _, ...rest } = state.downloadProgress;
+    return { downloadProgress: rest };
+  }),
+
+  distribution: null,
+  setDistribution: (dist) => set({ distribution: dist }),
+  workStats: [],
+  setWorkStats: (stats) => set({ workStats: stats }),
+
+  myAssignment: () => {
+    const state = get();
+    if (!state.distribution || !state.activeSession) return null;
+    return state.distribution.assignments.find(a => a.nodeId === state.activeSession!.myNodeId) || null;
+  },
+
+  isItemAssignedToMe: (id, type) => {
+    const state = get();
+    if (!state.distribution || !state.activeSession) return true;
+    const my = state.distribution.assignments.find(a => a.nodeId === state.activeSession!.myNodeId);
+    if (!my) return false;
+    return type === 'video' ? my.videoIds.includes(id) : my.imageIds.includes(id);
+  },
+
+  getItemAssignee: (id, type) => {
+    const state = get();
+    if (!state.distribution) return null;
+    for (const a of state.distribution.assignments) {
+      const found = type === 'video'
+        ? a.videoIds.includes(id)
+        : a.imageIds.includes(id);
+      if (found) return { nodeId: a.nodeId, displayName: a.displayName };
+    }
+    return null;
+  },
+
   reset: () => set({
     activeSession: null,
     peers: [],
     imageLocks: new Map(),
     batches: [],
     syncProgress: null,
+    downloadProgress: {},
+    distribution: null,
+    workStats: [],
   }),
 }));

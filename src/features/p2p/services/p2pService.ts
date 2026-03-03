@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { P2pSessionInfo, PeerInfo, ImageLockInfo, BatchInfo, SessionRules } from '../types';
+import type { P2pSessionInfo, PeerInfo, ImageLockInfo, BatchInfo, SessionRules, WorkDistribution, PeerWorkStats } from '../types';
 
 export const p2pService = {
   createSession(projectId: string, displayName: string, rules: SessionRules): Promise<P2pSessionInfo> {
@@ -48,5 +48,25 @@ export const p2pService = {
 
   getRules(): Promise<SessionRules> {
     return invoke('p2p_get_rules');
+  },
+
+  resumeDownload(projectId: string): Promise<void> {
+    return invoke('p2p_resume_download', { projectId });
+  },
+
+  distributeWork(): Promise<WorkDistribution> {
+    return invoke('p2p_distribute_work');
+  },
+
+  adjustAssignment(itemIds: string[], itemType: 'video' | 'image', targetNodeId: string): Promise<WorkDistribution> {
+    return invoke('p2p_adjust_assignment', { itemIds, itemType, targetNodeId });
+  },
+
+  getDistribution(): Promise<WorkDistribution | null> {
+    return invoke('p2p_get_distribution');
+  },
+
+  getWorkStats(): Promise<PeerWorkStats[]> {
+    return invoke('p2p_get_work_stats');
   },
 };

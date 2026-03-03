@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { useP2pStore } from '../store/p2pStore';
-import type { ImageLockInfo, PeerInfo, BatchInfo, SyncProgress, SessionStatus, SessionRules } from '../types';
+import type { P2pSessionInfo, ImageLockInfo, PeerInfo, BatchInfo, SyncProgress, SessionStatus, SessionRules, DownloadProgress, WorkDistribution } from '../types';
+import { p2pService } from '../services/p2pService';
 
 export function useP2pSession() {
   const {
     activeSession,
+    setActiveSession,
     setImageLock,
     removeImageLock,
     addPeer,
@@ -14,7 +16,35 @@ export function useP2pSession() {
     setSyncProgress,
     updateSessionStatus,
     updateRules,
+    setDownloadProgress,
+    clearDownloadProgress,
+    setDistribution,
   } = useP2pStore();
+
+  // Listeners globales (no dependen de activeSession)
+  useEffect(() => {
+    const unlisteners: (() => void)[] = [];
+
+    listen<P2pSessionInfo>('p2p:session-restored', async (event) => {
+      setActiveSession(event.payload);
+      try {
+        const dist = await p2pService.getDistribution();
+        if (dist) setDistribution(dist);
+      } catch {}
+    }).then((fn) => unlisteners.push(fn));
+
+    listen<DownloadProgress>('p2p:download-progress', (event) => {
+      setDownloadProgress(event.payload);
+    }).then((fn) => unlisteners.push(fn));
+
+    listen<{ projectId: string }>('p2p:download-complete', (event) => {
+      clearDownloadProgress(event.payload.projectId);
+    }).then((fn) => unlisteners.push(fn));
+
+    return () => {
+      unlisteners.forEach((fn) => fn());
+    };
+  }, []);
 
   useEffect(() => {
     if (!activeSession) return;
@@ -76,6 +106,12 @@ export function useP2pSession() {
       unlisteners.push(
         await listen<SessionRules>('p2p:rules-updated', (event) => {
           updateRules(event.payload);
+        })
+      );
+
+      unlisteners.push(
+        await listen<WorkDistribution>('p2p:distribution-updated', (event) => {
+          setDistribution(event.payload);
         })
       );
     };

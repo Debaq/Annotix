@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useP2pStore } from '../store/p2pStore';
 import { p2pService } from '../services/p2pService';
 import { PeerList } from './PeerList';
-import { BatchAssignDialog } from './BatchAssignDialog';
+import { WorkDistributionPanel } from './WorkDistributionPanel';
 import type { SessionRules } from '../types';
 
 export function P2pSessionPanel() {
@@ -140,9 +140,7 @@ export function P2pSessionPanel() {
         <PeerList peers={peers} myNodeId={activeSession.myNodeId} />
       </div>
 
-      {isHost && rules.lockMode === 'batch' && (
-        <BatchAssignDialog peers={peers} />
-      )}
+      <WorkDistributionPanel />
 
       <Button
         variant="destructive"

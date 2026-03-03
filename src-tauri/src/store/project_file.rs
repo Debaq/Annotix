@@ -24,23 +24,34 @@ pub struct ProjectFile {
     pub tabular_data: Vec<TabularDataEntry>,
     #[serde(default)]
     pub p2p: Option<P2pProjectConfig>,
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "p2pDownload")]
+    pub p2p_download: Option<P2pDownloadStatus>,
+}
+
+/// Estado de descarga P2P pendiente (imágenes por descargar)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct P2pDownloadStatus {
+    pub total_images: usize,
+    pub downloaded_images: usize,
 }
 
 // ─── P2P ───────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct P2pProjectConfig {
-    #[serde(rename = "sessionId")]
-    pub session_id: String,
+    /// "host" o "collaborator"
     pub role: String,
-    #[serde(rename = "namespaceId")]
+    /// Nombre de display para re-join
+    pub display_name: String,
+    /// ID del documento iroh (hex) para re-abrir al reiniciar
     pub namespace_id: String,
-    #[serde(rename = "authorId")]
-    pub author_id: String,
-    #[serde(rename = "hostNodeId")]
-    pub host_node_id: String,
-    #[serde(rename = "lockMode")]
-    pub lock_mode: String,
+    /// Reglas de sesión serializadas
+    pub rules: serde_json::Value,
+    /// Secreto del host (solo presente para rol host)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub host_secret: Option<String>,
 }
 
 // ─── Clases ─────────────────────────────────────────────────────────────────
@@ -74,6 +85,8 @@ pub struct ImageEntry {
     pub locked_by: Option<String>,
     #[serde(default, rename = "lockExpires")]
     pub lock_expires: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "downloadStatus")]
+    pub download_status: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

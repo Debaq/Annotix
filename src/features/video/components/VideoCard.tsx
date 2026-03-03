@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useUIStore } from '../../core/store/uiStore';
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { videoService } from '../services/videoService';
+import { useP2pStore } from '@/features/p2p/store/p2pStore';
 
 interface VideoCardProps {
   video: Video;
@@ -23,6 +24,10 @@ export function VideoCard({ video }: VideoCardProps) {
   const isReady = video.status === 'ready';
   const isExtracting = video.status === 'extracting';
   const canOpen = isReady || isExtracting;
+  const vidId = video.id || '';
+  const assignee = useP2pStore.getState().getItemAssignee(vidId, 'video');
+  const isAssignedToMe = useP2pStore.getState().isItemAssignedToMe(vidId, 'video');
+  const hasDistribution = !!useP2pStore.getState().distribution;
 
   // Thumbnail: usar el primer frame del video (disponible durante extracting o ready)
   useEffect(() => {
@@ -143,6 +148,17 @@ export function VideoCard({ video }: VideoCardProps) {
             <i className="fas fa-video"></i>
           </div>
         </div>
+
+        {/* P2P Assignment badge */}
+        {hasDistribution && assignee && (
+          <div className="absolute top-1 left-1 z-10" style={{ top: markedFrames > 0 ? '22px' : undefined }}>
+            <div className={`px-1 py-0.5 rounded text-[8px] font-bold text-white truncate max-w-[60px] ${
+              isAssignedToMe ? 'bg-blue-500' : 'bg-gray-500'
+            }`}>
+              {isAssignedToMe ? 'Tú' : assignee.displayName}
+            </div>
+          </div>
+        )}
 
         {/* Delete button (bottom-right, visible on hover) */}
         <button
