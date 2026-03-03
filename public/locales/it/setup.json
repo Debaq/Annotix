@@ -1,0 +1,9 @@
+{
+  "welcome": "Benvenuto su Annotix",
+  "description": "Scegli una cartella dove verranno salvati i tuoi progetti. Ogni progetto sarà una sottocartella con le sue immagini, annotazioni e configurazione.",
+  "selectFolder": "Seleziona Cartella Progetti",
+  "selectedFolder": "Cartella selezionata",
+  "confirm": "Inizia",
+  "noFolder": "Nessuna cartella selezionata",
+  "changeFolder": "Cambia Cartella"
+}

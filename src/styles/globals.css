@@ -624,3 +624,85 @@
   background: var(--annotix-primary);
   color: white;
 }
+
+/* ============================================
+   SPLASH SCREEN
+   ============================================ */
+
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--annotix-primary) 0%, var(--annotix-secondary) 100%);
+}
+
+.splash-fadeout {
+  animation: splash-fadeout 300ms ease-out forwards;
+}
+
+.splash-logo-pulse {
+  animation: splash-pulse 2s ease-in-out infinite;
+}
+
+.splash-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.splash-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  animation: splash-dot-bounce 1.4s ease-in-out infinite;
+}
+
+.splash-dots span:nth-child(2) {
+  animation-delay: 0.16s;
+}
+
+.splash-dots span:nth-child(3) {
+  animation-delay: 0.32s;
+}
+
+@keyframes splash-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.06); opacity: 0.9; }
+}
+
+@keyframes splash-fadeout {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes splash-dot-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* ============================================
+   ERROR BOUNDARY
+   ============================================ */
+
+.error-boundary {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--annotix-primary) 0%, var(--annotix-secondary) 100%);
+}
+
+.error-boundary-card {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 520px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}

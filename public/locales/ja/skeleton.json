@@ -1,0 +1,33 @@
+{
+  "addKeypointClass": "キーポイントクラスを追加",
+  "step1": "ステップ1: 基本情報",
+  "step2": "ステップ2: スケルトンプリセットを選択",
+  "className": "クラス名",
+  "classNamePlaceholder": "例: 人、手、顔",
+  "classColor": "クラスの色",
+  "selectPreset": "このクラスのスケルトンプリセットを選択:",
+  "presetInfo": "各クラスは独自のスケルトンを持つことができます。これにより、同じプロジェクト内で異なるタイプのオブジェクトにアノテーションできます。",
+  "points": "ポイント",
+  "connections": "接続",
+  "previous": "前へ",
+  "next": "次へ",
+  "finish": "完了",
+  "presets": {
+    "coco17": "COCO 17キーポイント",
+    "coco17Desc": "完全な人体スケルトン（COCOデータセット）",
+    "mediapipePose": "MediaPipe Pose 33",
+    "mediapipePoseDesc": "詳細な全身ポーズ",
+    "mediapipeHand": "MediaPipe Hand 21",
+    "mediapipeHandDesc": "詳細な手の関節",
+    "openpose25": "OpenPose 25",
+    "openpose25Desc": "手付きOpenPoseスケルトン",
+    "facial68": "顔ランドマーク68",
+    "facial68Desc": "詳細な顔のポイント",
+    "facial5": "顔5ポイント",
+    "facial5Desc": "基本的な顔のポイント（目、鼻、口）",
+    "animalQuad": "四足動物",
+    "animalQuadDesc": "四足動物のスケルトン",
+    "custom": "カスタム",
+    "customDesc": "独自のスケルトンを定義"
+  }
+}

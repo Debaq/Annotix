@@ -1,0 +1,11 @@
+{
+  "toolName": "参考点",
+  "placed": "参考点 \"{name}\" 已放置",
+  "selectFirst": "请先选择一个参考点",
+  "enterName": "请输入名称",
+  "renamed": "参考点已重命名",
+  "renumbered": "{count} 个点已重新编号",
+  "renameLandmark": "重命名参考点",
+  "landmarkName": "点名称：",
+  "namePlaceholder": "例如：中心、左上、入口"
+}

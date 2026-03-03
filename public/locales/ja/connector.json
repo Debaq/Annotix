@@ -1,0 +1,17 @@
+{
+  "connected": "Connector",
+  "disconnected": "Connectorなし",
+  "connectedMessage": "Connectorオンライン - ポート5000",
+  "checking": "Connectorへの接続を確認中...",
+  "connectedReady": "接続済み - トレーニング準備完了",
+  "notConnected": "コンパニオンエンジンに接続できませんでした",
+  "notConnectedHint": "実行中であることを確認してください",
+  "offlineMessage": "コンパニオンエンジンに接続できませんでした。\n\nデスクトップアプリケーションをダウンロードして実行しましたか？\n「motor_server.exe」がPCで実行中であることを確認してください。",
+  "downloadTitle": "コンパニオンエンジンが検出されません",
+  "downloadMessage": "ローカルでモデルをトレーニングするには、Annotixコンパニオンエンジンをダウンロードしてインストールする必要があります。",
+  "downloadHint": "コンパニオンエンジンはPCのバックグラウンドで実行され、アノテーション済みデータでモデルをトレーニングできるようになります。",
+  "download": "コンパニオンエンジンをダウンロード",
+  "downloadStarted": "ダウンロードが開始されました。完了したらインストーラーを実行してください。",
+  "startTraining": "トレーニングを開始",
+  "trainingStarted": "トレーニングが正常に開始されました"
+}

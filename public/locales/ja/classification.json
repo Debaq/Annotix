@@ -1,0 +1,16 @@
+{
+  "selectOne": "正しいラベルを選択",
+  "selectMultiple": "該当するラベルを選択",
+  "singleHint": "ラベルは1つだけ選択できます",
+  "multiHint": "複数のラベルを選択できます",
+  "noLabels": "ラベルが割り当てられていません",
+  "labeled": "ラベル付き",
+  "selectLabel": "ラベルを選択",
+  "selectLabels": "ラベルを選択",
+  "selected": "選択済み",
+  "multiLabel": "マルチラベル分類",
+  "singleLabel": "シンプル分類",
+  "noImageSelected": "画像が選択されていません。ギャラリーから画像を選択してください。",
+  "multiLabelInstructions": "この画像に該当する1つ以上のラベルを選択してください。Ctrl+Sで保存。",
+  "singleLabelInstructions": "この画像を最もよく表すラベルを選択してください。Ctrl+Sで保存。"
+}

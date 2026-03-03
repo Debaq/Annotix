@@ -1,0 +1,9 @@
+{
+  "welcome": "欢迎使用 Annotix",
+  "description": "选择一个文件夹来存储您的项目。每个项目将是一个包含图片、标注和配置的子文件夹。",
+  "selectFolder": "选择项目文件夹",
+  "selectedFolder": "已选文件夹",
+  "confirm": "开始使用",
+  "noFolder": "未选择文件夹",
+  "changeFolder": "更改文件夹"
+}

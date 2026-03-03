@@ -1,0 +1,17 @@
+{
+  "connected": "Connector",
+  "disconnected": "Sans Connector",
+  "connectedMessage": "Connector en ligne - Port 5000",
+  "checking": "Vérification de la connexion avec le Connector...",
+  "connectedReady": "Connecté - Prêt pour l'entraînement",
+  "notConnected": "Impossible de se connecter au Moteur Compagnon",
+  "notConnectedHint": "Assurez-vous qu'il est en cours d'exécution",
+  "offlineMessage": "Impossible de se connecter au Moteur Compagnon.\n\nAvez-vous téléchargé et lancé l'application de bureau ?\nAssurez-vous que 'motor_server.exe' est en cours d'exécution sur votre PC.",
+  "downloadTitle": "Moteur Compagnon Non Détecté",
+  "downloadMessage": "Pour entraîner des modèles localement, vous devez télécharger et installer le Moteur Compagnon d'Annotix.",
+  "downloadHint": "Le Moteur Compagnon s'exécutera en arrière-plan sur votre PC et permettra d'entraîner des modèles avec vos données annotées.",
+  "download": "Télécharger le Moteur Compagnon",
+  "downloadStarted": "Téléchargement lancé. Exécutez l'installateur une fois terminé.",
+  "startTraining": "Démarrer l'Entraînement",
+  "trainingStarted": "Entraînement démarré avec succès"
+}

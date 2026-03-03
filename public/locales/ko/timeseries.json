@@ -1,0 +1,40 @@
+{
+  "noProjectSelected": "프로젝트가 선택되지 않았습니다. 시계열 프로젝트를 선택하세요.",
+  "importCSV": "CSV 파일 가져오기",
+  "importSuccess": "CSV를 성공적으로 가져왔습니다!",
+  "selectCSV": "CSV 파일 선택",
+  "hasHeader": "첫 번째 행에 헤더가 포함되어 있습니다",
+  "timestampColumn": "타임스탬프 열 (0 기반 인덱스)",
+  "timestampColumnHelp": "타임스탬프의 열 인덱스 (기본값: 0 = 첫 번째 열)",
+  "import": "가져오기",
+  "csvFormatInfo": "CSV 형식: 첫 번째 열은 타임스탬프, 나머지 열은 값입니다. 예: 시간,값1,값2",
+  "noSeriesSelected": "시계열이 선택되지 않았습니다. 갤러리에서 시리즈를 선택하세요.",
+  "dataPoints": "데이터 포인트",
+  "series": "시리즈",
+  "annotations": "주석",
+  "annotationsCount": "주석",
+  "addAnnotation": "주석 추가",
+  "totalSeries": "전체 시리즈",
+  "annotated": "주석 완료",
+  "pending": "대기 중",
+  "seriesList": "시계열 목록",
+  "noSeriesYet": "아직 시계열이 없습니다",
+  "importCSVToStart": "시작하려면 CSV 파일을 가져오세요",
+  "deleteConfirm": "이 시계열을 삭제하시겠습니까?",
+  "tools": {
+    "select": "선택",
+    "point": "포인트",
+    "range": "범위",
+    "event": "이벤트",
+    "anomaly": "이상",
+    "classification": "분류"
+  },
+  "clearAnnotations": "모든 주석 지우기",
+  "noAnnotations": "아직 주석이 없습니다. 도구를 선택하고 그래프를 클릭하여 주석을 추가하세요.",
+  "instructions": {
+    "point": "그래프를 클릭하여 주석 포인트를 표시합니다",
+    "range": "클릭하여 시작점을 설정한 다음 다시 클릭하여 끝점을 설정합니다",
+    "event": "그래프를 클릭하여 이벤트를 표시합니다",
+    "anomaly": "그래프를 클릭하여 이상을 표시합니다"
+  }
+}

@@ -1,0 +1,539 @@
+{
+  "new": "Новый проект",
+  "name": "Название проекта",
+  "namePlaceholder": "Мой проект Annotix",
+  "type": "Тип аннотации",
+  "typeSelectHelper": "Выберите тип аннотации в соответствии с целью обучения",
+  "types": {
+    "classification": {
+      "name": "Простая классификация",
+      "description": "Присвоить одну метку каждому изображению",
+      "useCases": "Определить содержимое изображения (например: кот, собака, машина)",
+      "models": "ResNet, VGG, EfficientNet, MobileNet",
+      "difficulty": "Начинающий"
+    },
+    "bbox": {
+      "name": "Bounding Box",
+      "description": "Обнаружение объектов с ограничительными рамками",
+      "useCases": "Обнаружение и локализация объектов на изображениях",
+      "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+      "difficulty": "Начинающий"
+    },
+    "mask": {
+      "name": "Маска",
+      "description": "Сегментация экземпляров с масками пикселей",
+      "useCases": "Разделение объектов на уровне пикселей",
+      "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+      "difficulty": "Средний"
+    },
+    "multiLabel": {
+      "name": "Мульти-классовая классификация",
+      "description": "Присвоить несколько меток каждому изображению",
+      "useCases": "Изображение с несколькими элементами (например: парк + собака + небо)",
+      "models": "ResNet, VGG с multi-label выходом",
+      "difficulty": "Начинающий"
+    },
+    "detection": {
+      "name": "Обнаружение объектов",
+      "description": "Локализация объектов с прямоугольными рамками (bounding boxes)",
+      "useCases": "Поиск и определение положения объектов на изображении",
+      "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+      "difficulty": "Средний"
+    },
+    "segmentation": {
+      "name": "Семантическая сегментация",
+      "description": "Классификация каждого пикселя изображения по классу",
+      "useCases": "Разделение областей (например: дорога, небо, здания)",
+      "models": "U-Net, DeepLab, FCN",
+      "difficulty": "Продвинутый"
+    },
+    "instanceSeg": {
+      "name": "Сегментация экземпляров",
+      "description": "Выделение контура каждого отдельного объекта",
+      "useCases": "Разделение отдельных объектов на уровне пикселей",
+      "models": "Mask R-CNN, YOLACT, YOLOv8-seg",
+      "difficulty": "Продвинутый"
+    },
+    "keypoints": {
+      "name": "Ключевые точки",
+      "description": "Отметка определённых точек на объектах",
+      "useCases": "Оценка позы, распознавание лиц, анатомия",
+      "models": "OpenPose, HRNet, MediaPipe",
+      "difficulty": "Средний"
+    },
+    "polygon": {
+      "name": "Сегментация полигонами",
+      "description": "Рисование полигонов точка за точкой для точной сегментации",
+      "useCases": "Точные контуры, геометрические формы, легче чем маски",
+      "models": "YOLOv8-seg, Mask R-CNN, SOLO",
+      "difficulty": "Средний"
+    },
+    "landmarks": {
+      "name": "Ориентиры",
+      "description": "Размещение независимых точек без соединений",
+      "useCases": "Центры объектов, ориентиры, подсчёт, расположение",
+      "models": "Модели обнаружения, пользовательские детекторы точек",
+      "difficulty": "Начинающий"
+    },
+    "obb": {
+      "name": "Повёрнутые рамки (OBB)",
+      "description": "Bounding boxes со свободным вращением",
+      "useCases": "Текст под углом, аэрообъекты, спутники",
+      "models": "Rotated-YOLO, RRPN",
+      "difficulty": "Продвинутый"
+    },
+    "semanticSeg": {
+      "name": "Чистая семантическая сегментация",
+      "description": "Классификация каждого пикселя без различения экземпляров",
+      "useCases": "Карты сегментации, пейзажи, городские сцены",
+      "models": "U-Net, DeepLabV3+, SegFormer",
+      "difficulty": "Продвинутый"
+    },
+    "panopticSeg": {
+      "name": "Панопtическая сегментация",
+      "description": "Комбинирует семантическую сегментацию и сегментацию экземпляров",
+      "useCases": "Автономное вождение, полный анализ сцен",
+      "models": "Panoptic-FPN, DETR, MaskFormer",
+      "difficulty": "Продвинутый"
+    },
+    "ocr": {
+      "name": "OCR (Распознавание текста)",
+      "description": "Обнаружение и распознавание текста на изображениях",
+      "useCases": "Документы, знаки, вывески, счета",
+      "models": "CRAFT, EasyOCR, Tesseract, PaddleOCR",
+      "difficulty": "Средний"
+    },
+    "depthEstimation": {
+      "name": "Оценка глубины",
+      "description": "Предсказание расстояния каждого пикселя до камеры",
+      "useCases": "Робототехника, AR/VR, 3D реконструкция",
+      "models": "MiDaS, DPT, Depth Anything",
+      "difficulty": "Продвинутый"
+    },
+    "audioClassification": {
+      "name": "Классификация аудио",
+      "description": "Присвоение метки аудиоклипам",
+      "useCases": "Классификация музыки, звуки окружающей среды",
+      "models": "AudioSet, PANNs, YAMNet",
+      "difficulty": "Средний"
+    },
+    "speechRecognition": {
+      "name": "Распознавание речи",
+      "description": "Транскрипция аудио в текст",
+      "useCases": "Субтитры, голосовые помощники, транскрипция",
+      "models": "Whisper, Wav2Vec2, DeepSpeech",
+      "difficulty": "Продвинутый"
+    },
+    "soundEventDetection": {
+      "name": "Обнаружение звуковых событий",
+      "description": "Идентификация и локализация событий в аудио",
+      "useCases": "Мониторинг безопасности, городской анализ",
+      "models": "CRNN, CNN14, SED-CRNN",
+      "difficulty": "Продвинутый"
+    },
+    "speakerIdentification": {
+      "name": "Идентификация говорящего",
+      "description": "Распознавание кто говорит",
+      "useCases": "Безопасность, диаризация совещаний",
+      "models": "x-vector, ECAPA-TDNN, SpeakerNet",
+      "difficulty": "Продвинутый"
+    },
+    "audioTagging": {
+      "name": "Теги аудио",
+      "description": "Присвоение нескольких меток аудио",
+      "useCases": "Анализ акустических сцен",
+      "models": "VGGish, PANNs, AudioSet",
+      "difficulty": "Средний"
+    },
+    "musicGenreClassification": {
+      "name": "Классификация музыкальных жанров",
+      "description": "Определение музыкального жанра песни",
+      "useCases": "Организация музыкальных библиотек",
+      "models": "MusiCNN, CNN-Spectrograms",
+      "difficulty": "Средний"
+    },
+    "emotionRecognition": {
+      "name": "Распознавание эмоций",
+      "description": "Обнаружение эмоций в голосе",
+      "useCases": "Обслуживание клиентов, анализ настроений",
+      "models": "OpenSMILE, EmotiW, SER-CNN",
+      "difficulty": "Продвинутый"
+    },
+    "voiceActivityDetection": {
+      "name": "Обнаружение речевой активности (VAD)",
+      "description": "Определение наличия речи в аудио",
+      "useCases": "Предобработка аудио, телефонные системы",
+      "models": "WebRTC VAD, Silero VAD",
+      "difficulty": "Начинающий"
+    },
+    "keywordSpotting": {
+      "name": "Обнаружение ключевых слов",
+      "description": "Обнаружение определённых слов в аудио",
+      "useCases": "Голосовые помощники (Hey Siri, OK Google)",
+      "models": "CNN-KWS, Depthwise Separable CNNs",
+      "difficulty": "Средний"
+    },
+    "environmentalSound": {
+      "name": "Классификация звуков окружающей среды",
+      "description": "Классификация звуков окружения",
+      "useCases": "Городской мониторинг, охрана фауны",
+      "models": "ESC-CNN, UrbanSound8K models",
+      "difficulty": "Средний"
+    },
+    "actionRecognition": {
+      "name": "Распознавание действий",
+      "description": "Идентификация действий в видео",
+      "useCases": "Спортивный анализ, наблюдение, взаимодействие людей",
+      "models": "C3D, I3D, SlowFast, X3D",
+      "difficulty": "Продвинутый"
+    },
+    "objectTracking": {
+      "name": "Отслеживание объектов",
+      "description": "Отслеживание объектов по кадрам",
+      "useCases": "Наблюдение, анализ трафика, спорт",
+      "models": "SORT, DeepSORT, ByteTrack, BoT-SORT",
+      "difficulty": "Продвинутый"
+    },
+    "temporalActionLocalization": {
+      "name": "Временная локализация действий",
+      "description": "Обнаружение когда происходят действия в видео",
+      "useCases": "Анализ видео, автоматические сводки",
+      "models": "BMN, TSN, ActionFormer",
+      "difficulty": "Продвинутый"
+    },
+    "videoClassification": {
+      "name": "Классификация видео",
+      "description": "Присвоение категории полному видео",
+      "useCases": "Организация контента, рекомендации",
+      "models": "3D-CNN, Two-Stream Networks, TimeSformer",
+      "difficulty": "Средний"
+    },
+    "videoSegmentation": {
+      "name": "Сегментация видео",
+      "description": "Сегментация объектов в видео кадр за кадром",
+      "useCases": "Видеоредактирование, спецэффекты",
+      "models": "STM, XMem, SAM-Track",
+      "difficulty": "Продвинутый"
+    },
+    "activityDetection": {
+      "name": "Обнаружение активности",
+      "description": "Обнаружение конкретных человеческих действий",
+      "useCases": "Мониторинг пожилых людей, безопасность",
+      "models": "ActivityNet models, TSM",
+      "difficulty": "Продвинутый"
+    },
+    "poseTracking": {
+      "name": "Отслеживание позы",
+      "description": "Отслеживание ключевых точек тела в видео",
+      "useCases": "Анализ движений, фитнес, спорт",
+      "models": "AlphaPose, OpenPose, MMPose",
+      "difficulty": "Продвинутый"
+    },
+    "videoAnomalyDetection": {
+      "name": "Обнаружение аномалий в видео",
+      "description": "Обнаружение необычных событий в видео",
+      "useCases": "Наблюдение, промышленный контроль качества",
+      "models": "AnomalyNet, Future Frame Prediction",
+      "difficulty": "Продвинутый"
+    },
+    "spatiotemporalAction": {
+      "name": "Пространственно-временное обнаружение действий",
+      "description": "Обнаружение действий в пространстве и времени",
+      "useCases": "Детальный анализ видео, YOLO-Act",
+      "models": "AVA models, SlowFast, YOLO-Act",
+      "difficulty": "Продвинутый"
+    },
+    "timeSeriesClassification": {
+      "name": "Классификация временных рядов",
+      "description": "Присвоение класса каждому полному временному ряду (режим глобальной классификации)",
+      "useCases": "Медицинская диагностика, распознавание жестов, классификация ЭКГ",
+      "models": "InceptionTime, ROCKET, ResNet",
+      "difficulty": "Средний"
+    },
+    "timeSeriesForecasting": {
+      "name": "Прогнозирование временных рядов",
+      "description": "Разметка исторических окон и горизонта прогнозирования с помощью диапазонов",
+      "useCases": "Прогнозирование продаж, погоды, энергопотребления",
+      "models": "LSTM, Transformer, N-BEATS, Prophet",
+      "difficulty": "Продвинутый"
+    },
+    "anomalyDetection": {
+      "name": "Обнаружение аномалий",
+      "description": "Разметка аномальных точек во временном ряду",
+      "useCases": "Обнаружение мошенничества, отказов оборудования, мониторинг здоровья",
+      "models": "AutoEncoder, Isolation Forest, LSTM-AE",
+      "difficulty": "Продвинутый"
+    },
+    "timeSeriesSegmentation": {
+      "name": "Сегментация временных рядов",
+      "description": "Разделение ряда на сегменты с классами с помощью диапазонов",
+      "useCases": "Анализ поведения, смена режима, состояния активности",
+      "models": "ClaSP, FLUSS, Seasonal-Trend Decomposition",
+      "difficulty": "Продвинутый"
+    },
+    "patternRecognition": {
+      "name": "Распознавание паттернов",
+      "description": "Разметка повторяющихся паттернов/мотивов с помощью диапазонов",
+      "useCases": "Биржевой анализ, биомедицинские сигналы, обнаружение циклов",
+      "models": "Matrix Profile, STOMP, SAX",
+      "difficulty": "Средний"
+    },
+    "eventDetection": {
+      "name": "Обнаружение событий",
+      "description": "Разметка дискретных событий во времени с помощью точек",
+      "useCases": "Мониторинг датчиков, оповещения, смена состояний",
+      "models": "Change Point Detection, Event Detection CNN",
+      "difficulty": "Средний"
+    },
+    "timeSeriesRegression": {
+      "name": "Регрессия временных рядов",
+      "description": "Разметка точек с числовыми целевыми значениями",
+      "useCases": "Оценка спроса, динамическое ценообразование, прогнозирование значений",
+      "models": "XGBoost, Random Forest, Neural Networks",
+      "difficulty": "Средний"
+    },
+    "clustering": {
+      "name": "Кластеризация рядов",
+      "description": "Присвоение кластера каждому полному временному ряду (режим глобальной классификации)",
+      "useCases": "Сегментация клиентов, анализ паттернов, группировка поведений",
+      "models": "K-Shape, DTW-KMeans, K-Means",
+      "difficulty": "Средний"
+    },
+    "imputation": {
+      "name": "Импутация пропущенных значений",
+      "description": "Разметка секций с пропущенными данными для импутации с помощью диапазонов",
+      "useCases": "Очистка данных датчиков, заполнение пробелов в измерениях",
+      "models": "MICE, KNN, Interpolation, BRITS",
+      "difficulty": "Средний"
+    },
+    "multi-label-classification": {
+      "name": "Мультиклассовая классификация",
+      "description": "Назначить несколько меток каждому изображению"
+    },
+    "timeseries-classification": {
+      "name": "Классификация временных рядов",
+      "description": "Классифицировать целые временные ряды по категориям"
+    },
+    "timeseries-forecasting": {
+      "name": "Прогнозирование временных рядов",
+      "description": "Прогнозировать будущие значения на основе исторических данных"
+    },
+    "anomaly-detection": {
+      "name": "Обнаружение аномалий",
+      "description": "Обнаруживать необычные паттерны во временных рядах"
+    },
+    "timeseries-segmentation": {
+      "name": "Сегментация временных рядов",
+      "description": "Сегментировать временные ряды на отдельные области"
+    },
+    "pattern-recognition": {
+      "name": "Распознавание паттернов",
+      "description": "Идентифицировать повторяющиеся паттерны во временных рядах"
+    },
+    "event-detection": {
+      "name": "Обнаружение событий",
+      "description": "Обнаруживать определённые события во временных рядах"
+    },
+    "timeseries-regression": {
+      "name": "Регрессия временных рядов",
+      "description": "Прогнозировать числовые значения из временных рядов"
+    },
+    "tabular": {
+      "name": "Табличный ML",
+      "description": "Классический ML с CSV/табличными данными"
+    },
+    "object3DDetection": {
+      "name": "Обнаружение 3D объектов",
+      "description": "Обнаружение объектов в 3D облаках точек",
+      "useCases": "Автономное вождение, робототехника",
+      "models": "PointNet++, VoxelNet, PointPillars",
+      "difficulty": "Продвинутый"
+    },
+    "semantic3DSegmentation": {
+      "name": "3D семантическая сегментация",
+      "description": "Классификация точек в 3D облаках",
+      "useCases": "Городское картирование, BIM, сканирование зданий",
+      "models": "PointNet, MinkowskiNet, KPConv",
+      "difficulty": "Продвинутый"
+    },
+    "instance3DSegmentation": {
+      "name": "3D сегментация экземпляров",
+      "description": "Разделение отдельных объектов в 3D",
+      "useCases": "Робототехника, манипулирование объектами",
+      "models": "PointGroup, SoftGroup, Mask3D",
+      "difficulty": "Продвинутый"
+    },
+    "pointCloudClassification": {
+      "name": "Классификация облаков точек",
+      "description": "Классификация полных облаков точек",
+      "useCases": "Распознавание 3D объектов",
+      "models": "PointNet, DGCNN, PointTransformer",
+      "difficulty": "Продвинутый"
+    },
+    "meshSegmentation": {
+      "name": "Сегментация мешей",
+      "description": "Сегментация полигональных 3D мешей",
+      "useCases": "3D моделирование, геометрический анализ",
+      "models": "MeshCNN, TextureNet",
+      "difficulty": "Продвинутый"
+    },
+    "pose3DEstimation": {
+      "name": "Оценка 3D позы",
+      "description": "Оценка человеческих поз в 3D",
+      "useCases": "Захват движений, анимация",
+      "models": "VideoPose3D, VoxelPose",
+      "difficulty": "Продвинутый"
+    },
+    "keypoint3DDetection": {
+      "name": "Обнаружение 3D ключевых точек",
+      "description": "Обнаружение точек интереса в 3D",
+      "useCases": "Регистрация облаков точек, SLAM",
+      "models": "D3Feat, FCGF, Predator",
+      "difficulty": "Продвинутый"
+    },
+    "surfaceReconstruction": {
+      "name": "Реконструкция поверхностей",
+      "description": "Реконструкция поверхностей из точек",
+      "useCases": "3D сканирование, культурное наследие",
+      "models": "Poisson Surface Reconstruction, COLMAP",
+      "difficulty": "Продвинутый"
+    },
+    "slamAnnotation": {
+      "name": "Аннотация для SLAM",
+      "description": "Аннотация данных для локализации и картирования",
+      "useCases": "Мобильная робототехника, автономная навигация",
+      "models": "ORB-SLAM, LiDAR-SLAM",
+      "difficulty": "Продвинутый"
+    },
+    "textClassification": {
+      "name": "Классификация текста",
+      "description": "Присвоение категории тексту",
+      "useCases": "Классификация новостей, обнаружение спама",
+      "models": "BERT, RoBERTa, DistilBERT",
+      "difficulty": "Средний"
+    },
+    "namedEntityRecognition": {
+      "name": "Распознавание сущностей (NER)",
+      "description": "Идентификация имён, мест, организаций",
+      "useCases": "Извлечение информации, анализ документов",
+      "models": "SpaCy, Flair, BERT-NER",
+      "difficulty": "Средний"
+    },
+    "sentimentAnalysis": {
+      "name": "Анализ тональности",
+      "description": "Определение тональности (положительная/отрицательная/нейтральная)",
+      "useCases": "Анализ мнений, социальные сети",
+      "models": "VADER, TextBlob, RoBERTa-Sentiment",
+      "difficulty": "Средний"
+    },
+    "intentClassification": {
+      "name": "Классификация намерений",
+      "description": "Определение намерения пользователя",
+      "useCases": "Чат-боты, виртуальные помощники",
+      "models": "DIET, Rasa NLU, BERT-Intent",
+      "difficulty": "Средний"
+    },
+    "relationExtraction": {
+      "name": "Извлечение отношений",
+      "description": "Идентификация отношений между сущностями",
+      "useCases": "Графы знаний, анализ текстов",
+      "models": "SpanBERT, LUKE, Relation Extraction BERT",
+      "difficulty": "Продвинутый"
+    },
+    "posTagging": {
+      "name": "Грамматическая разметка (POS)",
+      "description": "Идентификация грамматических категорий",
+      "useCases": "Лингвистический анализ, предобработка NLP",
+      "models": "SpaCy, NLTK, Flair",
+      "difficulty": "Начинающий"
+    },
+    "dependencyParsing": {
+      "name": "Анализ зависимостей",
+      "description": "Анализ синтаксической структуры",
+      "useCases": "Понимание языка, перевод",
+      "models": "SpaCy, Stanford Parser",
+      "difficulty": "Продвинутый"
+    },
+    "questionAnswering": {
+      "name": "Ответы на вопросы",
+      "description": "Ответы на вопросы по тексту",
+      "useCases": "QA-ассистенты, поиск информации",
+      "models": "BERT-QA, RoBERTa-QA, T5",
+      "difficulty": "Продвинутый"
+    },
+    "keyphraseExtraction": {
+      "name": "Извлечение ключевых фраз",
+      "description": "Идентификация важных фраз",
+      "useCases": "Сводки, индексация документов",
+      "models": "YAKE, KeyBERT, RAKE",
+      "difficulty": "Средний"
+    },
+    "entityLinking": {
+      "name": "Связывание сущностей",
+      "description": "Связывание сущностей с базами знаний",
+      "useCases": "Обогащение данных, графы знаний",
+      "models": "BLINK, ELQ, GENRE",
+      "difficulty": "Продвинутый"
+    },
+    "toxicityClassification": {
+      "name": "Классификация токсичности",
+      "description": "Обнаружение токсичного или оскорбительного контента",
+      "useCases": "Модерация контента, фильтры",
+      "models": "Perspective API, Detoxify, RoBERTa-Toxicity",
+      "difficulty": "Средний"
+    },
+    "languageIdentification": {
+      "name": "Идентификация языка",
+      "description": "Определение языка текста",
+      "useCases": "Мультиязычная обработка, перевод",
+      "models": "langdetect, fastText, XLM-RoBERTa",
+      "difficulty": "Начинающий"
+    },
+    "useCasesLabel": "Случаи использования",
+    "modelsLabel": "Рекомендуемые модели",
+    "difficultyLabel": "Сложность"
+  },
+  "categories": {
+    "images": "Аннотация изображений",
+    "classification": "Классификация",
+    "timeSeries": "Временные ряды",
+    "tabular": "Табличные / Классический ML"
+  },
+  "modality": "Модальность",
+  "initialClasses": "Начальные классы (необязательно)",
+  "classesPlaceholder": "класс1, класс2, класс3",
+  "classesHelp": "Через запятую. Можно добавить ещё позже.",
+  "imageDimensions": "Размеры изображений",
+  "dimensionsAuto": "Автоматически — принимает любой размер",
+  "dimensionsFixed": "Фиксированный — все изображения будут изменены",
+  "targetSize": "Целевой размер",
+  "resizeStrategy": "Стратегия",
+  "enterName": "Введите название проекта",
+  "created": "Проект \"{name}\" создан",
+  "updated": "Обновлено",
+  "loaded": "Проект \"{name}\" загружен",
+  "deleted": "Проект удалён",
+  "duplicated": "Проект \"{name}\" дублирован",
+  "renamed": "Проект переименован",
+  "imported": "Проект \"{name}\" импортирован",
+  "exported": "Проект экспортирован",
+  "configExported": "Конфигурация экспортирована",
+  "selectFirst": "Сначала выберите проект",
+  "noProjects": "Нет доступных проектов",
+  "manageProjects": "Управление проектами",
+  "renameProject": "Переименовать проект",
+  "newName": "Новое название",
+  "images": "изображений",
+  "annotations": "аннотаций",
+  "exportBackup": "Скачать backup .tix перед удалением",
+  "deleteWarning": {
+    "title": "⚠️ ПРЕДУПРЕЖДЕНИЕ: БЕЗВОЗВРАТНОЕ УДАЛЕНИЕ",
+    "confirmTitle": "Подтвердить удаление?",
+    "projectName": "Проект:",
+    "message": "Вы собираетесь НАВСЕГДА удалить этот проект.",
+    "permanent": "Это действие НЕЛЬЗЯ отменить",
+    "allData": "Будут удалены ВСЕ изображения и аннотации",
+    "noUndo": "Нет способа восстановить удалённые данные",
+    "recommendation": "💡 Рекомендация: Экспортируйте проект в формате .tix как backup ПЕРЕД удалением"
+  }
+}

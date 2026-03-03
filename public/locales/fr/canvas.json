@@ -1,0 +1,13 @@
+{
+  "zoomIn": "Zoom avant",
+  "zoomOut": "Zoom arrière",
+  "resetZoom": "Réinitialiser le Zoom",
+  "fitScreen": "Ajuster à l'écran",
+  "toggleLabels": "Afficher/Masquer les Étiquettes",
+  "toggleGrid": "Afficher/Masquer la Grille",
+  "prevImage": "Image Précédente (← / PgPrec)",
+  "nextImage": "Image Suivante (→ / PgSuiv)",
+  "reset": "Réinitialiser",
+  "tools": "Outils",
+  "zoom": "Zoom"
+}

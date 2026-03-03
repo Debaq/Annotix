@@ -1,0 +1,43 @@
+{
+  "datasets": "Conjuntos de datos",
+  "upload": "Subir CSV",
+  "create": "Crear Tabla",
+  "noData": "Aún no hay datos tabulares",
+  "uploadFirst": "Sube un archivo CSV",
+  "createFirst": "Crear primera tabla",
+  "createNewTitle": "Crear Nueva Tabla",
+  "createNewDesc": "Crea una tabla manualmente definiendo su nombre y columnas iniciales.",
+  "tableName": "Nombre de la Tabla",
+  "selectOrUpload": "Seleccionar o subir datos",
+  "selectOrUploadDesc": "Sube un archivo CSV o crea una tabla para comenzar",
+  "rows": "filas",
+  "cols": "columnas",
+  "columns": "columnas",
+  "target": "Objetivo",
+  "preview": "Vista previa de datos",
+  "configuration": "Configuración de columnas",
+  "targetColumn": "Columna objetivo",
+  "targetColumnDesc": "Selecciona la columna que quieres predecir",
+  "taskType": "Tipo de tarea",
+  "classification": "Clasificación",
+  "regression": "Regresión",
+  "featureColumns": "Columnas de características",
+  "featureColumnsDesc": "Selecciona qué columnas usar como características de entrada",
+  "selectAll": "Seleccionar todo",
+  "deselectAll": "Deseleccionar todo",
+  "selected": "seleccionadas",
+  "saveConfig": "Guardar configuración",
+  "confirmDelete": "¿Estás seguro de que deseas eliminar esta tabla? Esta acción no se puede deshacer.",
+  "placeholderName": "ej. resultados_2024",
+  "placeholderColumns": "id, nombre, valor, objetivo",
+  "showingRows": "Mostrando {{shown}} de {{total}} filas",
+  "tabs": {
+    "view": "Vista y Config",
+    "edit": "Editar Datos"
+  },
+  "editor": {
+    "title": "Editar Datos",
+    "addRow": "Añadir Fila",
+    "noRows": "Aún no hay filas. Haz clic en \"Añadir Fila\" para comenzar."
+  }
+}

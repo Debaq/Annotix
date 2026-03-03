@@ -1,0 +1,33 @@
+{
+  "addKeypointClass": "키포인트 클래스 추가",
+  "step1": "1단계: 기본 정보",
+  "step2": "2단계: 스켈레톤 프리셋 선택",
+  "className": "클래스 이름",
+  "classNamePlaceholder": "예: 사람, 손, 얼굴",
+  "classColor": "클래스 색상",
+  "selectPreset": "이 클래스의 스켈레톤 프리셋을 선택하세요:",
+  "presetInfo": "각 클래스는 고유한 스켈레톤을 가질 수 있습니다. 이를 통해 같은 프로젝트에서 다양한 유형의 객체에 주석을 달 수 있습니다.",
+  "points": "포인트",
+  "connections": "연결",
+  "previous": "이전",
+  "next": "다음",
+  "finish": "완료",
+  "presets": {
+    "coco17": "COCO 17 Keypoints",
+    "coco17Desc": "완전한 인체 스켈레톤 (COCO 데이터셋)",
+    "mediapipePose": "MediaPipe Pose 33",
+    "mediapipePoseDesc": "전신 상세 포즈",
+    "mediapipeHand": "MediaPipe Hand 21",
+    "mediapipeHandDesc": "상세한 손 관절",
+    "openpose25": "OpenPose 25",
+    "openpose25Desc": "손을 포함한 OpenPose 스켈레톤",
+    "facial68": "Facial Landmarks 68",
+    "facial68Desc": "상세한 얼굴 포인트",
+    "facial5": "Facial 5 Points",
+    "facial5Desc": "기본 얼굴 포인트 (눈, 코, 입)",
+    "animalQuad": "사족동물",
+    "animalQuadDesc": "네 발 동물 스켈레톤",
+    "custom": "사용자 정의",
+    "customDesc": "나만의 스켈레톤 정의"
+  }
+}

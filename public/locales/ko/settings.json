@@ -1,0 +1,185 @@
+{
+  "title": "설정",
+  "back": "뒤로",
+  "sections": {
+    "general": "일반",
+    "pythonEnv": "Python 환경",
+    "trainingModels": "학습 모델",
+    "cloudProviders": "클라우드 제공업체",
+    "keyboardShortcuts": "키보드 단축키",
+    "browserAutomation": "브라우저 자동화"
+  },
+  "shortcuts": {
+    "description": "키 배지를 클릭하여 재할당하세요. Escape를 눌러 취소합니다.",
+    "pressKey": "키를 누르세요...",
+    "resetAll": "모두 초기화",
+    "resetOne": "기본값으로 초기화",
+    "conflict": "이 키는 이미 \"{{name}}\"에 할당되어 있습니다.",
+    "customize": "단축키 사용자 정의"
+  },
+  "automation": {
+    "browsers": {
+      "title": "브라우저 감지",
+      "description": "자동화 작업을 위한 Chromium 기반 브라우저를 감지하고 선택합니다.",
+      "detect": "브라우저 감지",
+      "detecting": "감지 중...",
+      "preferred": "선호",
+      "testLaunch": "테스트 실행",
+      "testing": "테스트 중..."
+    },
+    "provider": {
+      "title": "기본 LLM 어시스턴트",
+      "description": "브라우저 기반 AI 쿼리에 사용할 기본 LLM 어시스턴트를 선택합니다.",
+      "trainingLabel": "훈련",
+      "llmLabel": "LLM 어시스턴트",
+      "colab_free": "Google Colab (무료)",
+      "kimi": "Kimi (Moonshot)",
+      "qwen": "Qwen Chat",
+      "deepseek": "DeepSeek",
+      "huggingchat": "HuggingChat"
+    },
+    "selectors": {
+      "title": "CSS 셀렉터 편집기",
+      "description": "각 제공자의 TOML 셀렉터 파일을 편집합니다. 자동화가 각 웹사이트와 상호작용하는 방식을 정의합니다.",
+      "restore": "복원"
+    },
+    "advanced": {
+      "title": "고급 설정",
+      "description": "타임아웃, 재시도 및 브라우저 창 설정을 조정합니다.",
+      "stepTimeout": "단계 타임아웃",
+      "maxRetries": "최대 재시도 횟수",
+      "userActionTimeout": "사용자 작업 타임아웃",
+      "llmResponseTimeout": "LLM 응답 타임아웃",
+      "seconds": "초",
+      "userDataDir": "사용자 데이터 디렉토리",
+      "userDataDirPlaceholder": "기본값 (자동 관리)",
+      "windowSize": "창 크기",
+      "restoreDefaults": "기본값 복원"
+    },
+    "saved": "저장됨",
+    "saveError": "저장 오류"
+  },
+  "general": {
+    "colorMode": "외관",
+    "light": "라이트",
+    "dark": "다크",
+    "dracula": "Dracula",
+    "system": "시스템",
+    "language": "언어",
+    "workDir": "작업 디렉토리",
+    "workDirHelp": "모든 프로젝트와 데이터가 저장되는 폴더입니다.",
+    "changeWorkDir": "새 작업 디렉토리 선택",
+    "change": "변경",
+    "about": "정보",
+    "buildDate": "빌드 날짜",
+    "aboutDescription": "<strong>Nicolás Baier</strong>의 부에노스아이레스 이탈리아 병원 생체공학 박사 프로젝트의 일환으로 칠레 아우스트랄 대학교 <strong>TecMedHub</strong> 연구실에서 개발되었습니다.",
+    "team": "팀",
+    "changelog": "변경 이력",
+    "roleNicolas": "개발 & 디렉션",
+    "roleFelipe": "2026 인턴, 컴퓨터공학과, UACh"
+  },
+  "pythonEnv": {
+    "systemPython": "시스템 Python",
+    "systemPythonFound": "Python 3 발견: {{python}}",
+    "systemPythonNotFound": "PATH에서 Python 3을 찾을 수 없습니다. Python 3.10 이상을 설치하세요.",
+    "venv": "가상 환경",
+    "venvNotExists": "가상 환경이 생성되지 않았습니다. 학습 기능을 사용하려면 생성하세요.",
+    "status": "상태",
+    "active": "활성",
+    "pythonVersion": "Python 버전",
+    "diskUsage": "디스크 사용량",
+    "path": "경로",
+    "createVenv": "환경 생성",
+    "removeVenv": "환경 삭제",
+    "pleaseWait": "몇 분 정도 걸릴 수 있습니다. 애플리케이션을 닫지 마세요."
+  },
+  "packages": {
+    "title": "설치된 패키지",
+    "name": "이름",
+    "version": "버전",
+    "updateAll": "모두 업데이트"
+  },
+  "pytorch": {
+    "title": "PyTorch",
+    "cudaActive": "활성",
+    "cpuOnly": "CPU만",
+    "nvidiaDetected": "NVIDIA GPU 감지됨",
+    "driverVersion": "드라이버",
+    "suggestedCuda": "권장 CUDA",
+    "noNvidia": "NVIDIA GPU가 감지되지 않음 (CPU 모드 사용)",
+    "selectVariant": "PyTorch 변형",
+    "install": "PyTorch 설치",
+    "reinstall": "PyTorch 재설치"
+  },
+  "trainingModels": {
+    "totalModels": "모델",
+    "tasks": "태스크",
+    "task": "태스크",
+    "model": "모델",
+    "params": "매개변수",
+    "sizes": "크기",
+    "recommended": "추천",
+    "readOnly": "읽기 전용",
+    "searchPlaceholder": "이름, 설명 또는 백엔드로 모델 검색...",
+    "clearFilters": "필터 지우기",
+    "noResults": "현재 필터와 일치하는 모델이 없습니다",
+    "overview": "개요",
+    "selectBackend": "백엔드를 선택하여 모델을 탐색하세요",
+    "modelCount": "모델",
+    "datasetFormat": "데이터셋",
+    "pipPackages": "패키지",
+    "viewScript": "스크립트 보기",
+    "supportedTasks": "지원되는 태스크",
+    "availableSizes": "사용 가능한 크기",
+    "defaultConfig": "기본 설정",
+    "parameter": "매개변수",
+    "type": "유형",
+    "defaultValue": "기본값",
+    "range": "범위",
+    "backTo": "돌아가기",
+    "prepareBackend": "백엔드 준비",
+    "filterByTask": "작업별 필터",
+    "allModels": "모든 모델"
+  },
+  "cloud": {
+    "gcp": {
+      "title": "Google Cloud Platform",
+      "description": "Vertex AI 및 Colab Enterprise용 GCP 자격 증명 구성",
+      "serviceAccount": "서비스 계정 JSON",
+      "serviceAccountPlaceholder": "서비스 계정 JSON 파일 선택...",
+      "projectId": "GCP 프로젝트 ID",
+      "region": "리전",
+      "bucket": "GCS 버킷"
+    },
+    "kaggle": {
+      "title": "Kaggle",
+      "description": "Kaggle API 자격 증명을 입력하세요.",
+      "getKey": "API Key 받기 →",
+      "username": "사용자 이름",
+      "apiKey": "API Key"
+    },
+    "lightning": {
+      "title": "Lightning AI",
+      "description": "무료 GPU 학습을 위한 Lightning AI 자격 증명을 구성합니다.",
+      "getKey": "API 키 받기 →",
+      "apiKey": "API 키"
+    },
+    "huggingface": {
+      "title": "Hugging Face",
+      "description": "AutoTrain을 위한 Hugging Face 자격 증명을 입력합니다.",
+      "getToken": "토큰 받기 →",
+      "username": "사용자 이름",
+      "token": "액세스 토큰"
+    },
+    "saturn": {
+      "title": "Saturn Cloud",
+      "description": "무료 GPU 인스턴스를 위한 Saturn Cloud API 토큰을 입력합니다.",
+      "getToken": "API 토큰 받기 →",
+      "apiToken": "API 토큰"
+    },
+    "validate": "검증",
+    "validating": "검증 중...",
+    "valid": "유효",
+    "invalid": "유효하지 않음"
+  }
+}

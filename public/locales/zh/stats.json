@@ -1,0 +1,9 @@
+{
+  "title": "统计",
+  "images": "图像",
+  "annotated": "已标注",
+  "labels": "标签",
+  "classes": "类别",
+  "progress": "张图像已标注",
+  "annotations": "stats.annotations"
+}

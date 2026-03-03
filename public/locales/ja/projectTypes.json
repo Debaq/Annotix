@@ -1,0 +1,9 @@
+{
+  "classification": "シンプル分類",
+  "multiLabel": "マルチラベル分類",
+  "detection": "オブジェクト検出",
+  "segmentation": "セマンティックセグメンテーション",
+  "instanceSeg": "インスタンスセグメンテーション",
+  "keypoints": "キーポイント",
+  "obb": "回転ボックス (OBB)"
+}

@@ -1,0 +1,28 @@
+{
+  "title": "导入数据集",
+  "button": "导入",
+  "selectFile": "选择包含标注数据集的 ZIP 文件",
+  "dragFiles": "将 ZIP 文件拖到此处",
+  "orClickToSelect": "或点击选择",
+  "analyzing": "分析数据集",
+  "configureProject": "配置导入的项目",
+  "projectName": "项目名称",
+  "projectType": "项目类型",
+  "classesCount": "类别",
+  "classes": "个类别",
+  "format": "检测到的格式",
+  "import": "导入项目",
+  "importing": "导入数据集中...",
+  "processing": "处理数据集中...",
+  "success": "项目导入成功",
+  "successMessage": "您的数据集已导入并准备就绪",
+  "openProject": "打开项目",
+  "error": {
+    "noFile": "请选择 ZIP 文件",
+    "invalidZip": "请选择有效的 ZIP 文件",
+    "unsupportedFormat": "不支持的数据集格式。支持的格式：YOLO、COCO、Pascal VOC、CSV、按类别分文件夹、U-Net 掩码",
+    "corruptedData": "数据集已损坏或不完整",
+    "parse": "数据集解析错误。请检查文件格式",
+    "invalidProjectName": "项目名称包含无效字符。仅使用字母数字、连字符、下划线和点"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "classification": "简单分类",
+  "multiLabel": "多标签分类",
+  "detection": "目标检测",
+  "segmentation": "语义分割",
+  "instanceSeg": "实例分割",
+  "keypoints": "关键点",
+  "obb": "旋转框 (OBB)"
+}

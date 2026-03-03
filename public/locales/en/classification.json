@@ -1,0 +1,16 @@
+{
+  "selectOne": "Select the correct label",
+  "selectMultiple": "Select all labels that apply",
+  "singleHint": "You can only select one label",
+  "multiHint": "You can select multiple labels",
+  "noLabels": "No labels assigned",
+  "labeled": "Labeled",
+  "selectLabel": "Select a label",
+  "selectLabels": "Select labels",
+  "selected": "selected",
+  "multiLabel": "Multi-Label Classification",
+  "singleLabel": "Single-Label Classification",
+  "noImageSelected": "No image selected. Please select an image from the gallery.",
+  "multiLabelInstructions": "Select one or more labels that apply to this image. Press Ctrl+S to save.",
+  "singleLabelInstructions": "Select the label that best describes this image. Press Ctrl+S to save."
+}

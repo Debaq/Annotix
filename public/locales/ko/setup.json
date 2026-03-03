@@ -1,0 +1,9 @@
+{
+  "welcome": "Annotix에 오신 것을 환영합니다",
+  "description": "프로젝트가 저장될 폴더를 선택하세요. 각 프로젝트는 이미지, 주석 및 설정이 포함된 하위 폴더가 됩니다.",
+  "selectFolder": "프로젝트 폴더 선택",
+  "selectedFolder": "선택된 폴더",
+  "confirm": "시작하기",
+  "noFolder": "폴더가 선택되지 않았습니다",
+  "changeFolder": "폴더 변경"
+}

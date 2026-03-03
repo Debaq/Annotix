@@ -1,0 +1,185 @@
+{
+  "title": "設定",
+  "back": "戻る",
+  "sections": {
+    "general": "一般",
+    "pythonEnv": "Python環境",
+    "trainingModels": "学習モデル",
+    "cloudProviders": "クラウドプロバイダー",
+    "keyboardShortcuts": "キーボードショートカット",
+    "browserAutomation": "ブラウザ自動化"
+  },
+  "general": {
+    "colorMode": "外観",
+    "light": "ライト",
+    "dark": "ダーク",
+    "dracula": "Dracula",
+    "system": "システム",
+    "language": "言語",
+    "workDir": "作業ディレクトリ",
+    "workDirHelp": "すべてのプロジェクトとデータが保存されるフォルダです。",
+    "changeWorkDir": "新しい作業ディレクトリを選択",
+    "change": "変更",
+    "about": "バージョン情報",
+    "buildDate": "ビルド日時",
+    "aboutDescription": "<strong>Nicolás Baier</strong>によるブエノスアイレス・イタリア病院の生体工学博士課程プロジェクトの一環として、チリ・アウストラル大学の<strong>TecMedHub</strong>研究室で開発。",
+    "team": "チーム",
+    "changelog": "変更履歴",
+    "roleNicolas": "開発・ディレクション",
+    "roleFelipe": "2026年インターン、情報工学科、UACh"
+  },
+  "pythonEnv": {
+    "systemPython": "システムPython",
+    "systemPythonFound": "Python 3が見つかりました: {{python}}",
+    "systemPythonNotFound": "PATHにPython 3が見つかりません。Python 3.10以上をインストールしてください。",
+    "venv": "仮想環境",
+    "venvNotExists": "仮想環境が作成されていません。トレーニング機能を使用するには作成してください。",
+    "status": "ステータス",
+    "active": "アクティブ",
+    "pythonVersion": "Pythonバージョン",
+    "diskUsage": "ディスク使用量",
+    "path": "パス",
+    "createVenv": "環境を作成",
+    "removeVenv": "環境を削除",
+    "pleaseWait": "数分かかる場合があります。アプリケーションを閉じないでください。"
+  },
+  "packages": {
+    "title": "インストール済みパッケージ",
+    "name": "名前",
+    "version": "バージョン",
+    "updateAll": "すべて更新"
+  },
+  "pytorch": {
+    "title": "PyTorch",
+    "cudaActive": "アクティブ",
+    "cpuOnly": "CPUのみ",
+    "nvidiaDetected": "NVIDIA GPUを検出",
+    "driverVersion": "ドライバー",
+    "suggestedCuda": "推奨CUDA",
+    "noNvidia": "NVIDIA GPUが検出されません（CPUモードが使用されます）",
+    "selectVariant": "PyTorchバリアント",
+    "install": "PyTorchをインストール",
+    "reinstall": "PyTorchを再インストール"
+  },
+  "trainingModels": {
+    "totalModels": "モデル",
+    "tasks": "タスク",
+    "task": "タスク",
+    "model": "モデル",
+    "params": "パラメータ",
+    "sizes": "サイズ",
+    "recommended": "推奨",
+    "readOnly": "読み取り専用",
+    "searchPlaceholder": "名前、説明、バックエンドでモデルを検索...",
+    "clearFilters": "フィルターをクリア",
+    "noResults": "現在のフィルターに一致するモデルはありません",
+    "overview": "概要",
+    "selectBackend": "バックエンドを選択してモデルを探索",
+    "modelCount": "モデル",
+    "datasetFormat": "データセット",
+    "pipPackages": "パッケージ",
+    "viewScript": "スクリプトを表示",
+    "supportedTasks": "サポートされるタスク",
+    "availableSizes": "利用可能なサイズ",
+    "defaultConfig": "デフォルト設定",
+    "parameter": "パラメータ",
+    "type": "型",
+    "defaultValue": "デフォルト",
+    "range": "範囲",
+    "backTo": "戻る",
+    "prepareBackend": "バックエンドを準備",
+    "filterByTask": "タスクでフィルター",
+    "allModels": "すべてのモデル"
+  },
+  "cloud": {
+    "gcp": {
+      "title": "Google Cloud Platform",
+      "description": "Vertex AIとColab Enterprise用のGCP認証情報を設定",
+      "serviceAccount": "サービスアカウントJSON",
+      "serviceAccountPlaceholder": "サービスアカウントJSONファイルを選択...",
+      "projectId": "GCPプロジェクトID",
+      "region": "リージョン",
+      "bucket": "GCSバケット"
+    },
+    "kaggle": {
+      "title": "Kaggle",
+      "description": "KaggleのAPI認証情報を入力してください。",
+      "getKey": "API Keyを取得 →",
+      "username": "ユーザー名",
+      "apiKey": "API Key"
+    },
+    "lightning": {
+      "title": "Lightning AI",
+      "description": "Lightning AIの認証情報を設定して無料GPU学習を行います。",
+      "getKey": "APIキーを取得 →",
+      "apiKey": "APIキー"
+    },
+    "huggingface": {
+      "title": "Hugging Face",
+      "description": "Hugging Faceの認証情報を入力してAutoTrainを使用します。",
+      "getToken": "トークンを取得 →",
+      "username": "ユーザー名",
+      "token": "アクセストークン"
+    },
+    "saturn": {
+      "title": "Saturn Cloud",
+      "description": "Saturn CloudのAPIトークンを入力して無料GPUインスタンスを使用します。",
+      "getToken": "APIトークンを取得 →",
+      "apiToken": "APIトークン"
+    },
+    "validate": "検証",
+    "validating": "検証中...",
+    "valid": "有効",
+    "invalid": "無効"
+  },
+  "shortcuts": {
+    "description": "キーバッジをクリックして再割り当て。Escapeでキャンセル。",
+    "pressKey": "キーを押してください...",
+    "resetAll": "すべてリセット",
+    "resetOne": "デフォルトに戻す",
+    "conflict": "このキーは既に「{{name}}」に割り当てられています。",
+    "customize": "ショートカットをカスタマイズ"
+  },
+  "automation": {
+    "browsers": {
+      "title": "ブラウザ検出",
+      "description": "自動化タスク用のChromiumベースのブラウザを検出して選択します。",
+      "detect": "ブラウザを検出",
+      "detecting": "検出中...",
+      "preferred": "優先",
+      "testLaunch": "テスト起動",
+      "testing": "テスト中..."
+    },
+    "provider": {
+      "title": "デフォルトLLMアシスタント",
+      "description": "ブラウザベースのAIクエリに使用するデフォルトのLLMアシスタントを選択します。",
+      "trainingLabel": "トレーニング",
+      "llmLabel": "LLMアシスタント",
+      "colab_free": "Google Colab（無料）",
+      "kimi": "Kimi（Moonshot）",
+      "qwen": "Qwen Chat",
+      "deepseek": "DeepSeek",
+      "huggingchat": "HuggingChat"
+    },
+    "selectors": {
+      "title": "CSSセレクターエディター",
+      "description": "各プロバイダーのTOMLセレクターファイルを編集します。これらは自動化が各ウェブサイトとどのようにやり取りするかを定義します。",
+      "restore": "復元"
+    },
+    "advanced": {
+      "title": "詳細設定",
+      "description": "タイムアウト、リトライ、ブラウザウィンドウの設定を調整します。",
+      "stepTimeout": "ステップタイムアウト",
+      "maxRetries": "最大リトライ数",
+      "userActionTimeout": "ユーザーアクションタイムアウト",
+      "llmResponseTimeout": "LLMレスポンスタイムアウト",
+      "seconds": "秒",
+      "userDataDir": "ユーザーデータディレクトリ",
+      "userDataDirPlaceholder": "デフォルト（自動管理）",
+      "windowSize": "ウィンドウサイズ",
+      "restoreDefaults": "デフォルトに戻す"
+    },
+    "saved": "保存しました",
+    "saveError": "保存エラー"
+  }
+}

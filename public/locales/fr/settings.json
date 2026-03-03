@@ -1,0 +1,185 @@
+{
+  "title": "Paramètres",
+  "back": "Retour",
+  "sections": {
+    "general": "Général",
+    "pythonEnv": "Environnement Python",
+    "trainingModels": "Modèles d'entraînement",
+    "cloudProviders": "Fournisseurs Cloud",
+    "keyboardShortcuts": "Raccourcis Clavier",
+    "browserAutomation": "Automatisation du Navigateur"
+  },
+  "shortcuts": {
+    "description": "Cliquez sur un badge de touche pour le réassigner. Appuyez sur Échap pour annuler.",
+    "pressKey": "Appuyez sur une touche...",
+    "resetAll": "Tout réinitialiser",
+    "resetOne": "Réinitialiser par défaut",
+    "conflict": "Cette touche est déjà assignée à \"{{name}}\".",
+    "customize": "Personnaliser les raccourcis"
+  },
+  "automation": {
+    "browsers": {
+      "title": "Détection des Navigateurs",
+      "description": "Détectez et sélectionnez un navigateur basé sur Chromium pour les tâches d'automatisation.",
+      "detect": "Détecter les Navigateurs",
+      "detecting": "Détection...",
+      "preferred": "Préféré",
+      "testLaunch": "Test de Lancement",
+      "testing": "Test en cours..."
+    },
+    "provider": {
+      "title": "Assistant LLM par Défaut",
+      "description": "Choisissez l'assistant LLM par défaut pour les requêtes IA via navigateur.",
+      "trainingLabel": "Entraînement",
+      "llmLabel": "Assistants LLM",
+      "colab_free": "Google Colab (Gratuit)",
+      "kimi": "Kimi (Moonshot)",
+      "qwen": "Qwen Chat",
+      "deepseek": "DeepSeek",
+      "huggingchat": "HuggingChat"
+    },
+    "selectors": {
+      "title": "Éditeur de Sélecteurs CSS",
+      "description": "Modifiez les fichiers TOML de sélecteurs pour chaque fournisseur. Ils définissent comment l'automatisation interagit avec chaque site web.",
+      "restore": "Restaurer"
+    },
+    "advanced": {
+      "title": "Configuration Avancée",
+      "description": "Ajustez les délais d'attente, les tentatives et les paramètres de la fenêtre du navigateur.",
+      "stepTimeout": "Délai par Étape",
+      "maxRetries": "Tentatives Max",
+      "userActionTimeout": "Délai d'Action Utilisateur",
+      "llmResponseTimeout": "Délai de Réponse LLM",
+      "seconds": "secondes",
+      "userDataDir": "Répertoire de Données Utilisateur",
+      "userDataDirPlaceholder": "Par défaut (géré automatiquement)",
+      "windowSize": "Taille de la Fenêtre",
+      "restoreDefaults": "Restaurer les Valeurs par Défaut"
+    },
+    "saved": "Enregistré",
+    "saveError": "Erreur lors de l'enregistrement"
+  },
+  "general": {
+    "colorMode": "Apparence",
+    "light": "Clair",
+    "dark": "Sombre",
+    "dracula": "Dracula",
+    "system": "Système",
+    "language": "Langue",
+    "workDir": "Répertoire de Travail",
+    "workDirHelp": "Dossier où tous vos projets et données sont stockés.",
+    "changeWorkDir": "Sélectionner un nouveau répertoire de travail",
+    "change": "Modifier",
+    "about": "À propos",
+    "buildDate": "Date de compilation",
+    "aboutDescription": "Développé au laboratoire <strong>TecMedHub</strong> de l'Universidad Austral de Chile, dans le cadre du projet doctoral en Bio-ingénierie de l'Hospital Italiano de Buenos Aires par <strong>Nicolás Baier</strong>.",
+    "team": "Équipe",
+    "changelog": "Changelog",
+    "roleNicolas": "Développement & direction",
+    "roleFelipe": "Stagiaire 2026 Génie Informatique, UACh"
+  },
+  "pythonEnv": {
+    "systemPython": "Python Système",
+    "systemPythonFound": "Python 3 trouvé : {{python}}",
+    "systemPythonNotFound": "Python 3 introuvable dans PATH. Veuillez installer Python 3.10+.",
+    "venv": "Environnement Virtuel",
+    "venvNotExists": "Aucun environnement virtuel créé. Créez-en un pour les fonctions d'entraînement.",
+    "status": "Statut",
+    "active": "Actif",
+    "pythonVersion": "Version Python",
+    "diskUsage": "Espace disque",
+    "path": "Chemin",
+    "createVenv": "Créer l'environnement",
+    "removeVenv": "Supprimer l'environnement",
+    "pleaseWait": "Cela peut prendre plusieurs minutes, veuillez ne pas fermer l'application."
+  },
+  "packages": {
+    "title": "Paquets installés",
+    "name": "Nom",
+    "version": "Version",
+    "updateAll": "Tout mettre à jour"
+  },
+  "pytorch": {
+    "title": "PyTorch",
+    "cudaActive": "Actif",
+    "cpuOnly": "CPU uniquement",
+    "nvidiaDetected": "GPU NVIDIA détecté",
+    "driverVersion": "Pilote",
+    "suggestedCuda": "CUDA suggéré",
+    "noNvidia": "Aucun GPU NVIDIA détecté (mode CPU utilisé)",
+    "selectVariant": "Variante PyTorch",
+    "install": "Installer PyTorch",
+    "reinstall": "Réinstaller PyTorch"
+  },
+  "trainingModels": {
+    "totalModels": "Modèles",
+    "tasks": "Tâches",
+    "task": "Tâche",
+    "model": "Modèle",
+    "params": "Params",
+    "sizes": "Tailles",
+    "recommended": "Recommandé",
+    "readOnly": "Lecture seule",
+    "searchPlaceholder": "Rechercher des modèles par nom, description ou backend...",
+    "clearFilters": "Effacer les filtres",
+    "noResults": "Aucun modèle ne correspond aux filtres actuels",
+    "overview": "Aperçu",
+    "selectBackend": "Sélectionnez un backend pour explorer ses modèles",
+    "modelCount": "modèles",
+    "datasetFormat": "Jeu de données",
+    "pipPackages": "Paquets",
+    "viewScript": "Voir le script",
+    "supportedTasks": "Tâches prises en charge",
+    "availableSizes": "Tailles disponibles",
+    "defaultConfig": "Configuration par défaut",
+    "parameter": "Paramètre",
+    "type": "Type",
+    "defaultValue": "Défaut",
+    "range": "Plage",
+    "backTo": "Retour à",
+    "prepareBackend": "Préparer le backend",
+    "filterByTask": "Filtrer par tâche",
+    "allModels": "Tous les modèles"
+  },
+  "cloud": {
+    "gcp": {
+      "title": "Google Cloud Platform",
+      "description": "Configurer les identifiants GCP pour Vertex AI et Colab Enterprise",
+      "serviceAccount": "JSON du compte de service",
+      "serviceAccountPlaceholder": "Sélectionner le fichier JSON du compte de service...",
+      "projectId": "ID du projet GCP",
+      "region": "Région",
+      "bucket": "Bucket GCS"
+    },
+    "kaggle": {
+      "title": "Kaggle",
+      "description": "Saisissez vos identifiants API Kaggle.",
+      "getKey": "Obtenir la clé API →",
+      "username": "Nom d'utilisateur",
+      "apiKey": "Clé API"
+    },
+    "lightning": {
+      "title": "Lightning AI",
+      "description": "Configurez les identifiants Lightning AI pour l'entraînement GPU gratuit.",
+      "getKey": "Get API Key →",
+      "apiKey": "API Key"
+    },
+    "huggingface": {
+      "title": "Hugging Face",
+      "description": "Entrez vos identifiants Hugging Face pour AutoTrain.",
+      "getToken": "Get Token →",
+      "username": "Username",
+      "token": "Access Token"
+    },
+    "saturn": {
+      "title": "Saturn Cloud",
+      "description": "Entrez votre jeton API Saturn Cloud pour des instances GPU gratuites.",
+      "getToken": "Get API Token →",
+      "apiToken": "API Token"
+    },
+    "validate": "Valider",
+    "validating": "Validation...",
+    "valid": "Valide",
+    "invalid": "Invalide"
+  }
+}

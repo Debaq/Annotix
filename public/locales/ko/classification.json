@@ -1,0 +1,16 @@
+{
+  "selectOne": "올바른 레이블을 선택하세요",
+  "selectMultiple": "해당되는 레이블을 선택하세요",
+  "singleHint": "하나의 레이블만 선택할 수 있습니다",
+  "multiHint": "여러 레이블을 선택할 수 있습니다",
+  "noLabels": "할당된 레이블 없음",
+  "labeled": "레이블됨",
+  "selectLabel": "레이블 선택",
+  "selectLabels": "레이블 선택",
+  "selected": "선택됨",
+  "multiLabel": "다중 레이블 분류",
+  "singleLabel": "단순 분류",
+  "noImageSelected": "이미지가 선택되지 않았습니다. 갤러리에서 이미지를 선택하세요.",
+  "multiLabelInstructions": "이 이미지에 해당하는 하나 이상의 레이블을 선택하세요. Ctrl+S를 눌러 저장합니다.",
+  "singleLabelInstructions": "이 이미지를 가장 잘 설명하는 레이블을 선택하세요. Ctrl+S를 눌러 저장합니다."
+}

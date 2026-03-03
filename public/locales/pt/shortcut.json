@@ -1,0 +1,14 @@
+{
+  "title": "Atalhos",
+  "save": "Salvar",
+  "undo": "Desfazer",
+  "delete": "Excluir",
+  "navigation": "Navegação",
+  "bbox": "Bbox",
+  "mask": "Mask",
+  "select": "Select",
+  "pan": "Pan",
+  "classes": "Classe 1-9",
+  "navigateImages": "shortcuts.navigateImages",
+  "selectClass": "shortcuts.selectClass"
+}

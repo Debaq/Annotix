@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import { invoke } from '@tauri-apps/api/core';
 import { getVersion } from '@tauri-apps/api/app';
 import { open } from '@tauri-apps/plugin-dialog';
@@ -181,21 +181,19 @@ export function GeneralSection() {
         {/* Proyecto */}
         <div className="space-y-2 pt-2 border-t">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Desarrollado en el laboratorio <strong>TecMedHub</strong> de la Universidad Austral de Chile,
-            como parte del proyecto doctoral en Bioingeniería del Hospital Italiano de Buenos Aires
-            de <strong>Nicolás Baier</strong>.
+            <Trans i18nKey="settings.general.aboutDescription" components={{ strong: <strong /> }} />
           </p>
           <div className="space-y-1">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Equipo
+              {t('settings.general.team')}
             </span>
             <div className="grid grid-cols-1 gap-0.5 text-xs text-muted-foreground">
-              <span><strong>Nicolás Baier</strong> — Desarrollo &amp; dirección</span>
+              <span><strong>Nicolás Baier</strong> — {t('settings.general.roleNicolas')}</span>
               <span><strong>Dra. Fernanda López</strong></span>
               <span><strong>TM. Vanessa Uribe</strong></span>
               <span><strong>DR(c) Haydee Barrientos</strong></span>
               <span><strong>Mg. Carolina Almendras</strong></span>
-              <span><strong>Felipe Brana</strong> — Interno 2026 Ing. Civil Informática, UACh</span>
+              <span><strong>Felipe Brana</strong> — {t('settings.general.roleFelipe')}</span>
             </div>
           </div>
         </div>
@@ -203,7 +201,7 @@ export function GeneralSection() {
         {CHANGELOG.length > 0 && (
           <div className="space-y-1.5 pt-2 border-t">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Changelog
+              {t('settings.general.changelog')}
             </span>
             <div className="max-h-48 overflow-y-auto space-y-0.5">
               {CHANGELOG.map((c) => (

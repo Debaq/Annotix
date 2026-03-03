@@ -1,0 +1,9 @@
+{
+  "classification": "단순 분류",
+  "multiLabel": "다중 레이블 분류",
+  "detection": "객체 감지",
+  "segmentation": "시맨틱 분할",
+  "instanceSeg": "인스턴스 분할",
+  "keypoints": "키포인트",
+  "obb": "회전된 박스 (OBB)"
+}

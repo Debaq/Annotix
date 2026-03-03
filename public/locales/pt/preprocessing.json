@@ -1,0 +1,29 @@
+{
+  "title": "Pré-processar Imagens",
+  "detected": "Detectadas {count} imagens não quadradas",
+  "description": "As imagens serão ajustadas para um tamanho quadrado para otimizar o treinamento. Escolha a estratégia de redimensionamento:",
+  "targetSize": "Tamanho alvo (pixels)",
+  "recommended": "Recomendado: {size}px",
+  "strategy": "Estratégia de redimensionamento",
+  "strategies": {
+    "resize": {
+      "name": "Redimensionar + Padding",
+      "description": "Reduz a imagem e adiciona padding (otimiza espaço e memória)"
+    },
+    "padding": {
+      "name": "Somente Padding",
+      "description": "Mantém tamanho original e adiciona padding (melhor qualidade)"
+    }
+  },
+  "options": {
+    "apply": "Aplicar pré-processamento",
+    "skip": "Enviar sem pré-processar"
+  },
+  "progress": "Processando imagem {current} de {total}...",
+  "complete": "{count} imagens pré-processadas corretamente",
+  "preview": "Pré-visualização",
+  "original": "Original",
+  "processed": "Processada",
+  "aspectRatio": "Aspect ratio original preservado",
+  "paddingInfo": "Será adicionado padding preto simétrico"
+}

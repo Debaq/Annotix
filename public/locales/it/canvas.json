@@ -1,0 +1,13 @@
+{
+  "zoomIn": "Zoom In",
+  "zoomOut": "Zoom Out",
+  "resetZoom": "Ripristina Zoom",
+  "fitScreen": "Adatta allo schermo",
+  "toggleLabels": "Mostra/Nascondi Etichette",
+  "toggleGrid": "Mostra/Nascondi Griglia",
+  "prevImage": "Immagine Precedente (← / PagSu)",
+  "nextImage": "Immagine Successiva (→ / PagGiù)",
+  "reset": "Ripristina",
+  "tools": "Strumenti",
+  "zoom": "Zoom"
+}

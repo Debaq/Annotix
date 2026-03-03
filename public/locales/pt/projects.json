@@ -1,0 +1,34 @@
+{
+  "title": "Projetos",
+  "subtitle": "Gerencie seus projetos de anotação",
+  "create": "Criar Projeto",
+  "createDescription": "Comece um novo projeto de anotação",
+  "description": "Modifique o nome ou gerencie as classes do projeto.",
+  "descriptionLabel": "Descrição",
+  "descriptionPlaceholder": "Notas ou comentários do projeto...",
+  "name": "Nome do Projeto",
+  "namePlaceholder": "Meu Projeto Annotix",
+  "type": {
+    "label": "Tipo de Projeto",
+    "bbox": "Bounding Box",
+    "bboxDescription": "Detecção de objetos com caixas delimitadoras",
+    "mask": "Máscara",
+    "maskDescription": "Segmentação de instâncias com máscaras"
+  },
+  "typeSelectHelper": "Selecione o tipo de anotação de acordo com seu objetivo de treinamento",
+  "classes": "Classes",
+  "open": "Abrir",
+  "delete": "Excluir",
+  "settings": "Configuração do Projeto",
+  "configure": "Configurar",
+  "edit": "Editar Projeto",
+  "saveChanges": "Salvar Alterações",
+  "stats": {
+    "classes": "Classes"
+  },
+  "empty": {
+    "title": "Não há projetos",
+    "description": "Crie seu primeiro projeto para começar a anotar"
+  },
+  "confirmDelete": "Confirmar exclusão do projeto"
+}

@@ -1,0 +1,14 @@
+{
+  "title": "Atajos",
+  "save": "Guardar",
+  "undo": "Deshacer",
+  "delete": "Eliminar",
+  "navigation": "Navegación",
+  "bbox": "Bbox",
+  "mask": "Mask",
+  "select": "Select",
+  "pan": "Pan",
+  "classes": "Clase 1-9",
+  "navigateImages": "shortcuts.navigateImages",
+  "selectClass": "shortcuts.selectClass"
+}

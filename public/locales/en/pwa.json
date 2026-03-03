@@ -1,0 +1,27 @@
+{
+  "installButton": "Install App",
+  "modal": {
+    "title": "🚀 Install Annotix as an app",
+    "benefits": "Benefits of installing:",
+    "benefit1": "✅ Desktop shortcut access",
+    "benefit2": "✅ Works offline",
+    "benefit3": "✅ Faster and smoother",
+    "benefit4": "✅ No browser bar",
+    "benefit5": "✅ Your data always private",
+    "benefit6": "✅ Automatic updates",
+    "platformCompatibility": "Platform compatibility:",
+    "androidInfo": "<strong>Android:</strong> Works excellent. Full native installation, behaves like a Play Store app.",
+    "iosInfo": "<strong>iOS/iPadOS:</strong> Works well, but Safari may clear cache periodically. <strong>Important:</strong> Save your progress frequently by exporting your projects.",
+    "linuxInfo": "<strong>Linux:</strong> Works perfectly. Full support in Chrome, Firefox and Edge.",
+    "windowsInfo": "<strong>Windows:</strong> Should work without issues in Chrome and Edge, although we haven't tested it extensively.",
+    "generalTip": "💡 <strong>Recommendation:</strong> Export your projects regularly as .tix backup, regardless of your operating system.",
+    "cancelButton": "Not now",
+    "installButtonModal": "🖖 Install App"
+  },
+  "notifications": {
+    "installed": "Annotix installed successfully!",
+    "installFailed": "Error installing application",
+    "updateAvailable": "Update available. Reload to update.",
+    "offline": "Offline mode activated. App works without connection."
+  }
+}

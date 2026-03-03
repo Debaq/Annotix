@@ -1,0 +1,173 @@
+{
+  "title": "Atajos de Teclado",
+  "tip": "Los atajos también funcionan mientras trabajas en el lienzo. Presiona ? para abrir este modal en cualquier momento.",
+  "categories": {
+    "general": "General",
+    "navigation": "Navegación",
+    "tools": "Herramientas",
+    "editing": "Edición"
+  },
+  "items": {
+    "save": {
+      "name": "Guardar",
+      "key": "Ctrl+S"
+    },
+    "undo": {
+      "name": "Deshacer",
+      "key": "Ctrl+Z"
+    },
+    "redo": {
+      "name": "Rehacer",
+      "key": "Ctrl+Y"
+    },
+    "delete": {
+      "name": "Eliminar",
+      "description": "Elimina el elemento seleccionado",
+      "key": "Del / Backspace"
+    },
+    "deselect": {
+      "name": "Deseleccionar",
+      "key": "Esc"
+    },
+    "prevImage": {
+      "name": "Imagen anterior",
+      "key": "←"
+    },
+    "nextImage": {
+      "name": "Imagen siguiente",
+      "key": "→"
+    },
+    "zoomIn": {
+      "name": "Ampliar",
+      "key": "Ctrl++"
+    },
+    "zoomOut": {
+      "name": "Reducir",
+      "key": "Ctrl+-"
+    },
+    "zoomFit": {
+      "name": "Ajustar",
+      "key": "Ctrl+0"
+    },
+    "toolBox": {
+      "name": "Herramienta Box",
+      "description": "Selecciona la herramienta de caja",
+      "key": "B"
+    },
+    "toolOBB": {
+      "name": "Herramienta OBB",
+      "description": "Selecciona la herramienta OBB",
+      "key": "O"
+    },
+    "toolMask": {
+      "name": "Herramienta Mask",
+      "description": "Selecciona la herramienta de máscara",
+      "key": "M"
+    },
+    "toolPolygon": {
+      "name": "Herramienta Polígono",
+      "description": "Selecciona la herramienta de polígono",
+      "key": "P"
+    },
+    "toolKeypoints": {
+      "name": "Herramienta Puntos Clave",
+      "description": "Selecciona la herramienta de puntos clave",
+      "key": "K"
+    },
+    "toolSelect": {
+      "name": "Herramienta Seleccionar",
+      "description": "Selecciona la herramienta de selección",
+      "key": "V"
+    },
+    "toolPan": {
+      "name": "Herramienta Pan",
+      "description": "Selecciona la herramienta de pan/movimiento",
+      "key": "H"
+    },
+    "rotateLeft": {
+      "name": "Rotar izquierda",
+      "key": "A"
+    },
+    "rotateRight": {
+      "name": "Rotar derecha",
+      "key": "D"
+    },
+    "class1": {
+      "name": "Seleccionar Clase 1",
+      "key": "1"
+    },
+    "class2": {
+      "name": "Seleccionar Clase 2",
+      "key": "2"
+    },
+    "class3": {
+      "name": "Seleccionar Clase 3",
+      "key": "3"
+    },
+    "class4": {
+      "name": "Seleccionar Clase 4",
+      "key": "4"
+    },
+    "class5": {
+      "name": "Seleccionar Clase 5",
+      "key": "5"
+    },
+    "class6": {
+      "name": "Seleccionar Clase 6",
+      "key": "6"
+    },
+    "class7": {
+      "name": "Seleccionar Clase 7",
+      "key": "7"
+    },
+    "class8": {
+      "name": "Seleccionar Clase 8",
+      "key": "8"
+    },
+    "class9": {
+      "name": "Seleccionar Clase 9",
+      "key": "9"
+    },
+    "toolLandmarks": {
+      "name": "Herramienta Landmarks",
+      "description": "Selecciona la herramienta de puntos de referencia"
+    },
+    "brushSize": {
+      "name": "Tamaño del Pincel",
+      "description": "Disminuir/aumentar tamaño del pincel"
+    },
+    "eraseToggle": {
+      "name": "Modo Borrador"
+    },
+    "confirmDrawing": {
+      "name": "Confirmar Dibujo"
+    },
+    "cancelDrawing": {
+      "name": "Cancelar Dibujo"
+    },
+    "videoNewTrack": {
+      "name": "Nuevo Track"
+    },
+    "videoPrevFrame": {
+      "name": "Frame Anterior"
+    },
+    "videoNextFrame": {
+      "name": "Frame Siguiente"
+    },
+    "tsToolSelect": {
+      "name": "Seleccionar (Series Temporales)"
+    },
+    "tsToolPoint": {
+      "name": "Herramienta Punto (Series Temporales)"
+    },
+    "tsToolRange": {
+      "name": "Herramienta Rango (Series Temporales)"
+    },
+    "tsToolEvent": {
+      "name": "Herramienta Evento (Series Temporales)"
+    },
+    "tsToolAnomaly": {
+      "name": "Herramienta Anomalía (Series Temporales)"
+    }
+  }
+}

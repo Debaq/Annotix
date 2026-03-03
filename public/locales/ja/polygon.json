@@ -1,0 +1,9 @@
+{
+  "toolName": "ポリゴン",
+  "clickToAdd": "クリックでポイントを追加。ダブルクリックまたはEnterで閉じます。",
+  "needMinPoints": "ポリゴンを作成するには少なくとも{min}ポイントが必要です",
+  "created": "ポリゴンが作成されました",
+  "cancelled": "描画がキャンセルされました",
+  "cannotDeletePoint": "ポイントを削除できません。最低{min}ポイントが必要です。",
+  "pointDeleted": "ポイントが削除されました"
+}

@@ -1,0 +1,69 @@
+{
+  "controlPanel": {
+    "title": "Automatización del navegador",
+    "logs": "Logs",
+    "waitingLogs": "Esperando logs...",
+    "minimize": "Minimizar",
+    "close": "Cerrar"
+  },
+  "pause": "Pausar",
+  "resume": "Reanudar",
+  "cancel": "Cancelar",
+  "providers": {
+    "colab_free": "Colab Gratuito",
+    "kimi": "Kimi",
+    "qwen": "Qwen",
+    "deep_seek": "DeepSeek",
+    "hugging_chat": "HuggingChat"
+  },
+  "colab": {
+    "steps": {
+      "openColab": "Abrir Google Colab",
+      "login": "Iniciar sesión en Google",
+      "createNotebook": "Crear notebook",
+      "configureGpu": "Configurar GPU",
+      "installDeps": "Instalar dependencias",
+      "uploadDataset": "Subir dataset",
+      "trainingCode": "Inyectar código de entrenamiento",
+      "runTraining": "Ejecutar entrenamiento",
+      "monitorProgress": "Monitorear progreso",
+      "downloadModel": "Descargar modelo"
+    }
+  },
+  "llm": {
+    "steps": {
+      "openLlm": "Abrir sitio web del LLM",
+      "login": "Iniciar sesión",
+      "newConversation": "Nueva conversación",
+      "sendPrompt": "Enviar prompt",
+      "waitResponse": "Esperar respuesta",
+      "extractResponse": "Extraer respuesta"
+    }
+  },
+  "status": {
+    "idle": "Inactivo",
+    "detecting_browser": "Detectando navegador",
+    "launching_browser": "Lanzando navegador",
+    "waiting_login": "Esperando inicio de sesión",
+    "running": "En ejecución",
+    "paused": "Pausado",
+    "completed": "Completado",
+    "failed": "Error",
+    "cancelled": "Cancelado",
+    "waitingUser": "Acción requerida"
+  },
+  "errors": {
+    "noBrowser": "No se encontró un navegador Chromium",
+    "captchaDetected": "CAPTCHA detectado",
+    "runtimeDisconnected": "Runtime desconectado",
+    "timeout": "La operación tardó demasiado"
+  },
+  "instructions": {
+    "login": "Por favor inicia sesión en la ventana del navegador. La automatización continuará automáticamente.",
+    "captcha": "Se ha detectado un CAPTCHA. Por favor resuélvelo en la ventana del navegador."
+  },
+  "result": {
+    "modelDownloaded": "Modelo descargado: {{path}}",
+    "llmResponse": "Respuesta recibida"
+  }
+}

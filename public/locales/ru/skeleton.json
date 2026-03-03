@@ -1,0 +1,33 @@
+{
+  "addKeypointClass": "Добавить класс Keypoints",
+  "step1": "Шаг 1: Основная информация",
+  "step2": "Шаг 2: Выбрать пресет скелета",
+  "className": "Название класса",
+  "classNamePlaceholder": "например: Человек, Рука, Лицо",
+  "classColor": "Цвет класса",
+  "selectPreset": "Выберите пресет скелета для этого класса:",
+  "presetInfo": "Каждый класс может иметь свой скелет. Это позволяет аннотировать различные типы объектов в одном проекте.",
+  "points": "точек",
+  "connections": "соединений",
+  "previous": "Назад",
+  "next": "Далее",
+  "finish": "Завершить",
+  "presets": {
+    "coco17": "COCO 17 Keypoints",
+    "coco17Desc": "Полный скелет человека (COCO dataset)",
+    "mediapipePose": "MediaPipe Pose 33",
+    "mediapipePoseDesc": "Детальная поза всего тела",
+    "mediapipeHand": "MediaPipe Hand 21",
+    "mediapipeHandDesc": "Детальные суставы руки",
+    "openpose25": "OpenPose 25",
+    "openpose25Desc": "Скелет OpenPose с руками",
+    "facial68": "Facial Landmarks 68",
+    "facial68Desc": "Детальные точки лица",
+    "facial5": "Facial 5 Points",
+    "facial5Desc": "Базовые точки лица (глаза, нос, рот)",
+    "animalQuad": "Животное-четвероногое",
+    "animalQuadDesc": "Скелет для четвероногих животных",
+    "custom": "Пользовательский",
+    "customDesc": "Определите свой собственный скелет"
+  }
+}

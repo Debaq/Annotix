@@ -1,0 +1,16 @@
+{
+  "title": "アクション",
+  "save": "保存",
+  "undo": "元に戻す",
+  "clear": "クリア",
+  "delete": "削除",
+  "cancel": "キャンセル",
+  "create": "作成",
+  "confirm": "確認",
+  "close": "閉じる",
+  "duplicate": "複製",
+  "rename": "名前変更",
+  "exportBackup": "バックアップをエクスポート",
+  "deleteConfirm": "はい、削除します",
+  "clearConfirm": "この画像のすべてのアノテーションをクリアしますか？"
+}

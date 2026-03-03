@@ -1,0 +1,17 @@
+{
+  "connected": "Connector",
+  "disconnected": "Connector 없음",
+  "connectedMessage": "Connector 온라인 - 포트 5000",
+  "checking": "Connector 연결 확인 중...",
+  "connectedReady": "연결됨 - 학습 준비 완료",
+  "notConnected": "동반 엔진에 연결할 수 없습니다",
+  "notConnectedHint": "실행 중인지 확인하세요",
+  "offlineMessage": "동반 엔진에 연결할 수 없습니다.\n\n데스크톱 앱을 다운로드하고 실행하셨나요?\n'motor_server.exe'가 PC에서 실행 중인지 확인하세요.",
+  "downloadTitle": "동반 엔진이 감지되지 않음",
+  "downloadMessage": "로컬에서 모델을 학습하려면 Annotix 동반 엔진을 다운로드하고 설치해야 합니다.",
+  "downloadHint": "동반 엔진은 PC에서 백그라운드로 실행되며 주석된 데이터로 모델을 학습할 수 있게 합니다.",
+  "download": "동반 엔진 다운로드",
+  "downloadStarted": "다운로드가 시작되었습니다. 완료되면 설치 프로그램을 실행하세요.",
+  "startTraining": "학습 시작",
+  "trainingStarted": "학습이 성공적으로 시작되었습니다"
+}

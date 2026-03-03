@@ -1,0 +1,9 @@
+{
+  "title": "통계",
+  "images": "이미지",
+  "annotated": "주석 완료",
+  "labels": "레이블",
+  "classes": "클래스",
+  "progress": "주석된 이미지",
+  "annotations": "stats.annotations"
+}

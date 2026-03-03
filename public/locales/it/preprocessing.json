@@ -1,0 +1,29 @@
+{
+  "title": "Pre-elaborazione Immagini",
+  "detected": "Rilevate {count} immagini non quadrate",
+  "description": "Le immagini verranno adattate a una dimensione quadrata per ottimizzare l'addestramento. Scegli la strategia di ridimensionamento:",
+  "targetSize": "Dimensione obiettivo (pixel)",
+  "recommended": "Consigliato: {size}px",
+  "strategy": "Strategia di ridimensionamento",
+  "strategies": {
+    "resize": {
+      "name": "Ridimensiona + Padding",
+      "description": "Riduce l'immagine e aggiunge padding (ottimizza spazio e memoria)"
+    },
+    "padding": {
+      "name": "Solo Padding",
+      "description": "Mantiene la dimensione originale e aggiunge padding (migliore qualità)"
+    }
+  },
+  "options": {
+    "apply": "Applica pre-elaborazione",
+    "skip": "Carica senza pre-elaborazione"
+  },
+  "progress": "Elaborazione immagine {current} di {total}...",
+  "complete": "{count} immagini pre-elaborate correttamente",
+  "preview": "Anteprima",
+  "original": "Originale",
+  "processed": "Elaborata",
+  "aspectRatio": "Rapporto d'aspetto originale preservato",
+  "paddingInfo": "Verrà aggiunto padding nero simmetrico"
+}

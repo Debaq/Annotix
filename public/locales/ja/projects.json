@@ -1,0 +1,34 @@
+{
+  "title": "プロジェクト",
+  "subtitle": "アノテーションプロジェクトを管理",
+  "create": "プロジェクト作成",
+  "createDescription": "新しいアノテーションプロジェクトを開始",
+  "description": "プロジェクトの名前を変更したりクラスを管理できます。",
+  "descriptionLabel": "説明",
+  "descriptionPlaceholder": "プロジェクトのメモやコメント...",
+  "name": "プロジェクト名",
+  "namePlaceholder": "マイAnnotixプロジェクト",
+  "type": {
+    "label": "プロジェクトタイプ",
+    "bbox": "バウンディングボックス",
+    "bboxDescription": "バウンディングボックスによるオブジェクト検出",
+    "mask": "マスク",
+    "maskDescription": "マスクによるインスタンスセグメンテーション"
+  },
+  "typeSelectHelper": "トレーニング目的に応じてアノテーションタイプを選択",
+  "classes": "クラス",
+  "open": "開く",
+  "delete": "削除",
+  "settings": "プロジェクト設定",
+  "configure": "設定",
+  "edit": "プロジェクト編集",
+  "saveChanges": "変更を保存",
+  "stats": {
+    "classes": "クラス"
+  },
+  "empty": {
+    "title": "プロジェクトがありません",
+    "description": "最初のプロジェクトを作成してアノテーションを開始"
+  },
+  "confirmDelete": "プロジェクトの削除を確認"
+}

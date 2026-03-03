@@ -1,0 +1,9 @@
+{
+  "welcome": "Annotixへようこそ",
+  "description": "プロジェクトを保存するフォルダを選択してください。各プロジェクトは画像、アノテーション、設定を含むサブフォルダになります。",
+  "selectFolder": "プロジェクトフォルダを選択",
+  "selectedFolder": "選択されたフォルダ",
+  "confirm": "開始",
+  "noFolder": "フォルダが選択されていません",
+  "changeFolder": "フォルダを変更"
+}

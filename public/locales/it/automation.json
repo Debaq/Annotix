@@ -1,0 +1,69 @@
+{
+  "controlPanel": {
+    "title": "Automazione del browser",
+    "logs": "Log",
+    "waitingLogs": "In attesa dei log...",
+    "minimize": "Minimizza",
+    "close": "Chiudi"
+  },
+  "pause": "Pausa",
+  "resume": "Riprendi",
+  "cancel": "Annulla",
+  "providers": {
+    "colab_free": "Colab Gratuito",
+    "kimi": "Kimi",
+    "qwen": "Qwen",
+    "deep_seek": "DeepSeek",
+    "hugging_chat": "HuggingChat"
+  },
+  "colab": {
+    "steps": {
+      "openColab": "Apri Google Colab",
+      "login": "Accedi a Google",
+      "createNotebook": "Crea notebook",
+      "configureGpu": "Configura GPU",
+      "installDeps": "Installa dipendenze",
+      "uploadDataset": "Carica dataset",
+      "trainingCode": "Inserisci codice di addestramento",
+      "runTraining": "Avvia addestramento",
+      "monitorProgress": "Monitora progresso",
+      "downloadModel": "Scarica modello"
+    }
+  },
+  "llm": {
+    "steps": {
+      "openLlm": "Apri sito web LLM",
+      "login": "Accedi",
+      "newConversation": "Nuova conversazione",
+      "sendPrompt": "Invia prompt",
+      "waitResponse": "Attendi risposta",
+      "extractResponse": "Estrai risposta"
+    }
+  },
+  "status": {
+    "idle": "Inattivo",
+    "detecting_browser": "Rilevamento browser",
+    "launching_browser": "Avvio browser",
+    "waiting_login": "In attesa di accesso",
+    "running": "In esecuzione",
+    "paused": "In pausa",
+    "completed": "Completato",
+    "failed": "Fallito",
+    "cancelled": "Annullato",
+    "waitingUser": "Azione richiesta"
+  },
+  "errors": {
+    "noBrowser": "Nessun browser Chromium trovato",
+    "captchaDetected": "CAPTCHA rilevato",
+    "runtimeDisconnected": "Runtime disconnesso",
+    "timeout": "Operazione scaduta"
+  },
+  "instructions": {
+    "login": "Effettua l'accesso nella finestra del browser. L'automazione continuerà automaticamente.",
+    "captcha": "È stato rilevato un CAPTCHA. Risolvilo nella finestra del browser."
+  },
+  "result": {
+    "modelDownloaded": "Modello scaricato: {{path}}",
+    "llmResponse": "Risposta ricevuta"
+  }
+}

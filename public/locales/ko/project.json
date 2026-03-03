@@ -1,0 +1,539 @@
+{
+  "new": "새 프로젝트",
+  "name": "프로젝트 이름",
+  "namePlaceholder": "내 Annotix 프로젝트",
+  "type": "주석 유형",
+  "typeSelectHelper": "학습 목표에 맞는 주석 유형을 선택하세요",
+  "types": {
+    "classification": {
+      "name": "단순 분류",
+      "description": "전체 이미지에 하나의 레이블 할당",
+      "useCases": "이미지 내용 식별 (예: 고양이, 개, 자동차)",
+      "models": "ResNet, VGG, EfficientNet, MobileNet",
+      "difficulty": "초급"
+    },
+    "bbox": {
+      "name": "바운딩 박스",
+      "description": "바운딩 박스를 사용한 객체 감지",
+      "useCases": "이미지에서 객체 감지 및 위치 파악",
+      "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+      "difficulty": "초급"
+    },
+    "mask": {
+      "name": "마스크",
+      "description": "픽셀 마스크를 사용한 인스턴스 분할",
+      "useCases": "픽셀 수준에서 객체 분리",
+      "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+      "difficulty": "중급"
+    },
+    "multiLabel": {
+      "name": "다중 레이블 분류",
+      "description": "각 이미지에 여러 레이블 할당",
+      "useCases": "여러 요소가 있는 이미지 (예: 공원 + 개 + 하늘)",
+      "models": "ResNet, VGG 다중 레이블 출력",
+      "difficulty": "초급"
+    },
+    "detection": {
+      "name": "객체 감지",
+      "description": "직사각형 박스 (바운딩 박스)로 객체 위치 파악",
+      "useCases": "이미지에서 특정 객체 찾기 및 위치 확인",
+      "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+      "difficulty": "중급"
+    },
+    "segmentation": {
+      "name": "시맨틱 분할",
+      "description": "이미지의 각 픽셀을 클래스별로 분류",
+      "useCases": "영역 분리 (예: 도로, 하늘, 건물)",
+      "models": "U-Net, DeepLab, FCN",
+      "difficulty": "고급"
+    },
+    "instanceSeg": {
+      "name": "인스턴스 분할",
+      "description": "각 개별 객체의 윤곽 그리기",
+      "useCases": "픽셀 수준에서 개별 객체 분리",
+      "models": "Mask R-CNN, YOLACT, YOLOv8-seg",
+      "difficulty": "고급"
+    },
+    "keypoints": {
+      "name": "키포인트",
+      "description": "객체의 특정 점 표시",
+      "useCases": "포즈 추정, 얼굴 인식, 해부학",
+      "models": "OpenPose, HRNet, MediaPipe",
+      "difficulty": "중급"
+    },
+    "polygon": {
+      "name": "폴리곤 분할",
+      "description": "정확한 분할을 위해 점별로 폴리곤 그리기",
+      "useCases": "정밀한 윤곽, 기하학적 형태, 마스크보다 가벼움",
+      "models": "YOLOv8-seg, Mask R-CNN, SOLO",
+      "difficulty": "중급"
+    },
+    "landmarks": {
+      "name": "랜드마크",
+      "description": "연결 없는 독립적인 포인트 배치",
+      "useCases": "객체 중심, 참조점, 카운팅, 위치",
+      "models": "감지 모델, 커스텀 포인트 감지기",
+      "difficulty": "초급"
+    },
+    "obb": {
+      "name": "회전된 박스 (OBB)",
+      "description": "자유 회전이 가능한 바운딩 박스",
+      "useCases": "기울어진 텍스트, 항공 객체, 위성",
+      "models": "Rotated-YOLO, RRPN",
+      "difficulty": "고급"
+    },
+    "semanticSeg": {
+      "name": "순수 시맨틱 분할",
+      "description": "인스턴스를 구분하지 않고 각 픽셀 분류",
+      "useCases": "분할 맵, 풍경, 도시 장면",
+      "models": "U-Net, DeepLabV3+, SegFormer",
+      "difficulty": "고급"
+    },
+    "panopticSeg": {
+      "name": "파노프틱 분할",
+      "description": "시맨틱 분할과 인스턴스 분할 결합",
+      "useCases": "자율 주행, 전체 장면 분석",
+      "models": "Panoptic-FPN, DETR, MaskFormer",
+      "difficulty": "고급"
+    },
+    "ocr": {
+      "name": "OCR (텍스트 인식)",
+      "description": "이미지에서 텍스트 감지 및 인식",
+      "useCases": "문서, 표지판, 간판, 청구서",
+      "models": "CRAFT, EasyOCR, Tesseract, PaddleOCR",
+      "difficulty": "중급"
+    },
+    "depthEstimation": {
+      "name": "깊이 추정",
+      "description": "각 픽셀의 카메라까지 거리 예측",
+      "useCases": "로봇공학, AR/VR, 3D 재구성",
+      "models": "MiDaS, DPT, Depth Anything",
+      "difficulty": "고급"
+    },
+    "audioClassification": {
+      "name": "오디오 분류",
+      "description": "오디오 클립에 레이블 할당",
+      "useCases": "음악 분류, 환경 소리",
+      "models": "AudioSet, PANNs, YAMNet",
+      "difficulty": "중급"
+    },
+    "speechRecognition": {
+      "name": "음성 인식",
+      "description": "오디오를 텍스트로 변환",
+      "useCases": "자막, 음성 비서, 전사",
+      "models": "Whisper, Wav2Vec2, DeepSpeech",
+      "difficulty": "고급"
+    },
+    "soundEventDetection": {
+      "name": "음향 이벤트 감지",
+      "description": "오디오에서 이벤트 식별 및 위치 파악",
+      "useCases": "보안 모니터링, 도시 분석",
+      "models": "CRNN, CNN14, SED-CRNN",
+      "difficulty": "고급"
+    },
+    "speakerIdentification": {
+      "name": "화자 식별",
+      "description": "누가 말하고 있는지 인식",
+      "useCases": "보안, 회의 화자 분리",
+      "models": "x-vector, ECAPA-TDNN, SpeakerNet",
+      "difficulty": "고급"
+    },
+    "audioTagging": {
+      "name": "오디오 태깅",
+      "description": "오디오에 여러 태그 할당",
+      "useCases": "음향 장면 분석",
+      "models": "VGGish, PANNs, AudioSet",
+      "difficulty": "중급"
+    },
+    "musicGenreClassification": {
+      "name": "음악 장르 분류",
+      "description": "곡의 음악 장르 식별",
+      "useCases": "음악 라이브러리 정리",
+      "models": "MusiCNN, CNN-Spectrograms",
+      "difficulty": "중급"
+    },
+    "emotionRecognition": {
+      "name": "감정 인식",
+      "description": "음성에서 감정 감지",
+      "useCases": "고객 서비스, 감정 분석",
+      "models": "OpenSMILE, EmotiW, SER-CNN",
+      "difficulty": "고급"
+    },
+    "voiceActivityDetection": {
+      "name": "음성 활동 감지 (VAD)",
+      "description": "오디오에서 음성이 있는지 감지",
+      "useCases": "오디오 전처리, 전화 시스템",
+      "models": "WebRTC VAD, Silero VAD",
+      "difficulty": "초급"
+    },
+    "keywordSpotting": {
+      "name": "키워드 감지",
+      "description": "오디오에서 특정 단어 감지",
+      "useCases": "음성 비서 (Hey Siri, OK Google)",
+      "models": "CNN-KWS, Depthwise Separable CNNs",
+      "difficulty": "중급"
+    },
+    "environmentalSound": {
+      "name": "환경 소리 분류",
+      "description": "주변 환경 소리 분류",
+      "useCases": "도시 모니터링, 야생 동물 보전",
+      "models": "ESC-CNN, UrbanSound8K models",
+      "difficulty": "중급"
+    },
+    "actionRecognition": {
+      "name": "동작 인식",
+      "description": "비디오에서 동작 식별",
+      "useCases": "스포츠 분석, 감시, 인간 상호작용",
+      "models": "C3D, I3D, SlowFast, X3D",
+      "difficulty": "고급"
+    },
+    "objectTracking": {
+      "name": "객체 추적",
+      "description": "프레임 간 객체 추적",
+      "useCases": "감시, 교통 분석, 스포츠",
+      "models": "SORT, DeepSORT, ByteTrack, BoT-SORT",
+      "difficulty": "고급"
+    },
+    "temporalActionLocalization": {
+      "name": "시간적 동작 로컬라이제이션",
+      "description": "비디오에서 동작 발생 시점 감지",
+      "useCases": "비디오 분석, 자동 요약",
+      "models": "BMN, TSN, ActionFormer",
+      "difficulty": "고급"
+    },
+    "videoClassification": {
+      "name": "비디오 분류",
+      "description": "전체 비디오에 카테고리 할당",
+      "useCases": "콘텐츠 정리, 추천",
+      "models": "3D-CNN, Two-Stream Networks, TimeSformer",
+      "difficulty": "중급"
+    },
+    "videoSegmentation": {
+      "name": "비디오 분할",
+      "description": "비디오에서 프레임별 객체 분할",
+      "useCases": "비디오 편집, 특수 효과",
+      "models": "STM, XMem, SAM-Track",
+      "difficulty": "고급"
+    },
+    "activityDetection": {
+      "name": "활동 감지",
+      "description": "특정 인간 활동 감지",
+      "useCases": "노인 모니터링, 보안",
+      "models": "ActivityNet models, TSM",
+      "difficulty": "고급"
+    },
+    "poseTracking": {
+      "name": "포즈 추적",
+      "description": "비디오에서 신체 키포인트 추적",
+      "useCases": "동작 분석, 피트니스, 스포츠",
+      "models": "AlphaPose, OpenPose, MMPose",
+      "difficulty": "고급"
+    },
+    "videoAnomalyDetection": {
+      "name": "비디오 이상 감지",
+      "description": "비디오에서 비정상 이벤트 감지",
+      "useCases": "감시, 산업 품질 관리",
+      "models": "AnomalyNet, Future Frame Prediction",
+      "difficulty": "고급"
+    },
+    "spatiotemporalAction": {
+      "name": "시공간 동작 감지",
+      "description": "공간과 시간에서 동작 감지",
+      "useCases": "상세 비디오 분석, YOLO-Act",
+      "models": "AVA models, SlowFast, YOLO-Act",
+      "difficulty": "고급"
+    },
+    "timeSeriesClassification": {
+      "name": "시계열 분류",
+      "description": "각 전체 시계열에 클래스 할당 (전역 분류 모드)",
+      "useCases": "의료 진단, 제스처 인식, ECG 분류",
+      "models": "InceptionTime, ROCKET, ResNet",
+      "difficulty": "중급"
+    },
+    "timeSeriesForecasting": {
+      "name": "시계열 예측",
+      "description": "범위를 사용하여 히스토리 윈도우와 예측 기간 표시",
+      "useCases": "매출 예측, 날씨, 에너지 수요",
+      "models": "LSTM, Transformer, N-BEATS, Prophet",
+      "difficulty": "고급"
+    },
+    "anomalyDetection": {
+      "name": "이상 감지",
+      "description": "시계열에서 이상 포인트 표시",
+      "useCases": "사기 감지, 장비 고장, 건강 모니터링",
+      "models": "AutoEncoder, Isolation Forest, LSTM-AE",
+      "difficulty": "고급"
+    },
+    "timeSeriesSegmentation": {
+      "name": "시계열 분할",
+      "description": "범위를 사용하여 시리즈를 클래스별 세그먼트로 분할",
+      "useCases": "행동 분석, 체제 변화, 활동 상태",
+      "models": "ClaSP, FLUSS, Seasonal-Trend Decomposition",
+      "difficulty": "고급"
+    },
+    "patternRecognition": {
+      "name": "패턴 인식",
+      "description": "범위를 사용하여 반복 패턴/모티프 표시",
+      "useCases": "주식 분석, 생의학 신호, 사이클 감지",
+      "models": "Matrix Profile, STOMP, SAX",
+      "difficulty": "중급"
+    },
+    "eventDetection": {
+      "name": "이벤트 감지",
+      "description": "포인트를 사용하여 시간상의 개별 이벤트 표시",
+      "useCases": "센서 모니터링, 알림, 상태 변화",
+      "models": "Change Point Detection, Event Detection CNN",
+      "difficulty": "중급"
+    },
+    "timeSeriesRegression": {
+      "name": "시계열 회귀",
+      "description": "포인트에 숫자 타겟 값 표시",
+      "useCases": "수요 추정, 동적 가격 책정, 값 예측",
+      "models": "XGBoost, Random Forest, Neural Networks",
+      "difficulty": "중급"
+    },
+    "clustering": {
+      "name": "시리즈 클러스터링",
+      "description": "각 전체 시계열에 클러스터 할당 (전역 분류 모드)",
+      "useCases": "고객 세분화, 패턴 분석, 행동 그룹화",
+      "models": "K-Shape, DTW-KMeans, K-Means",
+      "difficulty": "중급"
+    },
+    "imputation": {
+      "name": "결측값 대체",
+      "description": "범위를 사용하여 대체할 결측 데이터 구간 표시",
+      "useCases": "센서 데이터 정제, 측정 갭 메우기",
+      "models": "MICE, KNN, Interpolation, BRITS",
+      "difficulty": "중급"
+    },
+    "multi-label-classification": {
+      "name": "다중 라벨 분류",
+      "description": "각 이미지에 여러 라벨 할당"
+    },
+    "timeseries-classification": {
+      "name": "시계열 분류",
+      "description": "전체 시계열을 카테고리로 분류"
+    },
+    "timeseries-forecasting": {
+      "name": "시계열 예측",
+      "description": "과거 데이터에서 미래 값 예측"
+    },
+    "anomaly-detection": {
+      "name": "이상 탐지",
+      "description": "시계열의 비정상 패턴 감지"
+    },
+    "timeseries-segmentation": {
+      "name": "시계열 분할",
+      "description": "시계열을 구별된 영역으로 분할"
+    },
+    "pattern-recognition": {
+      "name": "패턴 인식",
+      "description": "시계열의 반복 패턴 식별"
+    },
+    "event-detection": {
+      "name": "이벤트 감지",
+      "description": "시계열의 특정 이벤트 감지"
+    },
+    "timeseries-regression": {
+      "name": "시계열 회귀",
+      "description": "시계열에서 수치 값 예측"
+    },
+    "object3DDetection": {
+      "name": "3D 객체 감지",
+      "description": "3D 포인트 클라우드에서 객체 감지",
+      "useCases": "자율 주행, 로봇공학",
+      "models": "PointNet++, VoxelNet, PointPillars",
+      "difficulty": "고급"
+    },
+    "semantic3DSegmentation": {
+      "name": "3D 시맨틱 분할",
+      "description": "3D 포인트 클라우드에서 포인트 분류",
+      "useCases": "도시 매핑, BIM, 건물 스캔",
+      "models": "PointNet, MinkowskiNet, KPConv",
+      "difficulty": "고급"
+    },
+    "instance3DSegmentation": {
+      "name": "3D 인스턴스 분할",
+      "description": "3D에서 개별 객체 분리",
+      "useCases": "로봇공학, 객체 조작",
+      "models": "PointGroup, SoftGroup, Mask3D",
+      "difficulty": "고급"
+    },
+    "pointCloudClassification": {
+      "name": "포인트 클라우드 분류",
+      "description": "전체 포인트 클라우드 분류",
+      "useCases": "3D 객체 인식",
+      "models": "PointNet, DGCNN, PointTransformer",
+      "difficulty": "고급"
+    },
+    "meshSegmentation": {
+      "name": "메시 분할",
+      "description": "3D 폴리곤 메시 분할",
+      "useCases": "3D 모델링, 기하학적 분석",
+      "models": "MeshCNN, TextureNet",
+      "difficulty": "고급"
+    },
+    "pose3DEstimation": {
+      "name": "3D 포즈 추정",
+      "description": "3D 인체 포즈 추정",
+      "useCases": "모션 캡처, 애니메이션",
+      "models": "VideoPose3D, VoxelPose",
+      "difficulty": "고급"
+    },
+    "keypoint3DDetection": {
+      "name": "3D 키포인트 감지",
+      "description": "3D에서 관심 포인트 감지",
+      "useCases": "포인트 클라우드 정합, SLAM",
+      "models": "D3Feat, FCGF, Predator",
+      "difficulty": "고급"
+    },
+    "surfaceReconstruction": {
+      "name": "표면 재구성",
+      "description": "포인트에서 표면 재구성",
+      "useCases": "3D 스캔, 문화 유산",
+      "models": "Poisson Surface Reconstruction, COLMAP",
+      "difficulty": "고급"
+    },
+    "slamAnnotation": {
+      "name": "SLAM 주석",
+      "description": "위치 파악 및 매핑을 위한 데이터 주석",
+      "useCases": "모바일 로봇, 자율 탐색",
+      "models": "ORB-SLAM, LiDAR-SLAM",
+      "difficulty": "고급"
+    },
+    "textClassification": {
+      "name": "텍스트 분류",
+      "description": "텍스트에 카테고리 할당",
+      "useCases": "뉴스 분류, 스팸 감지",
+      "models": "BERT, RoBERTa, DistilBERT",
+      "difficulty": "중급"
+    },
+    "namedEntityRecognition": {
+      "name": "개체명 인식 (NER)",
+      "description": "이름, 장소, 조직 식별",
+      "useCases": "정보 추출, 문서 분석",
+      "models": "SpaCy, Flair, BERT-NER",
+      "difficulty": "중급"
+    },
+    "sentimentAnalysis": {
+      "name": "감정 분석",
+      "description": "감정 감지 (긍정/부정/중립)",
+      "useCases": "의견 분석, 소셜 미디어",
+      "models": "VADER, TextBlob, RoBERTa-Sentiment",
+      "difficulty": "중급"
+    },
+    "intentClassification": {
+      "name": "의도 분류",
+      "description": "사용자 의도 식별",
+      "useCases": "챗봇, 가상 비서",
+      "models": "DIET, Rasa NLU, BERT-Intent",
+      "difficulty": "중급"
+    },
+    "relationExtraction": {
+      "name": "관계 추출",
+      "description": "엔티티 간 관계 식별",
+      "useCases": "지식 그래프, 텍스트 분석",
+      "models": "SpanBERT, LUKE, Relation Extraction BERT",
+      "difficulty": "고급"
+    },
+    "posTagging": {
+      "name": "품사 태깅 (POS)",
+      "description": "문법적 카테고리 식별",
+      "useCases": "언어학적 분석, NLP 전처리",
+      "models": "SpaCy, NLTK, Flair",
+      "difficulty": "초급"
+    },
+    "dependencyParsing": {
+      "name": "의존 구문 분석",
+      "description": "구문 구조 분석",
+      "useCases": "언어 이해, 번역",
+      "models": "SpaCy, Stanford Parser",
+      "difficulty": "고급"
+    },
+    "questionAnswering": {
+      "name": "질문 응답",
+      "description": "텍스트에 대한 질문에 답변",
+      "useCases": "QA 비서, 정보 검색",
+      "models": "BERT-QA, RoBERTa-QA, T5",
+      "difficulty": "고급"
+    },
+    "keyphraseExtraction": {
+      "name": "핵심 구문 추출",
+      "description": "중요한 구문 식별",
+      "useCases": "요약, 문서 인덱싱",
+      "models": "YAKE, KeyBERT, RAKE",
+      "difficulty": "중급"
+    },
+    "entityLinking": {
+      "name": "엔티티 연결",
+      "description": "엔티티를 지식 베이스에 연결",
+      "useCases": "데이터 강화, 지식 그래프",
+      "models": "BLINK, ELQ, GENRE",
+      "difficulty": "고급"
+    },
+    "toxicityClassification": {
+      "name": "독성 분류",
+      "description": "유해하거나 공격적인 콘텐츠 감지",
+      "useCases": "콘텐츠 모더레이션, 필터",
+      "models": "Perspective API, Detoxify, RoBERTa-Toxicity",
+      "difficulty": "중급"
+    },
+    "languageIdentification": {
+      "name": "언어 식별",
+      "description": "텍스트의 언어 감지",
+      "useCases": "다국어 처리, 번역",
+      "models": "langdetect, fastText, XLM-RoBERTa",
+      "difficulty": "초급"
+    },
+    "tabular": {
+      "name": "테이블 ML",
+      "description": "CSV/테이블 데이터를 활용한 클래식 ML"
+    },
+    "useCasesLabel": "사용 사례",
+    "modelsLabel": "추천 모델",
+    "difficultyLabel": "난이도"
+  },
+  "categories": {
+    "images": "이미지 어노테이션",
+    "classification": "분류",
+    "timeSeries": "시계열",
+    "tabular": "테이블 / 클래식 ML"
+  },
+  "modality": "모달리티",
+  "initialClasses": "초기 클래스 (선택사항)",
+  "classesPlaceholder": "클래스1, 클래스2, 클래스3",
+  "classesHelp": "쉼표로 구분. 나중에 더 추가할 수 있습니다.",
+  "imageDimensions": "이미지 치수",
+  "dimensionsAuto": "자동 - 모든 크기 허용",
+  "dimensionsFixed": "고정 - 모든 이미지가 리사이즈됨",
+  "targetSize": "목표 크기",
+  "resizeStrategy": "전략",
+  "enterName": "프로젝트 이름을 입력하세요",
+  "created": "프로젝트 \"{name}\"이(가) 생성되었습니다",
+  "updated": "업데이트됨",
+  "loaded": "프로젝트 \"{name}\"이(가) 로드되었습니다",
+  "deleted": "프로젝트가 삭제되었습니다",
+  "duplicated": "프로젝트 \"{name}\"이(가) 복제되었습니다",
+  "renamed": "프로젝트 이름이 변경되었습니다",
+  "imported": "프로젝트 \"{name}\"이(가) 가져오기 되었습니다",
+  "exported": "프로젝트가 내보내졌습니다",
+  "configExported": "설정이 내보내졌습니다",
+  "selectFirst": "먼저 프로젝트를 선택하세요",
+  "noProjects": "사용 가능한 프로젝트가 없습니다",
+  "manageProjects": "프로젝트 관리",
+  "renameProject": "프로젝트 이름 변경",
+  "newName": "새 이름",
+  "images": "이미지",
+  "annotations": "주석",
+  "exportBackup": "삭제 전 .tix 백업 다운로드",
+  "deleteWarning": {
+    "title": "⚠️ 경고: 영구 삭제",
+    "confirmTitle": "삭제를 확인하시겠습니까?",
+    "projectName": "프로젝트:",
+    "message": "이 프로젝트를 영구적으로 삭제하려고 합니다.",
+    "permanent": "이 작업은 취소할 수 없습니다",
+    "allData": "모든 이미지와 주석이 삭제됩니다",
+    "noUndo": "삭제된 데이터를 복구할 방법이 없습니다",
+    "recommendation": "💡 권장: 삭제하기 전에 프로젝트를 .tix 형식으로 백업으로 내보내세요"
+  }
+}

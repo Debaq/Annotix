@@ -1,0 +1,9 @@
+{
+  "toolName": "폴리곤",
+  "clickToAdd": "클릭하여 점을 추가합니다. 더블클릭 또는 Enter를 눌러 닫습니다.",
+  "needMinPoints": "폴리곤을 만들려면 최소 {min}개의 점이 필요합니다",
+  "created": "폴리곤 생성됨",
+  "cancelled": "그리기 취소됨",
+  "cannotDeletePoint": "점을 삭제할 수 없습니다. 최소 {min}개의 점이 필요합니다.",
+  "pointDeleted": "점 삭제됨"
+}
