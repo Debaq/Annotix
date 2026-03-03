@@ -178,6 +178,28 @@ export function GeneralSection() {
           )}
         </div>
 
+        {/* Proyecto */}
+        <div className="space-y-2 pt-2 border-t">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Desarrollado en el laboratorio <strong>TecMedHub</strong> de la Universidad Austral de Chile,
+            como parte del proyecto doctoral en Bioingeniería del Hospital Italiano de Buenos Aires
+            de <strong>Nicolás Baier</strong>.
+          </p>
+          <div className="space-y-1">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Equipo
+            </span>
+            <div className="grid grid-cols-1 gap-0.5 text-xs text-muted-foreground">
+              <span><strong>Nicolás Baier</strong> — Desarrollo &amp; dirección</span>
+              <span><strong>Dra. Fernanda López</strong></span>
+              <span><strong>TM. Vanessa Uribe</strong></span>
+              <span><strong>DR(c) Haydee Barrientos</strong></span>
+              <span><strong>Mg. Carolina Almendras</strong></span>
+              <span><strong>Felipe Brana</strong> — Interno 2026 Ing. Civil Informática, UACh</span>
+            </div>
+          </div>
+        </div>
+
         {CHANGELOG.length > 0 && (
           <div className="space-y-1.5 pt-2 border-t">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
