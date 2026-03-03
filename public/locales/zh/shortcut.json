@@ -1,0 +1,14 @@
+{
+  "title": "快捷键",
+  "save": "保存",
+  "undo": "撤销",
+  "delete": "删除",
+  "navigation": "导航",
+  "bbox": "Bbox",
+  "mask": "Mask",
+  "select": "Select",
+  "pan": "Pan",
+  "classes": "类别 1-9",
+  "navigateImages": "shortcuts.navigateImages",
+  "selectClass": "shortcuts.selectClass"
+}

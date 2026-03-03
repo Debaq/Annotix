@@ -1,0 +1,173 @@
+{
+  "title": "Tastenkombinationen",
+  "tip": "Die Tastenkürzel funktionieren auch beim Arbeiten auf der Leinwand. Drücke ? um dieses Modal jederzeit zu öffnen.",
+  "categories": {
+    "general": "Allgemein",
+    "navigation": "Navigation",
+    "tools": "Werkzeuge",
+    "editing": "Bearbeitung"
+  },
+  "items": {
+    "save": {
+      "name": "Speichern",
+      "key": "Ctrl+S"
+    },
+    "undo": {
+      "name": "Rückgängig",
+      "key": "Ctrl+Z"
+    },
+    "redo": {
+      "name": "Wiederherstellen",
+      "key": "Ctrl+Y"
+    },
+    "delete": {
+      "name": "Löschen",
+      "description": "Löscht das ausgewählte Element",
+      "key": "Del / Backspace"
+    },
+    "deselect": {
+      "name": "Abwählen",
+      "key": "Esc"
+    },
+    "prevImage": {
+      "name": "Vorheriges Bild",
+      "key": "←"
+    },
+    "nextImage": {
+      "name": "Nächstes Bild",
+      "key": "→"
+    },
+    "zoomIn": {
+      "name": "Vergrößern",
+      "key": "Ctrl++"
+    },
+    "zoomOut": {
+      "name": "Verkleinern",
+      "key": "Ctrl+-"
+    },
+    "zoomFit": {
+      "name": "Einpassen",
+      "key": "Ctrl+0"
+    },
+    "toolBox": {
+      "name": "Box-Werkzeug",
+      "description": "Wählt das Box-Werkzeug aus",
+      "key": "B"
+    },
+    "toolOBB": {
+      "name": "OBB-Werkzeug",
+      "description": "Wählt das OBB-Werkzeug aus",
+      "key": "O"
+    },
+    "toolMask": {
+      "name": "Masken-Werkzeug",
+      "description": "Wählt das Masken-Werkzeug aus",
+      "key": "M"
+    },
+    "toolPolygon": {
+      "name": "Polygon-Werkzeug",
+      "description": "Wählt das Polygon-Werkzeug aus",
+      "key": "P"
+    },
+    "toolKeypoints": {
+      "name": "Keypoints-Werkzeug",
+      "description": "Wählt das Keypoints-Werkzeug aus",
+      "key": "K"
+    },
+    "toolSelect": {
+      "name": "Auswahl-Werkzeug",
+      "description": "Wählt das Auswahl-Werkzeug aus",
+      "key": "V"
+    },
+    "toolPan": {
+      "name": "Verschieben-Werkzeug",
+      "description": "Wählt das Verschieben-Werkzeug aus",
+      "key": "H"
+    },
+    "rotateLeft": {
+      "name": "Links drehen",
+      "key": "A"
+    },
+    "rotateRight": {
+      "name": "Rechts drehen",
+      "key": "D"
+    },
+    "class1": {
+      "name": "Klasse 1 auswählen",
+      "key": "1"
+    },
+    "class2": {
+      "name": "Klasse 2 auswählen",
+      "key": "2"
+    },
+    "class3": {
+      "name": "Klasse 3 auswählen",
+      "key": "3"
+    },
+    "class4": {
+      "name": "Klasse 4 auswählen",
+      "key": "4"
+    },
+    "class5": {
+      "name": "Klasse 5 auswählen",
+      "key": "5"
+    },
+    "class6": {
+      "name": "Klasse 6 auswählen",
+      "key": "6"
+    },
+    "class7": {
+      "name": "Klasse 7 auswählen",
+      "key": "7"
+    },
+    "class8": {
+      "name": "Klasse 8 auswählen",
+      "key": "8"
+    },
+    "class9": {
+      "name": "Klasse 9 auswählen",
+      "key": "9"
+    },
+    "toolLandmarks": {
+      "name": "Landmarks-Werkzeug",
+      "description": "Landmarks-Werkzeug auswählen"
+    },
+    "brushSize": {
+      "name": "Pinselgröße",
+      "description": "Pinselgröße verkleinern/vergrößern"
+    },
+    "eraseToggle": {
+      "name": "Radiermodus"
+    },
+    "confirmDrawing": {
+      "name": "Zeichnung bestätigen"
+    },
+    "cancelDrawing": {
+      "name": "Zeichnung abbrechen"
+    },
+    "videoNewTrack": {
+      "name": "Neuer Track"
+    },
+    "videoPrevFrame": {
+      "name": "Vorheriges Bild"
+    },
+    "videoNextFrame": {
+      "name": "Nächstes Bild"
+    },
+    "tsToolSelect": {
+      "name": "Auswahl (Zeitreihe)"
+    },
+    "tsToolPoint": {
+      "name": "Punkt-Werkzeug (Zeitreihe)"
+    },
+    "tsToolRange": {
+      "name": "Bereich-Werkzeug (Zeitreihe)"
+    },
+    "tsToolEvent": {
+      "name": "Ereignis-Werkzeug (Zeitreihe)"
+    },
+    "tsToolAnomaly": {
+      "name": "Anomalie-Werkzeug (Zeitreihe)"
+    }
+  }
+}

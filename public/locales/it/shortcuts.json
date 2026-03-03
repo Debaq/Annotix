@@ -1,0 +1,173 @@
+{
+  "title": "Scorciatoie da Tastiera",
+  "tip": "Le scorciatoie funzionano anche mentre lavori sulla tela. Premi ? per aprire questa finestra in qualsiasi momento.",
+  "categories": {
+    "general": "Generale",
+    "navigation": "Navigazione",
+    "tools": "Strumenti",
+    "editing": "Modifica"
+  },
+  "items": {
+    "save": {
+      "name": "Salva",
+      "key": "Ctrl+S"
+    },
+    "undo": {
+      "name": "Annulla",
+      "key": "Ctrl+Z"
+    },
+    "redo": {
+      "name": "Ripeti",
+      "key": "Ctrl+Y"
+    },
+    "delete": {
+      "name": "Elimina",
+      "description": "Elimina l'elemento selezionato",
+      "key": "Del / Backspace"
+    },
+    "deselect": {
+      "name": "Deseleziona",
+      "key": "Esc"
+    },
+    "prevImage": {
+      "name": "Immagine precedente",
+      "key": "←"
+    },
+    "nextImage": {
+      "name": "Immagine successiva",
+      "key": "→"
+    },
+    "zoomIn": {
+      "name": "Ingrandisci",
+      "key": "Ctrl++"
+    },
+    "zoomOut": {
+      "name": "Riduci",
+      "key": "Ctrl+-"
+    },
+    "zoomFit": {
+      "name": "Adatta",
+      "key": "Ctrl+0"
+    },
+    "toolBox": {
+      "name": "Strumento Box",
+      "description": "Seleziona lo strumento riquadro",
+      "key": "B"
+    },
+    "toolOBB": {
+      "name": "Strumento OBB",
+      "description": "Seleziona lo strumento OBB",
+      "key": "O"
+    },
+    "toolMask": {
+      "name": "Strumento Maschera",
+      "description": "Seleziona lo strumento maschera",
+      "key": "M"
+    },
+    "toolPolygon": {
+      "name": "Strumento Poligono",
+      "description": "Seleziona lo strumento poligono",
+      "key": "P"
+    },
+    "toolKeypoints": {
+      "name": "Strumento Punti Chiave",
+      "description": "Seleziona lo strumento punti chiave",
+      "key": "K"
+    },
+    "toolSelect": {
+      "name": "Strumento Seleziona",
+      "description": "Seleziona lo strumento di selezione",
+      "key": "V"
+    },
+    "toolPan": {
+      "name": "Strumento Pan",
+      "description": "Seleziona lo strumento pan/spostamento",
+      "key": "H"
+    },
+    "rotateLeft": {
+      "name": "Ruota a sinistra",
+      "key": "A"
+    },
+    "rotateRight": {
+      "name": "Ruota a destra",
+      "key": "D"
+    },
+    "class1": {
+      "name": "Seleziona Classe 1",
+      "key": "1"
+    },
+    "class2": {
+      "name": "Seleziona Classe 2",
+      "key": "2"
+    },
+    "class3": {
+      "name": "Seleziona Classe 3",
+      "key": "3"
+    },
+    "class4": {
+      "name": "Seleziona Classe 4",
+      "key": "4"
+    },
+    "class5": {
+      "name": "Seleziona Classe 5",
+      "key": "5"
+    },
+    "class6": {
+      "name": "Seleziona Classe 6",
+      "key": "6"
+    },
+    "class7": {
+      "name": "Seleziona Classe 7",
+      "key": "7"
+    },
+    "class8": {
+      "name": "Seleziona Classe 8",
+      "key": "8"
+    },
+    "class9": {
+      "name": "Seleziona Classe 9",
+      "key": "9"
+    },
+    "toolLandmarks": {
+      "name": "Strumento Landmarks",
+      "description": "Seleziona lo strumento landmarks"
+    },
+    "brushSize": {
+      "name": "Dimensione Pennello",
+      "description": "Diminuisci/aumenta dimensione pennello"
+    },
+    "eraseToggle": {
+      "name": "Modalità Gomma"
+    },
+    "confirmDrawing": {
+      "name": "Conferma Disegno"
+    },
+    "cancelDrawing": {
+      "name": "Annulla Disegno"
+    },
+    "videoNewTrack": {
+      "name": "Nuova Traccia"
+    },
+    "videoPrevFrame": {
+      "name": "Fotogramma Precedente"
+    },
+    "videoNextFrame": {
+      "name": "Fotogramma Successivo"
+    },
+    "tsToolSelect": {
+      "name": "Selezione (Serie Temporali)"
+    },
+    "tsToolPoint": {
+      "name": "Strumento Punto (Serie Temporali)"
+    },
+    "tsToolRange": {
+      "name": "Strumento Intervallo (Serie Temporali)"
+    },
+    "tsToolEvent": {
+      "name": "Strumento Evento (Serie Temporali)"
+    },
+    "tsToolAnomaly": {
+      "name": "Strumento Anomalia (Serie Temporali)"
+    }
+  }
+}

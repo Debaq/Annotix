@@ -1,0 +1,198 @@
+{
+  "trigger": "Não sabe qual escolher?",
+  "title": "Assistente de Tipo de Projeto",
+  "subtitle": "Responda algumas perguntas e recomendaremos o melhor tipo de projeto.",
+  "bestMatch": "Melhor opção",
+  "useThis": "Usar este",
+  "noResults": "Nenhum tipo correspondente encontrado. Tente outras respostas.",
+  "resultsTitle": "Recomendado para você",
+  "questions": {
+    "dataType": {
+      "title": "Com que tipo de dados você vai trabalhar?",
+      "options": {
+        "images": "Imagens",
+        "timeseries": "Séries temporais",
+        "tabular": "Dados tabulares"
+      },
+      "optionsDesc": {
+        "images": "Fotos, capturas, digitalizações, frames",
+        "timeseries": "Sensores, métricas, sinais, dados financeiros",
+        "tabular": "Arquivos CSV, planilhas, tabelas estruturadas"
+      }
+    },
+    "goalImages": {
+      "title": "O que você quer fazer com as imagens?",
+      "options": {
+        "classify": "Classificar",
+        "detectLocate": "Detectar e Localizar",
+        "segment": "Segmentar",
+        "pointsKeypts": "Marcar pontos"
+      },
+      "optionsDesc": {
+        "classify": "Atribuir um rótulo à imagem inteira",
+        "detectLocate": "Encontrar e localizar objetos com caixas",
+        "segment": "Delinear objetos a nível de pixel",
+        "pointsKeypts": "Colocar keypoints ou landmarks nos objetos"
+      }
+    },
+    "goalTimeseries": {
+      "title": "O que você quer fazer com as séries temporais?",
+      "options": {
+        "tsClassify": "Classificar",
+        "tsPredict": "Prever",
+        "tsAnomaly": "Detectar anomalias",
+        "tsAnalyze": "Analisar"
+      },
+      "optionsDesc": {
+        "tsClassify": "Atribuir uma categoria a toda a série",
+        "tsPredict": "Prever valores futuros ou preencher lacunas",
+        "tsAnomaly": "Encontrar padrões incomuns ou inesperados",
+        "tsAnalyze": "Segmentar, encontrar padrões ou agrupar"
+      }
+    },
+    "classifyDetail": {
+      "title": "Quantos rótulos por imagem?",
+      "options": {
+        "singleLabel": "Um rótulo",
+        "multiLabel": "Múltiplos rótulos"
+      },
+      "optionsDesc": {
+        "singleLabel": "Cada imagem pertence a exatamente uma classe",
+        "multiLabel": "Uma imagem pode ter vários rótulos ao mesmo tempo"
+      }
+    },
+    "detectDetail": {
+      "title": "Que tipo de caixas delimitadoras?",
+      "options": {
+        "axisAligned": "Caixas normais",
+        "rotated": "Caixas rotacionadas"
+      },
+      "optionsDesc": {
+        "axisAligned": "Retângulos horizontais/verticais (mais comum)",
+        "rotated": "Caixas que podem ser rotacionadas em qualquer ângulo"
+      }
+    },
+    "segmentDetail": {
+      "title": "Que tipo de segmentação?",
+      "options": {
+        "polygonOutline": "Contornos poligonais",
+        "pixelMask": "Máscaras de pixels",
+        "instanceSeg": "Segmentação de instâncias"
+      },
+      "optionsDesc": {
+        "polygonOutline": "Desenhar polígonos ponto a ponto ao redor dos objetos",
+        "pixelMask": "Pintar máscaras a nível de pixel nos objetos",
+        "instanceSeg": "Separar cada instância individual de objeto"
+      }
+    },
+    "pointsDetail": {
+      "title": "Que tipo de pontos?",
+      "options": {
+        "connectedPose": "Esqueleto conectado",
+        "freePoints": "Pontos independentes"
+      },
+      "optionsDesc": {
+        "connectedPose": "Pontos conectados por linhas (estimativa de pose)",
+        "freePoints": "Pontos autônomos sem conexões"
+      }
+    },
+    "tsAnalyzeDetail": {
+      "title": "Que tipo de análise?",
+      "options": {
+        "tsSegment": "Segmentar regiões",
+        "tsPattern": "Encontrar padrões",
+        "tsEvent": "Detectar eventos",
+        "tsCluster": "Agrupar similares"
+      },
+      "optionsDesc": {
+        "tsSegment": "Dividir a série em regiões rotuladas",
+        "tsPattern": "Identificar padrões recorrentes ou motivos",
+        "tsEvent": "Encontrar quando eventos específicos ocorrem",
+        "tsCluster": "Agrupar séries ou segmentos similares"
+      }
+    },
+    "tsPredictDetail": {
+      "title": "Que tipo de previsão?",
+      "options": {
+        "tsForecast": "Prever futuro",
+        "tsRegression": "Regressão de valores",
+        "tsImpute": "Preencher dados faltantes"
+      },
+      "optionsDesc": {
+        "tsForecast": "Prever valores futuros da série",
+        "tsRegression": "Prever valores contínuos a partir de características",
+        "tsImpute": "Reconstruir pontos de dados faltantes ou corrompidos"
+      }
+    }
+  },
+  "shortcuts": {
+    "description": "Clique em um badge de tecla para reatribuí-lo. Pressione Escape para cancelar.",
+    "pressKey": "Pressione uma tecla...",
+    "resetAll": "Restaurar todos",
+    "resetOne": "Restaurar padrão",
+    "conflict": "Esta tecla já está atribuída a \"{{name}}\".",
+    "customize": "Personalizar atalhos"
+  },
+  "automation": {
+    "browsers": {
+      "title": "Detecção de Navegadores",
+      "description": "Detecte e selecione um navegador baseado em Chromium para tarefas de automação.",
+      "detect": "Detectar Navegadores",
+      "detecting": "Detectando...",
+      "preferred": "Preferido",
+      "testLaunch": "Testar Lançamento",
+      "testing": "Testando..."
+    },
+    "provider": {
+      "title": "Assistente LLM Padrão",
+      "description": "Escolha o assistente LLM padrão para consultas de IA via navegador.",
+      "trainingLabel": "Treinamento",
+      "llmLabel": "Assistentes LLM",
+      "colab_free": "Google Colab (Gratuito)",
+      "kimi": "Kimi (Moonshot)",
+      "qwen": "Qwen Chat",
+      "deepseek": "DeepSeek",
+      "huggingchat": "HuggingChat"
+    },
+    "selectors": {
+      "title": "Editor de Seletores CSS",
+      "description": "Edite os arquivos TOML de seletores para cada provedor. Eles definem como a automação interage com cada site.",
+      "restore": "Restaurar"
+    },
+    "advanced": {
+      "title": "Configuração Avançada",
+      "description": "Ajuste timeouts, tentativas e configurações da janela do navegador.",
+      "stepTimeout": "Timeout por Passo",
+      "maxRetries": "Tentativas Máximas",
+      "userActionTimeout": "Timeout de Ação do Usuário",
+      "llmResponseTimeout": "Timeout de Resposta LLM",
+      "seconds": "segundos",
+      "userDataDir": "Diretório de Dados do Usuário",
+      "userDataDirPlaceholder": "Padrão (gerenciado automaticamente)",
+      "windowSize": "Tamanho da Janela",
+      "restoreDefaults": "Restaurar Padrões"
+    },
+    "saved": "Salvo",
+    "saveError": "Erro ao salvar"
+  },
+  "reasons": {
+    "bbox": "Ideal para detectar objetos com caixas retangulares alinhadas",
+    "obb": "Perfeito para objetos angulados ou rotacionados como vistas aéreas ou texto",
+    "mask": "Máscaras a nível de pixel para segmentação semântica precisa",
+    "polygon": "Contornos poligonais para limites precisos de objetos",
+    "instance-segmentation": "Separar cada instância de objeto a nível de pixel",
+    "keypoints": "Marcar pontos esqueléticos conectados para estimativa de pose",
+    "landmarks": "Colocar pontos de referência independentes nos objetos",
+    "classification": "Um rótulo por imagem para categorização simples",
+    "multi-label-classification": "Rotular imagens com múltiplos rótulos simultaneamente",
+    "timeseries-classification": "Classificar séries temporais completas em categorias",
+    "timeseries-forecasting": "Prever valores futuros baseados em dados históricos",
+    "timeseries-regression": "Prever valores contínuos a partir de características da série",
+    "anomaly-detection": "Encontrar padrões incomuns e valores atípicos nos dados",
+    "timeseries-segmentation": "Dividir séries temporais em segmentos rotulados",
+    "pattern-recognition": "Descobrir motivos e padrões recorrentes",
+    "event-detection": "Identificar quando eventos específicos ocorrem na série",
+    "clustering": "Agrupar séries temporais ou segmentos similares",
+    "imputation": "Reconstruir pontos de dados faltantes ou corrompidos"
+  }
+}

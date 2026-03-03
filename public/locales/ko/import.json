@@ -1,0 +1,28 @@
+{
+  "title": "데이터셋 가져오기",
+  "button": "가져오기",
+  "selectFile": "주석된 데이터셋이 포함된 ZIP 파일을 선택하세요",
+  "dragFiles": "ZIP 파일을 여기로 드래그하세요",
+  "orClickToSelect": "또는 클릭하여 선택",
+  "analyzing": "데이터셋 분석 중",
+  "configureProject": "가져온 프로젝트 구성",
+  "projectName": "프로젝트 이름",
+  "projectType": "프로젝트 유형",
+  "classesCount": "클래스",
+  "classes": "클래스",
+  "format": "감지된 형식",
+  "import": "프로젝트 가져오기",
+  "importing": "데이터셋 가져오는 중...",
+  "processing": "데이터셋 처리 중...",
+  "success": "프로젝트를 성공적으로 가져왔습니다",
+  "successMessage": "데이터셋을 가져왔으며 사용할 준비가 되었습니다",
+  "openProject": "프로젝트 열기",
+  "error": {
+    "noFile": "ZIP 파일을 선택하세요",
+    "invalidZip": "유효한 ZIP 파일을 선택하세요",
+    "unsupportedFormat": "지원하지 않는 데이터셋 형식입니다. 지원 형식: YOLO, COCO, Pascal VOC, CSV, 클래스별 폴더, U-Net 마스크",
+    "corruptedData": "데이터셋이 손상되었거나 불완전합니다",
+    "parse": "데이터셋 분석 오류입니다. 파일 형식을 확인하세요",
+    "invalidProjectName": "프로젝트 이름에 잘못된 문자가 포함되어 있습니다. 영숫자, 하이픈, 밑줄 및 점만 사용하세요"
+  }
+}

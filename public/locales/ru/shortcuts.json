@@ -1,0 +1,173 @@
+{
+  "title": "Горячие клавиши",
+  "tip": "Горячие клавиши работают и при работе на холсте. Нажмите ? чтобы открыть это окно в любой момент.",
+  "categories": {
+    "general": "Общие",
+    "navigation": "Навигация",
+    "tools": "Инструменты",
+    "editing": "Редактирование"
+  },
+  "items": {
+    "save": {
+      "name": "Сохранить",
+      "key": "Ctrl+S"
+    },
+    "undo": {
+      "name": "Отменить",
+      "key": "Ctrl+Z"
+    },
+    "redo": {
+      "name": "Повторить",
+      "key": "Ctrl+Y"
+    },
+    "delete": {
+      "name": "Удалить",
+      "description": "Удалить выбранный элемент",
+      "key": "Del / Backspace"
+    },
+    "deselect": {
+      "name": "Снять выделение",
+      "key": "Esc"
+    },
+    "prevImage": {
+      "name": "Предыдущее изображение",
+      "key": "←"
+    },
+    "nextImage": {
+      "name": "Следующее изображение",
+      "key": "→"
+    },
+    "zoomIn": {
+      "name": "Увеличить",
+      "key": "Ctrl++"
+    },
+    "zoomOut": {
+      "name": "Уменьшить",
+      "key": "Ctrl+-"
+    },
+    "zoomFit": {
+      "name": "По размеру",
+      "key": "Ctrl+0"
+    },
+    "toolBox": {
+      "name": "Инструмент Box",
+      "description": "Выбрать инструмент рамки",
+      "key": "B"
+    },
+    "toolOBB": {
+      "name": "Инструмент OBB",
+      "description": "Выбрать инструмент OBB",
+      "key": "O"
+    },
+    "toolMask": {
+      "name": "Инструмент Mask",
+      "description": "Выбрать инструмент маски",
+      "key": "M"
+    },
+    "toolPolygon": {
+      "name": "Инструмент Полигон",
+      "description": "Выбрать инструмент полигона",
+      "key": "P"
+    },
+    "toolKeypoints": {
+      "name": "Инструмент Ключевые точки",
+      "description": "Выбрать инструмент ключевых точек",
+      "key": "K"
+    },
+    "toolSelect": {
+      "name": "Инструмент Выбор",
+      "description": "Выбрать инструмент выделения",
+      "key": "V"
+    },
+    "toolPan": {
+      "name": "Инструмент Pan",
+      "description": "Выбрать инструмент перемещения",
+      "key": "H"
+    },
+    "rotateLeft": {
+      "name": "Повернуть влево",
+      "key": "A"
+    },
+    "rotateRight": {
+      "name": "Повернуть вправо",
+      "key": "D"
+    },
+    "class1": {
+      "name": "Выбрать Класс 1",
+      "key": "1"
+    },
+    "class2": {
+      "name": "Выбрать Класс 2",
+      "key": "2"
+    },
+    "class3": {
+      "name": "Выбрать Класс 3",
+      "key": "3"
+    },
+    "class4": {
+      "name": "Выбрать Класс 4",
+      "key": "4"
+    },
+    "class5": {
+      "name": "Выбрать Класс 5",
+      "key": "5"
+    },
+    "class6": {
+      "name": "Выбрать Класс 6",
+      "key": "6"
+    },
+    "class7": {
+      "name": "Выбрать Класс 7",
+      "key": "7"
+    },
+    "class8": {
+      "name": "Выбрать Класс 8",
+      "key": "8"
+    },
+    "class9": {
+      "name": "Выбрать Класс 9",
+      "key": "9"
+    },
+    "toolLandmarks": {
+      "name": "Инструмент ориентиров",
+      "description": "Выбрать инструмент ориентиров"
+    },
+    "brushSize": {
+      "name": "Размер кисти",
+      "description": "Уменьшить/увеличить размер кисти"
+    },
+    "eraseToggle": {
+      "name": "Режим ластика"
+    },
+    "confirmDrawing": {
+      "name": "Подтвердить рисование"
+    },
+    "cancelDrawing": {
+      "name": "Отменить рисование"
+    },
+    "videoNewTrack": {
+      "name": "Новый трек"
+    },
+    "videoPrevFrame": {
+      "name": "Предыдущий кадр"
+    },
+    "videoNextFrame": {
+      "name": "Следующий кадр"
+    },
+    "tsToolSelect": {
+      "name": "Выбор (временные ряды)"
+    },
+    "tsToolPoint": {
+      "name": "Точка (временные ряды)"
+    },
+    "tsToolRange": {
+      "name": "Диапазон (временные ряды)"
+    },
+    "tsToolEvent": {
+      "name": "Событие (временные ряды)"
+    },
+    "tsToolAnomaly": {
+      "name": "Аномалия (временные ряды)"
+    }
+  }
+}

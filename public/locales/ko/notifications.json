@@ -1,0 +1,33 @@
+{
+  "imageSaved": "이미지가 저장되었습니다",
+  "imagesLoaded": "{count}개 이미지가 로드되었습니다",
+  "datasetDownloaded": "데이터셋이 다운로드되었습니다",
+  "classesDownloaded": "classes.txt가 다운로드되었습니다",
+  "noClasses": "다운로드할 클래스가 없습니다",
+  "noImages": "프로젝트에 이미지가 없습니다",
+  "noAnnotations": "다운로드할 주석이 없습니다",
+  "appStarted": "애플리케이션이 시작되었습니다",
+  "classDeleted": "클래스와 모든 주석이 삭제되었습니다",
+  "error": {
+    "createProject": "프로젝트 생성 오류",
+    "loadProject": "프로젝트 로드 오류",
+    "updateProject": "프로젝트 업데이트 오류",
+    "deleteProject": "프로젝트 삭제 오류",
+    "duplicateProject": "프로젝트 복제 오류",
+    "renameProject": "프로젝트 이름 변경 오류",
+    "loadProjects": "프로젝트 목록 로드 오류",
+    "exportProject": "프로젝트 내보내기 오류",
+    "exportConfig": "설정 내보내기 오류",
+    "importConfig": "설정 가져오기 오류",
+    "importProject": "프로젝트 가져오기 오류",
+    "loadImage": "이미지 로드 오류",
+    "saveImage": "이미지 저장 오류",
+    "deleteImage": "이미지 삭제 오류",
+    "loadImages": "이미지 목록 로드 오류",
+    "downloadDataset": "데이터셋 다운로드 오류",
+    "initApp": "애플리케이션 시작 오류",
+    "export": "내보내기 오류",
+    "noImages": "이미지를 찾을 수 없습니다 오류"
+  },
+  "imageDeleted": "notifications.imageDeleted"
+}

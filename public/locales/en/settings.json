@@ -1,0 +1,185 @@
+{
+  "title": "Settings",
+  "back": "Back",
+  "sections": {
+    "general": "General",
+    "pythonEnv": "Python Environment",
+    "trainingModels": "Training Models",
+    "cloudProviders": "Cloud Providers",
+    "keyboardShortcuts": "Keyboard Shortcuts",
+    "browserAutomation": "Browser Automation"
+  },
+  "general": {
+    "colorMode": "Appearance",
+    "light": "Light",
+    "dark": "Dark",
+    "dracula": "Dracula",
+    "system": "System",
+    "language": "Language",
+    "workDir": "Working Directory",
+    "workDirHelp": "Folder where all your projects and data are stored.",
+    "changeWorkDir": "Select new working directory",
+    "change": "Change",
+    "about": "About",
+    "buildDate": "Build date",
+    "aboutDescription": "Developed at the <strong>TecMedHub</strong> laboratory of Universidad Austral de Chile, as part of the doctoral project in Bioengineering at Hospital Italiano de Buenos Aires by <strong>Nicolás Baier</strong>.",
+    "team": "Team",
+    "changelog": "Changelog",
+    "roleNicolas": "Development & direction",
+    "roleFelipe": "2026 Intern, Computer Science Engineering, UACh"
+  },
+  "pythonEnv": {
+    "systemPython": "System Python",
+    "systemPythonFound": "Python 3 found: {{python}}",
+    "systemPythonNotFound": "Python 3 not found in PATH. Please install Python 3.10+.",
+    "venv": "Virtual Environment",
+    "venvNotExists": "No virtual environment created yet. Create one to use training features.",
+    "status": "Status",
+    "active": "Active",
+    "pythonVersion": "Python Version",
+    "diskUsage": "Disk Usage",
+    "path": "Path",
+    "createVenv": "Create Environment",
+    "removeVenv": "Remove Environment",
+    "pleaseWait": "This may take several minutes, please do not close the application."
+  },
+  "packages": {
+    "title": "Installed Packages",
+    "name": "Name",
+    "version": "Version",
+    "updateAll": "Update All"
+  },
+  "pytorch": {
+    "title": "PyTorch",
+    "cudaActive": "Active",
+    "cpuOnly": "CPU only",
+    "nvidiaDetected": "NVIDIA GPU detected",
+    "driverVersion": "Driver",
+    "suggestedCuda": "Suggested CUDA",
+    "noNvidia": "No NVIDIA GPU detected (CPU mode will be used)",
+    "selectVariant": "PyTorch Variant",
+    "install": "Install PyTorch",
+    "reinstall": "Reinstall PyTorch"
+  },
+  "trainingModels": {
+    "totalModels": "Models",
+    "tasks": "Tasks",
+    "task": "Task",
+    "model": "Model",
+    "params": "Params",
+    "sizes": "Sizes",
+    "recommended": "Recommended",
+    "readOnly": "Read only",
+    "searchPlaceholder": "Search models by name, description or backend...",
+    "clearFilters": "Clear filters",
+    "noResults": "No models match the current filters",
+    "overview": "Overview",
+    "selectBackend": "Select a backend to explore its models",
+    "modelCount": "models",
+    "datasetFormat": "Dataset",
+    "prepareBackend": "Prepare Backend",
+    "pipPackages": "Packages",
+    "viewScript": "View Script",
+    "supportedTasks": "Supported Tasks",
+    "availableSizes": "Available Sizes",
+    "defaultConfig": "Default Configuration",
+    "parameter": "Parameter",
+    "type": "Type",
+    "defaultValue": "Default",
+    "range": "Range",
+    "backTo": "Back to",
+    "filterByTask": "Filter by task",
+    "allModels": "All Models"
+  },
+  "cloud": {
+    "gcp": {
+      "title": "Google Cloud Platform",
+      "description": "Configure GCP credentials for Vertex AI and Colab Enterprise",
+      "serviceAccount": "Service Account JSON",
+      "serviceAccountPlaceholder": "Select service account JSON file...",
+      "projectId": "GCP Project ID",
+      "region": "Region",
+      "bucket": "GCS Bucket"
+    },
+    "kaggle": {
+      "title": "Kaggle",
+      "description": "Enter your Kaggle API credentials.",
+      "getKey": "Get API Key →",
+      "username": "Username",
+      "apiKey": "API Key"
+    },
+    "lightning": {
+      "title": "Lightning AI",
+      "description": "Configure Lightning AI credentials for free GPU training.",
+      "getKey": "Get API Key →",
+      "apiKey": "API Key"
+    },
+    "huggingface": {
+      "title": "Hugging Face",
+      "description": "Enter your Hugging Face credentials for AutoTrain.",
+      "getToken": "Get Token →",
+      "username": "Username",
+      "token": "Access Token"
+    },
+    "saturn": {
+      "title": "Saturn Cloud",
+      "description": "Enter your Saturn Cloud API token for free GPU instances.",
+      "getToken": "Get API Token →",
+      "apiToken": "API Token"
+    },
+    "validate": "Validate",
+    "validating": "Validating...",
+    "valid": "Valid",
+    "invalid": "Invalid"
+  },
+  "shortcuts": {
+    "description": "Click on a key badge to reassign it. Press Escape to cancel.",
+    "pressKey": "Press a key...",
+    "resetAll": "Reset All",
+    "resetOne": "Reset to default",
+    "conflict": "This key is already assigned to \"{{name}}\".",
+    "customize": "Customize shortcuts"
+  },
+  "automation": {
+    "browsers": {
+      "title": "Browser Detection",
+      "description": "Detect and select a Chromium-based browser for automation tasks.",
+      "detect": "Detect Browsers",
+      "detecting": "Detecting...",
+      "preferred": "Preferred",
+      "testLaunch": "Test Launch",
+      "testing": "Testing..."
+    },
+    "provider": {
+      "title": "Default LLM Assistant",
+      "description": "Choose the default LLM assistant for browser-based AI queries.",
+      "trainingLabel": "Training",
+      "llmLabel": "LLM Assistants",
+      "colab_free": "Google Colab (Free)",
+      "kimi": "Kimi (Moonshot)",
+      "qwen": "Qwen Chat",
+      "deepseek": "DeepSeek",
+      "huggingchat": "HuggingChat"
+    },
+    "selectors": {
+      "title": "CSS Selectors Editor",
+      "description": "Edit TOML selector files for each provider. These define how the automation interacts with each website.",
+      "restore": "Restore"
+    },
+    "advanced": {
+      "title": "Advanced Configuration",
+      "description": "Fine-tune timeouts, retries, and browser window settings.",
+      "stepTimeout": "Step Timeout",
+      "maxRetries": "Max Retries",
+      "userActionTimeout": "User Action Timeout",
+      "llmResponseTimeout": "LLM Response Timeout",
+      "seconds": "seconds",
+      "userDataDir": "User Data Directory",
+      "userDataDirPlaceholder": "Default (auto-managed)",
+      "windowSize": "Window Size",
+      "restoreDefaults": "Restore Defaults"
+    },
+    "saved": "Saved",
+    "saveError": "Error saving"
+  }
+}

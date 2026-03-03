@@ -1,0 +1,17 @@
+{
+  "connected": "Connector",
+  "disconnected": "Senza Connector",
+  "connectedMessage": "Connector online - Porta 5000",
+  "checking": "Verifica della connessione con Connector...",
+  "connectedReady": "Connesso - Pronto per l'addestramento",
+  "notConnected": "Impossibile connettersi al Motore Companion",
+  "notConnectedHint": "Assicurati che sia in esecuzione",
+  "offlineMessage": "Impossibile connettersi al Motore Companion.\n\nHai scaricato e avviato l'applicazione desktop?\nAssicurati che 'motor_server.exe' sia in esecuzione sul tuo PC.",
+  "downloadTitle": "Motore Companion Non Rilevato",
+  "downloadMessage": "Per addestrare modelli localmente, devi scaricare e installare il Motore Companion di Annotix.",
+  "downloadHint": "Il Motore Companion verrà eseguito in background sul tuo PC e permetterà di addestrare modelli con i tuoi dati annotati.",
+  "download": "Scarica Motore Companion",
+  "downloadStarted": "Download avviato. Esegui l'installatore quando terminato.",
+  "startTraining": "Avvia Addestramento",
+  "trainingStarted": "Addestramento avviato correttamente"
+}

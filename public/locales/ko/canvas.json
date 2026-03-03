@@ -1,0 +1,13 @@
+{
+  "zoomIn": "확대",
+  "zoomOut": "축소",
+  "resetZoom": "확대/축소 초기화",
+  "fitScreen": "화면에 맞추기",
+  "toggleLabels": "레이블 표시/숨기기",
+  "toggleGrid": "격자 표시/숨기기",
+  "prevImage": "이전 이미지 (← / PgUp)",
+  "nextImage": "다음 이미지 (→ / PgDn)",
+  "reset": "초기화",
+  "tools": "도구",
+  "zoom": "확대/축소"
+}

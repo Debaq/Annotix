@@ -1,0 +1,16 @@
+{
+  "title": "Ações",
+  "save": "Salvar",
+  "undo": "Desfazer",
+  "clear": "Limpar",
+  "delete": "Excluir",
+  "cancel": "Cancelar",
+  "create": "Criar",
+  "confirm": "Confirmar",
+  "close": "Fechar",
+  "duplicate": "Duplicar",
+  "rename": "Renomear",
+  "exportBackup": "Exportar Backup",
+  "deleteConfirm": "Sim, excluir",
+  "clearConfirm": "Limpar todas as anotações desta imagem?"
+}

@@ -1,0 +1,9 @@
+{
+  "title": "Statistiques",
+  "images": "Images",
+  "annotated": "Annotées",
+  "labels": "Étiquettes",
+  "classes": "Classes",
+  "progress": "images annotées",
+  "annotations": "stats.annotations"
+}

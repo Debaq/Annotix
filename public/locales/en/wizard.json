@@ -1,0 +1,148 @@
+{
+  "trigger": "Not sure which to pick?",
+  "title": "Project Type Assistant",
+  "subtitle": "Answer a few questions and we will recommend the best project type for you.",
+  "bestMatch": "Best match",
+  "useThis": "Use this",
+  "noResults": "No matching type found. Try different answers.",
+  "resultsTitle": "Recommended for you",
+  "questions": {
+    "dataType": {
+      "title": "What type of data will you work with?",
+      "options": {
+        "images": "Images",
+        "timeseries": "Time series",
+        "tabular": "Tabular data"
+      },
+      "optionsDesc": {
+        "images": "Photos, screenshots, scans, frames",
+        "timeseries": "Sensors, metrics, signals, financial data",
+        "tabular": "CSV files, spreadsheets, structured tables"
+      }
+    },
+    "goalImages": {
+      "title": "What do you want to do with the images?",
+      "options": {
+        "classify": "Classify",
+        "detectLocate": "Detect & Locate",
+        "segment": "Segment",
+        "pointsKeypts": "Mark points"
+      },
+      "optionsDesc": {
+        "classify": "Assign a label to the whole image",
+        "detectLocate": "Find and locate objects with boxes",
+        "segment": "Outline objects at pixel level",
+        "pointsKeypts": "Place keypoints or landmarks on objects"
+      }
+    },
+    "goalTimeseries": {
+      "title": "What do you want to do with the time series?",
+      "options": {
+        "tsClassify": "Classify",
+        "tsPredict": "Predict",
+        "tsAnomaly": "Detect anomalies",
+        "tsAnalyze": "Analyze"
+      },
+      "optionsDesc": {
+        "tsClassify": "Assign a category to the whole series",
+        "tsPredict": "Forecast future values or fill gaps",
+        "tsAnomaly": "Find unusual or unexpected patterns",
+        "tsAnalyze": "Segment, find patterns, or cluster"
+      }
+    },
+    "classifyDetail": {
+      "title": "How many labels per image?",
+      "options": {
+        "singleLabel": "One label",
+        "multiLabel": "Multiple labels"
+      },
+      "optionsDesc": {
+        "singleLabel": "Each image belongs to exactly one class",
+        "multiLabel": "An image can have several labels at once"
+      }
+    },
+    "detectDetail": {
+      "title": "What kind of bounding boxes?",
+      "options": {
+        "axisAligned": "Normal boxes",
+        "rotated": "Rotated boxes"
+      },
+      "optionsDesc": {
+        "axisAligned": "Horizontal/vertical rectangles (most common)",
+        "rotated": "Boxes that can be rotated at any angle"
+      }
+    },
+    "segmentDetail": {
+      "title": "What kind of segmentation?",
+      "options": {
+        "polygonOutline": "Polygon outlines",
+        "pixelMask": "Pixel masks",
+        "instanceSeg": "Instance segmentation"
+      },
+      "optionsDesc": {
+        "polygonOutline": "Draw polygons point by point around objects",
+        "pixelMask": "Paint pixel-level masks on objects",
+        "instanceSeg": "Separate each individual object instance"
+      }
+    },
+    "pointsDetail": {
+      "title": "What kind of points?",
+      "options": {
+        "connectedPose": "Connected skeleton",
+        "freePoints": "Independent points"
+      },
+      "optionsDesc": {
+        "connectedPose": "Points connected by lines (pose estimation)",
+        "freePoints": "Free-standing points without connections"
+      }
+    },
+    "tsAnalyzeDetail": {
+      "title": "What kind of analysis?",
+      "options": {
+        "tsSegment": "Segment regions",
+        "tsPattern": "Find patterns",
+        "tsEvent": "Detect events",
+        "tsCluster": "Group similar"
+      },
+      "optionsDesc": {
+        "tsSegment": "Divide the series into labeled regions",
+        "tsPattern": "Identify recurring patterns or motifs",
+        "tsEvent": "Find when specific events occur",
+        "tsCluster": "Group similar series or segments together"
+      }
+    },
+    "tsPredictDetail": {
+      "title": "What kind of prediction?",
+      "options": {
+        "tsForecast": "Forecast future",
+        "tsRegression": "Value regression",
+        "tsImpute": "Fill missing data"
+      },
+      "optionsDesc": {
+        "tsForecast": "Predict future values of the series",
+        "tsRegression": "Predict continuous values from features",
+        "tsImpute": "Reconstruct missing or corrupt data points"
+      }
+    }
+  },
+  "reasons": {
+    "bbox": "Ideal for detecting objects with axis-aligned rectangular boxes",
+    "obb": "Perfect for angled or rotated objects like aerial views or text",
+    "mask": "Paint pixel-level masks for precise semantic segmentation",
+    "polygon": "Draw polygon outlines for accurate object boundaries",
+    "instance-segmentation": "Separate each object instance at pixel level",
+    "keypoints": "Mark connected skeletal points for pose estimation",
+    "landmarks": "Place independent reference points on objects",
+    "classification": "Assign one label per image for simple categorization",
+    "multi-label-classification": "Tag images with multiple labels simultaneously",
+    "timeseries-classification": "Classify entire time series into categories",
+    "timeseries-forecasting": "Predict future values based on historical data",
+    "timeseries-regression": "Predict continuous values from time series features",
+    "anomaly-detection": "Find unusual patterns and outliers in your data",
+    "timeseries-segmentation": "Divide time series into labeled segments",
+    "pattern-recognition": "Discover recurring motifs and patterns",
+    "event-detection": "Identify when specific events happen in the series",
+    "clustering": "Group similar time series or segments together",
+    "imputation": "Reconstruct missing or corrupted data points"
+  }
+}

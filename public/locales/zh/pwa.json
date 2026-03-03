@@ -1,0 +1,27 @@
+{
+  "installButton": "安装应用",
+  "modal": {
+    "title": "🚀 将 Annotix 安装为应用",
+    "benefits": "安装的好处：",
+    "benefit1": "✅ 桌面快捷方式访问",
+    "benefit2": "✅ 离线工作",
+    "benefit3": "✅ 更快更流畅",
+    "benefit4": "✅ 无浏览器栏",
+    "benefit5": "✅ 您的数据始终私密",
+    "benefit6": "✅ 自动更新",
+    "platformCompatibility": "平台兼容性：",
+    "androidInfo": "<strong>Android：</strong>运行极佳。完全原生安装，如同 Play Store 应用。",
+    "iosInfo": "<strong>iOS/iPadOS：</strong>运行良好，但 Safari 可能会定期清除缓存。<strong>重要：</strong>请经常导出项目以保存进度。",
+    "linuxInfo": "<strong>Linux：</strong>完美运行。在 Chrome、Firefox 和 Edge 中完全支持。",
+    "windowsInfo": "<strong>Windows：</strong>在 Chrome 和 Edge 中应该没有问题，但我们尚未进行广泛测试。",
+    "generalTip": "💡 <strong>建议：</strong>无论您的操作系统如何，都请定期导出项目作为备份。",
+    "cancelButton": "暂不安装",
+    "installButtonModal": "🖖 安装应用"
+  },
+  "notifications": {
+    "installed": "Annotix 安装成功！",
+    "installFailed": "安装应用时出错",
+    "updateAvailable": "有可用更新。重新加载以更新。",
+    "offline": "离线模式已激活。应用可离线工作。"
+  }
+}

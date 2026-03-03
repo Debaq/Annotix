@@ -1,0 +1,17 @@
+{
+  "connected": "Connector",
+  "disconnected": "Kein Connector",
+  "connectedMessage": "Connector online - Port 5000",
+  "checking": "Verbindung zum Connector wird überprüft...",
+  "connectedReady": "Verbunden - Bereit zum Trainieren",
+  "notConnected": "Verbindung zum Begleitmotor konnte nicht hergestellt werden",
+  "notConnectedHint": "Stelle sicher, dass er ausgeführt wird",
+  "offlineMessage": "Verbindung zum Begleitmotor konnte nicht hergestellt werden.\n\nHast du die Desktop-Anwendung heruntergeladen und gestartet?\nStelle sicher, dass 'motor_server.exe' auf deinem PC läuft.",
+  "downloadTitle": "Begleitmotor nicht erkannt",
+  "downloadMessage": "Um Modelle lokal zu trainieren, musst du den Annotix-Begleitmotor herunterladen und installieren.",
+  "downloadHint": "Der Begleitmotor läuft im Hintergrund auf deinem PC und ermöglicht das Training von Modellen mit deinen annotierten Daten.",
+  "download": "Begleitmotor herunterladen",
+  "downloadStarted": "Download gestartet. Führe den Installer aus, wenn er fertig ist.",
+  "startTraining": "Training starten",
+  "trainingStarted": "Training erfolgreich gestartet"
+}

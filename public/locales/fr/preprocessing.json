@@ -1,0 +1,29 @@
+{
+  "title": "Prétraiter les Images",
+  "detected": "{count} images non carrées détectées",
+  "description": "Les images seront ajustées à une taille carrée pour optimiser l'entraînement. Choisissez la stratégie de redimensionnement :",
+  "targetSize": "Taille cible (pixels)",
+  "recommended": "Recommandé : {size}px",
+  "strategy": "Stratégie de redimensionnement",
+  "strategies": {
+    "resize": {
+      "name": "Redimensionner + Padding",
+      "description": "Réduit l'image et ajoute du padding (optimise l'espace et la mémoire)"
+    },
+    "padding": {
+      "name": "Padding uniquement",
+      "description": "Conserve la taille originale et ajoute du padding (meilleure qualité)"
+    }
+  },
+  "options": {
+    "apply": "Appliquer le prétraitement",
+    "skip": "Télécharger sans prétraiter"
+  },
+  "progress": "Traitement de l'image {current} sur {total}...",
+  "complete": "{count} images prétraitées correctement",
+  "preview": "Aperçu",
+  "original": "Original",
+  "processed": "Traitée",
+  "aspectRatio": "Rapport d'aspect original préservé",
+  "paddingInfo": "Un padding noir symétrique sera ajouté"
+}

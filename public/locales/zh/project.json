@@ -1,0 +1,539 @@
+{
+  "new": "新建项目",
+  "name": "项目名称",
+  "namePlaceholder": "我的 Annotix 项目",
+  "type": "标注类型",
+  "typeSelectHelper": "根据训练目标选择标注类型",
+  "types": {
+    "classification": {
+      "name": "简单分类",
+      "description": "为每张图像分配单个标签",
+      "useCases": "识别图像内容（例如：猫、狗、汽车）",
+      "models": "ResNet, VGG, EfficientNet, MobileNet",
+      "difficulty": "初学者"
+    },
+    "bbox": {
+      "name": "Bounding Box",
+      "description": "使用边界框进行目标检测",
+      "useCases": "检测和定位图像中的对象",
+      "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+      "difficulty": "初学者"
+    },
+    "mask": {
+      "name": "遮罩",
+      "description": "使用像素遮罩进行实例分割",
+      "useCases": "在像素级别分离对象",
+      "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+      "difficulty": "中级"
+    },
+    "multiLabel": {
+      "name": "多标签分类",
+      "description": "为每张图像分配多个标签",
+      "useCases": "包含多个元素的图像（例如：公园 + 狗 + 天空）",
+      "models": "ResNet, VGG 多标签输出",
+      "difficulty": "初学者"
+    },
+    "detection": {
+      "name": "目标检测",
+      "description": "使用矩形框（bounding boxes）定位对象",
+      "useCases": "在图像中查找和定位特定对象",
+      "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+      "difficulty": "中级"
+    },
+    "segmentation": {
+      "name": "语义分割",
+      "description": "按类别对图像的每个像素进行分类",
+      "useCases": "分离区域（例如：道路、天空、建筑物）",
+      "models": "U-Net, DeepLab, FCN",
+      "difficulty": "高级"
+    },
+    "instanceSeg": {
+      "name": "实例分割",
+      "description": "勾画每个单独对象的轮廓",
+      "useCases": "在像素级别分离单个对象",
+      "models": "Mask R-CNN, YOLACT, YOLOv8-seg",
+      "difficulty": "高级"
+    },
+    "keypoints": {
+      "name": "关键点",
+      "description": "在对象上标记特定点",
+      "useCases": "姿态估计、人脸识别、解剖学",
+      "models": "OpenPose, HRNet, MediaPipe",
+      "difficulty": "中级"
+    },
+    "polygon": {
+      "name": "多边形分割",
+      "description": "逐点绘制多边形以进行精确分割",
+      "useCases": "精确轮廓、几何形状，比遮罩更轻量",
+      "models": "YOLOv8-seg, Mask R-CNN, SOLO",
+      "difficulty": "中级"
+    },
+    "landmarks": {
+      "name": "参考点",
+      "description": "放置独立的点，无连接",
+      "useCases": "对象中心、参考点、计数、位置",
+      "models": "检测模型、自定义点检测器",
+      "difficulty": "初学者"
+    },
+    "obb": {
+      "name": "旋转框 (OBB)",
+      "description": "可自由旋转的边界框",
+      "useCases": "倾斜文字、航拍对象、卫星",
+      "models": "Rotated-YOLO, RRPN",
+      "difficulty": "高级"
+    },
+    "semanticSeg": {
+      "name": "纯语义分割",
+      "description": "对每个像素分类，不区分实例",
+      "useCases": "分割地图、风景、城市场景",
+      "models": "U-Net, DeepLabV3+, SegFormer",
+      "difficulty": "高级"
+    },
+    "panopticSeg": {
+      "name": "全景分割",
+      "description": "结合语义分割和实例分割",
+      "useCases": "自动驾驶、完整场景分析",
+      "models": "Panoptic-FPN, DETR, MaskFormer",
+      "difficulty": "高级"
+    },
+    "ocr": {
+      "name": "OCR（文字识别）",
+      "description": "检测和识别图像中的文字",
+      "useCases": "文档、标志、海报、发票",
+      "models": "CRAFT, EasyOCR, Tesseract, PaddleOCR",
+      "difficulty": "中级"
+    },
+    "depthEstimation": {
+      "name": "深度估计",
+      "description": "预测每个像素到相机的距离",
+      "useCases": "机器人、AR/VR、3D 重建",
+      "models": "MiDaS, DPT, Depth Anything",
+      "difficulty": "高级"
+    },
+    "audioClassification": {
+      "name": "音频分类",
+      "description": "为音频片段分配标签",
+      "useCases": "音乐分类、环境声音",
+      "models": "AudioSet, PANNs, YAMNet",
+      "difficulty": "中级"
+    },
+    "speechRecognition": {
+      "name": "语音识别",
+      "description": "将音频转录为文字",
+      "useCases": "字幕、语音助手、转录",
+      "models": "Whisper, Wav2Vec2, DeepSpeech",
+      "difficulty": "高级"
+    },
+    "soundEventDetection": {
+      "name": "声音事件检测",
+      "description": "识别和定位音频中的事件",
+      "useCases": "安全监控、城市分析",
+      "models": "CRNN, CNN14, SED-CRNN",
+      "difficulty": "高级"
+    },
+    "speakerIdentification": {
+      "name": "说话人识别",
+      "description": "识别谁在说话",
+      "useCases": "安全、会议日志记录",
+      "models": "x-vector, ECAPA-TDNN, SpeakerNet",
+      "difficulty": "高级"
+    },
+    "audioTagging": {
+      "name": "音频标记",
+      "description": "为音频分配多个标签",
+      "useCases": "声学场景分析",
+      "models": "VGGish, PANNs, AudioSet",
+      "difficulty": "中级"
+    },
+    "musicGenreClassification": {
+      "name": "音乐流派分类",
+      "description": "识别歌曲的音乐流派",
+      "useCases": "音乐库组织",
+      "models": "MusiCNN, CNN-Spectrograms",
+      "difficulty": "中级"
+    },
+    "emotionRecognition": {
+      "name": "情感识别",
+      "description": "检测语音中的情感",
+      "useCases": "客户服务、情感分析",
+      "models": "OpenSMILE, EmotiW, SER-CNN",
+      "difficulty": "高级"
+    },
+    "voiceActivityDetection": {
+      "name": "语音活动检测 (VAD)",
+      "description": "检测音频中是否有语音",
+      "useCases": "音频预处理、电话系统",
+      "models": "WebRTC VAD, Silero VAD",
+      "difficulty": "初学者"
+    },
+    "keywordSpotting": {
+      "name": "关键词检测",
+      "description": "检测音频中的特定词语",
+      "useCases": "语音助手（Hey Siri、OK Google）",
+      "models": "CNN-KWS, Depthwise Separable CNNs",
+      "difficulty": "中级"
+    },
+    "environmentalSound": {
+      "name": "环境声音分类",
+      "description": "分类环境中的声音",
+      "useCases": "城市监控、野生动物保护",
+      "models": "ESC-CNN, UrbanSound8K models",
+      "difficulty": "中级"
+    },
+    "actionRecognition": {
+      "name": "动作识别",
+      "description": "识别视频中的动作",
+      "useCases": "体育分析、监控、人际互动",
+      "models": "C3D, I3D, SlowFast, X3D",
+      "difficulty": "高级"
+    },
+    "objectTracking": {
+      "name": "目标跟踪",
+      "description": "跨帧跟踪对象",
+      "useCases": "监控、交通分析、体育",
+      "models": "SORT, DeepSORT, ByteTrack, BoT-SORT",
+      "difficulty": "高级"
+    },
+    "temporalActionLocalization": {
+      "name": "时间动作定位",
+      "description": "检测视频中动作发生的时间",
+      "useCases": "视频分析、自动摘要",
+      "models": "BMN, TSN, ActionFormer",
+      "difficulty": "高级"
+    },
+    "videoClassification": {
+      "name": "视频分类",
+      "description": "为完整视频分配类别",
+      "useCases": "内容组织、推荐",
+      "models": "3D-CNN, Two-Stream Networks, TimeSformer",
+      "difficulty": "中级"
+    },
+    "videoSegmentation": {
+      "name": "视频分割",
+      "description": "逐帧分割视频中的对象",
+      "useCases": "视频编辑、特效",
+      "models": "STM, XMem, SAM-Track",
+      "difficulty": "高级"
+    },
+    "activityDetection": {
+      "name": "活动检测",
+      "description": "检测特定的人类活动",
+      "useCases": "老年人监控、安全",
+      "models": "ActivityNet models, TSM",
+      "difficulty": "高级"
+    },
+    "poseTracking": {
+      "name": "姿态跟踪",
+      "description": "在视频中跟踪身体关键点",
+      "useCases": "运动分析、健身、体育",
+      "models": "AlphaPose, OpenPose, MMPose",
+      "difficulty": "高级"
+    },
+    "videoAnomalyDetection": {
+      "name": "视频异常检测",
+      "description": "检测视频中的异常事件",
+      "useCases": "监控、工业质量控制",
+      "models": "AnomalyNet, Future Frame Prediction",
+      "difficulty": "高级"
+    },
+    "spatiotemporalAction": {
+      "name": "时空动作检测",
+      "description": "在空间和时间中检测动作",
+      "useCases": "详细视频分析、YOLO-Act",
+      "models": "AVA models, SlowFast, YOLO-Act",
+      "difficulty": "高级"
+    },
+    "timeSeriesClassification": {
+      "name": "时间序列分类",
+      "description": "为每个完整时间序列分配一个类别（全局分类模式）",
+      "useCases": "医学诊断、手势识别、ECG 分类",
+      "models": "InceptionTime, ROCKET, ResNet",
+      "difficulty": "中级"
+    },
+    "timeSeriesForecasting": {
+      "name": "时间序列预测",
+      "description": "使用范围标记历史窗口和预测范围",
+      "useCases": "销售预测、天气预报、能源需求",
+      "models": "LSTM, Transformer, N-BEATS, Prophet",
+      "difficulty": "高级"
+    },
+    "anomalyDetection": {
+      "name": "异常检测",
+      "description": "标记时间序列中的异常点",
+      "useCases": "欺诈检测、设备故障、健康监测",
+      "models": "AutoEncoder, Isolation Forest, LSTM-AE",
+      "difficulty": "高级"
+    },
+    "timeSeriesSegmentation": {
+      "name": "时间序列分割",
+      "description": "使用范围将序列划分为带类别的段",
+      "useCases": "行为分析、体制变化、活动状态",
+      "models": "ClaSP, FLUSS, Seasonal-Trend Decomposition",
+      "difficulty": "高级"
+    },
+    "patternRecognition": {
+      "name": "模式识别",
+      "description": "使用范围标记重复的模式/母题",
+      "useCases": "股市分析、生物医学信号、周期检测",
+      "models": "Matrix Profile, STOMP, SAX",
+      "difficulty": "中级"
+    },
+    "eventDetection": {
+      "name": "事件检测",
+      "description": "使用点标记时间中的离散事件",
+      "useCases": "传感器监控、告警、状态变化",
+      "models": "Change Point Detection, Event Detection CNN",
+      "difficulty": "中级"
+    },
+    "timeSeriesRegression": {
+      "name": "时间序列回归",
+      "description": "标记带有数值目标的点",
+      "useCases": "需求估计、动态定价、值预测",
+      "models": "XGBoost, Random Forest, Neural Networks",
+      "difficulty": "中级"
+    },
+    "clustering": {
+      "name": "序列聚类",
+      "description": "为每个完整时间序列分配聚类（全局分类模式）",
+      "useCases": "客户细分、模式分析、行为分组",
+      "models": "K-Shape, DTW-KMeans, K-Means",
+      "difficulty": "中级"
+    },
+    "imputation": {
+      "name": "缺失值填补",
+      "description": "使用范围标记需要填补的缺失数据段",
+      "useCases": "传感器数据清洗、测量间隙填充",
+      "models": "MICE, KNN, Interpolation, BRITS",
+      "difficulty": "中级"
+    },
+    "multi-label-classification": {
+      "name": "多标签分类",
+      "description": "为每张图像分配多个标签"
+    },
+    "timeseries-classification": {
+      "name": "时间序列分类",
+      "description": "将完整的时间序列分类到不同类别"
+    },
+    "timeseries-forecasting": {
+      "name": "时间序列预测",
+      "description": "根据历史数据预测未来值"
+    },
+    "anomaly-detection": {
+      "name": "异常检测",
+      "description": "检测时间序列中的异常模式"
+    },
+    "timeseries-segmentation": {
+      "name": "时间序列分割",
+      "description": "将时间序列分割为不同区域"
+    },
+    "pattern-recognition": {
+      "name": "模式识别",
+      "description": "识别时间序列中的重复模式"
+    },
+    "event-detection": {
+      "name": "事件检测",
+      "description": "检测时间序列中的特定事件"
+    },
+    "timeseries-regression": {
+      "name": "时间序列回归",
+      "description": "从时间序列预测数值"
+    },
+    "tabular": {
+      "name": "表格ML",
+      "description": "使用CSV/表格数据的经典机器学习"
+    },
+    "object3DDetection": {
+      "name": "3D 目标检测",
+      "description": "在 3D 点云中检测对象",
+      "useCases": "自动驾驶、机器人",
+      "models": "PointNet++, VoxelNet, PointPillars",
+      "difficulty": "高级"
+    },
+    "semantic3DSegmentation": {
+      "name": "3D 语义分割",
+      "description": "在 3D 点云中对点进行分类",
+      "useCases": "城市测绘、BIM、建筑扫描",
+      "models": "PointNet, MinkowskiNet, KPConv",
+      "difficulty": "高级"
+    },
+    "instance3DSegmentation": {
+      "name": "3D 实例分割",
+      "description": "在 3D 中分离单个对象",
+      "useCases": "机器人、物体操控",
+      "models": "PointGroup, SoftGroup, Mask3D",
+      "difficulty": "高级"
+    },
+    "pointCloudClassification": {
+      "name": "点云分类",
+      "description": "对完整点云进行分类",
+      "useCases": "3D 物体识别",
+      "models": "PointNet, DGCNN, PointTransformer",
+      "difficulty": "高级"
+    },
+    "meshSegmentation": {
+      "name": "网格分割",
+      "description": "分割 3D 多边形网格",
+      "useCases": "3D 建模、几何分析",
+      "models": "MeshCNN, TextureNet",
+      "difficulty": "高级"
+    },
+    "pose3DEstimation": {
+      "name": "3D 姿态估计",
+      "description": "估计 3D 中的人体姿态",
+      "useCases": "动作捕捉、动画",
+      "models": "VideoPose3D, VoxelPose",
+      "difficulty": "高级"
+    },
+    "keypoint3DDetection": {
+      "name": "3D 关键点检测",
+      "description": "检测 3D 中的兴趣点",
+      "useCases": "点云配准、SLAM",
+      "models": "D3Feat, FCGF, Predator",
+      "difficulty": "高级"
+    },
+    "surfaceReconstruction": {
+      "name": "表面重建",
+      "description": "从点重建表面",
+      "useCases": "3D 扫描、文化遗产",
+      "models": "Poisson Surface Reconstruction, COLMAP",
+      "difficulty": "高级"
+    },
+    "slamAnnotation": {
+      "name": "SLAM 标注",
+      "description": "为定位和建图标注数据",
+      "useCases": "移动机器人、自主导航",
+      "models": "ORB-SLAM, LiDAR-SLAM",
+      "difficulty": "高级"
+    },
+    "textClassification": {
+      "name": "文本分类",
+      "description": "为文本分配类别",
+      "useCases": "新闻分类、垃圾邮件检测",
+      "models": "BERT, RoBERTa, DistilBERT",
+      "difficulty": "中级"
+    },
+    "namedEntityRecognition": {
+      "name": "命名实体识别 (NER)",
+      "description": "识别名称、地点、组织",
+      "useCases": "信息提取、文档分析",
+      "models": "SpaCy, Flair, BERT-NER",
+      "difficulty": "中级"
+    },
+    "sentimentAnalysis": {
+      "name": "情感分析",
+      "description": "检测情感（正面/负面/中性）",
+      "useCases": "观点分析、社交媒体",
+      "models": "VADER, TextBlob, RoBERTa-Sentiment",
+      "difficulty": "中级"
+    },
+    "intentClassification": {
+      "name": "意图分类",
+      "description": "识别用户意图",
+      "useCases": "聊天机器人、虚拟助手",
+      "models": "DIET, Rasa NLU, BERT-Intent",
+      "difficulty": "中级"
+    },
+    "relationExtraction": {
+      "name": "关系提取",
+      "description": "识别实体之间的关系",
+      "useCases": "知识图谱、文本分析",
+      "models": "SpanBERT, LUKE, Relation Extraction BERT",
+      "difficulty": "高级"
+    },
+    "posTagging": {
+      "name": "词性标注 (POS)",
+      "description": "识别语法类别",
+      "useCases": "语言学分析、NLP 预处理",
+      "models": "SpaCy, NLTK, Flair",
+      "difficulty": "初学者"
+    },
+    "dependencyParsing": {
+      "name": "依存分析",
+      "description": "分析句法结构",
+      "useCases": "语言理解、翻译",
+      "models": "SpaCy, Stanford Parser",
+      "difficulty": "高级"
+    },
+    "questionAnswering": {
+      "name": "问答",
+      "description": "回答关于文本的问题",
+      "useCases": "QA 助手、信息搜索",
+      "models": "BERT-QA, RoBERTa-QA, T5",
+      "difficulty": "高级"
+    },
+    "keyphraseExtraction": {
+      "name": "关键短语提取",
+      "description": "识别重要短语",
+      "useCases": "摘要、文档索引",
+      "models": "YAKE, KeyBERT, RAKE",
+      "difficulty": "中级"
+    },
+    "entityLinking": {
+      "name": "实体链接",
+      "description": "将实体链接到知识库",
+      "useCases": "数据富化、知识图谱",
+      "models": "BLINK, ELQ, GENRE",
+      "difficulty": "高级"
+    },
+    "toxicityClassification": {
+      "name": "毒性分类",
+      "description": "检测有毒或冒犯性内容",
+      "useCases": "内容审核、过滤器",
+      "models": "Perspective API, Detoxify, RoBERTa-Toxicity",
+      "difficulty": "中级"
+    },
+    "languageIdentification": {
+      "name": "语言识别",
+      "description": "检测文本的语言",
+      "useCases": "多语言处理、翻译",
+      "models": "langdetect, fastText, XLM-RoBERTa",
+      "difficulty": "初学者"
+    },
+    "useCasesLabel": "应用场景",
+    "modelsLabel": "推荐模型",
+    "difficultyLabel": "难度"
+  },
+  "categories": {
+    "images": "图像标注",
+    "classification": "分类",
+    "timeSeries": "时间序列",
+    "tabular": "表格 / 经典ML"
+  },
+  "modality": "模态",
+  "initialClasses": "初始类别（可选）",
+  "classesPlaceholder": "类别1, 类别2, 类别3",
+  "classesHelp": "用逗号分隔。之后可以添加更多。",
+  "imageDimensions": "图像尺寸",
+  "dimensionsAuto": "自动 — 接受任何尺寸",
+  "dimensionsFixed": "固定 — 所有图像将被调整大小",
+  "targetSize": "目标大小",
+  "resizeStrategy": "策略",
+  "enterName": "请输入项目名称",
+  "created": "项目 \"{name}\" 已创建",
+  "updated": "已更新",
+  "loaded": "项目 \"{name}\" 已加载",
+  "deleted": "项目已删除",
+  "duplicated": "项目 \"{name}\" 已复制",
+  "renamed": "项目已重命名",
+  "imported": "项目 \"{name}\" 已导入",
+  "exported": "项目已导出",
+  "configExported": "配置已导出",
+  "selectFirst": "请先选择一个项目",
+  "noProjects": "没有可用项目",
+  "manageProjects": "管理项目",
+  "renameProject": "重命名项目",
+  "newName": "新名称",
+  "images": "张图像",
+  "annotations": "个标注",
+  "exportBackup": "删除前下载 .tix 备份",
+  "deleteWarning": {
+    "title": "⚠️ 警告：永久删除",
+    "confirmTitle": "确认删除？",
+    "projectName": "项目：",
+    "message": "您即将永久删除此项目。",
+    "permanent": "此操作无法撤销",
+    "allData": "所有图像和标注都将被删除",
+    "noUndo": "没有方法恢复已删除的数据",
+    "recommendation": "💡 建议：删除前先将项目导出为 .tix 格式作为备份"
+  }
+}

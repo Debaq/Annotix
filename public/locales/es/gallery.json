@@ -1,0 +1,26 @@
+{
+  "imageCount": "{{count}} imágenes",
+  "imageCount_plural": "{{count}} imágenes",
+  "empty": {
+    "title": "No hay imágenes",
+    "description": "Sube imágenes para comenzar a anotar",
+    "upload": "Subir imágenes"
+  },
+  "title": "Galería",
+  "all": "Todas",
+  "annotated": "Anotadas",
+  "unannotated": "Sin anotar",
+  "deleteConfirm": "¿Eliminar esta imagen?",
+  "annotate": "Anotar",
+  "upload": "Seleccionar imágenes",
+  "noImages": "No hay imágenes",
+  "filter": {
+    "all": "Todas",
+    "annotated": "Anotadas",
+    "unannotated": "Sin anotar"
+  },
+  "backToGallery": "Volver a Galería",
+  "selectImage": "Selecciona una imagen",
+  "uploadOrSelect": "Sube o selecciona una imágen",
+  "uploading": "Subiendo imágenes"
+}

@@ -1,0 +1,173 @@
+{
+  "title": "Raccourcis Clavier",
+  "tip": "Les raccourcis fonctionnent également pendant le travail sur le canevas. Appuyez sur ? pour ouvrir cette fenêtre à tout moment.",
+  "categories": {
+    "general": "Général",
+    "navigation": "Navigation",
+    "tools": "Outils",
+    "editing": "Édition"
+  },
+  "items": {
+    "save": {
+      "name": "Enregistrer",
+      "key": "Ctrl+S"
+    },
+    "undo": {
+      "name": "Annuler",
+      "key": "Ctrl+Z"
+    },
+    "redo": {
+      "name": "Rétablir",
+      "key": "Ctrl+Y"
+    },
+    "delete": {
+      "name": "Supprimer",
+      "description": "Supprime l'élément sélectionné",
+      "key": "Del / Backspace"
+    },
+    "deselect": {
+      "name": "Désélectionner",
+      "key": "Esc"
+    },
+    "prevImage": {
+      "name": "Image précédente",
+      "key": "←"
+    },
+    "nextImage": {
+      "name": "Image suivante",
+      "key": "→"
+    },
+    "zoomIn": {
+      "name": "Zoom avant",
+      "key": "Ctrl++"
+    },
+    "zoomOut": {
+      "name": "Zoom arrière",
+      "key": "Ctrl+-"
+    },
+    "zoomFit": {
+      "name": "Ajuster",
+      "key": "Ctrl+0"
+    },
+    "toolBox": {
+      "name": "Outil Box",
+      "description": "Sélectionne l'outil boîte englobante",
+      "key": "B"
+    },
+    "toolOBB": {
+      "name": "Outil OBB",
+      "description": "Sélectionne l'outil OBB",
+      "key": "O"
+    },
+    "toolMask": {
+      "name": "Outil Mask",
+      "description": "Sélectionne l'outil masque",
+      "key": "M"
+    },
+    "toolPolygon": {
+      "name": "Outil Polygone",
+      "description": "Sélectionne l'outil polygone",
+      "key": "P"
+    },
+    "toolKeypoints": {
+      "name": "Outil Points Clés",
+      "description": "Sélectionne l'outil points clés",
+      "key": "K"
+    },
+    "toolSelect": {
+      "name": "Outil Sélection",
+      "description": "Sélectionne l'outil de sélection",
+      "key": "V"
+    },
+    "toolPan": {
+      "name": "Outil Pan",
+      "description": "Sélectionne l'outil de panoramique",
+      "key": "H"
+    },
+    "rotateLeft": {
+      "name": "Rotation gauche",
+      "key": "A"
+    },
+    "rotateRight": {
+      "name": "Rotation droite",
+      "key": "D"
+    },
+    "class1": {
+      "name": "Sélectionner Classe 1",
+      "key": "1"
+    },
+    "class2": {
+      "name": "Sélectionner Classe 2",
+      "key": "2"
+    },
+    "class3": {
+      "name": "Sélectionner Classe 3",
+      "key": "3"
+    },
+    "class4": {
+      "name": "Sélectionner Classe 4",
+      "key": "4"
+    },
+    "class5": {
+      "name": "Sélectionner Classe 5",
+      "key": "5"
+    },
+    "class6": {
+      "name": "Sélectionner Classe 6",
+      "key": "6"
+    },
+    "class7": {
+      "name": "Sélectionner Classe 7",
+      "key": "7"
+    },
+    "class8": {
+      "name": "Sélectionner Classe 8",
+      "key": "8"
+    },
+    "class9": {
+      "name": "Sélectionner Classe 9",
+      "key": "9"
+    },
+    "toolLandmarks": {
+      "name": "Outil Repères",
+      "description": "Sélectionner l'outil repères"
+    },
+    "brushSize": {
+      "name": "Taille du Pinceau",
+      "description": "Diminuer/augmenter la taille du pinceau"
+    },
+    "eraseToggle": {
+      "name": "Mode Gomme"
+    },
+    "confirmDrawing": {
+      "name": "Confirmer le Dessin"
+    },
+    "cancelDrawing": {
+      "name": "Annuler le Dessin"
+    },
+    "videoNewTrack": {
+      "name": "Nouveau Track"
+    },
+    "videoPrevFrame": {
+      "name": "Image Précédente"
+    },
+    "videoNextFrame": {
+      "name": "Image Suivante"
+    },
+    "tsToolSelect": {
+      "name": "Sélection (Séries Temporelles)"
+    },
+    "tsToolPoint": {
+      "name": "Outil Point (Séries Temporelles)"
+    },
+    "tsToolRange": {
+      "name": "Outil Plage (Séries Temporelles)"
+    },
+    "tsToolEvent": {
+      "name": "Outil Événement (Séries Temporelles)"
+    },
+    "tsToolAnomaly": {
+      "name": "Outil Anomalie (Séries Temporelles)"
+    }
+  }
+}

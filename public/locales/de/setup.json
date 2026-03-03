@@ -1,0 +1,9 @@
+{
+  "welcome": "Willkommen bei Annotix",
+  "description": "Wähle einen Ordner, in dem deine Projekte gespeichert werden. Jedes Projekt wird ein Unterordner mit seinen Bildern, Annotationen und Konfiguration.",
+  "selectFolder": "Projektordner auswählen",
+  "selectedFolder": "Ausgewählter Ordner",
+  "confirm": "Los geht's",
+  "noFolder": "Kein Ordner ausgewählt",
+  "changeFolder": "Ordner ändern"
+}

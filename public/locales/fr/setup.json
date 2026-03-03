@@ -1,0 +1,9 @@
+{
+  "welcome": "Bienvenue sur Annotix",
+  "description": "Choisissez un dossier où vos projets seront stockés. Chaque projet sera un sous-dossier avec ses images, annotations et configuration.",
+  "selectFolder": "Sélectionner le Dossier de Projets",
+  "selectedFolder": "Dossier sélectionné",
+  "confirm": "Commencer",
+  "noFolder": "Aucun dossier sélectionné",
+  "changeFolder": "Changer de Dossier"
+}

@@ -1,0 +1,539 @@
+{
+  "new": "Nuevo Proyecto",
+  "name": "Nombre del Proyecto",
+  "namePlaceholder": "Mi Proyecto Annotix",
+  "type": "Tipo de Anotación",
+  "typeSelectHelper": "Selecciona el tipo de anotación según tu objetivo de entrenamiento",
+  "types": {
+    "classification": {
+      "name": "Clasificación Simple",
+      "description": "Asignar una sola etiqueta a cada imagen completa",
+      "useCases": "Identificar qué contiene la imagen (ej: gato, perro, coche)",
+      "models": "ResNet, VGG, EfficientNet, MobileNet",
+      "difficulty": "Principiante"
+    },
+    "bbox": {
+      "name": "Bounding Box",
+      "description": "Detección de objetos con cajas delimitadoras",
+      "useCases": "Detectar y localizar objetos en imágenes",
+      "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+      "difficulty": "Principiante"
+    },
+    "mask": {
+      "name": "Máscara",
+      "description": "Segmentación de instancias con máscaras de píxeles",
+      "useCases": "Separar objetos a nivel de píxel",
+      "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+      "difficulty": "Intermedio"
+    },
+    "multiLabel": {
+      "name": "Clasificación Multi-Etiqueta",
+      "description": "Asignar múltiples etiquetas a cada imagen",
+      "useCases": "Imagen con varios elementos (ej: parque + perro + cielo)",
+      "models": "ResNet, VGG con salida multi-label",
+      "difficulty": "Principiante"
+    },
+    "detection": {
+      "name": "Detección de Objetos",
+      "description": "Localizar objetos con cajas rectangulares (bounding boxes)",
+      "useCases": "Encontrar y ubicar objetos específicos en la imagen",
+      "models": "YOLO, SSD, Faster R-CNN, RetinaNet",
+      "difficulty": "Intermedio"
+    },
+    "segmentation": {
+      "name": "Segmentación Semántica",
+      "description": "Clasificar cada píxel de la imagen por clase",
+      "useCases": "Separar regiones (ej: carretera, cielo, edificios)",
+      "models": "U-Net, DeepLab, FCN",
+      "difficulty": "Avanzado"
+    },
+    "instanceSeg": {
+      "name": "Segmentación de Instancias",
+      "description": "Delinear contorno de cada objeto individual",
+      "useCases": "Separar objetos individuales a nivel de píxel",
+      "models": "Mask R-CNN, YOLACT, YOLOv8-seg",
+      "difficulty": "Avanzado"
+    },
+    "keypoints": {
+      "name": "Puntos Clave",
+      "description": "Marcar puntos específicos en objetos",
+      "useCases": "Pose estimation, reconocimiento facial, anatomía",
+      "models": "OpenPose, HRNet, MediaPipe",
+      "difficulty": "Intermedio"
+    },
+    "polygon": {
+      "name": "Segmentación con Polígonos",
+      "description": "Dibujar polígonos punto por punto para segmentación precisa",
+      "useCases": "Contornos precisos, formas geométricas, más liviano que máscaras",
+      "models": "YOLOv8-seg, Mask R-CNN, SOLO",
+      "difficulty": "Intermedio"
+    },
+    "landmarks": {
+      "name": "Puntos de Referencia",
+      "description": "Colocar puntos independientes sin conexiones",
+      "useCases": "Centros de objetos, puntos de referencia, conteo, ubicaciones",
+      "models": "Modelos de detección, detectores de puntos personalizados",
+      "difficulty": "Principiante"
+    },
+    "obb": {
+      "name": "Cajas Rotadas (OBB)",
+      "description": "Bounding boxes con rotación libre",
+      "useCases": "Texto en ángulos, objetos aéreos, satélites",
+      "models": "Rotated-YOLO, RRPN",
+      "difficulty": "Avanzado"
+    },
+    "semanticSeg": {
+      "name": "Segmentación Semántica Pura",
+      "description": "Clasificar cada píxel sin distinguir instancias",
+      "useCases": "Mapas de segmentación, paisajes, escenas urbanas",
+      "models": "U-Net, DeepLabV3+, SegFormer",
+      "difficulty": "Avanzado"
+    },
+    "panopticSeg": {
+      "name": "Segmentación Panóptica",
+      "description": "Combina segmentación semántica e instancias",
+      "useCases": "Conducción autónoma, análisis de escenas completas",
+      "models": "Panoptic-FPN, DETR, MaskFormer",
+      "difficulty": "Avanzado"
+    },
+    "ocr": {
+      "name": "OCR (Reconocimiento de Texto)",
+      "description": "Detectar y reconocer texto en imágenes",
+      "useCases": "Documentos, señales, carteles, facturas",
+      "models": "CRAFT, EasyOCR, Tesseract, PaddleOCR",
+      "difficulty": "Intermedio"
+    },
+    "depthEstimation": {
+      "name": "Estimación de Profundidad",
+      "description": "Predecir distancia de cada píxel a la cámara",
+      "useCases": "Robótica, AR/VR, reconstrucción 3D",
+      "models": "MiDaS, DPT, Depth Anything",
+      "difficulty": "Avanzado"
+    },
+    "audioClassification": {
+      "name": "Clasificación de Audio",
+      "description": "Asignar etiqueta a clips de audio",
+      "useCases": "Clasificación de música, sonidos ambientales",
+      "models": "AudioSet, PANNs, YAMNet",
+      "difficulty": "Intermedio"
+    },
+    "speechRecognition": {
+      "name": "Reconocimiento de Voz",
+      "description": "Transcribir audio a texto",
+      "useCases": "Subtítulos, asistentes de voz, transcripción",
+      "models": "Whisper, Wav2Vec2, DeepSpeech",
+      "difficulty": "Avanzado"
+    },
+    "soundEventDetection": {
+      "name": "Detección de Eventos Sonoros",
+      "description": "Identificar y localizar eventos en audio",
+      "useCases": "Monitoreo de seguridad, análisis urbano",
+      "models": "CRNN, CNN14, SED-CRNN",
+      "difficulty": "Avanzado"
+    },
+    "speakerIdentification": {
+      "name": "Identificación de Hablante",
+      "description": "Reconocer quién está hablando",
+      "useCases": "Seguridad, diarización de reuniones",
+      "models": "x-vector, ECAPA-TDNN, SpeakerNet",
+      "difficulty": "Avanzado"
+    },
+    "audioTagging": {
+      "name": "Etiquetado de Audio",
+      "description": "Asignar múltiples etiquetas a audio",
+      "useCases": "Análisis de escenas acústicas",
+      "models": "VGGish, PANNs, AudioSet",
+      "difficulty": "Intermedio"
+    },
+    "musicGenreClassification": {
+      "name": "Clasificación de Géneros Musicales",
+      "description": "Identificar género musical de una canción",
+      "useCases": "Organización de bibliotecas musicales",
+      "models": "MusiCNN, CNN-Spectrograms",
+      "difficulty": "Intermedio"
+    },
+    "emotionRecognition": {
+      "name": "Reconocimiento de Emociones",
+      "description": "Detectar emoción en voz",
+      "useCases": "Atención al cliente, análisis de sentimientos",
+      "models": "OpenSMILE, EmotiW, SER-CNN",
+      "difficulty": "Avanzado"
+    },
+    "voiceActivityDetection": {
+      "name": "Detección de Actividad de Voz (VAD)",
+      "description": "Detectar cuando hay voz en audio",
+      "useCases": "Preprocesamiento de audio, sistemas telefónicos",
+      "models": "WebRTC VAD, Silero VAD",
+      "difficulty": "Principiante"
+    },
+    "keywordSpotting": {
+      "name": "Detección de Palabras Clave",
+      "description": "Detectar palabras específicas en audio",
+      "useCases": "Asistentes de voz (Hey Siri, OK Google)",
+      "models": "CNN-KWS, Depthwise Separable CNNs",
+      "difficulty": "Intermedio"
+    },
+    "environmentalSound": {
+      "name": "Clasificación de Sonidos Ambientales",
+      "description": "Clasificar sonidos del entorno",
+      "useCases": "Monitoreo urbano, conservación de fauna",
+      "models": "ESC-CNN, UrbanSound8K models",
+      "difficulty": "Intermedio"
+    },
+    "actionRecognition": {
+      "name": "Reconocimiento de Acciones",
+      "description": "Identificar acciones en video",
+      "useCases": "Análisis deportivo, vigilancia, interacción humana",
+      "models": "C3D, I3D, SlowFast, X3D",
+      "difficulty": "Avanzado"
+    },
+    "objectTracking": {
+      "name": "Seguimiento de Objetos",
+      "description": "Rastrear objetos a través de frames",
+      "useCases": "Vigilancia, análisis de tráfico, deportes",
+      "models": "SORT, DeepSORT, ByteTrack, BoT-SORT",
+      "difficulty": "Avanzado"
+    },
+    "temporalActionLocalization": {
+      "name": "Localización Temporal de Acciones",
+      "description": "Detectar cuándo ocurren acciones en video",
+      "useCases": "Análisis de video, resúmenes automáticos",
+      "models": "BMN, TSN, ActionFormer",
+      "difficulty": "Avanzado"
+    },
+    "videoClassification": {
+      "name": "Clasificación de Video",
+      "description": "Asignar categoría a video completo",
+      "useCases": "Organización de contenido, recomendaciones",
+      "models": "3D-CNN, Two-Stream Networks, TimeSformer",
+      "difficulty": "Intermedio"
+    },
+    "videoSegmentation": {
+      "name": "Segmentación de Video",
+      "description": "Segmentar objetos en video frame por frame",
+      "useCases": "Edición de video, efectos especiales",
+      "models": "STM, XMem, SAM-Track",
+      "difficulty": "Avanzado"
+    },
+    "activityDetection": {
+      "name": "Detección de Actividades",
+      "description": "Detectar actividades humanas específicas",
+      "useCases": "Monitoreo de personas mayores, seguridad",
+      "models": "ActivityNet models, TSM",
+      "difficulty": "Avanzado"
+    },
+    "poseTracking": {
+      "name": "Seguimiento de Poses",
+      "description": "Rastrear puntos clave del cuerpo en video",
+      "useCases": "Análisis de movimiento, fitness, deportes",
+      "models": "AlphaPose, OpenPose, MMPose",
+      "difficulty": "Avanzado"
+    },
+    "videoAnomalyDetection": {
+      "name": "Detección de Anomalías en Video",
+      "description": "Detectar eventos inusuales en video",
+      "useCases": "Vigilancia, control de calidad industrial",
+      "models": "AnomalyNet, Future Frame Prediction",
+      "difficulty": "Avanzado"
+    },
+    "spatiotemporalAction": {
+      "name": "Detección Espaciotemporal de Acciones",
+      "description": "Detectar acciones en espacio y tiempo",
+      "useCases": "Análisis detallado de video, YOLO-Act",
+      "models": "AVA models, SlowFast, YOLO-Act",
+      "difficulty": "Avanzado"
+    },
+    "timeSeriesClassification": {
+      "name": "Clasificación de Series Temporales",
+      "description": "Asignar una clase a cada serie temporal completa (modo clasificación global)",
+      "useCases": "Diagnóstico médico, reconocimiento de gestos, clasificación de ECG",
+      "models": "InceptionTime, ROCKET, ResNet",
+      "difficulty": "Intermedio"
+    },
+    "timeSeriesForecasting": {
+      "name": "Pronóstico de Series Temporales",
+      "description": "Marcar ventanas históricas y horizonte de predicción usando rangos",
+      "useCases": "Predicción de ventas, clima, demanda energética",
+      "models": "LSTM, Transformer, N-BEATS, Prophet",
+      "difficulty": "Avanzado"
+    },
+    "anomalyDetection": {
+      "name": "Detección de Anomalías",
+      "description": "Marcar puntos anómalos en la serie temporal",
+      "useCases": "Detección de fraudes, fallos en equipos, monitoreo de salud",
+      "models": "AutoEncoder, Isolation Forest, LSTM-AE",
+      "difficulty": "Avanzado"
+    },
+    "timeSeriesSegmentation": {
+      "name": "Segmentación de Series Temporales",
+      "description": "Dividir serie en segmentos con clases usando rangos",
+      "useCases": "Análisis de comportamiento, cambio de régimen, estados de actividad",
+      "models": "ClaSP, FLUSS, Seasonal-Trend Decomposition",
+      "difficulty": "Avanzado"
+    },
+    "patternRecognition": {
+      "name": "Reconocimiento de Patrones",
+      "description": "Marcar patrones/motifs repetitivos usando rangos",
+      "useCases": "Análisis bursátil, señales biomédicas, detección de ciclos",
+      "models": "Matrix Profile, STOMP, SAX",
+      "difficulty": "Intermedio"
+    },
+    "eventDetection": {
+      "name": "Detección de Eventos",
+      "description": "Marcar eventos discretos en el tiempo usando puntos",
+      "useCases": "Monitoreo de sensores, alertas, cambios de estado",
+      "models": "Change Point Detection, Event Detection CNN",
+      "difficulty": "Intermedio"
+    },
+    "timeSeriesRegression": {
+      "name": "Regresión de Series Temporales",
+      "description": "Marcar puntos con valores target numéricos",
+      "useCases": "Estimación de demanda, pricing dinámico, predicción de valores",
+      "models": "XGBoost, Random Forest, Neural Networks",
+      "difficulty": "Intermedio"
+    },
+    "clustering": {
+      "name": "Agrupamiento de Series",
+      "description": "Asignar cluster a cada serie temporal completa (modo clasificación global)",
+      "useCases": "Segmentación de clientes, análisis de patrones, agrupación de comportamientos",
+      "models": "K-Shape, DTW-KMeans, K-Means",
+      "difficulty": "Intermedio"
+    },
+    "imputation": {
+      "name": "Imputación de Valores Faltantes",
+      "description": "Marcar secciones de datos faltantes a imputar usando rangos",
+      "useCases": "Limpieza de datos de sensores, relleno de gaps en mediciones",
+      "models": "MICE, KNN, Interpolation, BRITS",
+      "difficulty": "Intermedio"
+    },
+    "multi-label-classification": {
+      "name": "Clasificación Multi-Etiqueta",
+      "description": "Asignar múltiples etiquetas a cada imagen"
+    },
+    "timeseries-classification": {
+      "name": "Clasificación de Series Temporales",
+      "description": "Clasificar series temporales completas en categorías"
+    },
+    "timeseries-forecasting": {
+      "name": "Pronóstico de Series Temporales",
+      "description": "Predecir valores futuros a partir de datos históricos"
+    },
+    "anomaly-detection": {
+      "name": "Detección de Anomalías",
+      "description": "Detectar patrones inusuales en series temporales"
+    },
+    "timeseries-segmentation": {
+      "name": "Segmentación de Series Temporales",
+      "description": "Segmentar series temporales en regiones distintas"
+    },
+    "pattern-recognition": {
+      "name": "Reconocimiento de Patrones",
+      "description": "Identificar patrones recurrentes en series temporales"
+    },
+    "event-detection": {
+      "name": "Detección de Eventos",
+      "description": "Detectar eventos específicos en series temporales"
+    },
+    "timeseries-regression": {
+      "name": "Regresión de Series Temporales",
+      "description": "Predecir valores numéricos a partir de series temporales"
+    },
+    "object3DDetection": {
+      "name": "Detección de Objetos 3D",
+      "description": "Detectar objetos en nubes de puntos 3D",
+      "useCases": "Conducción autónoma, robótica",
+      "models": "PointNet++, VoxelNet, PointPillars",
+      "difficulty": "Avanzado"
+    },
+    "semantic3DSegmentation": {
+      "name": "Segmentación Semántica 3D",
+      "description": "Clasificar puntos en nubes 3D",
+      "useCases": "Mapeo urbano, BIM, escaneo de edificios",
+      "models": "PointNet, MinkowskiNet, KPConv",
+      "difficulty": "Avanzado"
+    },
+    "instance3DSegmentation": {
+      "name": "Segmentación de Instancias 3D",
+      "description": "Separar objetos individuales en 3D",
+      "useCases": "Robótica, manipulación de objetos",
+      "models": "PointGroup, SoftGroup, Mask3D",
+      "difficulty": "Avanzado"
+    },
+    "pointCloudClassification": {
+      "name": "Clasificación de Nubes de Puntos",
+      "description": "Clasificar nubes de puntos completas",
+      "useCases": "Reconocimiento de objetos 3D",
+      "models": "PointNet, DGCNN, PointTransformer",
+      "difficulty": "Avanzado"
+    },
+    "meshSegmentation": {
+      "name": "Segmentación de Mallas",
+      "description": "Segmentar mallas poligonales 3D",
+      "useCases": "Modelado 3D, análisis geométrico",
+      "models": "MeshCNN, TextureNet",
+      "difficulty": "Avanzado"
+    },
+    "pose3DEstimation": {
+      "name": "Estimación de Pose 3D",
+      "description": "Estimar poses humanas en 3D",
+      "useCases": "Captura de movimiento, animación",
+      "models": "VideoPose3D, VoxelPose",
+      "difficulty": "Avanzado"
+    },
+    "keypoint3DDetection": {
+      "name": "Detección de Puntos Clave 3D",
+      "description": "Detectar puntos de interés en 3D",
+      "useCases": "Registro de nubes de puntos, SLAM",
+      "models": "D3Feat, FCGF, Predator",
+      "difficulty": "Avanzado"
+    },
+    "surfaceReconstruction": {
+      "name": "Reconstrucción de Superficies",
+      "description": "Reconstruir superficies desde puntos",
+      "useCases": "Escaneo 3D, patrimonio cultural",
+      "models": "Poisson Surface Reconstruction, COLMAP",
+      "difficulty": "Avanzado"
+    },
+    "slamAnnotation": {
+      "name": "Anotación para SLAM",
+      "description": "Anotar datos para localización y mapeo",
+      "useCases": "Robótica móvil, navegación autónoma",
+      "models": "ORB-SLAM, LiDAR-SLAM",
+      "difficulty": "Avanzado"
+    },
+    "textClassification": {
+      "name": "Clasificación de Texto",
+      "description": "Asignar categoría a texto",
+      "useCases": "Clasificación de noticias, spam detection",
+      "models": "BERT, RoBERTa, DistilBERT",
+      "difficulty": "Intermedio"
+    },
+    "namedEntityRecognition": {
+      "name": "Reconocimiento de Entidades (NER)",
+      "description": "Identificar nombres, lugares, organizaciones",
+      "useCases": "Extracción de información, análisis de documentos",
+      "models": "SpaCy, Flair, BERT-NER",
+      "difficulty": "Intermedio"
+    },
+    "sentimentAnalysis": {
+      "name": "Análisis de Sentimientos",
+      "description": "Detectar sentimiento (positivo/negativo/neutral)",
+      "useCases": "Análisis de opiniones, redes sociales",
+      "models": "VADER, TextBlob, RoBERTa-Sentiment",
+      "difficulty": "Intermedio"
+    },
+    "intentClassification": {
+      "name": "Clasificación de Intenciones",
+      "description": "Identificar intención del usuario",
+      "useCases": "Chatbots, asistentes virtuales",
+      "models": "DIET, Rasa NLU, BERT-Intent",
+      "difficulty": "Intermedio"
+    },
+    "relationExtraction": {
+      "name": "Extracción de Relaciones",
+      "description": "Identificar relaciones entre entidades",
+      "useCases": "Grafos de conocimiento, análisis de textos",
+      "models": "SpanBERT, LUKE, Relation Extraction BERT",
+      "difficulty": "Avanzado"
+    },
+    "posTagging": {
+      "name": "Etiquetado Gramatical (POS)",
+      "description": "Identificar categorías gramaticales",
+      "useCases": "Análisis lingüístico, preprocesamiento NLP",
+      "models": "SpaCy, NLTK, Flair",
+      "difficulty": "Principiante"
+    },
+    "dependencyParsing": {
+      "name": "Análisis de Dependencias",
+      "description": "Analizar estructura sintáctica",
+      "useCases": "Comprensión de lenguaje, traducción",
+      "models": "SpaCy, Stanford Parser",
+      "difficulty": "Avanzado"
+    },
+    "questionAnswering": {
+      "name": "Respuesta a Preguntas",
+      "description": "Responder preguntas sobre texto",
+      "useCases": "Asistentes QA, búsqueda de información",
+      "models": "BERT-QA, RoBERTa-QA, T5",
+      "difficulty": "Avanzado"
+    },
+    "keyphraseExtraction": {
+      "name": "Extracción de Frases Clave",
+      "description": "Identificar frases importantes",
+      "useCases": "Resúmenes, indexación de documentos",
+      "models": "YAKE, KeyBERT, RAKE",
+      "difficulty": "Intermedio"
+    },
+    "entityLinking": {
+      "name": "Vinculación de Entidades",
+      "description": "Enlazar entidades a bases de conocimiento",
+      "useCases": "Enriquecimiento de datos, grafos de conocimiento",
+      "models": "BLINK, ELQ, GENRE",
+      "difficulty": "Avanzado"
+    },
+    "toxicityClassification": {
+      "name": "Clasificación de Toxicidad",
+      "description": "Detectar contenido tóxico u ofensivo",
+      "useCases": "Moderación de contenido, filtros",
+      "models": "Perspective API, Detoxify, RoBERTa-Toxicity",
+      "difficulty": "Intermedio"
+    },
+    "languageIdentification": {
+      "name": "Identificación de Idioma",
+      "description": "Detectar idioma del texto",
+      "useCases": "Procesamiento multilingüe, traducción",
+      "models": "langdetect, fastText, XLM-RoBERTa",
+      "difficulty": "Principiante"
+    },
+    "tabular": {
+      "name": "ML Tabular",
+      "description": "ML clásico con datos CSV/tabulares"
+    },
+    "useCasesLabel": "Casos de uso",
+    "modelsLabel": "Modelos recomendados",
+    "difficultyLabel": "Dificultad"
+  },
+  "categories": {
+    "images": "Anotación de Imágenes",
+    "classification": "Clasificación",
+    "timeSeries": "Series Temporales",
+    "tabular": "Tabular / ML Clásico"
+  },
+  "modality": "Modalidad",
+  "initialClasses": "Clases Iniciales (opcional)",
+  "classesPlaceholder": "clase1, clase2, clase3",
+  "classesHelp": "Separadas por comas. Puedes agregar más después.",
+  "imageDimensions": "Dimensiones de Imágenes",
+  "dimensionsAuto": "Automático - Acepta cualquier tamaño",
+  "dimensionsFixed": "Fijo - Todas las imágenes se redimensionarán",
+  "targetSize": "Tamaño objetivo",
+  "resizeStrategy": "Estrategia",
+  "enterName": "Ingresa un nombre para el proyecto",
+  "created": "Proyecto \"{name}\" creado",
+  "updated": "Actualizado",
+  "loaded": "Proyecto \"{name}\" cargado",
+  "deleted": "Proyecto eliminado",
+  "duplicated": "Proyecto \"{name}\" duplicado",
+  "renamed": "Proyecto renombrado",
+  "imported": "Proyecto \"{name}\" importado",
+  "exported": "Proyecto exportado",
+  "configExported": "Configuración exportada",
+  "selectFirst": "Selecciona un proyecto primero",
+  "noProjects": "No hay proyectos disponibles",
+  "manageProjects": "Gestionar Proyectos",
+  "renameProject": "Renombrar Proyecto",
+  "newName": "Nuevo nombre",
+  "images": "imágenes",
+  "annotations": "anotaciones",
+  "exportBackup": "Descargar backup .tix antes de eliminar",
+  "deleteWarning": {
+    "title": "⚠️ ADVERTENCIA: ELIMINACIÓN PERMANENTE",
+    "confirmTitle": "¿Confirmar Eliminación?",
+    "projectName": "Proyecto:",
+    "message": "Estás a punto de eliminar este proyecto de forma PERMANENTE.",
+    "permanent": "Esta acción NO se puede deshacer",
+    "allData": "Se eliminarán TODAS las imágenes y anotaciones",
+    "noUndo": "No hay forma de recuperar los datos eliminados",
+    "recommendation": "💡 Recomendación: Exporta el proyecto en formato .tix como backup ANTES de eliminarlo"
+  }
+}

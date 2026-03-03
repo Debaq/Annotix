@@ -1,0 +1,27 @@
+{
+  "installButton": "アプリをインストール",
+  "modal": {
+    "title": "🚀 Annotixをアプリとしてインストール",
+    "benefits": "インストールのメリット：",
+    "benefit1": "✅ デスクトップからの直接アクセス",
+    "benefit2": "✅ オフラインで動作",
+    "benefit3": "✅ より高速でスムーズ",
+    "benefit4": "✅ ブラウザバーなし",
+    "benefit5": "✅ データは常にプライベート",
+    "benefit6": "✅ 自動更新",
+    "platformCompatibility": "プラットフォーム互換性：",
+    "androidInfo": "<strong>Android：</strong>優れた動作。完全なネイティブインストール、Play Storeアプリのように動作。",
+    "iosInfo": "<strong>iOS/iPadOS：</strong>良好な動作、ただしSafariが定期的にキャッシュをクリアする可能性。<strong>重要：</strong>プロジェクトをエクスポートして頻繁に進捗を保存。",
+    "linuxInfo": "<strong>Linux：</strong>完璧に動作。Chrome、Firefox、Edgeで完全サポート。",
+    "windowsInfo": "<strong>Windows：</strong>ChromeとEdgeで問題なく動作するはずですが、広範なテストは行えていません。",
+    "generalTip": "💡 <strong>推奨：</strong>OSに関係なく、定期的にプロジェクトをバックアップとしてエクスポートしてください。",
+    "cancelButton": "今はしない",
+    "installButtonModal": "🖖 アプリをインストール"
+  },
+  "notifications": {
+    "installed": "Annotixが正常にインストールされました！",
+    "installFailed": "アプリのインストールエラー",
+    "updateAvailable": "アップデートが利用可能です。リロードして更新してください。",
+    "offline": "オフラインモードが有効です。アプリは接続なしで動作します。"
+  }
+}

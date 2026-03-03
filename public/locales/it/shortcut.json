@@ -1,0 +1,14 @@
+{
+  "title": "Scorciatoie",
+  "save": "Salva",
+  "undo": "Annulla",
+  "delete": "Elimina",
+  "navigation": "Navigazione",
+  "bbox": "Bbox",
+  "mask": "Maschera",
+  "select": "Seleziona",
+  "pan": "Pan",
+  "classes": "Classe 1-9",
+  "navigateImages": "shortcuts.navigateImages",
+  "selectClass": "shortcuts.selectClass"
+}

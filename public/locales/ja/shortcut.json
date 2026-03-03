@@ -1,0 +1,14 @@
+{
+  "title": "ショートカット",
+  "save": "保存",
+  "undo": "元に戻す",
+  "delete": "削除",
+  "navigation": "ナビゲーション",
+  "bbox": "Bbox",
+  "mask": "マスク",
+  "select": "選択",
+  "pan": "パン",
+  "classes": "クラス 1-9",
+  "navigateImages": "shortcuts.navigateImages",
+  "selectClass": "shortcuts.selectClass"
+}

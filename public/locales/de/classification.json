@@ -1,0 +1,16 @@
+{
+  "selectOne": "Wähle das richtige Label aus",
+  "selectMultiple": "Wähle die zutreffenden Labels aus",
+  "singleHint": "Du kannst nur ein Label auswählen",
+  "multiHint": "Du kannst mehrere Labels auswählen",
+  "noLabels": "Keine Labels zugewiesen",
+  "labeled": "Gelabelt",
+  "selectLabel": "Wähle ein Label",
+  "selectLabels": "Wähle Labels",
+  "selected": "ausgewählt",
+  "multiLabel": "Multi-Label-Klassifikation",
+  "singleLabel": "Einfache Klassifikation",
+  "noImageSelected": "Kein Bild ausgewählt. Bitte wähle ein Bild aus der Galerie.",
+  "multiLabelInstructions": "Wähle ein oder mehrere Labels aus, die auf dieses Bild zutreffen. Drücke Ctrl+S zum Speichern.",
+  "singleLabelInstructions": "Wähle das Label, das dieses Bild am besten beschreibt. Drücke Ctrl+S zum Speichern."
+}

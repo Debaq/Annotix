@@ -1,0 +1,14 @@
+{
+  "title": "단축키",
+  "save": "저장",
+  "undo": "실행 취소",
+  "delete": "삭제",
+  "navigation": "탐색",
+  "bbox": "Bbox",
+  "mask": "Mask",
+  "select": "Select",
+  "pan": "Pan",
+  "classes": "클래스 1-9",
+  "navigateImages": "shortcuts.navigateImages",
+  "selectClass": "shortcuts.selectClass"
+}

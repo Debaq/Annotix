@@ -1,0 +1,9 @@
+{
+  "classification": "Clasificación Simple",
+  "multiLabel": "Clasificación Multi-Etiqueta",
+  "detection": "Detección de Objetos",
+  "segmentation": "Segmentación Semántica",
+  "instanceSeg": "Segmentación de Instancias",
+  "keypoints": "Puntos Clave",
+  "obb": "Cajas Rotadas (OBB)"
+}

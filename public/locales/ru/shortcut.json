@@ -1,0 +1,14 @@
+{
+  "title": "Горячие клавиши",
+  "save": "Сохранить",
+  "undo": "Отменить",
+  "delete": "Удалить",
+  "navigation": "Навигация",
+  "bbox": "Bbox",
+  "mask": "Mask",
+  "select": "Select",
+  "pan": "Pan",
+  "classes": "Класс 1-9",
+  "navigateImages": "shortcuts.navigateImages",
+  "selectClass": "shortcuts.selectClass"
+}

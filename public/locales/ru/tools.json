@@ -1,0 +1,25 @@
+{
+  "title": "Инструменты",
+  "bbox": "Box",
+  "obb": "OBB",
+  "mask": "Mask",
+  "polygon": "Полигон",
+  "keypoints": "Keypoints",
+  "landmarks": "Landmarks",
+  "select": "Select",
+  "pan": "Pan",
+  "eraseMode": "Ластик",
+  "newInstance": "Новый экземпляр",
+  "tooltips": {
+    "bbox": "Bounding Box (B)",
+    "obb": "Oriented Box (O)",
+    "mask": "Маска (M)",
+    "polygon": "Полигон (P)",
+    "keypoints": "Keypoints (K)",
+    "landmarks": "Landmarks (L)",
+    "point": "Точка (P)",
+    "range": "Диапазон (R)",
+    "select": "Выбрать (V)",
+    "pan": "Pan (H)"
+  }
+}

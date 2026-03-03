@@ -1,0 +1,26 @@
+{
+  "imageCount": "{{count}} Bilder",
+  "imageCount_plural": "{{count}} Bilder",
+  "empty": {
+    "title": "Keine Bilder",
+    "description": "Lade Bilder hoch, um mit der Annotation zu beginnen",
+    "upload": "Bilder hochladen"
+  },
+  "title": "Galerie",
+  "all": "Alle",
+  "annotated": "Annotiert",
+  "unannotated": "Nicht annotiert",
+  "deleteConfirm": "Dieses Bild löschen?",
+  "annotate": "Annotieren",
+  "upload": "Bilder auswählen",
+  "noImages": "Keine Bilder",
+  "filter": {
+    "all": "Alle",
+    "annotated": "Annotiert",
+    "unannotated": "Nicht annotiert"
+  },
+  "backToGallery": "Zurück zur Galerie",
+  "selectImage": "Wähle ein Bild aus",
+  "uploadOrSelect": "Lade ein Bild hoch oder wähle eines aus",
+  "uploading": "Bilder werden hochgeladen"
+}

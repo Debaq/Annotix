@@ -1,0 +1,69 @@
+{
+  "controlPanel": {
+    "title": "Browser Automation",
+    "logs": "Logs",
+    "waitingLogs": "Waiting for logs...",
+    "minimize": "Minimize",
+    "close": "Close"
+  },
+  "pause": "Pause",
+  "resume": "Resume",
+  "cancel": "Cancel",
+  "providers": {
+    "colab_free": "Colab Free",
+    "kimi": "Kimi",
+    "qwen": "Qwen",
+    "deep_seek": "DeepSeek",
+    "hugging_chat": "HuggingChat"
+  },
+  "colab": {
+    "steps": {
+      "openColab": "Open Google Colab",
+      "login": "Login to Google",
+      "createNotebook": "Create notebook",
+      "configureGpu": "Configure GPU",
+      "installDeps": "Install dependencies",
+      "uploadDataset": "Upload dataset",
+      "trainingCode": "Inject training code",
+      "runTraining": "Run training",
+      "monitorProgress": "Monitor progress",
+      "downloadModel": "Download model"
+    }
+  },
+  "llm": {
+    "steps": {
+      "openLlm": "Open LLM website",
+      "login": "Login",
+      "newConversation": "New conversation",
+      "sendPrompt": "Send prompt",
+      "waitResponse": "Wait for response",
+      "extractResponse": "Extract response"
+    }
+  },
+  "status": {
+    "idle": "Idle",
+    "detecting_browser": "Detecting browser",
+    "launching_browser": "Launching browser",
+    "waiting_login": "Waiting for login",
+    "running": "Running",
+    "paused": "Paused",
+    "completed": "Completed",
+    "failed": "Failed",
+    "cancelled": "Cancelled",
+    "waitingUser": "Action required"
+  },
+  "errors": {
+    "noBrowser": "No Chromium browser found",
+    "captchaDetected": "CAPTCHA detected",
+    "runtimeDisconnected": "Runtime disconnected",
+    "timeout": "Operation timed out"
+  },
+  "instructions": {
+    "login": "Please login in the browser window. The automation will continue automatically once logged in.",
+    "captcha": "A CAPTCHA has been detected. Please solve it in the browser window."
+  },
+  "result": {
+    "modelDownloaded": "Model downloaded: {{path}}",
+    "llmResponse": "Response received"
+  }
+}

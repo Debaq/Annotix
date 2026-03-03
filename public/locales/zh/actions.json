@@ -1,0 +1,16 @@
+{
+  "title": "操作",
+  "save": "保存",
+  "undo": "撤销",
+  "clear": "清除",
+  "delete": "删除",
+  "cancel": "取消",
+  "create": "创建",
+  "confirm": "确认",
+  "close": "关闭",
+  "duplicate": "复制",
+  "rename": "重命名",
+  "exportBackup": "导出备份",
+  "deleteConfirm": "是的，删除",
+  "clearConfirm": "清除此图像的所有标注？"
+}

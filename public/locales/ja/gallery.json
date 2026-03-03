@@ -1,0 +1,26 @@
+{
+  "imageCount": "{{count}} 画像",
+  "imageCount_plural": "{{count}} 画像",
+  "empty": {
+    "title": "画像がありません",
+    "description": "画像をアップロードしてアノテーションを開始",
+    "upload": "画像をアップロード"
+  },
+  "title": "ギャラリー",
+  "all": "すべて",
+  "annotated": "アノテーション済み",
+  "unannotated": "未アノテーション",
+  "deleteConfirm": "この画像を削除しますか？",
+  "annotate": "アノテーション",
+  "upload": "画像を選択",
+  "noImages": "画像がありません",
+  "filter": {
+    "all": "すべて",
+    "annotated": "アノテーション済み",
+    "unannotated": "未アノテーション"
+  },
+  "backToGallery": "ギャラリーに戻る",
+  "selectImage": "画像を選択",
+  "uploadOrSelect": "画像をアップロードまたは選択",
+  "uploading": "画像をアップロード中"
+}

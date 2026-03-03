@@ -1,0 +1,13 @@
+{
+  "zoomIn": "Zoom In",
+  "zoomOut": "Zoom Out",
+  "resetZoom": "Сбросить Zoom",
+  "fitScreen": "По размеру экрана",
+  "toggleLabels": "Показать/Скрыть метки",
+  "toggleGrid": "Показать/Скрыть сетку",
+  "prevImage": "Предыдущее изображение (← / PgUp)",
+  "nextImage": "Следующее изображение (→ / PgDn)",
+  "reset": "Сбросить",
+  "tools": "Инструменты",
+  "zoom": "Zoom"
+}

@@ -1,0 +1,9 @@
+{
+  "title": "統計",
+  "images": "画像",
+  "annotated": "アノテーション済み",
+  "labels": "ラベル",
+  "classes": "クラス",
+  "progress": "枚アノテーション済み",
+  "annotations": "stats.annotations"
+}
