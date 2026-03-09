@@ -26,6 +26,8 @@ pub struct ProjectFile {
     pub p2p: Option<P2pProjectConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none", rename = "p2pDownload")]
     pub p2p_download: Option<P2pDownloadStatus>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub inference_models: Vec<InferenceModelEntry>,
 }
 
 /// Estado de descarga P2P pendiente (imágenes por descargar)
@@ -87,6 +89,8 @@ pub struct ImageEntry {
     pub lock_expires: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none", rename = "downloadStatus")]
     pub download_status: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub predictions: Vec<PredictionEntry>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -234,4 +238,58 @@ pub struct TrainingJobEntry {
     pub cloud_job_url: Option<String>,
     #[serde(default, rename = "modelDownloadUrl")]
     pub model_download_url: Option<String>,
+}
+
+// ─── Inference / Predicciones ───────────────────────────────────────────────
+
+/// Modelo de inferencia subido al proyecto
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InferenceModelEntry {
+    pub id: String,
+    pub name: String,
+    /// Nombre del archivo en disco (dentro de models/)
+    pub file: String,
+    /// "onnx" | "pt"
+    pub format: String,
+    /// "detect" | "segment" | "classify" | "pose" | "obb"
+    pub task: String,
+    pub class_names: Vec<String>,
+    #[serde(default)]
+    pub class_mapping: Vec<ClassMapping>,
+    pub input_size: Option<u32>,
+    pub model_hash: String,
+    pub uploaded: f64,
+    pub metadata: Option<serde_json::Value>,
+}
+
+/// Mapeo de clase del modelo a clase del proyecto
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClassMapping {
+    pub model_class_id: usize,
+    pub model_class_name: String,
+    /// UUID de la clase del proyecto, None = sin mapear
+    pub project_class_id: Option<String>,
+}
+
+/// Predicción generada por inferencia
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PredictionEntry {
+    pub id: String,
+    pub model_id: String,
+    /// Índice de clase del modelo
+    pub class_id: usize,
+    /// Nombre de clase del modelo
+    pub class_name: String,
+    pub confidence: f64,
+    /// Mismo formato que AnnotationEntry.data (bbox, polígono, etc.)
+    pub data: serde_json::Value,
+    #[serde(default = "default_prediction_status")]
+    pub status: String, // "pending" | "accepted" | "rejected"
+}
+
+fn default_prediction_status() -> String {
+    "pending".to_string()
 }

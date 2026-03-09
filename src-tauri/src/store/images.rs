@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::store::project_file::{AnnotationEntry, ImageEntry};
+use crate::store::project_file::{AnnotationEntry, ImageEntry, PredictionEntry};
 use crate::store::state::AppState;
 
 /// Timestamp JS
@@ -39,6 +39,8 @@ pub struct ImageResponse {
     pub lock_expires: Option<f64>,
     #[serde(rename = "downloadStatus", skip_serializing_if = "Option::is_none")]
     pub download_status: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub predictions: Vec<PredictionEntry>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -67,6 +69,7 @@ fn entry_to_response(entry: &ImageEntry, project_id: &str) -> ImageResponse {
         locked_by: entry.locked_by.clone(),
         lock_expires: entry.lock_expires,
         download_status: entry.download_status.clone(),
+        predictions: entry.predictions.clone(),
     }
 }
 
@@ -111,6 +114,7 @@ impl AppState {
             locked_by: None,
             lock_expires: None,
             download_status: None,
+            predictions: vec![],
         };
 
         Ok((id, entry))
@@ -176,6 +180,7 @@ impl AppState {
                 locked_by: None,
                 lock_expires: None,
                 download_status: None,
+                predictions: vec![],
             });
         }
 
@@ -228,6 +233,7 @@ impl AppState {
             locked_by: None,
             lock_expires: None,
             download_status: None,
+            predictions: vec![],
         };
 
         self.with_project_mut(project_id, |pf| {
