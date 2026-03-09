@@ -73,6 +73,7 @@ impl AppState {
             tabular_data: vec![],
             p2p: None,
             p2p_download: None,
+            inference_models: vec![],
         };
 
         io::write_project(&project_dir, &project)?;

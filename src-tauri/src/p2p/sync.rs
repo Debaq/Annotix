@@ -359,6 +359,7 @@ pub async fn doc_to_project_metadata(
                 locked_by: None,
                 lock_expires: None,
                 download_status: Some("pending".to_string()),
+                predictions: vec![],
             });
         }
     }
@@ -394,6 +395,7 @@ pub async fn doc_to_project_metadata(
         tabular_data: vec![],
         p2p: None,
         p2p_download,
+        inference_models: vec![],
     })
 }
 

@@ -2,6 +2,7 @@ mod browser_automation;
 mod commands;
 mod export;
 mod import;
+mod inference;
 mod p2p;
 mod store;
 mod training;
@@ -13,6 +14,7 @@ use store::AppState;
 use training::runner::TrainingProcessManager;
 use training::cloud::CloudTrainingManager;
 use training::TrainingEnvCache;
+use inference::runner::InferenceProcessManager;
 use browser_automation::BrowserAutomationManager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -26,6 +28,7 @@ pub fn run() {
         .manage(TrainingProcessManager::new())
         .manage(CloudTrainingManager::new())
         .manage(TrainingEnvCache::new())
+        .manage(InferenceProcessManager::new())
         .manage(BrowserAutomationManager::new())
         .manage(p2p::node::P2pState::new())
         .plugin(tauri_plugin_dialog::init())
@@ -190,6 +193,21 @@ pub fn run() {
             commands::automation_commands::list_provider_selectors,
             commands::automation_commands::get_provider_selectors,
             commands::automation_commands::save_provider_selectors,
+            // Inference
+            commands::inference_commands::upload_inference_model,
+            commands::inference_commands::delete_inference_model,
+            commands::inference_commands::list_inference_models,
+            commands::inference_commands::update_model_config,
+            commands::inference_commands::detect_model_metadata,
+            commands::inference_commands::parse_class_names,
+            commands::inference_commands::start_batch_inference,
+            commands::inference_commands::cancel_inference,
+            commands::inference_commands::run_single_inference,
+            commands::inference_commands::get_predictions,
+            commands::inference_commands::clear_predictions,
+            commands::inference_commands::accept_prediction,
+            commands::inference_commands::reject_prediction,
+            commands::inference_commands::convert_predictions,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
