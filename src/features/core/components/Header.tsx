@@ -10,6 +10,7 @@ import { useUIStore } from '../store/uiStore';
 import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
 import { ExportDialog } from '@/features/export/components/ExportDialog';
 import { TrainingPanel } from '@/features/training/components/TrainingPanel';
+import { InferencePanel } from '@/features/inference/components/InferencePanel';
 import { P2pStatusIndicator } from '@/features/p2p/components/P2pStatusIndicator';
 import { P2pGuard } from '@/features/p2p/components/P2pGuard';
 
@@ -114,6 +115,17 @@ export const Header: React.FC = () => {
                 >
                   <i className="fas fa-brain"></i>
                   <span className="hidden sm:inline">{t('training.title')}</span>
+                </button>
+              }
+            />
+            <InferencePanel
+              trigger={
+                <button
+                  className="h-9 px-3 rounded bg-purple-600/80 border border-purple-500/30 text-white text-sm hover:bg-purple-600 transition-all flex items-center gap-2"
+                  title={t('inference.title')}
+                >
+                  <i className="fas fa-magic"></i>
+                  <span className="hidden sm:inline">{t('inference.title')}</span>
                 </button>
               }
             />
