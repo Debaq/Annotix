@@ -80,6 +80,9 @@ export interface Annotation {
   type: ProjectType;
   classId: number;
   data: AnnotationData;
+  source?: 'user' | 'ai';     // "user" por defecto, "ai" para inferencia
+  confidence?: number;         // Solo para source="ai"
+  modelClassName?: string;     // Nombre de clase del modelo (solo AI)
 }
 
 export type AnnotationData =

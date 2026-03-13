@@ -9,5 +9,10 @@
   "nextImage": "次の画像 (→ / PageDown)",
   "reset": "リセット",
   "tools": "ツール",
-  "zoom": "ズーム"
+  "zoom": "ズーム",
+  "adjustments": "画像調整",
+  "brightness": "明るさ",
+  "contrast": "コントラスト",
+  "temperature": "色温度",
+  "sharpness": "シャープネス"
 }

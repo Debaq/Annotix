@@ -18,7 +18,7 @@ const appWindow = getCurrentWindow();
 
 export const Header: React.FC = () => {
   const { t } = useTranslation();
-  const { setCurrentProjectId } = useUIStore();
+  const { setCurrentProjectId, currentImageId } = useUIStore();
   const { project } = useCurrentProject();
   const navigate = useNavigate();
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -119,6 +119,8 @@ export const Header: React.FC = () => {
               }
             />
             <InferencePanel
+              currentImageId={currentImageId}
+              project={project}
               trigger={
                 <button
                   className="h-9 px-3 rounded bg-purple-600/80 border border-purple-500/30 text-white text-sm hover:bg-purple-600 transition-all flex items-center gap-2"

@@ -1,3 +1,4 @@
+pub mod ort_runner;
 pub mod runner;
 pub mod scripts;
 
@@ -33,21 +34,14 @@ pub struct InferenceProgressEvent {
     pub predictions_count: usize,
 }
 
-/// Resultado de inferencia por imagen
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct InferenceImageResult {
-    pub image_id: String,
-    pub predictions: Vec<InferencePrediction>,
-    pub inference_time_ms: f64,
+/// Infiere el tipo de anotación basado en la estructura de data
+pub fn infer_annotation_type(data: &serde_json::Value) -> String {
+    if data.get("points").is_some() {
+        "polygon".to_string()
+    } else if data.get("angle").is_some() {
+        "obb".to_string()
+    } else {
+        "bbox".to_string()
+    }
 }
 
-/// Predicción individual del modelo
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct InferencePrediction {
-    pub class_id: usize,
-    pub class_name: String,
-    pub confidence: f64,
-    pub data: serde_json::Value,
-}

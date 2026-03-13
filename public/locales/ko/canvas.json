@@ -9,5 +9,10 @@
   "nextImage": "다음 이미지 (→ / PgDn)",
   "reset": "초기화",
   "tools": "도구",
-  "zoom": "확대/축소"
+  "zoom": "확대/축소",
+  "adjustments": "이미지 조정",
+  "brightness": "밝기",
+  "contrast": "대비",
+  "temperature": "색온도",
+  "sharpness": "선명도"
 }

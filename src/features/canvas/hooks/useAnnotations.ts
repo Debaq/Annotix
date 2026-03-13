@@ -95,15 +95,19 @@ export function useAnnotations() {
     clearAnnotationsState,
   } = useAnnotationStore();
 
+  // Fingerprint de las anotaciones para detectar cambios (inferencia, import, etc.)
+  const annotationsFingerprint = image?.annotations
+    ? `${image.annotations.length}:${image.annotations[0]?.id || ''}:${image.annotations[image.annotations.length - 1]?.id || ''}`
+    : '';
+
   useEffect(() => {
     if (image) {
       setAnnotations(image.annotations || []);
-      setSelectedAnnotationId(null);
     } else {
       setAnnotations([]);
       setSelectedAnnotationId(null);
     }
-  }, [image?.id, setAnnotations, setSelectedAnnotationId]);
+  }, [image?.id, annotationsFingerprint, setAnnotations, setSelectedAnnotationId]);
 
   const saveAnnotations = useCallback(async (targetAnnotations?: Annotation[], showToast = false) => {
     if (!image?.id || !currentProjectId) {

@@ -23,7 +23,7 @@ export function PredictionsList({
   onConvert,
   onClear,
 }: PredictionsListProps) {
-  const { t } = useTranslation('inference');
+  const { t } = useTranslation();
 
   const pending = predictions.filter((p) => p.status === 'pending');
   const accepted = predictions.filter((p) => p.status === 'accepted');
@@ -33,7 +33,7 @@ export function PredictionsList({
     return (
       <div className="text-center py-4 text-gray-500 text-sm">
         <i className="fas fa-search text-lg mb-2 block" />
-        {t('noPredictions')}
+        {t('inference.noPredictions')}
       </div>
     );
   }
@@ -43,13 +43,13 @@ export function PredictionsList({
       {/* Resumen */}
       <div className="flex items-center gap-2 text-xs">
         <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400">
-          {pending.length} {t('pending')}
+          {pending.length} {t('inference.pending')}
         </Badge>
         <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-400">
-          {accepted.length} {t('accepted')}
+          {accepted.length} {t('inference.accepted')}
         </Badge>
         <Badge variant="secondary" className="bg-red-500/20 text-red-400">
-          {rejected.length} {t('rejected')}
+          {rejected.length} {t('inference.rejected')}
         </Badge>
       </div>
 
@@ -64,7 +64,7 @@ export function PredictionsList({
               onClick={onAcceptAll}
             >
               <i className="fas fa-check mr-1" />
-              {t('acceptAll')}
+              {t('inference.acceptAll')}
             </Button>
             <Button
               size="sm"
@@ -73,7 +73,7 @@ export function PredictionsList({
               onClick={onRejectAll}
             >
               <i className="fas fa-times mr-1" />
-              {t('rejectAll')}
+              {t('inference.rejectAll')}
             </Button>
           </>
         )}
@@ -84,7 +84,7 @@ export function PredictionsList({
             onClick={onConvert}
           >
             <i className="fas fa-exchange-alt mr-1" />
-            {t('convertAll')}
+            {t('inference.convertAll')}
           </Button>
         )}
         <Button
@@ -127,14 +127,14 @@ export function PredictionsList({
                   <button
                     onClick={() => onAccept(pred.id)}
                     className="w-6 h-6 rounded flex items-center justify-center bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors"
-                    title={t('acceptPrediction')}
+                    title={t('inference.acceptPrediction')}
                   >
                     <i className="fas fa-check text-[10px]" />
                   </button>
                   <button
                     onClick={() => onReject(pred.id)}
                     className="w-6 h-6 rounded flex items-center justify-center bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
-                    title={t('rejectPrediction')}
+                    title={t('inference.rejectPrediction')}
                   >
                     <i className="fas fa-times text-[10px]" />
                   </button>

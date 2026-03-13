@@ -9,5 +9,10 @@
   "nextImage": "Следующее изображение (→ / PgDn)",
   "reset": "Сбросить",
   "tools": "Инструменты",
-  "zoom": "Zoom"
+  "zoom": "Zoom",
+  "adjustments": "Настройки изображения",
+  "brightness": "Яркость",
+  "contrast": "Контраст",
+  "temperature": "Температура",
+  "sharpness": "Резкость"
 }
