@@ -9,5 +9,10 @@
   "nextImage": "下一张图像 (→ / PgDn)",
   "reset": "重置",
   "tools": "工具",
-  "zoom": "缩放"
+  "zoom": "缩放",
+  "adjustments": "图像调整",
+  "brightness": "亮度",
+  "contrast": "对比度",
+  "temperature": "色温",
+  "sharpness": "锐度"
 }

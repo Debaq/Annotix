@@ -32,6 +32,7 @@ impl AppState {
         task: &str,
         class_names: Vec<String>,
         input_size: Option<u32>,
+        metadata: Option<serde_json::Value>,
     ) -> Result<InferenceModelEntry, String> {
         let models_dir = self.project_models_dir(project_id)?;
         let source = PathBuf::from(source_path);
@@ -84,7 +85,7 @@ impl AppState {
             input_size,
             model_hash,
             uploaded: now,
-            metadata: None,
+            metadata,
         };
 
         let entry_clone = entry.clone();
@@ -151,21 +152,6 @@ impl AppState {
                 if let Some(t) = task {
                     model.task = t;
                 }
-            }
-            pf.updated = js_timestamp();
-        })
-    }
-
-    /// Guarda predicciones para una imagen
-    pub fn save_predictions(
-        &self,
-        project_id: &str,
-        image_id: &str,
-        predictions: Vec<PredictionEntry>,
-    ) -> Result<(), String> {
-        self.with_project_mut(project_id, |pf| {
-            if let Some(img) = pf.images.iter_mut().find(|i| i.id == image_id) {
-                img.predictions = predictions;
             }
             pf.updated = js_timestamp();
         })
@@ -263,6 +249,9 @@ impl AppState {
                                 annotation_type: infer_annotation_type(&pred.data),
                                 class_id,
                                 data: pred.data.clone(),
+                                source: "user".to_string(),
+                                confidence: Some(pred.confidence),
+                                model_class_name: Some(pred.class_name.clone()),
                             };
                             img.annotations.push(annotation);
                             converted += 1;

@@ -9,5 +9,10 @@
   "nextImage": "Nächstes Bild (→ / Bild↓)",
   "reset": "Zurücksetzen",
   "tools": "Werkzeuge",
-  "zoom": "Zoom"
+  "zoom": "Zoom",
+  "adjustments": "Anpassungen",
+  "brightness": "Helligkeit",
+  "contrast": "Kontrast",
+  "temperature": "Temperatur",
+  "sharpness": "Schärfe"
 }

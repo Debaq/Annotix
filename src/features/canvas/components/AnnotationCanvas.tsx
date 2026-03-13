@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, useReducer } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Stage, Layer, Image as KonvaImage, Rect, Transformer, Line, Circle, Group } from 'react-konva';
+import { Stage, Layer, Image as KonvaImage, Rect, Transformer, Line, Circle, Group, Text } from 'react-konva';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { useCurrentImage } from '../../gallery/hooks/useCurrentImage';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
@@ -8,6 +8,9 @@ import { useAnnotations, captureSaveContext, invalidateSaveContext } from '../ho
 import { useUIStore } from '../../core/store/uiStore';
 import { FloatingTools } from './FloatingTools';
 import { FloatingZoomControls } from './FloatingZoomControls';
+import { ImageAdjustments, DEFAULT_ADJUSTMENTS } from './ImageAdjustments';
+import type { ImageAdjustmentValues } from './ImageAdjustments';
+import { buildCSSFilter, processImage } from '../utils/imageFilters';
 import { ImageNavigation } from '../../gallery/components/ImageNavigation';
 import { AnnotationsBar } from './AnnotationsBar';
 import { skeletonPresets } from '../data/skeletonPresets';
@@ -27,6 +30,9 @@ import { KeypointsRenderer } from './renderers/KeypointsRenderer';
 import { LandmarksRenderer } from './renderers/LandmarksRenderer';
 import { MaskRenderer } from './renderers/MaskRenderer';
 import { matchesShortcut } from '../../core/utils/matchShortcut';
+import { useInferenceModels } from '../../inference/hooks/useInferenceModels';
+import { useInferenceRunner } from '../../inference/hooks/useInferenceRunner';
+import type { InferenceConfig } from '../../inference/types';
 
 const ZOOM_WHEEL_FACTOR = 1.05;
 const MIN_ZOOM_SCALE = 0.1;
@@ -87,6 +93,45 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     visible: false,
   });
   const [, forceKeypointsPreviewUpdate] = useReducer((v: number) => v + 1, 0);
+
+  // ─── Image adjustments (persisted per image) ───────────────────────────
+  const adjustmentsMapRef = useRef<Map<string, ImageAdjustmentValues>>(new Map());
+  const [imageAdjustments, setImageAdjustments] = useState<ImageAdjustmentValues>({ ...DEFAULT_ADJUSTMENTS });
+  const imageLayerRef = useRef<any>(null);
+  const [processedImage, setProcessedImage] = useState<HTMLImageElement | null>(null);
+  const originalImageRef = useRef<HTMLImageElement | null>(null);
+
+  // Save adjustments to map when they change
+  const handleSetImageAdjustments = useCallback((values: ImageAdjustmentValues) => {
+    setImageAdjustments(values);
+    const imgId = image?.id;
+    if (imgId) {
+      adjustmentsMapRef.current.set(imgId, values);
+    }
+  }, [image?.id]);
+
+  // ─── Inference hooks ──────────────────────────────────────────────────────
+  const projectId = project?.id || null;
+  const currentImageId = image?.id || null;
+  const { models: inferenceModels, selectedModel: inferenceModel } = useInferenceModels(projectId);
+  const {
+    running: inferenceRunning,
+    startSingle: startSingleInference,
+  } = useInferenceRunner();
+
+  // Contar anotaciones AI para mostrar en el panel
+  const aiAnnotationsCount = annotations.filter(a => a.source === 'ai').length;
+
+  const handleRunInference = useCallback(async () => {
+    if (!projectId || !inferenceModel || !currentImageId) return;
+    const config: InferenceConfig = {
+      confidenceThreshold: 0.25,
+      inputSize: inferenceModel.inputSize || null,
+      device: 'cpu',
+      iouThreshold: 0.45,
+    };
+    await startSingleInference(projectId, inferenceModel.id, currentImageId, config);
+  }, [projectId, inferenceModel, currentImageId, startSingleInference]);
 
   // Track previous tool to finish handlers when switching
   const prevToolRef = useRef<string | null>(null);
@@ -267,12 +312,18 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       if (cancelled) return;
 
       const img = new window.Image();
+      img.crossOrigin = 'anonymous';
       const url = convertFileSrc(filePath);
 
       img.onload = () => {
         if (cancelled) return;
         setKonvaImage(img);
         imageElementRef.current = img;
+        originalImageRef.current = img;
+        setProcessedImage(null);
+        // Restore per-image adjustments or reset to defaults
+        const saved = image.id ? adjustmentsMapRef.current.get(image.id) : undefined;
+        setImageAdjustments(saved ? { ...saved } : { ...DEFAULT_ADJUSTMENTS });
 
         // Calculate initial scale
         if (containerRef.current) {
@@ -302,7 +353,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     return () => {
       cancelled = true;
     };
-  }, [image]);
+  }, [image?.id]);
 
   // Handle container resize
   useEffect(() => {
@@ -471,7 +522,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     }
   };
 
-  // Handle annotation drag
+  // Handle annotation drag (si es AI, pasa a ser del usuario)
   const handleAnnotationDragEnd = (id: string, e: any) => {
     const node = e.target;
     const x = (node.x() - imageOffset.x) / scale;
@@ -479,13 +530,10 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     const width = node.width() / scale;
     const height = node.height() / scale;
 
+    const ann = annotations.find(a => a.id === id);
     updateAnnotation(id, {
-      data: {
-        x,
-        y,
-        width,
-        height,
-      }
+      data: { x, y, width, height },
+      ...(ann?.source === 'ai' ? { source: 'user' as const, confidence: undefined } : {}),
     });
   };
 
@@ -504,8 +552,10 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     const width = Math.max(5, (node.width() * scaleX) / scale);
     const height = Math.max(5, (node.height() * scaleY) / scale);
 
+    const ann = annotations.find(a => a.id === id);
     updateAnnotation(id, {
-      data: { x, y, width, height }
+      data: { x, y, width, height },
+      ...(ann?.source === 'ai' ? { source: 'user' as const, confidence: undefined } : {}),
     });
   };
 
@@ -762,6 +812,46 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     }
   }, [activeTool]);
 
+  // ─── Apply CSS filters (brightness, contrast, temperature) to image layer ──
+  useEffect(() => {
+    if (!imageLayerRef.current) return;
+    const canvas = imageLayerRef.current.getCanvas()?._canvas as HTMLCanvasElement | undefined;
+    if (!canvas) return;
+    canvas.style.filter = buildCSSFilter(imageAdjustments);
+  }, [imageAdjustments.brightness, imageAdjustments.contrast, imageAdjustments.temperature]);
+
+  // ─── Process CLAHE / Sharpness (pixel-level, debounced) ──────────────────
+  useEffect(() => {
+    if (!originalImageRef.current) return;
+    const orig = originalImageRef.current;
+
+    if (imageAdjustments.clahe === 0 && imageAdjustments.sharpness === 0) {
+      if (processedImage) {
+        setProcessedImage(null);
+        setKonvaImage(orig);
+      }
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      processImage(orig, imageAdjustments).then((result) => {
+        if (cancelled) return;
+        if (result) {
+          setProcessedImage(result);
+          setKonvaImage(result);
+        }
+      }).catch((err) => {
+        console.error('processImage failed:', err);
+      });
+    }, 150); // debounce
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [imageAdjustments.clahe, imageAdjustments.sharpness]);
+
   if (!image) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -808,6 +898,12 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
         onZoomReset={handleResetZoom}
       />
 
+      {/* Image Adjustments (Below Zoom Controls) */}
+      <ImageAdjustments
+        values={imageAdjustments}
+        onChange={handleSetImageAdjustments}
+      />
+
       {/* Image/Frame Info (Top Left) */}
       <div className="annotix-floating" style={{ top: '20px', left: '20px' }}>
         <div className="flex flex-col gap-1">
@@ -838,6 +934,30 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
                 <i className="fas fa-layer-group"></i>
                 <span>{annotations.length} {t('annotations.title')}</span>
               </div>
+              {aiAnnotationsCount > 0 && (
+                <div className="flex items-center gap-2 text-xs" style={{ color: '#a855f7' }}>
+                  <i className="fas fa-robot"></i>
+                  <span>{aiAnnotationsCount} AI</span>
+                </div>
+              )}
+              {/* Botón de inferencia rápida */}
+              {inferenceModels.length > 0 && (
+                <button
+                  onClick={handleRunInference}
+                  disabled={inferenceRunning || !inferenceModel}
+                  className="mt-1 flex items-center justify-center w-6 h-6 rounded transition-colors"
+                  style={{
+                    background: inferenceRunning ? '#374151' : '#7c3aed',
+                    color: inferenceRunning ? '#6b7280' : 'white',
+                    border: 'none',
+                    cursor: inferenceRunning || !inferenceModel ? 'not-allowed' : 'pointer',
+                    opacity: inferenceRunning || !inferenceModel ? 0.5 : 1,
+                  }}
+                  title={inferenceModel ? `Inferir: ${inferenceModel.name}` : 'No hay modelo seleccionado'}
+                >
+                  <i className={`fas ${inferenceRunning ? 'fa-spinner fa-spin' : 'fa-brain'} text-xs`}></i>
+                </button>
+              )}
             </>
           )}
         </div>
@@ -882,7 +1002,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
         }}
       >
         {/* Image Layer */}
-        <Layer>
+        <Layer ref={imageLayerRef}>
           <KonvaImage
             image={konvaImage}
             x={imageOffset.x}
@@ -918,10 +1038,28 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
 
             switch (ann.type) {
               case 'bbox': {
-                const bboxData = ann.data as BBoxData;
+                const rawData = ann.data as BBoxData;
+                const isAI = ann.source === 'ai';
+
+                // AI annotations: coordenadas normalizadas (0..1) → píxeles imagen
+                const bboxData: BBoxData = isAI
+                  ? {
+                      x: rawData.x * (konvaImage?.width || image.width),
+                      y: rawData.y * (konvaImage?.height || image.height),
+                      width: rawData.width * (konvaImage?.width || image.width),
+                      height: rawData.height * (konvaImage?.height || image.height),
+                    }
+                  : rawData;
+
                 const toggleFn = overrideAnnotations?.onToggleAnnotation;
                 const btnX = bboxData.x * scale + imageOffset.x + bboxData.width * scale - 20;
                 const btnY = bboxData.y * scale + imageOffset.y + 2;
+
+                // Etiqueta AI con confianza
+                const aiLabel = isAI && ann.confidence != null
+                  ? `AI ${Math.round(ann.confidence * 100)}%`
+                  : null;
+
                 return (
                   <React.Fragment key={ann.id}>
                     <BBoxRenderer
@@ -932,6 +1070,43 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
                       onDragEnd={(e) => handleAnnotationDragEnd(ann.id, e)}
                       onTransformEnd={(e) => handleAnnotationTransform(ann.id, e)}
                     />
+                    {/* Borde punteado extra para AI */}
+                    {isAI && (
+                      <Rect
+                        x={bboxData.x * scale + imageOffset.x}
+                        y={bboxData.y * scale + imageOffset.y}
+                        width={bboxData.width * scale}
+                        height={bboxData.height * scale}
+                        stroke={annColor}
+                        strokeWidth={1}
+                        dash={[5, 3]}
+                        listening={false}
+                      />
+                    )}
+                    {/* Badge AI con confianza */}
+                    {aiLabel && bboxData.width * scale > 30 && (
+                      <Group
+                        x={bboxData.x * scale + imageOffset.x}
+                        y={bboxData.y * scale + imageOffset.y - 15}
+                        listening={false}
+                      >
+                        <Rect
+                          width={aiLabel.length * 7 + 6}
+                          height={14}
+                          fill={annColor}
+                          cornerRadius={[2, 2, 0, 0]}
+                          opacity={0.85}
+                        />
+                        <Text
+                          text={aiLabel}
+                          fontSize={9}
+                          fontFamily="monospace"
+                          fill="white"
+                          x={3}
+                          y={2}
+                        />
+                      </Group>
+                    )}
                     {toggleFn && (
                       <Group
                         x={btnX}

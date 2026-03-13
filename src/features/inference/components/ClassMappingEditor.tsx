@@ -14,7 +14,7 @@ interface ClassMappingEditorProps {
 }
 
 export function ClassMappingEditor({ mapping, projectClasses, onChange }: ClassMappingEditorProps) {
-  const { t } = useTranslation('inference');
+  const { t } = useTranslation();
 
   const handleChange = (modelClassId: number, projectClassId: string | null) => {
     const updated = mapping.map((m) =>
@@ -42,7 +42,7 @@ export function ClassMappingEditor({ mapping, projectClasses, onChange }: ClassM
   if (mapping.length === 0) {
     return (
       <p className="text-xs text-gray-500 italic">
-        {t('noClassMapping')}
+        {t('inference.noClassMapping')}
       </p>
     );
   }
@@ -51,7 +51,7 @@ export function ClassMappingEditor({ mapping, projectClasses, onChange }: ClassM
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-          {t('classMapping')}
+          {t('inference.classMapping')}
         </h4>
         <button
           onClick={autoMap}
@@ -77,7 +77,7 @@ export function ClassMappingEditor({ mapping, projectClasses, onChange }: ClassM
               }
               className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-gray-300 text-xs"
             >
-              <option value="">{t('unmapped')}</option>
+              <option value="">{t('inference.unmapped')}</option>
               {projectClasses.map((c) => (
                 <option key={c.id} value={String(c.id)}>
                   {c.name}

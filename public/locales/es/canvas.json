@@ -9,5 +9,10 @@
   "nextImage": "Imagen Siguiente (→ / AvPag)",
   "reset": "Reiniciar",
   "tools": "Herramientas",
-  "zoom": "Zoom"
+  "zoom": "Zoom",
+  "adjustments": "Ajustes",
+  "brightness": "Brillo",
+  "contrast": "Contraste",
+  "temperature": "Temperatura",
+  "sharpness": "Nitidez"
 }

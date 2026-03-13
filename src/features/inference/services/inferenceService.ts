@@ -5,6 +5,7 @@ import type {
   PredictionEntry,
   InferenceConfig,
   ModelMetadata,
+  ModelConfigResult,
 } from '../types';
 
 export const inferenceService = {
@@ -18,6 +19,7 @@ export const inferenceService = {
     task: string,
     classNames: string[],
     inputSize: number | null,
+    metadata?: Record<string, unknown> | null,
   ): Promise<InferenceModelEntry> {
     return invoke('upload_inference_model', {
       projectId,
@@ -27,6 +29,7 @@ export const inferenceService = {
       task,
       classNames,
       inputSize,
+      metadata: metadata ?? null,
     });
   },
 
@@ -62,6 +65,11 @@ export const inferenceService = {
 
   parseClassNames(filePath: string, format: string): Promise<string[]> {
     return invoke('parse_class_names', { filePath, format });
+  },
+
+  /** Parsea un JSON rico de configuración de modelo (clases, colores, task, etc.) */
+  parseModelConfig(filePath: string): Promise<ModelConfigResult> {
+    return invoke('parse_model_config', { filePath });
   },
 
   // ─── Ejecución de inferencia ─────────────────────────────────────────────

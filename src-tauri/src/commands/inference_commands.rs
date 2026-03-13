@@ -1,5 +1,6 @@
 use std::process::{Command, Stdio};
 
+use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, State};
 
 use crate::inference::runner::InferenceProcessManager;
@@ -20,6 +21,7 @@ pub fn upload_inference_model(
     task: String,
     class_names: Vec<String>,
     input_size: Option<u32>,
+    metadata: Option<serde_json::Value>,
 ) -> Result<InferenceModelEntry, String> {
     state.upload_inference_model(
         &project_id,
@@ -29,6 +31,7 @@ pub fn upload_inference_model(
         &task,
         class_names,
         input_size,
+        metadata,
     )
 }
 
@@ -104,6 +107,7 @@ pub fn detect_model_metadata(
     Err("No se pudieron detectar metadatos del modelo".to_string())
 }
 
+/// Parsea nombres de clases desde archivos .txt, .yaml o .json
 #[tauri::command]
 pub fn parse_class_names(
     file_path: String,
@@ -114,18 +118,19 @@ pub fn parse_class_names(
 
     match format.as_str() {
         "txt" => {
-            // Una clase por línea
             Ok(content
                 .lines()
                 .map(|l| l.trim().to_string())
                 .filter(|l| !l.is_empty())
                 .collect())
         }
+        "json" => {
+            // Extraer nombres de clases del JSON rico
+            let parsed = parse_model_config_json_internal(&content)?;
+            Ok(parsed.class_names)
+        }
         "yaml" | "yml" => {
-            // Formato YOLO data.yaml con 'names: [...]' o 'names:\n  0: clase1\n  ...'
             let mut names = Vec::new();
-
-            // Intentar parsear YAML simple
             let mut in_names = false;
             for line in content.lines() {
                 let trimmed = line.trim();
@@ -133,7 +138,6 @@ pub fn parse_class_names(
                 if trimmed.starts_with("names:") {
                     let after = trimmed.strip_prefix("names:").unwrap().trim();
                     if after.starts_with('[') {
-                        // Formato inline: names: ['a', 'b', 'c']
                         let inner = after
                             .trim_start_matches('[')
                             .trim_end_matches(']');
@@ -151,9 +155,8 @@ pub fn parse_class_names(
 
                 if in_names {
                     if !line.starts_with(' ') && !line.starts_with('\t') {
-                        break; // Fin de la sección names
+                        break;
                     }
-                    // Formato: '  0: nombre' o '  - nombre'
                     if let Some(name) = trimmed.strip_prefix("- ") {
                         names.push(name.trim_matches('\'').trim_matches('"').to_string());
                     } else if let Some((_idx, name)) = trimmed.split_once(':') {
@@ -169,6 +172,125 @@ pub fn parse_class_names(
         }
         _ => Err(format!("Formato no soportado: {}", format)),
     }
+}
+
+/// Resultado del parseo de un JSON de configuración de modelo
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelConfigResult {
+    pub class_names: Vec<String>,
+    pub display_names: Vec<String>,
+    pub task: Option<String>,
+    pub input_size: Option<u32>,
+    /// Colores por technical_name: { "hemorrhage": "#ef4444", ... }
+    pub colors: std::collections::HashMap<String, String>,
+    /// Clases marcadas como currently_detected
+    pub detected_classes: Vec<usize>,
+    /// Categorías por clase: { "hemorrhage": "lesion", ... }
+    pub categories: std::collections::HashMap<String, String>,
+    /// Metadata completa del JSON original
+    pub raw_metadata: serde_json::Value,
+}
+
+/// Parsea internamente el JSON de configuración de modelo
+fn parse_model_config_json_internal(content: &str) -> Result<ModelConfigResult, String> {
+    let json: serde_json::Value = serde_json::from_str(content)
+        .map_err(|e| format!("Error parseando JSON: {}", e))?;
+
+    // Extraer clases
+    let classes = json.get("classes")
+        .and_then(|c| c.as_array())
+        .ok_or("El JSON no contiene un array 'classes'")?;
+
+    let mut class_names = Vec::new();
+    let mut display_names = Vec::new();
+    let mut detected_classes = Vec::new();
+    let mut categories = std::collections::HashMap::new();
+
+    for cls in classes {
+        let tech_name = cls.get("technical_name")
+            .and_then(|n| n.as_str())
+            .unwrap_or("unknown")
+            .to_string();
+
+        // Intentar display_name_es, luego display_name_en, luego technical_name
+        let display = cls.get("display_name_es")
+            .or_else(|| cls.get("display_name_en"))
+            .and_then(|n| n.as_str())
+            .unwrap_or(&tech_name)
+            .to_string();
+
+        let index = cls.get("index")
+            .and_then(|i| i.as_u64())
+            .unwrap_or(class_names.len() as u64) as usize;
+
+        let detected = cls.get("currently_detected")
+            .and_then(|d| d.as_bool())
+            .unwrap_or(true);
+
+        if detected {
+            detected_classes.push(index);
+        }
+
+        if let Some(cat) = cls.get("category").and_then(|c| c.as_str()) {
+            categories.insert(tech_name.clone(), cat.to_string());
+        }
+
+        class_names.push(tech_name);
+        display_names.push(display);
+    }
+
+    // Extraer colores
+    let colors: std::collections::HashMap<String, String> = json.get("color_palette")
+        .and_then(|p| serde_json::from_value(p.clone()).ok())
+        .unwrap_or_default();
+
+    // Extraer task desde model_info.type
+    let task = json.get("model_info")
+        .and_then(|mi| mi.get("type"))
+        .and_then(|t| t.as_str())
+        .map(|t| {
+            let lower = t.to_lowercase();
+            if lower.contains("detect") { "detect".to_string() }
+            else if lower.contains("segment") { "segment".to_string() }
+            else if lower.contains("classif") { "classify".to_string() }
+            else if lower.contains("pose") { "pose".to_string() }
+            else if lower.contains("obb") { "obb".to_string() }
+            else { "detect".to_string() }
+        });
+
+    // Extraer input_size desde model_info.input_size
+    let input_size = json.get("model_info")
+        .and_then(|mi| mi.get("input_size"))
+        .and_then(|is| {
+            // Puede ser [640, 640] o un número
+            if let Some(arr) = is.as_array() {
+                arr.first().and_then(|v| v.as_u64()).map(|v| v as u32)
+            } else {
+                is.as_u64().map(|v| v as u32)
+            }
+        });
+
+    Ok(ModelConfigResult {
+        class_names,
+        display_names,
+        task,
+        input_size,
+        colors,
+        detected_classes,
+        categories,
+        raw_metadata: json,
+    })
+}
+
+/// Parsea un JSON de configuración de modelo y devuelve toda la metadata rica
+#[tauri::command]
+pub fn parse_model_config(
+    file_path: String,
+) -> Result<ModelConfigResult, String> {
+    let content = std::fs::read_to_string(&file_path)
+        .map_err(|e| format!("Error leyendo archivo: {}", e))?;
+    parse_model_config_json_internal(&content)
 }
 
 // ─── Ejecución de inferencia ─────────────────────────────────────────────────

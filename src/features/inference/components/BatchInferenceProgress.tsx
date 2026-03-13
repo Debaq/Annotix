@@ -14,7 +14,7 @@ export function BatchInferenceProgress({
   running,
   onCancel,
 }: BatchInferenceProgressProps) {
-  const { t } = useTranslation('inference');
+  const { t } = useTranslation();
 
   if (!running) return null;
 
@@ -27,7 +27,7 @@ export function BatchInferenceProgress({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <i className="fas fa-spinner fa-spin text-blue-400 text-sm" />
-          <span className="text-sm text-blue-300">{t('batchProgress')}</span>
+          <span className="text-sm text-blue-300">{t('inference.batchProgress')}</span>
         </div>
         <Button
           size="sm"
@@ -35,7 +35,7 @@ export function BatchInferenceProgress({
           className="text-xs h-6 text-red-400 hover:text-red-300"
           onClick={onCancel}
         >
-          {t('cancelInference')}
+          {t('inference.cancelInference')}
         </Button>
       </div>
 
@@ -50,7 +50,7 @@ export function BatchInferenceProgress({
 
       {progress && progress.predictionsCount > 0 && (
         <p className="text-xs text-gray-500">
-          {t('inferenceCompleted', {
+          {t('inference.inferenceCompleted', {
             count: progress.predictionsCount,
             time: '',
           }).replace(' in ms', '')}

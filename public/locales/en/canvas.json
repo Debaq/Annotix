@@ -9,5 +9,10 @@
   "nextImage": "Next Image (→ / PgDn)",
   "reset": "Reset",
   "tools": "Tools",
-  "zoom": "Zoom"
+  "zoom": "Zoom",
+  "adjustments": "Adjustments",
+  "brightness": "Brightness",
+  "contrast": "Contrast",
+  "temperature": "Temperature",
+  "sharpness": "Sharpness"
 }

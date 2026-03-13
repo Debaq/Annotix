@@ -101,6 +101,19 @@ pub struct AnnotationEntry {
     #[serde(rename = "classId")]
     pub class_id: i64,
     pub data: serde_json::Value,
+    /// "user" (default) o "ai"
+    #[serde(default = "default_source")]
+    pub source: String,
+    /// Confianza del modelo (solo para source="ai")
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub confidence: Option<f64>,
+    /// Nombre de clase del modelo (solo para source="ai")
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "modelClassName")]
+    pub model_class_name: Option<String>,
+}
+
+fn default_source() -> String {
+    "user".to_string()
 }
 
 // ─── TimeSeries ─────────────────────────────────────────────────────────────

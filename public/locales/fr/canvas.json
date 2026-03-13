@@ -9,5 +9,10 @@
   "nextImage": "Image Suivante (→ / PgSuiv)",
   "reset": "Réinitialiser",
   "tools": "Outils",
-  "zoom": "Zoom"
+  "zoom": "Zoom",
+  "adjustments": "Réglages",
+  "brightness": "Luminosité",
+  "contrast": "Contraste",
+  "temperature": "Température",
+  "sharpness": "Netteté"
 }

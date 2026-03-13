@@ -9,5 +9,10 @@
   "nextImage": "Immagine Successiva (→ / PagGiù)",
   "reset": "Ripristina",
   "tools": "Strumenti",
-  "zoom": "Zoom"
+  "zoom": "Zoom",
+  "adjustments": "Regolazioni",
+  "brightness": "Luminosità",
+  "contrast": "Contrasto",
+  "temperature": "Temperatura",
+  "sharpness": "Nitidezza"
 }

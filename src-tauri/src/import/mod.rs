@@ -75,6 +75,9 @@ pub fn create_annotation(class_id: i64, ann_type: &str, data: serde_json::Value)
         annotation_type: ann_type.to_string(),
         class_id,
         data,
+        source: "user".to_string(),
+        confidence: None,
+        model_class_name: None,
     }
 }
 

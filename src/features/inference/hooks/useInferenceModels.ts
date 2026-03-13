@@ -1,13 +1,15 @@
 import { useState, useCallback, useEffect } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { inferenceService } from '../services/inferenceService';
-import type { InferenceModelEntry, ClassMapping, ModelMetadata } from '../types';
+import type { InferenceModelEntry, ClassMapping, ModelMetadata, ModelConfigResult } from '../types';
 
 interface UseInferenceModelsResult {
   models: InferenceModelEntry[];
   selectedModel: InferenceModelEntry | null;
   loading: boolean;
   error: string | null;
+  /** Metadata rica del último JSON de configuración cargado */
+  lastConfigResult: ModelConfigResult | null;
   selectModel: (model: InferenceModelEntry | null) => void;
   uploadModel: () => Promise<void>;
   deleteModel: (modelId: string) => Promise<void>;
@@ -20,16 +22,19 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
   const [selectedModel, setSelectedModel] = useState<InferenceModelEntry | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastConfigResult, setLastConfigResult] = useState<ModelConfigResult | null>(null);
 
   const refreshModels = useCallback(async () => {
     if (!projectId) return;
     try {
       const list = await inferenceService.listModels(projectId);
       setModels(list);
-      // Mantener selección si el modelo aún existe
       if (selectedModel) {
         const still = list.find((m) => m.id === selectedModel.id);
-        setSelectedModel(still || null);
+        setSelectedModel(still || list[0] || null);
+      } else if (list.length > 0) {
+        // Auto-seleccionar el primer modelo si no hay selección
+        setSelectedModel(list[0]);
       }
     } catch (err) {
       setError(String(err));
@@ -45,9 +50,9 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
     setError(null);
 
     try {
-      // Seleccionar archivo del modelo
+      // 1. Seleccionar archivo del modelo
       const file = await open({
-        title: 'Seleccionar modelo',
+        title: 'Seleccionar modelo (.onnx o .pt)',
         filters: [
           { name: 'Modelos', extensions: ['pt', 'onnx'] },
         ],
@@ -61,19 +66,62 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
       const format = ext === 'pt' ? 'pt' : 'onnx';
       const baseName = filePath.split('/').pop()?.split('\\').pop() || 'model';
 
-      // Intentar detectar metadatos
-      let metadata: ModelMetadata | null = null;
-      try {
-        metadata = await inferenceService.detectModelMetadata(filePath);
-      } catch {
-        // Si falla la detección, continuamos con valores por defecto
+      let task = 'detect';
+      let classNames: string[] = [];
+      let inputSize: number | null = null;
+      let configResult: ModelConfigResult | null = null;
+      let rawMetadata: Record<string, unknown> | null = null;
+
+      if (format === 'pt') {
+        // Para .pt intentar detectar automáticamente con ultralytics
+        try {
+          const meta: ModelMetadata = await inferenceService.detectModelMetadata(filePath);
+          task = meta.task || 'detect';
+          classNames = meta.classNames || [];
+          inputSize = meta.inputSize || null;
+        } catch {
+          // Fallo la detección, pedir config manual
+        }
       }
 
-      const task = metadata?.task || 'detect';
-      const classNames = metadata?.classNames || [];
-      const inputSize = metadata?.inputSize || null;
+      // 2. Pedir archivo de configuración (JSON/YAML/TXT) para clases
+      //    Para ONNX siempre, para PT solo si no se detectaron clases
+      if (classNames.length === 0) {
+        const configFile = await open({
+          title: 'Seleccionar archivo de configuración de clases',
+          filters: [
+            { name: 'Configuración', extensions: ['json', 'yaml', 'yml', 'txt'] },
+          ],
+        });
 
-      // Subir modelo
+        if (configFile) {
+          const configPath = typeof configFile === 'string' ? configFile : configFile;
+          const configExt = configPath.split('.').pop()?.toLowerCase() || '';
+
+          if (configExt === 'json') {
+            // Parsear JSON rico con toda la metadata
+            try {
+              configResult = await inferenceService.parseModelConfig(configPath);
+              classNames = configResult.classNames;
+              task = configResult.task || task;
+              inputSize = configResult.inputSize || inputSize;
+              rawMetadata = configResult.rawMetadata;
+              setLastConfigResult(configResult);
+            } catch (err) {
+              setError(`Error parseando JSON: ${err}`);
+            }
+          } else {
+            // Parsear TXT o YAML simple
+            try {
+              classNames = await inferenceService.parseClassNames(configPath, configExt);
+            } catch (err) {
+              setError(`Error parseando archivo de clases: ${err}`);
+            }
+          }
+        }
+      }
+
+      // 3. Subir modelo con metadata rica si disponible
       const entry = await inferenceService.uploadModel(
         projectId,
         filePath,
@@ -82,6 +130,7 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
         task,
         classNames,
         inputSize,
+        rawMetadata,
       );
 
       setSelectedModel(entry);
@@ -121,6 +170,7 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
     selectedModel,
     loading,
     error,
+    lastConfigResult,
     selectModel: setSelectedModel,
     uploadModel,
     deleteModel,

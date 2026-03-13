@@ -663,6 +663,9 @@ pub async fn bake_video_tracks(
                         data: serde_json::json!({
                             "x": x, "y": y, "width": w, "height": h,
                         }),
+                        source: "user".to_string(),
+                        confidence: None,
+                        model_class_name: None,
                     });
                 }
             }

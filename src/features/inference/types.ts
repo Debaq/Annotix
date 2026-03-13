@@ -97,3 +97,19 @@ export interface ModelMetadata {
   outputShape?: number[];
   error?: string;
 }
+
+/// Resultado del parseo de un JSON de configuración de modelo
+export interface ModelConfigResult {
+  classNames: string[];
+  displayNames: string[];
+  task: string | null;
+  inputSize: number | null;
+  /** Colores por technical_name: { "hemorrhage": "#ef4444", ... } */
+  colors: Record<string, string>;
+  /** Índices de clases marcadas como currently_detected */
+  detectedClasses: number[];
+  /** Categorías por clase: { "hemorrhage": "lesion", ... } */
+  categories: Record<string, string>;
+  /** JSON original completo */
+  rawMetadata: Record<string, unknown>;
+}
