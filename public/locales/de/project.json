@@ -21,9 +21,9 @@
     },
     "mask": {
       "name": "Maske",
-      "description": "Instanzsegmentierung mit Pixelmasken",
-      "useCases": "Objekte auf Pixelebene trennen",
-      "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+      "description": "Semantische Segmentierung mit Pixelmasken",
+      "useCases": "Jedes Pixel nach Kategorie klassifizieren",
+      "models": "U-Net, DeepLab, SegFormer, FCN",
       "difficulty": "Mittel"
     },
     "multiLabel": {

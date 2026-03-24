@@ -2,8 +2,8 @@
   "title": "주석",
   "empty": "주석 없음",
   "addClassFirst": "주석을 달기 전에 최소 하나의 클래스를 추가하세요",
-  "delete": "",
-  "confirmDelete": "",
-  "expand": "",
-  "collapse": ""
+  "delete": "삭제",
+  "confirmDelete": "이 주석을 삭제하시겠습니까?",
+  "expand": "펼치기",
+  "collapse": "접기"
 }

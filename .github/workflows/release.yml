@@ -25,15 +25,9 @@ jobs:
             libappindicator3-dev \
             librsvg2-dev \
             patchelf \
-            libavcodec-dev \
-            libavformat-dev \
-            libavutil-dev \
-            libswscale-dev \
-            libswresample-dev \
-            libavfilter-dev \
-            libavdevice-dev \
             pkg-config \
-            clang
+            clang \
+            nasm
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -114,25 +108,9 @@ jobs:
         with:
           version: "18"
 
-      - name: Download FFmpeg
+      - name: Install nasm (for FFmpeg static build)
         shell: pwsh
-        run: |
-          $url = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-lgpl-shared.zip"
-          Invoke-WebRequest -Uri $url -OutFile C:\ffmpeg.zip
-          Expand-Archive C:\ffmpeg.zip -DestinationPath C:\ffmpeg
-          $dir = (Get-ChildItem C:\ffmpeg -Directory)[0].FullName
-          echo "FFMPEG_DIR=$dir" >> $env:GITHUB_ENV
-          echo "$dir\bin" >> $env:GITHUB_PATH
-          Copy-Item "$dir\bin\*.dll" src-tauri\
-
-      - name: Include FFmpeg DLLs in bundle
-        shell: pwsh
-        run: |
-          $confPath = "src-tauri\tauri.conf.json"
-          $conf = Get-Content $confPath -Raw | ConvertFrom-Json
-          $dlls = Get-ChildItem src-tauri\*.dll | Where-Object { $_.Name -match '^(av|sw)' } | ForEach-Object { $_.Name }
-          $conf.bundle | Add-Member -NotePropertyName "resources" -NotePropertyValue $dlls -Force
-          $conf | ConvertTo-Json -Depth 20 | Set-Content $confPath -Encoding UTF8
+        run: choco install nasm -y
 
       - name: Install dependencies
         run: npm ci

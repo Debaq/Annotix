@@ -2,8 +2,8 @@
   "title": "Annotations",
   "empty": "Aucune annotation",
   "addClassFirst": "Ajoutez au moins une classe avant d'annoter",
-  "delete": "",
-  "confirmDelete": "",
-  "expand": "",
-  "collapse": ""
+  "delete": "Supprimer",
+  "confirmDelete": "Êtes-vous sûr de vouloir supprimer cette annotation ?",
+  "expand": "Développer",
+  "collapse": "Réduire"
 }

@@ -21,9 +21,9 @@
     },
     "mask": {
       "name": "Mask",
-      "description": "Instance segmentation with pixel masks",
-      "useCases": "Separate objects at pixel level",
-      "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+      "description": "Semantic segmentation with pixel masks",
+      "useCases": "Classify each pixel by category",
+      "models": "U-Net, DeepLab, SegFormer, FCN",
       "difficulty": "Intermediate"
     },
     "multiLabel": {

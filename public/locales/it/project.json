@@ -21,9 +21,9 @@
     },
     "mask": {
       "name": "Maschera",
-      "description": "Segmentazione di istanze con maschere a livello di pixel",
-      "useCases": "Separare oggetti a livello di pixel",
-      "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+      "description": "Segmentazione semantica con maschere a livello di pixel",
+      "useCases": "Classificare ogni pixel per categoria",
+      "models": "U-Net, DeepLab, SegFormer, FCN",
       "difficulty": "Intermedio"
     },
     "multiLabel": {
