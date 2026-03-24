@@ -253,12 +253,7 @@ impl P2pState {
             .await
             .map_err(|e| format!("Error registrando peer: {}", e))?;
 
-        // Iniciar watcher de cambios remotos y emitir peers existentes
-        // Nota: usamos un project_id temporal vacío; lo actualizaremos después
-        sync::start_doc_watcher(namespace_id, String::new(), node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
-        sync::emit_existing_peers(namespace_id, &node.docs, &node.blobs_store, app_handle, &my_node_id).await;
-
-        // Iniciar heartbeat para presencia
+        // Iniciar heartbeat para presencia (no depende del project_id)
         sync::start_heartbeat(
             namespace_id,
             author,
@@ -275,6 +270,11 @@ impl P2pState {
         let project = sync::doc_to_project_metadata(&node, namespace_id, author, &projects_dir).await?;
 
         let project_id = project.id.clone();
+
+        // Iniciar watcher de cambios remotos y emitir peers existentes
+        // (DESPUÉS de tener el project_id real para que los eventos se asocien correctamente)
+        sync::start_doc_watcher(namespace_id, project_id.clone(), node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
+        sync::emit_existing_peers(namespace_id, &node.docs, &node.blobs_store, app_handle, &my_node_id, &project_id).await;
         let project_name = project.name.clone();
         let has_pending_images = project.p2p_download.is_some();
         let project_dir = projects_dir.join(&project_id);
@@ -682,7 +682,7 @@ impl P2pState {
 
         // Iniciar watcher de cambios remotos y emitir peers existentes
         sync::start_doc_watcher(ns_id, project_id.to_string(), node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
-        sync::emit_existing_peers(ns_id, &node.docs, &node.blobs_store, app_handle, &my_node_id).await;
+        sync::emit_existing_peers(ns_id, &node.docs, &node.blobs_store, app_handle, &my_node_id, project_id).await;
 
         // Iniciar heartbeat para presencia
         sync::start_heartbeat(
