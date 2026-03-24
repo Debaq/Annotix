@@ -127,6 +127,17 @@ pub async fn save_annotations(
     p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
     state.save_annotations(&project_id, &image_id, &annotations)?;
     let _ = app.emit("db:images-changed", &project_id);
+
+    // Sincronizar anotaciones al doc P2P si hay sesión activa
+    let has_session = p2p.get_session_info(&project_id).await.is_some();
+    if has_session {
+        if let Err(e) = crate::p2p::sync::sync_annotations_to_doc(
+            &p2p, &project_id, &image_id, &annotations,
+        ).await {
+            log::warn!("Error sincronizando anotaciones al P2P: {}", e);
+        }
+    }
+
     Ok(())
 }
 

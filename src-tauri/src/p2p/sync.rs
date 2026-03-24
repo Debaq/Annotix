@@ -467,21 +467,39 @@ pub async fn download_project_images(
 
     let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
 
-    // Leer host_node_id para descarga explícita de blobs
-    let host_endpoint_id: iroh::EndpointId = {
-        let entry = doc
-            .get_one(iroh_docs::store::Query::key_exact(b"meta/host_node_id"))
-            .await
-            .map_err(|e| format!("Error leyendo host_node_id: {}", e))?
-            .ok_or("meta/host_node_id no encontrado")?;
-        let bytes = read_entry_bytes(&entry, blobs).await?;
-        let id_str = String::from_utf8_lossy(&bytes).to_string();
-        id_str.parse().map_err(|e| format!("Error parseando host EndpointId: {}", e))?
-    };
+    // Recopilar endpoints de todos los peers conocidos para descarga
+    let mut peer_endpoints: Vec<iroh::EndpointId> = Vec::new();
+    // Host primero (prioridad)
+    if let Ok(Some(entry)) = doc.get_one(iroh_docs::store::Query::key_exact(b"meta/host_node_id")).await {
+        if let Ok(bytes) = read_entry_bytes(&entry, blobs).await {
+            if let Ok(id) = String::from_utf8_lossy(&bytes).parse::<iroh::EndpointId>() {
+                peer_endpoints.push(id);
+            }
+        }
+    }
+    // También incluir otros peers del doc
+    if let Ok(peer_entries) = doc.get_many(iroh_docs::store::Query::key_prefix(b"meta/peers/")).await {
+        use futures_lite::StreamExt;
+        tokio::pin!(peer_entries);
+        while let Some(Ok(entry)) = peer_entries.next().await {
+            let key_str = String::from_utf8_lossy(entry.key()).to_string();
+            if let Some(node_id_str) = key_str.strip_prefix("meta/peers/") {
+                if let Ok(id) = node_id_str.parse::<iroh::EndpointId>() {
+                    if !peer_endpoints.contains(&id) {
+                        peer_endpoints.push(id);
+                    }
+                }
+            }
+        }
+    }
 
-    // Crear downloader para descarga explícita de blobs desde el host
+    if peer_endpoints.is_empty() {
+        return Err("No se encontraron peers para descargar blobs".to_string());
+    }
+
+    // Crear downloader para descarga explícita de blobs
     let downloader = blobs.downloader(&node.endpoint);
-    log::info!("Downloader creado para {} imágenes desde host {}", total, host_endpoint_id);
+    log::info!("Downloader creado para {} imágenes desde {} peers", total, peer_endpoints.len());
 
     let mut downloaded = 0;
     let max_retries: u32 = 8;
@@ -514,9 +532,9 @@ pub async fn download_project_images(
 
             let hash = entry.content_hash();
 
-            // Descargar explícitamente el blob desde el host
-            if let Err(e) = downloader.download(hash, vec![host_endpoint_id]).await {
-                log::warn!("Error descargando blob {} del host (intento {}): {}", img_id, attempt + 1, e);
+            // Descargar el blob desde cualquier peer disponible
+            if let Err(e) = downloader.download(hash, peer_endpoints.clone()).await {
+                log::warn!("Error descargando blob {} (intento {}): {}", img_id, attempt + 1, e);
                 continue;
             }
 
@@ -1121,17 +1139,49 @@ pub fn start_doc_watcher(
                     else if key.starts_with("images/") && key.ends_with("/annots") {
                         let parts: Vec<&str> = key.split('/').collect();
                         if parts.len() == 3 {
-                            let image_id = parts[1];
-                            if let Ok(content) = read_entry_bytes(&entry, blobs).await {
+                            let image_id = parts[1].to_string();
+                            let content_hash = entry.content_hash();
+                            let from_str = from.to_string();
+                            let pid = project_id.clone();
+                            let ah = app_handle.clone();
+                            let bs = blobs_store.clone();
+                            tokio::spawn(async move {
+                                let blobs: &iroh_blobs::api::Store = &*bs;
+                                let mut content_opt = None;
+                                for attempt in 0..5u32 {
+                                    if attempt > 0 {
+                                        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+                                    }
+                                    match blobs.blobs().get_bytes(content_hash).await {
+                                        Ok(c) => { content_opt = Some(c); break; }
+                                        Err(e) if attempt == 4 => {
+                                            log::warn!("Error leyendo blob de anotaciones para imagen {} después de 5 intentos: {}", image_id, e);
+                                            return;
+                                        }
+                                        Err(_) => continue,
+                                    }
+                                }
+                                let content = match content_opt {
+                                    Some(c) => c,
+                                    None => return,
+                                };
                                 if let Ok(annots) = serde_json::from_slice::<Vec<AnnotationEntry>>(&content) {
-                                    let _ = app_handle.emit("p2p:annotations-synced", serde_json::json!({
-                                        "projectId": project_id,
+                                    let app_state = ah.state::<crate::store::state::AppState>();
+                                    let iid = image_id.clone();
+                                    let annots_clone = annots.clone();
+                                    let _ = app_state.with_project_mut(&pid, |pf| {
+                                        if let Some(img) = pf.images.iter_mut().find(|i| i.id == iid) {
+                                            img.annotations = annots_clone;
+                                        }
+                                    });
+                                    let _ = ah.emit("p2p:annotations-synced", serde_json::json!({
+                                        "projectId": pid,
                                         "imageId": image_id,
                                         "annotations": annots,
-                                        "from": from.to_string(),
+                                        "from": from_str,
                                     }));
                                 }
-                            }
+                            });
                         }
                     }
                     else if key.starts_with("images/") && key.ends_with("/lock") {

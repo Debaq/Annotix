@@ -741,11 +741,68 @@ impl P2pState {
         sessions.get(project_id).map(|s| s.to_info())
     }
 
-    /// Lista los peers conectados de una sesión
+    /// Lista los peers conectados leyendo directamente del iroh-doc (fuente de verdad)
     pub async fn list_peers(&self, project_id: &str) -> Result<Vec<super::PeerInfo>, String> {
+        let node_guard = self.node.read().await;
+        let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
         let sessions = self.sessions.read().await;
         let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
-        Ok(session.peers.values().cloned().collect())
+
+        let doc = node.docs.open(session.namespace_id)
+            .await
+            .map_err(|e| format!("Error abriendo doc: {}", e))?
+            .ok_or("Documento no encontrado")?;
+
+        let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
+        let my_node_id = &session.my_node_id;
+
+        let peer_entries = doc.get_many(iroh_docs::store::Query::key_prefix(b"meta/peers/"))
+            .await
+            .map_err(|e| format!("Error leyendo peers: {}", e))?;
+
+        use futures_lite::StreamExt;
+        tokio::pin!(peer_entries);
+
+        let now_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as f64;
+        let timeout_ms = 90_000.0;
+
+        let mut peers = Vec::new();
+        while let Some(Ok(entry)) = peer_entries.next().await {
+            let key = String::from_utf8_lossy(entry.key()).to_string();
+            let node_id = match key.strip_prefix("meta/peers/") {
+                Some(id) if !id.is_empty() && id != my_node_id => id.to_string(),
+                _ => continue,
+            };
+
+            let content = match blobs.blobs().get_bytes(entry.content_hash()).await {
+                Ok(c) => c,
+                Err(_) => continue,
+            };
+            let info: serde_json::Value = match serde_json::from_slice(&content) {
+                Ok(v) => v,
+                Err(_) => continue,
+            };
+
+            if info.get("left").and_then(|v| v.as_bool()) == Some(true) {
+                continue;
+            }
+
+            let last_seen = info["last_seen"].as_f64().unwrap_or(0.0);
+            let online = (now_ms - last_seen) < timeout_ms;
+
+            peers.push(super::PeerInfo {
+                node_id,
+                display_name: info["display_name"].as_str().unwrap_or("").to_string(),
+                role: serde_json::from_value(info["role"].clone()).unwrap_or(super::PeerRole::Annotator),
+                joined_at: info["joined_at"].as_f64().unwrap_or(0.0),
+                online,
+            });
+        }
+
+        Ok(peers)
     }
 
     /// Actualiza las reglas de la sesión (solo host)

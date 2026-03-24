@@ -13,6 +13,7 @@ import type { ImageAdjustmentValues } from './ImageAdjustments';
 import { buildCSSFilter, processImage } from '../utils/imageFilters';
 import { ImageNavigation } from '../../gallery/components/ImageNavigation';
 import { AnnotationsBar } from './AnnotationsBar';
+import { useImagePresence } from '../../p2p/hooks/useImagePresence';
 import { skeletonPresets } from '../data/skeletonPresets';
 import { imageService } from '../../gallery/services/imageService';
 import type { Annotation, BBoxData, OBBData, PolygonData, KeypointsData, LandmarksData, MaskData } from '@/lib/db';
@@ -71,6 +72,9 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   const { annotations, selectedAnnotationId, selectAnnotation, updateAnnotation, addAnnotation, deleteAnnotation } = overrideAnnotations ?? defaults;
   const { replaceAnnotations } = defaults;
   const { activeTool, activeClassId, setActiveTool } = useUIStore();
+
+  // Auto-lock/unlock para presencia P2P
+  useImagePresence(project?.id, image?.id);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<any>(null);
