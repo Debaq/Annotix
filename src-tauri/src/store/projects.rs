@@ -29,6 +29,8 @@ pub struct ProjectSummary {
     pub p2p_download: Option<P2pDownloadStatus>,
     #[serde(rename = "hasP2pConfig")]
     pub has_p2p_config: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub folder: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -74,6 +76,7 @@ impl AppState {
             p2p: None,
             p2p_download: None,
             inference_models: vec![],
+            folder: None,
         };
 
         io::write_project(&project_dir, &project)?;
@@ -130,6 +133,7 @@ impl AppState {
                         },
                         p2p_download,
                         has_p2p_config,
+                        folder: pf.folder,
                     });
                 }
                 Err(e) => {
@@ -164,8 +168,15 @@ impl AppState {
                 },
                 p2p_download: pf.p2p_download.clone(),
                 has_p2p_config: pf.p2p.is_some(),
+                folder: pf.folder.clone(),
             }
         }).map(Some)
+    }
+
+    pub fn set_project_folder(&self, project_id: &str, folder: Option<String>) -> Result<(), String> {
+        self.with_project_mut(project_id, |pf| {
+            pf.folder = folder;
+        })
     }
 
     pub fn update_project(

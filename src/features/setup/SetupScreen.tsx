@@ -12,6 +12,7 @@ export function SetupScreen({ onComplete }: SetupScreenProps) {
   const { t } = useTranslation();
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [pathWarning, setPathWarning] = useState(false);
 
   const handleSelectFolder = async () => {
     const result = await open({
@@ -21,7 +22,14 @@ export function SetupScreen({ onComplete }: SetupScreenProps) {
     });
 
     if (result && typeof result === 'string') {
-      setSelectedPath(result);
+      if (result.includes(' ')) {
+        // Ruta con espacios — avisar y sugerir alternativa
+        setPathWarning(true);
+        setSelectedPath(result.replace(/ /g, '_'));
+      } else {
+        setPathWarning(false);
+        setSelectedPath(result);
+      }
     }
   };
 
@@ -62,6 +70,12 @@ export function SetupScreen({ onComplete }: SetupScreenProps) {
               <p className="text-sm font-mono text-[var(--annotix-dark)] truncate">
                 {selectedPath}
               </p>
+              {pathWarning && (
+                <p className="mt-2 text-xs text-amber-600">
+                  <i className="fas fa-exclamation-triangle mr-1" />
+                  {t('setup.pathSpacesWarning', 'La ruta tenía espacios, se reemplazaron por guiones bajos para evitar problemas.')}
+                </p>
+              )}
               <button
                 onClick={handleSelectFolder}
                 className="mt-2 text-xs text-[var(--annotix-primary)] hover:underline"

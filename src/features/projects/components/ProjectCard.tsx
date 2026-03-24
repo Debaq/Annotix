@@ -18,16 +18,21 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import * as tauriDb from '@/lib/tauriDb';
 
 interface ProjectCardProps {
   project: Project;
+  folders?: string[];
 }
 
 const EMPTY_PEERS: never[] = [];
 
-export function ProjectCard({ project }: ProjectCardProps) {
+export function ProjectCard({ project, folders = [] }: ProjectCardProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { deleteProject } = useProjects();
@@ -221,33 +226,33 @@ export function ProjectCard({ project }: ProjectCardProps) {
               </p>
             </div>
           </div>
-          {!isCollaborator && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <i className="fas fa-ellipsis-v"></i>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleOpen}>
-                  <i className="fas fa-folder-open mr-2"></i>
-                  {t('projects.open')}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <i className="fas fa-ellipsis-v"></i>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleOpen}>
+                <i className="fas fa-folder-open mr-2"></i>
+                {t('projects.open')}
+              </DropdownMenuItem>
+
+              {!isCollaborator && !isSharing && (
+                <DropdownMenuItem onSelect={() => setP2pOpen(true)}>
+                  <i className="fas fa-people-arrows mr-2"></i>
+                  {t('p2p.share')}
                 </DropdownMenuItem>
+              )}
 
-                {!isSharing && (
-                  <DropdownMenuItem onSelect={() => setP2pOpen(true)}>
-                    <i className="fas fa-people-arrows mr-2"></i>
-                    {t('p2p.share')}
-                  </DropdownMenuItem>
-                )}
+              {!isCollaborator && isSharing && (
+                <DropdownMenuItem onClick={() => navigate(`/projects/${project.id}/team`)}>
+                  <i className="fas fa-users mr-2"></i>
+                  {t('p2p.manageTeam')}
+                </DropdownMenuItem>
+              )}
 
-                {isSharing && (
-                  <DropdownMenuItem onClick={() => navigate(`/projects/${project.id}/team`)}>
-                    <i className="fas fa-users mr-2"></i>
-                    {t('p2p.manageTeam')}
-                  </DropdownMenuItem>
-                )}
-
+              {!isCollaborator && (
                 <ProjectSettingsDialog
                   project={project}
                   trigger={
@@ -257,15 +262,52 @@ export function ProjectCard({ project }: ProjectCardProps) {
                     </DropdownMenuItem>
                   }
                 />
+              )}
 
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-                  <i className="fas fa-trash mr-2"></i>
-                  {t('projects.delete')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+              {folders.length > 0 && (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <i className="fas fa-folder mr-2"></i>
+                    {t('projects.moveToFolder', 'Mover a carpeta')}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {project.folder && (
+                      <DropdownMenuItem onClick={() => project.id && tauriDb.setProjectFolder(project.id, null)}>
+                        <i className="fas fa-times mr-2 text-muted-foreground"></i>
+                        {t('projects.removeFromFolder', 'Sin carpeta')}
+                      </DropdownMenuItem>
+                    )}
+                    {folders.filter(f => f !== project.folder).map(f => (
+                      <DropdownMenuItem key={f} onClick={() => project.id && tauriDb.setProjectFolder(project.id, f)}>
+                        <i className="fas fa-folder mr-2 text-muted-foreground"></i>
+                        {f}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              )}
+
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={async () => {
+                  const msg = isCollaborator
+                    ? t('p2p.confirmLeaveAndDelete', 'Esto abandonará la sesión P2P y eliminará la copia local. ¿Continuar?')
+                    : t('projects.confirmDelete', { name: project.name });
+                  if (await confirm(msg, { kind: 'warning' })) {
+                    if (isCollaborator) {
+                      try { await p2pService.leaveSession(project.id!); } catch {}
+                      useP2pStore.getState().reset(project.id!);
+                    }
+                    await deleteProject(project.id!);
+                  }
+                }}
+                className="text-destructive"
+              >
+                <i className="fas fa-trash mr-2"></i>
+                {isCollaborator ? t('p2p.leaveAndDelete', 'Abandonar y eliminar') : t('projects.delete')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="space-y-2">

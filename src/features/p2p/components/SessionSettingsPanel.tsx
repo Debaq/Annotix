@@ -18,6 +18,7 @@ export function SessionSettingsPanel() {
   const [leaving, setLeaving] = useState(false);
   const [pausing, setPausing] = useState(false);
   const [savingRules, setSavingRules] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   if (!session || !projectId) return null;
 
@@ -123,6 +124,27 @@ export function SessionSettingsPanel() {
           ))}
         </div>
       </div>
+
+      {/* Sync */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full"
+        onClick={async () => {
+          setSyncing(true);
+          try {
+            await p2pService.resumeDownload(projectId);
+          } catch (err) {
+            console.error('Error syncing P2P:', err);
+          } finally {
+            setSyncing(false);
+          }
+        }}
+        disabled={syncing || leaving || pausing}
+      >
+        {syncing ? <i className="fas fa-spinner fa-spin mr-2" /> : <i className="fas fa-sync mr-2" />}
+        {t('p2p.refreshSync', 'Actualizar P2P')}
+      </Button>
 
       {/* Actions */}
       <div className="flex gap-2">

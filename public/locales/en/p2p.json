@@ -30,6 +30,7 @@
   "startAnnotating": "Start Annotating",
   "activeSession": "P2P Session",
   "leaveSession": "Leave Session",
+  "refreshSync": "Refresh P2P",
   "pauseSession": "Pause",
   "resumeSession": "Resume P2P",
   "pausedSession": "Paused P2P",

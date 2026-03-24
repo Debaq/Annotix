@@ -192,7 +192,6 @@ export function GeneralSection() {
               <span><strong>Dra. Fernanda López</strong></span>
               <span><strong>TM. Vanessa Uribe</strong></span>
               <span><strong>DR(c) Haydee Barrientos</strong></span>
-              <span><strong>Mg. Carolina Almendras</strong></span>
               <span><strong>Felipe Brana</strong> — {t('settings.general.roleFelipe')}</span>
             </div>
           </div>

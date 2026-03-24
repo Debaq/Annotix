@@ -68,3 +68,15 @@ pub async fn delete_project(
     let _ = app.emit("db:images-changed", ());
     Ok(())
 }
+
+#[tauri::command]
+pub fn set_project_folder(
+    state: State<'_, AppState>,
+    app: AppHandle,
+    project_id: String,
+    folder: Option<String>,
+) -> Result<(), String> {
+    state.set_project_folder(&project_id, folder)?;
+    let _ = app.emit("db:projects-changed", ());
+    Ok(())
+}

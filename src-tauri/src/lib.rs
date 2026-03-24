@@ -66,6 +66,7 @@ pub fn run() {
             commands::project_commands::list_projects,
             commands::project_commands::update_project,
             commands::project_commands::delete_project,
+            commands::project_commands::set_project_folder,
             // Imágenes
             commands::image_commands::upload_images,
             commands::image_commands::upload_image_bytes,

@@ -310,47 +310,63 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
 
     let cancelled = false;
 
-    imageService.getFilePath(image.projectId, image.id).then((filePath) => {
+    const applyImage = (img: HTMLImageElement) => {
       if (cancelled) return;
+      setKonvaImage(img);
+      imageElementRef.current = img;
+      originalImageRef.current = img;
+      setProcessedImage(null);
+      const saved = image.id ? adjustmentsMapRef.current.get(image.id) : undefined;
+      setImageAdjustments(saved ? { ...saved } : { ...DEFAULT_ADJUSTMENTS });
 
-      const img = new window.Image();
-      img.crossOrigin = 'anonymous';
-      const url = convertFileSrc(filePath);
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.clientWidth;
+        const containerHeight = containerRef.current.clientHeight || 600;
+        const scaleX = containerWidth / img.width;
+        const scaleY = containerHeight / img.height;
+        const newScale = Math.min(scaleX, scaleY) * 0.9;
+        const scaledWidth = img.width * newScale;
+        const scaledHeight = img.height * newScale;
+        const offsetX = (containerWidth - scaledWidth) / 2;
+        const offsetY = (containerHeight - scaledHeight) / 2;
+        setScale(newScale);
+        setImageOffset({ x: offsetX, y: offsetY });
+        setStageSize({ width: containerWidth, height: containerHeight });
+        setStageScale(1);
+        setStagePos({ x: 0, y: 0 });
+      }
+    };
 
-      img.onload = () => {
+    const loadViaAssetProtocol = () => {
+      imageService.getFilePath(image.projectId, image.id!).then((filePath) => {
         if (cancelled) return;
-        setKonvaImage(img);
-        imageElementRef.current = img;
-        originalImageRef.current = img;
-        setProcessedImage(null);
-        // Restore per-image adjustments or reset to defaults
-        const saved = image.id ? adjustmentsMapRef.current.get(image.id) : undefined;
-        setImageAdjustments(saved ? { ...saved } : { ...DEFAULT_ADJUSTMENTS });
+        const img = new window.Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => applyImage(img);
+        // Fallback: si asset protocol falla (paths con espacios en Windows, scope, etc.)
+        img.onerror = () => {
+          if (cancelled) return;
+          loadViaBytes();
+        };
+        img.src = convertFileSrc(filePath);
+      });
+    };
 
-        // Calculate initial scale
-        if (containerRef.current) {
-          const containerWidth = containerRef.current.clientWidth;
-          const containerHeight = containerRef.current.clientHeight || 600;
+    const loadViaBytes = () => {
+      imageService.getImageData(image.projectId, image.id!).then((bytes) => {
+        if (cancelled) return;
+        const blob = new Blob([bytes as unknown as BlobPart]);
+        const url = URL.createObjectURL(blob);
+        const img = new window.Image();
+        img.onload = () => {
+          applyImage(img);
+          URL.revokeObjectURL(url);
+        };
+        img.src = url;
+      }).catch(err => console.error('Failed to load image bytes:', err));
+    };
 
-          const scaleX = containerWidth / img.width;
-          const scaleY = containerHeight / img.height;
-          const newScale = Math.min(scaleX, scaleY) * 0.9;
-
-          const scaledWidth = img.width * newScale;
-          const scaledHeight = img.height * newScale;
-          const offsetX = (containerWidth - scaledWidth) / 2;
-          const offsetY = (containerHeight - scaledHeight) / 2;
-
-          setScale(newScale);
-          setImageOffset({ x: offsetX, y: offsetY });
-          setStageSize({ width: containerWidth, height: containerHeight });
-          setStageScale(1);
-          setStagePos({ x: 0, y: 0 });
-        }
-      };
-
-      img.src = url;
-    });
+    loadViaAssetProtocol();
 
     return () => {
       cancelled = true;
