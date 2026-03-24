@@ -10,6 +10,9 @@ import { p2pService } from '../services/p2pService';
 import { canManage } from '../hooks/useP2pCanEdit';
 import type { PeerRole, PeerWorkStats } from '../types';
 
+const EMPTY_PEERS: never[] = [];
+const EMPTY_STATS: never[] = [];
+
 const roleIcons: Record<PeerRole, string> = {
   lead_researcher: 'fa-flask',
   annotator: 'fa-pen',
@@ -26,8 +29,8 @@ export function TeamMembersList() {
   const { t } = useTranslation();
   const { projectId } = useParams<{ projectId: string }>();
   const session = useP2pStore(s => projectId ? s.sessions[projectId] ?? null : null);
-  const peers = useP2pStore(s => projectId ? s.peersByProject[projectId] ?? [] : []);
-  const workStats = useP2pStore(s => projectId ? s.workStatsByProject[projectId] ?? [] : []);
+  const peers = useP2pStore(s => projectId ? s.peersByProject[projectId] ?? EMPTY_PEERS : EMPTY_PEERS);
+  const workStats = useP2pStore(s => projectId ? s.workStatsByProject[projectId] ?? EMPTY_STATS : EMPTY_STATS);
   const [changingRole, setChangingRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 

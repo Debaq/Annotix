@@ -5,12 +5,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useP2pStore } from '../store/p2pStore';
 import { useUIStore } from '../../core/store/uiStore';
 
+const EMPTY_PEERS: never[] = [];
+
 export function P2pStatusIndicator() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const currentProjectId = useUIStore(s => s.currentProjectId);
   const session = useP2pStore(s => currentProjectId ? s.sessions[currentProjectId] ?? null : null);
-  const peers = useP2pStore(s => currentProjectId ? s.peersByProject[currentProjectId] ?? [] : []);
+  const peers = useP2pStore(s => currentProjectId ? s.peersByProject[currentProjectId] ?? EMPTY_PEERS : EMPTY_PEERS);
 
   if (!session) return null;
 

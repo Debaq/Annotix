@@ -7,11 +7,13 @@ import { useP2pStore } from '../store/p2pStore';
 import { p2pService } from '../services/p2pService';
 import { canManage } from '../hooks/useP2pCanEdit';
 
+const EMPTY_APPROVALS: never[] = [];
+
 export function PendingApprovalsPanel() {
   const { t } = useTranslation();
   const { projectId } = useParams<{ projectId: string }>();
   const session = useP2pStore(s => projectId ? s.sessions[projectId] ?? null : null);
-  const pendingApprovals = useP2pStore(s => projectId ? s.pendingApprovalsByProject[projectId] ?? [] : []);
+  const pendingApprovals = useP2pStore(s => projectId ? s.pendingApprovalsByProject[projectId] ?? EMPTY_APPROVALS : EMPTY_APPROVALS);
   const { setPendingApprovals, removePendingApproval } = useP2pStore();
   const [loading, setLoading] = useState<string | null>(null);
 

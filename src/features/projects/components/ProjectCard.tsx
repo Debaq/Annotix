@@ -25,13 +25,15 @@ interface ProjectCardProps {
   project: Project;
 }
 
+const EMPTY_PEERS: never[] = [];
+
 export function ProjectCard({ project }: ProjectCardProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { deleteProject } = useProjects();
   const [p2pOpen, setP2pOpen] = useState(false);
   const session = useP2pStore(s => project.id ? s.sessions[project.id] ?? null : null);
-  const peers = useP2pStore(s => project.id ? s.peersByProject[project.id] ?? [] : []);
+  const peers = useP2pStore(s => project.id ? s.peersByProject[project.id] ?? EMPTY_PEERS : EMPTY_PEERS);
   const downloadProgress = useP2pStore(s => s.downloadProgress);
   const isSharing = !!session;
   const isHost = isSharing && session?.role === 'lead_researcher';
