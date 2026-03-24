@@ -19,17 +19,19 @@ fn now_ms() -> f64 {
 
 impl P2pState {
     /// Intenta bloquear una imagen. Retorna true si se obtuvo el lock.
-    pub async fn lock_image(&self, image_id: &str) -> Result<bool, String> {
-        let session = self.session.read().await;
-        let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+    pub async fn lock_image(&self, project_id: &str, image_id: &str) -> Result<bool, String> {
+        let node_guard = self.node.read().await;
+        let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+        let sessions = self.sessions.read().await;
+        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
 
-        let doc = session.node.docs.open(session.namespace_id)
+        let doc = node.docs.open(session.namespace_id)
             .await
             .map_err(|e| format!("Error abriendo doc: {}", e))?
             .ok_or("Documento no encontrado")?;
 
         let lock_key = format!("images/{}/lock", image_id);
-        let blobs: &iroh_blobs::api::Store = &*session.node.blobs_store;
+        let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
 
         // Verificar si ya existe un lock no expirado
         let existing = doc
@@ -69,11 +71,13 @@ impl P2pState {
     }
 
     /// Desbloquea una imagen (solo si somos dueños del lock)
-    pub async fn unlock_image(&self, image_id: &str) -> Result<(), String> {
-        let session = self.session.read().await;
-        let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+    pub async fn unlock_image(&self, project_id: &str, image_id: &str) -> Result<(), String> {
+        let node_guard = self.node.read().await;
+        let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+        let sessions = self.sessions.read().await;
+        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
 
-        let doc = session.node.docs.open(session.namespace_id)
+        let doc = node.docs.open(session.namespace_id)
             .await
             .map_err(|e| format!("Error abriendo doc: {}", e))?
             .ok_or("Documento no encontrado")?;
@@ -89,17 +93,19 @@ impl P2pState {
     }
 
     /// Lee el estado de lock de una imagen
-    pub async fn get_image_lock(&self, image_id: &str) -> Result<Option<ImageLockInfo>, String> {
-        let session = self.session.read().await;
-        let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+    pub async fn get_image_lock(&self, project_id: &str, image_id: &str) -> Result<Option<ImageLockInfo>, String> {
+        let node_guard = self.node.read().await;
+        let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+        let sessions = self.sessions.read().await;
+        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
 
-        let doc = session.node.docs.open(session.namespace_id)
+        let doc = node.docs.open(session.namespace_id)
             .await
             .map_err(|e| format!("Error abriendo doc: {}", e))?
             .ok_or("Documento no encontrado")?;
 
         let lock_key = format!("images/{}/lock", image_id);
-        let blobs: &iroh_blobs::api::Store = &*session.node.blobs_store;
+        let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
 
         let entry = doc
             .get_exact(session.author_id, lock_key.as_bytes(), false)
@@ -128,17 +134,20 @@ impl P2pState {
     /// Asigna un batch de imágenes a un colaborador (solo host)
     pub async fn assign_batch(
         &self,
+        project_id: &str,
         image_ids: Vec<String>,
         assign_to_node_id: &str,
     ) -> Result<super::BatchInfo, String> {
-        let session = self.session.read().await;
-        let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+        let node_guard = self.node.read().await;
+        let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+        let sessions = self.sessions.read().await;
+        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
 
         if !session.role.can_manage() {
             return Err("Solo el host puede asignar lotes".to_string());
         }
 
-        let doc = session.node.docs.open(session.namespace_id)
+        let doc = node.docs.open(session.namespace_id)
             .await
             .map_err(|e| format!("Error abriendo doc: {}", e))?
             .ok_or("Documento no encontrado")?;

@@ -34,7 +34,6 @@ pub struct ActiveSession {
     pub namespace_id: iroh_docs::NamespaceId,
     pub author_id: iroh_docs::AuthorId,
     pub peers: HashMap<String, PeerInfo>,
-    pub node: Arc<IrohNode>,
     /// Secreto del host (solo presente si somos host)
     pub host_secret: Option<String>,
 }
@@ -61,7 +60,10 @@ impl ActiveSession {
 
 /// Estado P2P global gestionado por Tauri
 pub struct P2pState {
-    pub session: RwLock<Option<ActiveSession>>,
+    /// Nodo iroh compartido entre todas las sesiones (lazy init)
+    pub node: RwLock<Option<Arc<IrohNode>>>,
+    /// Sesiones activas indexadas por project_id
+    pub sessions: RwLock<HashMap<String, ActiveSession>>,
     pub data_dir: PathBuf,
 }
 
@@ -73,16 +75,46 @@ impl P2pState {
         let _ = std::fs::create_dir_all(&data_dir);
 
         Self {
-            session: RwLock::new(None),
+            node: RwLock::new(None),
+            sessions: RwLock::new(HashMap::new()),
             data_dir,
         }
     }
 
+    /// Obtiene el nodo compartido, creándolo si no existe (lazy init)
+    pub async fn get_or_create_node(&self) -> Result<Arc<IrohNode>, String> {
+        {
+            let node_guard = self.node.read().await;
+            if let Some(ref node) = *node_guard {
+                return Ok(node.clone());
+            }
+        }
+        let mut node_guard = self.node.write().await;
+        // Double-check: otro thread pudo crearlo
+        if let Some(ref node) = *node_guard {
+            return Ok(node.clone());
+        }
+        let node = self.start_node().await?;
+        *node_guard = Some(node.clone());
+        Ok(node)
+    }
+
+    /// Cierra el nodo si no quedan sesiones activas
+    pub async fn maybe_shutdown_node(&self) {
+        let sessions = self.sessions.read().await;
+        if sessions.is_empty() {
+            drop(sessions);
+            let mut node_guard = self.node.write().await;
+            *node_guard = None;
+            log::info!("Nodo iroh cerrado (última sesión terminó)");
+        }
+    }
+
     /// Verifica si la acción está permitida según rol + reglas de sesión.
-    /// Si no hay sesión activa (modo local), todo se permite.
-    pub async fn check_permission(&self, perm: P2pPermission) -> Result<(), String> {
-        let session = self.session.read().await;
-        let session = match session.as_ref() {
+    /// Si no hay sesión activa para el proyecto (modo local), todo se permite.
+    pub async fn check_permission(&self, project_id: &str, perm: P2pPermission) -> Result<(), String> {
+        let sessions = self.sessions.read().await;
+        let session = match sessions.get(project_id) {
             Some(s) => s,
             None => return Ok(()),
         };
@@ -182,6 +214,12 @@ impl P2pState {
     /// Computa el hash blake3 de un secreto
     pub fn hash_secret(secret: &str) -> String {
         blake3::hash(secret.as_bytes()).to_hex().to_string()
+    }
+
+    /// Lista todas las sesiones activas
+    pub async fn get_all_sessions(&self) -> Vec<P2pSessionInfo> {
+        let sessions = self.sessions.read().await;
+        sessions.values().map(|s| s.to_info()).collect()
     }
 }
 

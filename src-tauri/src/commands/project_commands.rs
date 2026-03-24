@@ -43,7 +43,7 @@ pub async fn update_project(
     classes: Option<Vec<ClassDef>>,
 ) -> Result<(), String> {
     if classes.is_some() {
-        p2p.check_permission(P2pPermission::EditClasses).await?;
+        p2p.check_permission(&id, P2pPermission::EditClasses).await?;
     }
     state.update_project(
         &id,
@@ -62,7 +62,7 @@ pub async fn delete_project(
     app: AppHandle,
     id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(P2pPermission::Manage).await?;
+    p2p.check_permission(&id, P2pPermission::Manage).await?;
     state.delete_project(&id)?;
     let _ = app.emit("db:projects-changed", ());
     let _ = app.emit("db:images-changed", ());

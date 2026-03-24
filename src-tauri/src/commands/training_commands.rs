@@ -229,7 +229,7 @@ pub async fn start_training(
     project_id: String,
     config: TrainingConfig,
 ) -> Result<String, String> {
-    p2p.check_permission(P2pPermission::Manage).await?;
+    p2p.check_permission(&project_id, P2pPermission::Manage).await?;
     let config_json = serde_json::to_value(&config).map_err(|e| e.to_string())?;
     let now = js_timestamp();
     let job_id = uuid::Uuid::new_v4().to_string();
@@ -272,7 +272,7 @@ pub async fn cancel_training(
     project_id: String,
     job_id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(P2pPermission::Manage).await?;
+    p2p.check_permission(&project_id, P2pPermission::Manage).await?;
     manager.cancel_training(&job_id)?;
 
     state.with_project_mut(&project_id, |pf| {
@@ -319,7 +319,7 @@ pub async fn delete_training_job(
     project_id: String,
     job_id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(P2pPermission::Delete).await?;
+    p2p.check_permission(&project_id, P2pPermission::Delete).await?;
     // Cancelar si está corriendo
     if manager.is_running(&job_id) {
         let _ = manager.cancel_training(&job_id);
@@ -461,7 +461,7 @@ pub async fn start_training_v2(
     project_id: String,
     request: TrainingRequest,
 ) -> Result<String, String> {
-    p2p.check_permission(P2pPermission::Manage).await?;
+    p2p.check_permission(&project_id, P2pPermission::Manage).await?;
     // For download-package mode, delegate to package generation
     if request.execution_mode == ExecutionMode::DownloadPackage {
         return Err("Usa generate_training_package para modo descarga".to_string());

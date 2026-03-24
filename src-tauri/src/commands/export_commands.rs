@@ -12,6 +12,6 @@ pub async fn export_dataset(
     p2p: State<'_, P2pState>,
     app: tauri::AppHandle,
 ) -> Result<(), String> {
-    p2p.check_permission(P2pPermission::Export).await?;
+    p2p.check_permission(&project_id, P2pPermission::Export).await?;
     crate::export::export_dataset(&state, &project_id, &format, &output_path, &app)
 }

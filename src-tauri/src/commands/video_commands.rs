@@ -67,7 +67,7 @@ pub async fn upload_video(
     file_path: String,
     fps_extraction: f64,
 ) -> Result<String, String> {
-    p2p.check_permission(P2pPermission::UploadData).await?;
+    p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
     let info = get_video_info(file_path.clone())?;
 
     let source = std::path::PathBuf::from(&file_path);
@@ -110,7 +110,7 @@ pub async fn extract_video_frames(
     project_id: String,
     video_id: String,
 ) -> Result<i64, String> {
-    p2p.check_permission(P2pPermission::UploadData).await?;
+    p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
     launch_extraction(&app, &project_id, &video_id).await
 }
 
@@ -466,7 +466,7 @@ pub async fn delete_video(
     project_id: String,
     video_id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(P2pPermission::Delete).await?;
+    p2p.check_permission(&project_id, P2pPermission::Delete).await?;
     state.delete_video(&project_id, &video_id)?;
     let _ = app.emit("db:videos-changed", &project_id);
     let _ = app.emit("db:images-changed", &project_id);
@@ -486,7 +486,7 @@ pub async fn create_track(
     class_id: i64,
     label: Option<String>,
 ) -> Result<String, String> {
-    p2p.check_permission(P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
     let id =
         state.create_track(&project_id, &video_id, &track_uuid, class_id, label.as_deref())?;
     let _ = app.emit("db:tracks-changed", &video_id);
@@ -514,7 +514,7 @@ pub async fn update_track(
     label: Option<String>,
     enabled: Option<bool>,
 ) -> Result<(), String> {
-    p2p.check_permission(P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
     let label_update = label.map(|l| Some(l));
     state.update_track(
         &project_id,
@@ -537,7 +537,7 @@ pub async fn delete_track(
     video_id: String,
     track_id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(P2pPermission::Delete).await?;
+    p2p.check_permission(&project_id, P2pPermission::Delete).await?;
     state.delete_track(&project_id, &video_id, &track_id)?;
     let _ = app.emit("db:tracks-changed", &video_id);
     Ok(())
@@ -557,7 +557,7 @@ pub async fn set_keyframe(
     bbox_width: f64,
     bbox_height: f64,
 ) -> Result<String, String> {
-    p2p.check_permission(P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
     let id = state.set_keyframe(
         &project_id,
         &video_id,
@@ -582,7 +582,7 @@ pub async fn delete_keyframe(
     track_id: String,
     frame_index: i64,
 ) -> Result<(), String> {
-    p2p.check_permission(P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
     state.delete_keyframe(&project_id, &video_id, &track_id, frame_index)?;
     let _ = app.emit("db:tracks-changed", &video_id);
     Ok(())
@@ -599,7 +599,7 @@ pub async fn toggle_keyframe_enabled(
     frame_index: i64,
     enabled: bool,
 ) -> Result<(), String> {
-    p2p.check_permission(P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
     state.toggle_keyframe_enabled(&project_id, &video_id, &track_id, frame_index, enabled)?;
     let _ = app.emit("db:tracks-changed", &video_id);
     Ok(())
@@ -613,7 +613,7 @@ pub async fn bake_video_tracks(
     project_id: String,
     video_id: String,
 ) -> Result<i64, String> {
-    p2p.check_permission(P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
     // Leer tracks una vez
     let tracks = state.with_project(&project_id, |pf| {
         pf.videos

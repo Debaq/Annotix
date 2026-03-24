@@ -26,9 +26,9 @@ export function VideoCard({ video }: VideoCardProps) {
   const isExtracting = video.status === 'extracting';
   const canOpen = isReady || isExtracting;
   const vidId = video.id || '';
-  const assignee = useP2pStore.getState().getItemAssignee(vidId, 'video');
-  const isAssignedToMe = useP2pStore.getState().isItemAssignedToMe(vidId, 'video');
-  const hasDistribution = !!useP2pStore.getState().distribution;
+  const assignee = projectId ? useP2pStore.getState().getItemAssignee(projectId, vidId, 'video') : null;
+  const isAssignedToMe = projectId ? useP2pStore.getState().isItemAssignedToMe(projectId, vidId, 'video') : true;
+  const hasDistribution = projectId ? !!useP2pStore.getState().distributionByProject[projectId] : false;
   const canDelete = useP2pPermission('delete');
 
   // Thumbnail: usar el primer frame del video (disponible durante extracting o ready)

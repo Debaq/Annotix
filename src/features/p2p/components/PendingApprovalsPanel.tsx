@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useP2pStore } from '../store/p2pStore';
@@ -8,22 +9,25 @@ import { canManage } from '../hooks/useP2pCanEdit';
 
 export function PendingApprovalsPanel() {
   const { t } = useTranslation();
-  const { activeSession, pendingApprovals, setPendingApprovals, removePendingApproval } = useP2pStore();
+  const { projectId } = useParams<{ projectId: string }>();
+  const session = useP2pStore(s => projectId ? s.sessions[projectId] ?? null : null);
+  const pendingApprovals = useP2pStore(s => projectId ? s.pendingApprovalsByProject[projectId] ?? [] : []);
+  const { setPendingApprovals, removePendingApproval } = useP2pStore();
   const [loading, setLoading] = useState<string | null>(null);
 
-  const isManager = activeSession ? canManage(activeSession.role) : false;
-  const requireApproval = activeSession?.rules.requireDataApproval;
+  const isManager = session ? canManage(session.role) : false;
+  const requireApproval = session?.rules.requireDataApproval;
 
   // Load pending approvals on mount
   useEffect(() => {
-    if (activeSession && requireApproval) {
-      p2pService.listPendingApprovals()
-        .then((approvals) => setPendingApprovals(approvals.filter(a => a.status === 'pending')))
+    if (session && requireApproval && projectId) {
+      p2pService.listPendingApprovals(projectId)
+        .then((approvals) => setPendingApprovals(projectId, approvals.filter(a => a.status === 'pending')))
         .catch(() => {});
     }
-  }, [activeSession?.sessionId, requireApproval]);
+  }, [session?.sessionId, requireApproval, projectId]);
 
-  if (!activeSession || !requireApproval) return null;
+  if (!session || !requireApproval || !projectId) return null;
 
   const pending = pendingApprovals.filter(a => a.status === 'pending');
   if (pending.length === 0 && !isManager) return null;
@@ -31,8 +35,8 @@ export function PendingApprovalsPanel() {
   const handleApprove = async (itemId: string) => {
     setLoading(itemId);
     try {
-      await p2pService.approveData(itemId);
-      removePendingApproval(itemId);
+      await p2pService.approveData(projectId, itemId);
+      removePendingApproval(projectId, itemId);
     } catch (err) {
       console.error('Error approving data:', err);
     } finally {
@@ -43,8 +47,8 @@ export function PendingApprovalsPanel() {
   const handleReject = async (itemId: string) => {
     setLoading(itemId);
     try {
-      await p2pService.rejectData(itemId);
-      removePendingApproval(itemId);
+      await p2pService.rejectData(projectId, itemId);
+      removePendingApproval(projectId, itemId);
     } catch (err) {
       console.error('Error rejecting data:', err);
     } finally {

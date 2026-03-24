@@ -7,8 +7,7 @@ import { p2pService } from '../services/p2pService';
 
 export function useP2pSession() {
   const {
-    activeSession,
-    setActiveSession,
+    setSession,
     setImageLock,
     removeImageLock,
     addPeer,
@@ -25,26 +24,27 @@ export function useP2pSession() {
     setHostStopped,
   } = useP2pStore();
 
-  // Listeners globales (no dependen de activeSession)
+  // Listeners globales
   useEffect(() => {
     const unlisteners: (() => void)[] = [];
 
-    // Consultar proactivamente si ya hay sesión activa (evita race condition con evento)
-    p2pService.getSessionInfo().then(async (session) => {
-      if (session) {
-        setActiveSession(session);
+    // Consultar proactivamente si ya hay sesiones activas
+    p2pService.getAllSessions().then(async (sessions) => {
+      for (const session of sessions) {
+        setSession(session.projectId, session);
         try {
-          const dist = await p2pService.getDistribution();
-          if (dist) setDistribution(dist);
+          const dist = await p2pService.getDistribution(session.projectId);
+          if (dist) setDistribution(session.projectId, dist);
         } catch {}
       }
     }).catch(() => {});
 
     listen<P2pSessionInfo>('p2p:session-restored', async (event) => {
-      setActiveSession(event.payload);
+      const session = event.payload;
+      setSession(session.projectId, session);
       try {
-        const dist = await p2pService.getDistribution();
-        if (dist) setDistribution(dist);
+        const dist = await p2pService.getDistribution(session.projectId);
+        if (dist) setDistribution(session.projectId, dist);
       } catch {}
     }).then((fn) => unlisteners.push(fn));
 
@@ -70,26 +70,27 @@ export function useP2pSession() {
     };
   }, []);
 
+  // Session-dependent listeners - ahora son globales (los eventos incluyen projectId)
   useEffect(() => {
-    if (!activeSession) return;
-
     const unlisteners: (() => void)[] = [];
 
     const setup = async () => {
       unlisteners.push(
-        await listen<PeerInfo>('p2p:peer-joined', (event) => {
-          addPeer({ ...event.payload, online: true });
-          if (event.payload.displayName) {
-            toast({ title: 'P2P', description: `${event.payload.displayName} joined` });
+        await listen<PeerInfo & { projectId: string }>('p2p:peer-joined', (event) => {
+          const { projectId, ...peer } = event.payload;
+          addPeer(projectId, { ...peer, online: true });
+          if (peer.displayName) {
+            toast({ title: 'P2P', description: `${peer.displayName} joined` });
           }
         })
       );
 
       unlisteners.push(
-        await listen<{ nodeId: string }>('p2p:peer-left', (event) => {
-          const { peers } = useP2pStore.getState();
-          const peer = peers.find(p => p.nodeId === event.payload.nodeId);
-          removePeer(event.payload.nodeId);
+        await listen<{ projectId: string; nodeId: string }>('p2p:peer-left', (event) => {
+          const { projectId, nodeId } = event.payload;
+          const peers = useP2pStore.getState().peersByProject[projectId] ?? [];
+          const peer = peers.find(p => p.nodeId === nodeId);
+          removePeer(projectId, nodeId);
           if (peer?.displayName) {
             toast({ title: 'P2P', description: `${peer.displayName} left` });
           }
@@ -124,20 +125,21 @@ export function useP2pSession() {
       );
 
       unlisteners.push(
-        await listen<BatchInfo>('p2p:batch-assigned', (event) => {
-          addBatch(event.payload);
+        await listen<BatchInfo & { projectId: string }>('p2p:batch-assigned', (event) => {
+          const { projectId, ...batch } = event.payload;
+          addBatch(projectId, batch);
         })
       );
 
       unlisteners.push(
-        await listen<{ status: SessionStatus }>('p2p:session-status', (event) => {
-          updateSessionStatus(event.payload.status);
+        await listen<{ projectId: string; status: SessionStatus }>('p2p:session-status', (event) => {
+          updateSessionStatus(event.payload.projectId, event.payload.status);
         })
       );
 
       unlisteners.push(
-        await listen<{ reason: string }>('p2p:host-stopped', (_event) => {
-          setHostStopped(true);
+        await listen<{ projectId: string; reason: string }>('p2p:host-stopped', (event) => {
+          setHostStopped(event.payload.projectId, true);
           toast({
             title: 'P2P',
             description: 'The host has stopped the session',
@@ -147,39 +149,43 @@ export function useP2pSession() {
       );
 
       unlisteners.push(
-        await listen<SessionRules>('p2p:rules-updated', (event) => {
-          updateRules(event.payload);
+        await listen<SessionRules & { projectId: string }>('p2p:rules-updated', (event) => {
+          const { projectId, ...rules } = event.payload;
+          updateRules(projectId, rules);
         })
       );
 
       unlisteners.push(
-        await listen<WorkDistribution>('p2p:distribution-updated', (event) => {
-          setDistribution(event.payload);
+        await listen<WorkDistribution & { projectId: string }>('p2p:distribution-updated', (event) => {
+          const { projectId, ...dist } = event.payload;
+          setDistribution(projectId, dist);
         })
       );
 
-      // Nuevos listeners para roles y aprobación de datos
+      // Listeners para roles y aprobacion de datos
       unlisteners.push(
-        await listen<PeerInfo>('p2p:peer-role-changed', (event) => {
-          addPeer(event.payload);
-        })
-      );
-
-      unlisteners.push(
-        await listen<PendingApproval>('p2p:data-submitted', (event) => {
-          addPendingApproval(event.payload);
+        await listen<PeerInfo & { projectId: string }>('p2p:peer-role-changed', (event) => {
+          const { projectId, ...peer } = event.payload;
+          addPeer(projectId, peer);
         })
       );
 
       unlisteners.push(
-        await listen<{ itemId: string }>('p2p:data-approved', (event) => {
-          removePendingApproval(event.payload.itemId);
+        await listen<PendingApproval & { projectId: string }>('p2p:data-submitted', (event) => {
+          const { projectId, ...approval } = event.payload;
+          addPendingApproval(projectId, approval);
         })
       );
 
       unlisteners.push(
-        await listen<{ itemId: string }>('p2p:data-rejected', (event) => {
-          removePendingApproval(event.payload.itemId);
+        await listen<{ projectId: string; itemId: string }>('p2p:data-approved', (event) => {
+          removePendingApproval(event.payload.projectId, event.payload.itemId);
+        })
+      );
+
+      unlisteners.push(
+        await listen<{ projectId: string; itemId: string }>('p2p:data-rejected', (event) => {
+          removePendingApproval(event.payload.projectId, event.payload.itemId);
         })
       );
     };
@@ -189,31 +195,33 @@ export function useP2pSession() {
     return () => {
       unlisteners.forEach((unlisten) => unlisten());
     };
-  }, [activeSession?.sessionId]);
+  }, []);
 
-  // Verificar presencia de peers cada 15s
+  // Verificar presencia de peers cada 15s (itera sobre todas las sesiones)
   useEffect(() => {
-    if (!activeSession) return;
-
     const interval = setInterval(() => {
-      const { peers, setPeers } = useP2pStore.getState();
+      const { peersByProject, setPeers } = useP2pStore.getState();
       const now = Date.now();
-      const TIMEOUT = 90_000; // 90 segundos
-      let changed = false;
-      const updated = peers.map(p => {
-        if (p.online && p.lastSeen && now - p.lastSeen > TIMEOUT) {
-          changed = true;
-          return { ...p, online: false };
+      const TIMEOUT = 90_000;
+
+      for (const [projectId, peers] of Object.entries(peersByProject)) {
+        let changed = false;
+        const updated = peers.map(p => {
+          if (p.online && p.lastSeen && now - p.lastSeen > TIMEOUT) {
+            changed = true;
+            return { ...p, online: false };
+          }
+          return p;
+        });
+        if (changed) {
+          setPeers(projectId, updated);
         }
-        return p;
-      });
-      if (changed) {
-        setPeers(updated);
       }
     }, 15_000);
 
     return () => clearInterval(interval);
-  }, [activeSession?.sessionId]);
+  }, []);
 
-  return { activeSession };
+  const sessions = useP2pStore(s => s.sessions);
+  return { sessions };
 }

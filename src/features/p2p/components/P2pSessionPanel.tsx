@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,21 +15,24 @@ import type { SessionRules } from '../types';
 export function P2pSessionPanel() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { activeSession, peers, reset, updateRules } = useP2pStore();
+  const { projectId } = useParams<{ projectId: string }>();
+  const session = useP2pStore(s => projectId ? s.sessions[projectId] ?? null : null);
+  const peers = useP2pStore(s => projectId ? s.peersByProject[projectId] ?? [] : []);
+  const { reset, updateRules } = useP2pStore();
   const [leaving, setLeaving] = useState(false);
   const [pausing, setPausing] = useState(false);
   const [savingRules, setSavingRules] = useState(false);
 
-  if (!activeSession) return null;
+  if (!session || !projectId) return null;
 
-  const isManager = canManage(activeSession.role);
-  const rules = activeSession.rules;
+  const isManager = canManage(session.role);
+  const rules = session.rules;
 
   const handlePause = async () => {
     setPausing(true);
     try {
-      await p2pService.pauseSession();
-      reset();
+      await p2pService.pauseSession(projectId);
+      reset(projectId);
     } catch (err) {
       console.error('Error pausing session:', err);
     } finally {
@@ -40,8 +43,8 @@ export function P2pSessionPanel() {
   const handleLeave = async () => {
     setLeaving(true);
     try {
-      await p2pService.leaveSession();
-      reset();
+      await p2pService.leaveSession(projectId);
+      reset(projectId);
     } catch (err) {
       console.error('Error leaving session:', err);
     } finally {
@@ -53,8 +56,8 @@ export function P2pSessionPanel() {
     const newRules: SessionRules = { ...rules, [key]: value };
     setSavingRules(true);
     try {
-      await p2pService.updateRules(newRules);
-      updateRules(newRules);
+      await p2pService.updateRules(projectId, newRules);
+      updateRules(projectId, newRules);
     } catch (err) {
       console.error('Error updating rules:', err);
     } finally {
@@ -72,8 +75,8 @@ export function P2pSessionPanel() {
           }
           <span className="font-semibold text-sm">{t('p2p.activeSession')}</span>
         </div>
-        <Badge variant={activeSession.status === 'connected' ? 'default' : 'secondary'}>
-          {t(`p2p.status.${activeSession.status}`)}
+        <Badge variant={session.status === 'connected' ? 'default' : 'secondary'}>
+          {t(`p2p.status.${session.status}`)}
         </Badge>
       </div>
 
@@ -81,7 +84,7 @@ export function P2pSessionPanel() {
         <div className="flex justify-between">
           <span>{t('p2p.role')}:</span>
           <span className="font-medium">
-            {t(`p2p.role_${activeSession.role}`)}
+            {t(`p2p.role_${session.role}`)}
           </span>
         </div>
         <div className="flex justify-between">
@@ -93,15 +96,15 @@ export function P2pSessionPanel() {
       </div>
 
       {/* Share code (only manager) */}
-      {isManager && activeSession.shareCode && (
+      {isManager && session.shareCode && (
         <div className="rounded border bg-muted/50 p-2 text-center">
           <p className="text-xs text-muted-foreground">{t('p2p.shareCodeLabel')}</p>
-          <p className="font-mono text-xs font-bold select-all break-all">{activeSession.shareCode}</p>
+          <p className="font-mono text-xs font-bold select-all break-all">{session.shareCode}</p>
           <Button
             variant="ghost"
             size="sm"
             className="mt-1 h-6 text-xs"
-            onClick={() => navigator.clipboard.writeText(activeSession.shareCode)}
+            onClick={() => navigator.clipboard.writeText(session.shareCode)}
           >
             <i className="fas fa-copy mr-1" />
             {t('p2p.copyCode')}
@@ -150,7 +153,7 @@ export function P2pSessionPanel() {
 
       <div>
         <p className="text-xs font-medium mb-2">{t('p2p.connectedPeers')} ({peers.length})</p>
-        <PeerList peers={peers} myNodeId={activeSession.myNodeId} />
+        <PeerList peers={peers} myNodeId={session.myNodeId} />
       </div>
 
       <WorkDistributionPanel />
@@ -160,7 +163,7 @@ export function P2pSessionPanel() {
         variant="outline"
         size="sm"
         className="w-full"
-        onClick={() => navigate(`/projects/${activeSession.projectId}/team`)}
+        onClick={() => navigate(`/projects/${session.projectId}/team`)}
       >
         <i className="fas fa-users mr-2" />
         {t('p2p.manageTeam')}

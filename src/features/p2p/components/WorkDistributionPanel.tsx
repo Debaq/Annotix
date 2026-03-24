@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,27 +11,31 @@ import type { PeerWorkStats } from '../types';
 
 export function WorkDistributionPanel() {
   const { t } = useTranslation();
-  const { activeSession, distribution, peers, setDistribution } = useP2pStore();
+  const { projectId } = useParams<{ projectId: string }>();
+  const session = useP2pStore(s => projectId ? s.sessions[projectId] ?? null : null);
+  const distribution = useP2pStore(s => projectId ? s.distributionByProject[projectId] ?? null : null);
+  const { setDistribution } = useP2pStore();
   const [stats, setStats] = useState<PeerWorkStats[]>([]);
   const [loading, setLoading] = useState(false);
   const [adjustTarget, setAdjustTarget] = useState<string | null>(null);
 
-  const isHost = activeSession ? canManage(activeSession.role) : false;
+  const isHost = session ? canManage(session.role) : false;
 
   // Cargar stats cuando hay distribución
   useEffect(() => {
-    if (distribution) {
-      p2pService.getWorkStats().then(setStats).catch(() => {});
+    if (distribution && projectId) {
+      p2pService.getWorkStats(projectId).then(setStats).catch(() => {});
     } else {
       setStats([]);
     }
-  }, [distribution?.version]);
+  }, [distribution?.version, projectId]);
 
   const handleDistribute = async () => {
+    if (!projectId) return;
     setLoading(true);
     try {
-      const dist = await p2pService.distributeWork();
-      setDistribution(dist);
+      const dist = await p2pService.distributeWork(projectId);
+      setDistribution(projectId, dist);
     } catch (err) {
       console.error('Error distributing work:', err);
     } finally {
@@ -39,16 +44,17 @@ export function WorkDistributionPanel() {
   };
 
   const handleMoveItems = async (itemIds: string[], itemType: 'video' | 'image', targetNodeId: string) => {
+    if (!projectId) return;
     try {
-      const dist = await p2pService.adjustAssignment(itemIds, itemType, targetNodeId);
-      setDistribution(dist);
+      const dist = await p2pService.adjustAssignment(projectId, itemIds, itemType, targetNodeId);
+      setDistribution(projectId, dist);
       setAdjustTarget(null);
     } catch (err) {
       console.error('Error adjusting assignment:', err);
     }
   };
 
-  if (!activeSession) return null;
+  if (!session || !projectId) return null;
 
   // Sin distribución
   if (!distribution) {
@@ -70,7 +76,7 @@ export function WorkDistributionPanel() {
   }
 
   // Con distribución
-  const myNodeId = activeSession.myNodeId;
+  const myNodeId = session.myNodeId;
   const availablePeers = distribution.assignments.filter(a => a.nodeId !== adjustTarget);
 
   return (

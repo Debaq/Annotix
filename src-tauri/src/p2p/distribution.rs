@@ -19,19 +19,22 @@ impl P2pState {
     /// Si ya existe distribución previa, redistribuye solo los items nuevos (no asignados).
     pub async fn distribute_work(
         &self,
+        project_id: &str,
         app_state: &AppState,
     ) -> Result<WorkDistribution, String> {
-        let session = self.session.read().await;
-        let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+        let node_guard = self.node.read().await;
+        let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+        let sessions = self.sessions.read().await;
+        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
 
         if !session.role.can_manage() {
             return Err("Solo el host puede distribuir trabajo".to_string());
         }
 
-        let project_id = &session.project_id;
+        let sess_project_id = &session.project_id;
 
         // Recoger IDs de videos e imágenes sueltas del proyecto
-        let (video_ids, standalone_image_ids) = app_state.with_project(project_id, |pf| {
+        let (video_ids, standalone_image_ids) = app_state.with_project(sess_project_id, |pf| {
             let vids: Vec<String> = pf.videos.iter().map(|v| v.id.clone()).collect();
             let imgs: Vec<String> = pf.images.iter()
                 .filter(|i| i.video_id.is_none())
@@ -55,7 +58,7 @@ impl P2pState {
         }
 
         // Leer distribución existente para detectar items ya asignados
-        let existing = self.read_distribution_inner(&session.node, session.namespace_id).await;
+        let existing = self.read_distribution_inner(node, session.namespace_id).await;
         let mut already_assigned_videos: HashSet<String> = HashSet::new();
         let mut already_assigned_images: HashSet<String> = HashSet::new();
         let prev_version = if let Some(ref dist) = existing {
@@ -151,7 +154,7 @@ impl P2pState {
         };
 
         // Escribir al iroh-doc
-        let doc = session.node.docs.open(session.namespace_id)
+        let doc = node.docs.open(session.namespace_id)
             .await
             .map_err(|e| format!("Error abriendo doc: {}", e))?
             .ok_or("Documento no encontrado")?;
@@ -171,18 +174,21 @@ impl P2pState {
     /// Ajusta la asignación moviendo items de un peer a otro (solo host).
     pub async fn adjust_assignment(
         &self,
+        project_id: &str,
         item_ids: Vec<String>,
         item_type: String,
         target_node_id: String,
     ) -> Result<WorkDistribution, String> {
-        let session = self.session.read().await;
-        let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+        let node_guard = self.node.read().await;
+        let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+        let sessions = self.sessions.read().await;
+        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
 
         if !session.role.can_manage() {
             return Err("Solo el host puede ajustar asignaciones".to_string());
         }
 
-        let mut dist = self.read_distribution_inner(&session.node, session.namespace_id)
+        let mut dist = self.read_distribution_inner(node, session.namespace_id)
             .await
             .ok_or("No hay distribución activa")?;
 
@@ -213,7 +219,7 @@ impl P2pState {
         dist.created_at = now_ms();
 
         // Escribir al doc
-        let doc = session.node.docs.open(session.namespace_id)
+        let doc = node.docs.open(session.namespace_id)
             .await
             .map_err(|e| format!("Error abriendo doc: {}", e))?
             .ok_or("Documento no encontrado")?;
@@ -229,10 +235,12 @@ impl P2pState {
     }
 
     /// Lee la distribución actual del iroh-doc. Cualquier peer puede llamarla.
-    pub async fn read_distribution(&self) -> Result<Option<WorkDistribution>, String> {
-        let session = self.session.read().await;
-        let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
-        Ok(self.read_distribution_inner(&session.node, session.namespace_id).await)
+    pub async fn read_distribution(&self, project_id: &str) -> Result<Option<WorkDistribution>, String> {
+        let node_guard = self.node.read().await;
+        let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+        let sessions = self.sessions.read().await;
+        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
+        Ok(self.read_distribution_inner(node, session.namespace_id).await)
     }
 
     /// Lee distribución desde el doc (helper interno)
@@ -257,19 +265,22 @@ impl P2pState {
     /// Calcula estadísticas de progreso por peer.
     pub async fn get_work_stats(
         &self,
+        project_id: &str,
         app_state: &AppState,
     ) -> Result<Vec<PeerWorkStats>, String> {
-        let session = self.session.read().await;
-        let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+        let node_guard = self.node.read().await;
+        let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+        let sessions = self.sessions.read().await;
+        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
 
-        let dist = self.read_distribution_inner(&session.node, session.namespace_id)
+        let dist = self.read_distribution_inner(node, session.namespace_id)
             .await
             .ok_or("No hay distribución activa")?;
 
-        let project_id = &session.project_id;
+        let sess_project_id = &session.project_id;
 
         // Construir sets de imágenes/videos completados
-        let (annotated_images, completed_videos) = app_state.with_project(project_id, |pf| {
+        let (annotated_images, completed_videos) = app_state.with_project(sess_project_id, |pf| {
             // Imágenes sueltas con >=1 anotación
             let ann_imgs: HashSet<String> = pf.images.iter()
                 .filter(|i| i.video_id.is_none() && !i.annotations.is_empty())

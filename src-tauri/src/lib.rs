@@ -162,6 +162,7 @@ pub fn run() {
             commands::p2p_commands::p2p_pause_session,
             commands::p2p_commands::p2p_resume_session,
             commands::p2p_commands::p2p_get_session_info,
+            commands::p2p_commands::p2p_get_all_sessions,
             commands::p2p_commands::p2p_lock_image,
             commands::p2p_commands::p2p_unlock_image,
             commands::p2p_commands::p2p_get_image_lock,

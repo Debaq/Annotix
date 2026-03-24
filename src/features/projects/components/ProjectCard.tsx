@@ -30,10 +30,12 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const navigate = useNavigate();
   const { deleteProject } = useProjects();
   const [p2pOpen, setP2pOpen] = useState(false);
-  const { activeSession, peers, reset, downloadProgress } = useP2pStore();
-  const isSharing = activeSession?.projectId === project.id;
-  const isHost = isSharing && activeSession?.role === 'lead_researcher';
-  const isCollaborator = isSharing && activeSession?.role !== 'lead_researcher';
+  const session = useP2pStore(s => project.id ? s.sessions[project.id] ?? null : null);
+  const peers = useP2pStore(s => project.id ? s.peersByProject[project.id] ?? [] : []);
+  const downloadProgress = useP2pStore(s => s.downloadProgress);
+  const isSharing = !!session;
+  const isHost = isSharing && session?.role === 'lead_researcher';
+  const isCollaborator = isSharing && session?.role !== 'lead_researcher';
   const [stopping, setStopping] = useState(false);
   const [resuming, setResuming] = useState(false);
   const dlProgress = downloadProgress[project.id!];
@@ -43,7 +45,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
     setResuming(true);
     try {
       const info = await p2pService.resumeSession(project.id!);
-      useP2pStore.getState().setActiveSession(info);
+      useP2pStore.getState().setSession(project.id!, info);
     } catch (err) {
       console.error('Error resuming P2P session:', err);
     } finally {
@@ -55,8 +57,8 @@ export function ProjectCard({ project }: ProjectCardProps) {
     if (!await confirm(t('p2p.confirmStop'), { kind: 'warning' })) return;
     setStopping(true);
     try {
-      await p2pService.leaveSession();
-      reset();
+      await p2pService.leaveSession(project.id!);
+      useP2pStore.getState().reset(project.id!);
     } catch (err) {
       console.error('Error stopping P2P session:', err);
     } finally {
@@ -112,7 +114,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
                 size="sm"
                 className="h-6 text-xs"
                 onClick={handleResumeP2p}
-                disabled={resuming || !!activeSession}
+                disabled={resuming}
               >
                 {resuming
                   ? <i className="fas fa-spinner fa-spin mr-1" />
@@ -141,8 +143,8 @@ export function ProjectCard({ project }: ProjectCardProps) {
                     <button
                       className="text-xs text-violet-500 hover:text-violet-700 dark:hover:text-violet-300"
                       onClick={() => {
-                        if (activeSession?.shareCode) {
-                          navigator.clipboard.writeText(activeSession.shareCode);
+                        if (session?.shareCode) {
+                          navigator.clipboard.writeText(session.shareCode);
                         }
                       }}
                     >

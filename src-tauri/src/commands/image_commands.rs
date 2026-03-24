@@ -14,7 +14,7 @@ pub async fn upload_images(
     project_id: String,
     file_paths: Vec<String>,
 ) -> Result<Vec<String>, String> {
-    p2p.check_permission(P2pPermission::UploadData).await?;
+    p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
     let ids = state.upload_images(&project_id, &file_paths)?;
     let _ = app.emit("db:images-changed", &project_id);
     Ok(ids)
@@ -30,7 +30,7 @@ pub async fn upload_image_bytes(
     data: Vec<u8>,
     annotations: Vec<AnnotationEntry>,
 ) -> Result<String, String> {
-    p2p.check_permission(P2pPermission::UploadData).await?;
+    p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
     let id = state.upload_image_bytes(&project_id, &file_name, &data, &annotations, None, None)?;
     let _ = app.emit("db:images-changed", &project_id);
     Ok(id)
@@ -82,7 +82,7 @@ pub async fn save_annotations(
     image_id: String,
     annotations: Vec<AnnotationEntry>,
 ) -> Result<(), String> {
-    p2p.check_permission(P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
     state.save_annotations(&project_id, &image_id, &annotations)?;
     let _ = app.emit("db:images-changed", &project_id);
     Ok(())
@@ -96,7 +96,7 @@ pub async fn delete_image(
     project_id: String,
     id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(P2pPermission::Delete).await?;
+    p2p.check_permission(&project_id, P2pPermission::Delete).await?;
     state.delete_image(&project_id, &id)?;
     let _ = app.emit("db:images-changed", &project_id);
     Ok(())

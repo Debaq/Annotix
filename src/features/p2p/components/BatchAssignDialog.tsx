@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useParams } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -15,6 +16,7 @@ interface BatchAssignDialogProps {
 
 export function BatchAssignDialog({ peers }: BatchAssignDialogProps) {
   const { t } = useTranslation();
+  const { projectId } = useParams<{ projectId: string }>();
   const [open, setOpen] = useState(false);
   const [selectedPeer, setSelectedPeer] = useState('');
   const [imageIdsText, setImageIdsText] = useState('');
@@ -25,7 +27,7 @@ export function BatchAssignDialog({ peers }: BatchAssignDialogProps) {
   const collaborators = peers.filter(p => p.role === 'annotator' || p.role === 'data_curator');
 
   const handleAssign = async () => {
-    if (!selectedPeer || !imageIdsText.trim()) return;
+    if (!selectedPeer || !imageIdsText.trim() || !projectId) return;
 
     const imageIds = imageIdsText.split(',').map(s => s.trim()).filter(Boolean);
     if (imageIds.length === 0) return;
@@ -34,8 +36,8 @@ export function BatchAssignDialog({ peers }: BatchAssignDialogProps) {
     setLoading(true);
 
     try {
-      const batch = await p2pService.assignBatch(imageIds, selectedPeer);
-      addBatch(batch);
+      const batch = await p2pService.assignBatch(projectId, imageIds, selectedPeer);
+      addBatch(projectId, batch);
       setOpen(false);
       setImageIdsText('');
       setSelectedPeer('');

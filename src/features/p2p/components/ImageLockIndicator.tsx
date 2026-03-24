@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useParams } from 'react-router-dom';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useP2pStore } from '../store/p2pStore';
 
@@ -8,14 +9,16 @@ interface ImageLockIndicatorProps {
 
 export function ImageLockIndicator({ imageId }: ImageLockIndicatorProps) {
   const { t } = useTranslation();
-  const { imageLocks, activeSession } = useP2pStore();
+  const { projectId } = useParams<{ projectId: string }>();
+  const session = useP2pStore(s => projectId ? s.sessions[projectId] ?? null : null);
+  const imageLocks = useP2pStore(s => s.imageLocks);
 
-  if (!activeSession) return null;
+  if (!session) return null;
 
   const lock = imageLocks.get(imageId);
   if (!lock || lock.expiresAt < Date.now()) return null;
 
-  const isMe = lock.lockedBy === activeSession.myNodeId;
+  const isMe = lock.lockedBy === session.myNodeId;
 
   return (
     <Tooltip>

@@ -17,6 +17,7 @@ pub async fn import_dataset(
     p2p: State<'_, P2pState>,
     app: tauri::AppHandle,
 ) -> Result<ImportResult, String> {
-    p2p.check_permission(P2pPermission::UploadData).await?;
+    // Import creates a new project, not part of any P2P session — pass empty to allow
+    p2p.check_permission("", P2pPermission::UploadData).await?;
     crate::import::import_dataset(&state, &file_path, &project_name, &app)
 }

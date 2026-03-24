@@ -14,22 +14,23 @@ export function TeamView() {
   const { t } = useTranslation();
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
-  const { activeSession, setWorkStats } = useP2pStore();
+  const session = useP2pStore(s => projectId ? s.sessions[projectId] ?? null : null);
+  const { setWorkStats } = useP2pStore();
 
   // Refresh stats periodically
   useEffect(() => {
-    if (!activeSession) return;
+    if (!session || !projectId) return;
 
     const loadStats = () => {
-      p2pService.getWorkStats().then(setWorkStats).catch(() => {});
+      p2pService.getWorkStats(projectId).then(stats => setWorkStats(projectId, stats)).catch(() => {});
     };
 
     loadStats();
     const interval = setInterval(loadStats, 10000);
     return () => clearInterval(interval);
-  }, [activeSession?.sessionId]);
+  }, [session?.sessionId, projectId]);
 
-  if (!activeSession) {
+  if (!session) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4">
         <i className="fas fa-users-slash text-4xl text-muted-foreground" />
@@ -63,7 +64,7 @@ export function TeamView() {
             </h1>
           </div>
           <div className="text-xs text-muted-foreground">
-            {activeSession.projectName}
+            {session.projectName}
           </div>
         </div>
 

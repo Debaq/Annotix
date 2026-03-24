@@ -40,7 +40,7 @@ export function P2pDialog({ trigger, projectId, open: controlledOpen, onOpenChan
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [exportProgress, setExportProgress] = useState<{ current: number; total: number } | null>(null);
-  const { setActiveSession } = useP2pStore();
+  const { setSession } = useP2pStore();
   const { downloadProgress } = useP2pStore();
   const { setCurrentProjectId } = useUIStore();
 
@@ -87,7 +87,7 @@ export function P2pDialog({ trigger, projectId, open: controlledOpen, onOpenChan
       };
       const session = await p2pService.createSession(projectId, displayName.trim(), rules);
       setSessionInfo(session);
-      setActiveSession(session);
+      setSession(session.projectId || projectId!, session);
       setStep('create-ready');
     } catch (err) {
       setError(String(err));
@@ -106,7 +106,7 @@ export function P2pDialog({ trigger, projectId, open: controlledOpen, onOpenChan
     try {
       const session = await p2pService.joinSession(shareCode.trim(), displayName.trim());
       setSessionInfo(session);
-      setActiveSession(session);
+      setSession(session.projectId, session);
       setCurrentProjectId(session.projectId);
       // La descarga de imágenes continúa en background, cerrar modal directamente
       handleClose();

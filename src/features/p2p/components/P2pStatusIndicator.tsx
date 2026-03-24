@@ -3,23 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useP2pStore } from '../store/p2pStore';
+import { useUIStore } from '../../core/store/uiStore';
 
 export function P2pStatusIndicator() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { activeSession, peers } = useP2pStore();
+  const currentProjectId = useUIStore(s => s.currentProjectId);
+  const session = useP2pStore(s => currentProjectId ? s.sessions[currentProjectId] ?? null : null);
+  const peers = useP2pStore(s => currentProjectId ? s.peersByProject[currentProjectId] ?? [] : []);
 
-  if (!activeSession) return null;
+  if (!session) return null;
 
-  const statusColor = activeSession.status === 'connected'
+  const statusColor = session.status === 'connected'
     ? 'bg-green-500'
-    : activeSession.status === 'syncing' || activeSession.status === 'connecting'
+    : session.status === 'syncing' || session.status === 'connecting'
     ? 'bg-yellow-500'
     : 'bg-red-500';
 
   const handleClick = () => {
-    if (activeSession.projectId) {
-      navigate(`/projects/${activeSession.projectId}/team`);
+    if (session.projectId) {
+      navigate(`/projects/${session.projectId}/team`);
     }
   };
 
@@ -39,7 +42,7 @@ export function P2pStatusIndicator() {
       <TooltipContent>
         <p>{t('p2p.activeSession')}</p>
         <p className="text-xs text-muted-foreground">
-          {t('p2p.connectedPeers')}: {peers.length + 1} · {t(`p2p.status.${activeSession.status}`)}
+          {t('p2p.connectedPeers')}: {peers.length + 1} · {t(`p2p.status.${session.status}`)}
         </p>
         <p className="text-xs text-muted-foreground mt-1">{t('p2p.clickToManageTeam')}</p>
       </TooltipContent>
