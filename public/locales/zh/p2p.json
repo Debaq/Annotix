@@ -123,5 +123,6 @@
   "peerJoined": "{{name}} 加入了会话",
   "peerLeft": "{{name}} 离开了会话",
   "downloadFailed": "图片下载失败",
-  "hostStoppedSession": "主机已停止会话"
+  "hostStoppedSession": "主机已停止会话",
+  "hostStoppedBanner": "主机已停止共享。项目现为只读。"
 }

@@ -30,5 +30,18 @@
     "title": "Não há projetos",
     "description": "Crie seu primeiro projeto para começar a anotar"
   },
-  "confirmDelete": "Confirmar exclusão do projeto"
+  "confirmDelete": "Confirmar exclusão do projeto",
+  "confirmDeleteFolder": "Excluir pasta \"{name}\"?",
+  "deleteFolder": "Excluir pasta",
+  "downloadZip": "Baixar como ZIP",
+  "empty.description": "Crie um novo projeto ou importe um existente",
+  "empty.title": "Sem projetos",
+  "emptyFolder": "Pasta vazia — mova projetos para cá",
+  "folderName": "Nome da pasta",
+  "moveToFolder": "Mover para pasta",
+  "newFolder": "Nova pasta",
+  "removeFromFolder": "Sem pasta",
+  "revealFolder": "Abrir no explorador",
+  "stats.classes": "Classes",
+  "type.label": "Tipo"
 }

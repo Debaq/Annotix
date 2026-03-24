@@ -30,5 +30,18 @@
     "title": "No projects",
     "description": "Create your first project to start annotating"
   },
-  "confirmDelete": "Confirm project deletion"
+  "confirmDelete": "Confirm project deletion",
+  "confirmDeleteFolder": "Delete folder \"{name}\"? Projects will be moved to unfiled.",
+  "deleteFolder": "Delete folder",
+  "downloadZip": "Download as ZIP",
+  "empty.description": "Create a new project or import an existing one",
+  "empty.title": "No projects",
+  "emptyFolder": "Empty folder — move projects here from their menu",
+  "folderName": "Folder name",
+  "moveToFolder": "Move to folder",
+  "newFolder": "New folder",
+  "removeFromFolder": "No folder",
+  "revealFolder": "Show in explorer",
+  "stats.classes": "Classes",
+  "type.label": "Type"
 }

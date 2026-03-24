@@ -30,5 +30,18 @@
     "title": "Нет проектов",
     "description": "Создайте свой первый проект, чтобы начать аннотирование"
   },
-  "confirmDelete": "Подтвердить удаление проекта"
+  "confirmDelete": "Подтвердить удаление проекта",
+  "confirmDeleteFolder": "Удалить папку \"{name}\"?",
+  "deleteFolder": "Удалить папку",
+  "downloadZip": "Скачать как ZIP",
+  "empty.description": "Создайте новый проект или импортируйте",
+  "empty.title": "Нет проектов",
+  "emptyFolder": "Пустая папка",
+  "folderName": "Имя папки",
+  "moveToFolder": "Переместить в папку",
+  "newFolder": "Новая папка",
+  "removeFromFolder": "Без папки",
+  "revealFolder": "Показать в проводнике",
+  "stats.classes": "Классы",
+  "type.label": "Тип"
 }

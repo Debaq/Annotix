@@ -30,5 +30,18 @@
     "title": "Nessun progetto",
     "description": "Crea il tuo primo progetto per iniziare ad annotare"
   },
-  "confirmDelete": "Conferma eliminazione del progetto"
+  "confirmDelete": "Conferma eliminazione del progetto",
+  "confirmDeleteFolder": "Eliminare la cartella \"{name}\"?",
+  "deleteFolder": "Elimina cartella",
+  "downloadZip": "Scarica come ZIP",
+  "empty.description": "Crea un nuovo progetto o importane uno",
+  "empty.title": "Nessun progetto",
+  "emptyFolder": "Cartella vuota — sposta i progetti qui",
+  "folderName": "Nome cartella",
+  "moveToFolder": "Sposta in cartella",
+  "newFolder": "Nuova cartella",
+  "removeFromFolder": "Senza cartella",
+  "revealFolder": "Mostra in esplora risorse",
+  "stats.classes": "Classi",
+  "type.label": "Tipo"
 }

@@ -30,5 +30,18 @@
     "title": "没有项目",
     "description": "创建您的第一个项目以开始标注"
   },
-  "confirmDelete": "确认删除项目"
+  "confirmDelete": "确认删除项目",
+  "confirmDeleteFolder": "删除文件夹“{name}”？",
+  "deleteFolder": "删除文件夹",
+  "downloadZip": "下载为ZIP",
+  "empty.description": "创建新项目或导入现有项目",
+  "empty.title": "没有项目",
+  "emptyFolder": "空文件夹",
+  "folderName": "文件夹名称",
+  "moveToFolder": "移动到文件夹",
+  "newFolder": "新建文件夹",
+  "removeFromFolder": "不在文件夹中",
+  "revealFolder": "在文件管理器中显示",
+  "stats.classes": "类别",
+  "type.label": "类型"
 }

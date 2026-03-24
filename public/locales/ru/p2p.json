@@ -123,5 +123,6 @@
   "peerJoined": "{{name}} присоединился к сессии",
   "peerLeft": "{{name}} покинул сессию",
   "downloadFailed": "Не удалось загрузить изображение",
-  "hostStoppedSession": "Хост остановил сессию"
+  "hostStoppedSession": "Хост остановил сессию",
+  "hostStoppedBanner": "Хост прекратил общий доступ."
 }

@@ -123,5 +123,6 @@
   "peerJoined": "{{name}} ist der Sitzung beigetreten",
   "peerLeft": "{{name}} hat die Sitzung verlassen",
   "downloadFailed": "Bild konnte nicht heruntergeladen werden",
-  "hostStoppedSession": "Der Host hat die Sitzung beendet"
+  "hostStoppedSession": "Der Host hat die Sitzung beendet",
+  "hostStoppedBanner": "Der Host hat die Freigabe gestoppt. Das Projekt ist schreibgeschützt."
 }

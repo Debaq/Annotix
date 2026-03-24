@@ -124,5 +124,6 @@
   "peerJoined": "{{name}} joined the session",
   "peerLeft": "{{name}} left the session",
   "downloadFailed": "Failed to download image",
-  "hostStoppedSession": "The host has stopped the session"
+  "hostStoppedSession": "The host has stopped the session",
+  "hostStoppedBanner": "The host stopped sharing. The project is now read-only."
 }

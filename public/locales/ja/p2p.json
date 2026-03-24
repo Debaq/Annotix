@@ -123,5 +123,6 @@
   "peerJoined": "{{name}}がセッションに参加しました",
   "peerLeft": "{{name}}がセッションを退出しました",
   "downloadFailed": "画像のダウンロードに失敗しました",
-  "hostStoppedSession": "ホストがセッションを停止しました"
+  "hostStoppedSession": "ホストがセッションを停止しました",
+  "hostStoppedBanner": "ホストが共有を停止しました。"
 }

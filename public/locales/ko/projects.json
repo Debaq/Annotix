@@ -30,5 +30,18 @@
     "title": "프로젝트 없음",
     "description": "주석을 시작하려면 첫 프로젝트를 만드세요"
   },
-  "confirmDelete": "프로젝트 삭제 확인"
+  "confirmDelete": "프로젝트 삭제 확인",
+  "confirmDeleteFolder": "폴더 \"{name}\"를 삭제하시겠습니까?",
+  "deleteFolder": "폴더 삭제",
+  "downloadZip": "ZIP으로 다운로드",
+  "empty.description": "새 프로젝트를 만들거나 가져오세요",
+  "empty.title": "프로젝트 없음",
+  "emptyFolder": "빈 폴더",
+  "folderName": "폴더 이름",
+  "moveToFolder": "폴더로 이동",
+  "newFolder": "새 폴더",
+  "removeFromFolder": "폴더 없음",
+  "revealFolder": "탐색기에서 보기",
+  "stats.classes": "클래스",
+  "type.label": "유형"
 }

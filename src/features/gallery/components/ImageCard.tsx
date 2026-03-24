@@ -77,7 +77,7 @@ export function ImageCard({ image }: ImageCardProps) {
       <div className="relative w-full h-full bg-[var(--annotix-gray-light)]">
         {isPendingDownload ? (
           <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
-            <i className="fas fa-cloud-download-alt text-lg mb-1" />
+            <span className="bunny-hop text-lg mb-1">&#x1F430;</span>
             <span className="text-[9px]">{image.name}</span>
           </div>
         ) : (
