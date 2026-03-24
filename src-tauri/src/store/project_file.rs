@@ -28,6 +28,8 @@ pub struct ProjectFile {
     pub p2p_download: Option<P2pDownloadStatus>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub inference_models: Vec<InferenceModelEntry>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub folder: Option<String>,
 }
 
 /// Estado de descarga P2P pendiente (imágenes por descargar)

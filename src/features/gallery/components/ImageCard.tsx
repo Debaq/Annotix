@@ -18,16 +18,30 @@ export function ImageCard({ image }: ImageCardProps) {
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
 
   useEffect(() => {
-    if (image.id && projectId) {
-      invoke<string>('get_thumbnail_path', { projectId, imageId: image.id }).then((path) => {
-        setThumbnailUrl(convertFileSrc(path));
-      }).catch(() => {
-        // Fallback to original image
-        invoke<string>('get_image_file_path', { projectId, id: image.id }).then((path) => {
-          setThumbnailUrl(convertFileSrc(path));
-        });
+    if (!image.id || !projectId) return;
+
+    // Intentar asset protocol, si falla cargar bytes directamente
+    const tryAsset = (path: string) => {
+      const url = convertFileSrc(path);
+      const testImg = new window.Image();
+      testImg.onload = () => setThumbnailUrl(url);
+      testImg.onerror = () => {
+        // Fallback: cargar bytes del backend (Windows paths con espacios, etc.)
+        invoke<number[]>('get_image_data', { projectId, id: image.id }).then((bytes) => {
+          const blob = new Blob([new Uint8Array(bytes)]);
+          setThumbnailUrl(URL.createObjectURL(blob));
+        }).catch(() => {});
+      };
+      testImg.src = url;
+    };
+
+    invoke<string>('get_thumbnail_path', { projectId, imageId: image.id })
+      .then(tryAsset)
+      .catch(() => {
+        invoke<string>('get_image_file_path', { projectId, id: image.id })
+          .then(tryAsset)
+          .catch(() => {});
       });
-    }
   }, [image.id, image.blobPath, projectId]);
 
   const isPendingDownload = image.downloadStatus === 'pending';

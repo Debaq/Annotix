@@ -18,6 +18,7 @@ export interface Project {
   imageCount?: number;
   p2pDownload?: { totalImages: number; downloadedImages: number };
   hasP2pConfig?: boolean;
+  folder?: string;
 }
 
 export interface ClassDefinition {

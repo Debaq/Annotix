@@ -87,6 +87,10 @@ export async function deleteProject(id: string): Promise<void> {
   return invoke('delete_project', { id });
 }
 
+export async function setProjectFolder(projectId: string, folder: string | null): Promise<void> {
+  return invoke('set_project_folder', { projectId, folder });
+}
+
 // ─── Image Commands ──────────────────────────────────────────────────────────
 
 export async function uploadImages(
