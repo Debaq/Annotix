@@ -3,12 +3,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use super::node::P2pState;
 use super::ImageLockInfo;
 
-/// TTL de un lock: 30 minutos en milisegundos
-const LOCK_TTL_MS: f64 = 30.0 * 60.0 * 1000.0;
+/// TTL de un lock: 3 minutos en milisegundos (presencia activa)
+const LOCK_TTL_MS: f64 = 3.0 * 60.0 * 1000.0;
 
-/// Intervalo de renovación: 10 minutos en milisegundos
+/// Intervalo de renovación: 1 minuto en milisegundos
 #[allow(dead_code)]
-pub const LOCK_RENEW_INTERVAL_MS: u64 = 10 * 60 * 1000;
+pub const LOCK_RENEW_INTERVAL_MS: u64 = 60 * 1000;
 
 fn now_ms() -> f64 {
     SystemTime::now()

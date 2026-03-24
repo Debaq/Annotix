@@ -155,7 +155,7 @@ export function P2pSessionPanel() {
 
       <div>
         <p className="text-xs font-medium mb-2">{t('p2p.connectedPeers')} ({peers.length})</p>
-        <PeerList peers={peers} myNodeId={session.myNodeId} />
+        <PeerList peers={peers} myNodeId={session.myNodeId} projectId={projectId} />
       </div>
 
       <WorkDistributionPanel />

@@ -31,8 +31,23 @@ export function TeamMembersList() {
   const session = useP2pStore(s => projectId ? s.sessions[projectId] ?? null : null);
   const peers = useP2pStore(s => projectId ? s.peersByProject[projectId] ?? EMPTY_PEERS : EMPTY_PEERS);
   const workStats = useP2pStore(s => projectId ? s.workStatsByProject[projectId] ?? EMPTY_STATS : EMPTY_STATS);
+  const setPeers = useP2pStore(s => s.setPeers);
   const [changingRole, setChangingRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefreshPeers = async () => {
+    if (!projectId || refreshing) return;
+    setRefreshing(true);
+    try {
+      const freshPeers = await p2pService.listPeers(projectId);
+      setPeers(projectId, freshPeers);
+    } catch (err) {
+      console.error('Error refreshing peers:', err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (!session || !projectId) return null;
 
@@ -76,6 +91,15 @@ export function TeamMembersList() {
       <h3 className="text-sm font-semibold flex items-center gap-2">
         <i className="fas fa-users text-muted-foreground" />
         {t('p2p.teamMembers')} ({allMembers.length})
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleRefreshPeers}
+          disabled={refreshing}
+          className="h-6 w-6 p-0 ml-auto"
+        >
+          <i className={`fas fa-sync-alt text-xs ${refreshing ? 'animate-spin' : ''}`} />
+        </Button>
       </h3>
       <div className="space-y-2">
         {allMembers.map((member) => {
