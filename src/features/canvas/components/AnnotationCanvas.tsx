@@ -4,7 +4,7 @@ import { Stage, Layer, Image as KonvaImage, Rect, Transformer, Line, Circle, Gro
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { useCurrentImage } from '../../gallery/hooks/useCurrentImage';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
-import { useAnnotations, captureSaveContext, invalidateSaveContext } from '../hooks/useAnnotations';
+import { useAnnotations, useAnnotationStore, captureSaveContext, invalidateSaveContext } from '../hooks/useAnnotations';
 import { useUIStore } from '../../core/store/uiStore';
 import { FloatingTools } from './FloatingTools';
 import { FloatingZoomControls } from './FloatingZoomControls';
@@ -22,7 +22,7 @@ import { OBBHandler } from '../handlers/OBBHandler';
 import { PolygonHandler } from '../handlers/PolygonHandler';
 import { KeypointsHandler } from '../handlers/KeypointsHandler';
 import { LandmarksHandler } from '../handlers/LandmarksHandler';
-import { MaskHandler } from '../handlers/MaskHandler';
+import { MaskHandler, type MaskPreviewImage } from '../handlers/MaskHandler';
 import { BBoxRenderer } from './renderers/BBoxRenderer';
 import { OBBRenderer } from './renderers/OBBRenderer';
 import { PolygonRenderer } from './renderers/PolygonRenderer';
@@ -69,6 +69,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   const { project } = useCurrentProject();
   const defaults = useAnnotations();
   const { annotations, selectedAnnotationId, selectAnnotation, updateAnnotation, addAnnotation, deleteAnnotation } = overrideAnnotations ?? defaults;
+  const { replaceAnnotations } = defaults;
   const { activeTool, activeClassId, setActiveTool } = useUIStore();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -82,7 +83,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
   const [stageScale, setStageScale] = useState(1);
   const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 });
-  const [maskImage, setMaskImage] = useState<HTMLImageElement | null>(null);
+  const [maskImage, setMaskImage] = useState<MaskPreviewImage | null>(null);
   const [bboxDrawingData, setBboxDrawingData] = useState<any>(null);
   const [obbDrawingData, setObbDrawingData] = useState<any>(null);
   const [maskBrushSize, setMaskBrushSize] = useState(15);
@@ -186,13 +187,15 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
 
   const getActiveClassMaskBase = useCallback((): string | undefined => {
     if (activeClassId === null) return undefined;
-    const maskCandidates = annotations.filter(
+    // Leer del store directamente para tener datos frescos
+    const currentAnns = useAnnotationStore.getState().annotations;
+    const maskCandidates = currentAnns.filter(
       (annotation) => annotation.type === 'mask' && annotation.classId === activeClassId
     );
     if (maskCandidates.length === 0) return undefined;
     const latest = maskCandidates[maskCandidates.length - 1];
     return (latest.data as MaskData).base64png;
-  }, [annotations, activeClassId]);
+  }, [activeClassId]);
 
   const initializeMaskHandler = useCallback(() => {
     if (!konvaImage) return;
@@ -206,16 +209,15 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       return;
     }
 
-    const existingMaskIds = annotations
-      .filter((item) => item.type === 'mask' && item.classId === annotation.classId)
-      .map((item) => item.id);
-
-    for (const annotationId of existingMaskIds) {
-      await deleteAnnotation(annotationId);
-    }
-
-    await addAnnotation(annotation);
-  }, [annotations, addAnnotation, deleteAnnotation]);
+    // Leer SIEMPRE del store (no del closure) para evitar datos stale
+    // El MaskHandler llama este callback 1s después de dibujar,
+    // y el closure de annotations puede estar desactualizado para entonces
+    const currentAnns = useAnnotationStore.getState().annotations;
+    const filtered = currentAnns.filter(
+      (item) => !(item.type === 'mask' && item.classId === annotation.classId)
+    );
+    await replaceAnnotations([...filtered, annotation]);
+  }, [addAnnotation, replaceAnnotations]);
 
   // Registrar callbacks y actualizar activeClassId cuando cambia
   useEffect(() => {
@@ -1205,7 +1207,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
                 );
 
               case 'mask':
-                if (activeTool === 'mask' && ann.classId === activeClassId) {
+                if (activeTool === 'mask' && ann.classId === activeClassId && maskHandler.isActive()) {
                   return null;
                 }
                 return (

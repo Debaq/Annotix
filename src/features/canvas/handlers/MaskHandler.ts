@@ -1,68 +1,52 @@
 import type { BaseHandler, MouseEventData } from '../types/handlers';
 import type { Annotation, MaskData } from '@/lib/db';
 
+export type MaskPreviewImage = HTMLImageElement | ImageBitmap;
+
 export class MaskHandler implements BaseHandler {
   private canvas: HTMLCanvasElement | null = null;
   private ctx: CanvasRenderingContext2D | null = null;
   private isDragging: boolean = false;
   private brushSize: number = 15;
-  private eraseMode: boolean = false; // Modo borrador
-  private maskImage: HTMLImageElement | null = null;
-  private onMaskImageUpdate: ((img: HTMLImageElement | null) => void) | null = null;
-  private drawingClassId: number | null = null; // Guarda el classId cuando se inicia el dibujo
-  private autoSaveTimer: ReturnType<typeof setTimeout> | null = null; // Timer para auto-guardar después de pintar
-  private hasDrawn: boolean = false; // Indica si se ha dibujado algo
-  private isValid: boolean = true; // Indica si el handler es válido (no ha sido cancelado)
+  private eraseMode: boolean = false;
+  private maskImage: MaskPreviewImage | null = null;
+  private onMaskImageUpdate: ((img: MaskPreviewImage | null) => void) | null = null;
+  private drawingClassId: number | null = null;
+  private autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
+  private hasDrawn: boolean = false;
+  private isValid: boolean = true;
+  private lastX: number = 0;
+  private lastY: number = 0;
+  private rafId: number = 0;
+  private needsImageUpdate: boolean = false;
+  private bitmapVersion: number = 0;
 
   constructor(
     private activeClassId: number | null,
     private onAddAnnotation: (annotation: Annotation) => void,
     private classColor: string = '#FF6B6B'
-  ) {
-    console.log('[MaskHandler] NUEVO HANDLER CREADO con classId:', activeClassId);
-  }
+  ) {}
 
-  setMaskImageUpdateCallback(callback: (img: HTMLImageElement | null) => void): void {
+  setMaskImageUpdateCallback(callback: (img: MaskPreviewImage | null) => void): void {
     this.onMaskImageUpdate = callback;
-    console.log('[MaskHandler] Callback de actualización de imagen registrado');
   }
 
-  // Método para actualizar el classId sin recrear el handler
   updateActiveClassId(classId: number | null): void {
-    console.log('[MaskHandler] Actualizando classId:', this.activeClassId, '->', classId);
     this.activeClassId = classId;
   }
 
-  // Método para actualizar el color de la clase
   updateClassColor(color: string): void {
-    console.log('[MaskHandler] Actualizando color:', this.classColor, '->', color);
     this.classColor = color;
   }
 
-  // Método para actualizar el callback de addAnnotation
   updateAddAnnotationCallback(callback: (annotation: Annotation) => void): void {
-    console.log('[MaskHandler] Actualizando callback de addAnnotation');
     this.onAddAnnotation = callback;
   }
 
   initialize(imageWidth: number, imageHeight: number, baseMaskDataUrl?: string): void {
-    // Siempre inicializar un nuevo canvas, incluso si ya existe uno
-    // Esto permite crear una nueva máscara después de guardar la anterior
-    console.log('[MaskHandler] initialize() - creando nuevo canvas y REVALIDANDO', { 
-      hasExistingCanvas: !!this.canvas, 
-      imageWidth, 
-      imageHeight, 
-      activeClassId: this.activeClassId 
-    });
-
-    // CRÍTICO: Revalidar el handler al inicializar
     this.isValid = true;
-    
-    // CRÍTICO: Guardar el classId actual para usarlo al guardar
-    // Esto previene que se pierda si activeClassId cambia antes de finish()
     this.drawingClassId = this.activeClassId;
-    this.hasDrawn = false; // Resetear flag de dibujo
-    console.log('[MaskHandler] drawingClassId guardado:', this.drawingClassId);
+    this.hasDrawn = false;
 
     this.canvas = document.createElement('canvas');
     this.canvas.width = imageWidth;
@@ -71,26 +55,23 @@ export class MaskHandler implements BaseHandler {
 
     if (this.ctx) {
       this.ctx.clearRect(0, 0, imageWidth, imageHeight);
-      this.ctx.fillStyle = 'transparent';
-      this.ctx.fillRect(0, 0, imageWidth, imageHeight);
 
       if (baseMaskDataUrl) {
         const baseImage = new window.Image();
         baseImage.onload = () => {
           if (!this.ctx || !this.canvas) return;
           this.ctx.drawImage(baseImage, 0, 0, this.canvas.width, this.canvas.height);
-          this.updateMaskImage();
+          this.flushImageUpdate();
         };
         baseImage.src = baseMaskDataUrl;
       } else {
-        this.updateMaskImage();
+        this.flushImageUpdate();
       }
     }
   }
 
   setBrushSize(size: number): void {
     this.brushSize = Math.max(5, Math.min(100, size));
-    console.log('[MaskHandler] Brush size ajustado a:', this.brushSize);
   }
 
   getBrushSize(): number {
@@ -99,7 +80,6 @@ export class MaskHandler implements BaseHandler {
 
   setEraseMode(enabled: boolean): void {
     this.eraseMode = enabled;
-    console.log('[MaskHandler] Erase mode:', enabled ? 'ON' : 'OFF');
   }
 
   getEraseMode(): boolean {
@@ -108,112 +88,108 @@ export class MaskHandler implements BaseHandler {
 
   toggleEraseMode(): boolean {
     this.eraseMode = !this.eraseMode;
-    console.log('[MaskHandler] Erase mode toggled:', this.eraseMode ? 'ON' : 'OFF');
     return this.eraseMode;
   }
 
   onMouseDown(event: MouseEventData): void {
-    if (!this.ctx || !this.canvas || this.drawingClassId === null) {
-      console.log('[MaskHandler] onMouseDown - cancelado, no hay drawingClassId');
-      return;
-    }
-    console.log('[MaskHandler] onMouseDown - comenzando a dibujar en:', { 
-      x: event.imageX, 
-      y: event.imageY, 
-      brushSize: this.brushSize,
-      drawingClassId: this.drawingClassId
-    });
+    if (!this.ctx || !this.canvas || this.drawingClassId === null) return;
     this.isDragging = true;
-    this.paintAt(event.imageX, event.imageY);
+    this.lastX = event.imageX;
+    this.lastY = event.imageY;
+    this.applyBrushStyle();
+    this.ctx.beginPath();
+    this.ctx.arc(event.imageX, event.imageY, this.brushSize / 2, 0, Math.PI * 2);
+    this.ctx.fill();
+    this.hasDrawn = true;
+    this.cancelAutoSaveTimer();
+    this.scheduleImageUpdate();
   }
 
   onMouseMove(event: MouseEventData): void {
     if (!this.isDragging || !this.ctx || !this.canvas) return;
-    this.paintAt(event.imageX, event.imageY);
+
+    this.hasDrawn = true;
+    this.cancelAutoSaveTimer();
+
+    this.applyBrushStyle();
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.lastX, this.lastY);
+    this.ctx.lineTo(event.imageX, event.imageY);
+    this.ctx.stroke();
+
+    this.lastX = event.imageX;
+    this.lastY = event.imageY;
+
+    this.scheduleImageUpdate();
   }
 
-  onMouseUp(event: MouseEventData): void {
+  onMouseUp(_event: MouseEventData): void {
     this.isDragging = false;
-    
-    // Si se dibujó algo, iniciar timer de auto-guardado
+    this.flushImageUpdate();
     if (this.hasDrawn) {
-      console.log('[MaskHandler] onMouseUp - iniciando timer de auto-guardado (1s)');
       this.startAutoSaveTimer();
     }
   }
 
-  private paintAt(x: number, y: number): void {
-    if (!this.ctx || !this.canvas) return;
-
-    console.log('[MaskHandler] pintando en:', { x, y, color: this.classColor, eraseMode: this.eraseMode });
-    
-    // Marcar que se ha dibujado y cancelar timer previo
-    this.hasDrawn = true;
-    this.cancelAutoSaveTimer();
-
-    // Configurar modo: pintar o borrar
+  private applyBrushStyle(): void {
+    if (!this.ctx) return;
     this.ctx.globalCompositeOperation = this.eraseMode ? 'destination-out' : 'source-over';
-    this.ctx.fillStyle = this.eraseMode ? 'rgba(0,0,0,1)' : this.classColor + 'AA';
+    // Opacidad completa — Konva aplica opacity={0.6} al renderizar
+    this.ctx.fillStyle = this.eraseMode ? 'rgba(0,0,0,1)' : this.classColor;
     this.ctx.strokeStyle = this.eraseMode ? 'rgba(0,0,0,1)' : this.classColor;
     this.ctx.lineWidth = this.brushSize;
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';
-
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, this.brushSize / 2, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    this.updateMaskImage();
   }
 
-  private updateMaskImage(): void {
-    if (!this.canvas) return;
+  private scheduleImageUpdate(): void {
+    this.needsImageUpdate = true;
+    if (!this.rafId) {
+      this.rafId = requestAnimationFrame(() => {
+        this.rafId = 0;
+        if (this.needsImageUpdate) {
+          this.needsImageUpdate = false;
+          this.createBitmap();
+        }
+      });
+    }
+  }
 
-    const img = new window.Image();
-    img.src = this.canvas.toDataURL();
-    img.onload = () => {
-      this.maskImage = img;
-      // Notificar al componente React que la imagen ha cambiado
-      if (this.onMaskImageUpdate) {
-        console.log('[MaskHandler] Notificando actualización de imagen al componente');
-        this.onMaskImageUpdate(img);
+  private flushImageUpdate(): void {
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = 0;
+    }
+    this.needsImageUpdate = false;
+    this.createBitmap();
+  }
+
+  private createBitmap(): void {
+    if (!this.canvas) return;
+    const version = ++this.bitmapVersion;
+    createImageBitmap(this.canvas).then(bitmap => {
+      // Ignorar si llegó un bitmap más reciente o el handler fue reseteado
+      if (version !== this.bitmapVersion) {
+        bitmap.close();
+        return;
       }
-    };
+      this.maskImage = bitmap;
+      if (this.onMaskImageUpdate) {
+        this.onMaskImageUpdate(bitmap);
+      }
+    });
   }
 
   async finish(): Promise<void> {
-    if (!this.isValid) {
-      console.log('[MaskHandler] finish() - CANCELADO, handler invalidado (fue cancelado previamente)');
-      return;
-    }
-    
-    if (!this.canvas || this.drawingClassId === null) {
-      console.log('[MaskHandler] finish() - cancelado, no canvas o no classId', { 
-        hasCanvas: !!this.canvas, 
-        activeClassId: this.activeClassId,
-        drawingClassId: this.drawingClassId
-      });
-      return;
-    }
-
+    if (!this.isValid) return;
+    if (!this.canvas || this.drawingClassId === null) return;
     if (!this.hasDrawn) {
-      console.log('[MaskHandler] finish() - no hubo trazos, cancelando guardado');
       this.reset();
       return;
     }
 
-    console.log('[MaskHandler] finish() - guardando máscara', { 
-      activeClassId: this.activeClassId,
-      drawingClassId: this.drawingClassId 
-    });
-
     const base64png = this.canvas.toDataURL('image/png');
-    console.log('[MaskHandler] Base64 generado, primeros 100 chars:', base64png.substring(0, 100));
-    
-    const maskAnnotation: MaskData = {
-      base64png,
-    };
-
+    const maskAnnotation: MaskData = { base64png };
     const annotation: Annotation = {
       id: crypto.randomUUID(),
       type: 'mask',
@@ -221,17 +197,7 @@ export class MaskHandler implements BaseHandler {
       data: maskAnnotation,
     };
 
-    console.log('[MaskHandler] Llamando onAddAnnotation con:', { 
-      annotationId: annotation.id, 
-      canvasSize: `${this.canvas.width}x${this.canvas.height}`,
-      base64Length: base64png.length
-    });
-
     this.onAddAnnotation(annotation);
-    console.log('[MaskHandler] onAddAnnotation ejecutado, reseteando handler completamente');
-    
-    // Resetear completamente para limpiar la preview
-    // La máscara guardada se renderizará desde annotations
     this.reset();
   }
 
@@ -243,17 +209,13 @@ export class MaskHandler implements BaseHandler {
     return this.canvas !== null;
   }
 
-  getMaskImage(): HTMLImageElement | null {
+  getMaskImage(): MaskPreviewImage | null {
     return this.maskImage;
   }
 
   private startAutoSaveTimer(): void {
-    // Cancelar timer anterior si existe
     this.cancelAutoSaveTimer();
-    
-    // Iniciar nuevo timer de 1 segundo
     this.autoSaveTimer = setTimeout(() => {
-      console.log('[MaskHandler] Timer de auto-guardado ejecutado');
       this.finish();
     }, 1000);
   }
@@ -266,19 +228,22 @@ export class MaskHandler implements BaseHandler {
   }
 
   reset(): void {
-    console.log('[MaskHandler] reseteando estado y INVALIDANDO handler');
-    this.isValid = false; // Invalidar para prevenir finish() después de cancel
+    this.isValid = false;
     this.cancelAutoSaveTimer();
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = 0;
+    }
+    this.bitmapVersion++;
     this.canvas = null;
     this.ctx = null;
     this.isDragging = false;
     this.maskImage = null;
     this.drawingClassId = null;
     this.hasDrawn = false;
-    
-    // Notificar a React que limpie la preview
+    this.needsImageUpdate = false;
+
     if (this.onMaskImageUpdate) {
-      console.log('[MaskHandler] Notificando a React que limpie maskImage');
       this.onMaskImageUpdate(null);
     }
   }
