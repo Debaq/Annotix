@@ -115,6 +115,10 @@ jobs:
         shell: pwsh
         run: choco install nasm -y
 
+      - name: Setup MSYS2 in PATH (needed by ffmpeg ./configure)
+        shell: pwsh
+        run: echo "C:\msys64\usr\bin" >> $env:GITHUB_PATH
+
       - name: Install dependencies
         run: npm ci
 
