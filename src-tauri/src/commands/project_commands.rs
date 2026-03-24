@@ -1,3 +1,4 @@
+use std::io::Write;
 use tauri::{AppHandle, Emitter, State};
 
 use crate::p2p::node::P2pState;
@@ -78,5 +79,69 @@ pub fn set_project_folder(
 ) -> Result<(), String> {
     state.set_project_folder(&project_id, folder)?;
     let _ = app.emit("db:projects-changed", ());
+    Ok(())
+}
+
+#[tauri::command]
+pub fn reveal_project_folder(
+    state: State<'_, AppState>,
+    project_id: String,
+) -> Result<(), String> {
+    let dir = state.project_dir(&project_id)?;
+    if !dir.exists() {
+        return Err("Carpeta del proyecto no existe".to_string());
+    }
+    #[cfg(target_os = "windows")]
+    { let _ = std::process::Command::new("explorer").arg(&dir).spawn(); }
+    #[cfg(target_os = "linux")]
+    { let _ = std::process::Command::new("xdg-open").arg(&dir).spawn(); }
+    #[cfg(target_os = "macos")]
+    { let _ = std::process::Command::new("open").arg(&dir).spawn(); }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn zip_project(
+    state: State<'_, AppState>,
+    project_id: String,
+    output_path: String,
+) -> Result<(), String> {
+    let dir = state.project_dir(&project_id)?;
+    if !dir.exists() {
+        return Err("Carpeta del proyecto no existe".to_string());
+    }
+
+    let file = std::fs::File::create(&output_path)
+        .map_err(|e| format!("Error creando zip: {}", e))?;
+    let mut zip = zip::ZipWriter::new(file);
+    let options = zip::write::SimpleFileOptions::default()
+        .compression_method(zip::CompressionMethod::Deflated);
+
+    fn add_dir_to_zip(
+        zip: &mut zip::ZipWriter<std::fs::File>,
+        base: &std::path::Path,
+        current: &std::path::Path,
+        options: zip::write::SimpleFileOptions,
+    ) -> Result<(), String> {
+        let entries = std::fs::read_dir(current)
+            .map_err(|e| format!("Error leyendo directorio: {}", e))?;
+        for entry in entries {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let path = entry.path();
+            let rel = path.strip_prefix(base).unwrap().to_string_lossy().replace('\\', "/");
+            if path.is_dir() {
+                zip.add_directory(&format!("{}/", rel), options).map_err(|e| e.to_string())?;
+                add_dir_to_zip(zip, base, &path, options)?;
+            } else {
+                zip.start_file(&rel, options).map_err(|e| e.to_string())?;
+                let data = std::fs::read(&path).map_err(|e| e.to_string())?;
+                zip.write_all(&data).map_err(|e| e.to_string())?;
+            }
+        }
+        Ok(())
+    }
+
+    add_dir_to_zip(&mut zip, &dir, &dir, options)?;
+    zip.finish().map_err(|e| format!("Error finalizando zip: {}", e))?;
     Ok(())
 }
