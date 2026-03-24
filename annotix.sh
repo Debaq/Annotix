@@ -23,11 +23,35 @@ NC='\033[0m'
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TAURI_DIR="$PROJECT_DIR/src-tauri"
 DIST_DIR="$PROJECT_DIR/dist"
-BUNDLE_DIR="$TAURI_DIR/target/release/bundle"
 OUT_DIR="$PROJECT_DIR/out"
 ANDROID_DIR="$TAURI_DIR/gen/android"
 KEYSTORE_DIR="$PROJECT_DIR/.keystore"
-VERSION=$(grep '"version"' "$PROJECT_DIR/package.json" | head -1 | sed 's/.*: *"\(.*\)".*/\1/')
+VERSION=$(cat "$PROJECT_DIR/VERSION" 2>/dev/null | tr -d '[:space:]' || grep '"version"' "$PROJECT_DIR/package.json" | head -1 | sed 's/.*: *"\(.*\)".*/\1/')
+
+# Detectar target dir de Cargo (respeta CARGO_TARGET_DIR y .cargo/config.toml)
+_detect_cargo_target() {
+    if [[ -n "${CARGO_TARGET_DIR:-}" ]]; then
+        echo "$CARGO_TARGET_DIR"
+    elif grep -q 'target-dir' ~/.cargo/config.toml 2>/dev/null; then
+        grep 'target-dir' ~/.cargo/config.toml | head -1 | sed 's/.*= *"\(.*\)".*/\1/' | sed "s|~|$HOME|"
+    else
+        echo "$TAURI_DIR/target"
+    fi
+}
+CARGO_TARGET="$(_detect_cargo_target)"
+BUNDLE_DIR="$CARGO_TARGET/release/bundle"
+
+# Busca el binario release en las ubicaciones posibles
+find_binary() {
+    local name="${1:-annotix}"
+    for dir in "$CARGO_TARGET/release" "$TAURI_DIR/target/release"; do
+        if [[ -f "$dir/$name" ]]; then
+            echo "$dir/$name"
+            return 0
+        fi
+    done
+    return 1
+}
 
 # ── Funciones auxiliares ─────────────────────────────────────────────────────
 info()    { echo -e "${BLUE}[INFO]${NC} $*"; }
@@ -389,7 +413,7 @@ cmd_build_bin() {
     info "Compilando binario con frontend embebido..."
     npx tauri build --no-bundle
 
-    local bin="$TAURI_DIR/target/release/annotix"
+    local bin="$(find_binary || echo '')"
     if [[ -f "$bin" ]]; then
         success "Binario listo en $(elapsed $start)"
         collect_artifacts
@@ -839,7 +863,7 @@ collect_artifacts() {
     local found=0
 
     # Binario
-    local bin="$TAURI_DIR/target/release/annotix"
+    local bin="$(find_binary || echo '')"
     if [[ -f "$bin" ]]; then
         cp "$bin" "$dest/${prefix}"
         found=1
@@ -884,7 +908,7 @@ cmd_list_artifacts() {
     local found=0
 
     # Binario
-    local bin="$TAURI_DIR/target/release/annotix"
+    local bin="$(find_binary || echo '')"
     if [[ -f "$bin" ]]; then
         echo -e "${GREEN}Binario:${NC} $bin ($(du -h "$bin" | cut -f1))"
         found=1
@@ -1045,7 +1069,7 @@ cmd_icons() {
 
 # ── Ejecutar binario release ─────────────────────────────────────────────────
 cmd_run() {
-    local bin="$TAURI_DIR/target/release/annotix"
+    local bin="$(find_binary || echo '')"
     if [[ ! -f "$bin" ]]; then
         error "Binario no encontrado. Ejecuta 'build' primero."
         return 1
@@ -1059,7 +1083,7 @@ cmd_run() {
 cmd_size() {
     header "Análisis de tamaño"
 
-    local bin="$TAURI_DIR/target/release/annotix"
+    local bin="$(find_binary || echo '')"
     if [[ -f "$bin" ]]; then
         echo -e "${BOLD}Binario release:${NC} $(du -h "$bin" | cut -f1)"
         echo ""
