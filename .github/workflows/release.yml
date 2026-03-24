@@ -121,6 +121,16 @@ jobs:
           Move-Item $dir D:\ffmpeg
           echo "FFMPEG_DIR=D:\ffmpeg" >> $env:GITHUB_ENV
 
+      - name: Bundle FFmpeg DLLs con el instalador
+        shell: pwsh
+        run: |
+          Copy-Item D:\ffmpeg\bin\*.dll src-tauri\
+          $conf = Get-Content src-tauri\tauri.conf.json -Raw | ConvertFrom-Json
+          $dlls = Get-ChildItem src-tauri\*.dll | ForEach-Object { $_.Name }
+          $conf.bundle | Add-Member -NotePropertyName "resources" -NotePropertyValue $dlls -Force
+          $conf | ConvertTo-Json -Depth 10 | Set-Content src-tauri\tauri.conf.json
+          Write-Host "DLLs bundled: $($dlls -join ', ')"
+
       - name: Install dependencies
         run: npm ci
 
