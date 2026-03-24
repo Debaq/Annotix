@@ -41,5 +41,6 @@
   "errorMessage": "予期しないエラーが発生しました。アプリケーションをリロードするか、エラーの詳細をコピーして報告できます。",
   "reloadApp": "アプリケーションをリロード",
   "copyError": "エラーをコピー",
-  "technicalDetails": "技術的な詳細"
+  "technicalDetails": "技術的な詳細",
+  "confirmTitle": "操作を確認"
 }

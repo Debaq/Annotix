@@ -2,8 +2,8 @@
   "title": "アノテーション",
   "empty": "アノテーションなし",
   "addClassFirst": "アノテーションの前に少なくとも1つのクラスを追加してください",
-  "delete": "",
-  "confirmDelete": "",
-  "expand": "",
-  "collapse": ""
+  "delete": "削除",
+  "confirmDelete": "このアノテーションを削除してもよろしいですか？",
+  "expand": "展開",
+  "collapse": "折りたたむ"
 }

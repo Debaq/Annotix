@@ -41,5 +41,6 @@
   "errorMessage": "Ein unerwarteter Fehler ist aufgetreten. Sie können die Anwendung neu laden oder die Fehlerdetails kopieren, um sie zu melden.",
   "reloadApp": "Anwendung neu laden",
   "copyError": "Fehler kopieren",
-  "technicalDetails": "Technische Details"
+  "technicalDetails": "Technische Details",
+  "confirmTitle": "Aktion bestätigen"
 }

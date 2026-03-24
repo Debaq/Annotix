@@ -2,8 +2,8 @@
   "title": "Anotaciones",
   "empty": "Sin anotaciones",
   "addClassFirst": "Agrega al menos una clase antes de anotar",
-  "delete": "",
-  "confirmDelete": "",
-  "expand": "",
-  "collapse": ""
+  "delete": "Eliminar",
+  "confirmDelete": "¿Estás seguro de que deseas eliminar esta anotación?",
+  "expand": "Expandir",
+  "collapse": "Contraer"
 }

@@ -21,9 +21,9 @@
     },
     "mask": {
       "name": "マスク",
-      "description": "ピクセルマスクによるインスタンスセグメンテーション",
-      "useCases": "ピクセルレベルでオブジェクトを分離",
-      "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+      "description": "ピクセルマスクによるセマンティックセグメンテーション",
+      "useCases": "各ピクセルをカテゴリ別に分類",
+      "models": "U-Net, DeepLab, SegFormer, FCN",
       "difficulty": "中級"
     },
     "multiLabel": {

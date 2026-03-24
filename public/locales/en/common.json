@@ -41,5 +41,6 @@
   "errorMessage": "An unexpected error occurred. You can reload the application or copy the error details to report it.",
   "reloadApp": "Reload application",
   "copyError": "Copy error",
-  "technicalDetails": "Technical details"
+  "technicalDetails": "Technical details",
+  "confirmTitle": "Confirm Action"
 }

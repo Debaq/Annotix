@@ -21,9 +21,9 @@
     },
     "mask": {
       "name": "Маска",
-      "description": "Сегментация экземпляров с масками пикселей",
-      "useCases": "Разделение объектов на уровне пикселей",
-      "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+      "description": "Семантическая сегментация с пиксельными масками",
+      "useCases": "Классификация каждого пикселя по категории",
+      "models": "U-Net, DeepLab, SegFormer, FCN",
       "difficulty": "Средний"
     },
     "multiLabel": {

@@ -41,5 +41,6 @@
   "errorMessage": "Ha ocurrido un error inesperado. Puedes recargar la aplicación o copiar los detalles del error para reportarlo.",
   "reloadApp": "Recargar aplicación",
   "copyError": "Copiar error",
-  "technicalDetails": "Detalles técnicos"
+  "technicalDetails": "Detalles técnicos",
+  "confirmTitle": "Confirmar acción"
 }

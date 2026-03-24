@@ -21,9 +21,9 @@
     },
     "mask": {
       "name": "遮罩",
-      "description": "使用像素遮罩进行实例分割",
-      "useCases": "在像素级别分离对象",
-      "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+      "description": "使用像素遮罩进行语义分割",
+      "useCases": "按类别对每个像素进行分类",
+      "models": "U-Net, DeepLab, SegFormer, FCN",
       "difficulty": "中级"
     },
     "multiLabel": {

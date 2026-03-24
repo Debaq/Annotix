@@ -41,5 +41,6 @@
   "errorMessage": "Si è verificato un errore imprevisto. Puoi ricaricare l'applicazione o copiare i dettagli dell'errore per segnalarlo.",
   "reloadApp": "Ricarica applicazione",
   "copyError": "Copia errore",
-  "technicalDetails": "Dettagli tecnici"
+  "technicalDetails": "Dettagli tecnici",
+  "confirmTitle": "Conferma azione"
 }

@@ -21,9 +21,9 @@
     },
     "mask": {
       "name": "마스크",
-      "description": "픽셀 마스크를 사용한 인스턴스 분할",
-      "useCases": "픽셀 수준에서 객체 분리",
-      "models": "Mask R-CNN, U-Net, YOLOv8-seg",
+      "description": "픽셀 마스크를 사용한 시맨틱 분할",
+      "useCases": "각 픽셀을 카테고리별로 분류",
+      "models": "U-Net, DeepLab, SegFormer, FCN",
       "difficulty": "중급"
     },
     "multiLabel": {
