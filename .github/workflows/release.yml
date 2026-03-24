@@ -68,6 +68,9 @@ jobs:
 
       - name: Build Tauri (binary + AppImage)
         run: npx tauri build --bundles appimage
+        env:
+          CARGO_HTTP_TIMEOUT: 300
+          CARGO_NET_RETRY: 5
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -140,6 +143,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LIBCLANG_PATH: ${{ env.LLVM_PATH }}/lib
+          CARGO_HTTP_TIMEOUT: 300
+          CARGO_NET_RETRY: 5
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
