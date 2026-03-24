@@ -123,5 +123,6 @@
   "peerJoined": "{{name}} si è unito alla sessione",
   "peerLeft": "{{name}} ha lasciato la sessione",
   "downloadFailed": "Impossibile scaricare l'immagine",
-  "hostStoppedSession": "L'host ha interrotto la sessione"
+  "hostStoppedSession": "L'host ha interrotto la sessione",
+  "hostStoppedBanner": "L'host ha smesso di condividere. Il progetto è in sola lettura."
 }

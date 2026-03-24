@@ -123,5 +123,6 @@
   "peerJoined": "{{name}}님이 세션에 참가했습니다",
   "peerLeft": "{{name}}님이 세션을 나갔습니다",
   "downloadFailed": "이미지 다운로드 실패",
-  "hostStoppedSession": "호스트가 세션을 중지했습니다"
+  "hostStoppedSession": "호스트가 세션을 중지했습니다",
+  "hostStoppedBanner": "호스트가 공유를 중지했습니다."
 }

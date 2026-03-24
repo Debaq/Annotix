@@ -30,5 +30,18 @@
     "title": "Keine Projekte",
     "description": "Erstelle dein erstes Projekt, um mit der Annotation zu beginnen"
   },
-  "confirmDelete": "Projektlöschung bestätigen"
+  "confirmDelete": "Projektlöschung bestätigen",
+  "confirmDeleteFolder": "Ordner \"{name}\" löschen? Projekte werden verschoben.",
+  "deleteFolder": "Ordner löschen",
+  "downloadZip": "Als ZIP herunterladen",
+  "empty.description": "Erstellen Sie ein neues Projekt oder importieren Sie eines",
+  "empty.title": "Keine Projekte",
+  "emptyFolder": "Leerer Ordner — Projekte hierher verschieben",
+  "folderName": "Ordnername",
+  "moveToFolder": "In Ordner verschieben",
+  "newFolder": "Neuer Ordner",
+  "removeFromFolder": "Kein Ordner",
+  "revealFolder": "Im Explorer anzeigen",
+  "stats.classes": "Klassen",
+  "type.label": "Typ"
 }

@@ -30,5 +30,18 @@
     "title": "プロジェクトがありません",
     "description": "最初のプロジェクトを作成してアノテーションを開始"
   },
-  "confirmDelete": "プロジェクトの削除を確認"
+  "confirmDelete": "プロジェクトの削除を確認",
+  "confirmDeleteFolder": "フォルダ「{name}」を削除しますか？",
+  "deleteFolder": "フォルダを削除",
+  "downloadZip": "ZIPでダウンロード",
+  "empty.description": "新しいプロジェクトを作成",
+  "empty.title": "プロジェクトなし",
+  "emptyFolder": "空のフォルダ",
+  "folderName": "フォルダ名",
+  "moveToFolder": "フォルダに移動",
+  "newFolder": "新しいフォルダ",
+  "removeFromFolder": "フォルダなし",
+  "revealFolder": "エクスプローラーで表示",
+  "stats.classes": "クラス",
+  "type.label": "タイプ"
 }

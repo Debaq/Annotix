@@ -196,7 +196,7 @@ export function ProjectCard({ project, folders = [] }: ProjectCardProps) {
             {dlProgress ? (
               <div className="mt-1.5 pt-1.5 border-t border-blue-500/20">
                 <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 mb-1">
-                  <i className="fas fa-cloud-download-alt" />
+                  <span className="bunny-hop">&#x1F430;</span>
                   <span>{t('p2p.downloadingImages')}</span>
                   <span className="ml-auto font-medium">{dlProgress.current} / {dlProgress.total}</span>
                 </div>

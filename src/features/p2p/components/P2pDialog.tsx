@@ -397,7 +397,7 @@ export function P2pDialog({ trigger, projectId, open: controlledOpen, onOpenChan
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="text-center">
-                <i className="fas fa-download fa-spin text-4xl text-blue-500 mb-4" />
+                <span className="bunny-hop text-4xl mb-4 block">&#x1F430;</span>
               </div>
               {sessionInfo && downloadProgress[sessionInfo.projectId] && (
                 <div>

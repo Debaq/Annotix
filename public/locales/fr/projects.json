@@ -30,5 +30,18 @@
     "title": "Aucun projet",
     "description": "Créez votre premier projet pour commencer à annoter"
   },
-  "confirmDelete": "Confirmer la suppression du projet"
+  "confirmDelete": "Confirmer la suppression du projet",
+  "confirmDeleteFolder": "Supprimer le dossier \"{name}\" ?",
+  "deleteFolder": "Supprimer le dossier",
+  "downloadZip": "Télécharger en ZIP",
+  "empty.description": "Créez un nouveau projet ou importez-en un",
+  "empty.title": "Aucun projet",
+  "emptyFolder": "Dossier vide — déplacez des projets ici",
+  "folderName": "Nom du dossier",
+  "moveToFolder": "Déplacer vers un dossier",
+  "newFolder": "Nouveau dossier",
+  "removeFromFolder": "Sans dossier",
+  "revealFolder": "Afficher dans l'explorateur",
+  "stats.classes": "Classes",
+  "type.label": "Type"
 }

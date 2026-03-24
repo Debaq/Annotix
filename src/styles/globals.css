@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes bunny-hop {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-8px) rotate(-5deg); }
+  50% { transform: translateY(-12px) rotate(0deg); }
+  70% { transform: translateY(-8px) rotate(5deg); }
+}
+
+.bunny-hop {
+  display: inline-block;
+  animation: bunny-hop 0.8s ease-in-out infinite;
+}
+
 @layer base {
   :root {
     /* Shadcn UI Variables (HSL format for Tailwind) */

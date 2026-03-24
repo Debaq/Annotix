@@ -30,5 +30,18 @@
     "title": "No hay proyectos",
     "description": "Crea tu primer proyecto para comenzar a anotar"
   },
-  "confirmDelete": "Confirmar eliminación del proyecto"
+  "confirmDelete": "Confirmar eliminación del proyecto",
+  "confirmDeleteFolder": "¿Eliminar la carpeta \"{name}\"? Los proyectos se moverán a sin carpeta.",
+  "deleteFolder": "Eliminar carpeta",
+  "downloadZip": "Descargar como ZIP",
+  "empty.description": "Crea un proyecto nuevo o importa uno existente",
+  "empty.title": "No hay proyectos",
+  "emptyFolder": "Carpeta vacía — mové proyectos acá desde su menú",
+  "folderName": "Nombre de la carpeta",
+  "moveToFolder": "Mover a carpeta",
+  "newFolder": "Nueva carpeta",
+  "removeFromFolder": "Sin carpeta",
+  "revealFolder": "Abrir en explorador",
+  "stats.classes": "Clases",
+  "type.label": "Tipo"
 }

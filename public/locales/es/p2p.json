@@ -124,5 +124,6 @@
   "peerJoined": "{{name}} se unió a la sesión",
   "peerLeft": "{{name}} dejó la sesión",
   "downloadFailed": "Error al descargar imagen",
-  "hostStoppedSession": "El host detuvo la sesión"
+  "hostStoppedSession": "El host detuvo la sesión",
+  "hostStoppedBanner": "El host dejó de compartir. El proyecto es de solo lectura."
 }
