@@ -114,5 +114,14 @@
   "clickToManageTeam": "Klicken zum Verwalten",
   "sessionSettings": "Sitzungseinstellungen",
   "joiningAsLeadResearcher": "Sie treten als leitender Forscher bei",
-  "joiningAsAnnotator": "Sie treten als Annotator bei"
+  "joiningAsAnnotator": "Sie treten als Annotator bei",
+  "exportingProject": "Projekt zum Teilen vorbereiten...",
+  "exportingImages": "Bilder importieren {{current}} / {{total}}",
+  "preparingSession": "P2P-Knoten starten...",
+  "connectingToHost": "Verbindung zum Host...",
+  "downloadingImagesProgress": "Bilder herunterladen {{current}} / {{total}}",
+  "peerJoined": "{{name}} ist der Sitzung beigetreten",
+  "peerLeft": "{{name}} hat die Sitzung verlassen",
+  "downloadFailed": "Bild konnte nicht heruntergeladen werden",
+  "hostStoppedSession": "Der Host hat die Sitzung beendet"
 }

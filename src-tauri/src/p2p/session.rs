@@ -86,8 +86,8 @@ impl P2pState {
             *session_guard = Some(session);
         }
 
-        // Exportar proyecto al doc (incluye meta, clases, imágenes)
-        sync::project_to_doc(self, &project, &images_dir).await?;
+        // Exportar proyecto al doc (incluye meta, clases, imágenes con blobs)
+        sync::project_to_doc(self, &project, &images_dir, app_handle).await?;
 
         // Escribir host_secret_hash, host_node_id y rules al doc
         sync::write_host_meta(self, &host_secret_hash, &my_node_id, &rules).await?;
@@ -198,8 +198,27 @@ impl P2pState {
             "status": "syncing",
         }));
 
-        // Esperar para que se sincronicen las entradas iniciales
-        tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+        // Esperar a que se sincronice meta/project (polling con timeout de 30s)
+        let blobs_ref: &iroh_blobs::api::Store = &*node.blobs_store;
+        let poll_interval = std::time::Duration::from_millis(500);
+        let max_wait = std::time::Duration::from_secs(30);
+        let started = std::time::Instant::now();
+        loop {
+            if started.elapsed() >= max_wait {
+                return Err("Timeout: no se pudieron sincronizar los metadatos del proyecto. Verifica que el host esté en línea.".to_string());
+            }
+            match doc.get_one(iroh_docs::store::Query::key_exact(b"meta/project")).await {
+                Ok(Some(entry)) => {
+                    // Verificar que podemos leer el contenido
+                    if blobs_ref.blobs().get_bytes(entry.content_hash()).await.is_ok() {
+                        log::info!("meta/project sincronizado en {:?}", started.elapsed());
+                        break;
+                    }
+                }
+                _ => {}
+            }
+            tokio::time::sleep(poll_interval).await;
+        }
 
         // Verificar si es lead researcher (si proporcionó host key)
         let (role, verified_secret) = if let Some(ref secret) = host_secret {

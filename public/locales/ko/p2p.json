@@ -114,5 +114,14 @@
   "clickToManageTeam": "팀 관리 클릭",
   "sessionSettings": "세션 설정",
   "joiningAsLeadResearcher": "수석 연구원으로 참여합니다",
-  "joiningAsAnnotator": "주석자로 참여합니다"
+  "joiningAsAnnotator": "주석자로 참여합니다",
+  "exportingProject": "공유를 위해 프로젝트 준비 중...",
+  "exportingImages": "이미지 가져오기 {{current}} / {{total}}",
+  "preparingSession": "P2P 노드 시작 중...",
+  "connectingToHost": "호스트에 연결 중...",
+  "downloadingImagesProgress": "이미지 다운로드 중 {{current}} / {{total}}",
+  "peerJoined": "{{name}}님이 세션에 참가했습니다",
+  "peerLeft": "{{name}}님이 세션을 나갔습니다",
+  "downloadFailed": "이미지 다운로드 실패",
+  "hostStoppedSession": "호스트가 세션을 중지했습니다"
 }

@@ -114,5 +114,14 @@
   "clickToManageTeam": "Нажмите для управления командой",
   "sessionSettings": "Настройки сессии",
   "joiningAsLeadResearcher": "Вы присоединитесь как ведущий исследователь",
-  "joiningAsAnnotator": "Вы присоединитесь как аннотатор"
+  "joiningAsAnnotator": "Вы присоединитесь как аннотатор",
+  "exportingProject": "Подготовка проекта к совместному использованию...",
+  "exportingImages": "Импорт изображений {{current}} / {{total}}",
+  "preparingSession": "Запуск P2P узла...",
+  "connectingToHost": "Подключение к хосту...",
+  "downloadingImagesProgress": "Загрузка изображений {{current}} / {{total}}",
+  "peerJoined": "{{name}} присоединился к сессии",
+  "peerLeft": "{{name}} покинул сессию",
+  "downloadFailed": "Не удалось загрузить изображение",
+  "hostStoppedSession": "Хост остановил сессию"
 }

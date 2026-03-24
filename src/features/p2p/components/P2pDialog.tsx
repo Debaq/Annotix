@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { listen } from '@tauri-apps/api/event';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +20,7 @@ interface P2pDialogProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-type Step = 'choose' | 'create-configure' | 'create-ready' | 'join-enter-code' | 'join-downloading' | 'connected';
+type Step = 'choose' | 'create-configure' | 'create-exporting' | 'create-ready' | 'join-enter-code' | 'join-downloading' | 'connected';
 
 export function P2pDialog({ trigger, projectId, open: controlledOpen, onOpenChange }: P2pDialogProps) {
   const { t } = useTranslation();
@@ -38,9 +39,19 @@ export function P2pDialog({ trigger, projectId, open: controlledOpen, onOpenChan
   const [sessionInfo, setSessionInfo] = useState<P2pSessionInfo | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [exportProgress, setExportProgress] = useState<{ current: number; total: number } | null>(null);
   const { setActiveSession } = useP2pStore();
-  const { syncProgress } = useP2pStore();
+  const { downloadProgress } = useP2pStore();
   const { setCurrentProjectId } = useUIStore();
+
+  // Listener para progreso de export (host importando blobs)
+  useEffect(() => {
+    let unlisten: (() => void) | null = null;
+    listen<{ current: number; total: number; imageName: string }>('p2p:export-progress', (event) => {
+      setExportProgress({ current: event.payload.current, total: event.payload.total });
+    }).then((fn) => { unlisten = fn; });
+    return () => { unlisten?.(); };
+  }, []);
 
   const handleReset = () => {
     setStep('choose');
@@ -55,12 +66,15 @@ export function P2pDialog({ trigger, projectId, open: controlledOpen, onOpenChan
     setSessionInfo(null);
     setError('');
     setLoading(false);
+    setExportProgress(null);
   };
 
   const handleCreateSession = async () => {
     if (!displayName.trim() || !projectId) return;
     setError('');
     setLoading(true);
+    setExportProgress(null);
+    setStep('create-exporting');
 
     try {
       const rules: SessionRules = {
@@ -77,6 +91,7 @@ export function P2pDialog({ trigger, projectId, open: controlledOpen, onOpenChan
       setStep('create-ready');
     } catch (err) {
       setError(String(err));
+      setStep('create-configure');
     } finally {
       setLoading(false);
     }
@@ -242,6 +257,35 @@ export function P2pDialog({ trigger, projectId, open: controlledOpen, onOpenChan
           </>
         )}
 
+        {/* Step: Create - Exporting (host importing blobs) */}
+        {step === 'create-exporting' && (
+          <>
+            <DialogHeader>
+              <DialogTitle>{t('p2p.createSession')}</DialogTitle>
+              <DialogDescription>{t('p2p.exportingProject')}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="text-center">
+                <i className="fas fa-upload fa-spin text-4xl text-violet-500 mb-4" />
+              </div>
+              {exportProgress && (
+                <div>
+                  <Progress value={(exportProgress.current / Math.max(exportProgress.total, 1)) * 100} />
+                  <p className="text-sm text-muted-foreground text-center mt-2">
+                    {t('p2p.exportingImages', { current: exportProgress.current, total: exportProgress.total })}
+                  </p>
+                </div>
+              )}
+              {!exportProgress && (
+                <p className="text-sm text-muted-foreground text-center">
+                  {t('p2p.preparingSession')}
+                </p>
+              )}
+              {error && <p className="text-sm text-destructive text-center">{error}</p>}
+            </div>
+          </>
+        )}
+
         {/* Step: Create - Ready (show codes) */}
         {step === 'create-ready' && sessionInfo && (
           <>
@@ -353,15 +397,23 @@ export function P2pDialog({ trigger, projectId, open: controlledOpen, onOpenChan
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="text-center">
-                <i className="fas fa-sync fa-spin text-4xl text-violet-500 mb-4" />
+                <i className="fas fa-download fa-spin text-4xl text-blue-500 mb-4" />
               </div>
-              {syncProgress && (
+              {sessionInfo && downloadProgress[sessionInfo.projectId] && (
                 <div>
-                  <Progress value={(syncProgress.current / Math.max(syncProgress.total, 1)) * 100} />
+                  <Progress value={(downloadProgress[sessionInfo.projectId].current / Math.max(downloadProgress[sessionInfo.projectId].total, 1)) * 100} />
                   <p className="text-sm text-muted-foreground text-center mt-2">
-                    {syncProgress.current} / {syncProgress.total}
+                    {t('p2p.downloadingImages', {
+                      current: downloadProgress[sessionInfo.projectId].current,
+                      total: downloadProgress[sessionInfo.projectId].total,
+                    })}
                   </p>
                 </div>
+              )}
+              {(!sessionInfo || !downloadProgress[sessionInfo?.projectId]) && !error && (
+                <p className="text-sm text-muted-foreground text-center">
+                  {t('p2p.connectingToHost')}
+                </p>
               )}
               {error && <p className="text-sm text-destructive text-center">{error}</p>}
             </div>
