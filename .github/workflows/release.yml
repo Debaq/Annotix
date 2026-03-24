@@ -144,8 +144,8 @@ jobs:
           $json = $commits | ConvertTo-Json -Compress -AsArray
           "// Auto-generado por CI`nexport const CHANGELOG: { hash: string; message: string }[] = $json;" | Set-Content src/lib/changelog.ts
 
-      - name: Build Tauri
-        run: npx tauri build
+      - name: Build Tauri (sin ffmpeg-build, usa FFMPEG_DIR pre-compilado)
+        run: npx tauri build -- --no-default-features
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LIBCLANG_PATH: ${{ env.LLVM_PATH }}/lib
