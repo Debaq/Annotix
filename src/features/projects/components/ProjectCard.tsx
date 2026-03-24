@@ -24,6 +24,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import * as tauriDb from '@/lib/tauriDb';
+import { invoke } from '@tauri-apps/api/core';
+import { save } from '@tauri-apps/plugin-dialog';
 
 interface ProjectCardProps {
   project: Project;
@@ -236,6 +238,24 @@ export function ProjectCard({ project, folders = [] }: ProjectCardProps) {
               <DropdownMenuItem onClick={handleOpen}>
                 <i className="fas fa-folder-open mr-2"></i>
                 {t('projects.open')}
+              </DropdownMenuItem>
+
+              <DropdownMenuItem onClick={() => invoke('reveal_project_folder', { projectId: project.id })}>
+                <i className="fas fa-external-link-alt mr-2"></i>
+                {t('projects.revealFolder', 'Abrir en explorador')}
+              </DropdownMenuItem>
+
+              <DropdownMenuItem onClick={async () => {
+                const path = await save({
+                  defaultPath: `${project.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.zip`,
+                  filters: [{ name: 'ZIP', extensions: ['zip'] }],
+                });
+                if (path) {
+                  await invoke('zip_project', { projectId: project.id, outputPath: path });
+                }
+              }}>
+                <i className="fas fa-download mr-2"></i>
+                {t('projects.downloadZip', 'Descargar como ZIP')}
               </DropdownMenuItem>
 
               {!isCollaborator && !isSharing && (

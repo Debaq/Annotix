@@ -805,5 +805,43 @@
     "date": "2026-03-24T19:40:05Z",
     "commits": [],
     "issues": []
+  },
+  {
+    "code": "aguoq",
+    "version": "2.1.0",
+    "buildNumber": 29,
+    "date": "2026-03-24T20:17:11Z",
+    "commits": [
+      {
+        "hash": "0b15c95",
+        "message": "feat: sistema de carpetas, mejoras P2P, fix Windows y limpieza"
+      },
+      {
+        "hash": "d7f3469",
+        "message": "fix(p2p): corregir visibilidad de peers y sincronización de imágenes de colaboradores"
+      }
+    ],
+    "issues": []
+  },
+  {
+    "code": "kcqsk",
+    "version": "2.1.0",
+    "buildNumber": 30,
+    "date": "2026-03-24T20:22:37Z",
+    "commits": [
+      {
+        "hash": "17058ca",
+        "message": "fix(export): solo exportar imágenes anotadas"
+      },
+      {
+        "hash": "0b15c95",
+        "message": "feat: sistema de carpetas, mejoras P2P, fix Windows y limpieza"
+      },
+      {
+        "hash": "d7f3469",
+        "message": "fix(p2p): corregir visibilidad de peers y sincronización de imágenes de colaboradores"
+      }
+    ],
+    "issues": []
   }
 ]
