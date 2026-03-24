@@ -24,15 +24,17 @@ async fn read_entry_bytes(
 /// Escribe metadatos del host al iroh-doc: hash del secreto, node_id del host, y reglas
 pub async fn write_host_meta(
     p2p: &P2pState,
+    project_id: &str,
     host_secret_hash: &str,
     host_node_id: &str,
     rules: &SessionRules,
 ) -> Result<(), String> {
-    let session = p2p.session.read().await;
-    let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+    let node_guard = p2p.node.read().await;
+    let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+    let sessions = p2p.sessions.read().await;
+    let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
 
-    let doc = session
-        .node
+    let doc = node
         .docs
         .open(session.namespace_id)
         .await
@@ -120,13 +122,15 @@ pub async fn read_rules_from_doc(
 /// Escribe reglas actualizadas al doc (solo host)
 pub async fn write_rules(
     p2p: &P2pState,
+    project_id: &str,
     rules: &SessionRules,
 ) -> Result<(), String> {
-    let session = p2p.session.read().await;
-    let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+    let node_guard = p2p.node.read().await;
+    let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+    let sessions = p2p.sessions.read().await;
+    let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
 
-    let doc = session
-        .node
+    let doc = node
         .docs
         .open(session.namespace_id)
         .await
@@ -146,15 +150,17 @@ pub async fn write_rules(
 /// Escribe el proyecto completo al iroh-doc (usado por el host al crear sesión)
 pub async fn project_to_doc(
     p2p: &P2pState,
+    project_id: &str,
     project: &ProjectFile,
     images_dir: &std::path::Path,
     app_handle: &tauri::AppHandle,
 ) -> Result<(), String> {
-    let session = p2p.session.read().await;
-    let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+    let node_guard = p2p.node.read().await;
+    let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+    let sessions = p2p.sessions.read().await;
+    let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
 
-    let doc = session
-        .node
+    let doc = node
         .docs
         .open(session.namespace_id)
         .await
@@ -162,7 +168,7 @@ pub async fn project_to_doc(
         .ok_or("Documento no encontrado")?;
 
     let author = session.author_id;
-    let blobs = &*session.node.blobs_store;
+    let blobs = &*node.blobs_store;
 
     // meta/project
     let meta = serde_json::json!({
@@ -258,22 +264,21 @@ pub async fn project_to_doc(
 
 /// Fase 1: Reconstruye un ProjectFile desde un iroh-doc, solo metadata (sin descargar blobs de imágenes).
 /// Las imágenes se crean con download_status = Some("pending").
+/// Toma node, namespace_id, author_id directamente (no necesita sesión en el HashMap).
 pub async fn doc_to_project_metadata(
-    p2p: &P2pState,
+    node: &Arc<IrohNode>,
+    namespace_id: iroh_docs::NamespaceId,
+    _author_id: iroh_docs::AuthorId,
     target_dir: &std::path::Path,
 ) -> Result<ProjectFile, String> {
-    let session = p2p.session.read().await;
-    let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
-
-    let doc = session
-        .node
+    let doc = node
         .docs
-        .open(session.namespace_id)
+        .open(namespace_id)
         .await
         .map_err(|e| format!("Error abriendo doc: {}", e))?
         .ok_or("Documento no encontrado")?;
 
-    let blobs: &iroh_blobs::api::Store = &*session.node.blobs_store;
+    let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
 
     // Leer meta/project
     let meta_entry = doc
@@ -445,9 +450,11 @@ pub async fn download_project_images(
 
     // Obtener doc y blobs del p2p state
     let (namespace_id, node) = {
-        let session = p2p.session.read().await;
-        let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
-        (session.namespace_id, session.node.clone())
+        let node_guard = p2p.node.read().await;
+        let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?.clone();
+        let sessions = p2p.sessions.read().await;
+        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
+        (session.namespace_id, node)
     };
 
     let doc = node
@@ -594,14 +601,16 @@ pub async fn download_project_images(
 /// Envía un dato para aprobación
 pub async fn submit_data_for_approval(
     p2p: &P2pState,
+    project_id: &str,
     item_id: &str,
     item_type: &str,
 ) -> Result<(), String> {
-    let session = p2p.session.read().await;
-    let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+    let node_guard = p2p.node.read().await;
+    let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+    let sessions = p2p.sessions.read().await;
+    let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
 
-    let doc = session
-        .node
+    let doc = node
         .docs
         .open(session.namespace_id)
         .await
@@ -636,41 +645,45 @@ pub async fn submit_data_for_approval(
 /// Aprueba un dato pendiente
 pub async fn approve_data(
     p2p: &P2pState,
+    project_id: &str,
     item_id: &str,
 ) -> Result<(), String> {
-    update_approval_status(p2p, item_id, super::ApprovalStatus::Approved).await
+    update_approval_status(p2p, project_id, item_id, super::ApprovalStatus::Approved).await
 }
 
 /// Rechaza un dato pendiente
 pub async fn reject_data(
     p2p: &P2pState,
+    project_id: &str,
     item_id: &str,
 ) -> Result<(), String> {
-    update_approval_status(p2p, item_id, super::ApprovalStatus::Rejected).await
+    update_approval_status(p2p, project_id, item_id, super::ApprovalStatus::Rejected).await
 }
 
 /// Helper interno para cambiar el estado de aprobación
 async fn update_approval_status(
     p2p: &P2pState,
+    project_id: &str,
     item_id: &str,
     new_status: super::ApprovalStatus,
 ) -> Result<(), String> {
-    let session = p2p.session.read().await;
-    let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+    let node_guard = p2p.node.read().await;
+    let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+    let sessions = p2p.sessions.read().await;
+    let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
 
     if !session.role.can_manage() {
         return Err("Solo el investigador principal puede aprobar/rechazar datos".to_string());
     }
 
-    let doc = session
-        .node
+    let doc = node
         .docs
         .open(session.namespace_id)
         .await
         .map_err(|e| format!("Error abriendo doc: {}", e))?
         .ok_or("Documento no encontrado")?;
 
-    let blobs: &iroh_blobs::api::Store = &*session.node.blobs_store;
+    let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
     let key = format!("approval/{}", item_id);
 
     let entry = doc
@@ -698,19 +711,21 @@ async fn update_approval_status(
 /// Lista todas las aprobaciones pendientes
 pub async fn list_pending_approvals(
     p2p: &P2pState,
+    project_id: &str,
 ) -> Result<Vec<super::PendingApproval>, String> {
-    let session = p2p.session.read().await;
-    let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+    let node_guard = p2p.node.read().await;
+    let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+    let sessions = p2p.sessions.read().await;
+    let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
 
-    let doc = session
-        .node
+    let doc = node
         .docs
         .open(session.namespace_id)
         .await
         .map_err(|e| format!("Error abriendo doc: {}", e))?
         .ok_or("Documento no encontrado")?;
 
-    let blobs: &iroh_blobs::api::Store = &*session.node.blobs_store;
+    let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
 
     let entries = doc
         .get_many(iroh_docs::store::Query::key_prefix(b"approval/"))
@@ -735,14 +750,16 @@ pub async fn list_pending_approvals(
 /// Sincroniza anotaciones locales al iroh-doc
 pub async fn sync_annotations_to_doc(
     p2p: &P2pState,
+    project_id: &str,
     image_id: &str,
     annotations: &[AnnotationEntry],
 ) -> Result<(), String> {
-    let session = p2p.session.read().await;
-    let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+    let node_guard = p2p.node.read().await;
+    let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+    let sessions = p2p.sessions.read().await;
+    let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
 
-    let doc = session
-        .node
+    let doc = node
         .docs
         .open(session.namespace_id)
         .await
@@ -802,6 +819,7 @@ pub async fn emit_existing_peers(
 /// Inicia el watcher de cambios remotos en el iroh-doc
 pub fn start_doc_watcher(
     namespace_id: iroh_docs::NamespaceId,
+    project_id: String,
     docs: iroh_docs::protocol::Docs,
     blobs_store: iroh_blobs::store::fs::FsStore,
     app_handle: tauri::AppHandle,
@@ -840,6 +858,7 @@ pub fn start_doc_watcher(
                             if let Ok(content) = read_entry_bytes(&entry, blobs).await {
                                 if let Ok(annots) = serde_json::from_slice::<Vec<AnnotationEntry>>(&content) {
                                     let _ = app_handle.emit("p2p:annotations-synced", serde_json::json!({
+                                        "projectId": project_id,
                                         "imageId": image_id,
                                         "annotations": annots,
                                         "from": from.to_string(),
@@ -851,13 +870,21 @@ pub fn start_doc_watcher(
                     else if key.starts_with("images/") && key.ends_with("/lock") {
                         let parts: Vec<&str> = key.split('/').collect();
                         if parts.len() == 3 {
-                            let image_id = parts[1];
+                            let _image_id = parts[1];
                             if let Ok(content) = read_entry_bytes(&entry, blobs).await {
                                 if let Ok(lock_info) = serde_json::from_slice::<ImageLockInfo>(&content) {
-                                    let _ = app_handle.emit("p2p:image-locked", &lock_info);
+                                    let _ = app_handle.emit("p2p:image-locked", serde_json::json!({
+                                        "projectId": project_id,
+                                        "imageId": lock_info.image_id,
+                                        "lockedBy": lock_info.locked_by,
+                                        "lockedByName": lock_info.locked_by_name,
+                                        "lockedAt": lock_info.locked_at,
+                                        "expiresAt": lock_info.expires_at,
+                                    }));
                                 } else {
                                     let _ = app_handle.emit("p2p:image-unlocked", serde_json::json!({
-                                        "imageId": image_id,
+                                        "projectId": project_id,
+                                        "imageId": _image_id,
                                     }));
                                 }
                             }
@@ -870,10 +897,12 @@ pub fn start_doc_watcher(
                                 // Detectar si el peer salió
                                 if peer_info.get("left").and_then(|v| v.as_bool()) == Some(true) {
                                     let _ = app_handle.emit("p2p:peer-left", serde_json::json!({
+                                        "projectId": project_id,
                                         "nodeId": node_id,
                                     }));
                                 } else {
                                     let _ = app_handle.emit("p2p:peer-joined", serde_json::json!({
+                                        "projectId": project_id,
                                         "nodeId": node_id,
                                         "displayName": peer_info["display_name"],
                                         "role": peer_info["role"],
@@ -886,27 +915,37 @@ pub fn start_doc_watcher(
                     else if key == "meta/session_closed" {
                         log::info!("Sesión cerrada por el host");
                         let _ = app_handle.emit("p2p:host-stopped", serde_json::json!({
+                            "projectId": project_id,
                             "reason": "host_stopped",
                         }));
                     }
                     else if key == "meta/rules" {
                         if let Ok(content) = read_entry_bytes(&entry, blobs).await {
                             if let Ok(rules) = serde_json::from_slice::<SessionRules>(&content) {
-                                let _ = app_handle.emit("p2p:rules-updated", &rules);
+                                let _ = app_handle.emit("p2p:rules-updated", serde_json::json!({
+                                    "projectId": project_id,
+                                    "rules": rules,
+                                }));
                             }
                         }
                     }
                     else if key.starts_with("batches/") {
                         if let Ok(content) = read_entry_bytes(&entry, blobs).await {
                             if let Ok(batch) = serde_json::from_slice::<super::BatchInfo>(&content) {
-                                let _ = app_handle.emit("p2p:batch-assigned", &batch);
+                                let _ = app_handle.emit("p2p:batch-assigned", serde_json::json!({
+                                    "projectId": project_id,
+                                    "batch": batch,
+                                }));
                             }
                         }
                     }
                     else if key == "work/distribution" {
                         if let Ok(content) = read_entry_bytes(&entry, blobs).await {
                             if let Ok(dist) = serde_json::from_slice::<super::WorkDistribution>(&content) {
-                                let _ = app_handle.emit("p2p:distribution-updated", &dist);
+                                let _ = app_handle.emit("p2p:distribution-updated", serde_json::json!({
+                                    "projectId": project_id,
+                                    "distribution": dist,
+                                }));
                             }
                         }
                     }
@@ -915,15 +954,20 @@ pub fn start_doc_watcher(
                             if let Ok(approval) = serde_json::from_slice::<super::PendingApproval>(&content) {
                                 match approval.status {
                                     super::ApprovalStatus::Pending => {
-                                        let _ = app_handle.emit("p2p:data-submitted", &approval);
+                                        let _ = app_handle.emit("p2p:data-submitted", serde_json::json!({
+                                            "projectId": project_id,
+                                            "approval": approval,
+                                        }));
                                     }
                                     super::ApprovalStatus::Approved => {
                                         let _ = app_handle.emit("p2p:data-approved", serde_json::json!({
+                                            "projectId": project_id,
                                             "itemId": approval.item_id,
                                         }));
                                     }
                                     super::ApprovalStatus::Rejected => {
                                         let _ = app_handle.emit("p2p:data-rejected", serde_json::json!({
+                                            "projectId": project_id,
                                             "itemId": approval.item_id,
                                         }));
                                     }
@@ -934,6 +978,7 @@ pub fn start_doc_watcher(
                 }
                 Ok(iroh_docs::engine::LiveEvent::SyncFinished(sync_event)) => {
                     let _ = app_handle.emit("p2p:session-status", serde_json::json!({
+                        "projectId": project_id,
                         "status": "connected",
                         "peer": sync_event.peer.to_string(),
                     }));
@@ -944,6 +989,7 @@ pub fn start_doc_watcher(
         // Stream cerrado: el doc fue cerrado o la conexión se perdió
         log::info!("Doc watcher finalizado — emitiendo desconexión");
         let _ = app_handle.emit("p2p:session-status", serde_json::json!({
+            "projectId": project_id,
             "status": "disconnected",
         }));
     });

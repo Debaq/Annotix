@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -11,21 +12,23 @@ import type { SessionRules } from '../types';
 
 export function SessionSettingsPanel() {
   const { t } = useTranslation();
-  const { activeSession, reset, updateRules } = useP2pStore();
+  const { projectId } = useParams<{ projectId: string }>();
+  const session = useP2pStore(s => projectId ? s.sessions[projectId] ?? null : null);
+  const { reset, updateRules } = useP2pStore();
   const [leaving, setLeaving] = useState(false);
   const [pausing, setPausing] = useState(false);
   const [savingRules, setSavingRules] = useState(false);
 
-  if (!activeSession) return null;
+  if (!session || !projectId) return null;
 
-  const isManager = canManage(activeSession.role);
-  const rules = activeSession.rules;
+  const isManager = canManage(session.role);
+  const rules = session.rules;
 
   const handlePause = async () => {
     setPausing(true);
     try {
-      await p2pService.pauseSession();
-      reset();
+      await p2pService.pauseSession(projectId);
+      reset(projectId);
     } catch (err) {
       console.error('Error pausing session:', err);
     } finally {
@@ -36,8 +39,8 @@ export function SessionSettingsPanel() {
   const handleLeave = async () => {
     setLeaving(true);
     try {
-      await p2pService.leaveSession();
-      reset();
+      await p2pService.leaveSession(projectId);
+      reset(projectId);
     } catch (err) {
       console.error('Error leaving session:', err);
     } finally {
@@ -49,8 +52,8 @@ export function SessionSettingsPanel() {
     const newRules: SessionRules = { ...rules, [key]: value };
     setSavingRules(true);
     try {
-      await p2pService.updateRules(newRules);
-      updateRules(newRules);
+      await p2pService.updateRules(projectId, newRules);
+      updateRules(projectId, newRules);
     } catch (err) {
       console.error('Error updating rules:', err);
     } finally {
@@ -70,7 +73,7 @@ export function SessionSettingsPanel() {
         <div className="flex justify-between">
           <span>{t('p2p.role')}:</span>
           <Badge variant="outline" className="text-[10px]">
-            {t(`p2p.role_${activeSession.role}`)}
+            {t(`p2p.role_${session.role}`)}
           </Badge>
         </div>
         <div className="flex justify-between">
@@ -82,15 +85,15 @@ export function SessionSettingsPanel() {
       </div>
 
       {/* Share code (only manager) */}
-      {isManager && activeSession.shareCode && (
+      {isManager && session.shareCode && (
         <div className="rounded border bg-muted/50 p-2 text-center">
           <p className="text-xs text-muted-foreground">{t('p2p.shareCodeLabel')}</p>
-          <p className="font-mono text-xs font-bold select-all break-all">{activeSession.shareCode}</p>
+          <p className="font-mono text-xs font-bold select-all break-all">{session.shareCode}</p>
           <Button
             variant="ghost"
             size="sm"
             className="mt-1 h-6 text-xs"
-            onClick={() => navigator.clipboard.writeText(activeSession.shareCode)}
+            onClick={() => navigator.clipboard.writeText(session.shareCode)}
           >
             <i className="fas fa-copy mr-1" />
             {t('p2p.copyCode')}

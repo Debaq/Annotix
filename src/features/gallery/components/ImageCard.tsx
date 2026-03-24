@@ -32,12 +32,13 @@ export function ImageCard({ image }: ImageCardProps) {
 
   const isPendingDownload = image.downloadStatus === 'pending';
   const imgId = image.id || '';
-  const assignee = useP2pStore.getState().getItemAssignee(image.videoId || imgId, image.videoId ? 'video' : 'image');
-  const isAssignedToMe = useP2pStore.getState().isItemAssignedToMe(
+  const assignee = projectId ? useP2pStore.getState().getItemAssignee(projectId, image.videoId || imgId, image.videoId ? 'video' : 'image') : null;
+  const isAssignedToMe = projectId ? useP2pStore.getState().isItemAssignedToMe(
+    projectId,
     image.videoId || imgId,
     image.videoId ? 'video' : 'image'
-  );
-  const hasDistribution = !!useP2pStore.getState().distribution;
+  ) : true;
+  const hasDistribution = projectId ? !!useP2pStore.getState().distributionByProject[projectId] : false;
 
   const handleSelect = () => {
     if (projectId && !isPendingDownload) {

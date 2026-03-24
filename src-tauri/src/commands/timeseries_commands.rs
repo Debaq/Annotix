@@ -16,7 +16,7 @@ pub async fn create_timeseries(
     data: serde_json::Value,
     annotations: Option<Vec<TsAnnotationEntry>>,
 ) -> Result<String, String> {
-    p2p.check_permission(P2pPermission::UploadData).await?;
+    p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
     let anns = annotations.unwrap_or_default();
     let id = state.create_timeseries(&project_id, &name, data, &anns)?;
     let _ = app.emit("db:timeseries-changed", &project_id);
@@ -49,7 +49,7 @@ pub async fn save_ts_annotations(
     timeseries_id: String,
     annotations: Vec<TsAnnotationEntry>,
 ) -> Result<(), String> {
-    p2p.check_permission(P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
     state.save_ts_annotations(&project_id, &timeseries_id, &annotations)?;
     let _ = app.emit("db:timeseries-changed", &project_id);
     Ok(())
@@ -63,7 +63,7 @@ pub async fn delete_timeseries(
     project_id: String,
     id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(P2pPermission::Delete).await?;
+    p2p.check_permission(&project_id, P2pPermission::Delete).await?;
     state.delete_timeseries(&project_id, &id)?;
     let _ = app.emit("db:timeseries-changed", &project_id);
     Ok(())

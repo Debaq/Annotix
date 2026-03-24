@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Header } from './Header';
 import { useP2pStore } from '@/features/p2p/store/p2pStore';
+import { useUIStore } from '../store/uiStore';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -9,12 +10,13 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { t } = useTranslation();
-  const hostStopped = useP2pStore((s) => s.hostStopped);
-  const activeSession = useP2pStore((s) => s.activeSession);
+  const currentProjectId = useUIStore(s => s.currentProjectId);
+  const session = useP2pStore(s => currentProjectId ? s.sessions[currentProjectId] ?? null : null);
+  const hostStopped = useP2pStore(s => currentProjectId ? s.hostStoppedByProject[currentProjectId] ?? false : false);
 
-  const showDisconnectedBanner = activeSession && (
-    hostStopped || activeSession.status === 'disconnected'
-  ) && activeSession.role !== 'lead_researcher';
+  const showDisconnectedBanner = session && (
+    hostStopped || session.status === 'disconnected'
+  ) && session.role !== 'lead_researcher';
 
   return (
     <div className="flex h-full flex-col overflow-hidden">

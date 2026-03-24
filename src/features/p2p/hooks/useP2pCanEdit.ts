@@ -1,3 +1,4 @@
+import { useParams } from 'react-router-dom';
 import { useP2pStore } from '../store/p2pStore';
 import type { PeerRole, SessionRules, P2pPermission } from '../types';
 
@@ -34,11 +35,12 @@ export function canDelete(role: PeerRole, rules?: SessionRules): boolean {
  * Si no hay sesión activa (modo local), siempre retorna true.
  */
 export function useP2pPermission(permission: P2pPermission): boolean {
-  const activeSession = useP2pStore((s) => s.activeSession);
+  const { projectId } = useParams<{ projectId: string }>();
+  const session = useP2pStore((s) => projectId ? s.sessions[projectId] ?? null : null);
 
-  if (!activeSession) return true;
+  if (!session) return true;
 
-  const { role, rules } = activeSession;
+  const { role, rules } = session;
 
   switch (permission) {
     case 'annotate':
@@ -59,18 +61,19 @@ export function useP2pPermission(permission: P2pPermission): boolean {
 }
 
 export function useP2pCanEdit(itemId?: string, videoId?: string | null): boolean {
-  const activeSession = useP2pStore((s) => s.activeSession);
-  const distribution = useP2pStore((s) => s.distribution);
-  const hostStopped = useP2pStore((s) => s.hostStopped);
+  const { projectId } = useParams<{ projectId: string }>();
+  const session = useP2pStore((s) => projectId ? s.sessions[projectId] ?? null : null);
+  const hostStopped = useP2pStore((s) => projectId ? s.hostStoppedByProject[projectId] ?? false : false);
+  const distribution = useP2pStore((s) => projectId ? s.distributionByProject[projectId] ?? null : null);
 
   // Si no hay sesión activa, siempre permitir edición
-  if (!activeSession) return true;
+  if (!session) return true;
 
   // Si el host detuvo la sesión, bloquear edición para no-hosts
-  if (hostStopped && activeSession.role !== 'lead_researcher') return false;
+  if (hostStopped && session.role !== 'lead_researcher') return false;
 
   // Si está desconectado, bloquear edición para no-hosts
-  if (activeSession.status === 'disconnected' && activeSession.role !== 'lead_researcher') return false;
+  if (session.status === 'disconnected' && session.role !== 'lead_researcher') return false;
 
   if (!distribution) return true;
   if (!itemId) return true;
@@ -78,5 +81,5 @@ export function useP2pCanEdit(itemId?: string, videoId?: string | null): boolean
   const checkId = videoId || itemId;
   const checkType: 'video' | 'image' = videoId ? 'video' : 'image';
 
-  return useP2pStore.getState().isItemAssignedToMe(checkId, checkType);
+  return useP2pStore.getState().isItemAssignedToMe(projectId!, checkId, checkType);
 }

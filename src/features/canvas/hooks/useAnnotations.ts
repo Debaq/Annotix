@@ -117,10 +117,10 @@ export function useAnnotations() {
 
     // P2P read-only guard: no guardar si el item no está asignado a mí
     const p2pState = useP2pStore.getState();
-    if (p2pState.activeSession && p2pState.distribution) {
+    if (currentProjectId && p2pState.sessions[currentProjectId] && p2pState.distributionByProject[currentProjectId]) {
       const checkId = image.videoId || image.id;
       const checkType: 'video' | 'image' = image.videoId ? 'video' : 'image';
-      if (checkId && !p2pState.isItemAssignedToMe(checkId, checkType)) {
+      if (checkId && !p2pState.isItemAssignedToMe(currentProjectId, checkId, checkType)) {
         return;
       }
     }

@@ -1,9 +1,12 @@
 import { useTranslation } from 'react-i18next';
+import { useParams } from 'react-router-dom';
 import { useP2pStore } from '../store/p2pStore';
 
 export function TeamDashboard() {
   const { t } = useTranslation();
-  const { peers, workStats } = useP2pStore();
+  const { projectId } = useParams<{ projectId: string }>();
+  const peers = useP2pStore(s => projectId ? s.peersByProject[projectId] ?? [] : []);
+  const workStats = useP2pStore(s => projectId ? s.workStatsByProject[projectId] ?? [] : []);
 
   const totalMembers = peers.length + 1;
   const totalAnnotated = workStats.reduce(

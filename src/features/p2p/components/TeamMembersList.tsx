@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -23,20 +24,23 @@ const roleColors: Record<PeerRole, string> = {
 
 export function TeamMembersList() {
   const { t } = useTranslation();
-  const { activeSession, peers, workStats } = useP2pStore();
+  const { projectId } = useParams<{ projectId: string }>();
+  const session = useP2pStore(s => projectId ? s.sessions[projectId] ?? null : null);
+  const peers = useP2pStore(s => projectId ? s.peersByProject[projectId] ?? [] : []);
+  const workStats = useP2pStore(s => projectId ? s.workStatsByProject[projectId] ?? [] : []);
   const [changingRole, setChangingRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  if (!activeSession) return null;
+  if (!session || !projectId) return null;
 
-  const isManager = canManage(activeSession.role);
+  const isManager = canManage(session.role);
 
   // Build combined list: self + peers
   const allMembers = [
     {
-      nodeId: activeSession.myNodeId,
-      displayName: activeSession.myDisplayName,
-      role: activeSession.role,
+      nodeId: session.myNodeId,
+      displayName: session.myDisplayName,
+      role: session.role,
       online: true,
       isMe: true,
     },
@@ -52,7 +56,7 @@ export function TeamMembersList() {
   const handleChangeRole = async (nodeId: string, newRole: PeerRole) => {
     setLoading(true);
     try {
-      await p2pService.updatePeerRole(nodeId, newRole);
+      await p2pService.updatePeerRole(projectId, nodeId, newRole);
       setChangingRole(null);
     } catch (err) {
       console.error('Error changing role:', err);

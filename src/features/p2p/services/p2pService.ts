@@ -10,91 +10,95 @@ export const p2pService = {
     return invoke('p2p_join_session', { shareCode, displayName });
   },
 
-  leaveSession(): Promise<void> {
-    return invoke('p2p_leave_session');
+  leaveSession(projectId: string): Promise<void> {
+    return invoke('p2p_leave_session', { projectId });
   },
 
-  pauseSession(): Promise<string> {
-    return invoke('p2p_pause_session');
+  pauseSession(projectId: string): Promise<string> {
+    return invoke('p2p_pause_session', { projectId });
   },
 
   resumeSession(projectId: string): Promise<P2pSessionInfo> {
     return invoke('p2p_resume_session', { projectId });
   },
 
-  getSessionInfo(): Promise<P2pSessionInfo | null> {
-    return invoke('p2p_get_session_info');
+  getSessionInfo(projectId: string): Promise<P2pSessionInfo | null> {
+    return invoke('p2p_get_session_info', { projectId });
   },
 
-  lockImage(imageId: string): Promise<boolean> {
-    return invoke('p2p_lock_image', { imageId });
+  getAllSessions(): Promise<P2pSessionInfo[]> {
+    return invoke('p2p_get_all_sessions');
   },
 
-  unlockImage(imageId: string): Promise<void> {
-    return invoke('p2p_unlock_image', { imageId });
+  lockImage(projectId: string, imageId: string): Promise<boolean> {
+    return invoke('p2p_lock_image', { projectId, imageId });
   },
 
-  getImageLock(imageId: string): Promise<ImageLockInfo | null> {
-    return invoke('p2p_get_image_lock', { imageId });
+  unlockImage(projectId: string, imageId: string): Promise<void> {
+    return invoke('p2p_unlock_image', { projectId, imageId });
   },
 
-  assignBatch(imageIds: string[], assignTo: string): Promise<BatchInfo> {
-    return invoke('p2p_assign_batch', { imageIds, assignTo });
+  getImageLock(projectId: string, imageId: string): Promise<ImageLockInfo | null> {
+    return invoke('p2p_get_image_lock', { projectId, imageId });
   },
 
-  syncAnnotations(imageId: string, annotations: unknown[]): Promise<void> {
-    return invoke('p2p_sync_annotations', { imageId, annotations });
+  assignBatch(projectId: string, imageIds: string[], assignTo: string): Promise<BatchInfo> {
+    return invoke('p2p_assign_batch', { projectId, imageIds, assignTo });
   },
 
-  listPeers(): Promise<PeerInfo[]> {
-    return invoke('p2p_list_peers');
+  syncAnnotations(projectId: string, imageId: string, annotations: unknown[]): Promise<void> {
+    return invoke('p2p_sync_annotations', { projectId, imageId, annotations });
   },
 
-  updateRules(rules: SessionRules): Promise<void> {
-    return invoke('p2p_update_rules', { rules });
+  listPeers(projectId: string): Promise<PeerInfo[]> {
+    return invoke('p2p_list_peers', { projectId });
   },
 
-  getRules(): Promise<SessionRules> {
-    return invoke('p2p_get_rules');
+  updateRules(projectId: string, rules: SessionRules): Promise<void> {
+    return invoke('p2p_update_rules', { projectId, rules });
+  },
+
+  getRules(projectId: string): Promise<SessionRules> {
+    return invoke('p2p_get_rules', { projectId });
   },
 
   resumeDownload(projectId: string): Promise<void> {
     return invoke('p2p_resume_download', { projectId });
   },
 
-  distributeWork(): Promise<WorkDistribution> {
-    return invoke('p2p_distribute_work');
+  distributeWork(projectId: string): Promise<WorkDistribution> {
+    return invoke('p2p_distribute_work', { projectId });
   },
 
-  adjustAssignment(itemIds: string[], itemType: 'video' | 'image', targetNodeId: string): Promise<WorkDistribution> {
-    return invoke('p2p_adjust_assignment', { itemIds, itemType, targetNodeId });
+  adjustAssignment(projectId: string, itemIds: string[], itemType: 'video' | 'image', targetNodeId: string): Promise<WorkDistribution> {
+    return invoke('p2p_adjust_assignment', { projectId, itemIds, itemType, targetNodeId });
   },
 
-  getDistribution(): Promise<WorkDistribution | null> {
-    return invoke('p2p_get_distribution');
+  getDistribution(projectId: string): Promise<WorkDistribution | null> {
+    return invoke('p2p_get_distribution', { projectId });
   },
 
-  getWorkStats(): Promise<PeerWorkStats[]> {
-    return invoke('p2p_get_work_stats');
+  getWorkStats(projectId: string): Promise<PeerWorkStats[]> {
+    return invoke('p2p_get_work_stats', { projectId });
   },
 
-  updatePeerRole(nodeId: string, newRole: PeerRole): Promise<void> {
-    return invoke('p2p_update_peer_role', { nodeId, newRole });
+  updatePeerRole(projectId: string, nodeId: string, newRole: PeerRole): Promise<void> {
+    return invoke('p2p_update_peer_role', { projectId, nodeId, newRole });
   },
 
-  submitData(itemId: string, itemType: string): Promise<void> {
-    return invoke('p2p_submit_data', { itemId, itemType });
+  submitData(projectId: string, itemId: string, itemType: string): Promise<void> {
+    return invoke('p2p_submit_data', { projectId, itemId, itemType });
   },
 
-  approveData(itemId: string): Promise<void> {
-    return invoke('p2p_approve_data', { itemId });
+  approveData(projectId: string, itemId: string): Promise<void> {
+    return invoke('p2p_approve_data', { projectId, itemId });
   },
 
-  rejectData(itemId: string): Promise<void> {
-    return invoke('p2p_reject_data', { itemId });
+  rejectData(projectId: string, itemId: string): Promise<void> {
+    return invoke('p2p_reject_data', { projectId, itemId });
   },
 
-  listPendingApprovals(): Promise<PendingApproval[]> {
-    return invoke('p2p_list_pending_approvals');
+  listPendingApprovals(projectId: string): Promise<PendingApproval[]> {
+    return invoke('p2p_list_pending_approvals', { projectId });
   },
 };

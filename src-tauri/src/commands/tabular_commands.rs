@@ -14,7 +14,7 @@ pub async fn upload_tabular_file(
     source_path: String,
     file_name: String,
 ) -> Result<TabularDataEntry, String> {
-    p2p.check_permission(P2pPermission::UploadData).await?;
+    p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
     state.upload_tabular_file(&project_id, &source_path, &file_name)
 }
 
@@ -26,7 +26,7 @@ pub async fn create_tabular_data(
     name: String,
     columns: Vec<String>,
 ) -> Result<TabularDataEntry, String> {
-    p2p.check_permission(P2pPermission::UploadData).await?;
+    p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
     state.create_tabular_data(&project_id, &name, columns)
 }
 
@@ -38,7 +38,7 @@ pub async fn update_tabular_rows(
     data_id: String,
     rows: Vec<Vec<String>>,
 ) -> Result<(), String> {
-    p2p.check_permission(P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
     state.update_tabular_rows(&project_id, &data_id, rows)
 }
 
@@ -81,6 +81,6 @@ pub async fn delete_tabular_data(
     project_id: String,
     data_id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(P2pPermission::Delete).await?;
+    p2p.check_permission(&project_id, P2pPermission::Delete).await?;
     state.delete_tabular_data(&project_id, &data_id)
 }

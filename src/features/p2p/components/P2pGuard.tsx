@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import { useParams } from 'react-router-dom';
 import { useP2pPermission } from '../hooks/useP2pCanEdit';
 import { useP2pStore } from '../store/p2pStore';
 import type { P2pPermission } from '../types';
@@ -16,13 +17,14 @@ interface P2pGuardProps {
  * Si no hay sesión P2P activa (modo local), no bloquea nada.
  */
 export function P2pGuard({ permission, children, tooltip }: P2pGuardProps) {
+  const { projectId } = useParams<{ projectId: string }>();
   const allowed = useP2pPermission(permission);
-  const hostStopped = useP2pStore((s) => s.hostStopped);
-  const activeSession = useP2pStore((s) => s.activeSession);
+  const hostStopped = useP2pStore((s) => projectId ? s.hostStoppedByProject[projectId] ?? false : false);
+  const session = useP2pStore((s) => projectId ? s.sessions[projectId] ?? null : null);
 
-  const sessionBlocked = activeSession && (
-    (hostStopped || activeSession.status === 'disconnected') &&
-    activeSession.role !== 'lead_researcher'
+  const sessionBlocked = session && (
+    (hostStopped || session.status === 'disconnected') &&
+    session.role !== 'lead_researcher'
   );
 
   const blocked = !allowed || sessionBlocked;

@@ -20,11 +20,11 @@ impl P2pState {
         display_name: &str,
         rules: SessionRules,
     ) -> Result<P2pSessionInfo, String> {
-        // Verificar que no haya sesión activa
+        // Verificar que no haya sesión activa para este proyecto
         {
-            let existing = self.session.read().await;
-            if existing.is_some() {
-                return Err("Ya hay una sesión P2P activa".to_string());
+            let sessions = self.sessions.read().await;
+            if sessions.contains_key(project_id) {
+                return Err("Ya hay una sesión P2P activa para este proyecto".to_string());
             }
         }
 
@@ -32,8 +32,8 @@ impl P2pState {
         let project = app_state.read_project_file(project_id)?;
         let images_dir = app_state.project_images_dir(project_id)?;
 
-        // Iniciar nodo iroh
-        let node = self.start_node().await?;
+        // Obtener o crear nodo iroh compartido
+        let node = self.get_or_create_node().await?;
 
         // Crear autor
         let author = node.docs.author_create()
@@ -63,7 +63,7 @@ impl P2pState {
         let share_code = ticket::encode_share_code(&ticket);
         let session_id = uuid::Uuid::new_v4().to_string();
 
-        // Crear sesión activa
+        // Crear sesión activa (sin campo node)
         let session = ActiveSession {
             session_id: session_id.clone(),
             project_id: project_id.to_string(),
@@ -76,21 +76,20 @@ impl P2pState {
             namespace_id,
             author_id: author,
             peers: HashMap::new(),
-            node: node.clone(),
             host_secret: Some(host_secret.clone()),
         };
 
-        // Guardar sesión
+        // Insertar sesión en el HashMap
         {
-            let mut session_guard = self.session.write().await;
-            *session_guard = Some(session);
+            let mut sessions = self.sessions.write().await;
+            sessions.insert(project_id.to_string(), session);
         }
 
         // Exportar proyecto al doc (incluye meta, clases, imágenes con blobs)
-        sync::project_to_doc(self, &project, &images_dir, app_handle).await?;
+        sync::project_to_doc(self, project_id, &project, &images_dir, app_handle).await?;
 
         // Escribir host_secret_hash, host_node_id y rules al doc
-        sync::write_host_meta(self, &host_secret_hash, &my_node_id, &rules).await?;
+        sync::write_host_meta(self, project_id, &host_secret_hash, &my_node_id, &rules).await?;
 
         // Iniciar sync del doc
         let doc = node.docs.open(namespace_id)
@@ -103,7 +102,7 @@ impl P2pState {
             .map_err(|e| format!("Error iniciando sync: {}", e))?;
 
         // Iniciar watcher de cambios remotos
-        sync::start_doc_watcher(namespace_id, node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
+        sync::start_doc_watcher(namespace_id, project_id.to_string(), node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
 
         // Iniciar heartbeat para presencia
         sync::start_heartbeat(
@@ -158,14 +157,6 @@ impl P2pState {
         share_code: &str,
         display_name: &str,
     ) -> Result<P2pSessionInfo, String> {
-        // Verificar que no haya sesión activa
-        {
-            let existing = self.session.read().await;
-            if existing.is_some() {
-                return Err("Ya hay una sesión P2P activa".to_string());
-            }
-        }
-
         // Detectar si es host key o share code
         let (ticket, host_secret) = if ticket::is_host_key(share_code) {
             let (t, secret) = ticket::decode_host_key(share_code)?;
@@ -174,8 +165,8 @@ impl P2pState {
             (ticket::decode_share_code(share_code)?, None)
         };
 
-        // Iniciar nodo iroh
-        let node = self.start_node().await?;
+        // Obtener o crear nodo iroh compartido
+        let node = self.get_or_create_node().await?;
         let my_node_id = P2pState::endpoint_id_str(&node.endpoint.id());
 
         // Crear autor local
@@ -247,28 +238,6 @@ impl P2pState {
             share_code.to_string()
         };
 
-        // Crear sesión
-        let session = ActiveSession {
-            session_id: session_id.clone(),
-            project_id: String::new(),
-            project_name: String::new(),
-            share_code: clean_share_code.clone(),
-            role: role.clone(),
-            rules: rules.clone(),
-            my_display_name: display_name.to_string(),
-            my_node_id: my_node_id.clone(),
-            namespace_id,
-            author_id: author,
-            peers: HashMap::new(),
-            node: node.clone(),
-            host_secret: verified_secret,
-        };
-
-        {
-            let mut session_guard = self.session.write().await;
-            *session_guard = Some(session);
-        }
-
         // Registrar este peer en el doc
         let role_str = role.to_string();
         let peer_info_json = serde_json::json!({
@@ -285,7 +254,8 @@ impl P2pState {
             .map_err(|e| format!("Error registrando peer: {}", e))?;
 
         // Iniciar watcher de cambios remotos y emitir peers existentes
-        sync::start_doc_watcher(namespace_id, node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
+        // Nota: usamos un project_id temporal vacío; lo actualizaremos después
+        sync::start_doc_watcher(namespace_id, String::new(), node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
         sync::emit_existing_peers(namespace_id, &node.docs, &node.blobs_store, app_handle, &my_node_id).await;
 
         // Iniciar heartbeat para presencia
@@ -299,13 +269,23 @@ impl P2pState {
         );
 
         // Fase 1: Reconstruir proyecto desde el doc (solo metadata, sin blobs)
+        // doc_to_project_metadata toma node, namespace_id, author_id directamente
+        // (la sesión aún no está en el HashMap)
         let projects_dir = app_state.projects_dir()?;
-        let project = sync::doc_to_project_metadata(self, &projects_dir).await?;
+        let project = sync::doc_to_project_metadata(&node, namespace_id, author, &projects_dir).await?;
 
         let project_id = project.id.clone();
         let project_name = project.name.clone();
         let has_pending_images = project.p2p_download.is_some();
         let project_dir = projects_dir.join(&project_id);
+
+        // Verificar que no haya sesión activa para este proyecto
+        {
+            let sessions = self.sessions.read().await;
+            if sessions.contains_key(&project_id) {
+                return Err("Ya hay una sesión P2P activa para este proyecto".to_string());
+            }
+        }
 
         // Crear directorio del proyecto
         std::fs::create_dir_all(project_dir.join("thumbnails"))
@@ -322,13 +302,25 @@ impl P2pState {
         // Notificar al frontend que hay un nuevo proyecto
         let _ = app_handle.emit("db:projects-changed", ());
 
-        // Actualizar sesión con project_id
+        // Crear sesión activa e insertar en HashMap con el project_id real
+        let session = ActiveSession {
+            session_id: session_id.clone(),
+            project_id: project_id.clone(),
+            project_name: project_name.clone(),
+            share_code: clean_share_code.clone(),
+            role: role.clone(),
+            rules: rules.clone(),
+            my_display_name: display_name.to_string(),
+            my_node_id: my_node_id.clone(),
+            namespace_id,
+            author_id: author,
+            peers: HashMap::new(),
+            host_secret: verified_secret,
+        };
+
         {
-            let mut session_guard = self.session.write().await;
-            if let Some(ref mut session) = *session_guard {
-                session.project_id = project_id.clone();
-                session.project_name = project_name.clone();
-            }
+            let mut sessions = self.sessions.write().await;
+            sessions.insert(project_id.clone(), session);
         }
 
         let _ = app_handle.emit("p2p:session-status", serde_json::json!({
@@ -388,16 +380,21 @@ impl P2pState {
     }
 
     /// Pausa la sesión P2P activa sin borrar datos (permite reanudar después)
-    pub async fn pause_session(&self) -> Result<String, String> {
-        let mut session_guard = self.session.write().await;
-        let session = session_guard.take()
-            .ok_or("No hay sesión P2P activa")?;
+    pub async fn pause_session(&self, project_id: &str) -> Result<String, String> {
+        let session = {
+            let mut sessions = self.sessions.write().await;
+            sessions.remove(project_id)
+                .ok_or("No hay sesión P2P activa para este proyecto")?
+        };
 
-        let project_id = session.project_id.clone();
         let session_id = session.session_id.clone();
 
+        // Obtener nodo compartido para operaciones de doc
+        let node_guard = self.node.read().await;
+        let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+
         // Notificar a los peers que la sesión se cierra
-        if let Ok(Some(doc)) = session.node.docs.open(session.namespace_id).await {
+        if let Ok(Some(doc)) = node.docs.open(session.namespace_id).await {
             let now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
@@ -438,83 +435,102 @@ impl P2pState {
 
         // Liberar la sesión de memoria
         drop(session);
+        drop(node_guard);
 
         // NO borramos iroh/ del disco
         // NO limpiamos p2p del project.json (necesario para resume)
 
+        // Cerrar nodo si no quedan sesiones
+        self.maybe_shutdown_node().await;
+
         log::info!("Sesión P2P pausada: {} (proyecto: {})", session_id, project_id);
-        Ok(project_id)
+        Ok(project_id.to_string())
     }
 
     /// Abandona la sesión P2P activa y limpia datos de iroh
-    pub async fn leave_session(&self, app_state: &AppState) -> Result<(), String> {
-        let mut session_guard = self.session.write().await;
-        if let Some(session) = session_guard.take() {
+    pub async fn leave_session(&self, project_id: &str, app_state: &AppState) -> Result<(), String> {
+        let session = {
+            let mut sessions = self.sessions.write().await;
+            sessions.remove(project_id)
+        };
+
+        if let Some(session) = session {
             let session_id = session.session_id.clone();
-            let project_id = session.project_id.clone();
 
-            // Notificar a los peers que este peer sale
-            if let Ok(Some(doc)) = session.node.docs.open(session.namespace_id).await {
-                let now = std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap()
-                    .as_millis() as f64;
+            // Obtener nodo compartido para operaciones de doc
+            let node_guard = self.node.read().await;
+            if let Some(ref node) = *node_guard {
+                // Notificar a los peers que este peer sale
+                if let Ok(Some(doc)) = node.docs.open(session.namespace_id).await {
+                    let now = std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis() as f64;
 
-                // Marcar este peer como "left"
-                let peer_key = format!("meta/peers/{}", session.my_node_id);
-                let left_info = serde_json::json!({
-                    "display_name": session.my_display_name,
-                    "role": session.role.to_string(),
-                    "left": true,
-                    "left_at": now,
-                });
-                let _ = doc.set_bytes(
-                    session.author_id,
-                    peer_key.into_bytes(),
-                    serde_json::to_vec(&left_info).unwrap(),
-                ).await;
-
-                // Si somos host, notificar cierre de sesión
-                if session.role.can_manage() {
-                    let close_info = serde_json::json!({
-                        "timestamp": now,
-                        "reason": "host_left",
+                    // Marcar este peer como "left"
+                    let peer_key = format!("meta/peers/{}", session.my_node_id);
+                    let left_info = serde_json::json!({
+                        "display_name": session.my_display_name,
+                        "role": session.role.to_string(),
+                        "left": true,
+                        "left_at": now,
                     });
                     let _ = doc.set_bytes(
                         session.author_id,
-                        b"meta/session_closed".to_vec(),
-                        serde_json::to_vec(&close_info).unwrap(),
+                        peer_key.into_bytes(),
+                        serde_json::to_vec(&left_info).unwrap(),
                     ).await;
-                }
 
-                // Breve espera para propagación
-                tokio::time::sleep(std::time::Duration::from_millis(500)).await;
-                let _ = doc.leave().await;
-                let _ = doc.close().await;
+                    // Si somos host, notificar cierre de sesión
+                    if session.role.can_manage() {
+                        let close_info = serde_json::json!({
+                            "timestamp": now,
+                            "reason": "host_left",
+                        });
+                        let _ = doc.set_bytes(
+                            session.author_id,
+                            b"meta/session_closed".to_vec(),
+                            serde_json::to_vec(&close_info).unwrap(),
+                        ).await;
+                    }
+
+                    // Breve espera para propagación
+                    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+                    let _ = doc.leave().await;
+                    let _ = doc.close().await;
+                }
             }
+            drop(node_guard);
 
             // Cerrar docs engine y nodo
             drop(session);
 
             // Limpiar p2p del project.json
             if !project_id.is_empty() {
-                let _ = app_state.with_project_mut(&project_id, |pf| {
+                let _ = app_state.with_project_mut(project_id, |pf| {
                     pf.p2p = None;
                 });
             }
 
-            // Solo borrar iroh/ si no hay otros proyectos con p2p config
-            let has_other_p2p = self.other_projects_have_p2p(app_state, &project_id);
+            // Solo borrar iroh/ si no hay otras sesiones activas ni otros proyectos con p2p config
+            let has_other_sessions = {
+                let sessions = self.sessions.read().await;
+                !sessions.is_empty()
+            };
+            let has_other_p2p = self.other_projects_have_p2p(app_state, project_id);
             let iroh_dir = self.data_dir.join("iroh");
-            if iroh_dir.exists() && !has_other_p2p {
+            if iroh_dir.exists() && !has_other_p2p && !has_other_sessions {
                 if let Err(e) = std::fs::remove_dir_all(&iroh_dir) {
                     log::warn!("No se pudo limpiar directorio iroh: {}", e);
                 } else {
                     log::info!("Datos iroh limpiados: {:?}", iroh_dir);
                 }
-            } else if has_other_p2p {
-                log::info!("No se borran datos iroh: hay otros proyectos con sesiones P2P pausadas");
+            } else if has_other_p2p || has_other_sessions {
+                log::info!("No se borran datos iroh: hay otros proyectos con sesiones P2P");
             }
+
+            // Cerrar nodo si no quedan sesiones
+            self.maybe_shutdown_node().await;
 
             log::info!("Sesión P2P abandonada: {}", session_id);
         }
@@ -556,11 +572,11 @@ impl P2pState {
         project_id: &str,
         config: P2pProjectConfig,
     ) -> Result<P2pSessionInfo, String> {
-        // Verificar que no haya sesión activa
+        // Verificar que no haya sesión activa para este proyecto
         {
-            let existing = self.session.read().await;
-            if existing.is_some() {
-                return Err("Ya hay una sesión P2P activa".to_string());
+            let sessions = self.sessions.read().await;
+            if sessions.contains_key(project_id) {
+                return Err("Ya hay una sesión P2P activa para este proyecto".to_string());
             }
         }
 
@@ -572,8 +588,8 @@ impl P2pState {
             _ => PeerRole::Annotator,
         };
 
-        // Iniciar nodo iroh (carga docs persistidos del disco)
-        let node = self.start_node().await?;
+        // Obtener o crear nodo iroh compartido (carga docs persistidos del disco)
+        let node = self.get_or_create_node().await?;
 
         // Parsear namespace_id desde hex
         let ns_id: iroh_docs::NamespaceId = config.namespace_id.parse()
@@ -620,7 +636,7 @@ impl P2pState {
         let rules: SessionRules = serde_json::from_value(config.rules.clone())
             .unwrap_or_default();
 
-        // Crear sesión activa
+        // Crear sesión activa (sin campo node)
         let session = ActiveSession {
             session_id: session_id.clone(),
             project_id: project_id.to_string(),
@@ -633,20 +649,20 @@ impl P2pState {
             namespace_id: ns_id,
             author_id: author,
             peers: HashMap::new(),
-            node: node.clone(),
             host_secret: config.host_secret.clone(),
         };
 
+        // Insertar sesión en el HashMap
         {
-            let mut session_guard = self.session.write().await;
-            *session_guard = Some(session);
+            let mut sessions = self.sessions.write().await;
+            sessions.insert(project_id.to_string(), session);
         }
 
         // Si somos host, re-escribir host meta con el nuevo node_id
         if let Some(ref secret) = config.host_secret {
             if is_host {
                 let host_secret_hash = P2pState::hash_secret(secret);
-                sync::write_host_meta(self, &host_secret_hash, &my_node_id, &rules).await?;
+                sync::write_host_meta(self, project_id, &host_secret_hash, &my_node_id, &rules).await?;
             }
         }
 
@@ -665,7 +681,7 @@ impl P2pState {
             .map_err(|e| format!("Error registrando peer: {}", e))?;
 
         // Iniciar watcher de cambios remotos y emitir peers existentes
-        sync::start_doc_watcher(ns_id, node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
+        sync::start_doc_watcher(ns_id, project_id.to_string(), node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
         sync::emit_existing_peers(ns_id, &node.docs, &node.blobs_store, app_handle, &my_node_id).await;
 
         // Iniciar heartbeat para presencia
@@ -719,37 +735,37 @@ impl P2pState {
         Ok(info)
     }
 
-    /// Obtiene info de la sesión activa
-    pub async fn get_session_info(&self) -> Option<P2pSessionInfo> {
-        let session = self.session.read().await;
-        session.as_ref().map(|s| s.to_info())
+    /// Obtiene info de la sesión activa para un proyecto
+    pub async fn get_session_info(&self, project_id: &str) -> Option<P2pSessionInfo> {
+        let sessions = self.sessions.read().await;
+        sessions.get(project_id).map(|s| s.to_info())
     }
 
-    /// Lista los peers conectados
-    pub async fn list_peers(&self) -> Result<Vec<super::PeerInfo>, String> {
-        let session = self.session.read().await;
-        let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+    /// Lista los peers conectados de una sesión
+    pub async fn list_peers(&self, project_id: &str) -> Result<Vec<super::PeerInfo>, String> {
+        let sessions = self.sessions.read().await;
+        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
         Ok(session.peers.values().cloned().collect())
     }
 
     /// Actualiza las reglas de la sesión (solo host)
-    pub async fn update_rules(&self, new_rules: SessionRules) -> Result<(), String> {
+    pub async fn update_rules(&self, project_id: &str, new_rules: SessionRules) -> Result<(), String> {
         // Verificar que somos host
         {
-            let session = self.session.read().await;
-            let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+            let sessions = self.sessions.read().await;
+            let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
             if !session.role.can_manage() {
                 return Err("Solo el investigador principal puede modificar las reglas".to_string());
             }
         }
 
         // Escribir reglas al doc
-        sync::write_rules(self, &new_rules).await?;
+        sync::write_rules(self, project_id, &new_rules).await?;
 
         // Actualizar local
         {
-            let mut session_guard = self.session.write().await;
-            if let Some(ref mut session) = *session_guard {
+            let mut sessions = self.sessions.write().await;
+            if let Some(session) = sessions.get_mut(project_id) {
                 session.rules = new_rules;
             }
         }
@@ -758,27 +774,30 @@ impl P2pState {
     }
 
     /// Obtiene las reglas actuales
-    pub async fn get_rules(&self) -> Result<SessionRules, String> {
-        let session = self.session.read().await;
-        let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+    pub async fn get_rules(&self, project_id: &str) -> Result<SessionRules, String> {
+        let sessions = self.sessions.read().await;
+        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
         Ok(session.rules.clone())
     }
 
     /// Actualiza el rol de un peer (solo LeadResearcher puede cambiar roles)
-    pub async fn update_peer_role(&self, node_id: &str, new_role: PeerRole) -> Result<(), String> {
-        let session = self.session.read().await;
-        let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
+    pub async fn update_peer_role(&self, project_id: &str, node_id: &str, new_role: PeerRole) -> Result<(), String> {
+        let node_guard = self.node.read().await;
+        let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+
+        let sessions = self.sessions.read().await;
+        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
 
         if !session.role.can_manage() {
             return Err("Solo el investigador principal puede cambiar roles".to_string());
         }
 
-        let doc = session.node.docs.open(session.namespace_id)
+        let doc = node.docs.open(session.namespace_id)
             .await
             .map_err(|e| format!("Error abriendo doc: {}", e))?
             .ok_or("Documento no encontrado")?;
 
-        let blobs: &iroh_blobs::api::Store = &*session.node.blobs_store;
+        let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
 
         // Leer peer info existente
         let peer_key = format!("meta/peers/{}", node_id);
