@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use bytes::Bytes;
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
 use tokio::pin;
 
 use crate::store::project_file::{AnnotationEntry, ClassDef, ImageEntry, ProjectFile};
@@ -420,6 +420,7 @@ pub async fn doc_to_project_metadata(
         p2p: None,
         p2p_download,
         inference_models: vec![],
+        folder: None,
     })
 }
 
@@ -747,6 +748,199 @@ pub async fn list_pending_approvals(
     Ok(approvals)
 }
 
+/// Sincroniza una imagen nueva al iroh-doc (meta + annots + blob)
+/// Usado cuando un colaborador sube una imagen y necesita propagarla a otros peers.
+pub async fn sync_new_image_to_doc(
+    p2p: &P2pState,
+    project_id: &str,
+    image_id: &str,
+    image_name: &str,
+    image_file: &str,
+    width: u32,
+    height: u32,
+    status: &str,
+    annotations: &[AnnotationEntry],
+    image_path: &std::path::Path,
+) -> Result<(), String> {
+    let node_guard = p2p.node.read().await;
+    let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+    let sessions = p2p.sessions.read().await;
+    let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
+
+    let doc = node
+        .docs
+        .open(session.namespace_id)
+        .await
+        .map_err(|e| format!("Error abriendo doc: {}", e))?
+        .ok_or("Documento no encontrado")?;
+
+    let author = session.author_id;
+    let blobs = &*node.blobs_store;
+
+    // Escribir metadata de la imagen
+    let img_meta = serde_json::json!({
+        "id": image_id,
+        "name": image_name,
+        "file": image_file,
+        "width": width,
+        "height": height,
+        "status": status,
+    });
+    let meta_key = format!("images/{}/meta", image_id);
+    doc.set_bytes(author, meta_key.into_bytes(), serde_json::to_vec(&img_meta).unwrap())
+        .await
+        .map_err(|e| format!("Error escribiendo img meta: {}", e))?;
+
+    // Escribir anotaciones
+    let annots_key = format!("images/{}/annots", image_id);
+    let annots_json = serde_json::to_vec(annotations).unwrap();
+    doc.set_bytes(author, annots_key.into_bytes(), annots_json)
+        .await
+        .map_err(|e| format!("Error escribiendo anotaciones: {}", e))?;
+
+    // Importar blob (archivo de imagen)
+    if image_path.exists() {
+        let blob_key: Bytes = format!("images/{}/blob", image_id).into_bytes().into();
+        let outcome = doc.import_file(
+            blobs,
+            author,
+            blob_key,
+            image_path,
+            iroh_blobs::api::blobs::ImportMode::Copy,
+        )
+        .await
+        .map_err(|e| format!("Error iniciando import de blob {}: {}", image_id, e))?
+        .await
+        .map_err(|e| format!("Error completando import de blob {}: {}", image_id, e))?;
+        log::info!("Imagen sincronizada al doc P2P: {} ({} bytes, hash: {})", image_id, outcome.size, outcome.hash);
+    }
+
+    Ok(())
+}
+
+/// Descarga el blob de una sola imagen desde peers remotos
+async fn download_single_image(
+    project_id: String,
+    image_id: String,
+    file_name: String,
+    app_handle: tauri::AppHandle,
+) {
+    let p2p = app_handle.state::<P2pState>();
+    let app_state = app_handle.state::<crate::store::state::AppState>();
+
+    let images_dir = match app_state.project_images_dir(&project_id) {
+        Ok(d) => d,
+        Err(e) => {
+            log::warn!("Error obteniendo directorio de imágenes: {}", e);
+            return;
+        }
+    };
+    let _ = std::fs::create_dir_all(&images_dir);
+
+    let (namespace_id, node) = {
+        let node_guard = p2p.node.read().await;
+        let node = match node_guard.as_ref() {
+            Some(n) => n.clone(),
+            None => return,
+        };
+        let sessions = p2p.sessions.read().await;
+        let session = match sessions.get(&*project_id) {
+            Some(s) => (s.namespace_id, node.clone()),
+            None => return,
+        };
+        session
+    };
+
+    let doc = match node.docs.open(namespace_id).await {
+        Ok(Some(doc)) => doc,
+        _ => return,
+    };
+
+    let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
+    let blob_key = format!("images/{}/blob", image_id);
+
+    // Recopilar endpoints de todos los peers conocidos para descarga
+    let mut peer_endpoints: Vec<iroh::EndpointId> = Vec::new();
+    // Intentar host primero
+    if let Ok(Some(entry)) = doc.get_one(iroh_docs::store::Query::key_exact(b"meta/host_node_id")).await {
+        if let Ok(bytes) = read_entry_bytes(&entry, blobs).await {
+            if let Ok(id) = String::from_utf8_lossy(&bytes).parse::<iroh::EndpointId>() {
+                peer_endpoints.push(id);
+            }
+        }
+    }
+    // También incluir otros peers del doc
+    if let Ok(peer_entries) = doc.get_many(iroh_docs::store::Query::key_prefix(b"meta/peers/")).await {
+        use futures_lite::StreamExt;
+        tokio::pin!(peer_entries);
+        while let Some(Ok(entry)) = peer_entries.next().await {
+            let key = String::from_utf8_lossy(entry.key()).to_string();
+            if let Some(node_id_str) = key.strip_prefix("meta/peers/") {
+                if let Ok(id) = node_id_str.parse::<iroh::EndpointId>() {
+                    if !peer_endpoints.contains(&id) {
+                        peer_endpoints.push(id);
+                    }
+                }
+            }
+        }
+    }
+
+    let downloader = blobs.downloader(&node.endpoint);
+    let max_retries: u32 = 8;
+    let retry_delay = std::time::Duration::from_secs(3);
+
+    for attempt in 0..max_retries {
+        if attempt > 0 {
+            tokio::time::sleep(retry_delay).await;
+        }
+
+        let entry = match doc.get_one(iroh_docs::store::Query::key_exact(blob_key.as_bytes())).await {
+            Ok(Some(entry)) => entry,
+            _ => {
+                log::warn!("Blob entry no encontrado para imagen {} (intento {})", image_id, attempt + 1);
+                continue;
+            }
+        };
+
+        let hash = entry.content_hash();
+
+        if let Err(e) = downloader.download(hash, peer_endpoints.clone()).await {
+            log::warn!("Error descargando blob {} (intento {}): {}", image_id, attempt + 1, e);
+            continue;
+        }
+
+        match blobs.blobs().get_bytes(hash).await {
+            Ok(blob_data) => {
+                let dest = images_dir.join(&file_name);
+                let tmp_dest = images_dir.join(format!("{}.tmp", file_name));
+                if std::fs::write(&tmp_dest, &blob_data).is_err() {
+                    continue;
+                }
+                if std::fs::rename(&tmp_dest, &dest).is_err() {
+                    continue;
+                }
+
+                // Actualizar download_status
+                let img_id = image_id.clone();
+                let _ = app_state.with_project_mut(&project_id, |pf| {
+                    if let Some(img) = pf.images.iter_mut().find(|i| i.id == img_id) {
+                        img.download_status = None;
+                    }
+                });
+                let _ = app_handle.emit("db:images-changed", &*project_id);
+                log::info!("Imagen P2P descargada: {} ({} bytes)", image_id, blob_data.len());
+                return;
+            }
+            Err(e) => {
+                log::warn!("Error leyendo blob local {} (intento {}): {}", image_id, attempt + 1, e);
+                continue;
+            }
+        }
+    }
+
+    log::warn!("No se pudo descargar imagen {} después de {} intentos", image_id, max_retries);
+}
+
 /// Sincroniza anotaciones locales al iroh-doc
 pub async fn sync_annotations_to_doc(
     p2p: &P2pState,
@@ -784,6 +978,7 @@ pub async fn emit_existing_peers(
     blobs_store: &iroh_blobs::store::fs::FsStore,
     app_handle: &tauri::AppHandle,
     my_node_id: &str,
+    project_id: &str,
 ) {
     let doc = match docs.open(namespace_id).await {
         Ok(Some(doc)) => doc,
@@ -806,10 +1001,16 @@ pub async fn emit_existing_peers(
         };
         if let Ok(content) = read_entry_bytes(&entry, blobs).await {
             if let Ok(peer_info) = serde_json::from_slice::<serde_json::Value>(&content) {
+                // Ignorar peers que ya salieron
+                if peer_info.get("left").and_then(|v| v.as_bool()) == Some(true) {
+                    continue;
+                }
                 let _ = app_handle.emit("p2p:peer-joined", serde_json::json!({
+                    "projectId": project_id,
                     "nodeId": node_id,
                     "displayName": peer_info["display_name"],
                     "role": peer_info["role"],
+                    "lastSeen": peer_info["last_seen"],
                 }));
             }
         }
@@ -851,7 +1052,73 @@ pub fn start_doc_watcher(
                     let key = String::from_utf8_lossy(entry.key()).to_string();
                     log::info!("Cambio remoto recibido: key={}", key);
 
-                    if key.starts_with("images/") && key.ends_with("/annots") {
+                    if key.starts_with("images/") && key.ends_with("/meta") {
+                        // Nueva imagen subida por un peer remoto
+                        let parts: Vec<&str> = key.split('/').collect();
+                        if parts.len() == 3 && !project_id.is_empty() {
+                            let image_id = parts[1].to_string();
+                            if let Ok(content) = read_entry_bytes(&entry, blobs).await {
+                                if let Ok(img_meta) = serde_json::from_slice::<serde_json::Value>(&content) {
+                                    let app_state = app_handle.state::<crate::store::state::AppState>();
+
+                                    // Verificar si la imagen ya existe localmente
+                                    let pid = project_id.clone();
+                                    let iid = image_id.clone();
+                                    let exists = app_state.with_project(&pid, |pf| {
+                                        pf.images.iter().any(|i| i.id == iid)
+                                    }).unwrap_or(true);
+
+                                    if !exists {
+                                        let file_name = img_meta["file"].as_str().unwrap_or("").to_string();
+                                        let img_name = img_meta["name"].as_str().unwrap_or("").to_string();
+                                        let width = img_meta["width"].as_u64().unwrap_or(0) as u32;
+                                        let height = img_meta["height"].as_u64().unwrap_or(0) as u32;
+
+                                        let now = std::time::SystemTime::now()
+                                            .duration_since(std::time::UNIX_EPOCH)
+                                            .unwrap()
+                                            .as_millis() as f64;
+
+                                        let new_entry = ImageEntry {
+                                            id: image_id.clone(),
+                                            name: img_name,
+                                            file: file_name.clone(),
+                                            width,
+                                            height,
+                                            uploaded: now,
+                                            annotated: None,
+                                            status: img_meta["status"].as_str().unwrap_or("pending").to_string(),
+                                            annotations: vec![],
+                                            video_id: None,
+                                            frame_index: None,
+                                            locked_by: None,
+                                            lock_expires: None,
+                                            download_status: Some("pending".to_string()),
+                                            predictions: vec![],
+                                        };
+
+                                        let pid2 = project_id.clone();
+                                        let _ = app_state.with_project_mut(&pid2, |pf| {
+                                            pf.images.push(new_entry);
+                                            pf.updated = now;
+                                        });
+
+                                        let _ = app_handle.emit("db:images-changed", &*project_id);
+                                        log::info!("Nueva imagen remota agregada: {} en proyecto {}", image_id, project_id);
+
+                                        // Descargar blob en background
+                                        let pid3 = project_id.clone();
+                                        let iid2 = image_id.clone();
+                                        let ah = app_handle.clone();
+                                        tokio::spawn(async move {
+                                            download_single_image(pid3, iid2, file_name, ah).await;
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else if key.starts_with("images/") && key.ends_with("/annots") {
                         let parts: Vec<&str> = key.split('/').collect();
                         if parts.len() == 3 {
                             let image_id = parts[1];

@@ -17,6 +17,28 @@ pub async fn upload_images(
     p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
     let ids = state.upload_images(&project_id, &file_paths)?;
     let _ = app.emit("db:images-changed", &project_id);
+
+    // Sincronizar imágenes nuevas al doc P2P si hay sesión activa
+    let has_session = p2p.get_session_info(&project_id).await.is_some();
+    if has_session {
+        for image_id in &ids {
+            let img_info = state.with_project(&project_id, |pf| {
+                pf.images.iter().find(|i| &i.id == image_id).map(|i| {
+                    (i.name.clone(), i.file.clone(), i.width, i.height, i.status.clone(), i.annotations.clone())
+                })
+            })?;
+            if let Some((name, file, width, height, status, annots)) = img_info {
+                let images_dir = state.project_images_dir(&project_id)?;
+                let image_path = images_dir.join(&file);
+                if let Err(e) = crate::p2p::sync::sync_new_image_to_doc(
+                    &p2p, &project_id, image_id, &name, &file, width, height, &status, &annots, &image_path,
+                ).await {
+                    log::warn!("Error sincronizando imagen {} al P2P: {}", image_id, e);
+                }
+            }
+        }
+    }
+
     Ok(ids)
 }
 
@@ -33,6 +55,26 @@ pub async fn upload_image_bytes(
     p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
     let id = state.upload_image_bytes(&project_id, &file_name, &data, &annotations, None, None)?;
     let _ = app.emit("db:images-changed", &project_id);
+
+    // Sincronizar imagen al doc P2P si hay sesión activa
+    let has_session = p2p.get_session_info(&project_id).await.is_some();
+    if has_session {
+        let img_info = state.with_project(&project_id, |pf| {
+            pf.images.iter().find(|i| i.id == id).map(|i| {
+                (i.name.clone(), i.file.clone(), i.width, i.height, i.status.clone(), i.annotations.clone())
+            })
+        })?;
+        if let Some((name, file, width, height, status, annots)) = img_info {
+            let images_dir = state.project_images_dir(&project_id)?;
+            let image_path = images_dir.join(&file);
+            if let Err(e) = crate::p2p::sync::sync_new_image_to_doc(
+                &p2p, &project_id, &id, &name, &file, width, height, &status, &annots, &image_path,
+            ).await {
+                log::warn!("Error sincronizando imagen {} al P2P: {}", id, e);
+            }
+        }
+    }
+
     Ok(id)
 }
 
