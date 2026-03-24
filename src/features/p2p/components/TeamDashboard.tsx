@@ -2,11 +2,14 @@ import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { useP2pStore } from '../store/p2pStore';
 
+const EMPTY_PEERS: never[] = [];
+const EMPTY_STATS: never[] = [];
+
 export function TeamDashboard() {
   const { t } = useTranslation();
   const { projectId } = useParams<{ projectId: string }>();
-  const peers = useP2pStore(s => projectId ? s.peersByProject[projectId] ?? [] : []);
-  const workStats = useP2pStore(s => projectId ? s.workStatsByProject[projectId] ?? [] : []);
+  const peers = useP2pStore(s => projectId ? s.peersByProject[projectId] ?? EMPTY_PEERS : EMPTY_PEERS);
+  const workStats = useP2pStore(s => projectId ? s.workStatsByProject[projectId] ?? EMPTY_STATS : EMPTY_STATS);
 
   const totalMembers = peers.length + 1;
   const totalAnnotated = workStats.reduce(

@@ -12,12 +12,14 @@ import { WorkDistributionPanel } from './WorkDistributionPanel';
 import { canManage } from '../hooks/useP2pCanEdit';
 import type { SessionRules } from '../types';
 
+const EMPTY_PEERS: never[] = [];
+
 export function P2pSessionPanel() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const session = useP2pStore(s => projectId ? s.sessions[projectId] ?? null : null);
-  const peers = useP2pStore(s => projectId ? s.peersByProject[projectId] ?? [] : []);
+  const peers = useP2pStore(s => projectId ? s.peersByProject[projectId] ?? EMPTY_PEERS : EMPTY_PEERS);
   const { reset, updateRules } = useP2pStore();
   const [leaving, setLeaving] = useState(false);
   const [pausing, setPausing] = useState(false);
