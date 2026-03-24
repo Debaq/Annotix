@@ -191,13 +191,21 @@ pub fn export_dataset(
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    // Filtrar anotaciones inválidas (classId no existe en las clases del proyecto)
-    let images: Vec<ImageEntry> = pf.images.iter().cloned().map(|mut img| {
-        img.annotations.retain(|ann| {
-            pf.classes.iter().any(|c| c.id == ann.class_id)
-        });
-        img
-    }).collect();
+    // Solo exportar imágenes anotadas, y filtrar anotaciones con classId inválido
+    let images: Vec<ImageEntry> = pf.images.iter().cloned()
+        .filter(|img| !img.annotations.is_empty())
+        .map(|mut img| {
+            img.annotations.retain(|ann| {
+                pf.classes.iter().any(|c| c.id == ann.class_id)
+            });
+            img
+        })
+        .filter(|img| !img.annotations.is_empty())
+        .collect();
+
+    if images.is_empty() {
+        return Err("No hay imágenes anotadas para exportar".to_string());
+    }
 
     let emit_progress = |progress: f64| {
         let _ = app_handle.emit("export:progress", progress);
