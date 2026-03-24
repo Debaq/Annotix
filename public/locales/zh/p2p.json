@@ -114,5 +114,14 @@
   "clickToManageTeam": "点击管理团队",
   "sessionSettings": "会话设置",
   "joiningAsLeadResearcher": "您将以首席研究员身份加入",
-  "joiningAsAnnotator": "您将以标注员身份加入"
+  "joiningAsAnnotator": "您将以标注员身份加入",
+  "exportingProject": "正在准备项目共享...",
+  "exportingImages": "正在导入图片 {{current}} / {{total}}",
+  "preparingSession": "正在启动 P2P 节点...",
+  "connectingToHost": "正在连接主机...",
+  "downloadingImagesProgress": "正在下载图片 {{current}} / {{total}}",
+  "peerJoined": "{{name}} 加入了会话",
+  "peerLeft": "{{name}} 离开了会话",
+  "downloadFailed": "图片下载失败",
+  "hostStoppedSession": "主机已停止会话"
 }

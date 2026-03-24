@@ -114,5 +114,14 @@
   "clickToManageTeam": "クリックでチーム管理",
   "sessionSettings": "セッション設定",
   "joiningAsLeadResearcher": "主任研究員として参加します",
-  "joiningAsAnnotator": "アノテーターとして参加します"
+  "joiningAsAnnotator": "アノテーターとして参加します",
+  "exportingProject": "共有のためにプロジェクトを準備中...",
+  "exportingImages": "画像をインポート中 {{current}} / {{total}}",
+  "preparingSession": "P2Pノードを起動中...",
+  "connectingToHost": "ホストに接続中...",
+  "downloadingImagesProgress": "画像をダウンロード中 {{current}} / {{total}}",
+  "peerJoined": "{{name}}がセッションに参加しました",
+  "peerLeft": "{{name}}がセッションを退出しました",
+  "downloadFailed": "画像のダウンロードに失敗しました",
+  "hostStoppedSession": "ホストがセッションを停止しました"
 }

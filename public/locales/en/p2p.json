@@ -114,5 +114,14 @@
   "clickToManageTeam": "Click to manage team",
   "sessionSettings": "Session Settings",
   "joiningAsLeadResearcher": "You will join as lead researcher",
-  "joiningAsAnnotator": "You will join as annotator"
+  "joiningAsAnnotator": "You will join as annotator",
+  "exportingProject": "Preparing project for sharing...",
+  "exportingImages": "Importing images {{current}} / {{total}}",
+  "preparingSession": "Starting P2P node...",
+  "connectingToHost": "Connecting to host...",
+  "downloadingImagesProgress": "Downloading images {{current}} / {{total}}",
+  "peerJoined": "{{name}} joined the session",
+  "peerLeft": "{{name}} left the session",
+  "downloadFailed": "Failed to download image",
+  "hostStoppedSession": "The host has stopped the session"
 }

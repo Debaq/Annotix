@@ -148,6 +148,7 @@ pub async fn project_to_doc(
     p2p: &P2pState,
     project: &ProjectFile,
     images_dir: &std::path::Path,
+    app_handle: &tauri::AppHandle,
 ) -> Result<(), String> {
     let session = p2p.session.read().await;
     let session = session.as_ref().ok_or("No hay sesión P2P activa")?;
@@ -197,7 +198,10 @@ pub async fn project_to_doc(
     }
 
     // images (skip video frames — only sync standalone images)
-    for img in project.images.iter().filter(|i| i.video_id.is_none()) {
+    let standalone_images: Vec<_> = project.images.iter().filter(|i| i.video_id.is_none()).collect();
+    let total_images = standalone_images.len();
+
+    for (idx, img) in standalone_images.iter().enumerate() {
         let img_meta = serde_json::json!({
             "id": img.id,
             "name": img.name,
@@ -220,7 +224,13 @@ pub async fn project_to_doc(
         let img_path = images_dir.join(&img.file);
         if img_path.exists() {
             let blob_key: Bytes = format!("images/{}/blob", img.id).into_bytes().into();
-            let _progress = doc.import_file(
+            // CRITICAL: import_file returns ImportFileProgress which is a Stream+Future.
+            // The first .await resolves Result<ImportFileProgress>.
+            // The second .await drives the stream to completion, which:
+            //   1. Imports the file into the blob store
+            //   2. Writes the hash entry into the doc
+            // Without the second .await, the doc entry is NEVER created.
+            let outcome = doc.import_file(
                 blobs,
                 author,
                 blob_key,
@@ -228,12 +238,21 @@ pub async fn project_to_doc(
                 iroh_blobs::api::blobs::ImportMode::Copy,
             )
             .await
-            .map_err(|e| format!("Error importando blob de imagen: {}", e))?;
-            log::info!("Imagen {} importada como blob", img.id);
+            .map_err(|e| format!("Error iniciando import de blob {}: {}", img.id, e))?
+            .await
+            .map_err(|e| format!("Error completando import de blob {}: {}", img.id, e))?;
+            log::info!("Blob importado: {} ({} bytes, hash: {})", img.id, outcome.size, outcome.hash);
         }
+
+        // Emitir progreso de export al frontend
+        let _ = app_handle.emit("p2p:export-progress", serde_json::json!({
+            "current": idx + 1,
+            "total": total_images,
+            "imageName": img.name,
+        }));
     }
 
-    log::info!("Proyecto exportado al iroh-doc: {} imágenes", project.images.len());
+    log::info!("Proyecto exportado al iroh-doc: {} imágenes con blobs", total_images);
     Ok(())
 }
 
@@ -518,6 +537,11 @@ pub async fn download_project_images(
 
         if !success {
             log::warn!("No se pudo descargar imagen {} después de {} intentos", img_id, max_retries);
+            let _ = app_handle.emit("p2p:download-error", serde_json::json!({
+                "projectId": project_id,
+                "imageId": img_id,
+                "error": format!("Falló después de {} intentos", max_retries),
+            }));
             continue;
         }
 

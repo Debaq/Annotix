@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
+import { toast } from '@/hooks/use-toast';
 import { useP2pStore } from '../store/p2pStore';
 import type { P2pSessionInfo, ImageLockInfo, PeerInfo, BatchInfo, SyncProgress, SessionStatus, SessionRules, DownloadProgress, WorkDistribution, PendingApproval } from '../types';
 import { p2pService } from '../services/p2pService';
@@ -53,6 +54,15 @@ export function useP2pSession() {
 
     listen<{ projectId: string }>('p2p:download-complete', (event) => {
       clearDownloadProgress(event.payload.projectId);
+      toast({ title: 'P2P', description: 'Download complete' });
+    }).then((fn) => unlisteners.push(fn));
+
+    listen<{ projectId: string; imageId: string; error: string }>('p2p:download-error', (event) => {
+      toast({
+        title: 'P2P',
+        description: `Download error: ${event.payload.error}`,
+        variant: 'destructive',
+      });
     }).then((fn) => unlisteners.push(fn));
 
     return () => {
@@ -69,12 +79,20 @@ export function useP2pSession() {
       unlisteners.push(
         await listen<PeerInfo>('p2p:peer-joined', (event) => {
           addPeer({ ...event.payload, online: true });
+          if (event.payload.displayName) {
+            toast({ title: 'P2P', description: `${event.payload.displayName} joined` });
+          }
         })
       );
 
       unlisteners.push(
         await listen<{ nodeId: string }>('p2p:peer-left', (event) => {
+          const { peers } = useP2pStore.getState();
+          const peer = peers.find(p => p.nodeId === event.payload.nodeId);
           removePeer(event.payload.nodeId);
+          if (peer?.displayName) {
+            toast({ title: 'P2P', description: `${peer.displayName} left` });
+          }
         })
       );
 
@@ -120,6 +138,11 @@ export function useP2pSession() {
       unlisteners.push(
         await listen<{ reason: string }>('p2p:host-stopped', (_event) => {
           setHostStopped(true);
+          toast({
+            title: 'P2P',
+            description: 'The host has stopped the session',
+            variant: 'destructive',
+          });
         })
       );
 

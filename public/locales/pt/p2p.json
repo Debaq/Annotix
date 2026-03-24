@@ -114,5 +114,14 @@
   "clickToManageTeam": "Clique para gerenciar equipe",
   "sessionSettings": "Configurações da Sessão",
   "joiningAsLeadResearcher": "Você entrará como pesquisador principal",
-  "joiningAsAnnotator": "Você entrará como anotador"
+  "joiningAsAnnotator": "Você entrará como anotador",
+  "exportingProject": "Preparando projeto para compartilhamento...",
+  "exportingImages": "Importando imagens {{current}} / {{total}}",
+  "preparingSession": "Iniciando nó P2P...",
+  "connectingToHost": "Conectando ao host...",
+  "downloadingImagesProgress": "Baixando imagens {{current}} / {{total}}",
+  "peerJoined": "{{name}} entrou na sessão",
+  "peerLeft": "{{name}} saiu da sessão",
+  "downloadFailed": "Falha ao baixar imagem",
+  "hostStoppedSession": "O host encerrou a sessão"
 }
