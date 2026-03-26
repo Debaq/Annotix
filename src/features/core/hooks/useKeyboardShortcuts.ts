@@ -88,6 +88,12 @@ export function useKeyboardShortcuts() {
         window.dispatchEvent(new CustomEvent('annotix:undo'));
       }
 
+      // Redo shortcut
+      if (matchesShortcut(e, 'redo')) {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('annotix:redo'));
+      }
+
       // Delete selected annotation
       if (matchesShortcut(e, 'delete')) {
         if (selectedAnnotationId) {

@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { create } from 'zustand';
 import { confirm } from '@/lib/dialogs';
 import { Annotation } from '@/lib/db';
@@ -8,6 +8,7 @@ import { annotationService } from '../services/annotationService';
 import { useToast } from '@/components/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { useP2pStore } from '@/features/p2p/store/p2pStore';
+import { useUndoStore } from '../store/undoStore';
 
 // Store global para control de guardado válido
 interface SaveGuardStore {
@@ -99,6 +100,8 @@ export function useAnnotations() {
   } = useAnnotationStore();
 
   const imageFingerprint = fingerprint(image?.annotations);
+  const undoStore = useUndoStore();
+  const prevImageIdRef = useRef<string | null>(null);
 
   // Sync image → store.
   // Se bloquea durante saves locales para que no sobrescriba cambios optimistas.
@@ -107,9 +110,18 @@ export function useAnnotations() {
     if (pendingSaves > 0) return;
     if (image) {
       setAnnotations(image.annotations || []);
+      // Reset undo history al cambiar de imagen
+      if (prevImageIdRef.current !== image.id) {
+        prevImageIdRef.current = image.id ?? null;
+        undoStore.reset(image.id ?? null);
+      }
     } else {
       setAnnotations([]);
       setSelectedAnnotationId(null);
+      if (prevImageIdRef.current !== null) {
+        prevImageIdRef.current = null;
+        undoStore.reset(null);
+      }
     }
   }, [image?.id, imageFingerprint, setAnnotations, setSelectedAnnotationId]);
 
@@ -143,33 +155,40 @@ export function useAnnotations() {
     }
   }, [image?.id, currentProjectId, toast, t]);
 
+  const pushUndo = useCallback(() => {
+    const current = useAnnotationStore.getState().annotations;
+    useUndoStore.getState().pushState(current.map(a => ({ ...a })));
+  }, []);
+
   const addAnnotation = useCallback(async (annotation: Annotation) => {
     const currentImageId = image?.id || null;
     if (!currentImageId) return;
     if (!useSaveGuard.getState().isContextValid(currentImageId)) return;
 
+    pushUndo();
     addAnnotationState(annotation);
     const latestAnns = useAnnotationStore.getState().annotations;
     await saveAnnotations(latestAnns);
-  }, [addAnnotationState, saveAnnotations, image?.id]);
+  }, [addAnnotationState, saveAnnotations, image?.id, pushUndo]);
 
   const updateAnnotation = useCallback(async (id: string, updates: Partial<Annotation>) => {
+    pushUndo();
     updateAnnotationState(id, updates);
     const latestAnns = useAnnotationStore.getState().annotations;
     await saveAnnotations(latestAnns);
-  }, [updateAnnotationState, saveAnnotations]);
+  }, [updateAnnotationState, saveAnnotations, pushUndo]);
 
   const updateAnnotationLocal = useCallback((id: string, updates: Partial<Annotation>) => {
     updateAnnotationState(id, updates);
   }, [updateAnnotationState]);
 
   const deleteAnnotation = useCallback(async (id: string) => {
+    pushUndo();
     deleteAnnotationState(id);
     const latestAnns = useAnnotationStore.getState().annotations;
     await saveAnnotations(latestAnns);
-    // Recargar para confirmar estado real y re-sincronizar
     await reload();
-  }, [deleteAnnotationState, saveAnnotations, reload]);
+  }, [deleteAnnotationState, saveAnnotations, reload, pushUndo]);
 
   const selectAnnotation = useCallback((id: string | null) => {
     setSelectedAnnotationId(id);
@@ -177,30 +196,46 @@ export function useAnnotations() {
 
   const replaceAnnotations = useCallback(async (newAnnotations: Annotation[]) => {
     if (!image?.id || !currentProjectId) return;
+    pushUndo();
     setAnnotations(newAnnotations);
     await saveAnnotations(newAnnotations);
-  }, [image?.id, currentProjectId, setAnnotations, saveAnnotations]);
+  }, [image?.id, currentProjectId, setAnnotations, saveAnnotations, pushUndo]);
 
   const clearAnnotations = useCallback(async () => {
     if (await confirm(t('common.clearConfirm'), { kind: 'warning' })) {
+      pushUndo();
       clearAnnotationsState();
       await saveAnnotations([]);
       await reload();
     }
-  }, [t, clearAnnotationsState, saveAnnotations, reload]);
+  }, [t, clearAnnotationsState, saveAnnotations, reload, pushUndo]);
 
   useEffect(() => {
     const handleUndo = async () => {
       const currentAnns = useAnnotationStore.getState().annotations;
-      if (currentAnns.length > 0) {
-        const updatedAnns = currentAnns.slice(0, -1);
-        setAnnotations(updatedAnns);
-        await saveAnnotations(updatedAnns);
+      const restored = useUndoStore.getState().undo(currentAnns.map(a => ({ ...a })));
+      if (restored) {
+        setAnnotations(restored);
+        await saveAnnotations(restored);
         await reload();
       }
     };
     window.addEventListener('annotix:undo', handleUndo);
     return () => window.removeEventListener('annotix:undo', handleUndo);
+  }, [setAnnotations, saveAnnotations, reload]);
+
+  useEffect(() => {
+    const handleRedo = async () => {
+      const currentAnns = useAnnotationStore.getState().annotations;
+      const restored = useUndoStore.getState().redo(currentAnns.map(a => ({ ...a })));
+      if (restored) {
+        setAnnotations(restored);
+        await saveAnnotations(restored);
+        await reload();
+      }
+    };
+    window.addEventListener('annotix:redo', handleRedo);
+    return () => window.removeEventListener('annotix:redo', handleRedo);
   }, [setAnnotations, saveAnnotations, reload]);
 
   useEffect(() => {
