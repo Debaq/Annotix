@@ -1050,11 +1050,9 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
               imageOffset,
               color: annColor,
               isSelected,
-              listening: activeTool === 'select',
+              listening: activeTool !== 'mask',
               onClick: () => {
-                if (activeTool === 'select') {
-                  selectAnnotation(ann.id);
-                }
+                selectAnnotation(ann.id);
               },
             };
 

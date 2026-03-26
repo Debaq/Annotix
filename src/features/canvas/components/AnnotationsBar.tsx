@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { confirm } from '@/lib/dialogs';
 import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
 import { useAnnotations } from '../hooks/useAnnotations';
 import { AnnotationThumbnailCard } from './AnnotationThumbnailCard';
@@ -56,11 +55,7 @@ export const AnnotationsBar: React.FC<AnnotationsBarProps> = ({ image }) => {
                     classShortcut={classShortcut}
                     isSelected={selectedAnnotationId === ann.id}
                     onSelect={() => selectAnnotation(ann.id)}
-                    onDelete={async () => {
-                      if (await confirm(t('annotations.confirmDelete'), { kind: 'warning' })) {
-                        deleteAnnotation(ann.id);
-                      }
-                    }}
+                    onDelete={() => deleteAnnotation(ann.id)}
                   />
                 );
               })
