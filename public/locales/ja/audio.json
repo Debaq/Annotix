@@ -23,6 +23,8 @@
   "segmentTextPlaceholder": "このセグメントの書き起こしテキスト...",
   "startMs": "開始 (ms)",
   "endMs": "終了 (ms)",
+  "speakers": "話者",
+  "clickToAssignSpeaker": "クリックしてアクティブな話者を割り当て",
   "selectClass": "クラスを選択",
   "noClasses": "このプロジェクトにクラスが定義されていません",
   "drawClass": "描画クラス",

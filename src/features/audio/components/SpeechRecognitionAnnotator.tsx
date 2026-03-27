@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play, Pause, Save, ChevronLeft, ChevronRight, Plus, Zap, Trash2 } from 'lucide-react';
-import { Audio, AudioSegment } from '@/lib/db';
+import { Audio, AudioSegment, ClassDefinition } from '@/lib/db';
+import { useUIStore } from '../../core/store/uiStore';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { audioService } from '../services/audioService';
 import { Waveform } from './Waveform';
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/button';
 interface Props {
   audio: Audio;
   projectId: string;
+  classes?: ClassDefinition[];
   currentIndex: number;
   totalCount: number;
   onPrev: () => void;
@@ -28,6 +30,7 @@ const SCRUB_FINE = 0.1;     // seconds for shift+arrow
 export function SpeechRecognitionAnnotator({
   audio,
   projectId,
+  classes = [],
   currentIndex,
   totalCount,
   onPrev,
@@ -40,6 +43,17 @@ export function SpeechRecognitionAnnotator({
 }: Props) {
   const { t } = useTranslation('audio');
   const player = useAudioPlayer({ projectId, audioId: audio.id });
+  const { activeClassId } = useUIStore();
+
+  const getSpeakerColor = useCallback((speakerId?: number) => {
+    if (!speakerId || classes.length === 0) return '#94a3b8';
+    return classes.find(c => c.id === speakerId)?.color || '#94a3b8';
+  }, [classes]);
+
+  const getSpeakerName = useCallback((speakerId?: number) => {
+    if (!speakerId || classes.length === 0) return '';
+    return classes.find(c => c.id === speakerId)?.name || '';
+  }, [classes]);
 
   const [segments, setSegments] = useState<AudioSegment[]>([]);
   const [speakerId, setSpeakerId] = useState('');
@@ -114,9 +128,9 @@ export function SpeechRecognitionAnnotator({
         ? '#ef4444'
         : activeSegmentId === s.id
         ? '#6366f1'
-        : '#94a3b8',
+        : getSpeakerColor(s.speakerId),
     })),
-    [segments, activeSegmentId]
+    [segments, activeSegmentId, getSpeakerColor]
   );
 
   // ── Helpers ────────────────────────────────────────────────────────────
@@ -134,11 +148,12 @@ export function SpeechRecognitionAnnotator({
       startMs: ms,
       endMs: Math.min(ms + 3000, Math.round(player.duration * 1000)),
       text: '',
+      speakerId: activeClassId ?? undefined,
     };
     setSegments((prev) => [...prev, newSeg].sort((a, b) => a.startMs - b.startMs));
     setActiveSegmentId(newId);
     pendingFocusIdRef.current = newId;
-  }, [player.currentTime, player.duration]);
+  }, [player.currentTime, player.duration, activeClassId]);
 
   const updateSegment = useCallback((id: string, field: keyof AudioSegment, value: string | number) => {
     setSegments((prev) =>
@@ -463,6 +478,31 @@ export function SpeechRecognitionAnnotator({
                   {formatMs(seg.startMs)}-{formatMs(seg.endMs)}
                 </span>
 
+                {classes.length > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Asignar speaker activo al segmento
+                      if (activeClassId != null) {
+                        updateSegment(seg.id, 'speakerId', activeClassId);
+                      }
+                    }}
+                    className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0 border transition-colors hover:opacity-80"
+                    style={{
+                      backgroundColor: getSpeakerColor(seg.speakerId) + '20',
+                      borderColor: getSpeakerColor(seg.speakerId),
+                      color: getSpeakerColor(seg.speakerId),
+                    }}
+                    title={t('clickToAssignSpeaker', 'Click to assign active speaker')}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: getSpeakerColor(seg.speakerId) }}
+                    />
+                    {getSpeakerName(seg.speakerId) || '?'}
+                  </button>
+                )}
+
                 <input
                   type="text"
                   data-seg-id={seg.id}
@@ -490,16 +530,6 @@ export function SpeechRecognitionAnnotator({
       {/* BOTTOM: Metadata + Nav */}
       <div className="px-6 py-2 bg-[var(--annotix-white)] border-t border-[var(--annotix-border)]">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <label className="text-xs font-medium text-[var(--annotix-dark)]">{t('speakerId')}</label>
-            <input
-              type="text"
-              value={speakerId}
-              onChange={(e) => setSpeakerId(e.target.value)}
-              placeholder={t('speakerIdPlaceholder')}
-              className="w-32 px-2 py-1 text-xs rounded border border-[var(--annotix-border)] bg-[var(--annotix-white)]"
-            />
-          </div>
           <div className="flex items-center gap-2">
             <label className="text-xs font-medium text-[var(--annotix-dark)]">{t('language')}</label>
             <input

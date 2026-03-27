@@ -23,6 +23,8 @@
   "segmentTextPlaceholder": "Texto transcrito para este segmento...",
   "startMs": "Inicio (ms)",
   "endMs": "Fim (ms)",
+  "speakers": "Falantes",
+  "clickToAssignSpeaker": "Clique para atribuir o falante ativo",
   "selectClass": "Selecionar Classe",
   "noClasses": "Nenhuma classe definida neste projeto",
   "drawClass": "Classe ativa",

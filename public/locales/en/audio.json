@@ -23,6 +23,8 @@
   "segmentTextPlaceholder": "Transcribed text for this segment...",
   "startMs": "Start (ms)",
   "endMs": "End (ms)",
+  "speakers": "Speakers",
+  "clickToAssignSpeaker": "Click to assign active speaker",
   "selectClass": "Select Class",
   "noClasses": "No classes defined in this project",
   "drawClass": "Drawing class",

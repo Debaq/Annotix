@@ -230,6 +230,8 @@ pub struct AudioSegment {
     pub end_ms: i64,
     #[serde(default)]
     pub text: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub speaker_id: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
