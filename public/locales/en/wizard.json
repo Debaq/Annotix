@@ -12,12 +12,14 @@
       "options": {
         "images": "Images",
         "timeseries": "Time series",
-        "tabular": "Tabular data"
+        "tabular": "Tabular data",
+        "audio": "Audio"
       },
       "optionsDesc": {
         "images": "Photos, screenshots, scans, frames",
         "timeseries": "Sensors, metrics, signals, financial data",
-        "tabular": "CSV files, spreadsheets, structured tables"
+        "tabular": "CSV files, spreadsheets, structured tables",
+        "audio": "Audio recordings, voice, music, sounds"
       }
     },
     "goalImages": {
@@ -48,6 +50,19 @@
         "tsPredict": "Forecast future values or fill gaps",
         "tsAnomaly": "Find unusual or unexpected patterns",
         "tsAnalyze": "Segment, find patterns, or cluster"
+      }
+    },
+    "goalAudio": {
+      "title": "What do you want to do with the audio?",
+      "options": {
+        "audioTranscribe": "Transcribe speech",
+        "audioClassify": "Classify audio",
+        "audioDetect": "Detect events"
+      },
+      "optionsDesc": {
+        "audioTranscribe": "Convert spoken audio to text (ASR)",
+        "audioClassify": "Assign a label to each audio clip",
+        "audioDetect": "Identify and locate specific sounds"
       }
     },
     "classifyDetail": {
@@ -143,6 +158,9 @@
     "pattern-recognition": "Discover recurring motifs and patterns",
     "event-detection": "Identify when specific events happen in the series",
     "clustering": "Group similar time series or segments together",
-    "imputation": "Reconstruct missing or corrupted data points"
+    "imputation": "Reconstruct missing or corrupted data points",
+    "speech-recognition": "Transcribe audio files to text for ASR training",
+    "audio-classification": "Classify audio clips into categories",
+    "sound-event-detection": "Detect and locate specific events in audio"
   }
 }

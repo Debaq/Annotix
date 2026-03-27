@@ -12,12 +12,14 @@
       "options": {
         "images": "Imágenes",
         "timeseries": "Series temporales",
-        "tabular": "Datos tabulares"
+        "tabular": "Datos tabulares",
+        "audio": "Audio"
       },
       "optionsDesc": {
         "images": "Fotos, capturas, escaneos, fotogramas",
         "timeseries": "Sensores, métricas, señales, datos financieros",
-        "tabular": "Archivos CSV, hojas de cálculo, tablas estructuradas"
+        "tabular": "Archivos CSV, hojas de cálculo, tablas estructuradas",
+        "audio": "Grabaciones de audio, voz, música, sonidos"
       }
     },
     "goalImages": {
@@ -48,6 +50,19 @@
         "tsPredict": "Pronosticar valores futuros o rellenar huecos",
         "tsAnomaly": "Encontrar patrones inusuales o inesperados",
         "tsAnalyze": "Segmentar, buscar patrones o agrupar"
+      }
+    },
+    "goalAudio": {
+      "title": "¿Qué quieres hacer con el audio?",
+      "options": {
+        "audioTranscribe": "Transcribir voz",
+        "audioClassify": "Clasificar audio",
+        "audioDetect": "Detectar eventos"
+      },
+      "optionsDesc": {
+        "audioTranscribe": "Convertir audio hablado a texto (ASR)",
+        "audioClassify": "Asignar una etiqueta a cada clip de audio",
+        "audioDetect": "Identificar y localizar sonidos específicos"
       }
     },
     "classifyDetail": {
@@ -143,6 +158,9 @@
     "pattern-recognition": "Descubrir motivos y patrones recurrentes",
     "event-detection": "Identificar cuándo ocurren eventos específicos en la serie",
     "clustering": "Agrupar series temporales o segmentos similares",
-    "imputation": "Reconstruir puntos de datos faltantes o corruptos"
+    "imputation": "Reconstruir puntos de datos faltantes o corruptos",
+    "speech-recognition": "Transcribir archivos de audio a texto para entrenamiento ASR",
+    "audio-classification": "Clasificar clips de audio en categorías",
+    "sound-event-detection": "Detectar y localizar eventos específicos en audio"
   }
 }

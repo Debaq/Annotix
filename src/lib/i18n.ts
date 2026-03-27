@@ -49,7 +49,7 @@ const NAMESPACES = [
   'projectTypes', 'project', 'notifications', 'tour', 'imageInfo',
   'preprocessing', 'classification', 'augmentation', 'pwa', 'storage',
   'inference', 'connector', 'timeseries', 'tabular', 'training', 'setup',
-  'video', 'settings', 'wizard', 'p2p', 'automation',
+  'video', 'settings', 'wizard', 'p2p', 'automation', 'audio', 'projectDetail',
 ] as const;
 
 // Load all namespace files for a locale and merge into one resource bundle

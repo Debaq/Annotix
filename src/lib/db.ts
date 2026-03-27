@@ -302,6 +302,44 @@ export interface AnnotixImage {
 }
 
 // ============================================================================
+// AUDIO TYPES
+// ============================================================================
+
+export interface AudioSegment {
+  id: string;
+  startMs: number;
+  endMs: number;
+  text: string;
+}
+
+export interface AudioEvent {
+  id: string;
+  startMs: number;
+  endMs: number;
+  classId: number;
+}
+
+export interface Audio {
+  id?: string;
+  projectId: string;
+  name: string;
+  file: string;
+  durationMs: number;
+  sampleRate: number;
+  transcription: string;
+  speakerId?: string;
+  language: string;
+  segments: AudioSegment[];
+  classId?: number | null;
+  events: AudioEvent[];
+  metadata: {
+    uploaded: number;
+    annotated?: number;
+    status: 'pending' | 'done' | 'review';
+  };
+}
+
+// ============================================================================
 // VIDEO TYPES
 // ============================================================================
 

@@ -32,11 +32,13 @@ interface UIState {
   currentImageId: string | null;
   currentTimeSeriesId: string | null;
   currentVideoId: string | null;
+  currentAudioId: string | null;
   currentFrameIndex: number;
   setCurrentProjectId: (id: string | null) => void;
   setCurrentImageId: (id: string | null) => void;
   setCurrentTimeSeriesId: (id: string | null) => void;
   setCurrentVideoId: (id: string | null) => void;
+  setCurrentAudioId: (id: string | null) => void;
   setCurrentFrameIndex: (index: number) => void;
 
   // Gallery filter
@@ -87,6 +89,7 @@ export const useUIStore = create<UIState>()(
       currentImageId: null,
       currentTimeSeriesId: null,
       currentVideoId: null,
+      currentAudioId: null,
       currentFrameIndex: 0,
       setCurrentProjectId: (id) => set((state) => {
         const projectChanged = state.currentProjectId !== null && state.currentProjectId !== id;
@@ -95,6 +98,7 @@ export const useUIStore = create<UIState>()(
           currentImageId: null,
           currentTimeSeriesId: null,
           currentVideoId: null,
+          currentAudioId: null,
           currentFrameIndex: 0,
           // Only reset tool and class when switching between projects (not on initial load)
           ...(projectChanged && {
@@ -106,6 +110,7 @@ export const useUIStore = create<UIState>()(
       setCurrentImageId: (id) => set({ currentImageId: id }),
       setCurrentTimeSeriesId: (id) => set({ currentTimeSeriesId: id }),
       setCurrentVideoId: (id) => set({ currentVideoId: id, currentFrameIndex: 0 }),
+      setCurrentAudioId: (id) => set({ currentAudioId: id }),
       setCurrentFrameIndex: (index) => set({ currentFrameIndex: index }),
 
       // Gallery filter

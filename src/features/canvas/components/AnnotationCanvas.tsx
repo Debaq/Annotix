@@ -255,10 +255,24 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   }, [activeClassId]);
 
   // Actualizar activeClassId y classColor en el MaskHandler sin recrearlo
+  // Si cambió la clase mientras el handler está activo, guardar y reinicializar
   useEffect(() => {
     console.log('[AnnotationCanvas] Actualizando MaskHandler con activeClassId:', activeClassId, 'y color:', classColor);
-    maskHandler.updateActiveClassId(activeClassId);
-    maskHandler.updateClassColor(classColor);
+
+    // Si el handler está activo con otra clase, guardar primero y reinicializar
+    if (maskHandler.isActive() && maskHandler.getDrawingClassId() !== activeClassId) {
+      maskHandler.finish().then(() => {
+        maskHandler.updateActiveClassId(activeClassId);
+        maskHandler.updateClassColor(classColor);
+        if (activeTool === 'mask' && konvaImage) {
+          initializeMaskHandler();
+        }
+      });
+    } else {
+      maskHandler.updateActiveClassId(activeClassId);
+      maskHandler.updateClassColor(classColor);
+    }
+
     setMaskBrushSize(maskHandler.getBrushSize());
     setMaskEraseMode(maskHandler.getEraseMode());
     // Registrar callback para actualizaciones de la imagen
@@ -494,9 +508,14 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     if (clickedOnEmpty || clickedOnImage) {
       selectAnnotation(null, false);
 
-      if (activeTool === 'mask' && konvaImage && !maskHandler.isActive()) {
-        console.log('[AnnotationCanvas] Re-inicializando maskHandler on-demand en mouseDown');
-        initializeMaskHandler();
+      if (activeTool === 'mask' && konvaImage) {
+        // Reinicializar si no está activo O si la clase cambió
+        if (!maskHandler.isActive() || maskHandler.getDrawingClassId() !== activeClassId) {
+          if (maskHandler.isActive()) {
+            maskHandler.finish();
+          }
+          initializeMaskHandler();
+        }
       }
 
       if (currentHandler && stageRef.current) {
@@ -920,9 +939,9 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
           maskHandler.setBrushSize(size);
           setMaskBrushSize(maskHandler.getBrushSize());
         }}
-        onMaskToggleErase={() => {
-          const newMode = maskHandler.toggleEraseMode();
-          setMaskEraseMode(newMode);
+        onMaskSetEraseMode={(erase) => {
+          maskHandler.setEraseMode(erase);
+          setMaskEraseMode(erase);
         }}
       />
 
@@ -1378,8 +1397,9 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
               x={maskCursor.x}
               y={maskCursor.y}
               radius={(maskBrushSize * scale) / 2}
-              stroke={maskEraseMode ? '#ffffff' : classColor}
-              strokeWidth={2}
+              stroke={classColor}
+              strokeWidth={maskEraseMode ? 2.5 : 2}
+              dash={maskEraseMode ? [6, 4] : undefined}
               fill={maskEraseMode ? 'transparent' : `${classColor}55`}
               listening={false}
             />

@@ -12,6 +12,8 @@ pub mod training_commands;
 pub mod config_commands;
 pub mod settings_commands;
 pub mod tabular_commands;
+pub mod audio_commands;
+pub mod audio_edit_commands;
 pub mod p2p_commands;
 pub mod automation_commands;
 pub mod inference_commands;

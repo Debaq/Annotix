@@ -12,12 +12,14 @@
       "options": {
         "images": "Bilder",
         "timeseries": "Zeitreihen",
-        "tabular": "Tabellarische Daten"
+        "tabular": "Tabellarische Daten",
+        "audio": "Audio"
       },
       "optionsDesc": {
         "images": "Fotos, Screenshots, Scans, Frames",
         "timeseries": "Sensoren, Metriken, Signale, Finanzdaten",
-        "tabular": "CSV-Dateien, Tabellen, strukturierte Daten"
+        "tabular": "CSV-Dateien, Tabellen, strukturierte Daten",
+        "audio": "Audioaufnahmen, Sprache, Musik, Geraeusche"
       }
     },
     "goalImages": {
@@ -48,6 +50,19 @@
         "tsPredict": "Zukünftige Werte vorhersagen oder Lücken füllen",
         "tsAnomaly": "Ungewöhnliche oder unerwartete Muster finden",
         "tsAnalyze": "Segmentieren, Muster finden oder gruppieren"
+      }
+    },
+    "goalAudio": {
+      "title": "Was moechten Sie mit dem Audio machen?",
+      "options": {
+        "audioTranscribe": "Sprache transkribieren",
+        "audioClassify": "Audio klassifizieren",
+        "audioDetect": "Ereignisse erkennen"
+      },
+      "optionsDesc": {
+        "audioTranscribe": "Gesprochenes Audio in Text umwandeln (ASR)",
+        "audioClassify": "Jedem Audioclip ein Label zuweisen",
+        "audioDetect": "Bestimmte Geraeusche identifizieren und lokalisieren"
       }
     },
     "classifyDetail": {
@@ -143,6 +158,9 @@
     "pattern-recognition": "Wiederkehrende Motive und Muster entdecken",
     "event-detection": "Erkennen, wann bestimmte Ereignisse in der Reihe auftreten",
     "clustering": "Ähnliche Zeitreihen oder Segmente gruppieren",
-    "imputation": "Fehlende oder beschädigte Datenpunkte rekonstruieren"
+    "imputation": "Fehlende oder beschädigte Datenpunkte rekonstruieren",
+    "speech-recognition": "Audiodateien fuer ASR-Training in Text transkribieren",
+    "audio-classification": "Audioclips in Kategorien klassifizieren",
+    "sound-event-detection": "Bestimmte Ereignisse in Audio erkennen und lokalisieren"
   }
 }

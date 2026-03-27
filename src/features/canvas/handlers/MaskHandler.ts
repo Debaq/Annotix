@@ -20,6 +20,8 @@ export class MaskHandler implements BaseHandler {
   private rafId: number = 0;
   private needsImageUpdate: boolean = false;
   private bitmapVersion: number = 0;
+  private ready: boolean = false;
+  private pendingMouseDown: MouseEventData | null = null;
 
   constructor(
     private activeClassId: number | null,
@@ -47,6 +49,7 @@ export class MaskHandler implements BaseHandler {
     this.isValid = true;
     this.drawingClassId = this.activeClassId;
     this.hasDrawn = false;
+    this.pendingMouseDown = null;
 
     this.canvas = document.createElement('canvas');
     this.canvas.width = imageWidth;
@@ -57,14 +60,28 @@ export class MaskHandler implements BaseHandler {
       this.ctx.clearRect(0, 0, imageWidth, imageHeight);
 
       if (baseMaskDataUrl) {
+        // No está listo hasta que la imagen base cargue
+        this.ready = false;
         const baseImage = new window.Image();
         baseImage.onload = () => {
           if (!this.ctx || !this.canvas) return;
+          // Forzar source-over para dibujar la imagen base correctamente
+          // (el usuario podría haber cambiado globalCompositeOperation antes de que cargue)
+          this.ctx.globalCompositeOperation = 'source-over';
           this.ctx.drawImage(baseImage, 0, 0, this.canvas.width, this.canvas.height);
+          this.ready = true;
           this.flushImageUpdate();
+          // Reproducir el evento de mouseDown pendiente
+          if (this.pendingMouseDown) {
+            const event = this.pendingMouseDown;
+            this.pendingMouseDown = null;
+            this.onMouseDown(event);
+          }
         };
         baseImage.src = baseMaskDataUrl;
       } else {
+        // Sin imagen base → listo inmediatamente
+        this.ready = true;
         this.flushImageUpdate();
       }
     }
@@ -93,6 +110,11 @@ export class MaskHandler implements BaseHandler {
 
   onMouseDown(event: MouseEventData): void {
     if (!this.ctx || !this.canvas || this.drawingClassId === null) return;
+    // Si la imagen base aún no cargó, guardar el evento para después
+    if (!this.ready) {
+      this.pendingMouseDown = event;
+      return;
+    }
     this.isDragging = true;
     this.lastX = event.imageX;
     this.lastY = event.imageY;
@@ -124,6 +146,11 @@ export class MaskHandler implements BaseHandler {
   }
 
   onMouseUp(_event: MouseEventData): void {
+    if (!this.ready) {
+      // Cancelar evento pendiente si el usuario soltó antes de que cargue
+      this.pendingMouseDown = null;
+      return;
+    }
     this.isDragging = false;
     this.flushImageUpdate();
     if (this.hasDrawn) {
@@ -209,6 +236,14 @@ export class MaskHandler implements BaseHandler {
     return this.canvas !== null;
   }
 
+  isReady(): boolean {
+    return this.ready;
+  }
+
+  getDrawingClassId(): number | null {
+    return this.drawingClassId;
+  }
+
   getMaskImage(): MaskPreviewImage | null {
     return this.maskImage;
   }
@@ -242,6 +277,8 @@ export class MaskHandler implements BaseHandler {
     this.drawingClassId = null;
     this.hasDrawn = false;
     this.needsImageUpdate = false;
+    this.ready = false;
+    this.pendingMouseDown = null;
 
     if (this.onMaskImageUpdate) {
       this.onMaskImageUpdate(null);

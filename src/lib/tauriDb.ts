@@ -13,6 +13,9 @@ import type {
   VideoTrack,
   VideoInfo,
   AnnotixImage,
+  Audio,
+  AudioSegment,
+  AudioEvent,
 } from './db';
 
 // Re-export el tipo AnnotixImage adaptado para Tauri (sin Blob, con blobPath)
@@ -289,6 +292,116 @@ export async function bakeVideoTracks(projectId: string, videoId: string): Promi
   return invoke<number>('bake_video_tracks', { projectId, videoId });
 }
 
+// ─── Audio Commands ─────────────────────────────────────────────────────────
+
+export async function uploadAudio(
+  projectId: string,
+  filePath: string,
+  durationMs: number,
+  sampleRate: number,
+  language?: string
+): Promise<string> {
+  return invoke<string>('upload_audio', { projectId, filePath, durationMs, sampleRate, language });
+}
+
+export async function getAudio(projectId: string, id: string): Promise<Audio | null> {
+  return invoke<Audio | null>('get_audio', { projectId, id });
+}
+
+export async function listAudioByProject(projectId: string): Promise<Audio[]> {
+  return invoke<Audio[]>('list_audio_by_project', { projectId });
+}
+
+export async function saveTranscription(
+  projectId: string,
+  audioId: string,
+  transcription: string,
+  speakerId?: string,
+  language?: string
+): Promise<void> {
+  return invoke('save_transcription', { projectId, audioId, transcription, speakerId, language });
+}
+
+export async function deleteAudio(projectId: string, id: string): Promise<void> {
+  return invoke('delete_audio', { projectId, id });
+}
+
+export async function getAudioFilePath(projectId: string, audioId: string): Promise<string> {
+  return invoke<string>('get_audio_file_path', { projectId, audioId });
+}
+
+export async function getAudioData(projectId: string, audioId: string): Promise<number[]> {
+  return invoke<number[]>('get_audio_data', { projectId, audioId });
+}
+
+export async function saveAudioAnnotation(
+  projectId: string,
+  audioId: string,
+  data: {
+    transcription?: string;
+    speakerId?: string;
+    language?: string;
+    segments?: AudioSegment[];
+    classId?: number | null;
+    events?: AudioEvent[];
+  }
+): Promise<void> {
+  return invoke('save_audio_annotation', {
+    projectId,
+    audioId,
+    transcription: data.transcription ?? null,
+    speakerId: data.speakerId ?? null,
+    language: data.language ?? null,
+    segments: data.segments ?? null,
+    classId: data.classId ?? null,
+    events: data.events ?? null,
+  });
+}
+
+// ─── Audio Edit Commands ────────────────────────────────────────────────────
+
+export async function audioTrim(
+  projectId: string, audioId: string, startMs: number, endMs: number
+): Promise<string> {
+  return invoke<string>('audio_trim', { projectId, audioId, startMs, endMs });
+}
+
+export async function audioCut(
+  projectId: string, audioId: string, startMs: number, endMs: number
+): Promise<string> {
+  return invoke<string>('audio_cut', { projectId, audioId, startMs, endMs });
+}
+
+export async function audioDeleteRange(
+  projectId: string, audioId: string, startMs: number, endMs: number
+): Promise<string> {
+  return invoke<string>('audio_delete_range', { projectId, audioId, startMs, endMs });
+}
+
+export async function audioSplit(
+  projectId: string, audioId: string, splitMs: number
+): Promise<string[]> {
+  return invoke<string[]>('audio_split', { projectId, audioId, splitMs });
+}
+
+export async function audioSilenceRange(
+  projectId: string, audioId: string, startMs: number, endMs: number
+): Promise<string> {
+  return invoke<string>('audio_silence_range', { projectId, audioId, startMs, endMs });
+}
+
+export async function audioNormalize(
+  projectId: string, audioId: string
+): Promise<string> {
+  return invoke<string>('audio_normalize', { projectId, audioId });
+}
+
+export async function audioEqualize(
+  projectId: string, audioId: string, preset: string
+): Promise<string> {
+  return invoke<string>('audio_equalize', { projectId, audioId, preset });
+}
+
 // ─── Event Listeners (reactividad) ──────────────────────────────────────────
 
 export function onProjectsChanged(callback: () => void): Promise<UnlistenFn> {
@@ -315,6 +428,14 @@ export function onVideosChanged(
   callback: (projectId: string) => void
 ): Promise<UnlistenFn> {
   return listen<string>('db:videos-changed', (event) =>
+    callback(event.payload)
+  );
+}
+
+export function onAudioChanged(
+  callback: (projectId: string) => void
+): Promise<UnlistenFn> {
+  return listen<string>('db:audio-changed', (event) =>
     callback(event.payload)
   );
 }

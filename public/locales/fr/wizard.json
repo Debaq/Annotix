@@ -12,12 +12,14 @@
       "options": {
         "images": "Images",
         "timeseries": "Séries temporelles",
-        "tabular": "Données tabulaires"
+        "tabular": "Données tabulaires",
+        "audio": "Audio"
       },
       "optionsDesc": {
         "images": "Photos, captures, scans, images",
         "timeseries": "Capteurs, métriques, signaux, données financières",
-        "tabular": "Fichiers CSV, feuilles de calcul, tables structurées"
+        "tabular": "Fichiers CSV, feuilles de calcul, tables structurées",
+        "audio": "Enregistrements audio, voix, musique, sons"
       }
     },
     "goalImages": {
@@ -48,6 +50,19 @@
         "tsPredict": "Prévoir des valeurs futures ou combler des lacunes",
         "tsAnomaly": "Trouver des motifs inhabituels ou inattendus",
         "tsAnalyze": "Segmenter, trouver des motifs ou regrouper"
+      }
+    },
+    "goalAudio": {
+      "title": "Que voulez-vous faire avec l'audio?",
+      "options": {
+        "audioTranscribe": "Transcrire la parole",
+        "audioClassify": "Classifier l'audio",
+        "audioDetect": "Detecter des evenements"
+      },
+      "optionsDesc": {
+        "audioTranscribe": "Convertir l'audio parle en texte (ASR)",
+        "audioClassify": "Attribuer un label a chaque clip audio",
+        "audioDetect": "Identifier et localiser des sons specifiques"
       }
     },
     "classifyDetail": {
@@ -143,6 +158,9 @@
     "pattern-recognition": "Découvrir des motifs et patterns récurrents",
     "event-detection": "Identifier quand des événements spécifiques se produisent",
     "clustering": "Regrouper des séries temporelles ou segments similaires",
-    "imputation": "Reconstruire des points de données manquants ou corrompus"
+    "imputation": "Reconstruire des points de données manquants ou corrompus",
+    "speech-recognition": "Transcrire des fichiers audio en texte pour l'entrainement ASR",
+    "audio-classification": "Classifier des clips audio en categories",
+    "sound-event-detection": "Detecter et localiser des evenements specifiques dans l'audio"
   }
 }

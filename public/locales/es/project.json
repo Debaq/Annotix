@@ -489,15 +489,30 @@
       "name": "ML Tabular",
       "description": "ML clásico con datos CSV/tabulares"
     },
+    "speech-recognition": {
+      "name": "Reconocimiento de Voz (ASR)",
+      "description": "Transcribir audio a texto para datasets ASR"
+    },
+    "audio-classification": {
+      "name": "Clasificación de Audio",
+      "description": "Asignar etiquetas a clips de audio"
+    },
+    "sound-event-detection": {
+      "name": "Detección de Eventos de Sonido",
+      "description": "Identificar y localizar eventos en audio"
+    },
     "useCasesLabel": "Casos de uso",
     "modelsLabel": "Modelos recomendados",
     "difficultyLabel": "Dificultad"
   },
   "categories": {
-    "images": "Anotación de Imágenes",
-    "classification": "Clasificación",
+    "imageVideo": "Imagen / Video",
+    "audio": "Audio / Voz",
     "timeSeries": "Series Temporales",
-    "tabular": "Tabular / ML Clásico"
+    "tabular": "Tabular / ML Clásico",
+    "language": "Lenguaje",
+    "3d": "3D",
+    "comingSoon": "Próximamente"
   },
   "modality": "Modalidad",
   "initialClasses": "Clases Iniciales (opcional)",

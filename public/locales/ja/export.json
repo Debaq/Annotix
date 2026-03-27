@@ -310,7 +310,15 @@
     "unetMasks": "U-Netマスク",
     "unetMasksDesc": "セグメンテーショントレーニング用グレースケールPNG画像",
     "tix": "Annotixプロジェクト (.tix)",
-    "tixDesc": "バックアップまたは共有用にプロジェクト全体を.tixファイルにエクスポート"
+    "tixDesc": "バックアップまたは共有用にプロジェクト全体を.tixファイルにエクスポート",
+    "huggingfaceAsr": "HuggingFace ASR",
+    "huggingfaceAsrDesc": "音声認識データセット用のfile_nameとtranscription列を持つCSV",
+    "ljspeech": "LJSpeech",
+    "ljspeechDesc": "metadata.csv（名前|書き起こし）とwavsフォルダのLJSpeechフォーマット",
+    "csvAudioClassification": "音声分類 CSV",
+    "csvAudioClassificationDesc": "音声分類用のfile_nameとlabel列を含むCSV",
+    "csvSoundEvents": "サウンドイベント CSV",
+    "csvSoundEventsDesc": "サウンドイベント検出用のfile_name、start_ms、end_ms、label列を含むCSV"
   },
   "notAvailable": "このプロジェクトタイプではエクスポートを利用できません",
   "preparing": "エクスポートを準備中...",

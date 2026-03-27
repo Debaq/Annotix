@@ -9,6 +9,8 @@
   "select": "Select",
   "pan": "Pan",
   "eraseMode": "橡皮擦",
+  "maskBrush": "画笔",
+  "maskEraser": "橡皮擦",
   "newInstance": "新实例",
   "tooltips": {
     "bbox": "Bounding Box (B)",

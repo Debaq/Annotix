@@ -5,6 +5,7 @@ pub mod csv_export;
 pub mod unet_masks;
 pub mod folders_by_class;
 pub mod tix;
+pub mod audio_export;
 
 use std::io::{Write, Seek};
 use std::path::Path;
@@ -185,6 +186,56 @@ pub fn export_dataset(
     app_handle: &tauri::AppHandle,
 ) -> Result<(), String> {
     let pf = state.read_project_file(project_id)?;
+
+    let emit_progress = |progress: f64| {
+        let _ = app_handle.emit("export:progress", progress);
+    };
+
+    let file = std::fs::File::create(output_path)
+        .map_err(|e| format!("Error creando archivo de salida: {}", e))?;
+
+    // ── Audio formats ──────────────────────────────────────────────────────
+    if ["huggingface-asr", "ljspeech", "csv-audio-classification", "csv-sound-events"].contains(&format) {
+        let audio_dir = state.project_dir(project_id)?.join("audio");
+
+        if format == "csv-audio-classification" {
+            let audio_entries: Vec<_> = pf.audio.iter()
+                .filter(|a| a.class_id.is_some())
+                .cloned()
+                .collect();
+            if audio_entries.is_empty() {
+                return Err("No hay audios clasificados para exportar".to_string());
+            }
+            return audio_export::export_audio_classification_csv(&pf, &audio_entries, &audio_dir, file, emit_progress);
+        }
+
+        if format == "csv-sound-events" {
+            let audio_entries: Vec<_> = pf.audio.iter()
+                .filter(|a| !a.events.is_empty())
+                .cloned()
+                .collect();
+            if audio_entries.is_empty() {
+                return Err("No hay audios con eventos para exportar".to_string());
+            }
+            return audio_export::export_sound_events_csv(&pf, &audio_entries, &audio_dir, file, emit_progress);
+        }
+
+        // ASR formats
+        let audio_entries: Vec<_> = pf.audio.iter()
+            .filter(|a| !a.transcription.is_empty() || !a.segments.is_empty())
+            .cloned()
+            .collect();
+        if audio_entries.is_empty() {
+            return Err("No hay audios transcritos para exportar".to_string());
+        }
+        return match format {
+            "huggingface-asr" => audio_export::export_huggingface(&pf, &audio_entries, &audio_dir, file, emit_progress),
+            "ljspeech" => audio_export::export_ljspeech(&pf, &audio_entries, &audio_dir, file, emit_progress),
+            _ => unreachable!(),
+        };
+    }
+
+    // ── Image formats ──────────────────────────────────────────────────────
     let images_dir = state.project_images_dir(project_id)?;
 
     if pf.images.is_empty() {
@@ -206,13 +257,6 @@ pub fn export_dataset(
     if images.is_empty() {
         return Err("No hay imágenes anotadas para exportar".to_string());
     }
-
-    let emit_progress = |progress: f64| {
-        let _ = app_handle.emit("export:progress", progress);
-    };
-
-    let file = std::fs::File::create(output_path)
-        .map_err(|e| format!("Error creando archivo de salida: {}", e))?;
 
     match format {
         "yolo-detection" => yolo::export(&pf, &images, &images_dir, file, false, emit_progress),

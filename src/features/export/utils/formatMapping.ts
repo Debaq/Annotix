@@ -11,7 +11,11 @@ export type ExportFormat =
   | 'csv-keypoints'
   | 'csv-landmarks'
   | 'folders-by-class'
-  | 'unet-masks';
+  | 'unet-masks'
+  | 'huggingface-asr'
+  | 'ljspeech'
+  | 'csv-audio-classification'
+  | 'csv-sound-events';
 
 export interface FormatInfo {
   id: ExportFormat;
@@ -75,6 +79,26 @@ export const FORMAT_INFO: Record<ExportFormat, FormatInfo> = {
     labelKey: 'export.formats.unetMasks',
     descriptionKey: 'export.formats.unetMasksDesc',
   },
+  'huggingface-asr': {
+    id: 'huggingface-asr',
+    labelKey: 'export.formats.huggingfaceAsr',
+    descriptionKey: 'export.formats.huggingfaceAsrDesc',
+  },
+  'ljspeech': {
+    id: 'ljspeech',
+    labelKey: 'export.formats.ljspeech',
+    descriptionKey: 'export.formats.ljspeechDesc',
+  },
+  'csv-audio-classification': {
+    id: 'csv-audio-classification',
+    labelKey: 'export.formats.csvAudioClassification',
+    descriptionKey: 'export.formats.csvAudioClassificationDesc',
+  },
+  'csv-sound-events': {
+    id: 'csv-sound-events',
+    labelKey: 'export.formats.csvSoundEvents',
+    descriptionKey: 'export.formats.csvSoundEventsDesc',
+  },
 };
 
 /**
@@ -109,11 +133,15 @@ export function getValidFormats(projectType: ProjectType | undefined): ExportFor
     case 'landmarks':
       return ['csv-landmarks', 'coco'];
 
-    // Audio projects (no image export applicable)
-    case 'audio-classification':
+    // Audio projects
     case 'speech-recognition':
+      return ['huggingface-asr', 'ljspeech'];
+
+    case 'audio-classification':
+      return ['csv-audio-classification'];
+
     case 'sound-event-detection':
-      return [];
+      return ['csv-sound-events'];
 
     // Tabular projects (no image export)
     case 'tabular':

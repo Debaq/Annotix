@@ -12,12 +12,14 @@
       "options": {
         "images": "图像",
         "timeseries": "时间序列",
-        "tabular": "表格数据"
+        "tabular": "表格数据",
+        "audio": "音频"
       },
       "optionsDesc": {
         "images": "照片、截图、扫描、帧",
         "timeseries": "传感器、指标、信号、金融数据",
-        "tabular": "CSV文件、电子表格、结构化表格"
+        "tabular": "CSV文件、电子表格、结构化表格",
+        "audio": "音频录音、语音、音乐、声音"
       }
     },
     "goalImages": {
@@ -48,6 +50,19 @@
         "tsPredict": "预测未来值或填补空白",
         "tsAnomaly": "查找异常或意外模式",
         "tsAnalyze": "分割、查找模式或聚类"
+      }
+    },
+    "goalAudio": {
+      "title": "您想对音频做什么？",
+      "options": {
+        "audioTranscribe": "转录语音",
+        "audioClassify": "分类音频",
+        "audioDetect": "检测事件"
+      },
+      "optionsDesc": {
+        "audioTranscribe": "将语音转换为文本 (ASR)",
+        "audioClassify": "为每个音频片段分配标签",
+        "audioDetect": "识别和定位特定声音"
       }
     },
     "classifyDetail": {
@@ -143,6 +158,9 @@
     "pattern-recognition": "发现反复出现的主题和模式",
     "event-detection": "识别序列中特定事件何时发生",
     "clustering": "将相似的时间序列或片段分组",
-    "imputation": "重建缺失或损坏的数据点"
+    "imputation": "重建缺失或损坏的数据点",
+    "speech-recognition": "将音频文件转录为文本用于ASR训练",
+    "audio-classification": "将音频片段分类到不同类别",
+    "sound-event-detection": "检测和定位音频中的特定事件"
   }
 }

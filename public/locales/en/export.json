@@ -310,7 +310,15 @@
     "unetMasks": "U-Net Masks",
     "unetMasksDesc": "PNG grayscale mask images for semantic segmentation training",
     "tix": "Annotix Project (.tix)",
-    "tixDesc": "Export the entire project in a .tix file for backup or sharing"
+    "tixDesc": "Export the entire project in a .tix file for backup or sharing",
+    "huggingfaceAsr": "HuggingFace ASR",
+    "huggingfaceAsrDesc": "CSV with file_name and transcription columns for speech recognition datasets",
+    "ljspeech": "LJSpeech",
+    "ljspeechDesc": "LJSpeech format with metadata.csv (name|transcription) and wavs folder",
+    "csvAudioClassification": "Audio Classification CSV",
+    "csvAudioClassificationDesc": "CSV with file_name and label columns for audio classification",
+    "csvSoundEvents": "Sound Events CSV",
+    "csvSoundEventsDesc": "CSV with file_name, start_ms, end_ms and label columns for sound event detection"
   },
   "notAvailable": "Export not available for this project type",
   "preparing": "Preparing export...",
