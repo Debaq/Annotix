@@ -31,6 +31,7 @@ import { KeypointsRenderer } from './renderers/KeypointsRenderer';
 import { LandmarksRenderer } from './renderers/LandmarksRenderer';
 import { MaskRenderer } from './renderers/MaskRenderer';
 import { matchesShortcut } from '../../core/utils/matchShortcut';
+import type { ToolId } from '../config/toolsConfig';
 import { useInferenceModels } from '../../inference/hooks/useInferenceModels';
 import { useInferenceRunner } from '../../inference/hooks/useInferenceRunner';
 import type { InferenceConfig } from '../../inference/types';
@@ -676,8 +677,18 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     }
   };
 
+  // Refs para modificadores temporales (Shift=borrador, Alt=pan)
+  const modifierStateRef = useRef<{
+    shiftHeld: boolean;
+    altHeld: boolean;
+    prevEraseMode: boolean | null;
+    prevTool: ToolId | null;
+  }>({ shiftHeld: false, altHeld: false, prevEraseMode: null, prevTool: null });
+
   // Keyboard shortcuts for handlers
   useEffect(() => {
+    const mod = modifierStateRef.current;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       // Handler specific shortcuts (Enter/Escape)
       if (currentHandler && currentHandler.isActive()) {
@@ -688,22 +699,20 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
         }
       }
 
-      // Mask-specific shortcuts (solo en proyectos mask)
+      // Mask-specific shortcuts (solo en proyectos con mask)
       if (project?.type === 'mask' && maskHandler) {
-        // [ / ]: Ajustar tamaño de pincel (no editable, se comparan directamente)
+        // [ / ]: Ajustar tamaño de pincel
         if (e.key === '[') {
           e.preventDefault();
           const currentSize = maskHandler.getBrushSize();
-          const newSize = currentSize - 5;
-          maskHandler.setBrushSize(newSize);
+          maskHandler.setBrushSize(currentSize - 5);
           setMaskBrushSize(maskHandler.getBrushSize());
           return;
         }
         if (e.key === ']') {
           e.preventDefault();
           const currentSize = maskHandler.getBrushSize();
-          const newSize = currentSize + 5;
-          maskHandler.setBrushSize(newSize);
+          maskHandler.setBrushSize(currentSize + 5);
           setMaskBrushSize(maskHandler.getBrushSize());
           return;
         }
@@ -715,12 +724,83 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
           setMaskEraseMode(newMode);
           return;
         }
+
+        // Shift mantenido: borrador temporal
+        if (e.key === 'Shift' && !mod.shiftHeld && activeTool === 'mask') {
+          mod.shiftHeld = true;
+          mod.prevEraseMode = maskHandler.getEraseMode();
+          if (!mod.prevEraseMode) {
+            maskHandler.setEraseMode(true);
+            setMaskEraseMode(true);
+          }
+          return;
+        }
+
+        // Alt mantenido: pan temporal
+        if (e.key === 'Alt' && !mod.altHeld) {
+          e.preventDefault();
+          mod.altHeld = true;
+          mod.prevTool = activeTool as ToolId;
+          setActiveTool('pan');
+          return;
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (project?.type !== 'mask' || !maskHandler) return;
+
+      // Soltar Shift: restaurar modo anterior
+      if (e.key === 'Shift' && mod.shiftHeld) {
+        mod.shiftHeld = false;
+        if (mod.prevEraseMode !== null) {
+          maskHandler.setEraseMode(mod.prevEraseMode);
+          setMaskEraseMode(mod.prevEraseMode);
+          mod.prevEraseMode = null;
+        }
+        return;
+      }
+
+      // Soltar Alt: restaurar herramienta anterior
+      if (e.key === 'Alt' && mod.altHeld) {
+        e.preventDefault();
+        mod.altHeld = false;
+        if (mod.prevTool) {
+          setActiveTool(mod.prevTool);
+          mod.prevTool = null;
+        }
+        return;
+      }
+    };
+
+    // Limpiar modificadores si la ventana pierde foco
+    const handleBlur = () => {
+      if (mod.shiftHeld && maskHandler) {
+        mod.shiftHeld = false;
+        if (mod.prevEraseMode !== null) {
+          maskHandler.setEraseMode(mod.prevEraseMode);
+          setMaskEraseMode(mod.prevEraseMode);
+          mod.prevEraseMode = null;
+        }
+      }
+      if (mod.altHeld) {
+        mod.altHeld = false;
+        if (mod.prevTool) {
+          setActiveTool(mod.prevTool);
+          mod.prevTool = null;
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentHandler, project?.type, maskHandler]);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, [currentHandler, project?.type, maskHandler, activeTool]);
 
   // Finish previous handler when tool changes or image changes
   useEffect(() => {
