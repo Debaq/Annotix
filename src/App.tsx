@@ -98,7 +98,88 @@ const ProjectView = () => {
   }
 
   if (isAudioProject(project.type)) {
-    return <AudioGallery />;
+    return (
+      <div className="annotix-layout">
+        {/* LEFT: Audio Gallery */}
+        <div className="annotix-panel">
+          <AudioGallery />
+        </div>
+
+        {/* CENTER: placeholder */}
+        <div className="flex items-center justify-center bg-[var(--annotix-light)]">
+          <div className="text-center text-[var(--annotix-gray)]">
+            <i className="fas fa-headphones text-6xl mb-4 opacity-20"></i>
+            <p className="text-lg font-medium">{t('audio.selectAudio', 'Select an audio file')}</p>
+          </div>
+        </div>
+
+        {/* RIGHT: Classes + Back */}
+        <div className="annotix-panel border-l">
+          {project.classes.length > 0 && (
+            <div className="annotix-panel-section">
+              <div className="flex items-center justify-between mb-3">
+                <h3>{t('common.classes')}</h3>
+                <ManageClassesDialog
+                  project={project}
+                  trigger={
+                    <button className="h-7 px-2 rounded text-xs bg-[var(--annotix-primary)] text-white hover:bg-[var(--annotix-primary-dark)] transition-colors flex items-center gap-1">
+                      <i className="fas fa-cog"></i>
+                      {t('classes.manage')}
+                    </button>
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                {project.classes.map((cls, index) => (
+                  <button
+                    key={cls.id}
+                    onClick={() => setActiveClassId(cls.id)}
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-lg border p-2 transition-all",
+                      activeClassId === cls.id
+                        ? "border-[var(--annotix-primary)] bg-[var(--annotix-primary)]/10 shadow-sm"
+                        : "border-[var(--annotix-border)] bg-[var(--annotix-white)] hover:border-[var(--annotix-primary)]/50"
+                    )}
+                  >
+                    {index < CLASS_SHORTCUTS.length && (
+                      <span className="flex h-6 w-6 items-center justify-center rounded bg-[var(--annotix-gray-light)] text-[10px] font-mono font-bold">
+                        {CLASS_SHORTCUTS[index]}
+                      </span>
+                    )}
+                    <div className="h-4 w-4 rounded-full shrink-0 border border-black/20" style={{ backgroundColor: cls.color }}></div>
+                    <span className="flex-1 text-sm text-left font-medium truncate text-[var(--annotix-dark)]">{cls.name}</span>
+                    {activeClassId === cls.id && <div className="h-2 w-2 rounded-full bg-[var(--annotix-primary)]" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="annotix-panel-section">
+            <h3 className="mb-3">{t('common.actions')}</h3>
+            <div className="space-y-2">
+              <ManageClassesDialog
+                project={project}
+                trigger={
+                  <Button variant="outline" className="w-full annotix-btn annotix-btn-outline">
+                    <i className="fas fa-cog mr-2"></i>
+                    {t('classes.manage')}
+                  </Button>
+                }
+              />
+              <Button
+                variant="outline"
+                className="w-full annotix-btn annotix-btn-outline"
+                onClick={() => { setCurrentProjectId(null); navigate('/'); }}
+              >
+                <i className="fas fa-arrow-left mr-2"></i>
+                {t('common.backToProjects')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (isTimeSeriesProject(project.type)) {
@@ -304,19 +385,76 @@ const ImageView = () => {
 
 const AudioView = () => {
   const { projectId, audioId } = useParams();
-  const { setCurrentProjectId, setCurrentAudioId } = useUIStore();
+  const { setCurrentProjectId, setCurrentAudioId, activeClassId, setActiveClassId } = useUIStore();
+  const { project } = useCurrentProject();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (projectId) setCurrentProjectId(projectId);
     if (audioId) setCurrentAudioId(audioId);
   }, [projectId, audioId, setCurrentProjectId, setCurrentAudioId]);
 
+  const hasClasses = project && project.classes.length > 0;
+
   return (
-    <div className="annotix-layout" style={{ gridTemplateColumns: '280px 1fr' }}>
+    <div className="annotix-layout" style={{ gridTemplateColumns: hasClasses ? '280px 1fr 260px' : '280px 1fr' }}>
       <div className="annotix-panel">
         <AudioGallery />
       </div>
       <AudioAnnotator />
+      {hasClasses && (
+        <div className="annotix-panel border-l">
+          <div className="annotix-panel-section">
+            <div className="flex items-center justify-between mb-3">
+              <h3>{t('common.classes')}</h3>
+              <ManageClassesDialog
+                project={project}
+                trigger={
+                  <button className="h-7 px-2 rounded text-xs bg-[var(--annotix-primary)] text-white hover:bg-[var(--annotix-primary-dark)] transition-colors flex items-center gap-1">
+                    <i className="fas fa-cog"></i>
+                    {t('classes.manage')}
+                  </button>
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              {project.classes.map((cls, index) => (
+                <button
+                  key={cls.id}
+                  onClick={() => setActiveClassId(cls.id)}
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-lg border p-2 transition-all",
+                    activeClassId === cls.id
+                      ? "border-[var(--annotix-primary)] bg-[var(--annotix-primary)]/10 shadow-sm"
+                      : "border-[var(--annotix-border)] bg-[var(--annotix-white)] hover:border-[var(--annotix-primary)]/50"
+                  )}
+                >
+                  {index < CLASS_SHORTCUTS.length && (
+                    <span className="flex h-6 w-6 items-center justify-center rounded bg-[var(--annotix-gray-light)] text-[10px] font-mono font-bold">
+                      {CLASS_SHORTCUTS[index]}
+                    </span>
+                  )}
+                  <div className="h-4 w-4 rounded-full shrink-0 border border-black/20" style={{ backgroundColor: cls.color }}></div>
+                  <span className="flex-1 text-sm text-left font-medium truncate text-[var(--annotix-dark)]">{cls.name}</span>
+                  {activeClassId === cls.id && <div className="h-2 w-2 rounded-full bg-[var(--annotix-primary)]" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="annotix-panel-section">
+            <Button
+              variant="outline"
+              className="w-full annotix-btn annotix-btn-outline"
+              onClick={() => navigate(`/projects/${projectId}`)}
+            >
+              <i className="fas fa-arrow-left mr-2"></i>
+              {t('gallery.backToGallery')}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
