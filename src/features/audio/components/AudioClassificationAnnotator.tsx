@@ -67,9 +67,19 @@ export function AudioClassificationAnnotator({
     onNext();
   }, [handleSave, onNext]);
 
-  const handleClassSelect = useCallback((classId: number) => {
-    setSelectedClassId((prev) => (prev === classId ? null : classId));
-  }, []);
+  const handleClassSelect = useCallback(async (classId: number) => {
+    const newId = selectedClassId === classId ? null : classId;
+    setSelectedClassId(newId);
+    // Auto-guardar al seleccionar clase
+    if (audio.id) {
+      try {
+        await audioService.saveAnnotation(projectId, audio.id, { classId: newId });
+        onSaved();
+      } catch (err) {
+        console.error('Auto-save failed:', err);
+      }
+    }
+  }, [audio.id, projectId, selectedClassId, onSaved]);
 
   // Keyboard shortcuts
   useEffect(() => {

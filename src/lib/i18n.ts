@@ -69,6 +69,8 @@ const loadLocale = async (code: string) => {
   const merged: Record<string, unknown> = {};
   for (const [ns, data] of entries) {
     merged[ns] = data;
+    // Registrar también como namespace individual para useTranslation('audio'), etc.
+    i18n.addResourceBundle(code, ns, data, true, true);
   }
 
   i18n.addResourceBundle(code, 'translation', merged, true, true);
@@ -82,7 +84,7 @@ i18n
     lng: initialLang,
     fallbackLng: DEFAULT_LANG,
     supportedLngs: supportedCodes,
-    ns: ['translation'],
+    ns: ['translation', ...NAMESPACES],
     defaultNS: 'translation',
     interpolation: { escapeValue: false },
     resources: {},

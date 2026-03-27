@@ -236,7 +236,22 @@ export function SpeechRecognitionAnnotator({
     }
   }, [audio.id, projectId, segments, speakerId, language, onSaved]);
 
+  // Auto-guardar con debounce cuando cambian los datos
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!audio.id) return;
+    // No auto-guardar en el mount inicial
+    if (segments === audio.segments || segments.length === 0) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      handleSave();
+    }, 1500);
+    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
+  }, [segments, speakerId, language]);
+
   const handleSaveAndNext = useCallback(async () => {
+    // Cancelar auto-save pendiente antes de guardar+avanzar
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     await handleSave();
     onNext();
   }, [handleSave, onNext]);

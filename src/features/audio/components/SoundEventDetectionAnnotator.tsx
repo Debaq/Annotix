@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play, Pause, Save, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { Audio, AudioEvent, ClassDefinition } from '@/lib/db';
@@ -85,6 +85,17 @@ export function SoundEventDetectionAnnotator({
       setSaving(false);
     }
   }, [audio.id, projectId, events, onSaved]);
+
+  // Auto-guardar cuando cambian los eventos
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!audio.id || events.length === 0) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      handleSave();
+    }, 1000);
+    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
+  }, [events]);
 
   // Keyboard shortcuts
   useEffect(() => {
