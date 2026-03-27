@@ -501,6 +501,10 @@
       "name": "음향 이벤트 감지",
       "description": "오디오에서 이벤트 식별 및 위치 파악"
     },
+    "tts-recording": {
+      "name": "TTS 녹음 스튜디오",
+      "description": "Text-to-Speech 모델을 위한 가이드 데이터셋 녹음"
+    },
     "useCasesLabel": "사용 사례",
     "modelsLabel": "추천 모델",
     "difficultyLabel": "난이도"

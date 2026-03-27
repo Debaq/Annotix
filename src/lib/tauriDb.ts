@@ -16,6 +16,8 @@ import type {
   Audio,
   AudioSegment,
   AudioEvent,
+  TtsSentence,
+  LlmConfig,
 } from './db';
 
 // Re-export el tipo AnnotixImage adaptado para Tauri (sin Blob, con blobPath)
@@ -436,6 +438,76 @@ export function onAudioChanged(
   callback: (projectId: string) => void
 ): Promise<UnlistenFn> {
   return listen<string>('db:audio-changed', (event) =>
+    callback(event.payload)
+  );
+}
+
+// ─── TTS Guided Recording Commands ─────────────────────────────────────────
+
+export async function getTtsSentences(projectId: string): Promise<TtsSentence[]> {
+  return invoke<TtsSentence[]>('get_tts_sentences', { projectId });
+}
+
+export async function saveTtsSentences(projectId: string, sentences: TtsSentence[]): Promise<void> {
+  return invoke('save_tts_sentences', { projectId, sentences });
+}
+
+export async function saveTtsRecording(
+  projectId: string,
+  sentenceId: string,
+  audioBase64: string,
+  fileExt: string,
+  durationMs: number,
+  sampleRate: number,
+): Promise<string> {
+  return invoke<string>('save_tts_recording', {
+    projectId, sentenceId, audioBase64, fileExt, durationMs, sampleRate,
+  });
+}
+
+export async function linkTtsUpload(
+  projectId: string,
+  sentenceId: string,
+  audioId: string,
+): Promise<void> {
+  return invoke('link_tts_upload', { projectId, sentenceId, audioId });
+}
+
+export async function getLlmConfig(): Promise<LlmConfig | null> {
+  return invoke<LlmConfig | null>('get_llm_config');
+}
+
+export async function saveLlmConfig(llmConfig: LlmConfig): Promise<void> {
+  return invoke('save_llm_config', { llmConfig });
+}
+
+export async function generateTtsWithLlm(
+  language: string,
+  count: number,
+  domain: string,
+  length: string,
+): Promise<string[]> {
+  return invoke<string[]>('generate_tts_with_llm', { language, count, domain, length });
+}
+
+export interface PhoneticAnalysis {
+  available: boolean;
+  foundPhonemes: string[];
+  inventory: string[];
+  missing: string[];
+}
+
+export async function analyzePhoneticCoverage(
+  texts: string[],
+  language: string,
+): Promise<PhoneticAnalysis> {
+  return invoke<PhoneticAnalysis>('analyze_phonetic_coverage', { texts, language });
+}
+
+export function onTtsChanged(
+  callback: (projectId: string) => void
+): Promise<UnlistenFn> {
+  return listen<string>('db:tts-changed', (event) =>
     callback(event.payload)
   );
 }

@@ -90,6 +90,14 @@
       "canDo4": "训练 CRNN 或 SED-CNN 等时序事件检测模型",
       "exampleUse": "某野生动物保护团队在丛林录音中标记鸟鸣、电锯声和车辆噪音。训练好的模型能从远程麦克风近实时地检测非法伐木活动。"
     },
+    "tts-recording": {
+      "detailAbout": "一个用于创建高质量TTS数据集的引导式录音工作室。加载或生成句子，通过实时质量监控逐一录制，并以LJSpeech格式导出，适用于Piper、Coqui TTS或VITS等模型。",
+      "canDo1": "逐步录制音素平衡的句子",
+      "canDo2": "使用AI生成句子列表或从文件加载",
+      "canDo3": "实时监控录音质量（音量、削波、噪音）",
+      "canDo4": "以LJSpeech格式导出完整数据集",
+      "exampleUse": "配音演员在安静的录音室中使用引导界面录制500个句子。数据集以LJSpeech格式导出，用于微调Piper TTS模型。"
+    },
     "timeseries-classification": {
       "detailAbout": "查看整条时间序列并为其分配一个类别。每条序列根据其整体形态或行为获得一个标签——无需标记具体的时间段。",
       "canDo1": "将传感器读数、信号或序列作为整体进行分类",

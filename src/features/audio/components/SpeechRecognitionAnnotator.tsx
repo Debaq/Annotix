@@ -7,6 +7,8 @@ import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { audioService } from '../services/audioService';
 import { Waveform } from './Waveform';
 import { Button } from '@/components/ui/button';
+import { matchesShortcut } from '@/features/core/utils/matchShortcut';
+import { useShortcutKey } from '@/features/core/hooks/useShortcutKey';
 
 interface Props {
   audio: Audio;
@@ -44,6 +46,11 @@ export function SpeechRecognitionAnnotator({
   const { t } = useTranslation('audio');
   const player = useAudioPlayer({ projectId, audioId: audio.id });
   const { activeClassId } = useUIStore();
+  const keyPlayPause = useShortcutKey('audio-play-pause');
+  const keyReplay = useShortcutKey('audio-replay');
+  const keyRewind = useShortcutKey('audio-rewind');
+  const keySplit = useShortcutKey('audio-split');
+  const keyScrub = useShortcutKey('audio-scrub');
 
   const getSpeakerColor = useCallback((speakerId?: number) => {
     if (!speakerId || classes.length === 0) return '#94a3b8';
@@ -277,27 +284,26 @@ export function SpeechRecognitionAnnotator({
       const target = e.target as HTMLElement;
       const isSegInput = target.hasAttribute('data-seg-id');
 
-      // F2 = play/pause (global)
-      if (e.code === 'F2') {
+      // Play/pause (global)
+      if (matchesShortcut(e, 'audio-play-pause')) {
         e.preventDefault();
         player.togglePlay();
         return;
       }
-      // F3 = replay active segment from start (global)
-      if (e.code === 'F3') {
+      // Replay active segment from start (global)
+      if (matchesShortcut(e, 'audio-replay')) {
         e.preventDefault();
         replaySegment();
         return;
       }
-      // F4 = rewind 2s (global)
-      if (e.code === 'F4') {
+      // Rewind 2s (global)
+      if (matchesShortcut(e, 'audio-rewind')) {
         e.preventDefault();
         player.seek(Math.max(0, player.currentTime - 2));
         return;
       }
       // Arrow keys for scrubbing (only from segment inputs)
       if (isSegInput && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) {
-        // Only scrub if cursor is at edge of input or input is empty
         const input = target as HTMLInputElement;
         const atStart = input.selectionStart === 0 && input.selectionEnd === 0;
         const atEnd = input.selectionStart === input.value.length;
@@ -338,8 +344,8 @@ export function SpeechRecognitionAnnotator({
         handleSaveAndNext();
         return;
       }
-      // Ctrl+S = save
-      if (e.ctrlKey && e.code === 'KeyS') {
+      // Save
+      if (matchesShortcut(e, 'save')) {
         e.preventDefault();
         handleSave();
         return;
@@ -427,11 +433,11 @@ export function SpeechRecognitionAnnotator({
           <div className="flex-1" />
 
           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-[var(--annotix-gray)]">
-            <span><kbd className="px-1 py-0.5 bg-[var(--annotix-gray-light)] rounded">F2</kbd> {t('shortcuts.playPause')}</span>
-            <span><kbd className="px-1 py-0.5 bg-[var(--annotix-gray-light)] rounded">F3</kbd> {t('shortcuts.replaySegment')}</span>
-            <span><kbd className="px-1 py-0.5 bg-[var(--annotix-gray-light)] rounded">F4</kbd> {t('shortcuts.rewind')}</span>
-            <span><kbd className="px-1 py-0.5 bg-[var(--annotix-gray-light)] rounded">Enter</kbd> {t('shortcuts.splitSegment')}</span>
-            <span><kbd className="px-1 py-0.5 bg-[var(--annotix-gray-light)] rounded">&larr;&rarr;</kbd> {t('shortcuts.scrub')}</span>
+            <span><kbd className="px-1 py-0.5 bg-[var(--annotix-gray-light)] rounded">{keyPlayPause}</kbd> {t('shortcuts.playPause')}</span>
+            <span><kbd className="px-1 py-0.5 bg-[var(--annotix-gray-light)] rounded">{keyReplay}</kbd> {t('shortcuts.replaySegment')}</span>
+            <span><kbd className="px-1 py-0.5 bg-[var(--annotix-gray-light)] rounded">{keyRewind}</kbd> {t('shortcuts.rewind')}</span>
+            <span><kbd className="px-1 py-0.5 bg-[var(--annotix-gray-light)] rounded">{keySplit}</kbd> {t('shortcuts.splitSegment')}</span>
+            <span><kbd className="px-1 py-0.5 bg-[var(--annotix-gray-light)] rounded">{keyScrub}</kbd> {t('shortcuts.scrub')}</span>
           </div>
         </div>
       </div>

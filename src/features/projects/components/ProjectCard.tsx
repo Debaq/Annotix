@@ -107,6 +107,7 @@ export function ProjectCard({ project, folders = [] }: ProjectCardProps) {
     'audio-classification': 'fa-music',
     'speech-recognition': 'fa-microphone',
     'sound-event-detection': 'fa-volume-high',
+    'tts-recording': 'fa-record-vinyl',
   };
 
   const typeIcon = typeIconMap[project.type] || 'fa-folder';

@@ -501,6 +501,10 @@
       "name": "Rilevamento Eventi Sonori",
       "description": "Identificare e localizzare eventi nell'audio"
     },
+    "tts-recording": {
+      "name": "Studio di registrazione TTS",
+      "description": "Registrare dataset guidati per modelli Text-to-Speech"
+    },
     "useCasesLabel": "Casi d'uso",
     "modelsLabel": "Modelli consigliati",
     "difficultyLabel": "Difficoltà"

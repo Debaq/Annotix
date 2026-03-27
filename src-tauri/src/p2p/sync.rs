@@ -422,6 +422,7 @@ pub async fn doc_to_project_metadata(
         p2p_download,
         inference_models: vec![],
         folder: None,
+        tts_sentences: vec![],
     })
 }
 

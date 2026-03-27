@@ -168,6 +168,46 @@
     },
     "tsToolAnomaly": {
       "name": "異常ツール（時系列）"
+    },
+    "audioPlayPause": {
+      "name": "再生/一時停止",
+      "description": "オーディオを再生または一時停止"
+    },
+    "audioReplay": {
+      "name": "セグメント再生",
+      "description": "アクティブなセグメントを最初から再生"
+    },
+    "audioRewind": {
+      "name": "巻き戻し",
+      "description": "2秒巻き戻し"
+    },
+    "audioScrub": {
+      "name": "オーディオスクラブ",
+      "description": "オーディオ内を前後に移動"
+    },
+    "audioSplit": {
+      "name": "セグメント分割",
+      "description": "分割して新しいセグメントを作成"
+    },
+    "audioSaveNext": {
+      "name": "保存して次へ",
+      "description": "保存して次のオーディオに移動"
+    },
+    "ttsRecord": {
+      "name": "録音/停止",
+      "description": "録音を開始または停止"
+    },
+    "ttsAccept": {
+      "name": "録音を承認",
+      "description": "現在の録音を承認"
+    },
+    "ttsRepeat": {
+      "name": "文をリピート",
+      "description": "現在の文をリピート"
+    },
+    "ttsSkip": {
+      "name": "文をスキップ",
+      "description": "次の文にスキップ"
     }
   }
 }

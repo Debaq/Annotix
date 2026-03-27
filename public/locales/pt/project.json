@@ -354,6 +354,10 @@
       "name": "Detecao de Eventos Sonoros",
       "description": "Identificar e localizar eventos em audio"
     },
+    "tts-recording": {
+      "name": "Estúdio de Gravação TTS",
+      "description": "Gravar datasets guiados para modelos Text-to-Speech"
+    },
     "object3DDetection": {
       "name": "Detecção de Objetos 3D",
       "description": "Detectar objetos em nuvens de pontos 3D",

@@ -354,6 +354,10 @@
       "name": "声音事件检测",
       "description": "在音频中识别和定位事件"
     },
+    "tts-recording": {
+      "name": "TTS录音工作室",
+      "description": "为文本转语音模型录制引导式数据集"
+    },
     "object3DDetection": {
       "name": "3D 目标检测",
       "description": "在 3D 点云中检测对象",

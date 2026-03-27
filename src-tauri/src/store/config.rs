@@ -105,6 +105,19 @@ impl Default for BrowserAutomationConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct LlmConfig {
+    /// "openai" | "anthropic" | "openai-compatible"
+    #[serde(default)]
+    pub provider: Option<String>,
+    #[serde(default)]
+    pub api_key: Option<String>,
+    /// Solo para openai-compatible: URL base del servidor
+    #[serde(default)]
+    pub base_url: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AppConfig {
     #[serde(default)]
     pub projects_dir: Option<PathBuf>,
@@ -112,6 +125,8 @@ pub struct AppConfig {
     pub cloud_providers: CloudProviderConfig,
     #[serde(default)]
     pub browser_automation: BrowserAutomationConfig,
+    #[serde(default)]
+    pub llm: Option<LlmConfig>,
 }
 
 impl AppConfig {

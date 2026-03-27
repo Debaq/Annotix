@@ -90,6 +90,14 @@
       "canDo4": "Temporale Ereigniserkennungsmodelle wie CRNN oder SED-CNN trainieren",
       "exampleUse": "Ein Wildschutzteam markiert Vogelrufe, Kettensägengeräusche und Fahrzeuglärm in Dschungelaufnahmen. Das trainierte Modell erkennt illegale Abholzungsaktivitäten nahezu in Echtzeit über entfernte Mikrofone."
     },
+    "tts-recording": {
+      "detailAbout": "Ein geführtes Aufnahmestudio zum Erstellen hochwertiger TTS-Datasets. Lade Sätze oder generiere sie, nimm sie einzeln mit Echtzeit-Qualitätsüberwachung auf und exportiere im LJSpeech-Format für Modelle wie Piper, Coqui TTS oder VITS.",
+      "canDo1": "Phonetisch ausgewogene Sätze Schritt für Schritt aufnehmen",
+      "canDo2": "Satzlisten mit KI generieren oder aus Datei laden",
+      "canDo3": "Aufnahmequalität in Echtzeit überwachen (Lautstärke, Clipping, Rauschen)",
+      "canDo4": "Komplette Datasets im LJSpeech-Format exportieren",
+      "exampleUse": "Ein Sprecher nimmt 500 Sätze in einem ruhigen Studio mit der geführten Oberfläche auf. Das Dataset wird im LJSpeech-Format exportiert und zum Feintuning eines Piper TTS-Modells verwendet."
+    },
     "timeseries-classification": {
       "detailAbout": "Sieh dir eine gesamte Zeitreihe an und weise ihr eine Kategorie zu. Jede Reihe erhält ein Label basierend auf ihrer Gesamtform oder ihrem Verhalten – ohne Markierung bestimmter Zeitbereiche.",
       "canDo1": "Sensormesswerte, Signale oder Sequenzen als Ganzes klassifizieren",

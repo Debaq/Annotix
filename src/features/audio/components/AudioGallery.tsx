@@ -6,6 +6,7 @@ import { useAudio } from '../hooks/useAudio';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useUIStore } from '../../core/store/uiStore';
 import { audioService } from '../services/audioService';
+import { Mic2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 async function pickAudioFiles(): Promise<string[] | null> {
@@ -136,8 +137,19 @@ export function AudioGallery() {
         ))}
       </div>
 
-      {/* Back button */}
-      <div className="p-3 border-t border-[var(--annotix-border)]">
+      {/* TTS Studio + Back */}
+      <div className="p-3 border-t border-[var(--annotix-border)] space-y-2">
+        {project?.type === 'speech-recognition' && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full gap-2"
+            onClick={() => project?.id && navigate(`/projects/${project.id}/tts`)}
+          >
+            <Mic2 size={14} />
+            {t('audio.tts.openStudio')}
+          </Button>
+        )}
         <Button
           variant="outline"
           size="sm"

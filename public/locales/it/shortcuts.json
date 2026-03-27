@@ -168,6 +168,46 @@
     },
     "tsToolAnomaly": {
       "name": "Strumento Anomalia (Serie Temporali)"
+    },
+    "audioPlayPause": {
+      "name": "Riproduci/Pausa",
+      "description": "Riproduci o metti in pausa l'audio"
+    },
+    "audioReplay": {
+      "name": "Ripeti segmento",
+      "description": "Riprodurre il segmento attivo dall'inizio"
+    },
+    "audioRewind": {
+      "name": "Riavvolgi",
+      "description": "Riavvolgere di 2 secondi"
+    },
+    "audioScrub": {
+      "name": "Scorri audio",
+      "description": "Avanzare/retrocedere nell'audio"
+    },
+    "audioSplit": {
+      "name": "Dividi segmento",
+      "description": "Dividere e creare un nuovo segmento"
+    },
+    "audioSaveNext": {
+      "name": "Salva e successivo",
+      "description": "Salvare e passare al prossimo audio"
+    },
+    "ttsRecord": {
+      "name": "Registra/Ferma",
+      "description": "Avviare o fermare la registrazione"
+    },
+    "ttsAccept": {
+      "name": "Accetta registrazione",
+      "description": "Accettare la registrazione corrente"
+    },
+    "ttsRepeat": {
+      "name": "Ripeti frase",
+      "description": "Ripetere la frase corrente"
+    },
+    "ttsSkip": {
+      "name": "Salta frase",
+      "description": "Passare alla frase successiva"
     }
   }
 }

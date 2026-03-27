@@ -168,6 +168,46 @@
     },
     "tsToolAnomaly": {
       "name": "이상 도구 (시계열)"
+    },
+    "audioPlayPause": {
+      "name": "재생/일시정지",
+      "description": "오디오를 재생하거나 일시정지"
+    },
+    "audioReplay": {
+      "name": "세그먼트 반복",
+      "description": "활성 세그먼트를 처음부터 재생"
+    },
+    "audioRewind": {
+      "name": "되감기",
+      "description": "2초 되감기"
+    },
+    "audioScrub": {
+      "name": "오디오 스크럽",
+      "description": "오디오 내에서 앞뒤로 이동"
+    },
+    "audioSplit": {
+      "name": "세그먼트 분할",
+      "description": "분할하고 새 세그먼트 생성"
+    },
+    "audioSaveNext": {
+      "name": "저장 후 다음",
+      "description": "저장하고 다음 오디오로 이동"
+    },
+    "ttsRecord": {
+      "name": "녹음/중지",
+      "description": "녹음 시작 또는 중지"
+    },
+    "ttsAccept": {
+      "name": "녹음 수락",
+      "description": "현재 녹음을 수락"
+    },
+    "ttsRepeat": {
+      "name": "문장 반복",
+      "description": "현재 문장을 반복"
+    },
+    "ttsSkip": {
+      "name": "문장 건너뛰기",
+      "description": "다음 문장으로 건너뛰기"
     }
   }
 }

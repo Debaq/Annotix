@@ -57,12 +57,14 @@
       "options": {
         "audioTranscribe": "Sprache transkribieren",
         "audioClassify": "Audio klassifizieren",
-        "audioDetect": "Ereignisse erkennen"
+        "audioDetect": "Ereignisse erkennen",
+        "audioTts": "TTS-Dataset aufnehmen"
       },
       "optionsDesc": {
         "audioTranscribe": "Gesprochenes Audio in Text umwandeln (ASR)",
         "audioClassify": "Jedem Audioclip ein Label zuweisen",
-        "audioDetect": "Bestimmte Geraeusche identifizieren und lokalisieren"
+        "audioDetect": "Bestimmte Geraeusche identifizieren und lokalisieren",
+        "audioTts": "Ein geführtes Dataset für Text-to-Speech-Modelle aufnehmen"
       }
     },
     "classifyDetail": {
@@ -161,6 +163,7 @@
     "imputation": "Fehlende oder beschädigte Datenpunkte rekonstruieren",
     "speech-recognition": "Audiodateien fuer ASR-Training in Text transkribieren",
     "audio-classification": "Audioclips in Kategorien klassifizieren",
-    "sound-event-detection": "Bestimmte Ereignisse in Audio erkennen und lokalisieren"
+    "sound-event-detection": "Bestimmte Ereignisse in Audio erkennen und lokalisieren",
+    "tts-recording": "Geführte TTS-Datasets für Sprachsynthesemodelle aufnehmen"
   }
 }

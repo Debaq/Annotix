@@ -106,7 +106,7 @@ dependencies = [
 
 [[package]]
 name = "annotix"
-version = "2.4.4"
+version = "2.5.0"
 dependencies = [
  "base64 0.22.1",
  "blake3",
@@ -140,6 +140,7 @@ dependencies = [
  "tokio-stream",
  "toml 0.8.2",
  "uuid",
+ "webkit2gtk",
  "zip 2.4.2",
 ]
 

@@ -501,6 +501,10 @@
       "name": "Sound Event Detection",
       "description": "Identify and locate events in audio"
     },
+    "tts-recording": {
+      "name": "TTS Recording Studio",
+      "description": "Record guided datasets for Text-to-Speech models"
+    },
     "useCasesLabel": "Use cases",
     "modelsLabel": "Recommended models",
     "difficultyLabel": "Difficulty"

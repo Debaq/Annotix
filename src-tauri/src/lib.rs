@@ -49,6 +49,19 @@ pub fn run() {
                 if let Ok(icon) = tauri::image::Image::from_bytes(icon_bytes) {
                     let _ = window.set_icon(icon);
                 }
+
+                // Permitir acceso al micrófono en WebKitGTK (Linux)
+                #[cfg(target_os = "linux")]
+                {
+                    window.with_webview(|wv| {
+                        use webkit2gtk::{WebViewExt, PermissionRequestExt};
+                        let wv = wv.inner();
+                        wv.connect_permission_request(|_wv, req: &webkit2gtk::PermissionRequest| {
+                            req.allow();
+                            true
+                        });
+                    }).ok();
+                }
             }
 
             // Reanudar extracciones de video interrumpidas
@@ -167,6 +180,15 @@ pub fn run() {
             commands::audio_edit_commands::audio_silence_range,
             commands::audio_edit_commands::audio_normalize,
             commands::audio_edit_commands::audio_equalize,
+            // TTS Guided Recording
+            commands::tts_commands::get_tts_sentences,
+            commands::tts_commands::save_tts_sentences,
+            commands::tts_commands::save_tts_recording,
+            commands::tts_commands::link_tts_upload,
+            commands::tts_commands::get_llm_config,
+            commands::tts_commands::save_llm_config,
+            commands::tts_commands::generate_tts_with_llm,
+            commands::tts_commands::analyze_phonetic_coverage,
             // Settings
             commands::settings_commands::get_venv_info,
             commands::settings_commands::list_installed_packages,
