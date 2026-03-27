@@ -51,7 +51,8 @@ function formatFrameTime(frameIndex: number, fps: number): string {
 export interface AnnotationOverride {
   annotations: Annotation[];
   selectedAnnotationId: string | null;
-  selectAnnotation: (id: string | null) => void;
+  selectedAnnotationIds: Set<string>;
+  selectAnnotation: (id: string | null, addToSelection?: boolean) => void;
   addAnnotation: (annotation: Annotation) => Promise<void>;
   updateAnnotation: (id: string, updates: Partial<Annotation>) => Promise<void>;
   deleteAnnotation: (id: string) => Promise<void>;
@@ -69,7 +70,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   const { image } = useCurrentImage();
   const { project } = useCurrentProject();
   const defaults = useAnnotations();
-  const { annotations, selectedAnnotationId, selectAnnotation, updateAnnotation, addAnnotation, deleteAnnotation } = overrideAnnotations ?? defaults;
+  const { annotations, selectedAnnotationId, selectedAnnotationIds, selectAnnotation, updateAnnotation, addAnnotation, deleteAnnotation } = overrideAnnotations ?? defaults;
   const { replaceAnnotations } = defaults;
   const { activeTool, activeClassId, setActiveTool } = useUIStore();
 
@@ -97,6 +98,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     y: 0,
     visible: false,
   });
+  const [crosshairPos, setCrosshairPos] = useState<{ x: number; y: number; visible: boolean }>({ x: 0, y: 0, visible: false });
   const [, forceKeypointsPreviewUpdate] = useReducer((v: number) => v + 1, 0);
 
   // ─── Image adjustments (persisted per image) ───────────────────────────
@@ -264,7 +266,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   }, [activeClassId, classColor]);
 
   useEffect(() => {
-    if (!selectedAnnotationId || activeClassId === null) {
+    if (selectedAnnotationIds.size === 0 || activeClassId === null) {
       prevActiveClassIdRef.current = activeClassId;
       return;
     }
@@ -276,13 +278,13 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       return;
     }
 
-    const selectedAnnotation = annotations.find((annotation) => annotation.id === selectedAnnotationId);
-    if (!selectedAnnotation || selectedAnnotation.classId === activeClassId) {
-      return;
+    for (const id of selectedAnnotationIds) {
+      const ann = annotations.find((a) => a.id === id);
+      if (ann && ann.classId !== activeClassId) {
+        updateAnnotation(id, { classId: activeClassId });
+      }
     }
-
-    updateAnnotation(selectedAnnotationId, { classId: activeClassId });
-  }, [activeClassId, selectedAnnotationId, annotations, updateAnnotation]);
+  }, [activeClassId, selectedAnnotationIds, annotations, updateAnnotation]);
 
   // Actualizar callback de addAnnotation en TODOS los handlers cuando cambia
   useEffect(() => {
@@ -407,11 +409,13 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
 
   // Update transformer when selection changes
   useEffect(() => {
-    if (selectedAnnotationId && trRef.current && stageRef.current) {
+    if (selectedAnnotationIds.size > 0 && trRef.current && stageRef.current) {
       const stage = stageRef.current;
-      const selectedNode = stage.findOne('#ann-' + selectedAnnotationId);
-      if (selectedNode) {
-        trRef.current.nodes([selectedNode]);
+      const nodes = [...selectedAnnotationIds]
+        .map(id => stage.findOne('#ann-' + id))
+        .filter(Boolean);
+      if (nodes.length > 0) {
+        trRef.current.nodes(nodes);
         trRef.current.getLayer().batchDraw();
       } else {
         trRef.current.nodes([]);
@@ -419,7 +423,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     } else if (trRef.current) {
       trRef.current.nodes([]);
     }
-  }, [selectedAnnotationId, annotations]);
+  }, [selectedAnnotationIds, annotations]);
 
   // Handle zoom with mouse wheel
   const handleWheel = (e: any) => {
@@ -488,7 +492,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     const clickedOnImage = e.target.getClassName() === 'Image';
 
     if (clickedOnEmpty || clickedOnImage) {
-      selectAnnotation(null);
+      selectAnnotation(null, false);
 
       if (activeTool === 'mask' && konvaImage && !maskHandler.isActive()) {
         console.log('[AnnotationCanvas] Re-inicializando maskHandler on-demand en mouseDown');
@@ -516,6 +520,16 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     if (coords) {
       if (currentHandler) {
         currentHandler.onMouseMove(coords);
+      }
+
+      // Crosshair para herramientas de dibujo de cajas
+      if ((activeTool === 'bbox' || activeTool === 'obb') && image) {
+        const insideImage =
+          coords.imageX >= 0 &&
+          coords.imageY >= 0 &&
+          coords.imageX <= image.width &&
+          coords.imageY <= image.height;
+        setCrosshairPos({ x: coords.canvasX, y: coords.canvasY, visible: insideImage });
       }
 
       if (activeTool === 'mask' && image) {
@@ -1005,7 +1019,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
         y={stagePos.y}
         onWheel={handleWheel}
         onDragEnd={handleDragEnd}
-        draggable={activeTool === 'pan' || activeTool === 'select'}
+        draggable={activeTool === 'pan'}
         onDragStart={(e) => {
           if (e.target !== e.target.getStage()) {
             return;
@@ -1020,6 +1034,9 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
         onMouseLeave={() => {
           if (activeTool === 'mask') {
             setMaskCursor((prev) => ({ ...prev, visible: false }));
+          }
+          if (activeTool === 'bbox' || activeTool === 'obb') {
+            setCrosshairPos((prev) => ({ ...prev, visible: false }));
           }
         }}
       >
@@ -1042,7 +1059,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
             const classInfo = project.classes.find(c => c.id === ann.classId);
             if (!classInfo) return null;
 
-            const isSelected = selectedAnnotationId === ann.id;
+            const isSelected = selectedAnnotationIds.has(ann.id);
             const isDisabled = overrideAnnotations?.disabledAnnotationIds?.has(ann.id) ?? false;
             const annColor = isDisabled ? '#999999' : classInfo.color;
             const commonProps = {
@@ -1051,8 +1068,9 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
               color: annColor,
               isSelected,
               listening: activeTool !== 'mask',
-              onClick: () => {
-                selectAnnotation(ann.id);
+              onClick: (e: any) => {
+                const shiftKey = e?.evt?.shiftKey ?? false;
+                selectAnnotation(ann.id, shiftKey);
               },
             };
 
@@ -1086,7 +1104,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
                       id={'ann-' + ann.id}
                       data={bboxData}
                       {...commonProps}
-                      draggable={activeTool === 'select' && isSelected && !isDisabled}
+                      draggable={activeTool !== 'pan' && isSelected && !isDisabled}
                       onDragEnd={(e) => handleAnnotationDragEnd(ann.id, e)}
                       onTransformEnd={(e) => handleAnnotationTransform(ann.id, e)}
                     />
@@ -1171,7 +1189,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
                     id={'ann-' + ann.id}
                     data={ann.data as OBBData}
                     {...commonProps}
-                    draggable={activeTool === 'select' && isSelected}
+                    draggable={activeTool !== 'pan' && isSelected}
                     onDragEnd={(e) => handleOBBDragEnd(ann.id, e)}
                     onTransformEnd={(e) => handleOBBTransform(ann.id, e)}
                   />
@@ -1184,7 +1202,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
                     id={'ann-' + ann.id}
                     data={ann.data as PolygonData}
                     {...commonProps}
-                    draggable={activeTool === 'select' && isSelected}
+                    draggable={activeTool !== 'pan' && isSelected}
                     onDragEnd={(e) => {
                       const polygonData = ann.data as PolygonData;
                       const group = e.target;
@@ -1390,13 +1408,35 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
               dash={[10, 5]}
             />
           )}
+
+          {/* Crosshair para herramientas de dibujo de cajas */}
+          {(activeTool === 'bbox' || activeTool === 'obb') && crosshairPos.visible && (
+            <>
+              <Line
+                points={[crosshairPos.x, -10000, crosshairPos.x, 10000]}
+                stroke={classColor}
+                strokeWidth={0.5}
+                opacity={0.5}
+                dash={[6, 4]}
+                listening={false}
+              />
+              <Line
+                points={[-10000, crosshairPos.y, 10000, crosshairPos.y]}
+                stroke={classColor}
+                strokeWidth={0.5}
+                opacity={0.5}
+                dash={[6, 4]}
+                listening={false}
+              />
+            </>
+          )}
         </Layer>
 
         {/* Transformer Layer */}
         <Layer>
           <Transformer
             ref={trRef}
-            rotateEnabled={selectedAnnotationId ? annotations.find(a => a.id === selectedAnnotationId)?.type === 'obb' : false}
+            rotateEnabled={selectedAnnotationIds.size === 1 && annotations.find(a => a.id === [...selectedAnnotationIds][0])?.type === 'obb'}
             keepRatio={false}
             boundBoxFunc={(oldBox, newBox) => {
               if (newBox.width < 5 || newBox.height < 5) {

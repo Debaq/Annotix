@@ -8,7 +8,7 @@ interface MaskRendererProps {
   imageOffset: { x: number; y: number };
   opacity?: number;
   listening?: boolean;
-  onClick?: () => void;
+  onClick?: (e?: any) => void;
 }
 
 export function MaskRenderer({ data, scale, imageOffset, opacity = 0.6, listening = true, onClick }: MaskRendererProps) {

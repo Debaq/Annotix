@@ -10,7 +10,7 @@ interface PolygonRendererProps {
   isSelected?: boolean;
   draggable?: boolean;
   listening?: boolean;
-  onClick?: () => void;
+  onClick?: (e?: any) => void;
   onDragEnd?: (e: any) => void;
 }
 

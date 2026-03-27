@@ -13,7 +13,7 @@ interface AnnotationsBarProps {
 export const AnnotationsBar: React.FC<AnnotationsBarProps> = ({ image }) => {
   const { t } = useTranslation();
   const { project } = useCurrentProject();
-  const { annotations, selectedAnnotationId, selectAnnotation, deleteAnnotation } = useAnnotations();
+  const { annotations, selectedAnnotationIds, selectAnnotation, deleteAnnotation } = useAnnotations();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   if (!project) return null;
@@ -53,7 +53,7 @@ export const AnnotationsBar: React.FC<AnnotationsBarProps> = ({ image }) => {
                     classColor={classInfo.color}
                     className={classInfo.name}
                     classShortcut={classShortcut}
-                    isSelected={selectedAnnotationId === ann.id}
+                    isSelected={selectedAnnotationIds.has(ann.id)}
                     onSelect={() => selectAnnotation(ann.id)}
                     onDelete={() => deleteAnnotation(ann.id)}
                   />

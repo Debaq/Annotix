@@ -7,7 +7,6 @@ import { ProjectType } from '@/lib/db';
  */
 
 export type ToolId =
-  | 'select'
   | 'pan'
   | 'bbox'
   | 'mask'
@@ -25,7 +24,6 @@ export interface ToolDefinition {
 
 // All available tools
 export const ALL_TOOLS: ToolDefinition[] = [
-  { id: 'select', icon: 'fa-mouse-pointer', key: 'V', name: 'tools.select' },
   { id: 'pan', icon: 'fa-hand', key: 'H', name: 'tools.pan' },
   { id: 'bbox', icon: 'fa-vector-square', key: 'B', name: 'tools.bbox' },
   { id: 'mask', icon: 'fa-paintbrush', key: 'M', name: 'tools.mask' },
@@ -38,15 +36,15 @@ export const ALL_TOOLS: ToolDefinition[] = [
 // Tools available per project type
 export const PROJECT_TOOLS: Partial<Record<ProjectType, ToolId[]>> = {
   // Image-based projects
-  'bbox': ['select', 'pan', 'bbox'],
-  'mask': ['select', 'pan', 'mask'],
-  'polygon': ['select', 'pan', 'polygon'],
-  'keypoints': ['select', 'pan', 'keypoints'],
-  'landmarks': ['select', 'pan', 'landmarks'],
-  'obb': ['select', 'pan', 'obb'],
-  'classification': ['select', 'pan'], // No drawing tools
-  'multi-label-classification': ['select', 'pan'], // No drawing tools
-  'instance-segmentation': ['select', 'pan', 'mask', 'polygon'], // Combined
+  'bbox': ['pan', 'bbox'],
+  'mask': ['pan', 'mask'],
+  'polygon': ['pan', 'polygon'],
+  'keypoints': ['pan', 'keypoints'],
+  'landmarks': ['pan', 'landmarks'],
+  'obb': ['pan', 'obb'],
+  'classification': ['pan'], // No drawing tools
+  'multi-label-classification': ['pan'], // No drawing tools
+  'instance-segmentation': ['pan', 'mask', 'polygon'], // Combined
 
   // Time series projects - no canvas tools
   'timeseries-classification': [],
@@ -85,6 +83,5 @@ export function isToolAvailable(toolId: ToolId, projectType: ProjectType): boole
  */
 export function getDefaultTool(projectType: ProjectType): ToolId {
   const availableTools = PROJECT_TOOLS[projectType] || [];
-  // Always default to 'select' if available, otherwise first tool
-  return availableTools.includes('select') ? 'select' : availableTools[0] || 'select';
+  return availableTools[0] || 'pan';
 }

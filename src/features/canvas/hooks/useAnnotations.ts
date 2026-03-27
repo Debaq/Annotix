@@ -45,9 +45,9 @@ export const invalidateSaveContext = () => {
 
 interface AnnotationState {
   annotations: Annotation[];
-  selectedAnnotationId: string | null;
+  selectedAnnotationIds: Set<string>;
   setAnnotations: (annotations: Annotation[]) => void;
-  setSelectedAnnotationId: (id: string | null) => void;
+  setSelectedAnnotationIds: (ids: Set<string>) => void;
   addAnnotationState: (annotation: Annotation) => void;
   updateAnnotationState: (id: string, updates: Partial<Annotation>) => void;
   deleteAnnotationState: (id: string) => void;
@@ -56,9 +56,9 @@ interface AnnotationState {
 
 export const useAnnotationStore = create<AnnotationState>((set) => ({
   annotations: [],
-  selectedAnnotationId: null,
+  selectedAnnotationIds: new Set(),
   setAnnotations: (annotations) => set({ annotations }),
-  setSelectedAnnotationId: (id) => set({ selectedAnnotationId: id }),
+  setSelectedAnnotationIds: (ids) => set({ selectedAnnotationIds: ids }),
   addAnnotationState: (annotation) =>
     set((state) => ({ annotations: [...state.annotations, annotation] })),
   updateAnnotationState: (id, updates) =>
@@ -70,9 +70,11 @@ export const useAnnotationStore = create<AnnotationState>((set) => ({
   deleteAnnotationState: (id) =>
     set((state) => ({
       annotations: state.annotations.filter((ann) => ann.id !== id),
-      selectedAnnotationId: state.selectedAnnotationId === id ? null : state.selectedAnnotationId,
+      selectedAnnotationIds: state.selectedAnnotationIds.has(id)
+        ? new Set([...state.selectedAnnotationIds].filter(x => x !== id))
+        : state.selectedAnnotationIds,
     })),
-  clearAnnotationsState: () => set({ annotations: [], selectedAnnotationId: null }),
+  clearAnnotationsState: () => set({ annotations: [], selectedAnnotationIds: new Set() }),
 }));
 
 // Contador global de saves en curso — bloquea sync externo mientras guardamos
@@ -90,9 +92,9 @@ export function useAnnotations() {
   const currentProjectId = useUIStore((s) => s.currentProjectId);
   const {
     annotations,
-    selectedAnnotationId,
+    selectedAnnotationIds,
     setAnnotations,
-    setSelectedAnnotationId,
+    setSelectedAnnotationIds,
     addAnnotationState,
     updateAnnotationState,
     deleteAnnotationState,
@@ -117,13 +119,13 @@ export function useAnnotations() {
       }
     } else {
       setAnnotations([]);
-      setSelectedAnnotationId(null);
+      setSelectedAnnotationIds(new Set());
       if (prevImageIdRef.current !== null) {
         prevImageIdRef.current = null;
         undoStore.reset(null);
       }
     }
-  }, [image?.id, imageFingerprint, setAnnotations, setSelectedAnnotationId]);
+  }, [image?.id, imageFingerprint, setAnnotations, setSelectedAnnotationIds]);
 
   const saveAnnotations = useCallback(async (targetAnnotations?: Annotation[], showToast = false) => {
     if (!image?.id || !currentProjectId) return;
@@ -190,9 +192,27 @@ export function useAnnotations() {
     await reload();
   }, [deleteAnnotationState, saveAnnotations, reload, pushUndo]);
 
-  const selectAnnotation = useCallback((id: string | null) => {
-    setSelectedAnnotationId(id);
-  }, [setSelectedAnnotationId]);
+  // Compatibilidad: selectedAnnotationId devuelve el primero del set (o null)
+  const selectedAnnotationId = selectedAnnotationIds.size > 0
+    ? [...selectedAnnotationIds][0]
+    : null;
+
+  const selectAnnotation = useCallback((id: string | null, addToSelection = false) => {
+    if (id === null) {
+      setSelectedAnnotationIds(new Set());
+    } else if (addToSelection) {
+      const current = useAnnotationStore.getState().selectedAnnotationIds;
+      const next = new Set(current);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      setSelectedAnnotationIds(next);
+    } else {
+      setSelectedAnnotationIds(new Set([id]));
+    }
+  }, [setSelectedAnnotationIds]);
 
   const replaceAnnotations = useCallback(async (newAnnotations: Annotation[]) => {
     if (!image?.id || !currentProjectId) return;
@@ -247,6 +267,7 @@ export function useAnnotations() {
   return {
     annotations,
     selectedAnnotationId,
+    selectedAnnotationIds,
     addAnnotation,
     updateAnnotation,
     updateAnnotationLocal,

@@ -103,11 +103,6 @@ export function VideoView() {
       }
 
       // Tool shortcuts
-      if (matchesShortcut(e, 'tool-select')) {
-        e.preventDefault();
-        setActiveTool('select');
-        return;
-      }
       if (matchesShortcut(e, 'tool-pan')) {
         e.preventDefault();
         setActiveTool('pan');

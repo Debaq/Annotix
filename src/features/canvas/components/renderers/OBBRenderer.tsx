@@ -10,7 +10,7 @@ interface OBBRendererProps {
   isSelected?: boolean;
   draggable?: boolean;
   listening?: boolean;
-  onClick?: () => void;
+  onClick?: (e?: any) => void;
   onDragEnd?: (e: any) => void;
   onTransformEnd?: (e: any) => void;
 }

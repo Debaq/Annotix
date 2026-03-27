@@ -10,7 +10,6 @@ import type { ToolId } from '../config/toolsConfig';
 
 // Mapeo de toolId a shortcutId
 const TOOL_SHORTCUT_MAP: Record<ToolId, string> = {
-  select: 'tool-select',
   pan: 'tool-pan',
   bbox: 'tool-box',
   mask: 'tool-mask',
