@@ -32,6 +32,7 @@ import { LandmarksRenderer } from './renderers/LandmarksRenderer';
 import { MaskRenderer } from './renderers/MaskRenderer';
 import { matchesShortcut } from '../../core/utils/matchShortcut';
 import type { ToolId } from '../config/toolsConfig';
+import { reclassifyIsland } from '../utils/maskReclassify';
 import { useInferenceModels } from '../../inference/hooks/useInferenceModels';
 import { useInferenceRunner } from '../../inference/hooks/useInferenceRunner';
 import type { InferenceConfig } from '../../inference/types';
@@ -452,6 +453,9 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     const stage = stageRef.current;
     if (!stage) return;
 
+    // Shift+scroll: ignorar (evita zoom accidental por scroll horizontal)
+    if (e.evt.shiftKey) return;
+
     // Si es proyecto mask y se presiona Ctrl, ajustar tamaño de pincel
     if (project?.type === 'mask' && e.evt.ctrlKey && maskHandler) {
       const delta = e.evt.deltaY > 0 ? -2 : 2; // Invertir para que scroll up = más grande
@@ -506,8 +510,48 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     return { imageX, imageY, canvasX, canvasY };
   }, [stagePos, stageScale, imageOffset, scale]);
 
+  // Middle-click: reclasificar isla de píxeles a la clase activa
+  const handleMiddleClickReclassify = useCallback(async (e: any) => {
+    if (!konvaImage || !stageRef.current || activeClassId === null) return;
+    const coords = getImageCoordinates(stageRef.current);
+    if (!coords) return;
+
+    // Guardar máscara en edición antes de reclasificar
+    if (maskHandler.isActive() && maskHandler.getDrawingClassId() !== null) {
+      await maskHandler.finish();
+    }
+
+    const currentAnns = useAnnotationStore.getState().annotations;
+    const result = await reclassifyIsland(
+      coords.imageX,
+      coords.imageY,
+      konvaImage.width,
+      konvaImage.height,
+      activeClassId,
+      classColor,
+      currentAnns,
+    );
+
+    if (result.changed) {
+      captureSaveContext(image?.id || null, project?.id || null);
+      await replaceAnnotations(result.updatedAnnotations);
+      // Reinicializar el mask handler con la máscara actualizada
+      if (activeTool === 'mask') {
+        initializeMaskHandler();
+      }
+    }
+  }, [konvaImage, activeClassId, classColor, image?.id, project?.id, maskHandler, activeTool,
+      getImageCoordinates, replaceAnnotations, initializeMaskHandler]);
+
   // Handle mouse down for drawing
   const handleMouseDown = (e: any) => {
+    // Middle click → reclasificar isla
+    if (e.evt.button === 1 && project?.type === 'mask') {
+      e.evt.preventDefault();
+      handleMiddleClickReclassify(e);
+      return;
+    }
+
     const clickedOnEmpty = e.target === e.target.getStage();
     const clickedOnImage = e.target.getClassName() === 'Image';
 
@@ -527,8 +571,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       if (currentHandler && stageRef.current) {
         // CRÍTICO: Capturar contexto ANTES de empezar a dibujar
         captureSaveContext(image?.id || null, project?.id || null);
-        console.log('[AnnotationCanvas] Iniciando dibujo en imagen:', image?.id, 'proyecto:', project?.id);
-        
+
         const coords = getImageCoordinates(stageRef.current);
         if (coords) {
           currentHandler.onMouseDown(coords);
@@ -1015,6 +1058,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     <div
       ref={containerRef}
       className="annotix-canvas-container"
+      onMouseDown={(e) => { if (e.button === 1) e.preventDefault(); }}
     >
       {/* Floating Tools (Left) */}
       <FloatingTools
