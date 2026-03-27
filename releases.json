@@ -843,5 +843,31 @@
       }
     ],
     "issues": []
+  },
+  {
+    "code": "oevjc",
+    "version": "2.3.1",
+    "buildNumber": 31,
+    "date": "2026-03-27T00:16:10Z",
+    "commits": [
+      {
+        "hash": "6e42d51",
+        "message": "feat: eliminar herramienta select, multi-selección, mover con flechas y crosshair"
+      }
+    ],
+    "issues": []
+  },
+  {
+    "code": "ygrck",
+    "version": "2.3.1",
+    "buildNumber": 32,
+    "date": "2026-03-27T00:19:53Z",
+    "commits": [
+      {
+        "hash": "6e42d51",
+        "message": "feat: eliminar herramienta select, multi-selección, mover con flechas y crosshair"
+      }
+    ],
+    "issues": []
   }
 ]
