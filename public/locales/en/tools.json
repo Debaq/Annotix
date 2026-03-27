@@ -9,6 +9,8 @@
   "select": "Select",
   "pan": "Pan",
   "eraseMode": "Eraser",
+  "maskBrush": "Brush",
+  "maskEraser": "Eraser",
   "newInstance": "New Instance",
   "tooltips": {
     "bbox": "Bounding Box (B)",

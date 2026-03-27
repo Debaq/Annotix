@@ -489,15 +489,30 @@
       "name": "テーブルML",
       "description": "CSV/テーブルデータによる古典的ML"
     },
+    "speech-recognition": {
+      "name": "音声認識 (ASR)",
+      "description": "ASRデータセット用に音声をテキストに書き起こす"
+    },
+    "audio-classification": {
+      "name": "音声分類",
+      "description": "音声クリップにラベルを付ける"
+    },
+    "sound-event-detection": {
+      "name": "音響イベント検出",
+      "description": "音声内のイベントを特定し位置を特定する"
+    },
     "useCasesLabel": "ユースケース",
     "modelsLabel": "推奨モデル",
     "difficultyLabel": "難易度"
   },
   "categories": {
-    "images": "画像アノテーション",
-    "classification": "分類",
+    "imageVideo": "画像 / 動画",
+    "audio": "音声 / スピーチ",
     "timeSeries": "時系列",
-    "tabular": "テーブル / 古典的ML"
+    "tabular": "テーブル / 従来型ML",
+    "language": "言語",
+    "3d": "3D",
+    "comingSoon": "近日公開"
   },
   "modality": "モダリティ",
   "initialClasses": "初期クラス（オプション）",

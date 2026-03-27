@@ -150,6 +150,23 @@ pub fn run() {
             commands::tabular_commands::get_tabular_preview,
             commands::tabular_commands::update_tabular_config,
             commands::tabular_commands::delete_tabular_data,
+            // Audio
+            commands::audio_commands::upload_audio,
+            commands::audio_commands::get_audio,
+            commands::audio_commands::list_audio_by_project,
+            commands::audio_commands::save_transcription,
+            commands::audio_commands::delete_audio,
+            commands::audio_commands::get_audio_file_path,
+            commands::audio_commands::get_audio_data,
+            commands::audio_commands::save_audio_annotation,
+            // Audio Edit
+            commands::audio_edit_commands::audio_trim,
+            commands::audio_edit_commands::audio_cut,
+            commands::audio_edit_commands::audio_delete_range,
+            commands::audio_edit_commands::audio_split,
+            commands::audio_edit_commands::audio_silence_range,
+            commands::audio_edit_commands::audio_normalize,
+            commands::audio_edit_commands::audio_equalize,
             // Settings
             commands::settings_commands::get_venv_info,
             commands::settings_commands::list_installed_packages,

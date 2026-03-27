@@ -1,0 +1,174 @@
+{
+  "whatCanYouDo": "¿Qué puedes hacer?",
+  "exampleUse": "Ejemplo de uso",
+  "types": {
+    "bbox": {
+      "detailAbout": "Dibuja rectángulos alrededor de objetos en tus imágenes para enseñarle a un modelo dónde están. Es el enfoque más popular para detección de objetos: rápido de anotar, fácil de entrenar y compatible con prácticamente todos los frameworks de detección.",
+      "canDo1": "Localizar y contar objetos en fotos o fotogramas de video",
+      "canDo2": "Entrenar detectores en tiempo real como YOLO o SSD",
+      "canDo3": "Crear sistemas de inventario, inspección de calidad o vigilancia",
+      "canDo4": "Exportar a COCO, Pascal VOC, YOLO y otros formatos estándar",
+      "exampleUse": "Un equipo de almacén anota cajas en imágenes de cintas transportadoras. Tras entrenar un modelo YOLO, las cámaras cuentan paquetes automáticamente y alertan si alguno cae de la cinta."
+    },
+    "mask": {
+      "detailAbout": "Pinta sobre regiones píxel por píxel para clasificar cada parte de una imagen. A diferencia de cajas o polígonos, las máscaras capturan formas exactas — ideal cuando la precisión importa más que la velocidad.",
+      "canDo1": "Clasificar cada píxel en categorías (cielo, carretera, edificio…)",
+      "canDo2": "Crear datos de entrenamiento para imágenes médicas o análisis satelital",
+      "canDo3": "Separar primer plano del fondo con precisión perfecta",
+      "canDo4": "Generar mapas de segmentación para conducción autónoma o robótica",
+      "exampleUse": "Un laboratorio médico pinta regiones tumorales en resonancias magnéticas. El modelo entrenado resalta áreas sospechosas para los radiólogos, reduciendo el tiempo de revisión a la mitad."
+    },
+    "polygon": {
+      "detailAbout": "Traza el contorno de objetos colocando puntos que forman un polígono. Es más ligero y rápido que las máscaras de píxeles manteniendo formas precisas — un excelente punto medio entre cajas y máscaras completas.",
+      "canDo1": "Delinear objetos irregulares con bordes precisos",
+      "canDo2": "Anotar más rápido que con máscaras de píxeles con precisión similar",
+      "canDo3": "Entrenar modelos de segmentación de instancias o semántica",
+      "canDo4": "Exportar en formato polígono COCO o convertir a máscaras al vuelo",
+      "exampleUse": "Una startup agrícola traza hileras de cultivos y parches de maleza en imágenes de drones. Las anotaciones de polígonos entrenan un modelo que guía un pulverizador robótico para apuntar solo a la maleza."
+    },
+    "keypoints": {
+      "detailAbout": "Coloca puntos conectados sobre objetos para describir su estructura — como marcar articulaciones en un cuerpo o esquinas en un rostro. Las conexiones entre puntos capturan cómo se relacionan las partes entre sí.",
+      "canDo1": "Anotar poses corporales para apps de fitness, deportes o ergonomía",
+      "canDo2": "Marcar puntos faciales para análisis de expresiones o identidad",
+      "canDo3": "Definir estructuras articuladas en animales, manos o máquinas",
+      "canDo4": "Entrenar modelos de estimación de pose como OpenPose o HRNet",
+      "exampleUse": "Una clínica de fisioterapia marca articulaciones de hombro, codo y muñeca en videos de ejercicios. El modelo entrenado mide ángulos articulares en tiempo real, dando retroalimentación instantánea a los pacientes."
+    },
+    "landmarks": {
+      "detailAbout": "Coloca puntos individuales en imágenes para marcar ubicaciones de interés — sin conexiones, sin formas, solo posiciones. Úsalos para contar, centrar o señalar cualquier cosa.",
+      "canDo1": "Contar objetos marcando sus centros (células, árboles, personas…)",
+      "canDo2": "Marcar puntos de referencia para alineación o medición",
+      "canDo3": "Crear mapas de calor basados en puntos para estimación de densidad",
+      "canDo4": "Entrenar modelos ligeros de detección de puntos o conteo",
+      "exampleUse": "Un biólogo coloca un punto en cada núcleo celular en placas de microscopio. El modelo entrenado cuenta células en miles de imágenes durante la noche, reemplazando días de trabajo manual."
+    },
+    "obb": {
+      "detailAbout": "Dibuja rectángulos rotados que se inclinan para coincidir con el ángulo de los objetos. Las cajas regulares desperdician espacio en objetos inclinados — las cajas orientadas se ajustan perfectamente a barcos, líneas de texto, vehículos vistos desde arriba y más.",
+      "canDo1": "Detectar objetos en cualquier ángulo en imágenes aéreas o satelitales",
+      "canDo2": "Anotar texto rotado, documentos o matrículas",
+      "canDo3": "Entrenar detectores especializados como Rotated-YOLO",
+      "canDo4": "Mejorar la precisión en escenas donde los objetos no están alineados a los ejes",
+      "exampleUse": "Una autoridad portuaria anota barcos de carga en fotos satelitales con cajas rotadas. El modelo detecta barcos independientemente de su orientación, alimentando un panel de monitoreo de tráfico automatizado."
+    },
+    "classification": {
+      "detailAbout": "Asigna una etiqueta a cada imagen — la forma más simple de anotación. No requiere dibujar: solo mira la imagen y elige la categoría correcta. Ideal para ordenar, filtrar o construir clasificadores rápidos.",
+      "canDo1": "Ordenar imágenes en categorías (bueno/malo, gato/perro, tipo A/B…)",
+      "canDo2": "Crear sistemas de categorización de productos o moderación de contenido",
+      "canDo3": "Entrenar clasificadores como ResNet, EfficientNet o MobileNet",
+      "canDo4": "Empezar rápidamente — no se necesitan herramientas de dibujo",
+      "exampleUse": "Un equipo de e-commerce etiqueta fotos de productos como 'frontal', 'lateral' o 'detalle'. El modelo entrenado ordena automáticamente las nuevas subidas en las posiciones correctas de la galería web."
+    },
+    "multi-label-classification": {
+      "detailAbout": "Asigna múltiples etiquetas a una sola imagen cuando pertenece a más de una categoría. A diferencia de la clasificación simple, cada imagen puede llevar varias etiquetas a la vez — como 'exterior', 'soleado' y 'perro' juntas.",
+      "canDo1": "Etiquetar imágenes con todos los atributos aplicables a la vez",
+      "canDo2": "Crear sistemas de búsqueda multi-etiqueta o recomendación",
+      "canDo3": "Generar metadatos enriquecidos para bibliotecas de imágenes o catálogos",
+      "canDo4": "Entrenar clasificadores multi-salida para categorización compleja",
+      "exampleUse": "Una tienda de moda etiqueta fotos de ropa con estilo, color, temporada y ocasión. Los compradores buscan 'rojo casual verano' y el modelo devuelve artículos coincidentes al instante."
+    },
+    "speech-recognition": {
+      "detailAbout": "Transcribe lo que dicen las personas en grabaciones de audio. Escuchas clips y escribes las palabras exactas pronunciadas, creando datos de entrenamiento para sistemas de reconocimiento automático de voz.",
+      "canDo1": "Transcribir clips de audio a texto preciso",
+      "canDo2": "Crear generadores de subtítulos o asistentes de voz",
+      "canDo3": "Crear datasets para modelos de voz-a-texto como Whisper",
+      "canDo4": "Manejar múltiples hablantes, acentos e idiomas",
+      "exampleUse": "Un centro de atención telefónica transcribe miles de llamadas de clientes. El modelo ASR entrenado convierte llamadas en vivo a texto en tiempo real, permitiendo análisis de sentimiento automático y alertas por palabras clave."
+    },
+    "audio-classification": {
+      "detailAbout": "Escucha clips de audio y asigna una categoría a cada uno. Sin edición de línea de tiempo — solo elige la etiqueta correcta para toda la grabación. Útil para ordenar sonidos, identificar géneros o detectar tipos de audio específicos.",
+      "canDo1": "Clasificar clips de audio por tipo, género o contenido",
+      "canDo2": "Crear sistemas de reconocimiento de sonido para dispositivos inteligentes",
+      "canDo3": "Crear datos de entrenamiento para modelos de sonido ambiental",
+      "canDo4": "Ordenar música, voz, ruido o cualquier categoría de audio",
+      "exampleUse": "Una empresa de hogar inteligente clasifica grabaciones como 'vidrio rompiendo', 'perro ladrando', 'timbre' o 'silencio'. El modelo funciona en un hub doméstico, activando alertas para cada tipo de sonido."
+    },
+    "sound-event-detection": {
+      "detailAbout": "Marca cuándo ocurren sonidos específicos en una grabación — su momento de inicio, fin y tipo. A diferencia de la clasificación (una etiqueta por clip), aquí señalas cada evento a lo largo de la línea de tiempo.",
+      "canDo1": "Localizar y etiquetar eventos en grabaciones largas de audio",
+      "canDo2": "Crear monitoreo en tiempo real para seguridad o industria",
+      "canDo3": "Anotar eventos superpuestos en paisajes sonoros complejos",
+      "canDo4": "Entrenar modelos de detección temporal de eventos como CRNN o SED-CNN",
+      "exampleUse": "Un equipo de conservación marca cantos de aves, sonidos de motosierras y ruido de vehículos en grabaciones de la selva. El modelo entrenado detecta actividad de tala ilegal casi en tiempo real desde micrófonos remotos."
+    },
+    "timeseries-classification": {
+      "detailAbout": "Observa una serie temporal completa y asígnale una categoría. Cada serie recibe una etiqueta basada en su forma o comportamiento general — no necesitas marcar rangos de tiempo específicos.",
+      "canDo1": "Clasificar lecturas de sensores, señales o secuencias como un todo",
+      "canDo2": "Crear herramientas de diagnóstico para señales médicas (ECG, EEG…)",
+      "canDo3": "Reconocer gestos o movimientos desde datos de acelerómetro",
+      "canDo4": "Entrenar modelos como InceptionTime, ROCKET o ResNet-TS",
+      "exampleUse": "Un departamento de cardiología etiqueta registros de ECG como 'normal', 'arritmia' o 'fibrilación auricular'. El modelo entrenado filtra los ECG entrantes y marca los casos anormales para revisión médica inmediata."
+    },
+    "timeseries-forecasting": {
+      "detailAbout": "Marca la ventana histórica y el horizonte de predicción en tu serie temporal. El modelo aprenderá a mirar valores pasados y predecir lo que viene — ventas, temperaturas, niveles de stock o cualquier cantidad medible.",
+      "canDo1": "Definir ventanas de entrenamiento para predicción pasado-a-futuro",
+      "canDo2": "Crear modelos de pronóstico de demanda, clima o finanzas",
+      "canDo3": "Experimentar con diferentes longitudes de retrospectiva y horizonte",
+      "canDo4": "Entrenar modelos como LSTM, Transformer o N-BEATS",
+      "exampleUse": "Una compañía eléctrica marca ventanas históricas de 7 días y horizontes de predicción de 24 horas en datos de demanda eléctrica. El modelo entrenado pronostica la carga del día siguiente, optimizando los calendarios de generación."
+    },
+    "anomaly-detection": {
+      "detailAbout": "Examina series temporales y marca los puntos o regiones que parecen inusuales. Tus anotaciones le enseñan al modelo cómo es lo 'normal' para que pueda señalar desviaciones — picos, caídas, derivas o cualquier comportamiento inesperado.",
+      "canDo1": "Marcar puntos o rangos anómalos en datos de sensores",
+      "canDo2": "Crear sistemas de mantenimiento predictivo o detección de fraude",
+      "canDo3": "Monitorear métricas de salud, tráfico de red o equipos",
+      "canDo4": "Entrenar autoencoders, isolation forests o detectores LSTM de anomalías",
+      "exampleUse": "Una fábrica anota datos de sensores de vibración, marcando los momentos previos a averías de máquinas. El modelo aprende las señales de alerta temprana y avisa al equipo de mantenimiento horas antes de que ocurran fallos."
+    },
+    "timeseries-segmentation": {
+      "detailAbout": "Divide una serie temporal en segmentos y etiqueta cada uno. Piensa en ello como colorear diferentes partes de una línea de tiempo — una región es 'corriendo', otra es 'descansando', otra es 'durmiendo'.",
+      "canDo1": "Dividir series temporales en regiones etiquetadas con significado",
+      "canDo2": "Analizar cambios de comportamiento, estados de actividad o regímenes",
+      "canDo3": "Crear sistemas de reconocimiento de actividad o monitoreo de estados",
+      "canDo4": "Entrenar modelos de segmentación como ClaSP o U-Net para series temporales",
+      "exampleUse": "Un laboratorio del sueño segmenta registros nocturnos de EEG en fases REM, sueño ligero, sueño profundo y vigilia. El modelo automatiza la puntuación del sueño para miles de pacientes."
+    },
+    "pattern-recognition": {
+      "detailAbout": "Encuentra y marca patrones que se repiten a lo largo de una serie temporal — formas recurrentes, motivos o ciclos. Tus anotaciones ayudan al modelo a aprender cómo lucen estas estructuras repetitivas para detectarlas automáticamente.",
+      "canDo1": "Identificar motivos o ciclos recurrentes en señales",
+      "canDo2": "Descubrir patrones periódicos en datos financieros o biomédicos",
+      "canDo3": "Crear herramientas de coincidencia de patrones para control de calidad",
+      "canDo4": "Entrenar modelos usando Matrix Profile, STOMP o SAX",
+      "exampleUse": "Un cardiólogo marca patrones recurrentes de latidos en tiras de ECG. El modelo entrenado señala variaciones anormales de ritmo en registros Holter de 24 horas."
+    },
+    "event-detection": {
+      "detailAbout": "Coloca marcadores en los momentos exactos en que algo importante sucede en una serie temporal. A diferencia de la segmentación (que etiqueta rangos), la detección de eventos señala momentos discretos — un pico, una transición, un disparador de alerta.",
+      "canDo1": "Marcar marcas de tiempo precisas de eventos en datos de sensores",
+      "canDo2": "Detectar transiciones de estado, alertas o puntos de cambio",
+      "canDo3": "Crear sistemas de monitoreo y notificación en tiempo real",
+      "canDo4": "Entrenar modelos de detección de puntos de cambio o eventos",
+      "exampleUse": "Un laboratorio de sismología marca el inicio exacto de ondas P de terremotos en datos de sismógrafos. El modelo detecta terremotos en segundos, alimentando sistemas de alerta temprana."
+    },
+    "timeseries-regression": {
+      "detailAbout": "Asigna un valor numérico a puntos específicos en una serie temporal. En lugar de categorías, predices números — un precio, una temperatura, una puntuación — basándote en los patrones alrededor de cada punto.",
+      "canDo1": "Etiquetar puntos de datos con objetivos numéricos continuos",
+      "canDo2": "Crear modelos de precios, valoración o estimación",
+      "canDo3": "Predecir mediciones desde el contexto temporal circundante",
+      "canDo4": "Entrenar modelos de regresión como XGBoost o redes neuronales",
+      "exampleUse": "Una plataforma inmobiliaria etiqueta índices semanales de precios de vivienda junto con series temporales de indicadores de mercado. El modelo predice precios del próximo mes para diferentes barrios."
+    },
+    "clustering": {
+      "detailAbout": "Agrupa series temporales similares sin etiquetas predefinidas. Cada serie se asigna a un grupo según cuán similar es su forma a las demás — una excelente manera de descubrir agrupaciones ocultas en tus datos.",
+      "canDo1": "Descubrir grupos naturales en grandes colecciones de series temporales",
+      "canDo2": "Segmentar clientes, sensores o señales por comportamiento",
+      "canDo3": "Explorar datos antes de decidir etiquetas de clasificación",
+      "canDo4": "Entrenar modelos de agrupamiento como K-Shape o DTW-KMeans",
+      "exampleUse": "Una empresa IoT agrupa miles de curvas de temperatura de sensores por forma. Emergen tres grupos naturales: 'estable', 'ciclo diario' y 'errático' — guiando estrategias de mantenimiento dirigidas."
+    },
+    "imputation": {
+      "detailAbout": "Marca los huecos en tu serie temporal donde faltan datos o son poco fiables. El modelo aprende a rellenar esos vacíos con valores plausibles, produciendo datasets limpios y continuos listos para análisis.",
+      "canDo1": "Señalar secciones de datos faltantes o corruptos",
+      "canDo2": "Crear modelos que rellenen huecos con valores realistas",
+      "canDo3": "Limpiar datos de sensores para análisis o entrenamiento posterior",
+      "canDo4": "Entrenar modelos de imputación como BRITS, MICE o métodos basados en KNN",
+      "exampleUse": "Una estación meteorológica tiene cortes intermitentes de sensores. Al marcar los intervalos faltantes, el modelo de imputación rellena lecturas de temperatura y humedad, manteniendo el archivo histórico completo."
+    },
+    "tabular": {
+      "detailAbout": "Trabaja con datos estructurados en filas y columnas — archivos CSV, hojas de cálculo o exportaciones de base de datos. Etiqueta filas, define columnas objetivo y prepara datasets para modelos de machine learning clásico.",
+      "canDo1": "Importar y etiquetar datasets CSV o tabulares",
+      "canDo2": "Definir variables objetivo para clasificación o regresión",
+      "canDo3": "Preparar datos para modelos como XGBoost, Random Forest o LightGBM",
+      "canDo4": "Manejar tipos de datos mixtos: números, categorías, fechas",
+      "exampleUse": "Un banco importa un CSV de solicitudes de préstamo con ingresos, puntuación crediticia y datos laborales. Tras etiquetar resultados aprobados/denegados, entrenan un modelo XGBoost que pre-filtra nuevas solicitudes."
+    }
+  }
+}

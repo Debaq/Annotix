@@ -9,6 +9,8 @@
   "select": "選択",
   "pan": "パン",
   "eraseMode": "消しゴム",
+  "maskBrush": "ブラシ",
+  "maskEraser": "消しゴム",
   "newInstance": "新しいインスタンス",
   "tooltips": {
     "bbox": "バウンディングボックス (B)",

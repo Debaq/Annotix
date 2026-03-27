@@ -12,12 +12,14 @@
       "options": {
         "images": "이미지",
         "timeseries": "시계열",
-        "tabular": "테이블 데이터"
+        "tabular": "테이블 데이터",
+        "audio": "오디오"
       },
       "optionsDesc": {
         "images": "사진, 스크린샷, 스캔, 프레임",
         "timeseries": "센서, 메트릭, 신호, 금융 데이터",
-        "tabular": "CSV 파일, 스프레드시트, 구조화된 테이블"
+        "tabular": "CSV 파일, 스프레드시트, 구조화된 테이블",
+        "audio": "음성 녹음, 목소리, 음악, 소리"
       }
     },
     "goalImages": {
@@ -48,6 +50,19 @@
         "tsPredict": "미래 값 예측 또는 갭 채우기",
         "tsAnomaly": "비정상적이거나 예상치 못한 패턴 찾기",
         "tsAnalyze": "분할, 패턴 찾기 또는 클러스터링"
+      }
+    },
+    "goalAudio": {
+      "title": "오디오로 무엇을 하고 싶으신가요?",
+      "options": {
+        "audioTranscribe": "음성 전사",
+        "audioClassify": "오디오 분류",
+        "audioDetect": "이벤트 감지"
+      },
+      "optionsDesc": {
+        "audioTranscribe": "음성을 텍스트로 변환 (ASR)",
+        "audioClassify": "각 오디오 클립에 레이블 할당",
+        "audioDetect": "특정 소리를 식별하고 위치 파악"
       }
     },
     "classifyDetail": {
@@ -143,6 +158,9 @@
     "pattern-recognition": "반복되는 모티프와 패턴 발견",
     "event-detection": "시리즈에서 특정 이벤트가 언제 발생하는지 식별",
     "clustering": "유사한 시계열 또는 세그먼트 그룹화",
-    "imputation": "누락되거나 손상된 데이터 포인트 재구성"
+    "imputation": "누락되거나 손상된 데이터 포인트 재구성",
+    "speech-recognition": "ASR 훈련을 위해 오디오 파일을 텍스트로 전사",
+    "audio-classification": "오디오 클립을 카테고리로 분류",
+    "sound-event-detection": "오디오에서 특정 이벤트를 감지하고 위치 파악"
   }
 }

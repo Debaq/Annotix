@@ -310,7 +310,15 @@
     "unetMasks": "Маски U-Net",
     "unetMasksDesc": "PNG изображения в градациях серого для обучения сегментации",
     "tix": "Проект Annotix (.tix)",
-    "tixDesc": "Экспорт всего проекта в файл .tix для backup или обмена"
+    "tixDesc": "Экспорт всего проекта в файл .tix для backup или обмена",
+    "huggingfaceAsr": "HuggingFace ASR",
+    "huggingfaceAsrDesc": "CSV с колонками file_name и transcription для датасетов распознавания речи",
+    "ljspeech": "LJSpeech",
+    "ljspeechDesc": "Формат LJSpeech с metadata.csv (имя|транскрипция) и папкой wavs",
+    "csvAudioClassification": "Классификация аудио CSV",
+    "csvAudioClassificationDesc": "CSV с колонками file_name и label для классификации аудио",
+    "csvSoundEvents": "Звуковые события CSV",
+    "csvSoundEventsDesc": "CSV с колонками file_name, start_ms, end_ms и label для обнаружения звуковых событий"
   },
   "notAvailable": "Экспорт недоступен для этого типа проекта",
   "preparing": "Подготовка экспорта...",

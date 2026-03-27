@@ -342,6 +342,18 @@
       "name": "ML Tabular",
       "description": "ML clássico com dados CSV/tabulares"
     },
+    "speech-recognition": {
+      "name": "Reconhecimento de Voz (ASR)",
+      "description": "Transcrever audio em texto para datasets ASR"
+    },
+    "audio-classification": {
+      "name": "Classificacao de Audio",
+      "description": "Atribuir rotulos a clips de audio"
+    },
+    "sound-event-detection": {
+      "name": "Detecao de Eventos Sonoros",
+      "description": "Identificar e localizar eventos em audio"
+    },
     "object3DDetection": {
       "name": "Detecção de Objetos 3D",
       "description": "Detectar objetos em nuvens de pontos 3D",
@@ -494,10 +506,13 @@
     "difficultyLabel": "Dificuldade"
   },
   "categories": {
-    "images": "Anotação de Imagens",
-    "classification": "Classificação",
+    "imageVideo": "Imagem / Vídeo",
+    "audio": "Áudio / Fala",
     "timeSeries": "Séries Temporais",
-    "tabular": "Tabular / ML Clássico"
+    "tabular": "Tabular / ML Clássico",
+    "language": "Linguagem",
+    "3d": "3D",
+    "comingSoon": "Em breve"
   },
   "modality": "Modalidade",
   "initialClasses": "Classes Iniciais (opcional)",

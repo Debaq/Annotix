@@ -310,7 +310,15 @@
     "unetMasks": "U-Net 마스크",
     "unetMasksDesc": "분할 학습을 위한 그레이스케일 PNG 이미지",
     "tix": "Annotix 프로젝트 (.tix)",
-    "tixDesc": "백업 또는 공유를 위해 전체 프로젝트를 .tix 파일로 내보내기"
+    "tixDesc": "백업 또는 공유를 위해 전체 프로젝트를 .tix 파일로 내보내기",
+    "huggingfaceAsr": "HuggingFace ASR",
+    "huggingfaceAsrDesc": "음성 인식 데이터셋용 file_name 및 transcription 열이 있는 CSV",
+    "ljspeech": "LJSpeech",
+    "ljspeechDesc": "metadata.csv (이름|전사) 및 wavs 폴더가 있는 LJSpeech 형식",
+    "csvAudioClassification": "오디오 분류 CSV",
+    "csvAudioClassificationDesc": "오디오 분류를 위한 file_name 및 label 열이 포함된 CSV",
+    "csvSoundEvents": "사운드 이벤트 CSV",
+    "csvSoundEventsDesc": "사운드 이벤트 감지를 위한 file_name, start_ms, end_ms, label 열이 포함된 CSV"
   },
   "notAvailable": "이 프로젝트 유형에는 내보내기를 사용할 수 없습니다",
   "preparing": "내보내기 준비 중...",

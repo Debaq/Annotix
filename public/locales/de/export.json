@@ -310,7 +310,15 @@
     "unetMasks": "U-Net-Masken",
     "unetMasksDesc": "Graustufenbilder im PNG-Format für Segmentierungstraining",
     "tix": "Annotix-Projekt (.tix)",
-    "tixDesc": "Exportiert das gesamte Projekt als .tix-Datei zum Backup oder Teilen"
+    "tixDesc": "Exportiert das gesamte Projekt als .tix-Datei zum Backup oder Teilen",
+    "huggingfaceAsr": "HuggingFace ASR",
+    "huggingfaceAsrDesc": "CSV mit file_name und transcription Spalten fuer Spracherkennungs-Datasets",
+    "ljspeech": "LJSpeech",
+    "ljspeechDesc": "LJSpeech Format mit metadata.csv (Name|Transkription) und wavs Ordner",
+    "csvAudioClassification": "Audio-Klassifikation CSV",
+    "csvAudioClassificationDesc": "CSV mit file_name und label Spalten fuer Audio-Klassifikation",
+    "csvSoundEvents": "Klangereignisse CSV",
+    "csvSoundEventsDesc": "CSV mit file_name, start_ms, end_ms und label Spalten fuer Klangereigniserkennung"
   },
   "notAvailable": "Export ist für diesen Projekttyp nicht verfügbar",
   "preparing": "Export wird vorbereitet...",

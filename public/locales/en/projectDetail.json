@@ -1,0 +1,174 @@
+{
+  "whatCanYouDo": "What can you do?",
+  "exampleUse": "Example of use",
+  "types": {
+    "bbox": {
+      "detailAbout": "Draw rectangles around objects in your images to teach a model where they are. This is the most popular approach for object detection — fast to annotate, easy to train, and supported by virtually every detection framework.",
+      "canDo1": "Locate and count objects in photos or video frames",
+      "canDo2": "Train real-time detectors like YOLO or SSD",
+      "canDo3": "Build inventory, quality inspection, or surveillance systems",
+      "canDo4": "Export to COCO, Pascal VOC, YOLO, and other standard formats",
+      "exampleUse": "A warehouse team annotates boxes on conveyor belt images. After training a YOLO model, cameras count packages automatically and flag any that fall off the belt."
+    },
+    "mask": {
+      "detailAbout": "Paint over regions pixel by pixel to classify every part of an image. Unlike boxes or polygons, masks capture exact shapes — perfect when precision matters more than speed.",
+      "canDo1": "Classify every pixel into categories (sky, road, building…)",
+      "canDo2": "Create training data for medical imaging or satellite analysis",
+      "canDo3": "Separate foreground from background with pixel-perfect accuracy",
+      "canDo4": "Generate segmentation maps for autonomous driving or robotics",
+      "exampleUse": "A medical research lab paints tumor regions on MRI scans. The trained model highlights suspicious areas for radiologists, cutting review time in half."
+    },
+    "polygon": {
+      "detailAbout": "Trace the outline of objects by placing points that form a polygon. It's lighter and faster than pixel masks while still capturing precise shapes — a great middle ground between boxes and full masks.",
+      "canDo1": "Outline irregular objects with precise boundaries",
+      "canDo2": "Annotate faster than pixel-level masks with similar accuracy",
+      "canDo3": "Train instance or semantic segmentation models",
+      "canDo4": "Export to COCO polygon format or convert to masks on the fly",
+      "exampleUse": "An agriculture startup traces crop rows and weed patches in drone images. The polygon annotations train a model that guides a robotic sprayer to target only the weeds."
+    },
+    "keypoints": {
+      "detailAbout": "Place connected points on objects to describe their structure — like marking joints on a body or corners on a face. The connections between points capture how parts relate to each other.",
+      "canDo1": "Annotate body poses for fitness, sports, or ergonomics apps",
+      "canDo2": "Mark facial landmarks for expression or identity analysis",
+      "canDo3": "Define articulated structures on animals, hands, or machines",
+      "canDo4": "Train pose estimation models like OpenPose or HRNet",
+      "exampleUse": "A physiotherapy clinic marks shoulder, elbow, and wrist joints on exercise videos. The trained model measures joint angles in real time, giving patients instant feedback on their form."
+    },
+    "landmarks": {
+      "detailAbout": "Drop individual points on images to mark locations of interest — no connections, no shapes, just positions. Use them for counting, centering, or pinpointing anything.",
+      "canDo1": "Count objects by marking their centers (cells, trees, people…)",
+      "canDo2": "Mark reference points for alignment or measurement",
+      "canDo3": "Create point-based heatmaps for density estimation",
+      "canDo4": "Train lightweight point-detection or counting models",
+      "exampleUse": "A biologist drops a point on every cell nucleus in microscope slides. The trained model counts cells across thousands of images overnight, replacing days of manual work."
+    },
+    "obb": {
+      "detailAbout": "Draw rotated rectangles that tilt to match the angle of objects. Regular boxes waste space on tilted items — oriented boxes fit tightly around ships, text lines, vehicles seen from above, and more.",
+      "canDo1": "Detect objects at any angle in aerial or satellite images",
+      "canDo2": "Annotate rotated text, documents, or license plates",
+      "canDo3": "Train specialized detectors like Rotated-YOLO",
+      "canDo4": "Improve accuracy on scenes where objects aren't axis-aligned",
+      "exampleUse": "A port authority annotates cargo ships in satellite photos with rotated boxes. The model detects ships regardless of heading, feeding an automated traffic monitoring dashboard."
+    },
+    "classification": {
+      "detailAbout": "Assign one label to each image — the simplest form of annotation. No drawing required: just look at the image and pick the right category. Great for sorting, filtering, or building quick classifiers.",
+      "canDo1": "Sort images into categories (good/bad, cat/dog, type A/B…)",
+      "canDo2": "Build product categorization or content moderation systems",
+      "canDo3": "Train classifiers like ResNet, EfficientNet, or MobileNet",
+      "canDo4": "Get started quickly — no drawing tools needed",
+      "exampleUse": "An e-commerce team labels product photos as 'front', 'side', or 'detail'. The trained model auto-sorts new uploads into the right gallery slots on the website."
+    },
+    "multi-label-classification": {
+      "detailAbout": "Assign multiple labels to a single image when it belongs to more than one category. Unlike simple classification, each image can carry several tags at once — like 'outdoor', 'sunny', and 'dog' all together.",
+      "canDo1": "Tag images with all applicable attributes at once",
+      "canDo2": "Build multi-tag search or recommendation systems",
+      "canDo3": "Create rich metadata for image libraries or catalogs",
+      "canDo4": "Train multi-output classifiers for complex categorization",
+      "exampleUse": "A fashion retailer tags clothing photos with style, color, season, and occasion. Shoppers search 'red casual summer' and the model returns matching items instantly."
+    },
+    "speech-recognition": {
+      "detailAbout": "Transcribe what people say in audio recordings. You listen to clips and type the exact words spoken, creating training data for automatic speech recognition systems.",
+      "canDo1": "Transcribe audio clips into accurate text",
+      "canDo2": "Build subtitle generators or voice assistants",
+      "canDo3": "Create datasets for speech-to-text models like Whisper",
+      "canDo4": "Handle multiple speakers, accents, and languages",
+      "exampleUse": "A call center transcribes thousands of customer calls. The trained ASR model converts live calls to text in real time, enabling automatic sentiment analysis and keyword alerts."
+    },
+    "audio-classification": {
+      "detailAbout": "Listen to audio clips and assign a category to each one. No timeline editing — just pick the right label for the whole recording. Useful for sorting sounds, identifying genres, or detecting specific audio types.",
+      "canDo1": "Classify audio clips by type, genre, or content",
+      "canDo2": "Build sound recognition systems for smart devices",
+      "canDo3": "Create training data for environmental sound models",
+      "canDo4": "Sort music, speech, noise, or any audio category",
+      "exampleUse": "A smart home company classifies recordings as 'glass breaking', 'dog barking', 'doorbell', or 'silence'. The model runs on a home hub, triggering alerts for each sound type."
+    },
+    "sound-event-detection": {
+      "detailAbout": "Mark when specific sounds happen in a recording — their start time, end time, and type. Unlike classification (one label per clip), here you pinpoint every event along the timeline.",
+      "canDo1": "Locate and label events in long audio recordings",
+      "canDo2": "Build real-time monitoring for security or industry",
+      "canDo3": "Annotate overlapping events in complex soundscapes",
+      "canDo4": "Train temporal event detection models like CRNN or SED-CNN",
+      "exampleUse": "A wildlife conservation team marks bird calls, chainsaw sounds, and vehicle noise in jungle recordings. The trained model detects illegal logging activity in near real-time from remote microphones."
+    },
+    "timeseries-classification": {
+      "detailAbout": "Look at an entire time series and assign it a category. Each series gets one label based on its overall shape or behavior — no need to mark specific time ranges.",
+      "canDo1": "Classify sensor readings, signals, or sequences as a whole",
+      "canDo2": "Build diagnostic tools for medical signals (ECG, EEG…)",
+      "canDo3": "Recognize gestures or movements from accelerometer data",
+      "canDo4": "Train models like InceptionTime, ROCKET, or ResNet-TS",
+      "exampleUse": "A cardiology department labels ECG recordings as 'normal', 'arrhythmia', or 'atrial fibrillation'. The trained model screens incoming ECGs and flags abnormal cases for immediate doctor review."
+    },
+    "timeseries-forecasting": {
+      "detailAbout": "Mark the historical window and the prediction horizon on your time series. The model will learn to look back at past values and predict what comes next — sales, temperatures, stock levels, or any measurable quantity.",
+      "canDo1": "Define training windows for past-to-future prediction",
+      "canDo2": "Build demand, weather, or financial forecasting models",
+      "canDo3": "Experiment with different look-back and horizon lengths",
+      "canDo4": "Train models like LSTM, Transformer, or N-BEATS",
+      "exampleUse": "An energy company marks 7-day historical windows and 24-hour prediction horizons on electricity demand data. The trained model forecasts next-day load, optimizing power generation schedules."
+    },
+    "anomaly-detection": {
+      "detailAbout": "Scan time series and mark the points or regions that look unusual. Your annotations teach a model what 'normal' looks like so it can flag deviations — spikes, drops, drift, or any unexpected behavior.",
+      "canDo1": "Mark anomalous points or ranges in sensor data",
+      "canDo2": "Build predictive maintenance or fraud detection systems",
+      "canDo3": "Monitor health metrics, network traffic, or equipment",
+      "canDo4": "Train autoencoders, isolation forests, or LSTM anomaly detectors",
+      "exampleUse": "A factory annotates vibration sensor data, marking the moments before machine breakdowns. The model learns the early warning signs and alerts maintenance crews hours before failures happen."
+    },
+    "timeseries-segmentation": {
+      "detailAbout": "Divide a time series into segments and label each one. Think of it like coloring different parts of a timeline — one region is 'running', another is 'resting', another is 'sleeping'.",
+      "canDo1": "Split time series into meaningful labeled regions",
+      "canDo2": "Analyze behavior changes, activity states, or regimes",
+      "canDo3": "Build activity recognition or state-monitoring systems",
+      "canDo4": "Train segmentation models like ClaSP or U-Net for time series",
+      "exampleUse": "A sleep lab segments overnight EEG recordings into REM, light sleep, deep sleep, and awake stages. The model automates sleep scoring for thousands of patients."
+    },
+    "pattern-recognition": {
+      "detailAbout": "Find and mark patterns that repeat across a time series — recurring shapes, motifs, or cycles. Your annotations help the model learn what these repeating structures look like so it can spot them automatically.",
+      "canDo1": "Identify recurring motifs or cycles in signals",
+      "canDo2": "Discover periodic patterns in financial or biomedical data",
+      "canDo3": "Build pattern-matching tools for quality control",
+      "canDo4": "Train models using Matrix Profile, STOMP, or SAX",
+      "exampleUse": "A cardiologist marks recurring heartbeat patterns in ECG strips. The trained model flags abnormal rhythm variations across 24-hour Holter monitor recordings."
+    },
+    "event-detection": {
+      "detailAbout": "Place markers at the exact moments when something important happens in a time series. Unlike segmentation (which labels ranges), event detection pinpoints discrete moments — a spike, a transition, an alert trigger.",
+      "canDo1": "Mark precise timestamps of events in sensor data",
+      "canDo2": "Detect state transitions, alerts, or change points",
+      "canDo3": "Build real-time monitoring and notification systems",
+      "canDo4": "Train change-point or event-detection models",
+      "exampleUse": "A seismology lab marks the exact onset of earthquake P-waves in seismograph data. The model detects earthquakes within seconds, feeding early-warning systems."
+    },
+    "timeseries-regression": {
+      "detailAbout": "Attach a numeric value to specific points in a time series. Instead of categories, you're predicting numbers — a price, a temperature, a score — based on the patterns around each point.",
+      "canDo1": "Label data points with continuous numeric targets",
+      "canDo2": "Build pricing, valuation, or estimation models",
+      "canDo3": "Predict measurements from surrounding time context",
+      "canDo4": "Train regression models like XGBoost or neural networks",
+      "exampleUse": "A real estate platform labels weekly housing price indices along with market indicator time series. The model predicts next-month prices for different neighborhoods."
+    },
+    "clustering": {
+      "detailAbout": "Group similar time series together without predefined labels. Each series gets assigned to a cluster based on how similar its shape is to others — a great way to discover hidden groupings in your data.",
+      "canDo1": "Discover natural groups in large collections of time series",
+      "canDo2": "Segment customers, sensors, or signals by behavior",
+      "canDo3": "Explore data before deciding on classification labels",
+      "canDo4": "Train clustering models like K-Shape or DTW-KMeans",
+      "exampleUse": "An IoT company groups thousands of sensor temperature curves by shape. Three natural clusters emerge: 'stable', 'daily cycle', and 'erratic' — guiding targeted maintenance strategies."
+    },
+    "imputation": {
+      "detailAbout": "Mark the gaps in your time series where data is missing or unreliable. The model learns to fill those holes with plausible values, producing clean, continuous datasets ready for analysis.",
+      "canDo1": "Highlight missing or corrupted data sections",
+      "canDo2": "Build models that fill gaps with realistic values",
+      "canDo3": "Clean sensor data for downstream analysis or training",
+      "canDo4": "Train imputation models like BRITS, MICE, or KNN-based methods",
+      "exampleUse": "A weather station has intermittent sensor outages. By marking the missing intervals, the imputation model fills in temperature and humidity readings, keeping the historical archive complete."
+    },
+    "tabular": {
+      "detailAbout": "Work with structured data in rows and columns — CSV files, spreadsheets, or database exports. Label rows, define target columns, and prepare datasets for classical machine learning models.",
+      "canDo1": "Import and label CSV or tabular datasets",
+      "canDo2": "Define target variables for classification or regression",
+      "canDo3": "Prepare data for models like XGBoost, Random Forest, or LightGBM",
+      "canDo4": "Handle mixed data types: numbers, categories, dates",
+      "exampleUse": "A bank imports a CSV of loan applications with income, credit score, and employment data. After labeling approved/denied outcomes, they train an XGBoost model that pre-screens new applications."
+    }
+  }
+}

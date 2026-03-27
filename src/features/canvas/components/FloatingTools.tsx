@@ -29,14 +29,14 @@ interface FloatingToolsProps {
   maskBrushSize?: number;
   maskEraseMode?: boolean;
   onMaskBrushSizeChange?: (size: number) => void;
-  onMaskToggleErase?: () => void;
+  onMaskSetEraseMode?: (erase: boolean) => void;
 }
 
 export const FloatingTools: React.FC<FloatingToolsProps> = ({
   maskBrushSize,
   maskEraseMode,
   onMaskBrushSizeChange,
-  onMaskToggleErase,
+  onMaskSetEraseMode,
 }) => {
   const { t } = useTranslation();
   const { project } = useCurrentProject();
@@ -83,16 +83,27 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
 
           {activeTool === 'mask' && typeof maskBrushSize === 'number' && (
             <div className="flex flex-col items-center gap-1 min-w-[46px]">
-              <div className="flex items-center gap-2">
+              {/* Pincel y goma como botones separados */}
+              <div className="flex flex-col gap-1">
+                <button
+                  className={cn('annotix-tool-btn', !maskEraseMode && 'active')}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onMaskSetEraseMode?.(false);
+                  }}
+                  title={`${t('tools.maskBrush')} (${shortcutsManager.getKeyForShortcut('mask-erase-toggle')})`}
+                >
+                  <i className="fas fa-paint-brush"></i>
+                </button>
                 <button
                   className={cn('annotix-tool-btn', maskEraseMode && 'active')}
                   onClick={(event) => {
                     event.stopPropagation();
-                    onMaskToggleErase?.();
+                    onMaskSetEraseMode?.(true);
                   }}
-                  title={shortcutsManager.getKeyForShortcut('mask-erase-toggle')}
+                  title={`${t('tools.maskEraser')} (${shortcutsManager.getKeyForShortcut('mask-erase-toggle')})`}
                 >
-                  <i className={`fas ${maskEraseMode ? 'fa-eraser' : 'fa-paint-brush'}`}></i>
+                  <i className="fas fa-eraser"></i>
                 </button>
               </div>
               <input

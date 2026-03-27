@@ -73,6 +73,7 @@ impl AppState {
             videos: vec![],
             training_jobs: vec![],
             tabular_data: vec![],
+            audio: vec![],
             p2p: None,
             p2p_download: None,
             inference_models: vec![],

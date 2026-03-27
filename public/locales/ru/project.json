@@ -342,6 +342,18 @@
       "name": "Табличный ML",
       "description": "Классический ML с CSV/табличными данными"
     },
+    "speech-recognition": {
+      "name": "Распознавание Речи (ASR)",
+      "description": "Транскрибировать аудио в текст для датасетов ASR"
+    },
+    "audio-classification": {
+      "name": "Классификация Аудио",
+      "description": "Присвоить метки аудиоклипам"
+    },
+    "sound-event-detection": {
+      "name": "Обнаружение Звуковых Событий",
+      "description": "Идентифицировать и локализовать события в аудио"
+    },
     "object3DDetection": {
       "name": "Обнаружение 3D объектов",
       "description": "Обнаружение объектов в 3D облаках точек",
@@ -494,10 +506,13 @@
     "difficultyLabel": "Сложность"
   },
   "categories": {
-    "images": "Аннотация изображений",
-    "classification": "Классификация",
+    "imageVideo": "Изображение / Видео",
+    "audio": "Аудио / Речь",
     "timeSeries": "Временные ряды",
-    "tabular": "Табличные / Классический ML"
+    "tabular": "Табличные / Классический ML",
+    "language": "Язык",
+    "3d": "3D",
+    "comingSoon": "Скоро"
   },
   "modality": "Модальность",
   "initialClasses": "Начальные классы (необязательно)",

@@ -10,6 +10,8 @@ import { TimeSeriesGallery } from './features/timeseries/components/TimeSeriesGa
 import { TimeSeriesCanvas } from './features/timeseries/components/TimeSeriesCanvas';
 import { VideoView } from './features/video/components/VideoView';
 import { TabularView } from './features/tabular/components/TabularView';
+import { AudioGallery } from './features/audio/components/AudioGallery';
+import { AudioAnnotator } from './features/audio/components/AudioAnnotator';
 import { SettingsPage } from './features/settings/components/SettingsPage';
 import { SetupScreen } from './features/setup/SetupScreen';
 import { useUIStore } from './features/core/store/uiStore';
@@ -53,6 +55,10 @@ function isTabularProject(type: ProjectType): boolean {
   return type === 'tabular';
 }
 
+function isAudioProject(type: ProjectType): boolean {
+  return ['audio-classification', 'speech-recognition', 'sound-event-detection'].includes(type);
+}
+
 // --- Route Components ---
 
 const ProjectView = () => {
@@ -89,6 +95,10 @@ const ProjectView = () => {
 
   if (isTabularProject(project.type)) {
     return <TabularView />;
+  }
+
+  if (isAudioProject(project.type)) {
+    return <AudioGallery />;
   }
 
   if (isTimeSeriesProject(project.type)) {
@@ -292,6 +302,25 @@ const ImageView = () => {
   );
 };
 
+const AudioView = () => {
+  const { projectId, audioId } = useParams();
+  const { setCurrentProjectId, setCurrentAudioId } = useUIStore();
+
+  useEffect(() => {
+    if (projectId) setCurrentProjectId(projectId);
+    if (audioId) setCurrentAudioId(audioId);
+  }, [projectId, audioId, setCurrentProjectId, setCurrentAudioId]);
+
+  return (
+    <div className="annotix-layout" style={{ gridTemplateColumns: '280px 1fr' }}>
+      <div className="annotix-panel">
+        <AudioGallery />
+      </div>
+      <AudioAnnotator />
+    </div>
+  );
+};
+
 const TimeSeriesView = () => {
   const { projectId, seriesId } = useParams();
   const { setCurrentProjectId, setCurrentTimeSeriesId } = useUIStore();
@@ -370,6 +399,7 @@ function App() {
           <Route path="/" element={<ProjectList />} />
           <Route path="/projects/:projectId" element={<ProjectView />} />
           <Route path="/projects/:projectId/images/:imageId" element={<ImageView />} />
+          <Route path="/projects/:projectId/audio/:audioId" element={<AudioView />} />
           <Route path="/projects/:projectId/timeseries/:seriesId" element={<TimeSeriesView />} />
           <Route path="/projects/:projectId/videos/:videoId" element={<VideoView />} />
           <Route path="/projects/:projectId/team" element={<TeamView />} />

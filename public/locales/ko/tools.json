@@ -9,6 +9,8 @@
   "select": "Select",
   "pan": "Pan",
   "eraseMode": "지우개",
+  "maskBrush": "브러시",
+  "maskEraser": "지우개",
   "newInstance": "새 인스턴스",
   "tooltips": {
     "bbox": "Bounding Box (B)",

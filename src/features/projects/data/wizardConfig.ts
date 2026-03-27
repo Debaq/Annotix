@@ -78,7 +78,7 @@ export const WIZARD_CONFIG: WizardConfig = {
         { id: 'images',     icon: 'fa-image',      colorClass: 'bg-blue-100 text-blue-600' },
         { id: 'timeseries', icon: 'fa-chart-line',  colorClass: 'bg-cyan-100 text-cyan-600' },
         { id: 'tabular',    icon: 'fa-table',       colorClass: 'bg-emerald-100 text-emerald-600' },
-        // Future: { id: 'audio', icon: 'fa-headphones', colorClass: 'bg-indigo-100 text-indigo-600' },
+        { id: 'audio',      icon: 'fa-headphones',  colorClass: 'bg-indigo-100 text-indigo-600' },
       ],
     },
 
@@ -103,6 +103,17 @@ export const WIZARD_CONFIG: WizardConfig = {
         { id: 'tsPredict',   icon: 'fa-chart-area',          colorClass: 'bg-teal-100 text-teal-600' },
         { id: 'tsAnomaly',   icon: 'fa-exclamation-triangle', colorClass: 'bg-rose-100 text-rose-600' },
         { id: 'tsAnalyze',   icon: 'fa-wave-square',         colorClass: 'bg-violet-100 text-violet-600' },
+      ],
+    },
+
+    // Q2c: What do you want to do with audio?
+    {
+      id: 'goalAudio',
+      showWhen: { questionId: 'dataType', answerIds: ['audio'] },
+      options: [
+        { id: 'audioTranscribe', icon: 'fa-microphone',  colorClass: 'bg-blue-100 text-blue-600' },
+        { id: 'audioClassify',   icon: 'fa-music',       colorClass: 'bg-indigo-100 text-indigo-600' },
+        { id: 'audioDetect',     icon: 'fa-volume-high',  colorClass: 'bg-orange-100 text-orange-600' },
       ],
     },
 
@@ -211,6 +222,11 @@ export const WIZARD_CONFIG: WizardConfig = {
     { when: { goalTimeseries: 'tsAnalyze', tsAnalyzeDetail: 'tsPattern' },      then: { 'pattern-recognition': 10 } },
     { when: { goalTimeseries: 'tsAnalyze', tsAnalyzeDetail: 'tsEvent' },        then: { 'event-detection': 10 } },
     { when: { goalTimeseries: 'tsAnalyze', tsAnalyzeDetail: 'tsCluster' },      then: { clustering: 10 } },
+
+    // ===== AUDIO =====
+    { when: { goalAudio: 'audioTranscribe' },                                  then: { 'speech-recognition': 15 } },
+    { when: { goalAudio: 'audioClassify' },                                    then: { 'audio-classification': 15 } },
+    { when: { goalAudio: 'audioDetect' },                                      then: { 'sound-event-detection': 15 } },
 
     // ===== TABULAR =====
     { when: { dataType: 'tabular' },                                           then: { tabular: 15 } },

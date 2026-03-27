@@ -417,6 +417,7 @@ pub async fn doc_to_project_metadata(
         videos: vec![],
         training_jobs: vec![],
         tabular_data: vec![],
+        audio: vec![],
         p2p: None,
         p2p_download,
         inference_models: vec![],

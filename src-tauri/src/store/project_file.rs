@@ -23,6 +23,8 @@ pub struct ProjectFile {
     #[serde(default)]
     pub tabular_data: Vec<TabularDataEntry>,
     #[serde(default)]
+    pub audio: Vec<AudioEntry>,
+    #[serde(default)]
     pub p2p: Option<P2pProjectConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none", rename = "p2pDownload")]
     pub p2p_download: Option<P2pDownloadStatus>,
@@ -191,6 +193,56 @@ pub struct KeyframeEntry {
     #[serde(rename = "isKeyframe")]
     pub is_keyframe: bool,
     pub enabled: bool,
+}
+
+// ─── Audio (ASR) ──────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AudioEntry {
+    pub id: String,
+    pub name: String,
+    pub file: String,
+    pub duration_ms: i64,
+    pub sample_rate: i32,
+    #[serde(default)]
+    pub transcription: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub speaker_id: Option<String>,
+    #[serde(default = "default_audio_language")]
+    pub language: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub segments: Vec<AudioSegment>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub class_id: Option<i64>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub events: Vec<AudioEvent>,
+    pub uploaded: f64,
+    pub annotated: Option<f64>,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AudioSegment {
+    pub id: String,
+    pub start_ms: i64,
+    pub end_ms: i64,
+    #[serde(default)]
+    pub text: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AudioEvent {
+    pub id: String,
+    pub start_ms: i64,
+    pub end_ms: i64,
+    pub class_id: i64,
+}
+
+fn default_audio_language() -> String {
+    "en".to_string()
 }
 
 // ─── Tabular Data ──────────────────────────────────────────────────────────

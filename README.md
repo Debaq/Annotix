@@ -5,273 +5,237 @@
 <h1 align="center">Annotix</h1>
 
 <p align="center">
-  <strong>Plataforma de escritorio para anotacion de datasets de Machine Learning</strong><br/>
-  Imagenes &middot; Video &middot; Series Temporales &middot; Datos Tabulares
+  <strong>Desktop annotation platform for Machine Learning datasets</strong><br/>
+  Images &middot; Video &middot; Time Series &middot; Tabular Data
 </p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-2.0.0-blue" />
+  <img alt="Version" src="https://img.shields.io/badge/version-2.3.1-blue" />
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green" />
   <img alt="Platform" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey" />
   <img alt="Tauri 2" src="https://img.shields.io/badge/tauri-2.x-orange" />
   <img alt="React 19" src="https://img.shields.io/badge/react-19-61DAFB" />
   <img alt="Rust" src="https://img.shields.io/badge/rust-1.89+-DEA584" />
-  <img alt="i18n" src="https://img.shields.io/badge/idiomas-10-purple" />
+  <img alt="i18n" src="https://img.shields.io/badge/languages-10-purple" />
 </p>
 
 ---
 
-## Tabla de contenidos
+## Overview
 
-- [Descripcion general](#descripcion-general)
-- [Tipos de proyecto](#tipos-de-proyecto)
-- [Herramientas de anotacion](#herramientas-de-anotacion)
-- [Anotacion de video](#anotacion-de-video)
-- [Series temporales](#series-temporales)
-- [Datos tabulares](#datos-tabulares)
-- [Entrenamiento ML integrado](#entrenamiento-ml-integrado)
-- [Automatizacion de navegador](#automatizacion-de-navegador)
-- [Colaboracion P2P](#colaboracion-p2p)
-- [Export e import](#export-e-import)
-- [Atajos de teclado](#atajos-de-teclado)
-- [Idiomas](#idiomas)
-- [Arquitectura](#arquitectura)
-- [Stack tecnologico](#stack-tecnologico)
-- [Requisitos del sistema](#requisitos-del-sistema)
-- [Instalacion y desarrollo](#instalacion-y-desarrollo)
-- [Estructura del proyecto](#estructura-del-proyecto)
-- [Licencia](#licencia)
+Annotix is a cross-platform desktop application for creating, managing, and exporting annotated ML datasets. It pairs a React 19 frontend with a high-performance Rust backend through Tauri 2, delivering native speed with a modern UI.
 
----
+Built for researchers, ML teams, and academic labs, Annotix covers the full pipeline: raw data import, collaborative annotation, integrated model training, and export to industry-standard formats.
 
-## Descripcion general
+### Highlights
 
-Annotix es una aplicacion de escritorio multiplataforma para crear, gestionar y exportar datasets anotados para Machine Learning. Combina un frontend React moderno con un backend Rust de alto rendimiento a traves de Tauri 2.
-
-Disenada para investigadores, equipos de ML y laboratorios academicos, Annotix cubre el pipeline completo: desde la importacion de datos crudos, pasando por la anotacion colaborativa, hasta el entrenamiento de modelos y la exportacion en formatos estandar de la industria.
-
-### Caracteristicas principales
-
-- **7 herramientas de anotacion** sobre canvas 2D de alto rendimiento (Konva)
-- **Anotacion de video** con tracks, keyframes e interpolacion lineal
-- **Series temporales** univariadas y multivariadas con 5 tipos de anotacion
-- **Datos tabulares** con editor integrado y ML clasico (scikit-learn)
-- **19 backends de entrenamiento ML** incluyendo YOLO, RT-DETR, MMDetection, Detectron2, timm, SMP y mas
-- **4 modos de ejecucion**: local, paquete descargable, cloud y browser automation
-- **Colaboracion P2P** en tiempo real con iroh (QUIC) — sin servidor central
-- **11 formatos de exportacion** y **8 de importacion** con auto-deteccion
-- **76 comandos Tauri** en el backend
-- **10 idiomas** con carga lazy
-- **Atajos de teclado completamente personalizables**
-- **Almacenamiento local** basado en JSON con cache en memoria y escritura atomica
+- **7 annotation tools** on a high-performance 2D canvas (Konva)
+- **Video annotation** with tracks, keyframes, and linear interpolation
+- **Time series** support (univariate & multivariate) with 5 annotation types
+- **Tabular data** editor with classical ML training (scikit-learn)
+- **19 ML training backends** including YOLO, RT-DETR, MMDetection, Detectron2, timm, SMP, and more
+- **4 execution modes**: local, downloadable package, cloud providers, and browser automation
+- **Real-time P2P collaboration** via Iroh (QUIC) with no central server
+- **11 export formats** and **8 import formats** with automatic detection
+- **10 languages** with lazy loading
+- **Fully customizable keyboard shortcuts**
+- **Local JSON-based storage** with in-memory cache and atomic writes
 
 ---
 
-## Tipos de proyecto
+## Table of Contents
 
-Annotix soporta una amplia variedad de tipos de proyecto organizados por dominio:
-
-### Imagenes
-
-| Tipo | Descripcion |
-|------|-------------|
-| `bbox` | Deteccion de objetos con bounding boxes rectangulares |
-| `obb` | Deteccion con bounding boxes orientados (rotados) |
-| `polygon` | Segmentacion semantica con poligonos |
-| `mask` | Segmentacion semantica con mascara de pintura |
-| `instance-segmentation` | Segmentacion de instancias |
-| `keypoints` | Puntos clave con skeleton configurable |
-| `landmarks` | Puntos de referencia nombrados |
-| `classification` | Clasificacion de imagen unica |
-| `multi-label-classification` | Clasificacion multilabel |
-
-### Series temporales
-
-| Tipo | Descripcion |
-|------|-------------|
-| `timeseries-classification` | Clasificacion de series |
-| `timeseries-forecasting` | Prediccion de valores futuros |
-| `anomaly-detection` | Deteccion de anomalias |
-| `timeseries-segmentation` | Segmentacion temporal |
-| `pattern-recognition` | Reconocimiento de patrones |
-| `event-detection` | Deteccion de eventos |
-| `timeseries-regression` | Regresion temporal |
-| `clustering` | Agrupamiento de series |
-| `imputation` | Imputacion de valores faltantes |
-
-### Otros
-
-| Tipo | Descripcion |
-|------|-------------|
-| `tabular` | Datos tabulares para ML clasico |
+- [Annotation Tools](#annotation-tools)
+- [Video Annotation](#video-annotation)
+- [Time Series](#time-series)
+- [Tabular Data](#tabular-data)
+- [Integrated ML Training](#integrated-ml-training)
+- [Browser Automation](#browser-automation)
+- [P2P Collaboration](#p2p-collaboration)
+- [Export & Import](#export--import)
+- [Keyboard Shortcuts](#keyboard-shortcuts)
+- [Languages](#languages)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [System Requirements](#system-requirements)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [License](#license)
 
 ---
 
-## Herramientas de anotacion
+## Annotation Tools
 
-El canvas de anotacion esta construido sobre Konva con renderers y handlers dedicados para cada herramienta:
+The annotation canvas is built on Konva with dedicated renderers and handlers per tool:
 
-| Herramienta | Tecla | Descripcion |
-|-------------|-------|-------------|
-| **BBox** | `B` | Bounding box rectangular con drag & resize |
-| **OBB** | `O` | Bounding box orientado con rotacion libre |
-| **Mask** | `M` | Pintura libre con brush configurable y modo borrador |
-| **Polygon** | `P` | Poligono punto a punto con cierre automatico |
-| **Keypoints** | `K` | Puntos clave con presets de skeleton (COCO, cara, mano, MediaPipe) |
-| **Landmarks** | `L` | Puntos de referencia nombrados con etiquetas |
-| **Select** | `V` | Seleccion, movimiento y edicion de anotaciones |
-| **Pan** | `H` | Navegacion por el canvas |
+| Tool | Key | Description |
+|------|-----|-------------|
+| **BBox** | `B` | Rectangular bounding box with drag & resize |
+| **OBB** | `O` | Oriented bounding box with free rotation |
+| **Mask** | `M` | Freehand painting with configurable brush and eraser mode |
+| **Polygon** | `P` | Point-by-point polygon with auto-close |
+| **Keypoints** | `K` | Keypoints with skeleton presets (COCO, face, hand, MediaPipe) |
+| **Landmarks** | `L` | Named reference points with labels |
+| **Select** | `V` | Select, move, and edit existing annotations |
+| **Pan** | `H` | Canvas navigation |
 
-Funcionalidades adicionales del canvas:
+Additional canvas features:
 
-- Zoom con rueda del mouse y controles flotantes
-- Rotacion de imagen (`A` / `D`)
-- Toggle de labels y grid
-- Seleccion rapida de clase con teclas `1-0` y `Q-P` (hasta 20 clases)
-- Undo / Redo (`Ctrl+Z` / `Ctrl+Y`)
+- Mouse wheel zoom with floating controls
+- Image rotation (`A` / `D`)
+- Label and grid toggles
+- Quick class selection with `1`-`0` and `Q`-`P` (up to 20 classes)
+- Undo / Redo with 100-step history (`Ctrl+Z` / `Ctrl+Y`)
 
----
+### Supported Project Types
 
-## Anotacion de video
+**Images:** Object detection (bbox), oriented detection (obb), semantic segmentation (polygon/mask), instance segmentation, keypoints, landmarks, single-label & multi-label classification.
 
-Sistema completo de anotacion de video basado en frames:
+**Time Series:** Classification, forecasting, anomaly detection, segmentation, pattern recognition, event detection, regression, clustering, imputation.
 
-- **Extraccion de frames** via FFmpeg nativo con FPS configurable
-- **Reanudacion automatica** de extracciones interrumpidas al reiniciar
-- **Tracks**: objetos a seguir a lo largo del video, cada uno con clase y etiqueta
-- **Keyframes**: bounding boxes posicionados en frames especificos
-- **Interpolacion lineal**: calculo automatico de posiciones entre keyframes
-- **Bake**: materializa la interpolacion en anotaciones reales por frame
-- **Toggle individual**: habilitar/deshabilitar keyframes especificos
-- **Timeline interactiva** con navegacion por frames
+**Tabular:** Classical ML on structured data.
 
 ---
 
-## Series temporales
+## Video Annotation
 
-Soporte para datos temporales univariados y multivariados:
+Full frame-based video annotation system:
 
-- **Importacion CSV** con parseo y validacion integrados
-- **Visualizacion interactiva** con zoom y pan
-- **5 tipos de anotacion**:
-  - `point` — marca en un timestamp
-  - `range` — rango entre dos timestamps
-  - `classification` — etiqueta global de la serie
-  - `event` — evento con tipo y confianza
-  - `anomaly` — anomalia con score y threshold
-
----
-
-## Datos tabulares
-
-- Editor de datos tabulares integrado
-- Selector de columnas para features y target
-- Vista previa de datos
-- Entrenamiento con scikit-learn (RandomForest, SVM, kNN, etc.)
+- **Frame extraction** via native FFmpeg with configurable FPS
+- **Auto-resume** of interrupted extractions on app restart
+- **Tracks** for following objects across the video, each with class and label
+- **Keyframes** with bounding boxes at specific frames
+- **Linear interpolation** automatically computes positions between keyframes
+- **Bake** materializes interpolation into real per-frame annotations
+- **Interactive timeline** with frame-by-frame navigation
 
 ---
 
-## Entrenamiento ML integrado
+## Time Series
 
-Annotix integra un pipeline de entrenamiento completo directamente en la aplicacion, con 19 backends ML y monitoreo de metricas en tiempo real.
+Support for univariate and multivariate temporal data:
 
-### Backends por tarea
+- **CSV import** with built-in parsing and validation
+- **Interactive visualization** with zoom and pan
+- **5 annotation types:**
+  - `point` — mark at a timestamp
+  - `range` — span between two timestamps
+  - `classification` — global label for the series
+  - `event` — event with type and confidence
+  - `anomaly` — anomaly with score and threshold
 
-#### Deteccion de objetos
+---
 
-| Backend | Modelos |
-|---------|---------|
+## Tabular Data
+
+- Built-in tabular data editor
+- Column selector for features and target
+- Data preview
+- Training with scikit-learn (RandomForest, SVM, kNN, GradientBoosting, etc.)
+
+---
+
+## Integrated ML Training
+
+Annotix ships with a complete training pipeline and real-time metrics monitoring across 19 ML backends.
+
+### Backends by Task
+
+#### Object Detection
+
+| Backend | Models |
+|---------|--------|
 | **YOLO** (Ultralytics) | YOLOv8, v9, v10, v11, v12 |
 | **RT-DETR** (Ultralytics) | RT-DETR-l, RT-DETR-x |
 | **RF-DETR** (Roboflow) | RF-DETR-base, RF-DETR-large |
-| **MMDetection** (OpenMMLab) | 30+ arquitecturas (Faster R-CNN, DINO, Co-DETR, etc.) |
+| **MMDetection** (OpenMMLab) | 30+ architectures (Faster R-CNN, DINO, Co-DETR, etc.) |
 
-#### Segmentacion semantica
+#### Semantic Segmentation
 
-| Backend | Modelos |
-|---------|---------|
+| Backend | Models |
+|---------|--------|
 | **SMP** | U-Net, DeepLabV3+, FPN, PSPNet, etc. |
 | **HuggingFace Segmentation** | SegFormer, Mask2Former, etc. |
-| **MMSegmentation** | Catalogo completo OpenMMLab |
+| **MMSegmentation** | Full OpenMMLab catalog |
 
-#### Segmentacion de instancias
+#### Instance Segmentation
 
-| Backend | Modelos |
-|---------|---------|
-| **Detectron2** (Facebook) | Mask R-CNN, Cascade R-CNN, etc. |
+| Backend | Models |
+|---------|--------|
+| **Detectron2** (Meta) | Mask R-CNN, Cascade R-CNN, etc. |
 
-#### Keypoints y pose
+#### Keypoints & Pose Estimation
 
-| Backend | Modelos |
-|---------|---------|
+| Backend | Models |
+|---------|--------|
 | **MMPose** | HRNet, ViTPose, RTMPose, etc. |
 
-#### OBB (deteccion rotada)
+#### Oriented Object Detection (OBB)
 
-| Backend | Modelos |
-|---------|---------|
+| Backend | Models |
+|---------|--------|
 | **MMRotate** | Oriented R-CNN, RoI Transformer, etc. |
 
-#### Clasificacion de imagenes
+#### Image Classification
 
-| Backend | Modelos |
-|---------|---------|
-| **timm** | 700+ modelos (ResNet, EfficientNet, ViT, ConvNeXt, etc.) |
+| Backend | Models |
+|---------|--------|
+| **timm** | 700+ models (ResNet, EfficientNet, ViT, ConvNeXt, etc.) |
 | **HuggingFace Classification** | ViT, BEiT, DeiT, Swin, etc. |
 
-#### Series temporales
+#### Time Series
 
-| Backend | Tarea |
-|---------|-------|
-| **tsai** | Clasificacion, regresion, forecasting |
+| Backend | Task |
+|---------|------|
+| **tsai** | Classification, regression, forecasting |
 | **PyTorch Forecasting** | Forecasting (TFT, N-BEATS, etc.) |
-| **PyOD** | Deteccion de anomalias |
-| **tslearn** | Clustering temporal |
-| **PyPOTS** | Imputacion de valores faltantes |
-| **STUMPY** | Matrix Profile (patron/motif) |
+| **PyOD** | Anomaly detection |
+| **tslearn** | Temporal clustering |
+| **PyPOTS** | Missing value imputation |
+| **STUMPY** | Matrix Profile (motif/pattern discovery) |
 
 #### Tabular
 
-| Backend | Tarea |
-|---------|-------|
+| Backend | Task |
+|---------|------|
 | **scikit-learn** | RandomForest, SVM, kNN, GradientBoosting, etc. |
 
-### Modos de ejecucion
+### Execution Modes
 
-| Modo | Descripcion |
+| Mode | Description |
 |------|-------------|
-| **Local** | Entorno Python aislado con micromamba, deteccion de GPU (CUDA/MPS) |
-| **Download Package** | Genera un paquete ZIP con script y datos para ejecutar externamente |
-| **Cloud** | Entrena en proveedores cloud (Vertex AI, Kaggle, Lightning AI, HuggingFace, Saturn Cloud) |
-| **Browser Automation** | Entrena gratis en Google Colab via automatizacion de navegador |
+| **Local** | Isolated Python environment via micromamba with GPU auto-detection (CUDA / MPS) |
+| **Download Package** | Generates a ZIP with script and data for external execution |
+| **Cloud** | Train on cloud providers (Vertex AI, Kaggle, Lightning AI, HuggingFace, Saturn Cloud) |
+| **Browser Automation** | Free training on Google Colab via browser automation |
 
-### Presets de entrenamiento
+### Training Presets
 
-6 presets optimizados para escenarios comunes: `small_objects`, `industrial`, `traffic`, `edge_mobile`, `medical`, `aerial`.
+6 optimized presets for common scenarios: `small_objects`, `industrial`, `traffic`, `edge_mobile`, `medical`, `aerial`.
 
-### Metricas en tiempo real
+### Real-Time Metrics
 
-Graficas en vivo de metricas por tarea: box/cls/dfl loss, precision, recall, mAP50, mAP50-95, IoU, dice, accuracy, F1, MAE, RMSE, AUC-ROC, silhouette score, R2, etc.
+Live charts for task-specific metrics: box/cls/dfl loss, precision, recall, mAP50, mAP50-95, IoU, dice, accuracy, F1, MAE, RMSE, AUC-ROC, silhouette score, R2, and more.
 
-### Export de modelos entrenados
+### Model Export
 
-Formatos soportados: PyTorch (`.pt`), ONNX, TorchScript, TFLite, CoreML, TensorRT.
+Supported formats: PyTorch (`.pt`), ONNX, TorchScript, TFLite, CoreML, TensorRT.
 
 ---
 
-## Automatizacion de navegador
+## Browser Automation
 
-Sistema de automatizacion basado en `headless_chrome` (Chrome DevTools Protocol) que opera sobre el navegador visible del usuario:
+Automation system based on Chrome DevTools Protocol (CDP) that operates on the user's visible browser:
 
-### Entrenamiento gratuito en Google Colab
+### Free Google Colab Training
 
-- Detecta automaticamente navegadores Chromium instalados
-- Abre Google Colab, sube el dataset y ejecuta el entrenamiento en GPU T4
-- Progreso en tiempo real con pausa / reanudacion / cancelacion
+- Auto-detects installed Chromium browsers
+- Opens Google Colab, uploads the dataset, and runs training on a T4 GPU
+- Real-time progress with pause / resume / cancel
 
-### Consulta de LLMs sin API key
+### LLM Queries Without API Keys
 
-Acceso a modelos de lenguaje a traves del navegador del usuario:
+Access language models through the user's browser:
 
 - **Kimi** (Moonshot AI)
 - **Qwen** (Alibaba)
@@ -280,67 +244,67 @@ Acceso a modelos de lenguaje a traves del navegador del usuario:
 
 ---
 
-## Colaboracion P2P
+## P2P Collaboration
 
-Anotacion colaborativa en tiempo real sin servidor central, usando iroh (protocolo QUIC):
+Real-time collaborative annotation with no central server, powered by Iroh (QUIC protocol):
 
-- **Crear sesion** como host o **unirse** como colaborador con un codigo
-- **Roles**: host (control total) y collaborator (permisos configurables)
-- **Reglas configurables**: subir imagenes, editar clases, eliminar, exportar
-- **Lock de imagenes**: modo individual o por lote asignado, con expiracion automatica
-- **Asignacion de lotes** de imagenes a colaboradores
-- **Sincronizacion de anotaciones** en tiempo real
-- **Lista de peers** con estado online
-
----
-
-## Export e import
-
-### Formatos de exportacion (11)
-
-| Formato | Descripcion |
-|---------|-------------|
-| YOLO Detection | `.txt` por imagen con bounding boxes normalizados |
-| YOLO Segmentation | `.txt` por imagen con poligonos normalizados |
-| COCO JSON | JSON unificado con anotaciones, categorias e imagenes |
-| Pascal VOC | XML por imagen (formato VOC2012) |
-| CSV Detection | CSV con bounding boxes |
-| CSV Classification | CSV con etiquetas de clase |
-| CSV Keypoints | CSV con coordenadas de keypoints |
-| CSV Landmarks | CSV con coordenadas de landmarks |
-| Folders by Class | Imagenes organizadas en carpetas por clase |
-| U-Net Masks | Mascaras PNG para segmentacion semantica |
-| TIX | Formato nativo Annotix (proyecto completo empaquetado) |
-
-Todos los exports generan un archivo ZIP con progreso en tiempo real.
-
-### Formatos de importacion (8)
-
-| Formato | Auto-deteccion |
-|---------|----------------|
-| YOLO Detection / Segmentation | Si |
-| COCO JSON | Si |
-| Pascal VOC | Si |
-| CSV (4 variantes) | Si |
-| U-Net Masks | Si |
-| Folders by Class | Si |
-| TIX (nativo) | Si |
-
-El detector automatico analiza la estructura del ZIP y asigna un score de confianza a cada formato.
+- **Create a session** as host or **join** as collaborator with a session code
+- **Roles**: LeadResearcher (full control) and Annotator/DataCurator (configurable permissions)
+- **Configurable permissions**: annotate, upload data, edit classes, delete, export, manage
+- **Image locking** with automatic 3-minute TTL and renewal
+- **Batch assignment** of images to collaborators
+- **Real-time annotation sync** via CRDT (Conflict-free Replicated Data Type)
+- **Peer list** with online status
 
 ---
 
-## Atajos de teclado
+## Export & Import
 
-Todos los atajos son **completamente personalizables** desde Settings con deteccion de conflictos por contexto.
+### Export Formats (11)
+
+| Format | Description |
+|--------|-------------|
+| YOLO Detection | One `.txt` per image with normalized bounding boxes |
+| YOLO Segmentation | One `.txt` per image with normalized polygons |
+| COCO JSON | Single JSON with annotations, categories, and images |
+| Pascal VOC | One XML per image (VOC2012 format) |
+| CSV Detection | CSV with bounding boxes |
+| CSV Classification | CSV with class labels |
+| CSV Keypoints | CSV with keypoint coordinates |
+| CSV Landmarks | CSV with landmark coordinates |
+| Folders by Class | Images organized in folders by class name |
+| U-Net Masks | Binary PNG masks for semantic segmentation |
+| TIX | Native Annotix format (complete packaged project) |
+
+All exports produce a ZIP file with real-time progress tracking.
+
+### Import Formats (8)
+
+| Format | Auto-Detection |
+|--------|----------------|
+| YOLO Detection / Segmentation | Yes |
+| COCO JSON | Yes |
+| Pascal VOC | Yes |
+| CSV (4 variants) | Yes |
+| U-Net Masks | Yes |
+| Folders by Class | Yes |
+| TIX (native) | Yes |
+
+The automatic detector inspects the ZIP structure and assigns a confidence score to each format.
+
+---
+
+## Keyboard Shortcuts
+
+All shortcuts are **fully customizable** from Settings with per-context conflict detection.
 
 <details>
-<summary><strong>Ver atajos por defecto</strong></summary>
+<summary><strong>Default shortcuts</strong></summary>
 
-### Herramientas de imagen
+### Image Tools
 
-| Atajo | Accion |
-|-------|--------|
+| Shortcut | Action |
+|----------|--------|
 | `B` | Bounding Box |
 | `O` | OBB |
 | `M` | Mask |
@@ -349,46 +313,46 @@ Todos los atajos son **completamente personalizables** desde Settings con detecc
 | `L` | Landmarks |
 | `V` | Select |
 | `H` | Pan |
-| `[` / `]` | Reducir / Aumentar brush |
-| `E` | Toggle borrador |
-| `A` / `D` | Rotar imagen |
-| `Enter` | Confirmar |
-| `Esc` | Cancelar |
+| `[` / `]` | Decrease / Increase brush size |
+| `E` | Toggle eraser |
+| `A` / `D` | Rotate image |
+| `Enter` | Confirm |
+| `Esc` | Cancel |
 
-### Navegacion
+### Navigation
 
-| Atajo | Accion |
-|-------|--------|
-| `←` / `→` | Imagen anterior / siguiente |
+| Shortcut | Action |
+|----------|--------|
+| `Left` / `Right` | Previous / Next image |
 | `Ctrl++` / `Ctrl+-` | Zoom in / out |
-| `Ctrl+0` | Zoom fit |
+| `Ctrl+0` | Zoom to fit |
 
 ### General
 
-| Atajo | Accion |
-|-------|--------|
-| `Ctrl+S` | Guardar |
-| `Ctrl+Z` / `Ctrl+Y` | Deshacer / Rehacer |
-| `Del` | Eliminar seleccion |
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+S` | Save |
+| `Ctrl+Z` / `Ctrl+Y` | Undo / Redo |
+| `Del` | Delete selection |
 
-### Seleccion rapida de clase
+### Quick Class Selection
 
-| Teclas | Clases |
-|--------|--------|
-| `1` - `0` | Clases 1 a 10 |
-| `Q` - `P` | Clases 11 a 20 |
+| Keys | Classes |
+|------|---------|
+| `1` - `0` | Classes 1 to 10 |
+| `Q` - `P` | Classes 11 to 20 |
 
 ### Video
 
-| Atajo | Accion |
-|-------|--------|
-| `T` | Nuevo track |
-| `←` / `→` | Frame anterior / siguiente |
+| Shortcut | Action |
+|----------|--------|
+| `T` | New track |
+| `Left` / `Right` | Previous / Next frame |
 
-### Series temporales
+### Time Series
 
-| Atajo | Accion |
-|-------|--------|
+| Shortcut | Action |
+|----------|--------|
 | `V` | Select |
 | `P` | Point |
 | `R` | Range |
@@ -399,248 +363,249 @@ Todos los atajos son **completamente personalizables** desde Settings con detecc
 
 ---
 
-## Idiomas
+## Languages
 
-Annotix esta disponible en 10 idiomas con carga lazy y fallback a ingles:
+Annotix is available in 10 languages with lazy loading and English fallback:
 
-| Idioma | Codigo |
-|--------|--------|
+| Language | Code |
+|----------|------|
 | Deutsch | `de` |
 | English | `en` |
 | Espanol | `es` |
 | Francais | `fr` |
 | Italiano | `it` |
-| 日本語 | `ja` |
-| 한국어 | `ko` |
+| Japanese | `ja` |
+| Korean | `ko` |
 | Portugues | `pt` |
-| Русский | `ru` |
-| 中文 | `zh` |
+| Russian | `ru` |
+| Chinese | `zh` |
 
 ---
 
-## Arquitectura
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    Frontend                          │
-│   React 19 + TypeScript + Tailwind + shadcn/ui      │
-│   Konva (canvas) · Chart.js (metricas) · i18next    │
-│   Zustand (estado) · React Router 7                 │
-├─────────────────────────────────────────────────────┤
-│                  Tauri 2 IPC                         │
-│               76 comandos registrados                │
-├─────────────────────────────────────────────────────┤
-│                  Backend (Rust)                      │
-│   ┌────────────┐ ┌───────────┐ ┌─────────────────┐ │
-│   │   Store     │ │ Commands  │ │ Export/Import   │ │
-│   │ (JSON+RAM)  │ │ (16 mod)  │ │ (11+8 fmts)    │ │
-│   └────────────┘ └───────────┘ └─────────────────┘ │
-│   ┌────────────┐ ┌───────────┐ ┌─────────────────┐ │
-│   │  Training   │ │ Browser   │ │ P2P (iroh)      │ │
-│   │ (19 backs)  │ │ Automat.  │ │ QUIC mesh       │ │
-│   └────────────┘ └───────────┘ └─────────────────┘ │
-├─────────────────────────────────────────────────────┤
-│               Integraciones externas                 │
-│   Python (micromamba) · FFmpeg · Chromium CDP        │
-│   Cloud APIs · iroh P2P network                     │
-└─────────────────────────────────────────────────────┘
++-----------------------------------------------------+
+|                    Frontend                           |
+|   React 19 + TypeScript + Tailwind + shadcn/ui       |
+|   Konva (canvas) . Chart.js (metrics) . i18next      |
+|   Zustand (state) . React Router 7                   |
++-----------------------------------------------------+
+|                  Tauri 2 IPC                          |
+|             137+ registered commands                  |
++-----------------------------------------------------+
+|                  Backend (Rust)                       |
+|   +------------+ +-----------+ +-----------------+   |
+|   |   Store    | | Commands  | | Export/Import   |   |
+|   | (JSON+RAM) | | (16 mod)  | | (11+8 formats) |   |
+|   +------------+ +-----------+ +-----------------+   |
+|   +------------+ +-----------+ +-----------------+   |
+|   |  Training  | | Browser   | | P2P (Iroh)      |   |
+|   | (19 backs) | | Automat.  | | QUIC mesh       |   |
+|   +------------+ +-----------+ +-----------------+   |
++-----------------------------------------------------+
+|               External Integrations                   |
+|   Python (micromamba) . FFmpeg . Chromium CDP         |
+|   Cloud APIs . Iroh P2P network                      |
++-----------------------------------------------------+
 ```
 
-### Almacenamiento
+### Storage
+
+All data is stored as JSON files and raw assets on disk. No database required.
 
 ```
-~/.local/share/annotix/config.json        → configuracion global
-{projects_dir}/{uuid}/project.json        → proyecto completo (metadata + clases + anotaciones)
-{projects_dir}/{uuid}/images/             → archivos de imagen originales
-{projects_dir}/{uuid}/thumbnails/         → thumbnails generados
-{projects_dir}/{uuid}/videos/             → archivos de video
+~/.local/share/annotix/config.json        -> global configuration
+{projects_dir}/{uuid}/project.json        -> full project (metadata + classes + annotations)
+{projects_dir}/{uuid}/images/             -> original image files
+{projects_dir}/{uuid}/thumbnails/         -> generated thumbnails
+{projects_dir}/{uuid}/videos/             -> video files
+{projects_dir}/{uuid}/models/             -> inference models
 ```
 
-- Cache en memoria (`HashMap<String, CachedProject>`)
-- Escritura atomica (`.tmp` → `rename`)
-- Acceso via `with_project(id, |pf| ...)` (lectura) y `with_project_mut(id, |pf| ...)` (escritura)
+- In-memory cache (`HashMap<String, CachedProject>`) with dirty-flag tracking
+- Atomic writes (`.tmp` file then `rename`)
+- Access via `with_project(id, |pf| ...)` (read) and `with_project_mut(id, |pf| ...)` (write + auto-flush)
 
 ---
 
-## Stack tecnologico
+## Tech Stack
 
 ### Frontend
 
-| Tecnologia | Version | Uso |
-|------------|---------|-----|
+| Technology | Version | Purpose |
+|------------|---------|---------|
 | React | 19 | UI framework |
-| TypeScript | 5.7 | Tipado estatico |
-| Vite | 6 | Bundler y dev server |
-| Tailwind CSS | 3.4 | Estilos utilitarios |
-| shadcn/ui | — | Componentes (Radix UI) |
-| Zustand | 5 | Estado global con persistencia |
-| React Router | 7 | Enrutamiento SPA |
-| Konva | 10 | Canvas 2D de anotaciones |
-| Chart.js | 4 | Graficas de metricas |
-| i18next | 24 | Internacionalizacion |
-| Lucide React | — | Iconografia |
+| TypeScript | 5.7 | Static typing |
+| Vite | 6 | Bundler and dev server |
+| Tailwind CSS | 3.4 | Utility-first styling |
+| shadcn/ui | — | Component library (Radix UI) |
+| Zustand | 5 | Global state with persistence |
+| React Router | 7 | SPA routing |
+| Konva | 10 | 2D annotation canvas |
+| Chart.js | 4 | Metrics visualization |
+| i18next | 24 | Internationalization |
+| Lucide React | — | Icons |
 
 ### Backend (Rust)
 
-| Crate | Version | Uso |
-|-------|---------|-----|
-| tauri | 2 | Framework de aplicacion desktop |
-| serde / serde_json | 1 | Serializacion JSON |
-| image | 0.25 | Procesamiento de imagenes |
-| ffmpeg-the-third | 4 | Extraccion de frames de video |
-| zip | 2 | Empaquetado export/import |
+| Crate | Version | Purpose |
+|-------|---------|---------|
+| tauri | 2 | Desktop application framework |
+| serde / serde_json | 1 | JSON serialization |
+| image | 0.25 | Image processing |
+| ffmpeg-the-third | 4 | Video frame extraction |
+| zip | 2 | Export/import packaging |
 | quick-xml | 0.37 | Pascal VOC XML |
 | csv | 1.3 | CSV import/export |
-| reqwest | 0.12 | Cliente HTTP (cloud providers) |
+| reqwest | 0.12 | HTTP client (cloud providers) |
 | headless_chrome | 1.0 | Browser automation (CDP) |
 | iroh | 0.96 | P2P networking (QUIC) |
-| tokio | 1 | Runtime async |
+| tokio | 1 | Async runtime |
 | blake3 | 1 | Hashing |
-| jsonwebtoken | 9 | JWT para cloud |
-| uuid | 1 | Generacion de IDs |
-| chrono | 0.4 | Timestamps |
 
 ### Python (via micromamba)
 
-| Paquete | Uso |
-|---------|-----|
+| Package | Purpose |
+|---------|---------|
 | ultralytics | YOLO, RT-DETR |
 | rfdetr | RF-DETR |
 | mmdet, mmseg, mmpose, mmrotate | OpenMMLab suite |
-| segmentation-models-pytorch | Segmentacion semantica |
-| timm | Clasificacion (700+ modelos) |
-| detectron2 | Segmentacion de instancias |
-| tsai, pytorch-forecasting | Series temporales DL |
-| pyod, tslearn, pypots, stumpy | Series temporales clasico |
-| scikit-learn | ML tabular |
+| segmentation-models-pytorch | Semantic segmentation |
+| timm | Classification (700+ models) |
+| detectron2 | Instance segmentation |
+| tsai, pytorch-forecasting | Time series deep learning |
+| pyod, tslearn, pypots, stumpy | Time series classical ML |
+| scikit-learn | Tabular ML |
 
 ---
 
-## Requisitos del sistema
+## System Requirements
 
 - **OS**: Windows 10+, macOS 12+, Linux (glibc 2.31+)
-- **RAM**: 4 GB minimo, 8 GB recomendado
-- **Disco**: 500 MB para la aplicacion + espacio para datasets
-- **GPU** (opcional): NVIDIA con CUDA para entrenamiento local acelerado, o Apple Silicon con MPS
-- **FFmpeg**: requerido para anotacion de video (incluido en el bundle)
-- **Navegador Chromium** (opcional): para browser automation (Chrome, Chromium, Brave, Edge)
+- **RAM**: 4 GB minimum, 8 GB recommended
+- **Disk**: ~500 MB for the application + space for datasets
+- **GPU** (optional): NVIDIA with CUDA or Apple Silicon with MPS for accelerated local training
+- **FFmpeg**: required for video annotation (bundled in release builds)
+- **Chromium browser** (optional): for browser automation (Chrome, Chromium, Brave, Edge)
 
 ---
 
-## Instalacion y desarrollo
+## Getting Started
 
-### Prerrequisitos
+### Prerequisites
 
 - [Node.js](https://nodejs.org/) >= 18
 - [Rust](https://rustup.rs/) >= 1.89
-- [Tauri CLI prerequisites](https://v2.tauri.app/start/prerequisites/)
+- [Tauri 2 prerequisites](https://v2.tauri.app/start/prerequisites/) for your platform
 
-### Setup
+### Install & Run
 
 ```bash
-# Clonar el repositorio
+# Clone the repository
 git clone https://github.com/tecmedhub/annotix.git
 cd annotix
 
-# Instalar dependencias frontend
+# Install frontend dependencies
 npm install
 
-# Desarrollo (frontend + backend)
+# Run in development mode (frontend hot-reload + Rust auto-rebuild)
 npm run tauri:dev
 
-# Build de produccion
+# Build for production
 npm run tauri:build
 ```
 
-### Scripts disponibles
+### Available Scripts
 
-| Script | Descripcion |
+| Script | Description |
 |--------|-------------|
-| `npm run dev` | Solo frontend (Vite dev server) |
-| `npm run build` | Build frontend (TypeScript + Vite) |
-| `npm run tauri:dev` | Desarrollo completo (frontend + Rust) |
-| `npm run tauri:build` | Build de produccion multiplataforma |
-| `npm run lint` | ESLint con zero warnings |
-| `npm run preview` | Preview del build frontend |
+| `npm run dev` | Frontend only (Vite dev server) |
+| `npm run build` | Build frontend (TypeScript check + Vite) |
+| `npm run tauri:dev` | Full development (frontend + Rust backend) |
+| `npm run tauri:build` | Production build with platform-specific installers |
+| `npm run lint` | ESLint with zero warnings policy |
+| `npm run preview` | Preview the built frontend |
 
 ---
 
-## Estructura del proyecto
+## Project Structure
 
 ```
 annotix/
-├── package.json                 # Dependencias frontend y scripts
-├── tsconfig.json                # Config TypeScript
-├── vite.config.ts               # Config Vite
-├── tailwind.config.js           # Config Tailwind CSS
-├── components.json              # Config shadcn/ui
-├── check-translations.ts        # Validador de traducciones
-├── DOCS/                        # Documentacion tecnica interna
-│   ├── training_backends_reference.md
-│   ├── yolo_hyperparameters_reference.md
-│   ├── segmentation_backends_reference.md
-│   ├── tabular_ml_backends_reference.md
-│   └── project_types_architecture.md
+├── package.json                 # Frontend dependencies and scripts
+├── tsconfig.json                # TypeScript configuration
+├── vite.config.ts               # Vite bundler config
+├── tailwind.config.js           # Tailwind CSS config
+├── components.json              # shadcn/ui config
+├── ARCHITECTURE.md              # Detailed architecture documentation
+├── DOCS/                        # Technical reference docs
 ├── public/
 │   ├── logo.png
-│   └── locales/                 # 10 archivos de idioma (JSON)
-├── src/
-│   ├── main.tsx                 # Entry point React
-│   ├── App.tsx                  # Router y providers
+│   └── locales/                 # 10 language files (JSON)
+├── src/                         # React frontend
+│   ├── main.tsx                 # Entry point
+│   ├── App.tsx                  # Router and providers
 │   ├── lib/
-│   │   ├── db.ts                # Tipos e interfaces
-│   │   ├── tauriDb.ts           # Capa de invocaciones Tauri
-│   │   └── i18n.ts              # Configuracion i18next
-│   ├── hooks/                   # Hooks globales
-│   ├── components/ui/           # Componentes shadcn/ui
+│   │   ├── db.ts                # Type definitions (mirrors Rust structs)
+│   │   ├── tauriDb.ts           # Centralized Tauri invoke bridge
+│   │   └── i18n.ts              # i18next configuration
+│   ├── hooks/                   # Global hooks
+│   ├── components/ui/           # shadcn/ui components
 │   └── features/
-│       ├── core/                # Layout, shortcuts, estado UI
-│       ├── projects/            # CRUD y gestion de proyectos
-│       ├── gallery/             # Galeria de imagenes
-│       ├── canvas/              # Canvas de anotacion (7 herramientas)
-│       ├── classification/      # Clasificacion de imagenes
-│       ├── video/               # Anotacion de video
-│       ├── timeseries/          # Series temporales
-│       ├── tabular/             # Datos tabulares
-│       ├── training/            # Panel de entrenamiento ML
-│       ├── export/              # Exportadores
-│       ├── import/              # Importadores
-│       ├── settings/            # Configuracion y env Python
-│       ├── browser-automation/  # Automatizacion de navegador
-│       ├── p2p/                 # Colaboracion P2P
-│       └── setup/               # Pantalla de configuracion inicial
-└── src-tauri/
-    ├── Cargo.toml               # Dependencias Rust
-    ├── tauri.conf.json          # Configuracion Tauri
+│       ├── core/                # Layout, shortcuts, global UI state
+│       ├── projects/            # Project CRUD
+│       ├── gallery/             # Image gallery and class management
+│       ├── canvas/              # Annotation canvas (7 tools)
+│       │   ├── handlers/        # BBox, OBB, Mask, Polygon, Keypoints, Landmarks
+│       │   ├── renderers/       # Visual renderers per annotation type
+│       │   ├── hooks/           # useAnnotations, canvas state
+│       │   └── services/        # annotationService
+│       ├── classification/      # Image classification
+│       ├── video/               # Video annotation
+│       ├── timeseries/          # Time series visualization and annotation
+│       ├── tabular/             # Tabular data editor
+│       ├── training/            # ML training panel
+│       ├── export/              # Export UI (11 formats)
+│       ├── import/              # Import UI (8 formats)
+│       ├── inference/           # Model inference
+│       ├── settings/            # App settings and Python environment
+│       ├── browser-automation/  # Chrome automation UI
+│       ├── p2p/                 # P2P collaboration
+│       └── setup/               # Initial setup screen
+└── src-tauri/                   # Rust backend
+    ├── Cargo.toml               # Rust dependencies
+    ├── tauri.conf.json          # Tauri app configuration
     └── src/
-        ├── lib.rs               # Entry point (76 comandos)
-        ├── store/               # Almacenamiento (state, IO, cache)
-        ├── commands/            # 16 modulos de comandos
-        ├── export/              # 7 modulos de exportacion
-        ├── import/              # 8 modulos de importacion
-        ├── training/            # Multi-backend ML training
+        ├── lib.rs               # 137+ Tauri command registrations
+        ├── store/               # Storage layer (state, IO, cache)
+        ├── commands/            # 16 command modules
+        ├── export/              # 11 export format modules
+        ├── import/              # 8 import format modules + auto-detector
+        ├── training/            # Multi-backend ML training pipeline
         ├── browser_automation/  # Headless Chrome automation
-        ├── p2p/                 # Red P2P con iroh
+        ├── p2p/                 # P2P networking with Iroh
+        ├── inference/           # ONNX model inference
         └── utils/
 ```
 
 ---
 
-## Rutas de la aplicacion
+## Application Routes
 
-| Ruta | Vista |
-|------|-------|
-| `/` | Lista de proyectos |
-| `/projects/:id` | Galeria de imagenes + gestion de clases |
-| `/projects/:id/images/:imageId` | Canvas de anotacion |
-| `/projects/:id/timeseries/:tsId` | Visualizacion y anotacion de series temporales |
-| `/projects/:id/videos/:videoId` | Anotacion de video con timeline |
-| `/settings` | Configuracion de la aplicacion |
+| Route | View |
+|-------|------|
+| `/` | Project list |
+| `/projects/:id` | Image gallery + class management |
+| `/projects/:id/images/:imageId` | Annotation canvas |
+| `/projects/:id/timeseries/:tsId` | Time series visualization and annotation |
+| `/projects/:id/videos/:videoId` | Video annotation with timeline |
+| `/settings` | Application settings |
 
-La pantalla de setup inicial se muestra automaticamente si no hay directorio de proyectos configurado.
+The initial setup screen is shown automatically if no projects directory has been configured.
 
 ---
 
-## Licencia
+## License
 
 MIT License — [TecMedHub](https://github.com/tecmedhub), Universidad Austral de Chile, Campus Puerto Montt.

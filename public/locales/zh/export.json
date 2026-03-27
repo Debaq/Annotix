@@ -310,7 +310,15 @@
     "unetMasks": "U-Net 掩码",
     "unetMasksDesc": "用于分割训练的灰度 PNG 图像",
     "tix": "Annotix 项目 (.tix)",
-    "tixDesc": "将整个项目导出为 .tix 文件用于备份或共享"
+    "tixDesc": "将整个项目导出为 .tix 文件用于备份或共享",
+    "huggingfaceAsr": "HuggingFace ASR",
+    "huggingfaceAsrDesc": "包含file_name和transcription列的语音识别数据集CSV",
+    "ljspeech": "LJSpeech",
+    "ljspeechDesc": "LJSpeech格式，包含metadata.csv（名称|转录）和wavs文件夹",
+    "csvAudioClassification": "音频分类 CSV",
+    "csvAudioClassificationDesc": "包含file_name和label列的音频分类CSV",
+    "csvSoundEvents": "声音事件 CSV",
+    "csvSoundEventsDesc": "包含file_name、start_ms、end_ms和label列的声音事件检测CSV"
   },
   "notAvailable": "此项目类型不支持导出",
   "preparing": "准备导出...",

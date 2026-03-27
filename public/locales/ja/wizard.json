@@ -12,12 +12,14 @@
       "options": {
         "images": "画像",
         "timeseries": "時系列",
-        "tabular": "テーブルデータ"
+        "tabular": "テーブルデータ",
+        "audio": "オーディオ"
       },
       "optionsDesc": {
         "images": "写真、スクリーンショット、スキャン、フレーム",
         "timeseries": "センサー、メトリクス、信号、金融データ",
-        "tabular": "CSVファイル、スプレッドシート、構造化テーブル"
+        "tabular": "CSVファイル、スプレッドシート、構造化テーブル",
+        "audio": "音声録音、声、音楽、効果音"
       }
     },
     "goalImages": {
@@ -48,6 +50,19 @@
         "tsPredict": "将来の値を予測またはギャップを埋める",
         "tsAnomaly": "異常または予期しないパターンを見つける",
         "tsAnalyze": "セグメント化、パターン検索、またはクラスタリング"
+      }
+    },
+    "goalAudio": {
+      "title": "オーディオで何をしたいですか？",
+      "options": {
+        "audioTranscribe": "音声を書き起こす",
+        "audioClassify": "音声を分類",
+        "audioDetect": "イベントを検出"
+      },
+      "optionsDesc": {
+        "audioTranscribe": "話し言葉をテキストに変換 (ASR)",
+        "audioClassify": "各音声クリップにラベルを付ける",
+        "audioDetect": "特定の音を識別し位置を特定する"
       }
     },
     "classifyDetail": {
@@ -143,6 +158,9 @@
     "pattern-recognition": "繰り返しモチーフとパターンを発見",
     "event-detection": "シリーズ内で特定のイベントがいつ発生するかを特定",
     "clustering": "類似の時系列またはセグメントをグループ化",
-    "imputation": "欠損または破損したデータポイントを再構築"
+    "imputation": "欠損または破損したデータポイントを再構築",
+    "speech-recognition": "ASRトレーニング用に音声ファイルをテキストに書き起こす",
+    "audio-classification": "音声クリップをカテゴリーに分類する",
+    "sound-event-detection": "音声内の特定のイベントを検出して位置を特定する"
   }
 }
