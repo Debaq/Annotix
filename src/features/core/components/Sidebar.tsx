@@ -12,7 +12,6 @@ const TOOLS = [
   { id: 'keypoints' as const, icon: 'fa-user-circle', key: 'K', requiresKeypoints: true },
   { id: 'landmarks' as const, icon: 'fa-map-marker-alt', key: 'L', requiresLandmarks: true },
   { id: 'obb' as const, icon: 'fa-rectangle-wide', key: 'O', requiresOBB: true },
-  { id: 'select' as const, icon: 'fa-mouse-pointer', key: 'V' },
   { id: 'pan' as const, icon: 'fa-hand', key: 'H' },
 ];
 

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { MousePointer2, Hand, Square, PenTool, Hexagon, Dot, LayoutGrid, Box } from 'lucide-react';
+import { Hand, Square, PenTool, Hexagon, Dot, LayoutGrid, Box } from 'lucide-react';
 import { useUIStore } from '../../core/store/uiStore';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,6 @@ export function CanvasToolbar() {
   const { project } = useCurrentProject();
 
   const tools = [
-    { id: 'select', icon: MousePointer2, label: 'tools.select', shortcut: 'V' },
     { id: 'pan', icon: Hand, label: 'tools.pan', shortcut: 'H' },
   ];
 

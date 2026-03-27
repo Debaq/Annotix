@@ -10,7 +10,7 @@ export function useKeyboardShortcuts() {
   const { setActiveTool, setActiveClassId } = useUIStore();
   const { project } = useCurrentProject();
   const { navigatePrevious, navigateNext } = useImageNavigation();
-  const { selectedAnnotationId, deleteAnnotation } = useAnnotations();
+  const { annotations, selectedAnnotationIds, deleteAnnotation, updateAnnotation } = useAnnotations();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -55,9 +55,6 @@ export function useKeyboardShortcuts() {
       } else if (matchesShortcut(e, 'tool-obb')) {
         e.preventDefault();
         if (project?.type === 'obb') setActiveTool('obb');
-      } else if (matchesShortcut(e, 'tool-select')) {
-        e.preventDefault();
-        setActiveTool('select');
       } else if (matchesShortcut(e, 'tool-pan')) {
         e.preventDefault();
         setActiveTool('pan');
@@ -65,12 +62,12 @@ export function useKeyboardShortcuts() {
 
       // Navigation (only if no annotation is selected)
       if (matchesShortcut(e, 'prev-image')) {
-        if (!selectedAnnotationId) {
+        if (selectedAnnotationIds.size === 0) {
           e.preventDefault();
           navigatePrevious();
         }
       } else if (matchesShortcut(e, 'next-image')) {
-        if (!selectedAnnotationId) {
+        if (selectedAnnotationIds.size === 0) {
           e.preventDefault();
           navigateNext();
         }
@@ -94,16 +91,39 @@ export function useKeyboardShortcuts() {
         window.dispatchEvent(new CustomEvent('annotix:redo'));
       }
 
-      // Delete selected annotation
+      // Arrow keys to move selected annotations
+      if (selectedAnnotationIds.size > 0 && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
+        const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+
+        for (const id of selectedAnnotationIds) {
+          const ann = annotations.find(a => a.id === id);
+          if (!ann) continue;
+          const data = ann.data as any;
+          if (data.x !== undefined && data.y !== undefined) {
+            updateAnnotation(id, { data: { ...data, x: data.x + dx, y: data.y + dy } });
+          } else if (data.points) {
+            updateAnnotation(id, {
+              data: { ...data, points: data.points.map((p: any) => ({ x: p.x + dx, y: p.y + dy })) },
+            });
+          }
+        }
+      }
+
+      // Delete selected annotations
       if (matchesShortcut(e, 'delete')) {
-        if (selectedAnnotationId) {
+        if (selectedAnnotationIds.size > 0) {
           e.preventDefault();
-          void deleteAnnotation(selectedAnnotationId);
+          for (const id of selectedAnnotationIds) {
+            void deleteAnnotation(id);
+          }
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [project, setActiveTool, setActiveClassId, navigatePrevious, navigateNext, selectedAnnotationId, deleteAnnotation]);
+  }, [project, setActiveTool, setActiveClassId, navigatePrevious, navigateNext, selectedAnnotationIds, annotations, deleteAnnotation, updateAnnotation]);
 }

@@ -92,10 +92,25 @@ export function useVideoAnnotationBridge(
     });
   }, [allBBoxes, imageWidth, imageHeight, pctToPx, localOverrides]);
 
-  const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
+  const [selectedAnnotationIds, setSelectedAnnotationIds] = useState<Set<string>>(new Set());
 
-  const selectAnnotation = useCallback((id: string | null) => {
-    setSelectedAnnotationId(id);
+  const selectedAnnotationId = selectedAnnotationIds.size > 0
+    ? [...selectedAnnotationIds][0]
+    : null;
+
+  const selectAnnotation = useCallback((id: string | null, addToSelection = false) => {
+    if (id === null) {
+      setSelectedAnnotationIds(new Set());
+    } else if (addToSelection) {
+      setSelectedAnnotationIds(prev => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      });
+    } else {
+      setSelectedAnnotationIds(new Set([id]));
+    }
   }, []);
 
   // Crear bbox → crear track + keyframe
@@ -149,8 +164,14 @@ export function useVideoAnnotationBridge(
     if (!id.startsWith(VKF_PREFIX)) return;
     const trackId = id.slice(VKF_PREFIX.length);
     await removeKeyframe(trackId, frameIndex);
-    if (selectedAnnotationId === id) setSelectedAnnotationId(null);
-  }, [removeKeyframe, frameIndex, selectedAnnotationId]);
+    if (selectedAnnotationIds.has(id)) {
+      setSelectedAnnotationIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  }, [removeKeyframe, frameIndex, selectedAnnotationIds]);
 
   // Toggle habilitado/deshabilitado en este frame
   const onToggleAnnotation = useCallback(async (id: string) => {
@@ -174,6 +195,7 @@ export function useVideoAnnotationBridge(
   return {
     annotations,
     selectedAnnotationId,
+    selectedAnnotationIds,
     selectAnnotation,
     addAnnotation,
     updateAnnotation,

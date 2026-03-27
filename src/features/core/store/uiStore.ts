@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type ToolType = 'select' | 'pan' | 'bbox' | 'mask' | 'polygon' | 'keypoints' | 'landmarks' | 'obb';
+type ToolType = 'pan' | 'bbox' | 'mask' | 'polygon' | 'keypoints' | 'landmarks' | 'obb';
 type GalleryFilterType = 'all' | 'annotated' | 'unannotated';
 
 interface UIState {
@@ -67,7 +67,7 @@ export const useUIStore = create<UIState>()(
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
 
       // Active tool
-      activeTool: 'select',
+      activeTool: 'pan',
       setActiveTool: (tool) => set({ activeTool: tool }),
 
       // Active class
@@ -128,13 +128,14 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: 'annotix-ui-storage',
-      // Optional: Only persist specific fields if needed, but persisting all seems fine for "stay where I was"
-      // partialize: (state) => ({ 
-      //   currentProjectId: state.currentProjectId,
-      //   currentImageId: state.currentImageId,
-      //   sidebarOpen: state.sidebarOpen,
-      //   // ...
-      // }),
+      merge: (persisted, current) => {
+        const merged = { ...(current as object), ...(persisted as object) } as UIState;
+        // Migrar tool 'select' eliminado → 'pan'
+        if ((merged.activeTool as string) === 'select') {
+          merged.activeTool = 'pan';
+        }
+        return merged;
+      },
     }
   )
 );
