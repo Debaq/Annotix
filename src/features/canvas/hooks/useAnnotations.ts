@@ -80,6 +80,10 @@ export const useAnnotationStore = create<AnnotationState>((set) => ({
 // Contador global de saves en curso — bloquea sync externo mientras guardamos
 let pendingSaves = 0;
 
+// Guard para evitar que múltiples instancias de useAnnotations ejecuten undo/redo
+// simultáneamente (cada componente que llama useAnnotations registra su propio listener)
+let _undoRedoInProgress = false;
+
 function fingerprint(anns: Annotation[] | undefined): string {
   if (!anns || anns.length === 0) return '';
   return `${anns.length}:${anns[0]?.id || ''}:${anns[anns.length - 1]?.id || ''}`;
@@ -232,12 +236,18 @@ export function useAnnotations() {
 
   useEffect(() => {
     const handleUndo = async () => {
-      const currentAnns = useAnnotationStore.getState().annotations;
-      const restored = useUndoStore.getState().undo(currentAnns.map(a => ({ ...a })));
-      if (restored) {
-        setAnnotations(restored);
-        await saveAnnotations(restored);
-        await reload();
+      if (_undoRedoInProgress) return;
+      _undoRedoInProgress = true;
+      try {
+        const currentAnns = useAnnotationStore.getState().annotations;
+        const restored = useUndoStore.getState().undo(currentAnns.map(a => ({ ...a })));
+        if (restored) {
+          setAnnotations(restored);
+          await saveAnnotations(restored);
+          await reload();
+        }
+      } finally {
+        _undoRedoInProgress = false;
       }
     };
     window.addEventListener('annotix:undo', handleUndo);
@@ -246,12 +256,18 @@ export function useAnnotations() {
 
   useEffect(() => {
     const handleRedo = async () => {
-      const currentAnns = useAnnotationStore.getState().annotations;
-      const restored = useUndoStore.getState().redo(currentAnns.map(a => ({ ...a })));
-      if (restored) {
-        setAnnotations(restored);
-        await saveAnnotations(restored);
-        await reload();
+      if (_undoRedoInProgress) return;
+      _undoRedoInProgress = true;
+      try {
+        const currentAnns = useAnnotationStore.getState().annotations;
+        const restored = useUndoStore.getState().redo(currentAnns.map(a => ({ ...a })));
+        if (restored) {
+          setAnnotations(restored);
+          await saveAnnotations(restored);
+          await reload();
+        }
+      } finally {
+        _undoRedoInProgress = false;
       }
     };
     window.addEventListener('annotix:redo', handleRedo);
