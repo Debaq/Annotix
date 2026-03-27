@@ -104,6 +104,9 @@ export function ProjectCard({ project, folders = [] }: ProjectCardProps) {
     clustering: 'fa-circle-nodes',
     imputation: 'fa-fill-drip',
     tabular: 'fa-table',
+    'audio-classification': 'fa-music',
+    'speech-recognition': 'fa-microphone',
+    'sound-event-detection': 'fa-volume-high',
   };
 
   const typeIcon = typeIconMap[project.type] || 'fa-folder';
