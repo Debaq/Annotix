@@ -135,6 +135,19 @@ export function AudioGallery() {
           </button>
         ))}
       </div>
+
+      {/* Back button */}
+      <div className="p-3 border-t border-[var(--annotix-border)]">
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full annotix-btn annotix-btn-outline"
+          onClick={() => navigate('/')}
+        >
+          <i className="fas fa-arrow-left mr-2"></i>
+          {t('common.backToProjects')}
+        </Button>
+      </div>
     </div>
   );
 }
