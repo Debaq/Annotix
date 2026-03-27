@@ -3,12 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
 import { useUIStore } from '@/features/core/store/uiStore';
 import { getAvailableTools } from '../config/toolsConfig';
-import { useShortcutKey } from '@/features/core/hooks/useShortcutKey';
 import { shortcutsManager } from '@/features/core/utils/ShortcutsManager';
 import { cn } from '@/lib/utils';
 import type { ToolId } from '../config/toolsConfig';
 
-// Mapeo de toolId a shortcutId
 const TOOL_SHORTCUT_MAP: Record<ToolId, string> = {
   pan: 'tool-pan',
   bbox: 'tool-box',
@@ -18,12 +16,6 @@ const TOOL_SHORTCUT_MAP: Record<ToolId, string> = {
   landmarks: 'tool-landmarks',
   obb: 'tool-obb',
 };
-
-function ToolShortcutKey({ toolId }: { toolId: ToolId }) {
-  const shortcutId = TOOL_SHORTCUT_MAP[toolId];
-  const key = useShortcutKey(shortcutId);
-  return <>{key}</>;
-}
 
 interface FloatingToolsProps {
   maskBrushSize?: number;
@@ -45,8 +37,26 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
   if (!project) return null;
 
   const availableTools = getAvailableTools(project.type);
-
   if (availableTools.length === 0) return null;
+
+  const hasMaskTool = availableTools.some((tool) => tool.id === 'mask');
+  const isMaskActive = activeTool === 'mask';
+
+  const handleBrushClick = () => {
+    setActiveTool('mask');
+    onMaskSetEraseMode?.(false);
+  };
+
+  const handleEraserClick = () => {
+    setActiveTool('mask');
+    onMaskSetEraseMode?.(true);
+  };
+
+  const handleSizeChange = (delta: number) => {
+    if (maskBrushSize == null) return;
+    const next = Math.max(1, Math.min(100, maskBrushSize + delta));
+    onMaskBrushSizeChange?.(next);
+  };
 
   return (
     <div className="annotix-floating" style={{ left: '20px', top: '50%', transform: 'translateY(-50%)' }}>
@@ -64,9 +74,11 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
           {t('canvas.tools')}
         </h4>
 
-        <div className="flex flex-col gap-1">
-          <div className="flex flex-col gap-2">
-            {availableTools.map((tool) => (
+        <div className="flex flex-col gap-2">
+          {/* Herramientas principales (sin mask, que se reemplaza por pincel/goma) */}
+          {availableTools
+            .filter((tool) => !(hasMaskTool && tool.id === 'mask'))
+            .map((tool) => (
               <button
                 key={tool.id}
                 onClick={() => setActiveTool(tool.id)}
@@ -79,48 +91,65 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
                 <i className={`fas ${tool.icon}`}></i>
               </button>
             ))}
-          </div>
 
-          {activeTool === 'mask' && typeof maskBrushSize === 'number' && (
-            <div className="flex flex-col items-center gap-1 min-w-[46px]">
-              {/* Pincel y goma como botones separados */}
-              <div className="flex flex-col gap-1">
-                <button
-                  className={cn('annotix-tool-btn', !maskEraseMode && 'active')}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onMaskSetEraseMode?.(false);
-                  }}
-                  title={`${t('tools.maskBrush')} (${shortcutsManager.getKeyForShortcut('mask-erase-toggle')})`}
-                >
-                  <i className="fas fa-paint-brush"></i>
-                </button>
-                <button
-                  className={cn('annotix-tool-btn', maskEraseMode && 'active')}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onMaskSetEraseMode?.(true);
-                  }}
-                  title={`${t('tools.maskEraser')} (${shortcutsManager.getKeyForShortcut('mask-erase-toggle')})`}
-                >
-                  <i className="fas fa-eraser"></i>
-                </button>
-              </div>
+          {/* Pincel y goma como herramientas directas (reemplazan al botón "mask") */}
+          {hasMaskTool && (
+            <>
+              <button
+                onClick={handleBrushClick}
+                className={cn(
+                  'annotix-tool-btn',
+                  isMaskActive && !maskEraseMode && 'active'
+                )}
+                title={`${t('tools.maskBrush')} (${shortcutsManager.getKeyForShortcut('tool-mask')})`}
+              >
+                <i className="fas fa-paint-brush"></i>
+              </button>
+              <button
+                onClick={handleEraserClick}
+                className={cn(
+                  'annotix-tool-btn',
+                  isMaskActive && maskEraseMode && 'active'
+                )}
+                title={`${t('tools.maskEraser')} (${shortcutsManager.getKeyForShortcut('mask-erase-toggle')})`}
+              >
+                <i className="fas fa-eraser"></i>
+              </button>
+            </>
+          )}
+
+          {/* Grosor del pincel — spin numérico */}
+          {hasMaskTool && isMaskActive && typeof maskBrushSize === 'number' && (
+            <div className="flex flex-col items-center gap-0.5">
+              <button
+                className="annotix-tool-btn !w-7 !h-5 !min-h-0 !text-[10px]"
+                onClick={() => handleSizeChange(5)}
+                title={`${shortcutsManager.getKeyForShortcut('mask-brush-size')} ]`}
+              >
+                <i className="fas fa-plus fa-xs"></i>
+              </button>
               <input
-                type="range"
-                min={5}
+                type="number"
+                min={1}
                 max={100}
-                step={1}
                 value={maskBrushSize}
-                onChange={(event) => {
-                  event.stopPropagation();
-                  onMaskBrushSizeChange?.(Number(event.target.value));
+                onChange={(e) => {
+                  e.stopPropagation();
+                  const v = parseInt(e.target.value, 10);
+                  if (!isNaN(v)) onMaskBrushSizeChange?.(Math.max(1, Math.min(100, v)));
                 }}
-                className="h-24 w-2"
-                style={{ writingMode: 'vertical-lr', direction: 'rtl' }}
-                title={shortcutsManager.getKeyForShortcut('mask-brush-size')}
+                className="w-10 text-center text-xs font-medium bg-transparent border rounded px-0.5 py-0.5
+                  [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                style={{ borderColor: 'var(--annotix-border)' }}
+                onClick={(e) => e.stopPropagation()}
               />
-              <span className="text-xs font-medium">{maskBrushSize}</span>
+              <button
+                className="annotix-tool-btn !w-7 !h-5 !min-h-0 !text-[10px]"
+                onClick={() => handleSizeChange(-5)}
+                title={`${shortcutsManager.getKeyForShortcut('mask-brush-size')} [`}
+              >
+                <i className="fas fa-minus fa-xs"></i>
+              </button>
             </div>
           )}
         </div>
