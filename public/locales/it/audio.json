@@ -23,6 +23,8 @@
   "segmentTextPlaceholder": "Testo trascritto per questo segmento...",
   "startMs": "Inizio (ms)",
   "endMs": "Fine (ms)",
+  "speakers": "Parlanti",
+  "clickToAssignSpeaker": "Clicca per assegnare il parlante attivo",
   "selectClass": "Seleziona Classe",
   "noClasses": "Nessuna classe definita in questo progetto",
   "drawClass": "Classe attiva",

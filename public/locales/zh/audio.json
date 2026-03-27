@@ -23,6 +23,8 @@
   "segmentTextPlaceholder": "此片段的转录文本...",
   "startMs": "开始 (ms)",
   "endMs": "结束 (ms)",
+  "speakers": "说话人",
+  "clickToAssignSpeaker": "点击分配当前说话人",
   "selectClass": "选择类别",
   "noClasses": "此项目未定义类别",
   "drawClass": "绘制类别",

@@ -310,6 +310,7 @@ export interface AudioSegment {
   startMs: number;
   endMs: number;
   text: string;
+  speakerId?: number;
 }
 
 export interface AudioEvent {

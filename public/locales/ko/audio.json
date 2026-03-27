@@ -23,6 +23,8 @@
   "segmentTextPlaceholder": "이 세그먼트의 전사 텍스트...",
   "startMs": "시작 (ms)",
   "endMs": "끝 (ms)",
+  "speakers": "화자",
+  "clickToAssignSpeaker": "클릭하여 활성 화자 할당",
   "selectClass": "클래스 선택",
   "noClasses": "이 프로젝트에 정의된 클래스가 없습니다",
   "drawClass": "그리기 클래스",

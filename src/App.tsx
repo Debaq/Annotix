@@ -59,6 +59,10 @@ function isAudioProject(type: ProjectType): boolean {
   return ['audio-classification', 'speech-recognition', 'sound-event-detection'].includes(type);
 }
 
+function isSpeakerProject(type: ProjectType): boolean {
+  return type === 'speech-recognition';
+}
+
 // --- Route Components ---
 
 const ProjectView = () => {
@@ -113,12 +117,12 @@ const ProjectView = () => {
           </div>
         </div>
 
-        {/* RIGHT: Classes + Back */}
+        {/* RIGHT: Classes/Speakers + Back */}
         <div className="annotix-panel border-l">
           {project.classes.length > 0 && (
             <div className="annotix-panel-section">
               <div className="flex items-center justify-between mb-3">
-                <h3>{t('common.classes')}</h3>
+                <h3>{isSpeakerProject(project.type) ? t('audio.speakers', 'Speakers') : t('common.classes')}</h3>
                 <ManageClassesDialog
                   project={project}
                   trigger={
@@ -407,7 +411,7 @@ const AudioView = () => {
         <div className="annotix-panel border-l">
           <div className="annotix-panel-section">
             <div className="flex items-center justify-between mb-3">
-              <h3>{t('common.classes')}</h3>
+              <h3>{isSpeakerProject(project.type) ? t('audio.speakers', 'Speakers') : t('common.classes')}</h3>
               <ManageClassesDialog
                 project={project}
                 trigger={

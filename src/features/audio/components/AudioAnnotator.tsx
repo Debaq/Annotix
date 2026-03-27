@@ -122,7 +122,7 @@ export function AudioAnnotator() {
 
       case 'speech-recognition':
       default:
-        return <SpeechRecognitionAnnotator {...sharedProps} />;
+        return <SpeechRecognitionAnnotator {...sharedProps} classes={project.classes} />;
     }
   })();
 

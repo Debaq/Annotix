@@ -73,7 +73,7 @@ const CATEGORIES: { key: CategoryKey; types: ProjectTypeOption[]; icon: string; 
   { key: '3d', types: [], icon: 'fa-cube', disabled: true },
 ];
 
-const TYPES_WITHOUT_CLASSES: ProjectType[] = ['tabular', 'speech-recognition'];
+const TYPES_WITHOUT_CLASSES: ProjectType[] = ['tabular'];
 
 function needsClasses(type: ProjectType): boolean {
   return !TYPES_WITHOUT_CLASSES.includes(type);
@@ -352,10 +352,10 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
                 />
               </div>
 
-              {/* Clases */}
+              {/* Clases / Hablantes */}
               {needsClasses(type) && (
                 <div className="space-y-2">
-                  <Label>{t('projects.classes')}</Label>
+                  <Label>{type === 'speech-recognition' ? t('audio.speakers', 'Speakers') : t('projects.classes')}</Label>
                   <ClassManager classes={classes} onChange={setClasses} />
                 </div>
               )}
