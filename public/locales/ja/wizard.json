@@ -57,12 +57,14 @@
       "options": {
         "audioTranscribe": "音声を書き起こす",
         "audioClassify": "音声を分類",
-        "audioDetect": "イベントを検出"
+        "audioDetect": "イベントを検出",
+        "audioTts": "TTSデータセット録音"
       },
       "optionsDesc": {
         "audioTranscribe": "話し言葉をテキストに変換 (ASR)",
         "audioClassify": "各音声クリップにラベルを付ける",
-        "audioDetect": "特定の音を識別し位置を特定する"
+        "audioDetect": "特定の音を識別し位置を特定する",
+        "audioTts": "Text-to-Speechモデル用のガイド付きデータセットを録音"
       }
     },
     "classifyDetail": {
@@ -161,6 +163,7 @@
     "imputation": "欠損または破損したデータポイントを再構築",
     "speech-recognition": "ASRトレーニング用に音声ファイルをテキストに書き起こす",
     "audio-classification": "音声クリップをカテゴリーに分類する",
-    "sound-event-detection": "音声内の特定のイベントを検出して位置を特定する"
+    "sound-event-detection": "音声内の特定のイベントを検出して位置を特定する",
+    "tts-recording": "音声合成モデル用のガイド付きTTSデータセットを録音"
   }
 }

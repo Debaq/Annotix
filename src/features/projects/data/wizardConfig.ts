@@ -63,6 +63,7 @@ export const PROJECT_TYPE_META: Record<ProjectType, { icon: string; colorClass: 
   'audio-classification':     { icon: 'fa-music',              colorClass: 'bg-indigo-100 text-indigo-600' },
   'speech-recognition':       { icon: 'fa-microphone',         colorClass: 'bg-blue-100 text-blue-600' },
   'sound-event-detection':    { icon: 'fa-volume-high',        colorClass: 'bg-orange-100 text-orange-600' },
+  'tts-recording':            { icon: 'fa-record-vinyl',       colorClass: 'bg-rose-100 text-rose-600' },
 };
 
 // ============================================================================
@@ -114,6 +115,7 @@ export const WIZARD_CONFIG: WizardConfig = {
         { id: 'audioTranscribe', icon: 'fa-microphone',  colorClass: 'bg-blue-100 text-blue-600' },
         { id: 'audioClassify',   icon: 'fa-music',       colorClass: 'bg-indigo-100 text-indigo-600' },
         { id: 'audioDetect',     icon: 'fa-volume-high',  colorClass: 'bg-orange-100 text-orange-600' },
+        { id: 'audioTts',        icon: 'fa-record-vinyl', colorClass: 'bg-rose-100 text-rose-600' },
       ],
     },
 
@@ -227,6 +229,7 @@ export const WIZARD_CONFIG: WizardConfig = {
     { when: { goalAudio: 'audioTranscribe' },                                  then: { 'speech-recognition': 15 } },
     { when: { goalAudio: 'audioClassify' },                                    then: { 'audio-classification': 15 } },
     { when: { goalAudio: 'audioDetect' },                                      then: { 'sound-event-detection': 15 } },
+    { when: { goalAudio: 'audioTts' },                                         then: { 'tts-recording': 15 } },
 
     // ===== TABULAR =====
     { when: { dataType: 'tabular' },                                           then: { tabular: 15 } },

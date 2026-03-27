@@ -53,7 +53,8 @@ export type ProjectType =
   // Future: Audio (10 types)
   | 'audio-classification'
   | 'speech-recognition'
-  | 'sound-event-detection';
+  | 'sound-event-detection'
+  | 'tts-recording';
 
 // ============================================================================
 // IMAGES TABLE
@@ -338,6 +339,23 @@ export interface Audio {
     annotated?: number;
     status: 'pending' | 'done' | 'review';
   };
+}
+
+// ============================================================================
+// TTS GUIDED RECORDING
+// ============================================================================
+
+export interface TtsSentence {
+  id: string;
+  text: string;
+  status: 'pending' | 'recorded' | 'skipped';
+  audioId?: string;
+}
+
+export interface LlmConfig {
+  provider?: string;
+  apiKey?: string;
+  baseUrl?: string;
 }
 
 // ============================================================================

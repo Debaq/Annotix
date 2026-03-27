@@ -501,6 +501,10 @@
       "name": "Schallereigniserkennung",
       "description": "Ereignisse in Audio identifizieren und lokalisieren"
     },
+    "tts-recording": {
+      "name": "TTS-Aufnahmestudio",
+      "description": "Geführte Datasets für Text-to-Speech-Modelle aufnehmen"
+    },
     "useCasesLabel": "Anwendungsfälle",
     "modelsLabel": "Empfohlene Modelle",
     "difficultyLabel": "Schwierigkeitsgrad"

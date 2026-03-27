@@ -78,6 +78,7 @@ impl AppState {
             p2p_download: None,
             inference_models: vec![],
             folder: None,
+            tts_sentences: vec![],
         };
 
         io::write_project(&project_dir, &project)?;

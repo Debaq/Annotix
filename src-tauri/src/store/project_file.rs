@@ -32,6 +32,8 @@ pub struct ProjectFile {
     pub inference_models: Vec<InferenceModelEntry>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub folder: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tts_sentences: Vec<TtsSentence>,
 }
 
 /// Estado de descarga P2P pendiente (imágenes por descargar)
@@ -245,6 +247,20 @@ pub struct AudioEvent {
 
 fn default_audio_language() -> String {
     "en".to_string()
+}
+
+// ─── TTS Guided Recording ──────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TtsSentence {
+    pub id: String,
+    pub text: String,
+    /// "pending" | "recorded" | "skipped"
+    pub status: String,
+    /// ID del AudioEntry vinculado cuando se graba
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audio_id: Option<String>,
 }
 
 // ─── Tabular Data ──────────────────────────────────────────────────────────

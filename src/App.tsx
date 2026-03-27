@@ -12,6 +12,7 @@ import { VideoView } from './features/video/components/VideoView';
 import { TabularView } from './features/tabular/components/TabularView';
 import { AudioGallery } from './features/audio/components/AudioGallery';
 import { AudioAnnotator } from './features/audio/components/AudioAnnotator';
+import { TtsRecordingMode } from './features/audio/components/TtsRecordingMode';
 import { SettingsPage } from './features/settings/components/SettingsPage';
 import { SetupScreen } from './features/setup/SetupScreen';
 import { useUIStore } from './features/core/store/uiStore';
@@ -56,7 +57,11 @@ function isTabularProject(type: ProjectType): boolean {
 }
 
 function isAudioProject(type: ProjectType): boolean {
-  return ['audio-classification', 'speech-recognition', 'sound-event-detection'].includes(type);
+  return ['audio-classification', 'speech-recognition', 'sound-event-detection', 'tts-recording'].includes(type);
+}
+
+function isTtsProject(type: ProjectType): boolean {
+  return type === 'tts-recording';
 }
 
 function isSpeakerProject(type: ProjectType): boolean {
@@ -99,6 +104,15 @@ const ProjectView = () => {
 
   if (isTabularProject(project.type)) {
     return <TabularView />;
+  }
+
+  if (isTtsProject(project.type)) {
+    return (
+      <TtsRecordingMode
+        projectId={project.id!}
+        onBack={() => navigate('/')}
+      />
+    );
   }
 
   if (isAudioProject(project.type)) {
@@ -463,6 +477,25 @@ const AudioView = () => {
   );
 };
 
+const TtsView = () => {
+  const { projectId } = useParams();
+  const { setCurrentProjectId } = useUIStore();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (projectId) setCurrentProjectId(projectId);
+  }, [projectId, setCurrentProjectId]);
+
+  if (!projectId) return null;
+
+  return (
+    <TtsRecordingMode
+      projectId={projectId}
+      onBack={() => navigate(`/projects/${projectId}`)}
+    />
+  );
+};
+
 const TimeSeriesView = () => {
   const { projectId, seriesId } = useParams();
   const { setCurrentProjectId, setCurrentTimeSeriesId } = useUIStore();
@@ -542,6 +575,7 @@ function App() {
           <Route path="/projects/:projectId" element={<ProjectView />} />
           <Route path="/projects/:projectId/images/:imageId" element={<ImageView />} />
           <Route path="/projects/:projectId/audio/:audioId" element={<AudioView />} />
+          <Route path="/projects/:projectId/tts" element={<TtsView />} />
           <Route path="/projects/:projectId/timeseries/:seriesId" element={<TimeSeriesView />} />
           <Route path="/projects/:projectId/videos/:videoId" element={<VideoView />} />
           <Route path="/projects/:projectId/team" element={<TeamView />} />

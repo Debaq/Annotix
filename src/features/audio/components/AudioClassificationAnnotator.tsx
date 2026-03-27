@@ -6,6 +6,9 @@ import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { audioService } from '../services/audioService';
 import { Waveform } from './Waveform';
 import { Button } from '@/components/ui/button';
+import { matchesShortcut } from '@/features/core/utils/matchShortcut';
+import { useShortcutKey } from '@/features/core/hooks/useShortcutKey';
+import { CLASS_SHORTCUTS } from '@/features/core/constants';
 
 interface Props {
   audio: Audio;
@@ -38,6 +41,8 @@ export function AudioClassificationAnnotator({
 }: Props) {
   const { t } = useTranslation('audio');
   const player = useAudioPlayer({ projectId, audioId: audio.id });
+  const keyPlayPause = useShortcutKey('audio-play-pause');
+  const keySave = useShortcutKey('save');
 
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
@@ -84,20 +89,23 @@ export function AudioClassificationAnnotator({
   // Keyboard shortcuts
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.code === 'F2') {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+
+      if (matchesShortcut(e, 'audio-play-pause')) {
         e.preventDefault();
         player.togglePlay();
       }
-      if (e.ctrlKey && e.code === 'KeyS') {
+      if (matchesShortcut(e, 'save')) {
         e.preventDefault();
         handleSave();
       }
-      // Number keys 1-9 to select class
-      if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.altKey) {
-        const idx = parseInt(e.key) - 1;
-        if (idx < classes.length) {
-          handleClassSelect(classes[idx].id);
-        }
+      // Class selection shortcuts
+      const key = e.key.toLowerCase();
+      const classIndex = CLASS_SHORTCUTS.indexOf(key);
+      if (classIndex !== -1 && !e.ctrlKey && !e.metaKey && classIndex < classes.length) {
+        e.preventDefault();
+        handleClassSelect(classes[classIndex].id);
       }
     };
     window.addEventListener('keydown', handleKey);
@@ -198,11 +206,11 @@ export function AudioClassificationAnnotator({
           </span>
 
           <div className="text-xs text-[var(--annotix-gray)]">
-            <kbd className="px-1.5 py-0.5 bg-[var(--annotix-gray-light)] rounded text-[10px]">F2</kbd> {t('shortcuts.playPause')}
+            <kbd className="px-1.5 py-0.5 bg-[var(--annotix-gray-light)] rounded text-[10px]">{keyPlayPause}</kbd> {t('shortcuts.playPause')}
             <span className="opacity-30 mx-2">|</span>
             <kbd className="px-1.5 py-0.5 bg-[var(--annotix-gray-light)] rounded text-[10px]">1-9</kbd> {t('shortcuts.selectClass')}
             <span className="opacity-30 mx-2">|</span>
-            <kbd className="px-1.5 py-0.5 bg-[var(--annotix-gray-light)] rounded text-[10px]">Ctrl+S</kbd> {t('shortcuts.save')}
+            <kbd className="px-1.5 py-0.5 bg-[var(--annotix-gray-light)] rounded text-[10px]">{keySave}</kbd> {t('shortcuts.save')}
           </div>
 
           <div className="flex-1" />

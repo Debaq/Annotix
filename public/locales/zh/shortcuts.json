@@ -168,6 +168,46 @@
     },
     "tsToolAnomaly": {
       "name": "异常工具（时间序列）"
+    },
+    "audioPlayPause": {
+      "name": "播放/暂停",
+      "description": "播放或暂停音频"
+    },
+    "audioReplay": {
+      "name": "重播片段",
+      "description": "从头开始重播当前片段"
+    },
+    "audioRewind": {
+      "name": "倒退",
+      "description": "倒退2秒"
+    },
+    "audioScrub": {
+      "name": "音频滑动",
+      "description": "在音频中前后移动"
+    },
+    "audioSplit": {
+      "name": "分割片段",
+      "description": "分割并创建新片段"
+    },
+    "audioSaveNext": {
+      "name": "保存并下一个",
+      "description": "保存并转到下一个音频"
+    },
+    "ttsRecord": {
+      "name": "录音/停止",
+      "description": "开始或停止录音"
+    },
+    "ttsAccept": {
+      "name": "接受录音",
+      "description": "接受当前录音"
+    },
+    "ttsRepeat": {
+      "name": "重复句子",
+      "description": "重复当前句子"
+    },
+    "ttsSkip": {
+      "name": "跳过句子",
+      "description": "跳到下一个句子"
     }
   }
 }

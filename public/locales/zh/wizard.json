@@ -57,12 +57,14 @@
       "options": {
         "audioTranscribe": "转录语音",
         "audioClassify": "分类音频",
-        "audioDetect": "检测事件"
+        "audioDetect": "检测事件",
+        "audioTts": "录制TTS数据集"
       },
       "optionsDesc": {
         "audioTranscribe": "将语音转换为文本 (ASR)",
         "audioClassify": "为每个音频片段分配标签",
-        "audioDetect": "识别和定位特定声音"
+        "audioDetect": "识别和定位特定声音",
+        "audioTts": "为文本转语音模型录制引导式数据集"
       }
     },
     "classifyDetail": {
@@ -161,6 +163,7 @@
     "imputation": "重建缺失或损坏的数据点",
     "speech-recognition": "将音频文件转录为文本用于ASR训练",
     "audio-classification": "将音频片段分类到不同类别",
-    "sound-event-detection": "检测和定位音频中的特定事件"
+    "sound-event-detection": "检测和定位音频中的特定事件",
+    "tts-recording": "为语音合成模型录制引导式TTS数据集"
   }
 }

@@ -168,6 +168,46 @@
     },
     "tsToolAnomaly": {
       "name": "Anomaly Tool (Time Series)"
+    },
+    "audioPlayPause": {
+      "name": "Play/Pause",
+      "description": "Play or pause the audio"
+    },
+    "audioReplay": {
+      "name": "Replay segment",
+      "description": "Replay the active segment from the start"
+    },
+    "audioRewind": {
+      "name": "Rewind",
+      "description": "Rewind 2 seconds"
+    },
+    "audioScrub": {
+      "name": "Scrub audio",
+      "description": "Move forward/backward in the audio"
+    },
+    "audioSplit": {
+      "name": "Split segment",
+      "description": "Split and create a new segment"
+    },
+    "audioSaveNext": {
+      "name": "Save & next",
+      "description": "Save and go to the next audio"
+    },
+    "ttsRecord": {
+      "name": "Record/Stop",
+      "description": "Start or stop recording"
+    },
+    "ttsAccept": {
+      "name": "Accept recording",
+      "description": "Accept the current recording"
+    },
+    "ttsRepeat": {
+      "name": "Repeat sentence",
+      "description": "Repeat the current sentence"
+    },
+    "ttsSkip": {
+      "name": "Skip sentence",
+      "description": "Skip to the next sentence"
     }
   }
 }

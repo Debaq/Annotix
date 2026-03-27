@@ -1,4 +1,4 @@
-use crate::store::project_file::{AudioEntry, AudioSegment, AudioEvent};
+use crate::store::project_file::{AudioEntry, AudioSegment, AudioEvent, TtsSentence};
 use crate::store::state::AppState;
 
 /// Timestamp compatible con JS Date.now()
@@ -292,6 +292,131 @@ impl AppState {
                     || !a.events.is_empty();
                 a.status = if has_annotation { "done".to_string() } else { "pending".to_string() };
                 a.annotated = if has_annotation { Some(now) } else { None };
+            }
+            pf.updated = now;
+        })
+    }
+
+    // ─── TTS Guided Recording ──────────────────────────────────────────────
+
+    pub fn get_tts_sentences(
+        &self,
+        project_id: &str,
+    ) -> Result<Vec<TtsSentence>, String> {
+        self.with_project(project_id, |pf| pf.tts_sentences.clone())
+    }
+
+    pub fn save_tts_sentences(
+        &self,
+        project_id: &str,
+        sentences: Vec<TtsSentence>,
+    ) -> Result<(), String> {
+        let now = js_timestamp();
+        self.with_project_mut(project_id, |pf| {
+            pf.tts_sentences = sentences;
+            pf.updated = now;
+        })
+    }
+
+    /// Guarda audio grabado desde el micrófono (base64) y lo vincula a una oración TTS
+    pub fn save_tts_recording(
+        &self,
+        project_id: &str,
+        sentence_id: &str,
+        audio_base64: &str,
+        file_ext: &str,
+        duration_ms: i64,
+        sample_rate: i32,
+    ) -> Result<String, String> {
+        let now = js_timestamp();
+        let audio_id = uuid::Uuid::new_v4().to_string();
+
+        // Decodificar base64
+        use base64::Engine as _;
+        let audio_bytes = base64::engine::general_purpose::STANDARD
+            .decode(audio_base64)
+            .map_err(|e| format!("Error decodificando base64: {}", e))?;
+
+        // Guardar archivo en disco
+        let project_dir = self.project_dir(project_id)?;
+        let audio_dir = project_dir.join("audio");
+        std::fs::create_dir_all(&audio_dir)
+            .map_err(|e| format!("Error creando directorio audio: {}", e))?;
+
+        let file_name = format!("{}_{}.{}", &audio_id[..8], sentence_id, file_ext);
+        let dest = audio_dir.join(&file_name);
+        std::fs::write(&dest, &audio_bytes)
+            .map_err(|e| format!("Error escribiendo archivo de audio: {}", e))?;
+
+        // Obtener texto de la oración para usarlo como transcripción
+        let sentence_text = self.with_project(project_id, |pf| {
+            pf.tts_sentences
+                .iter()
+                .find(|s| s.id == sentence_id)
+                .map(|s| s.text.clone())
+                .unwrap_or_default()
+        })?;
+
+        // Crear AudioEntry
+        let entry = AudioEntry {
+            id: audio_id.clone(),
+            name: format!("tts_{}.{}", &sentence_id[..8.min(sentence_id.len())], file_ext),
+            file: file_name,
+            duration_ms,
+            sample_rate,
+            transcription: sentence_text,
+            speaker_id: None,
+            language: String::new(),
+            segments: Vec::new(),
+            class_id: None,
+            events: Vec::new(),
+            uploaded: now,
+            annotated: Some(now),
+            status: "done".to_string(),
+        };
+
+        // Insertar audio y actualizar oración
+        self.with_project_mut(project_id, |pf| {
+            pf.audio.push(entry);
+            if let Some(s) = pf.tts_sentences.iter_mut().find(|s| s.id == sentence_id) {
+                s.status = "recorded".to_string();
+                s.audio_id = Some(audio_id.clone());
+            }
+            pf.updated = now;
+        })?;
+
+        Ok(audio_id)
+    }
+
+    /// Vincula un archivo de audio subido a una oración TTS
+    pub fn link_tts_upload(
+        &self,
+        project_id: &str,
+        sentence_id: &str,
+        audio_id: &str,
+    ) -> Result<(), String> {
+        let now = js_timestamp();
+
+        // Obtener texto de la oración
+        let sentence_text = self.with_project(project_id, |pf| {
+            pf.tts_sentences
+                .iter()
+                .find(|s| s.id == sentence_id)
+                .map(|s| s.text.clone())
+                .unwrap_or_default()
+        })?;
+
+        self.with_project_mut(project_id, |pf| {
+            // Actualizar transcripción del audio
+            if let Some(a) = pf.audio.iter_mut().find(|a| a.id == audio_id) {
+                a.transcription = sentence_text;
+                a.status = "done".to_string();
+                a.annotated = Some(now);
+            }
+            // Vincular oración
+            if let Some(s) = pf.tts_sentences.iter_mut().find(|s| s.id == sentence_id) {
+                s.status = "recorded".to_string();
+                s.audio_id = Some(audio_id.to_string());
             }
             pf.updated = now;
         })

@@ -60,6 +60,7 @@ const AUDIO_TYPES: ProjectTypeOption[] = [
   { value: 'speech-recognition', icon: 'fa-microphone', colorClass: 'bg-blue-100 text-blue-600' },
   { value: 'audio-classification', icon: 'fa-music', colorClass: 'bg-indigo-100 text-indigo-600' },
   { value: 'sound-event-detection', icon: 'fa-volume-high', colorClass: 'bg-orange-100 text-orange-600' },
+  { value: 'tts-recording', icon: 'fa-record-vinyl', colorClass: 'bg-rose-100 text-rose-600' },
 ];
 
 type CategoryKey = 'imageVideo' | 'audio' | 'timeSeries' | 'tabular' | 'language' | '3d';
@@ -73,7 +74,7 @@ const CATEGORIES: { key: CategoryKey; types: ProjectTypeOption[]; icon: string; 
   { key: '3d', types: [], icon: 'fa-cube', disabled: true },
 ];
 
-const TYPES_WITHOUT_CLASSES: ProjectType[] = ['tabular'];
+const TYPES_WITHOUT_CLASSES: ProjectType[] = ['tabular', 'tts-recording'];
 
 function needsClasses(type: ProjectType): boolean {
   return !TYPES_WITHOUT_CLASSES.includes(type);

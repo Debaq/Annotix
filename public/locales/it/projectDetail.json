@@ -90,6 +90,14 @@
       "canDo4": "Addestrare modelli di rilevamento eventi temporali come CRNN o SED-CNN",
       "exampleUse": "Un team di conservazione della fauna segna canti di uccelli, suoni di motoseghe e rumori di veicoli in registrazioni nella giungla. Il modello addestrato rileva attività di disboscamento illegale in quasi tempo reale da microfoni remoti."
     },
+    "tts-recording": {
+      "detailAbout": "Uno studio di registrazione guidato per creare dataset TTS di alta qualità. Carica o genera frasi, registrale una per una con monitoraggio qualità in tempo reale, ed esporta in formato LJSpeech per modelli come Piper, Coqui TTS o VITS.",
+      "canDo1": "Registrare frasi foneticamente bilanciate passo dopo passo",
+      "canDo2": "Generare liste di frasi con IA o caricare da file",
+      "canDo3": "Monitorare la qualità di registrazione in tempo reale (volume, clipping, rumore)",
+      "canDo4": "Esportare dataset completi in formato LJSpeech",
+      "exampleUse": "Un doppiatore registra 500 frasi in uno studio silenzioso. Il dataset viene esportato in formato LJSpeech e usato per perfezionare un modello Piper TTS."
+    },
     "timeseries-classification": {
       "detailAbout": "Osserva un'intera serie temporale e assegnale una categoria. Ogni serie riceve un'unica etichetta basata sulla sua forma o comportamento complessivo — senza necessità di segnare intervalli di tempo specifici.",
       "canDo1": "Classificare letture di sensori, segnali o sequenze nel loro insieme",

@@ -501,6 +501,10 @@
       "name": "音響イベント検出",
       "description": "音声内のイベントを特定し位置を特定する"
     },
+    "tts-recording": {
+      "name": "TTS録音スタジオ",
+      "description": "Text-to-Speechモデル用のガイド付きデータセットを録音"
+    },
     "useCasesLabel": "ユースケース",
     "modelsLabel": "推奨モデル",
     "difficultyLabel": "難易度"
