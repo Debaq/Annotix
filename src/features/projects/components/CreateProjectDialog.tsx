@@ -73,7 +73,7 @@ const CATEGORIES: { key: CategoryKey; types: ProjectTypeOption[]; icon: string; 
   { key: '3d', types: [], icon: 'fa-cube', disabled: true },
 ];
 
-const TYPES_WITHOUT_CLASSES: ProjectType[] = ['tabular', 'speech-recognition', 'audio-classification', 'sound-event-detection'];
+const TYPES_WITHOUT_CLASSES: ProjectType[] = ['tabular', 'speech-recognition'];
 
 function needsClasses(type: ProjectType): boolean {
   return !TYPES_WITHOUT_CLASSES.includes(type);
