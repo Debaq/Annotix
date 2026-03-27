@@ -216,13 +216,18 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     }
 
     // Leer SIEMPRE del store (no del closure) para evitar datos stale
-    // El MaskHandler llama este callback 1s después de dibujar,
-    // y el closure de annotations puede estar desactualizado para entonces
     const currentAnns = useAnnotationStore.getState().annotations;
-    const filtered = currentAnns.filter(
-      (item) => !(item.type === 'mask' && item.classId === annotation.classId)
+    const existingIdx = currentAnns.findIndex(
+      (item) => item.type === 'mask' && item.classId === annotation.classId
     );
-    await replaceAnnotations([...filtered, annotation]);
+    if (existingIdx >= 0) {
+      // Reemplazar in-place para mantener el orden de creación
+      const updated = [...currentAnns];
+      updated[existingIdx] = annotation;
+      await replaceAnnotations(updated);
+    } else {
+      await replaceAnnotations([...currentAnns, annotation]);
+    }
   }, [addAnnotation, replaceAnnotations]);
 
   // Registrar callbacks y actualizar activeClassId cuando cambia
