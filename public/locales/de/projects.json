@@ -43,5 +43,9 @@
   "removeFromFolder": "Kein Ordner",
   "revealFolder": "Im Explorer anzeigen",
   "stats.classes": "Klassen",
-  "type.label": "Typ"
+  "type.label": "Typ",
+  "uploadDataset": "Datensatz hochladen",
+  "uploadDatasetHint": "Bilder jetzt auswählen oder später aus der Galerie hochladen",
+  "filesSelected": "{{count}} Bilder ausgewählt",
+  "addMore": "Mehr hinzufügen"
 }

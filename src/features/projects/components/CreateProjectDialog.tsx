@@ -1,5 +1,6 @@
 import { ReactNode, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useProjects } from '../hooks/useProjects';
 import { ProjectTypeWizard } from './ProjectTypeWizard';
 import { ClassManager } from './ClassManager';
@@ -17,6 +18,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProjectType, ClassDefinition } from '@/lib/db';
+import { pickImages } from '@/lib/nativeDialogs';
+import { imageService } from '@/features/gallery/services/imageService';
 import '@/styles/projects.css';
 
 interface CreateProjectDialogProps {
@@ -80,8 +83,11 @@ function needsClasses(type: ProjectType): boolean {
   return !TYPES_WITHOUT_CLASSES.includes(type);
 }
 
+const IMAGE_UPLOAD_TYPES: ProjectType[] = IMAGE_VIDEO_TYPES.map(t => t.value);
+
 export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { createProject } = useProjects();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
@@ -94,6 +100,7 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
   ]);
   const [isCreating, setIsCreating] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<string[]>([]);
 
   const selectedTypeInfo = useMemo(() => {
     for (const cat of CATEGORIES) {
@@ -110,6 +117,7 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
     setType('bbox');
     setActiveCategory('imageVideo');
     setClasses([{ id: 0, name: 'Object', color: '#ff0000' }]);
+    setPendingFiles([]);
   };
 
   const handleOpenChange = (value: boolean) => {
@@ -129,6 +137,13 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
     setStep(1);
   };
 
+  const handlePickFiles = async () => {
+    const files = await pickImages();
+    if (files) {
+      setPendingFiles(prev => [...prev, ...files]);
+    }
+  };
+
   const handleCreate = async () => {
     if (!name.trim() || (needsClasses(type) && classes.length === 0)) {
       return;
@@ -136,12 +151,21 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
 
     setIsCreating(true);
     try {
-      await createProject({
+      const projectId = await createProject({
         name: name.trim(),
         type,
         classes: needsClasses(type) ? classes : [],
       });
+
+      if (pendingFiles.length > 0 && projectId) {
+        await imageService.uploadFromPaths(projectId, pendingFiles);
+      }
+
       handleOpenChange(false);
+
+      if (projectId) {
+        navigate(`/projects/${projectId}`);
+      }
     } catch (error) {
       console.error('Failed to create project:', error);
     } finally {
@@ -358,6 +382,41 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
                 <div className="space-y-2">
                   <Label>{type === 'speech-recognition' ? t('audio.speakers', 'Speakers') : t('projects.classes')}</Label>
                   <ClassManager classes={classes} onChange={setClasses} />
+                </div>
+              )}
+
+              {/* Upload dataset (opcional) — solo tipos de imagen */}
+              {IMAGE_UPLOAD_TYPES.includes(type) && (
+                <div className="space-y-2">
+                  <Label>
+                    {t('projects.uploadDataset')}
+                    <span className="text-muted-foreground font-normal ml-1">({t('common.optional')})</span>
+                  </Label>
+                  {pendingFiles.length === 0 ? (
+                    <button
+                      type="button"
+                      onClick={handlePickFiles}
+                      className="w-full border-2 border-dashed rounded-lg p-5 text-center hover:border-primary/50 hover:bg-accent/30 transition-colors cursor-pointer"
+                    >
+                      <i className="fas fa-cloud-arrow-up text-2xl text-muted-foreground/50 block mb-1.5"></i>
+                      <p className="text-sm text-muted-foreground">{t('projects.uploadDatasetHint')}</p>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-3 rounded-lg border bg-primary/5 p-3">
+                      <i className="fas fa-images text-primary"></i>
+                      <span className="flex-1 text-sm font-medium">
+                        {t('projects.filesSelected', { count: pendingFiles.length })}
+                      </span>
+                      <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={handlePickFiles}>
+                        <i className="fas fa-plus mr-1"></i>
+                        {t('projects.addMore')}
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:text-destructive" onClick={() => setPendingFiles([])}>
+                        <i className="fas fa-times mr-1"></i>
+                        {t('common.clear')}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

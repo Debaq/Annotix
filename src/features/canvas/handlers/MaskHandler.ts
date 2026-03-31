@@ -3,14 +3,19 @@ import type { Annotation, MaskData } from '@/lib/db';
 
 export type MaskPreviewImage = HTMLImageElement | ImageBitmap;
 
+export type BrushShape = 'circle' | 'square';
+
 export class MaskHandler implements BaseHandler {
   private canvas: HTMLCanvasElement | null = null;
   private ctx: CanvasRenderingContext2D | null = null;
   private isDragging: boolean = false;
   private brushSize: number = 15;
+  private brushShape: BrushShape = 'circle';
+  private maxBrushSize: number = 100;
   private eraseMode: boolean = false;
   private maskImage: MaskPreviewImage | null = null;
   private onMaskImageUpdate: ((img: MaskPreviewImage | null) => void) | null = null;
+  private onDirtyChange: ((dirty: boolean) => void) | null = null;
   private drawingClassId: number | null = null;
   private autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
   private hasDrawn: boolean = false;
@@ -33,6 +38,10 @@ export class MaskHandler implements BaseHandler {
     this.onMaskImageUpdate = callback;
   }
 
+  setDirtyChangeCallback(callback: (dirty: boolean) => void): void {
+    this.onDirtyChange = callback;
+  }
+
   updateActiveClassId(classId: number | null): void {
     this.activeClassId = classId;
   }
@@ -50,6 +59,7 @@ export class MaskHandler implements BaseHandler {
     this.drawingClassId = this.activeClassId;
     this.hasDrawn = false;
     this.pendingMouseDown = null;
+    this.maxBrushSize = Math.max(imageWidth, imageHeight);
 
     this.canvas = document.createElement('canvas');
     this.canvas.width = imageWidth;
@@ -88,11 +98,28 @@ export class MaskHandler implements BaseHandler {
   }
 
   setBrushSize(size: number): void {
-    this.brushSize = Math.max(5, Math.min(100, size));
+    this.brushSize = Math.max(1, Math.min(this.maxBrushSize, size));
   }
 
   getBrushSize(): number {
     return this.brushSize;
+  }
+
+  getMaxBrushSize(): number {
+    return this.maxBrushSize;
+  }
+
+  setBrushShape(shape: BrushShape): void {
+    this.brushShape = shape;
+  }
+
+  getBrushShape(): BrushShape {
+    return this.brushShape;
+  }
+
+  toggleBrushShape(): BrushShape {
+    this.brushShape = this.brushShape === 'circle' ? 'square' : 'circle';
+    return this.brushShape;
   }
 
   setEraseMode(enabled: boolean): void {
@@ -119,10 +146,9 @@ export class MaskHandler implements BaseHandler {
     this.lastX = event.imageX;
     this.lastY = event.imageY;
     this.applyBrushStyle();
-    this.ctx.beginPath();
-    this.ctx.arc(event.imageX, event.imageY, this.brushSize / 2, 0, Math.PI * 2);
-    this.ctx.fill();
+    this.stampBrush(event.imageX, event.imageY);
     this.hasDrawn = true;
+    this.onDirtyChange?.(true);
     this.cancelAutoSaveTimer();
     this.scheduleImageUpdate();
   }
@@ -134,10 +160,23 @@ export class MaskHandler implements BaseHandler {
     this.cancelAutoSaveTimer();
 
     this.applyBrushStyle();
-    this.ctx.beginPath();
-    this.ctx.moveTo(this.lastX, this.lastY);
-    this.ctx.lineTo(event.imageX, event.imageY);
-    this.ctx.stroke();
+
+    if (this.brushShape === 'circle') {
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.lastX, this.lastY);
+      this.ctx.lineTo(event.imageX, event.imageY);
+      this.ctx.stroke();
+    } else {
+      // Square brush: interpolar stamps entre lastXY y currentXY
+      const dx = event.imageX - this.lastX;
+      const dy = event.imageY - this.lastY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const steps = Math.max(1, Math.ceil(dist / (this.brushSize * 0.3)));
+      for (let i = 1; i <= steps; i++) {
+        const t = i / steps;
+        this.stampBrush(this.lastX + dx * t, this.lastY + dy * t);
+      }
+    }
 
     this.lastX = event.imageX;
     this.lastY = event.imageY;
@@ -158,6 +197,18 @@ export class MaskHandler implements BaseHandler {
     }
   }
 
+  private stampBrush(x: number, y: number): void {
+    if (!this.ctx) return;
+    const half = this.brushSize / 2;
+    if (this.brushShape === 'circle') {
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, half, 0, Math.PI * 2);
+      this.ctx.fill();
+    } else {
+      this.ctx.fillRect(x - half, y - half, this.brushSize, this.brushSize);
+    }
+  }
+
   private applyBrushStyle(): void {
     if (!this.ctx) return;
     this.ctx.globalCompositeOperation = this.eraseMode ? 'destination-out' : 'source-over';
@@ -165,8 +216,8 @@ export class MaskHandler implements BaseHandler {
     this.ctx.fillStyle = this.eraseMode ? 'rgba(0,0,0,1)' : this.classColor;
     this.ctx.strokeStyle = this.eraseMode ? 'rgba(0,0,0,1)' : this.classColor;
     this.ctx.lineWidth = this.brushSize;
-    this.ctx.lineCap = 'round';
-    this.ctx.lineJoin = 'round';
+    this.ctx.lineCap = this.brushShape === 'circle' ? 'round' : 'square';
+    this.ctx.lineJoin = this.brushShape === 'circle' ? 'round' : 'miter';
   }
 
   private scheduleImageUpdate(): void {
@@ -224,11 +275,13 @@ export class MaskHandler implements BaseHandler {
       data: maskAnnotation,
     };
 
+    this.onDirtyChange?.(false);
     this.onAddAnnotation(annotation);
     this.reset();
   }
 
   cancel(): void {
+    this.onDirtyChange?.(false);
     this.reset();
   }
 

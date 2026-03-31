@@ -11,6 +11,10 @@
   "eraseMode": "橡皮擦",
   "maskBrush": "画笔",
   "maskEraser": "橡皮擦",
+  "brushCircle": "切换为圆形",
+  "brushSquare": "切换为方形",
+  "unsaved": "未保存的更改",
+  "saved": "已保存",
   "newInstance": "新实例",
   "tooltips": {
     "bbox": "Bounding Box (B)",

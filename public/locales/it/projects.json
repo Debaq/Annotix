@@ -43,5 +43,9 @@
   "removeFromFolder": "Senza cartella",
   "revealFolder": "Mostra in esplora risorse",
   "stats.classes": "Classi",
-  "type.label": "Tipo"
+  "type.label": "Tipo",
+  "uploadDataset": "Carica dataset",
+  "uploadDatasetHint": "Seleziona immagini ora o caricale dopo dalla galleria",
+  "filesSelected": "{{count}} immagini selezionate",
+  "addMore": "Aggiungi altre"
 }

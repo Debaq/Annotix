@@ -43,5 +43,9 @@
   "removeFromFolder": "폴더 없음",
   "revealFolder": "탐색기에서 보기",
   "stats.classes": "클래스",
-  "type.label": "유형"
+  "type.label": "유형",
+  "uploadDataset": "데이터셋 업로드",
+  "uploadDatasetHint": "지금 이미지를 선택하거나 나중에 갤러리에서 업로드하세요",
+  "filesSelected": "{{count}}개 이미지 선택됨",
+  "addMore": "더 추가"
 }

@@ -43,5 +43,9 @@
   "removeFromFolder": "Без папки",
   "revealFolder": "Показать в проводнике",
   "stats.classes": "Классы",
-  "type.label": "Тип"
+  "type.label": "Тип",
+  "uploadDataset": "Загрузить датасет",
+  "uploadDatasetHint": "Выберите изображения сейчас или загрузите позже из галереи",
+  "filesSelected": "{{count}} изображений выбрано",
+  "addMore": "Добавить ещё"
 }

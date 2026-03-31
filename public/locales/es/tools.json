@@ -11,6 +11,10 @@
   "eraseMode": "Borrador",
   "maskBrush": "Pincel",
   "maskEraser": "Goma",
+  "brushCircle": "Cambiar a círculo",
+  "brushSquare": "Cambiar a cuadrado",
+  "unsaved": "Cambios sin guardar",
+  "saved": "Guardado",
   "newInstance": "Nueva Instancia",
   "tooltips": {
     "bbox": "Bounding Box (B)",

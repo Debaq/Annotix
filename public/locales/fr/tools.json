@@ -11,6 +11,10 @@
   "eraseMode": "Gomme",
   "maskBrush": "Pinceau",
   "maskEraser": "Gomme",
+  "brushCircle": "Passer au cercle",
+  "brushSquare": "Passer au carré",
+  "unsaved": "Modifications non enregistrées",
+  "saved": "Enregistré",
   "newInstance": "Nouvelle Instance",
   "tooltips": {
     "bbox": "Bounding Box (B)",

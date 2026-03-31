@@ -43,5 +43,9 @@
   "removeFromFolder": "Sans dossier",
   "revealFolder": "Afficher dans l'explorateur",
   "stats.classes": "Classes",
-  "type.label": "Type"
+  "type.label": "Type",
+  "uploadDataset": "Importer le dataset",
+  "uploadDatasetHint": "Sélectionnez des images maintenant ou importez-les plus tard depuis la galerie",
+  "filesSelected": "{{count}} images sélectionnées",
+  "addMore": "Ajouter plus"
 }

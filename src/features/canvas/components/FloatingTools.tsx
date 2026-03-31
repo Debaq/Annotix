@@ -17,18 +17,28 @@ const TOOL_SHORTCUT_MAP: Record<ToolId, string> = {
   obb: 'tool-obb',
 };
 
+type BrushShape = 'circle' | 'square';
+
 interface FloatingToolsProps {
   maskBrushSize?: number;
   maskEraseMode?: boolean;
+  maskBrushShape?: BrushShape;
+  maskMaxBrushSize?: number;
+  maskDirty?: boolean;
   onMaskBrushSizeChange?: (size: number) => void;
   onMaskSetEraseMode?: (erase: boolean) => void;
+  onMaskToggleBrushShape?: () => void;
 }
 
 export const FloatingTools: React.FC<FloatingToolsProps> = ({
   maskBrushSize,
   maskEraseMode,
+  maskBrushShape = 'circle',
+  maskMaxBrushSize = 100,
+  maskDirty,
   onMaskBrushSizeChange,
   onMaskSetEraseMode,
+  onMaskToggleBrushShape,
 }) => {
   const { t } = useTranslation();
   const { project } = useCurrentProject();
@@ -54,7 +64,7 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
 
   const handleSizeChange = (delta: number) => {
     if (maskBrushSize == null) return;
-    const next = Math.max(1, Math.min(100, maskBrushSize + delta));
+    const next = Math.max(1, Math.min(maskMaxBrushSize, maskBrushSize + delta));
     onMaskBrushSizeChange?.(next);
   };
 
@@ -131,12 +141,12 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
               <input
                 type="number"
                 min={1}
-                max={100}
+                max={maskMaxBrushSize}
                 value={maskBrushSize}
                 onChange={(e) => {
                   e.stopPropagation();
                   const v = parseInt(e.target.value, 10);
-                  if (!isNaN(v)) onMaskBrushSizeChange?.(Math.max(1, Math.min(100, v)));
+                  if (!isNaN(v)) onMaskBrushSizeChange?.(Math.max(1, Math.min(maskMaxBrushSize, v)));
                 }}
                 className="w-10 text-center text-xs font-medium bg-transparent border rounded px-0.5 py-0.5
                   [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -151,6 +161,30 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
                 <i className="fas fa-minus fa-xs"></i>
               </button>
             </div>
+          )}
+
+          {/* Toggle forma del pincel — círculo / cuadrado */}
+          {hasMaskTool && isMaskActive && (
+            <button
+              onClick={onMaskToggleBrushShape}
+              className="annotix-tool-btn"
+              title={t(maskBrushShape === 'circle' ? 'tools.brushSquare' : 'tools.brushCircle')}
+            >
+              <i className={`fas ${maskBrushShape === 'circle' ? 'fa-square' : 'fa-circle'}`}></i>
+            </button>
+          )}
+
+          {/* Indicador de cambios sin guardar */}
+          {hasMaskTool && isMaskActive && (
+            <div
+              className={cn(
+                'w-2.5 h-2.5 rounded-full mx-auto transition-all duration-300',
+                maskDirty
+                  ? 'bg-amber-400 scale-100'
+                  : 'bg-emerald-400 scale-75'
+              )}
+              title={t(maskDirty ? 'tools.unsaved' : 'tools.saved')}
+            />
           )}
         </div>
       </div>

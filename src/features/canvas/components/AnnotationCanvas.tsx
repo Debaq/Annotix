@@ -95,6 +95,9 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   const [obbDrawingData, setObbDrawingData] = useState<any>(null);
   const [maskBrushSize, setMaskBrushSize] = useState(15);
   const [maskEraseMode, setMaskEraseMode] = useState(false);
+  const [maskBrushShape, setMaskBrushShape] = useState<'circle' | 'square'>('circle');
+  const [maskMaxBrushSize, setMaskMaxBrushSize] = useState(100);
+  const [maskDirty, setMaskDirty] = useState(false);
   const [maskCursor, setMaskCursor] = useState<{ x: number; y: number; visible: boolean }>({
     x: 0,
     y: 0,
@@ -209,6 +212,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     if (!konvaImage) return;
     const baseMask = getActiveClassMaskBase();
     maskHandler.initialize(konvaImage.width, konvaImage.height, baseMask);
+    setMaskMaxBrushSize(maskHandler.getMaxBrushSize());
   }, [konvaImage, getActiveClassMaskBase, maskHandler]);
 
   const addAnnotationWithMaskReplace = useCallback(async (annotation: Annotation) => {
@@ -282,8 +286,11 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
 
     setMaskBrushSize(maskHandler.getBrushSize());
     setMaskEraseMode(maskHandler.getEraseMode());
-    // Registrar callback para actualizaciones de la imagen
+    setMaskBrushShape(maskHandler.getBrushShape());
+    setMaskMaxBrushSize(maskHandler.getMaxBrushSize());
+    // Registrar callbacks
     maskHandler.setMaskImageUpdateCallback(setMaskImage);
+    maskHandler.setDirtyChangeCallback(setMaskDirty);
   }, [activeClassId, classColor]);
 
   useEffect(() => {
@@ -460,7 +467,8 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     if (project?.type === 'mask' && e.evt.ctrlKey && maskHandler) {
       const delta = e.evt.deltaY > 0 ? -2 : 2; // Invertir para que scroll up = más grande
       const currentSize = maskHandler.getBrushSize();
-      const newSize = Math.max(5, Math.min(100, currentSize + delta));
+      const maxSize = maskHandler.getMaxBrushSize();
+      const newSize = Math.max(1, Math.min(maxSize, currentSize + delta));
       maskHandler.setBrushSize(newSize);
       setMaskBrushSize(newSize);
       return;
@@ -1064,6 +1072,9 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       <FloatingTools
         maskBrushSize={maskBrushSize}
         maskEraseMode={maskEraseMode}
+        maskBrushShape={maskBrushShape}
+        maskMaxBrushSize={maskMaxBrushSize}
+        maskDirty={maskDirty}
         onMaskBrushSizeChange={(size) => {
           maskHandler.setBrushSize(size);
           setMaskBrushSize(maskHandler.getBrushSize());
@@ -1071,6 +1082,10 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
         onMaskSetEraseMode={(erase) => {
           maskHandler.setEraseMode(erase);
           setMaskEraseMode(erase);
+        }}
+        onMaskToggleBrushShape={() => {
+          const newShape = maskHandler.toggleBrushShape();
+          setMaskBrushShape(newShape);
         }}
       />
 
@@ -1522,16 +1537,30 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
           )}
 
           {activeTool === 'mask' && maskCursor.visible && (
-            <Circle
-              x={maskCursor.x}
-              y={maskCursor.y}
-              radius={(maskBrushSize * scale) / 2}
-              stroke={classColor}
-              strokeWidth={maskEraseMode ? 2.5 : 2}
-              dash={maskEraseMode ? [6, 4] : undefined}
-              fill={maskEraseMode ? 'transparent' : `${classColor}55`}
-              listening={false}
-            />
+            maskBrushShape === 'circle' ? (
+              <Circle
+                x={maskCursor.x}
+                y={maskCursor.y}
+                radius={(maskBrushSize * scale) / 2}
+                stroke={classColor}
+                strokeWidth={maskEraseMode ? 2.5 : 2}
+                dash={maskEraseMode ? [6, 4] : undefined}
+                fill={maskEraseMode ? 'transparent' : `${classColor}55`}
+                listening={false}
+              />
+            ) : (
+              <Rect
+                x={maskCursor.x - (maskBrushSize * scale) / 2}
+                y={maskCursor.y - (maskBrushSize * scale) / 2}
+                width={maskBrushSize * scale}
+                height={maskBrushSize * scale}
+                stroke={classColor}
+                strokeWidth={maskEraseMode ? 2.5 : 2}
+                dash={maskEraseMode ? [6, 4] : undefined}
+                fill={maskEraseMode ? 'transparent' : `${classColor}55`}
+                listening={false}
+              />
+            )
           )}
 
           {activeTool === 'bbox' && bboxDrawingData && (

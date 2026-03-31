@@ -11,6 +11,10 @@
   "eraseMode": "Gomma",
   "maskBrush": "Pennello",
   "maskEraser": "Gomma",
+  "brushCircle": "Passa al cerchio",
+  "brushSquare": "Passa al quadrato",
+  "unsaved": "Modifiche non salvate",
+  "saved": "Salvato",
   "newInstance": "Nuova Istanza",
   "tooltips": {
     "bbox": "Bounding Box (B)",

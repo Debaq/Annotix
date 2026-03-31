@@ -11,6 +11,10 @@
   "eraseMode": "消しゴム",
   "maskBrush": "ブラシ",
   "maskEraser": "消しゴム",
+  "brushCircle": "円に切り替え",
+  "brushSquare": "四角に切り替え",
+  "unsaved": "未保存の変更",
+  "saved": "保存済み",
   "newInstance": "新しいインスタンス",
   "tooltips": {
     "bbox": "バウンディングボックス (B)",
