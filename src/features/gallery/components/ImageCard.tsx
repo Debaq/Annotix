@@ -1,21 +1,27 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AnnotixImage } from '@/lib/db';
+import { confirm } from '@/lib/dialogs';
 import { useUIStore } from '../../core/store/uiStore';
 import { cn } from '@/lib/utils';
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
+import { imageService } from '../services/imageService';
 import { ImageLockIndicator } from '@/features/p2p/components/ImageLockIndicator';
 import { useP2pStore } from '@/features/p2p/store/p2pStore';
+import { useP2pPermission } from '@/features/p2p/hooks/useP2pCanEdit';
 
 interface ImageCardProps {
   image: AnnotixImage;
 }
 
 export function ImageCard({ image }: ImageCardProps) {
+  const { t } = useTranslation('gallery');
   const navigate = useNavigate();
   const { projectId } = useParams();
   const { currentImageId } = useUIStore();
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
+  const canDelete = useP2pPermission('delete');
 
   useEffect(() => {
     if (!image.id || !projectId) return;
@@ -60,13 +66,25 @@ export function ImageCard({ image }: ImageCardProps) {
     }
   };
 
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!projectId || !image.id) return;
+    if (!await confirm(t('deleteConfirm'), { kind: 'warning' })) return;
+
+    if (currentImageId === image.id) {
+      navigate(`/projects/${projectId}`);
+    }
+
+    await imageService.delete(projectId, image.id);
+  };
+
   const isSelected = currentImageId === image.id;
   const isAnnotated = image.annotations.length > 0;
 
   return (
     <div
       className={cn(
-        "annotix-gallery-item",
+        "annotix-gallery-item group",
         isSelected && "active",
         !isAnnotated && "no-annotations",
         isPendingDownload && "opacity-60 cursor-default"
@@ -127,6 +145,17 @@ export function ImageCard({ image }: ImageCardProps) {
               </div>
             )}
           </div>
+        )}
+
+        {/* Delete button (bottom-right, visible on hover) */}
+        {canDelete && !isPendingDownload && (
+          <button
+            onClick={handleDelete}
+            className="absolute bottom-1 right-1 w-5 h-5 rounded-full flex items-center justify-center bg-black/50 text-white text-[10px] opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-opacity"
+            title={t('deleteConfirm')}
+          >
+            <i className="fas fa-trash-alt"></i>
+          </button>
         )}
       </div>
     </div>

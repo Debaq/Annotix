@@ -43,5 +43,9 @@
   "removeFromFolder": "Sem pasta",
   "revealFolder": "Abrir no explorador",
   "stats.classes": "Classes",
-  "type.label": "Tipo"
+  "type.label": "Tipo",
+  "uploadDataset": "Enviar dataset",
+  "uploadDatasetHint": "Selecione imagens agora ou envie depois pela galeria",
+  "filesSelected": "{{count}} imagens selecionadas",
+  "addMore": "Adicionar mais"
 }

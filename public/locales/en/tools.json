@@ -11,6 +11,10 @@
   "eraseMode": "Eraser",
   "maskBrush": "Brush",
   "maskEraser": "Eraser",
+  "brushCircle": "Switch to circle",
+  "brushSquare": "Switch to square",
+  "unsaved": "Unsaved changes",
+  "saved": "Saved",
   "newInstance": "New Instance",
   "tooltips": {
     "bbox": "Bounding Box (B)",

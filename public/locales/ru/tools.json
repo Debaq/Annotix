@@ -11,6 +11,10 @@
   "eraseMode": "Ластик",
   "maskBrush": "Кисть",
   "maskEraser": "Ластик",
+  "brushCircle": "Переключить на круг",
+  "brushSquare": "Переключить на квадрат",
+  "unsaved": "Несохранённые изменения",
+  "saved": "Сохранено",
   "newInstance": "Новый экземпляр",
   "tooltips": {
     "bbox": "Bounding Box (B)",

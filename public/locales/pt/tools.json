@@ -11,6 +11,10 @@
   "eraseMode": "Borracha",
   "maskBrush": "Pincel",
   "maskEraser": "Borracha",
+  "brushCircle": "Mudar para círculo",
+  "brushSquare": "Mudar para quadrado",
+  "unsaved": "Alterações não salvas",
+  "saved": "Salvo",
   "newInstance": "Nova Instância",
   "tooltips": {
     "bbox": "Bounding Box (B)",

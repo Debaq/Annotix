@@ -11,6 +11,10 @@
   "eraseMode": "지우개",
   "maskBrush": "브러시",
   "maskEraser": "지우개",
+  "brushCircle": "원으로 전환",
+  "brushSquare": "사각형으로 전환",
+  "unsaved": "저장되지 않은 변경사항",
+  "saved": "저장됨",
   "newInstance": "새 인스턴스",
   "tooltips": {
     "bbox": "Bounding Box (B)",

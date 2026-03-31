@@ -43,5 +43,9 @@
   "removeFromFolder": "不在文件夹中",
   "revealFolder": "在文件管理器中显示",
   "stats.classes": "类别",
-  "type.label": "类型"
+  "type.label": "类型",
+  "uploadDataset": "上传数据集",
+  "uploadDatasetHint": "现在选择图片或稍后从图库上传",
+  "filesSelected": "已选择{{count}}张图片",
+  "addMore": "添加更多"
 }

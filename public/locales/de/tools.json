@@ -11,6 +11,10 @@
   "eraseMode": "Radierer",
   "maskBrush": "Pinsel",
   "maskEraser": "Radierer",
+  "brushCircle": "Zu Kreis wechseln",
+  "brushSquare": "Zu Quadrat wechseln",
+  "unsaved": "Nicht gespeicherte Änderungen",
+  "saved": "Gespeichert",
   "newInstance": "Neue Instanz",
   "tooltips": {
     "bbox": "Bounding Box (B)",
