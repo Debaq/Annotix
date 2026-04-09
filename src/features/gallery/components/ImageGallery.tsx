@@ -10,6 +10,7 @@ import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useTauriQuery } from '@/hooks/useTauriQuery';
 import { videoService } from '../../video/services/videoService';
 import { P2pGuard } from '../../p2p/components/P2pGuard';
+import { InferencePanel } from '../../inference/components/InferencePanel';
 
 export function ImageGallery() {
   const { t } = useTranslation();
@@ -76,8 +77,16 @@ export function ImageGallery() {
         </div>
       )}
 
-      {/* Filters Section */}
+      {/* Inference Config + Filters */}
       <div className="panel-section">
+        <div className="mb-2">
+          <InferencePanel project={project} trigger={
+            <button className="annotix-btn annotix-btn-outline w-full" style={{ fontSize: '0.75rem' }}>
+              <i className="fas fa-brain mr-2" style={{ color: '#7c3aed' }} />
+              {t('inference.title')}
+            </button>
+          } />
+        </div>
         <GalleryFilters />
       </div>
 

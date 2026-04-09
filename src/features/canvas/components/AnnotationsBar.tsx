@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
 import { useAnnotations } from '../hooks/useAnnotations';
@@ -15,6 +15,47 @@ export const AnnotationsBar: React.FC<AnnotationsBarProps> = ({ image }) => {
   const { project } = useCurrentProject();
   const { annotations, selectedAnnotationIds, selectAnnotation, deleteAnnotation } = useAnnotations();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // Scroll horizontal con rueda del mouse
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (!listRef.current) return;
+    e.preventDefault();
+    listRef.current.scrollLeft += e.deltaY !== 0 ? e.deltaY : e.deltaX;
+  }, []);
+
+  // Auto-scroll al thumbnail seleccionado
+  useEffect(() => {
+    if (selectedAnnotationIds.size !== 1) return;
+    const selectedId = [...selectedAnnotationIds][0];
+    const card = cardRefs.current.get(selectedId);
+    if (!card || !listRef.current) return;
+
+    const list = listRef.current;
+    const cardLeft = card.offsetLeft;
+    const cardRight = cardLeft + card.offsetWidth;
+    const listLeft = list.scrollLeft;
+    const listRight = listLeft + list.clientWidth;
+
+    // Si el card no es visible, hacer scroll para centrarlo
+    if (cardLeft < listLeft || cardRight > listRight) {
+      const targetScroll = cardLeft - list.clientWidth / 2 + card.offsetWidth / 2;
+      list.scrollTo({ left: targetScroll, behavior: 'smooth' });
+    }
+  }, [selectedAnnotationIds]);
+
+  const setCardRef = useCallback((id: string, el: HTMLDivElement | null) => {
+    if (el) {
+      cardRefs.current.set(id, el);
+    } else {
+      cardRefs.current.delete(id);
+    }
+  }, []);
+
+  // Ocultar badge de tipo si todas las anotaciones son del mismo tipo
+  const uniqueTypes = new Set(annotations.map(a => a.type));
+  const hideTypeBadge = uniqueTypes.size <= 1;
 
   if (!project) return null;
 
@@ -32,7 +73,11 @@ export const AnnotationsBar: React.FC<AnnotationsBarProps> = ({ image }) => {
 
         {/* Annotations List */}
         {!isCollapsed && (
-          <div className="annotix-annotations-list">
+          <div
+            ref={listRef}
+            className="annotix-annotations-list"
+            onWheel={handleWheel}
+          >
             {annotations.length === 0 ? (
               <div className="flex items-center justify-center flex-1 text-sm" style={{ color: 'var(--annotix-gray)' }}>
                 <i className="fas fa-inbox mr-2"></i>
@@ -46,17 +91,19 @@ export const AnnotationsBar: React.FC<AnnotationsBarProps> = ({ image }) => {
                 const classShortcut = classIndex >= 0 ? CLASS_SHORTCUTS[classIndex] : undefined;
 
                 return (
-                  <AnnotationThumbnailCard
-                    key={ann.id}
-                    annotation={ann}
-                    image={image}
-                    classColor={classInfo.color}
-                    className={classInfo.name}
-                    classShortcut={classShortcut}
-                    isSelected={selectedAnnotationIds.has(ann.id)}
-                    onSelect={() => selectAnnotation(ann.id)}
-                    onDelete={() => deleteAnnotation(ann.id)}
-                  />
+                  <div key={ann.id} ref={(el) => setCardRef(ann.id, el)}>
+                    <AnnotationThumbnailCard
+                      annotation={ann}
+                      image={image}
+                      classColor={classInfo.color}
+                      className={classInfo.name}
+                      classShortcut={classShortcut}
+                      isSelected={selectedAnnotationIds.has(ann.id)}
+                      hideTypeBadge={hideTypeBadge}
+                      onSelect={() => selectAnnotation(ann.id)}
+                      onDelete={() => deleteAnnotation(ann.id)}
+                    />
+                  </div>
                 );
               })
             )}

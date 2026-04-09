@@ -335,6 +335,76 @@
   color: var(--annotix-white);
 }
 
+/* Labels */
+.annotix-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--annotix-gray);
+}
+
+/* Select */
+.annotix-select {
+  background: var(--annotix-white);
+  border: 1px solid var(--annotix-border);
+  border-radius: 6px;
+  color: var(--annotix-dark);
+  outline: none;
+  transition: var(--annotix-transition);
+}
+
+.annotix-select:focus {
+  border-color: var(--annotix-primary);
+}
+
+/* Range slider */
+.annotix-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--annotix-gray-light);
+  outline: none;
+  cursor: pointer;
+}
+
+.annotix-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--annotix-primary);
+  border: 2px solid var(--annotix-white);
+  box-shadow: 0 1px 3px var(--annotix-shadow);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.annotix-range::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.annotix-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--annotix-primary);
+  border: 2px solid var(--annotix-white);
+  box-shadow: 0 1px 3px var(--annotix-shadow);
+  cursor: pointer;
+}
+
+/* Dialog Annotix themed */
+.annotix-dialog {
+  background: var(--annotix-white) !important;
+  border: 1px solid var(--annotix-border) !important;
+  color: var(--annotix-dark) !important;
+  box-shadow: 0 8px 30px var(--annotix-shadow-strong) !important;
+}
+
 /* Tool buttons */
 .annotix-tool-btn {
   width: 42px;
@@ -528,42 +598,50 @@
 /* Overlay con información */
 .annotix-annotation-overlay {
   position: absolute;
-  top: 0;
+  top: -1px;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: -1px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 3px;
+  padding: 0 2px;
   pointer-events: none;
 }
 
 /* Badge de clase */
 .annotix-annotation-class-label {
   display: inline-block;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-size: 0.65em;
+  padding: 1px 4px;
+  border-radius: 0 0 3px 3px;
+  font-size: 0.6em;
   font-weight: 600;
   color: white;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-  align-self: flex-start;
-  backdrop-filter: blur(4px);
+  line-height: 1.2;
 }
 
 /* Badge de tipo */
 .annotix-annotation-type-badge {
   display: inline-block;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 0.6em;
+  padding: 1px 4px;
+  border-radius: 0 0 3px 3px;
+  font-size: 0.55em;
   font-weight: 500;
   color: white;
   background: rgba(0,0,0,0.6);
-  align-self: flex-start;
-  margin-top: 2px;
-  backdrop-filter: blur(4px);
+  margin-left: 2px;
+}
+
+.annotix-annotation-ai-badge {
+  display: inline-block;
+  padding: 1px 4px;
+  border-radius: 3px 3px 0 0;
+  font-size: 0.5em;
+  font-weight: 600;
+  font-family: monospace;
+  color: white;
+  background: rgba(124, 58, 237, 0.85);
 }
 
 /* Botón eliminar */

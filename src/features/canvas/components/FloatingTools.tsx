@@ -28,6 +28,11 @@ interface FloatingToolsProps {
   onMaskBrushSizeChange?: (size: number) => void;
   onMaskSetEraseMode?: (erase: boolean) => void;
   onMaskToggleBrushShape?: () => void;
+  /** Inferencia */
+  inferenceAvailable?: boolean;
+  inferenceRunning?: boolean;
+  inferenceModelName?: string;
+  onRunInference?: () => void;
 }
 
 export const FloatingTools: React.FC<FloatingToolsProps> = ({
@@ -39,6 +44,10 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
   onMaskBrushSizeChange,
   onMaskSetEraseMode,
   onMaskToggleBrushShape,
+  inferenceAvailable = false,
+  inferenceRunning = false,
+  inferenceModelName,
+  onRunInference,
 }) => {
   const { t } = useTranslation();
   const { project } = useCurrentProject();
@@ -185,6 +194,22 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
               )}
               title={t(maskDirty ? 'tools.unsaved' : 'tools.saved')}
             />
+          )}
+
+          {/* Botón de inferencia AI */}
+          {inferenceAvailable && (
+            <>
+              <div style={{ height: 1, background: 'var(--annotix-border)', margin: '2px 0' }} />
+              <button
+                onClick={onRunInference}
+                disabled={inferenceRunning}
+                className={cn('annotix-tool-btn', inferenceRunning && 'active')}
+                style={inferenceRunning ? undefined : { background: '#7c3aed', color: 'white' }}
+                title={inferenceModelName ? `Inferir: ${inferenceModelName}` : 'Inferencia AI'}
+              >
+                <i className={`fas ${inferenceRunning ? 'fa-spinner fa-spin' : 'fa-brain'}`}></i>
+              </button>
+            </>
           )}
         </div>
       </div>

@@ -11,6 +11,8 @@ interface AnnotationThumbnailCardProps {
   className: string;
   classShortcut?: string;
   isSelected: boolean;
+  /** Si true, oculta el badge de tipo (todos son iguales) */
+  hideTypeBadge?: boolean;
   onSelect: () => void;
   onDelete: () => void;
 }
@@ -22,6 +24,7 @@ export const AnnotationThumbnailCard: React.FC<AnnotationThumbnailCardProps> = (
   className,
   classShortcut,
   isSelected,
+  hideTypeBadge = false,
   onSelect,
   onDelete,
 }) => {
@@ -358,7 +361,7 @@ export const AnnotationThumbnailCard: React.FC<AnnotationThumbnailCardProps> = (
       <div className="annotix-annotation-thumbnail">
         <canvas ref={canvasRef} />
 
-        {/* Overlay with badges */}
+        {/* Overlay: badges en bordes superior e inferior */}
         <div className="annotix-annotation-overlay">
           <div>
             <span
@@ -366,11 +369,19 @@ export const AnnotationThumbnailCard: React.FC<AnnotationThumbnailCardProps> = (
               style={{ backgroundColor: classColor }}
             >
               {className}
-              {classShortcut && <span className="ml-1 opacity-80">[{classShortcut}]</span>}
             </span>
-            <span className="annotix-annotation-type-badge">
-              {getTypeLabel(annotation.type)}
-            </span>
+            {!hideTypeBadge && (
+              <span className="annotix-annotation-type-badge">
+                {getTypeLabel(annotation.type)}
+              </span>
+            )}
+          </div>
+          <div>
+            {annotation.source === 'ai' && annotation.confidence != null && (
+              <span className="annotix-annotation-ai-badge">
+                AI {Math.round(annotation.confidence * 100)}%
+              </span>
+            )}
           </div>
         </div>
 

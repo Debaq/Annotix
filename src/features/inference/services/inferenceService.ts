@@ -19,6 +19,7 @@ export const inferenceService = {
     task: string,
     classNames: string[],
     inputSize: number | null,
+    outputFormat?: string | null,
     metadata?: Record<string, unknown> | null,
   ): Promise<InferenceModelEntry> {
     return invoke('upload_inference_model', {
@@ -29,6 +30,7 @@ export const inferenceService = {
       task,
       classNames,
       inputSize,
+      outputFormat: outputFormat ?? null,
       metadata: metadata ?? null,
     });
   },
@@ -47,6 +49,7 @@ export const inferenceService = {
     classMapping: ClassMapping[],
     inputSize: number | null,
     task: string | null,
+    outputFormat?: string | null,
   ): Promise<void> {
     return invoke('update_model_config', {
       projectId,
@@ -54,6 +57,7 @@ export const inferenceService = {
       classMapping,
       inputSize,
       task,
+      outputFormat: outputFormat ?? null,
     });
   },
 

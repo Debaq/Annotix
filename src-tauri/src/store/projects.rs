@@ -31,6 +31,8 @@ pub struct ProjectSummary {
     pub has_p2p_config: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub folder: Option<String>,
+    #[serde(rename = "inferenceModelCount")]
+    pub inference_model_count: usize,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -136,6 +138,7 @@ impl AppState {
                         p2p_download,
                         has_p2p_config,
                         folder: pf.folder,
+                        inference_model_count: pf.inference_models.len(),
                     });
                 }
                 Err(e) => {
@@ -171,6 +174,7 @@ impl AppState {
                 p2p_download: pf.p2p_download.clone(),
                 has_p2p_config: pf.p2p.is_some(),
                 folder: pf.folder.clone(),
+                inference_model_count: pf.inference_models.len(),
             }
         }).map(Some)
     }

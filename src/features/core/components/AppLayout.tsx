@@ -1,8 +1,10 @@
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Header } from './Header';
+import { DropOverlay } from './DropOverlay';
 import { useP2pStore } from '@/features/p2p/store/p2pStore';
 import { useUIStore } from '../store/uiStore';
+import { useFileDrop } from '@/hooks/useFileDrop';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -13,6 +15,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const currentProjectId = useUIStore(s => s.currentProjectId);
   const session = useP2pStore(s => currentProjectId ? s.sessions[currentProjectId] ?? null : null);
   const hostStopped = useP2pStore(s => currentProjectId ? s.hostStoppedByProject[currentProjectId] ?? false : false);
+
+  const { isDragging, isUploading, fileCount } = useFileDrop();
 
   const showDisconnectedBanner = session && (
     hostStopped || session.status === 'disconnected'
@@ -32,6 +36,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <main className="flex-1 overflow-hidden">
         {children}
       </main>
+      <DropOverlay isDragging={isDragging} isUploading={isUploading} fileCount={fileCount} />
     </div>
   );
 }

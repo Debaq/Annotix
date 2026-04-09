@@ -1,15 +1,14 @@
 import { ReactNode, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Slider } from '@/components/ui/slider';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { projectService } from '../../projects/services/projectService';
 import { useInferenceModels } from '../hooks/useInferenceModels';
@@ -19,24 +18,20 @@ import type { ClassDefinition, Project } from '@/lib/db';
 
 interface InferencePanelProps {
   trigger?: ReactNode;
-  /** ID de la imagen seleccionada actualmente */
   currentImageId?: string | null;
-  /** Proyecto actual (pasado desde Header para evitar fetch duplicado) */
   project: Project | null;
 }
 
-export function InferencePanel({ trigger, currentImageId, project }: InferencePanelProps) {
+export function InferencePanel({ trigger, project }: InferencePanelProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   const projectId = project?.id || null;
 
-  // Estado de configuración
   const [confidence, setConfidence] = useState(0.25);
   const [iouThreshold, setIouThreshold] = useState(0.45);
   const [device, setDevice] = useState('cpu');
 
-  // Hooks
   const {
     models,
     selectedModel,
@@ -54,14 +49,11 @@ export function InferencePanel({ trigger, currentImageId, project }: InferencePa
     color: string;
   }>;
 
-  // Sincronizar clases del modelo al proyecto
   const handleSyncClasses = useCallback(async () => {
     if (!projectId || !selectedModel) return;
 
-    // Obtener colores del JSON de metadata
     const colorPalette: Record<string, string> =
       (selectedModel.metadata as any)?.color_palette || {};
-
     const classNames = selectedModel.classNames;
     if (classNames.length === 0) return;
 
@@ -70,16 +62,14 @@ export function InferencePanel({ trigger, currentImageId, project }: InferencePa
       (img: any) => img.annotations && img.annotations.length > 0
     );
 
-    // Construir mensaje de advertencia
-    let warning = `Se reemplazarán las ${existingCount} clases actuales del proyecto por ${classNames.length} clases del modelo.`;
+    let warning = `Se reemplazarán las ${existingCount} clases actuales por ${classNames.length} clases del modelo.`;
     if (hasAnnotations) {
-      warning += '\n\n⚠️ ATENCIÓN: El proyecto tiene anotaciones existentes. Las anotaciones con clases que no coincidan podrían quedar huérfanas.';
+      warning += '\n\n⚠️ El proyecto tiene anotaciones. Las de clases no coincidentes podrían quedar huérfanas.';
     }
     warning += '\n\n¿Continuar?';
 
     if (!window.confirm(warning)) return;
 
-    // Generar nuevas clases con colores del JSON
     const defaultColors = [
       '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6',
       '#ec4899', '#06b6d4', '#f97316', '#a855f7', '#14b8a6',
@@ -94,7 +84,6 @@ export function InferencePanel({ trigger, currentImageId, project }: InferencePa
 
     await projectService.update(projectId, { classes: newClasses });
 
-    // Actualizar el mapeo automáticamente (cada clase del modelo → clase del proyecto con mismo índice)
     const newMapping = classNames.map((name, index) => ({
       modelClassId: index,
       modelClassName: name,
@@ -107,26 +96,23 @@ export function InferencePanel({ trigger, currentImageId, project }: InferencePa
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="outline" size="sm">
-            <i className="fas fa-magic mr-2" />
+          <button className="annotix-btn annotix-btn-outline">
+            <i className="fas fa-brain mr-2" />
             {t('inference.title')}
-          </Button>
+          </button>
         )}
       </DialogTrigger>
 
-      <DialogContent className="max-w-lg max-h-[85vh] bg-gray-900 border-gray-700">
+      <DialogContent className="annotix-dialog max-w-lg max-h-[85vh]">
         <DialogHeader>
-          <DialogTitle className="text-lg flex items-center gap-2">
-            <i className="fas fa-magic text-purple-400" />
+          <DialogTitle className="text-base flex items-center gap-2">
+            <i className="fas fa-brain" style={{ color: '#7c3aed' }} />
             {t('inference.title')}
           </DialogTitle>
-          <DialogDescription className="text-gray-400 text-sm">
-            {t('inference.uploadHint')}
-          </DialogDescription>
         </DialogHeader>
 
-        <div className="overflow-y-auto max-h-[calc(85vh-100px)] pr-1 space-y-4 pb-4">
-          {/* Sección: Modelo */}
+        <div className="overflow-y-auto max-h-[calc(85vh-120px)] space-y-4 pb-2">
+          {/* Modelo */}
           <ModelUploader
             model={selectedModel}
             loading={modelLoading}
@@ -135,38 +121,41 @@ export function InferencePanel({ trigger, currentImageId, project }: InferencePa
             onDelete={deleteModel}
           />
 
-          {/* Botón sincronizar clases del modelo al proyecto */}
+          {/* Sync clases */}
           {selectedModel && selectedModel.classNames.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full border-amber-500/30 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
+            <button
+              className="annotix-btn w-full"
+              style={{
+                background: 'rgba(245, 158, 11, 0.1)',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                color: '#d97706',
+                fontSize: '0.75rem',
+              }}
               onClick={handleSyncClasses}
             >
               <i className="fas fa-sync-alt mr-2" />
               Reemplazar clases del proyecto con las del modelo ({selectedModel.classNames.length})
-            </Button>
+            </button>
           )}
 
-          {/* Selector de modelo activo si hay más de uno */}
+          {/* Selector de modelo */}
           {models.length > 1 && (
             <div className="space-y-1">
-              <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                {t('inference.modelName')}
-              </h4>
+              <label className="annotix-label">{t('inference.modelName')}</label>
               <div className="space-y-1">
                 {models.map((m) => (
                   <button
                     key={m.id}
                     onClick={() => selectModel(m)}
-                    className={`w-full text-left px-3 py-2 rounded text-xs transition-colors ${
-                      selectedModel?.id === m.id
-                        ? 'bg-purple-500/20 border border-purple-500/30 text-purple-300'
-                        : 'bg-gray-800/50 border border-gray-700/50 text-gray-400 hover:bg-gray-800'
-                    }`}
+                    className="w-full text-left px-3 py-2 rounded text-xs transition-colors"
+                    style={{
+                      background: selectedModel?.id === m.id ? 'rgba(124, 58, 237, 0.12)' : 'var(--annotix-gray-light)',
+                      border: selectedModel?.id === m.id ? '1px solid rgba(124, 58, 237, 0.4)' : '1px solid var(--annotix-border)',
+                      color: selectedModel?.id === m.id ? '#7c3aed' : 'var(--annotix-dark)',
+                    }}
                   >
                     <span className="font-medium">{m.name}</span>
-                    <span className="ml-2 text-gray-500 uppercase font-mono">{m.format}</span>
+                    <span className="ml-2 opacity-50 uppercase font-mono">{m.format}</span>
                   </button>
                 ))}
               </div>
@@ -175,7 +164,7 @@ export function InferencePanel({ trigger, currentImageId, project }: InferencePa
 
           {selectedModel && (
             <>
-              <Separator className="bg-gray-700" />
+              <Separator style={{ background: 'var(--annotix-border)' }} />
 
               {/* Mapeo de clases */}
               <ClassMappingEditor
@@ -184,61 +173,63 @@ export function InferencePanel({ trigger, currentImageId, project }: InferencePa
                 onChange={(mapping) => updateMapping(selectedModel.id, mapping)}
               />
 
-              <Separator className="bg-gray-700" />
+              <Separator style={{ background: 'var(--annotix-border)' }} />
 
               {/* Configuración */}
               <div className="space-y-3">
-                <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  {t('inference.settings')}
-                </h4>
+                <label className="annotix-label">{t('inference.settings')}</label>
 
-                {/* Umbral de confianza */}
-                <div className="space-y-1">
+                {/* Confianza */}
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs text-gray-400">
+                    <span className="text-xs" style={{ color: 'var(--annotix-gray)' }}>
                       {t('inference.confidenceThreshold')}
-                    </label>
-                    <span className="text-xs font-mono text-gray-300">
+                    </span>
+                    <span className="text-xs font-mono font-semibold" style={{ color: 'var(--annotix-dark)' }}>
                       {confidence.toFixed(2)}
                     </span>
                   </div>
-                  <Slider
-                    value={[confidence]}
-                    onValueChange={([v]) => setConfidence(v)}
-                    min={0.01}
-                    max={0.99}
-                    step={0.01}
-                    className="w-full"
+                  <input
+                    type="range"
+                    min={1}
+                    max={99}
+                    value={Math.round(confidence * 100)}
+                    onChange={(e) => setConfidence(Number(e.target.value) / 100)}
+                    className="annotix-range w-full"
                   />
                 </div>
 
-                {/* Umbral IoU */}
-                <div className="space-y-1">
+                {/* IoU */}
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs text-gray-400">
+                    <span className="text-xs" style={{ color: 'var(--annotix-gray)' }}>
                       {t('inference.iouThreshold')}
-                    </label>
-                    <span className="text-xs font-mono text-gray-300">
+                    </span>
+                    <span className="text-xs font-mono font-semibold" style={{ color: 'var(--annotix-dark)' }}>
                       {iouThreshold.toFixed(2)}
                     </span>
                   </div>
-                  <Slider
-                    value={[iouThreshold]}
-                    onValueChange={([v]) => setIouThreshold(v)}
-                    min={0.1}
-                    max={0.95}
-                    step={0.05}
-                    className="w-full"
+                  <input
+                    type="range"
+                    min={10}
+                    max={95}
+                    step={5}
+                    value={Math.round(iouThreshold * 100)}
+                    onChange={(e) => setIouThreshold(Number(e.target.value) / 100)}
+                    className="annotix-range w-full"
                   />
                 </div>
 
                 {/* Dispositivo */}
                 <div className="flex items-center justify-between">
-                  <label className="text-xs text-gray-400">{t('inference.device')}</label>
+                  <span className="text-xs" style={{ color: 'var(--annotix-gray)' }}>
+                    {t('inference.device')}
+                  </span>
                   <select
                     value={device}
                     onChange={(e) => setDevice(e.target.value)}
-                    className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-300"
+                    className="annotix-select"
+                    style={{ fontSize: '0.75rem', padding: '4px 8px' }}
                   >
                     <option value="cpu">CPU</option>
                     <option value="0">GPU 0</option>
@@ -250,6 +241,15 @@ export function InferencePanel({ trigger, currentImageId, project }: InferencePa
             </>
           )}
         </div>
+
+        <DialogFooter>
+          <DialogClose asChild>
+            <button className="annotix-btn annotix-btn-primary">
+              <i className="fas fa-check mr-1" />
+              {t('common.accept', 'Aceptar')}
+            </button>
+          </DialogClose>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

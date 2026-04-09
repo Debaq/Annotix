@@ -19,8 +19,14 @@
     "annotated": "Annotiert",
     "unannotated": "Nicht annotiert"
   },
+  "inferAll": "Alle inferieren",
+  "inferring": "Inferiert...",
+  "inferenceCompleted": "Batch-Inferenz abgeschlossen",
   "backToGallery": "Zurück zur Galerie",
   "selectImage": "Wähle ein Bild aus",
   "uploadOrSelect": "Lade ein Bild hoch oder wähle eines aus",
-  "uploading": "Bilder werden hochgeladen"
+  "uploading": "Bilder werden hochgeladen",
+  "dropImages": "Bilder hier ablegen",
+  "dropHint": "Bilder zum Projekt hinzufügen",
+  "dropNoProject": "Öffne zuerst ein Projekt"
 }

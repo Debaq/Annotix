@@ -19,8 +19,14 @@
     "annotated": "已标注",
     "unannotated": "未标注"
   },
+  "inferAll": "推理全部",
+  "inferring": "推理中...",
+  "inferenceCompleted": "批量推理完成",
   "backToGallery": "返回图库",
   "selectImage": "选择一张图像",
   "uploadOrSelect": "上传或选择一张图像",
-  "uploading": "上传图像中"
+  "uploading": "上传图像中",
+  "dropImages": "将图像拖放到此处",
+  "dropHint": "要添加到项目的图像",
+  "dropNoProject": "请先打开一个项目"
 }

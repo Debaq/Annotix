@@ -19,8 +19,14 @@
     "annotated": "주석 완료",
     "unannotated": "주석 미완료"
   },
+  "inferAll": "모두 추론",
+  "inferring": "추론 중...",
+  "inferenceCompleted": "일괄 추론 완료",
   "backToGallery": "갤러리로 돌아가기",
   "selectImage": "이미지를 선택하세요",
   "uploadOrSelect": "이미지를 업로드하거나 선택하세요",
-  "uploading": "이미지 업로드 중"
+  "uploading": "이미지 업로드 중",
+  "dropImages": "여기에 이미지를 놓으세요",
+  "dropHint": "프로젝트에 추가할 이미지",
+  "dropNoProject": "먼저 프로젝트를 열어주세요"
 }

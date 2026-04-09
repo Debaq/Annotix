@@ -9,6 +9,8 @@ export interface InferenceModelEntry {
   classNames: string[];
   classMapping: ClassMapping[];
   inputSize: number | null;
+  /** Hint de formato ONNX: "yolov5","yolov8","yolov10","classification", null=auto */
+  outputFormat: string | null;
   modelHash: string;
   uploaded: number;
   metadata: Record<string, unknown> | null;
@@ -95,6 +97,8 @@ export interface ModelMetadata {
   numClasses?: number;
   inputShape?: number[];
   outputShape?: number[];
+  outputFormat?: string;
+  numOutputs?: number;
   error?: string;
 }
 
@@ -104,6 +108,8 @@ export interface ModelConfigResult {
   displayNames: string[];
   task: string | null;
   inputSize: number | null;
+  /** Hint de formato ONNX: "yolov5","yolov8","yolov10","classification" */
+  outputFormat: string | null;
   /** Colores por technical_name: { "hemorrhage": "#ef4444", ... } */
   colors: Record<string, string>;
   /** Índices de clases marcadas como currently_detected */
