@@ -21,6 +21,7 @@ pub fn upload_inference_model(
     task: String,
     class_names: Vec<String>,
     input_size: Option<u32>,
+    output_format: Option<String>,
     metadata: Option<serde_json::Value>,
 ) -> Result<InferenceModelEntry, String> {
     state.upload_inference_model(
@@ -31,6 +32,7 @@ pub fn upload_inference_model(
         &task,
         class_names,
         input_size,
+        output_format,
         metadata,
     )
 }
@@ -60,8 +62,9 @@ pub fn update_model_config(
     class_mapping: Vec<ClassMapping>,
     input_size: Option<u32>,
     task: Option<String>,
+    output_format: Option<String>,
 ) -> Result<(), String> {
-    state.update_model_config(&project_id, &model_id, class_mapping, input_size, task)
+    state.update_model_config(&project_id, &model_id, class_mapping, input_size, task, output_format)
 }
 
 // ─── Detección de metadatos ──────────────────────────────────────────────────
@@ -182,6 +185,8 @@ pub struct ModelConfigResult {
     pub display_names: Vec<String>,
     pub task: Option<String>,
     pub input_size: Option<u32>,
+    /// Hint de formato ONNX: "yolov5", "yolov8", "yolov10", "classification"
+    pub output_format: Option<String>,
     /// Colores por technical_name: { "hemorrhage": "#ef4444", ... }
     pub colors: std::collections::HashMap<String, String>,
     /// Clases marcadas como currently_detected
@@ -263,7 +268,6 @@ fn parse_model_config_json_internal(content: &str) -> Result<ModelConfigResult, 
     let input_size = json.get("model_info")
         .and_then(|mi| mi.get("input_size"))
         .and_then(|is| {
-            // Puede ser [640, 640] o un número
             if let Some(arr) = is.as_array() {
                 arr.first().and_then(|v| v.as_u64()).map(|v| v as u32)
             } else {
@@ -271,11 +275,18 @@ fn parse_model_config_json_internal(content: &str) -> Result<ModelConfigResult, 
             }
         });
 
+    // Extraer output_format desde model_info.output_format
+    let output_format = json.get("model_info")
+        .and_then(|mi| mi.get("output_format"))
+        .and_then(|f| f.as_str())
+        .map(|s| s.to_string());
+
     Ok(ModelConfigResult {
         class_names,
         display_names,
         task,
         input_size,
+        output_format,
         colors,
         detected_classes,
         categories,

@@ -32,6 +32,7 @@ impl AppState {
         task: &str,
         class_names: Vec<String>,
         input_size: Option<u32>,
+        output_format: Option<String>,
         metadata: Option<serde_json::Value>,
     ) -> Result<InferenceModelEntry, String> {
         let models_dir = self.project_models_dir(project_id)?;
@@ -83,6 +84,7 @@ impl AppState {
             class_names,
             class_mapping,
             input_size,
+            output_format,
             model_hash,
             uploaded: now,
             metadata,
@@ -142,6 +144,7 @@ impl AppState {
         class_mapping: Vec<ClassMapping>,
         input_size: Option<u32>,
         task: Option<String>,
+        output_format: Option<String>,
     ) -> Result<(), String> {
         self.with_project_mut(project_id, |pf| {
             if let Some(model) = pf.inference_models.iter_mut().find(|m| m.id == model_id) {
@@ -152,6 +155,8 @@ impl AppState {
                 if let Some(t) = task {
                     model.task = t;
                 }
+                // output_format: Some("yolov5") sets it, Some("") or None clears it
+                model.output_format = output_format.filter(|s| !s.is_empty());
             }
             pf.updated = js_timestamp();
         })

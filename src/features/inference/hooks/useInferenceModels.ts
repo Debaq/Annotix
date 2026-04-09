@@ -69,19 +69,19 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
       let task = 'detect';
       let classNames: string[] = [];
       let inputSize: number | null = null;
+      let outputFormat: string | null = null;
       let configResult: ModelConfigResult | null = null;
       let rawMetadata: Record<string, unknown> | null = null;
 
-      if (format === 'pt') {
-        // Para .pt intentar detectar automáticamente con ultralytics
-        try {
-          const meta: ModelMetadata = await inferenceService.detectModelMetadata(filePath);
-          task = meta.task || 'detect';
-          classNames = meta.classNames || [];
-          inputSize = meta.inputSize || null;
-        } catch {
-          // Fallo la detección, pedir config manual
-        }
+      // Intentar detectar metadata automáticamente (para .pt y .onnx)
+      try {
+        const meta: ModelMetadata = await inferenceService.detectModelMetadata(filePath);
+        task = meta.task || task;
+        classNames = meta.classNames || classNames;
+        inputSize = meta.inputSize || inputSize;
+        outputFormat = meta.outputFormat || outputFormat;
+      } catch {
+        // Fallo la detección automática, se pedirá config manual
       }
 
       // 2. Pedir archivo de configuración (JSON/YAML/TXT) para clases
@@ -105,6 +105,7 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
               classNames = configResult.classNames;
               task = configResult.task || task;
               inputSize = configResult.inputSize || inputSize;
+              outputFormat = configResult.outputFormat || outputFormat;
               rawMetadata = configResult.rawMetadata;
               setLastConfigResult(configResult);
             } catch (err) {
@@ -130,6 +131,7 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
         task,
         classNames,
         inputSize,
+        outputFormat,
         rawMetadata,
       );
 

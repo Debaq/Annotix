@@ -343,6 +343,9 @@ pub struct InferenceModelEntry {
     #[serde(default)]
     pub class_mapping: Vec<ClassMapping>,
     pub input_size: Option<u32>,
+    /// Hint de formato de salida ONNX: "yolov5", "yolov8", "yolov10", "classification", null=auto
+    #[serde(default)]
+    pub output_format: Option<String>,
     pub model_hash: String,
     pub uploaded: f64,
     pub metadata: Option<serde_json::Value>,

@@ -77,6 +77,8 @@ impl InferenceProcessManager {
                 app, &job_id, &model_path, &model_info.class_names,
                 &image_paths, &config,
                 model_id, project_id,
+                &model_info.task,
+                model_info.output_format.as_deref(),
             ),
             "pt" => self.start_python_inference(
                 state, app, &job_id, &model_path, &model_info,
@@ -97,8 +99,10 @@ impl InferenceProcessManager {
         class_names: &[String],
         image_paths: &[(String, String)],
         config: &InferenceConfig,
-        _model_id: &str,
+        model_id: &str,
         project_id: &str,
+        task: &str,
+        output_format: Option<&str>,
     ) -> Result<(), String> {
         // Cargar modelo (validar antes de lanzar el thread)
         let mut session = super::ort_runner::load_model(model_path)?;
@@ -120,17 +124,22 @@ impl InferenceProcessManager {
         let iou_threshold = config.iou_threshold;
         let project_id_owned = project_id.to_string();
         let cancel_flags = self.cancel_flags.clone();
+        let task_owned = task.to_string();
+        let output_format_owned = output_format.map(|s| s.to_string());
+        let model_id_owned = model_id.to_string();
 
         std::thread::spawn(move || {
             let total = image_paths_owned.len();
 
             for (idx, (image_id, image_path)) in image_paths_owned.iter().enumerate() {
-                // Verificar cancelación
                 if cancel.load(Ordering::Relaxed) {
                     break;
                 }
 
                 let start = std::time::Instant::now();
+
+                // Leer dimensiones de la imagen original para denormalizar coordenadas
+                let img_dims = image::image_dimensions(image_path).ok();
 
                 match super::ort_runner::run_inference(
                     &mut session,
@@ -139,63 +148,39 @@ impl InferenceProcessManager {
                     iou_threshold,
                     input_size,
                     num_classes,
+                    &task_owned,
+                    output_format_owned.as_deref(),
                 ) {
-                    Ok(detections) => {
-                        let ai_annotations: Vec<AnnotationEntry> = detections
-                            .iter()
-                            .filter_map(|det| {
-                                let class_name = class_names_owned
-                                    .get(det.class_id)
-                                    .cloned()
-                                    .unwrap_or_else(|| det.class_id.to_string());
-
-                                // Buscar clase del proyecto por nombre
-                                let project_class_id = {
-                                    use tauri::Manager;
-                                    let state = app_clone.state::<AppState>();
-                                    state.with_project(&project_id_owned, |pf| {
-                                        pf.classes.iter()
-                                            .find(|c| c.name.eq_ignore_ascii_case(&class_name))
-                                            .map(|c| c.id)
-                                    }).ok().flatten()
-                                };
-
-                                let class_id = project_class_id?;
-
-                                Some(AnnotationEntry {
-                                    id: uuid::Uuid::new_v4().to_string(),
-                                    annotation_type: "bbox".to_string(),
-                                    class_id,
-                                    data: serde_json::json!({
-                                        "x": det.x,
-                                        "y": det.y,
-                                        "width": det.width,
-                                        "height": det.height,
-                                    }),
-                                    source: "ai".to_string(),
-                                    confidence: Some(det.confidence),
-                                    model_class_name: Some(class_name),
-                                })
-                            })
-                            .collect();
+                    Ok(result) => {
+                        let ai_annotations = match result {
+                            super::ort_runner::InferenceResult::Detections(detections) => {
+                                detections_to_annotations(
+                                    &detections, &class_names_owned,
+                                    &app_clone, &project_id_owned,
+                                    &model_id_owned, img_dims,
+                                )
+                            }
+                            super::ort_runner::InferenceResult::Classifications(classifications) => {
+                                classifications_to_annotations(
+                                    &classifications, &class_names_owned,
+                                    &app_clone, &project_id_owned,
+                                    &model_id_owned,
+                                )
+                            }
+                        };
 
                         let ann_count = ai_annotations.len();
                         let elapsed = start.elapsed().as_millis() as f64;
 
                         log::info!(
-                            "[ONNX Inference] image={} detections={} time={:.0}ms",
+                            "[ONNX Inference] image={} annotations={} time={:.0}ms",
                             image_id, ann_count, elapsed
                         );
 
-                        // Guardar como anotaciones AI (borra AI previas de esta imagen)
                         save_ai_annotations(
-                            &app_clone,
-                            &project_id_owned,
-                            image_id,
-                            ai_annotations,
+                            &app_clone, &project_id_owned, image_id, ai_annotations,
                         );
 
-                        // Emitir progreso
                         let _ = app_clone.emit(
                             "inference:progress",
                             &InferenceProgressEvent {
@@ -207,7 +192,6 @@ impl InferenceProcessManager {
                             },
                         );
 
-                        // Emitir resultado
                         let _ = app_clone.emit(
                             "inference:result",
                             serde_json::json!({
@@ -233,13 +217,11 @@ impl InferenceProcessManager {
                 }
             }
 
-            // Emitir completado
             let _ = app_clone.emit(
                 "inference:completed",
                 serde_json::json!({ "jobId": &job_id_owned }),
             );
 
-            // Limpiar flag de cancelación
             if let Ok(mut flags) = cancel_flags.lock() {
                 flags.remove(&job_id_owned);
             }
@@ -480,6 +462,198 @@ fn handle_python_event(
             );
         }
         _ => {}
+    }
+}
+
+/// Resuelve el class_id del proyecto para una detección.
+///
+/// Estrategia (en orden de prioridad):
+/// 1. Match exacto por nombre (case-insensitive) con clases del proyecto
+/// 2. Si hay class_mapping configurado con project_class_id, usar eso
+/// 3. Si el proyecto tiene exactamente 1 clase, usar esa (modelo single-class)
+/// 4. Usar la primera clase del proyecto como fallback
+fn resolve_project_class(
+    app: &AppHandle,
+    project_id: &str,
+    model_class_name: &str,
+    model_class_id: usize,
+    model_id: &str,
+) -> Option<i64> {
+    use tauri::Manager;
+    let state = app.state::<AppState>();
+    state.with_project(project_id, |pf| {
+        // 1. Match por nombre
+        if let Some(cls) = pf.classes.iter().find(|c| c.name.eq_ignore_ascii_case(model_class_name)) {
+            return Some(cls.id);
+        }
+
+        // 2. Match por class_mapping configurado
+        if let Some(model) = pf.inference_models.iter().find(|m| m.id == model_id) {
+            if let Some(mapping) = model.class_mapping.iter().find(|m| m.model_class_id == model_class_id) {
+                if let Some(ref pid) = mapping.project_class_id {
+                    if let Ok(id) = pid.parse::<i64>() {
+                        if pf.classes.iter().any(|c| c.id == id) {
+                            return Some(id);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Si el proyecto tiene 1 sola clase, usar esa
+        if pf.classes.len() == 1 {
+            return Some(pf.classes[0].id);
+        }
+
+        // 4. Fallback: primera clase del proyecto
+        pf.classes.first().map(|c| c.id)
+    }).ok().flatten()
+}
+
+/// Convierte detecciones ONNX a AnnotationEntry, determinando el tipo según los campos.
+/// Las coordenadas se denormalizan de (0..1) a píxeles absolutos para compatibilidad
+/// con el sistema de anotaciones del canvas.
+fn detections_to_annotations(
+    detections: &[super::ort_runner::Detection],
+    class_names: &[String],
+    app: &AppHandle,
+    project_id: &str,
+    model_id: &str,
+    img_dims: Option<(u32, u32)>,
+) -> Vec<AnnotationEntry> {
+    let (img_w, img_h) = img_dims
+        .map(|(w, h)| (w as f64, h as f64))
+        .unwrap_or((1.0, 1.0)); // fallback: mantener normalizado
+
+    let mut mapped = 0usize;
+    let mut unmapped = 0usize;
+
+    let result: Vec<AnnotationEntry> = detections
+        .iter()
+        .filter_map(|det| {
+            let class_name = class_names
+                .get(det.class_id)
+                .cloned()
+                .unwrap_or_else(|| det.class_id.to_string());
+
+            let class_id = match resolve_project_class(
+                app, project_id, &class_name, det.class_id, model_id,
+            ) {
+                Some(id) => {
+                    mapped += 1;
+                    id
+                }
+                None => {
+                    unmapped += 1;
+                    return None;
+                }
+            };
+
+            // Denormalizar coordenadas a píxeles absolutos
+            let px = det.x * img_w;
+            let py = det.y * img_h;
+            let pw = det.width * img_w;
+            let ph = det.height * img_h;
+
+            let mut data = serde_json::json!({
+                "x": px,
+                "y": py,
+                "width": pw,
+                "height": ph,
+            });
+
+            let annotation_type;
+
+            if let Some(ref polygon) = det.polygon {
+                annotation_type = "polygon".to_string();
+                let points: Vec<serde_json::Value> = polygon
+                    .iter()
+                    .map(|(pt_x, pt_y)| serde_json::json!({"x": pt_x * img_w, "y": pt_y * img_h}))
+                    .collect();
+                data["points"] = serde_json::Value::Array(points);
+            } else if let Some(angle) = det.angle {
+                annotation_type = "obb".to_string();
+                data["angle"] = serde_json::json!(angle);
+            } else if let Some(ref keypoints) = det.keypoints {
+                annotation_type = "keypoints".to_string();
+                let kpts: Vec<serde_json::Value> = keypoints
+                    .iter()
+                    .map(|kp| serde_json::json!({
+                        "x": kp.x * img_w,
+                        "y": kp.y * img_h,
+                        "confidence": kp.confidence,
+                    }))
+                    .collect();
+                data["keypoints"] = serde_json::Value::Array(kpts);
+            } else {
+                annotation_type = "bbox".to_string();
+            }
+
+            Some(AnnotationEntry {
+                id: uuid::Uuid::new_v4().to_string(),
+                annotation_type,
+                class_id,
+                data,
+                source: "ai".to_string(),
+                confidence: Some(det.confidence),
+                model_class_name: Some(class_name),
+            })
+        })
+        .collect();
+
+    if unmapped > 0 {
+        log::warn!(
+            "[Inference] {} detecciones mapeadas, {} sin clase en el proyecto (el proyecto no tiene clases definidas)",
+            mapped, unmapped
+        );
+    } else {
+        log::info!("[Inference] {} detecciones mapeadas a clases del proyecto", mapped);
+    }
+
+    result
+}
+
+/// Convierte clasificaciones ONNX a AnnotationEntry
+fn classifications_to_annotations(
+    classifications: &[super::ort_runner::Classification],
+    class_names: &[String],
+    app: &AppHandle,
+    project_id: &str,
+    model_id: &str,
+) -> Vec<AnnotationEntry> {
+    let top = match classifications.first() {
+        Some(c) => c,
+        None => return vec![],
+    };
+
+    let class_name = class_names
+        .get(top.class_id)
+        .cloned()
+        .unwrap_or_else(|| top.class_id.to_string());
+
+    let class_id = resolve_project_class(
+        app, project_id, &class_name, top.class_id, model_id,
+    );
+
+    match class_id {
+        Some(id) => vec![AnnotationEntry {
+            id: uuid::Uuid::new_v4().to_string(),
+            annotation_type: "bbox".to_string(),
+            class_id: id,
+            data: serde_json::json!({
+                "x": 0.0,
+                "y": 0.0,
+                "width": 1.0,
+                "height": 1.0,
+            }),
+            source: "ai".to_string(),
+            confidence: Some(top.confidence),
+            model_class_name: Some(class_name),
+        }],
+        None => {
+            log::warn!("[Inference] Clasificación descartada: proyecto sin clases definidas");
+            vec![]
+        }
     }
 }
 

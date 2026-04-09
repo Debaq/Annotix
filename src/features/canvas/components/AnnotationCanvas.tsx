@@ -35,7 +35,8 @@ import type { ToolId } from '../config/toolsConfig';
 import { reclassifyIsland } from '../utils/maskReclassify';
 import { useInferenceModels } from '../../inference/hooks/useInferenceModels';
 import { useInferenceRunner } from '../../inference/hooks/useInferenceRunner';
-import type { InferenceConfig } from '../../inference/types';
+import type { InferenceConfig, InferenceResultEvent, InferenceCompletedEvent, InferenceErrorEvent } from '../../inference/types';
+import { useToast } from '@/components/hooks/use-toast';
 
 const ZOOM_WHEEL_FACTOR = 1.05;
 const MIN_ZOOM_SCALE = 0.1;
@@ -125,11 +126,27 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   // ─── Inference hooks ──────────────────────────────────────────────────────
   const projectId = project?.id || null;
   const currentImageId = image?.id || null;
+  const { toast } = useToast();
   const { models: inferenceModels, selectedModel: inferenceModel } = useInferenceModels(projectId);
+
+  const handleInferenceResult = useCallback((event: InferenceResultEvent) => {
+    const count = event.predictionsCount;
+    const time = Math.round(event.inferenceTimeMs);
+    if (count > 0) {
+      toast({ title: `Inferencia: ${count} detecciones (${time}ms)`, duration: 3000 });
+    } else {
+      toast({ title: `Inferencia: 0 detecciones (${time}ms). Revisa clases y umbral de confianza.`, variant: 'destructive', duration: 5000 });
+    }
+  }, [toast]);
+
+  const handleInferenceError = useCallback((event: InferenceErrorEvent) => {
+    toast({ title: `Error de inferencia: ${event.error}`, variant: 'destructive', duration: 6000 });
+  }, [toast]);
+
   const {
     running: inferenceRunning,
     startSingle: startSingleInference,
-  } = useInferenceRunner();
+  } = useInferenceRunner(handleInferenceResult, undefined, handleInferenceError);
 
   // Contar anotaciones AI para mostrar en el panel
   const aiAnnotationsCount = annotations.filter(a => a.source === 'ai').length;
@@ -1087,6 +1104,10 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
           const newShape = maskHandler.toggleBrushShape();
           setMaskBrushShape(newShape);
         }}
+        inferenceAvailable={inferenceModels.length > 0 && !!inferenceModel}
+        inferenceRunning={inferenceRunning}
+        inferenceModelName={inferenceModel?.name}
+        onRunInference={handleRunInference}
       />
 
       {/* Floating Zoom Controls (Right) */}
@@ -1123,7 +1144,9 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
             <>
               <div className="flex items-center gap-2 text-sm">
                 <i className="fas fa-image" style={{ color: 'var(--annotix-primary)' }}></i>
-                <span className="font-medium text-[var(--annotix-dark)]">{image.name}</span>
+                <span className="font-medium text-[var(--annotix-dark)]" title={image.name}>
+                  {image.name.length > 14 ? image.name.slice(0, 10) + '...' + image.name.slice(image.name.lastIndexOf('.')) : image.name}
+                </span>
               </div>
               <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--annotix-gray)' }}>
                 <i className="fas fa-expand-arrows-alt"></i>
@@ -1138,24 +1161,6 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
                   <i className="fas fa-robot"></i>
                   <span>{aiAnnotationsCount} AI</span>
                 </div>
-              )}
-              {/* Botón de inferencia rápida */}
-              {inferenceModels.length > 0 && (
-                <button
-                  onClick={handleRunInference}
-                  disabled={inferenceRunning || !inferenceModel}
-                  className="mt-1 flex items-center justify-center w-6 h-6 rounded transition-colors"
-                  style={{
-                    background: inferenceRunning ? '#374151' : '#7c3aed',
-                    color: inferenceRunning ? '#6b7280' : 'white',
-                    border: 'none',
-                    cursor: inferenceRunning || !inferenceModel ? 'not-allowed' : 'pointer',
-                    opacity: inferenceRunning || !inferenceModel ? 0.5 : 1,
-                  }}
-                  title={inferenceModel ? `Inferir: ${inferenceModel.name}` : 'No hay modelo seleccionado'}
-                >
-                  <i className={`fas ${inferenceRunning ? 'fa-spinner fa-spin' : 'fa-brain'} text-xs`}></i>
-                </button>
               )}
             </>
           )}
@@ -1242,24 +1247,12 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
                 const rawData = ann.data as BBoxData;
                 const isAI = ann.source === 'ai';
 
-                // AI annotations: coordenadas normalizadas (0..1) → píxeles imagen
-                const bboxData: BBoxData = isAI
-                  ? {
-                      x: rawData.x * (konvaImage?.width || image.width),
-                      y: rawData.y * (konvaImage?.height || image.height),
-                      width: rawData.width * (konvaImage?.width || image.width),
-                      height: rawData.height * (konvaImage?.height || image.height),
-                    }
-                  : rawData;
+                // Todas las anotaciones (AI y manuales) usan píxeles absolutos
+                const bboxData: BBoxData = rawData;
 
                 const toggleFn = overrideAnnotations?.onToggleAnnotation;
                 const btnX = bboxData.x * scale + imageOffset.x + bboxData.width * scale - 20;
                 const btnY = bboxData.y * scale + imageOffset.y + 2;
-
-                // Etiqueta AI con confianza
-                const aiLabel = isAI && ann.confidence != null
-                  ? `AI ${Math.round(ann.confidence * 100)}%`
-                  : null;
 
                 return (
                   <React.Fragment key={ann.id}>
@@ -1271,7 +1264,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
                       onDragEnd={(e) => handleAnnotationDragEnd(ann.id, e)}
                       onTransformEnd={(e) => handleAnnotationTransform(ann.id, e)}
                     />
-                    {/* Borde punteado extra para AI */}
+                    {/* Borde punteado para AI */}
                     {isAI && (
                       <Rect
                         x={bboxData.x * scale + imageOffset.x}
@@ -1283,30 +1276,6 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
                         dash={[5, 3]}
                         listening={false}
                       />
-                    )}
-                    {/* Badge AI con confianza */}
-                    {aiLabel && bboxData.width * scale > 30 && (
-                      <Group
-                        x={bboxData.x * scale + imageOffset.x}
-                        y={bboxData.y * scale + imageOffset.y - 15}
-                        listening={false}
-                      >
-                        <Rect
-                          width={aiLabel.length * 7 + 6}
-                          height={14}
-                          fill={annColor}
-                          cornerRadius={[2, 2, 0, 0]}
-                          opacity={0.85}
-                        />
-                        <Text
-                          text={aiLabel}
-                          fontSize={9}
-                          fontFamily="monospace"
-                          fill="white"
-                          x={3}
-                          y={2}
-                        />
-                      </Group>
                     )}
                     {toggleFn && (
                       <Group
