@@ -1,2 +1,54 @@
-// Auto-generado por annotix.sh — no editar manualmente
-export const CHANGELOG: { hash: string; message: string }[] = [{"hash": "4c686ec", "message": "feat: modo de grabación guiada TTS para datasets de síntesis de voz"}, {"hash": "fafc194", "message": "feat: sistema de hablantes para speech-recognition"}, {"hash": "892efac", "message": "fix: traducciones audio, auto-guardado y navegación"}, {"hash": "b7d98cd", "message": "i18n: agregar traducciones audio.edit faltantes en 8 locales (de/fr/it/ja/ko/pt/ru/zh)"}, {"hash": "43906e3", "message": "fix: panel de clases y navegación en proyectos de audio"}, {"hash": "f98bd10", "message": "fix: permitir definir clases en proyectos audio-classification y sound-event-detection"}, {"hash": "46c918c", "message": "fix: iconos correctos para proyectos de audio en la lista de proyectos"}, {"hash": "9a41e9c", "message": "feat: click central reclasifica islas de máscara, Shift+scroll bloqueado (v2.4.4)"}, {"hash": "768522e", "message": "feat: Shift=borrador temporal, Alt=pan temporal en modo máscara (v2.4.3)"}, {"hash": "62ec4f4", "message": "fix: mantener orden de creación al editar máscaras (v2.4.2)"}, {"hash": "f1cde50", "message": "fix(ui): reorganizar toolbar máscara, pincel/goma directos, spin grosor (v2.4.1)"}, {"hash": "0f8d5a5", "message": "fix: actualizar archivo VERSION a 2.4.0"}, {"hash": "996b17c", "message": "feat: audio annotation, mask eraser fix, UI improvements (v2.4.0)"}, {"hash": "b58911a", "message": "chore: bump versión a v2.3.1"}, {"hash": "6e42d51", "message": "feat: eliminar herramienta select, multi-selección, mover con flechas y crosshair"}, {"hash": "a0eff55", "message": "feat: undo/redo real (100 pasos), selección directa en modo dibujo, eliminar sin confirmación"}, {"hash": "5c12162", "message": "fix(p2p): sync anotaciones, retry blob watcher, refresh peers y presencia automática"}, {"hash": "ec14aee", "message": "i18n: agregar traducciones faltantes (carpetas, P2P, explorador, ZIP) en 10 locales"}, {"hash": "0d00c72", "message": "chore: bump versión a v2.2.0"}, {"hash": "c72b792", "message": "feat: abrir carpeta en explorador y descargar proyecto como ZIP"}, {"hash": "17058ca", "message": "fix(export): solo exportar imágenes anotadas"}, {"hash": "0b15c95", "message": "feat: sistema de carpetas, mejoras P2P, fix Windows y limpieza"}, {"hash": "d7f3469", "message": "fix(p2p): corregir visibilidad de peers y sincronización de imágenes de colaboradores"}, {"hash": "8f47225", "message": "fix(ci): bundlear FFmpeg DLLs en instalador Windows"}, {"hash": "9919f87", "message": "fix(ci): ffmpeg-build como feature — Linux compila desde fuente, Windows usa pre-compilado"}, {"hash": "fac1a2d", "message": "fix(ci): usar FFmpeg pre-compilado en Windows en vez de compilar desde fuente"}, {"hash": "f6f5653", "message": "fix(ci): agregar MSYS2 al PATH para compilar FFmpeg en Windows"}, {"hash": "9dda675", "message": "fix(ci): aumentar timeout de cargo para descargas grandes (ffmpeg-sys)"}, {"hash": "84d4958", "message": "chore: archivos pendientes del release — locales, versión, workflow y changelog"}, {"hash": "fae0f0c", "message": "fix: máscaras - race conditions en sync, rendimiento de pintura y mezcla de clases"}];
+const REPO = 'Debaq/Annotix';
+const CACHE_KEY = 'annotix-changelog';
+const CACHE_TTL = 1000 * 60 * 30; // 30 minutos
+
+export interface ChangelogEntry {
+  hash: string;
+  message: string;
+}
+
+interface CachedData {
+  ts: number;
+  entries: ChangelogEntry[];
+}
+
+/**
+ * Obtiene los últimos 30 commits desde la API de GitHub.
+ * Cachea en sessionStorage para no repetir la llamada en la misma sesión.
+ */
+export async function fetchChangelog(): Promise<ChangelogEntry[]> {
+  // Leer cache
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (raw) {
+      const cached: CachedData = JSON.parse(raw);
+      if (Date.now() - cached.ts < CACHE_TTL) {
+        return cached.entries;
+      }
+    }
+  } catch { /* ignore */ }
+
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${REPO}/commits?per_page=30`,
+      { headers: { Accept: 'application/vnd.github.v3+json' } },
+    );
+
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    const entries: ChangelogEntry[] = data.map((c: any) => ({
+      hash: (c.sha as string).slice(0, 7),
+      message: (c.commit.message as string).split('\n')[0],
+    }));
+
+    // Guardar cache
+    try {
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), entries }));
+    } catch { /* ignore */ }
+
+    return entries;
+  } catch {
+    return [];
+  }
+}

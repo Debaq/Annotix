@@ -5,7 +5,7 @@ import { getVersion } from '@tauri-apps/api/app';
 import { open } from '@tauri-apps/plugin-dialog';
 import { availableLanguages } from '@/lib/i18n';
 import { BUILD_CODE, BUILD_DATE } from '@/lib/buildInfo';
-import { CHANGELOG } from '@/lib/changelog';
+import { fetchChangelog, type ChangelogEntry } from '@/lib/changelog';
 import {
   Select,
   SelectContent,
@@ -45,12 +45,14 @@ export function GeneralSection() {
   const [projectsDir, setProjectsDir] = useState<string>('');
   const [changingDir, setChangingDir] = useState(false);
   const [appVersion, setAppVersion] = useState<string>('');
+  const [changelog, setChangelog] = useState<ChangelogEntry[]>([]);
 
   useEffect(() => {
     invoke<{ projects_dir: string | null }>('get_config').then((cfg) => {
       if (cfg.projects_dir) setProjectsDir(cfg.projects_dir);
     });
     getVersion().then(setAppVersion);
+    fetchChangelog().then(setChangelog);
   }, []);
 
   useEffect(() => {
@@ -197,13 +199,13 @@ export function GeneralSection() {
           </div>
         </div>
 
-        {CHANGELOG.length > 0 && (
+        {changelog.length > 0 && (
           <div className="space-y-1.5 pt-2 border-t">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               {t('settings.general.changelog')}
             </span>
             <div className="max-h-48 overflow-y-auto space-y-0.5">
-              {CHANGELOG.map((c) => (
+              {changelog.map((c) => (
                 <div key={c.hash} className="flex items-center gap-2 text-xs font-mono leading-5">
                   <span className="shrink-0 text-[var(--annotix-primary)]">{c.hash}</span>
                   <span className="truncate text-muted-foreground">{c.message}</span>
