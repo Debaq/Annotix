@@ -72,12 +72,23 @@ jobs:
           CARGO_HTTP_TIMEOUT: 300
           CARGO_NET_RETRY: 5
 
+      - name: Rename artifacts with version and platform
+        run: |
+          mv src-tauri/target/release/annotix \
+             src-tauri/target/release/annotix-v${APP_VERSION}-linux-x86_64.bin
+          for f in src-tauri/target/release/bundle/appimage/*.AppImage; do
+            base=$(basename "$f")
+            if ! echo "$base" | grep -q "$APP_VERSION"; then
+              mv "$f" "$(dirname "$f")/Annotix-v${APP_VERSION}-linux-x86_64.AppImage"
+            fi
+          done
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: annotix-linux
           path: |
-            src-tauri/target/release/annotix
+            src-tauri/target/release/annotix-v*.bin
             src-tauri/target/release/bundle/appimage/*.AppImage
           retention-days: 30
 
@@ -162,6 +173,18 @@ jobs:
           CARGO_HTTP_TIMEOUT: 300
           CARGO_NET_RETRY: 5
 
+      - name: Rename Windows artifacts with version
+        shell: pwsh
+        run: |
+          Get-ChildItem src-tauri/target/release/bundle/nsis/*.exe | ForEach-Object {
+            $newName = "Annotix-v$env:APP_VERSION-windows-x86_64-setup.exe"
+            Rename-Item $_.FullName $newName
+          }
+          Get-ChildItem src-tauri/target/release/bundle/msi/*.msi | ForEach-Object {
+            $newName = "Annotix-v$env:APP_VERSION-windows-x86_64.msi"
+            Rename-Item $_.FullName $newName
+          }
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -202,7 +225,7 @@ jobs:
           name: Annotix v${{ env.APP_VERSION }}
           generate_release_notes: true
           files: |
-            dist/linux/annotix
+            dist/linux/annotix-v*.bin
             dist/linux/bundle/appimage/*.AppImage
             dist/windows/nsis/*.exe
             dist/windows/msi/*.msi
