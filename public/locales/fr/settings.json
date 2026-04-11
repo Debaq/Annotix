@@ -7,7 +7,8 @@
     "trainingModels": "Modèles d'entraînement",
     "cloudProviders": "Fournisseurs Cloud",
     "keyboardShortcuts": "Raccourcis Clavier",
-    "browserAutomation": "Automatisation du Navigateur"
+    "browserAutomation": "Automatisation du Navigateur",
+    "network": "Réseau"
   },
   "shortcuts": {
     "description": "Cliquez sur un badge de touche pour le réassigner. Appuyez sur Échap pour annuler.",
@@ -75,6 +76,9 @@
     "aboutDescription": "Développé au laboratoire <strong>TecMedHub</strong> de l'Universidad Austral de Chile, dans le cadre du projet doctoral en Bio-ingénierie de l'Hospital Italiano de Buenos Aires par <strong>Nicolás Baier</strong>.",
     "team": "Équipe",
     "changelog": "Changelog",
+    "newCommit": "Not included in your version",
+    "currentBuild": "Your current version",
+    "newerAvailable": "{{count}} newer commits available",
     "roleNicolas": "Développement & direction",
     "roleFelipe": "Stagiaire 2026 Génie Informatique, UACh"
   },

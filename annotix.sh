@@ -125,11 +125,14 @@ generate_build_info() {
 BJSON
 
     # Generar buildInfo.ts
+    local build_commit
+    build_commit=$(git -C "$PROJECT_DIR" rev-parse --short HEAD 2>/dev/null || echo "")
     cat > "$build_ts" <<BINFO
 // Auto-generado por annotix.sh — no editar manualmente
 export const BUILD_NUMBER = $build_num;
 export const BUILD_CODE = "$build_code";
 export const BUILD_DATE = "$build_date";
+export const BUILD_COMMIT = "$build_commit";
 BINFO
 
     # changelog.ts ahora se obtiene dinámicamente desde GitHub API (no necesita generarse)

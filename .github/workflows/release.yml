@@ -49,7 +49,8 @@ jobs:
       - name: Generate build info
         run: |
           BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          printf '// Auto-generado por CI\nexport const BUILD_NUMBER = 0;\nexport const BUILD_CODE = "%s";\nexport const BUILD_DATE = "%s";\n' "${{ github.ref_name }}" "$BUILD_DATE" > src/lib/buildInfo.ts
+          BUILD_COMMIT=$(git rev-parse --short HEAD)
+          printf '// Auto-generado por CI\nexport const BUILD_NUMBER = 0;\nexport const BUILD_CODE = "%s";\nexport const BUILD_DATE = "%s";\nexport const BUILD_COMMIT = "%s";\n' "${{ github.ref_name }}" "$BUILD_DATE" "$BUILD_COMMIT" > src/lib/buildInfo.ts
 
       - name: Build Tauri (binary + AppImage)
         run: npx tauri build --bundles appimage
@@ -134,7 +135,8 @@ jobs:
         shell: pwsh
         run: |
           $date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-          "// Auto-generado por CI`nexport const BUILD_NUMBER = 0;`nexport const BUILD_CODE = `"${{ github.ref_name }}`";`nexport const BUILD_DATE = `"$date`";" | Set-Content src/lib/buildInfo.ts
+          $commit = (git rev-parse --short HEAD)
+          "// Auto-generado por CI`nexport const BUILD_NUMBER = 0;`nexport const BUILD_CODE = `"${{ github.ref_name }}`";`nexport const BUILD_DATE = `"$date`";`nexport const BUILD_COMMIT = `"$commit`";" | Set-Content src/lib/buildInfo.ts
 
       - name: Build Tauri (sin ffmpeg-build, usa FFMPEG_DIR pre-compilado)
         run: npx tauri build -- --no-default-features

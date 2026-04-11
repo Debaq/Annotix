@@ -4,7 +4,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { getVersion } from '@tauri-apps/api/app';
 import { open } from '@tauri-apps/plugin-dialog';
 import { availableLanguages } from '@/lib/i18n';
-import { BUILD_CODE, BUILD_DATE } from '@/lib/buildInfo';
+import { BUILD_CODE, BUILD_DATE, BUILD_COMMIT } from '@/lib/buildInfo';
 import { fetchChangelog, type ChangelogEntry } from '@/lib/changelog';
 import {
   Select,
@@ -199,21 +199,50 @@ export function GeneralSection() {
           </div>
         </div>
 
-        {changelog.length > 0 && (
-          <div className="space-y-1.5 pt-2 border-t">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              {t('settings.general.changelog')}
-            </span>
-            <div className="max-h-48 overflow-y-auto space-y-0.5">
-              {changelog.map((c) => (
-                <div key={c.hash} className="flex items-center gap-2 text-xs font-mono leading-5">
-                  <span className="shrink-0 text-[var(--annotix-primary)]">{c.hash}</span>
-                  <span className="truncate text-muted-foreground">{c.message}</span>
-                </div>
-              ))}
+        {changelog.length > 0 && (() => {
+          const buildIdx = BUILD_COMMIT
+            ? changelog.findIndex((c) => c.hash === BUILD_COMMIT)
+            : -1;
+          const hasNewer = buildIdx > 0;
+
+          return (
+            <div className="space-y-1.5 pt-2 border-t">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                {t('settings.general.changelog')}
+              </span>
+              <div className="max-h-48 overflow-y-auto space-y-0.5">
+                {changelog.map((c, i) => {
+                  const isNewer = hasNewer && i < buildIdx;
+                  const isCurrent = buildIdx >= 0 && i === buildIdx;
+
+                  return (
+                    <div key={c.hash} className={`flex items-center gap-2 text-xs font-mono leading-5 ${
+                      isNewer ? 'opacity-100' : hasNewer ? 'opacity-40' : ''
+                    }`}>
+                      {isNewer && (
+                        <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-amber-500" title={t('settings.general.newCommit', 'No incluido en tu versión')} />
+                      )}
+                      {isCurrent && (
+                        <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-emerald-500" title={t('settings.general.currentBuild', 'Tu versión actual')} />
+                      )}
+                      {!isNewer && !isCurrent && (
+                        <span className="shrink-0 w-1.5 h-1.5" />
+                      )}
+                      <span className={`shrink-0 ${isNewer ? 'text-amber-500' : isCurrent ? 'text-emerald-500' : 'text-[var(--annotix-primary)]'}`}>{c.hash}</span>
+                      <span className="truncate text-muted-foreground">{c.message}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              {hasNewer && (
+                <p className="text-[0.65rem] text-muted-foreground flex items-center gap-1.5">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  {t('settings.general.newerAvailable', '{{count}} commits nuevos disponibles', { count: buildIdx })}
+                </p>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
     </div>

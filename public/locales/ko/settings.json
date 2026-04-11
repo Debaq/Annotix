@@ -7,7 +7,8 @@
     "trainingModels": "학습 모델",
     "cloudProviders": "클라우드 제공업체",
     "keyboardShortcuts": "키보드 단축키",
-    "browserAutomation": "브라우저 자동화"
+    "browserAutomation": "브라우저 자동화",
+    "network": "네트워크"
   },
   "shortcuts": {
     "description": "키 배지를 클릭하여 재할당하세요. Escape를 눌러 취소합니다.",

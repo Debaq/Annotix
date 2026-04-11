@@ -7,7 +7,8 @@
     "trainingModels": "Training Models",
     "cloudProviders": "Cloud Providers",
     "keyboardShortcuts": "Keyboard Shortcuts",
-    "browserAutomation": "Browser Automation"
+    "browserAutomation": "Browser Automation",
+    "network": "Network"
   },
   "general": {
     "colorMode": "Appearance",
@@ -25,6 +26,9 @@
     "aboutDescription": "Developed at the <strong>TecMedHub</strong> laboratory of Universidad Austral de Chile, as part of the doctoral project in Bioengineering at Hospital Italiano de Buenos Aires by <strong>Nicolás Baier</strong>.",
     "team": "Team",
     "changelog": "Changelog",
+    "newCommit": "Not included in your version",
+    "currentBuild": "Your current version",
+    "newerAvailable": "{{count}} newer commits available",
     "roleNicolas": "Development & direction",
     "roleFelipe": "2026 Intern, Computer Science Engineering, UACh"
   },
