@@ -34,7 +34,7 @@ export const imageService = {
     return await tauriDb.uploadImageBytes(
       projectId,
       fileName,
-      Array.from(data),
+      data,
       annotations
     );
   },

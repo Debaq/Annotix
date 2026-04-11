@@ -108,7 +108,7 @@ export async function uploadImages(
 export async function uploadImageBytes(
   projectId: string,
   fileName: string,
-  data: number[],
+  data: number[] | Uint8Array,
   annotations: Annotation[] = []
 ): Promise<string> {
   return invoke<string>('upload_image_bytes', {
@@ -516,6 +516,96 @@ export function onTracksChanged(
   callback: (videoId: string) => void
 ): Promise<UnlistenFn> {
   return listen<string>('db:tracks-changed', (event) =>
+    callback(event.payload)
+  );
+}
+
+// ─── Pixel processing (Rust-accelerated) ─────────────────────────────────────
+
+export async function processImageFilters(
+  projectId: string,
+  imageId: string,
+  clahe: number,
+  sharpness: number,
+): Promise<string> {
+  return invoke<string>('process_image_filters', {
+    projectId,
+    imageId,
+    clahe,
+    sharpness,
+  });
+}
+
+export interface MaskInput {
+  base64png: string;
+  classId: number;
+}
+
+export interface MaskUpdate {
+  index: number;
+  base64png: string | null;
+}
+
+export interface ReclassifyResult {
+  updatedMasks: MaskUpdate[];
+  newMask: string | null;
+  removedSource: boolean;
+  changed: boolean;
+}
+
+export async function reclassifyMaskIsland(
+  masksBase64: MaskInput[],
+  clickX: number,
+  clickY: number,
+  imageWidth: number,
+  imageHeight: number,
+  targetClassId: number,
+  targetColor: string,
+): Promise<ReclassifyResult> {
+  return invoke<ReclassifyResult>('reclassify_mask_island', {
+    masksBase64,
+    clickX,
+    clickY,
+    imageWidth,
+    imageHeight,
+    targetClassId,
+    targetColor,
+  });
+}
+
+export async function computeAudioPeaks(
+  samples: Float32Array | number[],
+  numPeaks: number,
+): Promise<number[]> {
+  return invoke<number[]>('compute_audio_peaks', {
+    samples: Array.from(samples),
+    numPeaks,
+  });
+}
+
+export async function extractPdfPages(
+  projectId: string,
+  pdfPath: string,
+  dpi?: number,
+): Promise<string[]> {
+  return invoke<string[]>('extract_pdf_pages', {
+    projectId,
+    pdfPath,
+    dpi: dpi ?? null,
+  });
+}
+
+export interface PdfExtractionProgress {
+  pdfPath: string;
+  progress: number;
+  current: number;
+  total: number;
+}
+
+export function onPdfExtractionProgress(
+  callback: (data: PdfExtractionProgress) => void,
+): Promise<UnlistenFn> {
+  return listen<PdfExtractionProgress>('pdf:extraction-progress', (event) =>
     callback(event.payload)
   );
 }

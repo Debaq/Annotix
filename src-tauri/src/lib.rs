@@ -4,6 +4,7 @@ mod export;
 mod import;
 mod inference;
 mod p2p;
+mod serve;
 mod store;
 mod training;
 mod utils;
@@ -31,6 +32,7 @@ pub fn run() {
         .manage(InferenceProcessManager::new())
         .manage(BrowserAutomationManager::new())
         .manage(p2p::node::P2pState::new())
+        .manage(serve::ServeState::new())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
@@ -67,8 +69,18 @@ pub fn run() {
             // Reanudar extracciones de video interrumpidas
             commands::video_commands::resume_pending_extractions(app.handle().clone());
 
-            // Reanudar sesión P2P si hay proyecto con p2p activa
-            resume_p2p_session(app.handle().clone());
+            // Reanudar sesión P2P si hay proyecto con p2p activa (respetando config)
+            {
+                let config = app.state::<store::AppState>().get_app_config().unwrap_or_default();
+                if !config.p2p_disabled {
+                    resume_p2p_session(app.handle().clone());
+                } else {
+                    log::info!("P2P deshabilitado en configuración, no se reanuda");
+                }
+            }
+
+            // Auto-iniciar servidor de red si está configurado
+            auto_start_serve(app.handle().clone());
 
             Ok(())
         })
@@ -135,6 +147,8 @@ pub fn run() {
             commands::config_commands::is_setup_complete,
             commands::config_commands::get_config,
             commands::config_commands::set_projects_dir,
+            commands::config_commands::save_network_config,
+            commands::config_commands::check_for_updates,
             // Training
             commands::training_commands::check_python_env,
             commands::training_commands::setup_python_env,
@@ -252,6 +266,17 @@ pub fn run() {
             commands::inference_commands::accept_prediction,
             commands::inference_commands::reject_prediction,
             commands::inference_commands::convert_predictions,
+            // Serve (red local)
+            commands::serve_commands::start_serve,
+            commands::serve_commands::stop_serve,
+            commands::serve_commands::get_serve_status,
+            commands::serve_commands::set_serve_auto_save,
+            // Pixel processing (CLAHE, sharpness, flood-fill, audio peaks)
+            commands::pixel_commands::process_image_filters,
+            commands::pixel_commands::reclassify_mask_island,
+            commands::pixel_commands::compute_audio_peaks,
+            // PDF extraction
+            commands::pdf_commands::extract_pdf_pages,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -312,6 +337,48 @@ fn resume_p2p_session(app: tauri::AppHandle) {
                 let _ = app_state.with_project_mut(&project_id, |pf| {
                     pf.p2p = None;
                 });
+            }
+        }
+    });
+}
+
+/// Auto-inicia el servidor de red si está configurado en config.json
+fn auto_start_serve(app: tauri::AppHandle) {
+    tauri::async_runtime::spawn(async move {
+        let app_state = app.state::<store::AppState>();
+        let config = match app_state.get_app_config() {
+            Ok(c) => c,
+            Err(_) => return,
+        };
+
+        if !config.serve.auto_start {
+            return;
+        }
+
+        let serve_state = app.state::<serve::ServeState>();
+        let mut project_ids = config.serve.project_ids.clone();
+
+        // Si no hay IDs específicos, compartir todos los proyectos
+        if project_ids.is_empty() {
+            if let Ok(summaries) = app_state.list_projects() {
+                project_ids = summaries.into_iter().map(|s| s.id).collect();
+            }
+        }
+
+        if project_ids.is_empty() {
+            log::info!("Auto-serve: no hay proyectos para compartir");
+            return;
+        }
+
+        let port = config.serve.port;
+        let auto_save = config.serve.auto_save;
+
+        match serve_state.start(app.clone(), project_ids, port, auto_save).await {
+            Ok(info) => {
+                log::info!("Auto-serve: servidor iniciado en {:?}", info.urls);
+            }
+            Err(e) => {
+                log::warn!("Auto-serve: no se pudo iniciar: {}", e);
             }
         }
     });

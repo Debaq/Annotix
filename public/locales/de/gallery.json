@@ -26,6 +26,7 @@
   "selectImage": "Wähle ein Bild aus",
   "uploadOrSelect": "Lade ein Bild hoch oder wähle eines aus",
   "uploading": "Bilder werden hochgeladen",
+  "extractingPdf": "PDF {{current}}/{{total}}",
   "dropImages": "Bilder hier ablegen",
   "dropHint": "Bilder zum Projekt hinzufügen",
   "dropNoProject": "Öffne zuerst ein Projekt"

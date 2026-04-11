@@ -10,7 +10,8 @@ import { FloatingTools } from './FloatingTools';
 import { FloatingZoomControls } from './FloatingZoomControls';
 import { ImageAdjustments, DEFAULT_ADJUSTMENTS } from './ImageAdjustments';
 import type { ImageAdjustmentValues } from './ImageAdjustments';
-import { buildCSSFilter, processImage } from '../utils/imageFilters';
+import { buildCSSFilter } from '../utils/imageFilters';
+import * as tauriDb from '@/lib/tauriDb';
 import { ImageNavigation } from '../../gallery/components/ImageNavigation';
 import { AnnotationsBar } from './AnnotationsBar';
 import { useImagePresence } from '../../p2p/hooks/useImagePresence';
@@ -106,6 +107,9 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   });
   const [crosshairPos, setCrosshairPos] = useState<{ x: number; y: number; visible: boolean }>({ x: 0, y: 0, visible: false });
   const [, forceKeypointsPreviewUpdate] = useReducer((v: number) => v + 1, 0);
+
+  // Middle-button pan state
+  const middlePanRef = useRef<{ active: boolean; startX: number; startY: number; startPosX: number; startPosY: number; moved: boolean } | null>(null);
 
   // ─── Image adjustments (persisted per image) ───────────────────────────
   const adjustmentsMapRef = useRef<Map<string, ImageAdjustmentValues>>(new Map());
@@ -570,10 +574,17 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
 
   // Handle mouse down for drawing
   const handleMouseDown = (e: any) => {
-    // Middle click → reclasificar isla
-    if (e.evt.button === 1 && project?.type === 'mask') {
+    // Middle button → start panning
+    if (e.evt.button === 1) {
       e.evt.preventDefault();
-      handleMiddleClickReclassify(e);
+      middlePanRef.current = {
+        active: true,
+        startX: e.evt.clientX,
+        startY: e.evt.clientY,
+        startPosX: stagePos.x,
+        startPosY: stagePos.y,
+        moved: false,
+      };
       return;
     }
 
@@ -607,6 +618,20 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
 
   // Handle mouse move for drawing
   const handleMouseMove = (e: any) => {
+    // Middle-button pan
+    if (middlePanRef.current?.active) {
+      const dx = e.evt.clientX - middlePanRef.current.startX;
+      const dy = e.evt.clientY - middlePanRef.current.startY;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+        middlePanRef.current.moved = true;
+      }
+      setStagePos({
+        x: middlePanRef.current.startPosX + dx,
+        y: middlePanRef.current.startPosY + dy,
+      });
+      return;
+    }
+
     if (!stageRef.current) return;
 
     const coords = getImageCoordinates(stageRef.current);
@@ -642,7 +667,18 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   };
 
   // Handle mouse up for drawing
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: any) => {
+    // Middle-button pan end
+    if (middlePanRef.current?.active) {
+      const wasDrag = middlePanRef.current.moved;
+      middlePanRef.current = null;
+      // If it was a click (no drag) on a mask project, reclassify
+      if (!wasDrag && project?.type === 'mask') {
+        handleMiddleClickReclassify(e);
+      }
+      return;
+    }
+
     if (!currentHandler || !stageRef.current) return;
 
     const coords = getImageCoordinates(stageRef.current);
@@ -1041,16 +1077,28 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       return;
     }
 
+    if (!project?.id || !image?.id) return;
+    const projId = project.id;
+    const imgId = image.id;
+
     let cancelled = false;
     const timer = setTimeout(() => {
-      processImage(orig, imageAdjustments).then((result) => {
+      tauriDb.processImageFilters(
+        projId,
+        imgId,
+        imageAdjustments.clahe,
+        imageAdjustments.sharpness,
+      ).then((dataUrl) => {
         if (cancelled) return;
-        if (result) {
-          setProcessedImage(result);
-          setKonvaImage(result);
-        }
+        const img = new window.Image();
+        img.onload = () => {
+          if (cancelled) return;
+          setProcessedImage(img);
+          setKonvaImage(img);
+        };
+        img.src = dataUrl;
       }).catch((err) => {
-        console.error('processImage failed:', err);
+        console.error('processImageFilters failed:', err);
       });
     }, 150); // debounce
 
@@ -1058,7 +1106,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [imageAdjustments.clahe, imageAdjustments.sharpness]);
+  }, [imageAdjustments.clahe, imageAdjustments.sharpness, project?.id, image?.id]);
 
   if (!image) {
     return (
@@ -1200,6 +1248,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={() => {
+          middlePanRef.current = null;
           if (activeTool === 'mask') {
             setMaskCursor((prev) => ({ ...prev, visible: false }));
           }

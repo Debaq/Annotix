@@ -2,12 +2,24 @@ import { useEffect, useState, useCallback } from 'react';
 import { getCurrentWebview } from '@tauri-apps/api/webview';
 import { useUIStore } from '@/features/core/store/uiStore';
 import { imageService } from '@/features/gallery/services/imageService';
+import * as tauriDb from '@/lib/tauriDb';
 
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif'];
 
+function getExtension(path: string): string {
+  return path.split('.').pop()?.toLowerCase() ?? '';
+}
+
 function isImagePath(path: string): boolean {
-  const ext = path.split('.').pop()?.toLowerCase() ?? '';
-  return IMAGE_EXTENSIONS.includes(ext);
+  return IMAGE_EXTENSIONS.includes(getExtension(path));
+}
+
+function isPdfPath(path: string): boolean {
+  return getExtension(path) === 'pdf';
+}
+
+function isSupportedPath(path: string): boolean {
+  return isImagePath(path) || isPdfPath(path);
 }
 
 interface FileDropState {
@@ -26,12 +38,18 @@ export function useFileDrop(): FileDropState {
     if (!projectId) return;
 
     const imagePaths = paths.filter(isImagePath);
-    if (imagePaths.length === 0) return;
+    const pdfPaths = paths.filter(isPdfPath);
+    if (imagePaths.length === 0 && pdfPaths.length === 0) return;
 
     setIsUploading(true);
-    setFileCount(imagePaths.length);
+    setFileCount(imagePaths.length + pdfPaths.length);
     try {
-      await imageService.uploadFromPaths(projectId, imagePaths);
+      if (imagePaths.length > 0) {
+        await imageService.uploadFromPaths(projectId, imagePaths);
+      }
+      for (const pdfPath of pdfPaths) {
+        await tauriDb.extractPdfPages(projectId, pdfPath);
+      }
     } catch (error) {
       console.error('Failed to upload dropped files:', error);
     } finally {
@@ -46,10 +64,10 @@ export function useFileDrop(): FileDropState {
     getCurrentWebview().onDragDropEvent((event) => {
       const payload = event.payload;
       if (payload.type === 'enter') {
-        const hasImages = payload.paths.some(isImagePath);
-        if (hasImages) {
+        const hasSupported = payload.paths.some(isSupportedPath);
+        if (hasSupported) {
           setIsDragging(true);
-          setFileCount(payload.paths.filter(isImagePath).length);
+          setFileCount(payload.paths.filter(isSupportedPath).length);
         }
       } else if (payload.type === 'over') {
         // mantener estado

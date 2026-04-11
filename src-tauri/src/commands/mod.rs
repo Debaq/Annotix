@@ -18,3 +18,6 @@ pub mod tts_commands;
 pub mod p2p_commands;
 pub mod automation_commands;
 pub mod inference_commands;
+pub mod serve_commands;
+pub mod pixel_commands;
+pub mod pdf_commands;

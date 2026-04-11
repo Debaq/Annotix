@@ -1,4 +1,5 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
+import * as tauriDb from '@/lib/tauriDb';
 
 interface WaveformProps {
   audioBuffer: AudioBuffer | null;
@@ -42,7 +43,7 @@ export function Waveform({
   const dragStartRef = useRef<number | null>(null);
   const dragEndRef = useRef<number | null>(null);
 
-  // Compute peaks from audio buffer
+  // Compute peaks from audio buffer (Rust-accelerated)
   useEffect(() => {
     if (!audioBuffer || !canvasRef.current) return;
 
@@ -53,22 +54,13 @@ export function Waveform({
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
 
+    let cancelled = false;
     const channelData = audioBuffer.getChannelData(0);
-    const samplesPerPixel = Math.floor(channelData.length / width);
-    const peaks: number[] = [];
+    tauriDb.computeAudioPeaks(channelData, width).then((peaks) => {
+      if (!cancelled) peaksRef.current = peaks;
+    });
 
-    for (let i = 0; i < width; i++) {
-      const start = i * samplesPerPixel;
-      const end = Math.min(start + samplesPerPixel, channelData.length);
-      let max = 0;
-      for (let j = start; j < end; j++) {
-        const abs = Math.abs(channelData[j]);
-        if (abs > max) max = abs;
-      }
-      peaks.push(max);
-    }
-
-    peaksRef.current = peaks;
+    return () => { cancelled = true; };
   }, [audioBuffer, height]);
 
   // Resolve CSS variable to actual color for canvas
@@ -281,21 +273,11 @@ export function Waveform({
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
 
-      // Recompute peaks
+      // Recompute peaks via Rust
       const channelData = audioBuffer.getChannelData(0);
-      const samplesPerPixel = Math.floor(channelData.length / width);
-      const peaks: number[] = [];
-      for (let i = 0; i < width; i++) {
-        const start = i * samplesPerPixel;
-        const end = Math.min(start + samplesPerPixel, channelData.length);
-        let max = 0;
-        for (let j = start; j < end; j++) {
-          const abs = Math.abs(channelData[j]);
-          if (abs > max) max = abs;
-        }
-        peaks.push(max);
-      }
-      peaksRef.current = peaks;
+      tauriDb.computeAudioPeaks(channelData, width).then((peaks) => {
+        peaksRef.current = peaks;
+      });
     });
 
     obs.observe(container);

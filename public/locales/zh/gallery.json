@@ -26,6 +26,7 @@
   "selectImage": "选择一张图像",
   "uploadOrSelect": "上传或选择一张图像",
   "uploading": "上传图像中",
+  "extractingPdf": "PDF {{current}}/{{total}}",
   "dropImages": "将图像拖放到此处",
   "dropHint": "要添加到项目的图像",
   "dropNoProject": "请先打开一个项目"
