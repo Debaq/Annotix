@@ -56,7 +56,7 @@ export function ManageClassesDialog({ project, trigger }: ManageClassesDialogPro
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl" onKeyDown={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle>{t('classes.manage')}</DialogTitle>
           <DialogDescription>

@@ -75,6 +75,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   const { project } = useCurrentProject();
   const defaults = useAnnotations();
   const { annotations, selectedAnnotationId, selectedAnnotationIds, selectAnnotation, updateAnnotation, addAnnotation, deleteAnnotation } = overrideAnnotations ?? defaults;
+  const { hiddenAnnotationIds } = defaults;
   const { replaceAnnotations } = defaults;
   const { activeTool, activeClassId, setActiveTool } = useUIStore();
 
@@ -1273,6 +1274,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
         {/* Annotations Layer */}
         <Layer>
           {annotations.map((ann) => {
+            if (hiddenAnnotationIds.has(ann.id)) return null;
             const classInfo = project.classes.find(c => c.id === ann.classId);
             if (!classInfo) return null;
 

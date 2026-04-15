@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 
 export function AnnotationList() {
   const { t } = useTranslation();
-  const { annotations, deleteAnnotation, clearAnnotations, saveAnnotations } = useAnnotations();
+  const { annotations, deleteAnnotation, clearAnnotations, saveAnnotations, hiddenAnnotationIds, toggleAnnotationVisibility } = useAnnotations();
   const { project } = useCurrentProject();
   const { activeClassId, setActiveClassId } = useUIStore();
 
@@ -107,6 +107,8 @@ export function AnnotationList() {
                 key={annotation.id}
                 annotation={annotation}
                 project={project}
+                isHidden={hiddenAnnotationIds.has(annotation.id)}
+                onToggleVisibility={() => toggleAnnotationVisibility(annotation.id)}
                 onDelete={() => deleteAnnotation(annotation.id)}
               />
             ))}

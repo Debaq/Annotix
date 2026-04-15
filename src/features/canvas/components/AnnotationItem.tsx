@@ -5,10 +5,12 @@ import { Card } from '@/components/ui/card';
 interface AnnotationItemProps {
   annotation: Annotation;
   project: Project;
+  isHidden: boolean;
+  onToggleVisibility: () => void;
   onDelete: () => void;
 }
 
-export function AnnotationItem({ annotation, project, onDelete }: AnnotationItemProps) {
+export function AnnotationItem({ annotation, project, isHidden, onToggleVisibility, onDelete }: AnnotationItemProps) {
   const classInfo = project.classes.find((c) => c.id === annotation.classId);
 
   if (!classInfo) return null;
@@ -40,6 +42,9 @@ export function AnnotationItem({ annotation, project, onDelete }: AnnotationItem
             <p className="text-xs text-muted-foreground">{getAnnotationInfo()}</p>
           </div>
         </div>
+        <Button variant="ghost" size="icon" onClick={onToggleVisibility}>
+          <i className={`fas ${isHidden ? 'fa-eye-slash text-muted-foreground' : 'fa-eye'}`}></i>
+        </Button>
         <Button variant="ghost" size="icon" onClick={onDelete}>
           <i className="fas fa-trash text-destructive"></i>
         </Button>

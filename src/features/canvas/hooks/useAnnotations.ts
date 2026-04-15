@@ -46,8 +46,10 @@ export const invalidateSaveContext = () => {
 interface AnnotationState {
   annotations: Annotation[];
   selectedAnnotationIds: Set<string>;
+  hiddenAnnotationIds: Set<string>;
   setAnnotations: (annotations: Annotation[]) => void;
   setSelectedAnnotationIds: (ids: Set<string>) => void;
+  toggleAnnotationVisibility: (id: string) => void;
   addAnnotationState: (annotation: Annotation) => void;
   updateAnnotationState: (id: string, updates: Partial<Annotation>) => void;
   deleteAnnotationState: (id: string) => void;
@@ -57,8 +59,16 @@ interface AnnotationState {
 export const useAnnotationStore = create<AnnotationState>((set) => ({
   annotations: [],
   selectedAnnotationIds: new Set(),
+  hiddenAnnotationIds: new Set(),
   setAnnotations: (annotations) => set({ annotations }),
   setSelectedAnnotationIds: (ids) => set({ selectedAnnotationIds: ids }),
+  toggleAnnotationVisibility: (id) =>
+    set((state) => {
+      const next = new Set(state.hiddenAnnotationIds);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return { hiddenAnnotationIds: next };
+    }),
   addAnnotationState: (annotation) =>
     set((state) => ({ annotations: [...state.annotations, annotation] })),
   updateAnnotationState: (id, updates) =>
@@ -74,7 +84,7 @@ export const useAnnotationStore = create<AnnotationState>((set) => ({
         ? new Set([...state.selectedAnnotationIds].filter(x => x !== id))
         : state.selectedAnnotationIds,
     })),
-  clearAnnotationsState: () => set({ annotations: [], selectedAnnotationIds: new Set() }),
+  clearAnnotationsState: () => set({ annotations: [], selectedAnnotationIds: new Set(), hiddenAnnotationIds: new Set() }),
 }));
 
 // Contador global de saves en curso — bloquea sync externo mientras guardamos
@@ -97,8 +107,10 @@ export function useAnnotations() {
   const {
     annotations,
     selectedAnnotationIds,
+    hiddenAnnotationIds,
     setAnnotations,
     setSelectedAnnotationIds,
+    toggleAnnotationVisibility,
     addAnnotationState,
     updateAnnotationState,
     deleteAnnotationState,
@@ -284,6 +296,8 @@ export function useAnnotations() {
     annotations,
     selectedAnnotationId,
     selectedAnnotationIds,
+    hiddenAnnotationIds,
+    toggleAnnotationVisibility,
     addAnnotation,
     updateAnnotation,
     updateAnnotationLocal,
