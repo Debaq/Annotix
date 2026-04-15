@@ -62,6 +62,35 @@ Most annotation tools focus on a single data type or require cloud accounts. Ann
 
 ---
 
+## Status
+
+> Last updated: April 2026 &mdash; v2.4.4
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| **Image annotation** (7 tools) | :white_check_mark: Stable | BBox, OBB, Mask, Polygon, Keypoints, Landmarks, Pan |
+| **Video annotation** | :white_check_mark: Stable | Tracks, keyframes, interpolation, bake |
+| **Time series annotation** | :white_check_mark: Stable | 5 annotation types, Chart.js canvas |
+| **Tabular ML** | :white_check_mark: Stable | scikit-learn integration, column selector |
+| **ONNX inference** | :white_check_mark: Stable | Auto-detects YOLOv5-v12, DETR, SSD, classification |
+| **Export** (11 formats) | :white_check_mark: Stable | YOLO, COCO, VOC, CSV, U-Net, TIX, etc. |
+| **Import** (8 formats) | :white_check_mark: Stable | Auto-detection with confidence scoring |
+| **Local ML training** (19 backends) | :white_check_mark: Stable | Isolated Python env, GPU auto-detection |
+| **Cloud training** (7 providers) | :white_check_mark: Stable | Vertex AI, Kaggle, Lightning AI, HuggingFace, Saturn Cloud, Colab Enterprise |
+| **Browser automation** (Colab free) | :white_check_mark: Stable | T4 GPU, real-time progress |
+| **Keyboard shortcuts** | :white_check_mark: Stable | Fully customizable, conflict detection |
+| **i18n** (10 languages) | :white_check_mark: Stable | Lazy loading, English fallback |
+| **P2P collaboration** | :construction: Beta | Works but no auto-reconnection on network drop; last-write-wins conflict resolution; video frames excluded from sync |
+| **Audio annotation** | :construction: In progress | Classification, speech recognition, sound event detection, TTS recording exist; waveform UI partially wired |
+| **Audio export** | :construction: In progress | HuggingFace ASR, LJSpeech, CSV formats implemented; import not yet available |
+| **Network sharing** (serve) | :construction: In development | HTTP server to share projects via browser; web annotation UI built; not yet released |
+| **LLM chat via browser** | :construction: Beta | Kimi, Qwen, DeepSeek, HuggingChat; generic runner works, provider-specific modules are stubs |
+| **macOS build** | :warning: Not tested | No CI for macOS; should build from source but untested |
+
+:white_check_mark: = production-ready &nbsp;&middot;&nbsp; :construction: = usable but incomplete &nbsp;&middot;&nbsp; :warning: = known limitation
+
+---
+
 ## Download
 
 Pre-built binaries for the latest release:
