@@ -117,6 +117,32 @@ pub struct LlmConfig {
     pub base_url: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ServeConfig {
+    #[serde(default)]
+    pub auto_start: bool,
+    #[serde(default = "default_serve_port")]
+    pub port: u16,
+    #[serde(default)]
+    pub auto_save: bool,
+    #[serde(default)]
+    pub project_ids: Vec<String>,
+}
+
+fn default_serve_port() -> u16 { 8090 }
+
+impl Default for ServeConfig {
+    fn default() -> Self {
+        Self {
+            auto_start: false,
+            port: default_serve_port(),
+            auto_save: false,
+            project_ids: Vec::new(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AppConfig {
     #[serde(default)]
@@ -127,6 +153,12 @@ pub struct AppConfig {
     pub browser_automation: BrowserAutomationConfig,
     #[serde(default)]
     pub llm: Option<LlmConfig>,
+    /// Configuración del servidor de red
+    #[serde(default)]
+    pub serve: ServeConfig,
+    /// Procesos P2P deshabilitados (no se reanudan al inicio)
+    #[serde(default, rename = "p2pDisabled")]
+    pub p2p_disabled: bool,
 }
 
 impl AppConfig {

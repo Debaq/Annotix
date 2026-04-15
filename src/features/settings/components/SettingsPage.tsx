@@ -7,8 +7,9 @@ import { TrainingModelsSection } from './TrainingModelsSection';
 import { CloudProvidersSection } from './CloudProvidersSection';
 import { KeyboardShortcutsSection } from './KeyboardShortcutsSection';
 import { BrowserAutomationSection } from './BrowserAutomationSection';
+import { NetworkSection } from './NetworkSection';
 
-type SettingsSection = 'general' | 'python-env' | 'training-models' | 'cloud-providers' | 'keyboard-shortcuts' | 'browser-automation';
+type SettingsSection = 'general' | 'network' | 'python-env' | 'training-models' | 'cloud-providers' | 'keyboard-shortcuts' | 'browser-automation';
 
 export function SettingsPage() {
   const { t } = useTranslation();
@@ -17,6 +18,7 @@ export function SettingsPage() {
 
   const sections: { id: SettingsSection; icon: string; labelKey: string }[] = [
     { id: 'general', icon: 'fas fa-cog', labelKey: 'settings.sections.general' },
+    { id: 'network', icon: 'fas fa-wifi', labelKey: 'settings.sections.network' },
     { id: 'python-env', icon: 'fab fa-python', labelKey: 'settings.sections.pythonEnv' },
     { id: 'training-models', icon: 'fas fa-brain', labelKey: 'settings.sections.trainingModels' },
     { id: 'cloud-providers', icon: 'fas fa-cloud', labelKey: 'settings.sections.cloudProviders' },
@@ -66,6 +68,7 @@ export function SettingsPage() {
           </h2>
 
           {activeSection === 'general' && <GeneralSection />}
+          {activeSection === 'network' && <NetworkSection />}
           {activeSection === 'python-env' && <PythonEnvironmentSection />}
           {activeSection === 'training-models' && <TrainingModelsSection />}
           {activeSection === 'cloud-providers' && <CloudProvidersSection />}

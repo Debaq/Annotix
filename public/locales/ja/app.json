@@ -4,5 +4,9 @@
   "branding": {
     "fablab": "TecMedHub",
     "university": "Universidad Austral de Chile - プエルトモンキャンパス"
+  },
+  "update": {
+    "available": "Annotix v{{version}} が利用可能です",
+    "download": "新しいバージョンをダウンロード"
   }
 }

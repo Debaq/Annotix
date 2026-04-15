@@ -4,5 +4,9 @@
   "branding": {
     "fablab": "TecMedHub",
     "university": "Universidad Austral de Chile - Campus Puerto Montt"
+  },
+  "update": {
+    "available": "Annotix v{{version}} disponible",
+    "download": "Télécharger la nouvelle version"
   }
 }

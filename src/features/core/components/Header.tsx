@@ -12,6 +12,7 @@ import { ExportDialog } from '@/features/export/components/ExportDialog';
 import { TrainingPanel } from '@/features/training/components/TrainingPanel';
 import { P2pStatusIndicator } from '@/features/p2p/components/P2pStatusIndicator';
 import { P2pGuard } from '@/features/p2p/components/P2pGuard';
+import { ServeButton } from '@/features/serve/components/ServeButton';
 
 const appWindow = getCurrentWindow();
 
@@ -90,6 +91,7 @@ export const Header: React.FC = () => {
 
       {/* Center Section: Project Controls */}
       <div className="flex items-center gap-2">
+        <ServeButton projectId={project?.id ?? null} />
         {project && (
           <>
             <div className="h-6 w-px bg-white/30 mx-1" />

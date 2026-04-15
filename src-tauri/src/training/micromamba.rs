@@ -3,58 +3,41 @@ use std::process::Command;
 use std::fs;
 use std::io::Write;
 
-/// Tipo de gestor de entornos conda detectado
-#[derive(Clone, Copy, PartialEq)]
-enum CondaBackend {
-    /// micromamba del sistema o descargado
-    Micromamba,
-    /// mamba del sistema
-    Mamba,
-    /// conda del sistema
-    Conda,
-}
-
 pub struct Micromamba {
     bin_path: PathBuf,
     root_prefix: PathBuf,
-    /// true si usamos un binario del sistema (no necesita descarga ni -r)
+    /// true si usamos un binario del sistema (no necesita descarga)
     system: bool,
-    backend: CondaBackend,
 }
 
 impl Micromamba {
     pub fn new() -> Result<Self, String> {
-        // 1. Buscar en el sistema: micromamba > mamba > conda
-        if let Some((path, backend)) = find_system_conda() {
-            let base_dir = directories::ProjectDirs::from("com", "tecmedhub", "annotix")
-                .ok_or("No se pudo determinar el directorio de datos")?;
-            let root_prefix = base_dir.data_dir().join("micromamba");
-            if !root_prefix.exists() {
-                fs::create_dir_all(&root_prefix).map_err(|e| e.to_string())?;
-            }
+        let base_dir = directories::ProjectDirs::from("com", "tecmedhub", "annotix")
+            .ok_or("No se pudo determinar el directorio de datos")?;
+        let data_dir = base_dir.data_dir();
+        let root_prefix = data_dir.join("micromamba");
+
+        if !root_prefix.exists() {
+            fs::create_dir_all(&root_prefix).map_err(|e| e.to_string())?;
+        }
+
+        // 1. Buscar micromamba del sistema
+        if let Some(path) = find_system_micromamba() {
             return Ok(Self {
                 bin_path: PathBuf::from(path),
                 root_prefix,
                 system: true,
-                backend,
             });
         }
 
         // 2. Fallback: micromamba descargado por nosotros
-        let base_dir = directories::ProjectDirs::from("com", "tecmedhub", "annotix")
-            .ok_or("No se pudo determinar el directorio de datos")?;
-
-        let data_dir = base_dir.data_dir();
         let bin_dir = data_dir.join("bin");
-        let root_prefix = data_dir.join("micromamba");
-
         if !bin_dir.exists() { fs::create_dir_all(&bin_dir).map_err(|e| e.to_string())?; }
-        if !root_prefix.exists() { fs::create_dir_all(&root_prefix).map_err(|e| e.to_string())?; }
 
         let bin_name = if cfg!(target_os = "windows") { "micromamba.exe" } else { "micromamba" };
         let bin_path = bin_dir.join(bin_name);
 
-        Ok(Self { bin_path, root_prefix, system: false, backend: CondaBackend::Micromamba })
+        Ok(Self { bin_path, root_prefix, system: false })
     }
 
     pub fn is_installed(&self) -> bool {
@@ -159,29 +142,15 @@ impl Micromamba {
     ) -> Result<(), String> {
         let mut cmd = Command::new(&self.bin_path);
 
-        match self.backend {
-            CondaBackend::Micromamba => {
-                cmd.args([
-                    "create",
-                    "-y",
-                    "-c", "conda-forge",
-                    "-p", &env_path.to_string_lossy(),
-                    "-r", &self.root_prefix.to_string_lossy(),
-                    &format!("python={}", python_version),
-                    "pip",
-                ]);
-            }
-            CondaBackend::Mamba | CondaBackend::Conda => {
-                cmd.args([
-                    "create",
-                    "-y",
-                    "-c", "conda-forge",
-                    "-p", &env_path.to_string_lossy(),
-                    &format!("python={}", python_version),
-                    "pip",
-                ]);
-            }
-        }
+        cmd.args([
+            "create",
+            "-y",
+            "-c", "conda-forge",
+            "-p", &env_path.to_string_lossy(),
+            "-r", &self.root_prefix.to_string_lossy(),
+            &format!("python={}", python_version),
+            "pip",
+        ]);
 
         crate::training::python_env::run_with_feedback(
             cmd,
@@ -191,26 +160,19 @@ impl Micromamba {
     }
 }
 
-/// Busca micromamba, mamba o conda — primero en PATH, luego en rutas comunes
-fn find_system_conda() -> Option<(String, CondaBackend)> {
-    let candidates: &[(&str, CondaBackend)] = &[
-        ("micromamba", CondaBackend::Micromamba),
-        ("mamba", CondaBackend::Mamba),
-        ("conda", CondaBackend::Conda),
-    ];
-
+/// Busca micromamba en el sistema — primero en PATH, luego en rutas comunes.
+/// No usa conda/mamba/anaconda: conda falla en Windows, mamba no está probado.
+fn find_system_micromamba() -> Option<String> {
     let ext = if cfg!(target_os = "windows") { ".exe" } else { "" };
 
-    // 1. Buscar en PATH
-    for &(name, backend) in candidates {
-        let cmd_name = format!("{}{}", name, ext);
-        let mut cmd = Command::new(&cmd_name);
-        cmd.args(["--version"]);
-        super::hide_console_window(&mut cmd);
-        if let Ok(output) = cmd.output() {
-            if output.status.success() {
-                return Some((cmd_name, backend));
-            }
+    // 1. Buscar micromamba en PATH
+    let cmd_name = format!("micromamba{}", ext);
+    let mut cmd = Command::new(&cmd_name);
+    cmd.args(["--version"]);
+    super::hide_console_window(&mut cmd);
+    if let Ok(output) = cmd.output() {
+        if output.status.success() {
+            return Some(cmd_name);
         }
     }
 
@@ -220,52 +182,38 @@ fn find_system_conda() -> Option<(String, CondaBackend)> {
     } else {
         std::env::var_os("HOME").map(PathBuf::from)
     }?;
+
     #[cfg(not(windows))]
-    let well_known: Vec<(PathBuf, CondaBackend)> = vec![
-        // micromamba
-        (home.join(".local/bin/micromamba"), CondaBackend::Micromamba),
-        (home.join("micromamba/bin/micromamba"), CondaBackend::Micromamba),
-        (home.join("bin/micromamba"), CondaBackend::Micromamba),
-        // mamba (mambaforge / miniforge)
-        (home.join("mambaforge/bin/mamba"), CondaBackend::Mamba),
-        (home.join("miniforge3/bin/mamba"), CondaBackend::Mamba),
-        (home.join("miniforge/bin/mamba"), CondaBackend::Mamba),
-        // conda (miniconda / anaconda)
-        (home.join("miniconda3/bin/conda"), CondaBackend::Conda),
-        (home.join("miniconda/bin/conda"), CondaBackend::Conda),
-        (home.join("anaconda3/bin/conda"), CondaBackend::Conda),
-        (home.join("anaconda/bin/conda"), CondaBackend::Conda),
-        // rutas comunes en macOS (brew)
-        (PathBuf::from("/opt/homebrew/bin/micromamba"), CondaBackend::Micromamba),
-        (PathBuf::from("/usr/local/bin/micromamba"), CondaBackend::Micromamba),
+    let well_known: Vec<PathBuf> = vec![
+        home.join(".local/bin/micromamba"),
+        home.join("micromamba/bin/micromamba"),
+        home.join("bin/micromamba"),
+        PathBuf::from("/opt/homebrew/bin/micromamba"),
+        PathBuf::from("/usr/local/bin/micromamba"),
     ];
 
     #[cfg(windows)]
-    let well_known: Vec<(PathBuf, CondaBackend)> = {
+    let well_known: Vec<PathBuf> = {
         let mut paths = vec![];
         if let Some(userprofile) = std::env::var_os("USERPROFILE") {
             let u = PathBuf::from(userprofile);
-            paths.push((u.join("micromamba/micromamba.exe"), CondaBackend::Micromamba));
-            paths.push((u.join("mambaforge/Scripts/mamba.exe"), CondaBackend::Mamba));
-            paths.push((u.join("miniforge3/Scripts/mamba.exe"), CondaBackend::Mamba));
-            paths.push((u.join("miniconda3/Scripts/conda.exe"), CondaBackend::Conda));
-            paths.push((u.join("anaconda3/Scripts/conda.exe"), CondaBackend::Conda));
+            paths.push(u.join("micromamba/micromamba.exe"));
         }
         if let Some(localappdata) = std::env::var_os("LOCALAPPDATA") {
             let l = PathBuf::from(localappdata);
-            paths.push((l.join("micromamba/micromamba.exe"), CondaBackend::Micromamba));
+            paths.push(l.join("micromamba/micromamba.exe"));
         }
         paths
     };
 
-    for (path, backend) in &well_known {
+    for path in &well_known {
         if path.is_file() {
             let mut cmd = Command::new(path);
             cmd.args(["--version"]);
             super::hide_console_window(&mut cmd);
             if let Ok(output) = cmd.output() {
                 if output.status.success() {
-                    return Some((path.to_string_lossy().to_string(), *backend));
+                    return Some(path.to_string_lossy().to_string());
                 }
             }
         }

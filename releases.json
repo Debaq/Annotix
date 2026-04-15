@@ -885,5 +885,13 @@
     "date": "2026-03-31T20:20:50Z",
     "commits": [],
     "issues": []
+  },
+  {
+    "code": "yzzkd",
+    "version": "2.4.4",
+    "buildNumber": 35,
+    "date": "2026-04-11T13:55:58Z",
+    "commits": [],
+    "issues": []
   }
 ]

@@ -128,8 +128,24 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
 
       // 2) Check backend-specific packages
       const needsBackendInstall =
+        ((backend === 'yolo' || backend === 'rt_detr') && !info.env.ultralyticsVersion) ||
         (backend === 'rf_detr' && !info.env.rfdetrVersion) ||
-        (backend === 'mmdetection' && !info.env.mmdetVersion);
+        (backend === 'mmdetection' && !info.env.mmdetVersion) ||
+        (backend === 'smp' && !info.env.smpVersion) ||
+        (backend === 'hf_segmentation' && !info.env.hfTransformersVersion) ||
+        (backend === 'hf_classification' && !info.env.hfTransformersVersion) ||
+        (backend === 'mmsegmentation' && !info.env.mmsegVersion) ||
+        (backend === 'detectron2' && !info.env.detectron2Version) ||
+        (backend === 'mmpose' && !info.env.mmposeVersion) ||
+        (backend === 'mmrotate' && !info.env.mmrotateVersion) ||
+        (backend === 'timm' && !info.env.timmVersion) ||
+        (backend === 'tsai' && !info.env.tsaiVersion) ||
+        (backend === 'pytorch_forecasting' && !info.env.pytorchForecastingVersion) ||
+        (backend === 'pyod' && !info.env.pyodVersion) ||
+        (backend === 'tslearn' && !info.env.tslearnVersion) ||
+        (backend === 'pypots' && !info.env.pypotsVersion) ||
+        (backend === 'stumpy' && !info.env.stumpyVersion) ||
+        (backend === 'sklearn' && !info.env.sklearnVersion);
 
       if (needsBackendInstall) {
         setPhase('installing_backend');

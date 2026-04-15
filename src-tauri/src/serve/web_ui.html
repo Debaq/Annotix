@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Annotix</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANNOTIX WEB — Design System
+   ═══════════════════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  /* Annotix brand */
+  --primary: #667eea;
+  --primary-dark: #5568d3;
+  --secondary: #764ba2;
+  --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  /* Status */
+  --success: #27ae60;
+  --warning: #f39c12;
+  --danger: #e74c3c;
+  --info: #3498db;
+
+  /* Neutrals */
+  --bg: #f8f9fa;
+  --bg-dark: #0f172a;
+  --surface: #ffffff;
+  --surface-alt: #f1f5f9;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+
+  /* Layout */
+  --header-h: 56px;
+  --toolbar-h: 52px;
+  --classbar-h: 44px;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --radius-lg: 12px;
+
+  /* Annotation */
+  --ann-fill-alpha: 0.2;
+  --ann-stroke: 2;
+}
+
+html, body {
+  height: 100%; overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Header ─── */
+.header {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+  background: var(--gradient);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; z-index: 100;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+.header-logo {
+  display: flex; align-items: center; gap: 10px;
+}
+.header-logo svg { width: 28px; height: 28px; }
+.header-title { font-weight: 700; font-size: 17px; color: #fff; letter-spacing: -0.3px; }
+.header-sub { font-size: 12px; color: rgba(255,255,255,0.75); font-weight: 400; }
+.header-right { display: flex; align-items: center; gap: 8px; }
+.header-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 20px;
+  background: rgba(255,255,255,0.2); color: #fff;
+  font-size: 12px; font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+.header-badge .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #4ade80; animation: pulse 2s infinite;
+}
+
+/* ─── Buttons ─── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 42px; min-width: 42px; padding: 0 16px;
+  border: none; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-user-select: none; user-select: none;
+  outline: none;
+}
+.btn:active { transform: scale(0.96); }
+.btn-icon { padding: 0; width: 42px; }
+.btn-sm { height: 36px; min-width: 36px; padding: 0 12px; font-size: 13px; }
+.btn:disabled { opacity: 0.35; pointer-events: none; }
+
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-success { background: var(--success); color: #fff; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-outline {
+  background: var(--surface); color: var(--text);
+  border: 1.5px solid var(--border);
+}
+.btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+.btn-ghost { background: transparent; color: var(--text-secondary); }
+.btn-ghost:hover { background: var(--surface-alt); }
+
+/* ─── Gallery View ─── */
+.gallery-container {
+  position: fixed; top: var(--header-h); left: 0; right: 0; bottom: 0;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  background: var(--bg);
+}
+.gallery-stats {
+  display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.stat-card {
+  flex: 1; min-width: 90px;
+  padding: 12px 14px; border-radius: var(--radius);
+  background: var(--surface); border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.stat-value { font-size: 22px; font-weight: 700; color: var(--text); }
+.stat-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
+.gallery-filters {
+  display: flex; border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; margin-bottom: 14px; background: var(--surface);
+}
+.filter-btn {
+  flex: 1; padding: 9px 6px; border: none;
+  background: var(--surface); color: var(--text-secondary);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: all 0.2s ease;
+  border-right: 1px solid var(--border);
+}
+.filter-btn:last-child { border-right: none; }
+.filter-btn.active { background: var(--primary); color: #fff; }
+.filter-btn:not(.active):hover { background: var(--surface-alt); }
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+.gallery-card {
+  position: relative; border-radius: var(--radius);
+  overflow: hidden; background: var(--surface);
+  border: 2px solid transparent;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  aspect-ratio: 1;
+}
+.gallery-card:active { transform: scale(0.97); }
+.gallery-card:hover { border-color: var(--primary); box-shadow: 0 2px 12px rgba(102,126,234,0.25); }
+.gallery-card.annotated { border-color: rgba(39,174,96,0.3); }
+.gallery-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gallery-card .card-overlay {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 6px 8px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+}
+.gallery-card .card-name {
+  font-size: 11px; color: #fff; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gallery-card .card-badge {
+  position: absolute; top: 6px; right: 6px;
+  width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.card-badge.pending { background: var(--text-muted); }
+.card-badge.done { background: var(--success); }
+
+/* ─── Annotation View ─── */
+.ann-view {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--bg-dark); display: none; flex-direction: column; z-index: 200;
+}
+.ann-view.visible { display: flex; }
+
+/* Annotation Toolbar */
+.ann-toolbar {
+  display: flex; align-items: center; gap: 4px;
+  height: var(--toolbar-h); padding: 0 10px;
+  background: #1e293b; border-bottom: 1px solid #334155;
+  flex-shrink: 0; overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.ann-toolbar::-webkit-scrollbar { display: none; }
+
+.tool-group {
+  display: flex; align-items: center; gap: 3px;
+  padding: 0 4px;
+}
+.tool-sep { width: 1px; height: 28px; background: #475569; margin: 0 4px; flex-shrink: 0; }
+
+.tool-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: var(--radius-sm);
+  border: 2px solid transparent;
+  background: transparent; color: #94a3b8;
+  cursor: pointer; transition: all 0.15s ease;
+  flex-shrink: 0; position: relative;
+}
+.tool-btn:active { transform: scale(0.92); }
+.tool-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.tool-btn.mode-pen { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+.tool-btn.mode-finger { background: #334155; color: #e2e8f0; border-color: #475569; }
+.tool-btn:not(.active):hover { background: #334155; color: #e2e8f0; }
+.tool-btn svg { width: 20px; height: 20px; pointer-events: none; }
+.tool-btn .tool-label {
+  display: none; font-size: 10px; font-weight: 600;
+  position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%);
+  white-space: nowrap; color: #94a3b8;
+}
+
+/* Navigation */
+.nav-group {
+  display: flex; align-items: center; gap: 2px;
+  margin-left: auto;
+}
+.nav-counter {
+  font-size: 13px; color: #cbd5e1; font-weight: 500;
+  min-width: 48px; text-align: center; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.nav-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  border: none; background: #334155; color: #cbd5e1;
+  cursor: pointer; transition: all 0.15s ease;
+}
+.nav-btn:active { transform: scale(0.92); }
+.nav-btn:hover { background: #475569; color: #fff; }
+.nav-btn:disabled { opacity: 0.3; pointer-events: none; }
+.nav-btn svg { width: 18px; height: 18px; }
+
+.save-indicator {
+  display: flex; align-items: center; gap: 5px;
+  margin-left: 8px; font-size: 12px; font-weight: 500;
+  color: #475569; white-space: nowrap; flex-shrink: 0;
+  transition: color 0.3s;
+}
+.save-indicator.saving { color: var(--warning); }
+.save-indicator.saved { color: var(--success); }
+.save-indicator .si-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #475569; transition: background 0.3s;
+}
+.save-indicator.saving .si-dot { background: var(--warning); animation: pulse 1s infinite; }
+.save-indicator.saved .si-dot { background: var(--success); }
+
+/* Class Bar */
+.class-bar {
+  display: flex; align-items: center; gap: 6px;
+  height: var(--classbar-h); padding: 0 10px;
+  background: #1e293b; border-bottom: 1px solid #334155;
+  flex-shrink: 0; overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.class-bar::-webkit-scrollbar { display: none; }
+
+.class-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 30px; padding: 0 12px; border-radius: 15px;
+  border: 2px solid transparent;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s ease; white-space: nowrap;
+  flex-shrink: 0;
+}
+.class-pill:active { transform: scale(0.95); }
+.class-pill.active { border-color: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.3); }
+.class-pill .cdot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+
+/* Canvas */
+.canvas-wrap {
+  flex: 1; position: relative; overflow: hidden; touch-action: none;
+  background: #0f172a;
+}
+.canvas-wrap canvas { position: absolute; top: 0; left: 0; }
+
+/* Annotations List (bottom) */
+.ann-list {
+  flex-shrink: 0; background: #1e293b; border-top: 1px solid #334155;
+  max-height: 110px; overflow-x: auto; overflow-y: hidden;
+  display: flex; align-items: stretch; gap: 6px;
+  padding: 6px 10px;
+  -webkit-overflow-scrolling: touch;
+}
+.ann-list::-webkit-scrollbar { height: 3px; }
+.ann-list::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+.ann-list:empty::after {
+  content: 'Sin anotaciones'; color: #475569; font-size: 12px;
+  display: flex; align-items: center; padding: 0 8px; white-space: nowrap;
+}
+.ann-chip {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 72px; padding: 6px 8px; border-radius: 6px;
+  border: 2px solid #334155; background: #0f172a;
+  cursor: pointer; transition: all 0.15s ease; flex-shrink: 0; gap: 3px;
+}
+.ann-chip:active { transform: scale(0.95); }
+.ann-chip.selected { border-color: #fff; background: #334155; }
+.ann-chip .ann-chip-color {
+  width: 28px; height: 18px; border-radius: 3px; opacity: 0.8;
+}
+.ann-chip .ann-chip-label {
+  font-size: 10px; color: #94a3b8; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 64px; text-align: center;
+}
+.ann-chip .ann-chip-type {
+  font-size: 9px; color: #475569; font-weight: 500; text-transform: uppercase;
+}
+
+/* Floating back button */
+.float-back {
+  position: absolute; top: 10px; left: 10px; z-index: 10;
+  display: flex; align-items: center; gap: 6px;
+  height: 38px; padding: 0 14px 0 10px;
+  border-radius: 19px; border: none;
+  background: rgba(30,41,59,0.85); color: #e2e8f0;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  transition: all 0.15s ease;
+}
+.float-back:hover { background: rgba(30,41,59,0.95); }
+.float-back:active { transform: scale(0.95); }
+.float-back svg { width: 16px; height: 16px; }
+
+/* Floating image name */
+.float-imgname {
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 10;
+  padding: 6px 14px; border-radius: 16px;
+  background: rgba(30,41,59,0.75); color: #cbd5e1;
+  font-size: 12px; font-weight: 500;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 50vw; pointer-events: none;
+}
+
+/* Floating Polygon Finish */
+.float-finish {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 210; display: none;
+}
+.float-finish.visible { display: flex; gap: 8px; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+  padding: 12px 24px; border-radius: var(--radius);
+  background: #1e293b; color: #fff; font-size: 14px; font-weight: 500;
+  box-shadow: var(--shadow-lg); z-index: 200;
+  opacity: 0; transition: all 0.3s ease; pointer-events: none;
+  border: 1px solid #334155;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.toast-success { border-color: var(--success); }
+.toast.toast-error { border-color: var(--danger); }
+
+/* Loading */
+.loading-screen {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; gap: 16px;
+}
+.loading-spinner {
+  width: 36px; height: 36px; border: 3px solid #e2e8f0;
+  border-top-color: var(--primary); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.loading-text { color: var(--text-muted); font-size: 14px; }
+
+/* Error Screen */
+.error-screen {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: calc(100% - var(--header-h)); text-align: center; padding: 32px;
+}
+.error-icon { font-size: 56px; margin-bottom: 16px; line-height: 1; }
+.error-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.error-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; max-width: 360px; margin-bottom: 24px; }
+.error-checklist { text-align: left; font-size: 13px; color: var(--text-secondary); line-height: 2; max-width: 320px; margin-bottom: 24px; }
+.error-checklist li { list-style: none; padding-left: 24px; position: relative; }
+.error-checklist li::before { content: '○'; position: absolute; left: 0; color: var(--text-muted); }
+
+/* Empty state */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px; color: var(--text-muted); text-align: center;
+}
+.empty-state svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.3; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+
+/* Animations */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes pulse-save {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(39,174,96,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(39,174,96,0); }
+}
+@keyframes slide-up {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.gallery-card { animation: slide-up 0.3s ease backwards; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     GALLERY VIEW
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div id="gallery-view">
+  <div class="header">
+    <div class="header-logo">
+      <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="rgba(255,255,255,0.2)"/><path d="M8 16L14 22L24 10" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div>
+        <div class="header-title" id="h-project-name">Annotix</div>
+        <div class="header-sub" id="h-project-type"></div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="header-badge" id="btn-change-project" style="display:none;cursor:pointer;border:none" onclick="showProjectSelector()">
+        &#9664; Proyectos
+      </button>
+      <div class="header-badge"><span class="dot"></span> Conectado</div>
+    </div>
+  </div>
+
+  <div class="gallery-container" id="gallery-container">
+    <div class="loading-screen" id="gallery-loading">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Conectando con Annotix...</div>
+    </div>
+    <div id="gallery-content" style="display:none">
+      <div class="gallery-stats" id="gallery-stats"></div>
+      <div class="gallery-filters" id="gallery-filters"></div>
+      <div class="gallery-grid" id="gallery-grid"></div>
+    </div>
+    <div id="gallery-error" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     ANNOTATION VIEW
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="ann-view" id="ann-view">
+  <!-- Toolbar -->
+  <div class="ann-toolbar">
+    <div class="tool-group">
+      <button class="tool-btn" id="btn-back" title="Volver a galería">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      </button>
+    </div>
+    <div class="tool-sep"></div>
+    <div class="tool-group" id="tools-group">
+      <!-- Pan -->
+      <button class="tool-btn active" data-tool="pan" title="Mover / Seleccionar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+      </button>
+      <!-- BBox -->
+      <button class="tool-btn" data-tool="bbox" id="tool-bbox" title="Rectángulo (BBox)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+      </button>
+      <!-- Polygon -->
+      <button class="tool-btn" data-tool="polygon" id="tool-polygon" title="Polígono">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8.5 5v10L12 22l-8.5-5V7z"/></svg>
+      </button>
+    </div>
+    <div class="tool-sep"></div>
+    <!-- Input mode toggle -->
+    <div class="tool-group">
+      <button class="tool-btn" id="btn-input-mode" title="Modo: Lápiz dibuja, dedo mueve">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+      </button>
+    </div>
+    <div class="tool-sep"></div>
+    <div class="tool-group">
+      <button class="tool-btn" id="btn-undo" title="Deshacer" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+      </button>
+      <button class="tool-btn" id="btn-delete" title="Eliminar selección" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+      </button>
+    </div>
+
+    <!-- Nav + Save (pushed right) -->
+    <div class="nav-group">
+      <button class="nav-btn" id="btn-prev" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="nav-counter" id="nav-counter">—</span>
+      <button class="nav-btn" id="btn-next" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+      <button class="nav-btn" id="manual-save-btn" title="Guardar" style="display:none;background:var(--success);color:#fff">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      </button>
+      <div class="save-indicator" id="save-indicator">
+        <span class="si-dot"></span>
+        <span id="save-text">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Class bar -->
+  <div class="class-bar" id="class-bar"></div>
+
+  <!-- Canvas -->
+  <div class="canvas-wrap" id="canvas-wrap">
+    <canvas id="canvas"></canvas>
+    <button class="float-back" id="float-back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      Galería
+    </button>
+    <div class="float-imgname" id="float-imgname"></div>
+  </div>
+
+  <!-- Annotations list -->
+  <div class="ann-list" id="ann-list"></div>
+
+  <!-- Floating polygon controls -->
+  <div class="float-finish" id="float-finish">
+    <button class="btn btn-primary btn-sm" id="btn-finish-poly">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Finalizar polígono
+    </button>
+    <button class="btn btn-outline btn-sm" id="btn-cancel-poly" style="background:#1e293b;color:#cbd5e1;border-color:#475569">Cancelar</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ─── State ──────────────────────────────────────────────────────────────── */
+const S = {
+  projects: [],      // lista de proyectos compartidos
+  projectId: null,   // proyecto activo
+  project: null,
+  images: [],
+  filter: 'all',
+  currentIdx: -1,
+  currentImage: null,
+  img: null,
+  annotations: [],
+  undoStack: [],
+  selectedId: null,
+  activeTool: 'pan',
+  activeClassId: null,
+  dirty: false,
+  autoSave: false,
+  inputMode: 'pen', // 'pen' = lápiz dibuja + dedo panea | 'finger' = todo sigue herramienta activa
+  scale: 1, offsetX: 0, offsetY: 0,
+  drawing: null,
+  pointerDown: false, pointerStart: null,
+  pinchDist: 0, pinchScale: 1,
+  activeTouches: 0,
+};
+
+/* ─── API ────────────────────────────────────────────────────────────────── */
+const API = {
+  async get(url) {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  },
+  getProjects() { return this.get('/api/projects'); },
+  getProject(pid) { return this.get(`/api/projects/${pid}`); },
+  getImages(pid) { return this.get(`/api/projects/${pid}/images`); },
+  getImage(pid, id) { return this.get(`/api/projects/${pid}/images/${id}`); },
+  imgUrl(pid, id) { return `/api/projects/${pid}/images/${id}/file`; },
+  thumbUrl(pid, id) { return `/api/projects/${pid}/images/${id}/thumbnail`; },
+  async saveAnnotations(pid, imageId, anns) {
+    const payload = JSON.stringify({ annotations: anns });
+    const r = await fetch(`/api/projects/${pid}/images/${imageId}/annotations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+    });
+    if (!r.ok) {
+      const txt = await r.text().catch(() => '');
+      throw new Error(`${r.status}: ${txt}`);
+    }
+    return r.json().catch(() => null);
+  },
+};
+
+/* ─── DOM refs ───────────────────────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+const galleryView = $('gallery-view');
+const galleryLoading = $('gallery-loading');
+const galleryContent = $('gallery-content');
+const galleryError = $('gallery-error');
+const galleryGrid = $('gallery-grid');
+const galleryStats = $('gallery-stats');
+const galleryFilters = $('gallery-filters');
+const annView = $('ann-view');
+const canvas = $('canvas');
+const ctx = canvas.getContext('2d');
+const canvasWrap = $('canvas-wrap');
+const classBar = $('class-bar');
+const navCounter = $('nav-counter');
+const btnInputMode = $('btn-input-mode');
+const manualSaveBtn = $('manual-save-btn');
+const saveIndicator = $('save-indicator');
+const saveText = $('save-text');
+const btnUndo = $('btn-undo');
+const btnDelete = $('btn-delete');
+const annList = $('ann-list');
+const floatFinish = $('float-finish');
+const toastEl = $('toast');
+
+/* ─── Helpers ────────────────────────────────────────────────────────────── */
+function uuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 3 | 8)).toString(16);
+  });
+}
+
+function hexToRgba(hex, a) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+let toastTimer;
+function toast(msg, type = '') {
+  toastEl.textContent = msg;
+  toastEl.className = 'toast show' + (type ? ` toast-${type}` : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.className = 'toast', 2500);
+}
+
+/* ─── Init ───────────────────────────────────────────────────────────────── */
+async function init() {
+  try {
+    S.projects = await API.getProjects();
+
+    // Si hay un solo proyecto, entrar directo
+    if (S.projects.length === 1) {
+      await enterProject(S.projects[0].id);
+    } else {
+      // Mostrar selector de proyectos
+      $('h-project-name').textContent = 'Annotix';
+      $('h-project-type').textContent = `${S.projects.length} proyectos`;
+      renderProjectSelector();
+      galleryLoading.style.display = 'none';
+      galleryContent.style.display = '';
+    }
+  } catch (e) {
+    console.error(e);
+    galleryLoading.style.display = 'none';
+    galleryError.style.display = '';
+    galleryError.innerHTML = `
+      <div class="error-screen">
+        <div class="error-icon">&#128268;</div>
+        <div class="error-title">No se puede conectar</div>
+        <div class="error-desc">No se pudo establecer conexión con el servidor de Annotix.</div>
+        <ul class="error-checklist">
+          <li>El servidor esté iniciado en la app de escritorio</li>
+          <li>Este dispositivo esté en la misma red WiFi</li>
+          <li>El firewall del PC permita conexiones en este puerto</li>
+        </ul>
+        <button class="btn btn-primary" onclick="location.reload()">Reintentar conexión</button>
+      </div>
+    `;
+  }
+}
+
+/* ─── Project selector ───────────────────────────────────────────────────── */
+async function enterProject(pid) {
+  S.projectId = pid;
+  S.project = await API.getProject(pid);
+  $('btn-change-project').style.display = S.projects.length > 1 ? '' : 'none';
+  $('h-project-name').textContent = S.project.name;
+  $('h-project-type').textContent = S.project.type.toUpperCase();
+  S.autoSave = !!S.project.autoSave;
+
+  // Herramientas según tipo de proyecto
+  const ptype = S.project.type;
+  const showBbox = ['bbox', 'obb'].includes(ptype);
+  const showPoly = ['polygon', 'mask'].includes(ptype);
+  $('tool-bbox').style.display = showBbox ? '' : 'none';
+  $('tool-polygon').style.display = showPoly ? '' : 'none';
+  if (showBbox) setTool('bbox');
+  else if (showPoly) setTool('polygon');
+  else setTool('pan');
+
+  if (S.project.classes.length > 0) {
+    S.activeClassId = S.project.classes[0].id;
+    renderClasses();
+  }
+
+  await loadGallery();
+  galleryLoading.style.display = 'none';
+  galleryContent.style.display = '';
+}
+
+function renderProjectSelector() {
+  galleryStats.innerHTML = '';
+  galleryFilters.innerHTML = '';
+  galleryGrid.innerHTML = S.projects.map((p, i) => `
+    <div class="gallery-card" data-pid="${p.id}" style="animation-delay:${i * 0.04}s; aspect-ratio: auto;">
+      <div style="padding:16px; display:flex; flex-direction:column; gap:6px; height:100%;">
+        <div style="font-size:15px; font-weight:600; color:var(--text);">${p.name}</div>
+        <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase;">${p.type}</div>
+        <div style="font-size:22px; font-weight:700; color:var(--primary); margin-top:auto;">${p.imageCount}</div>
+        <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">imágenes</div>
+      </div>
+    </div>
+  `).join('');
+
+  galleryGrid.querySelectorAll('.gallery-card[data-pid]').forEach(card => {
+    card.onclick = async () => {
+      galleryContent.style.display = 'none';
+      galleryLoading.style.display = '';
+      galleryLoading.querySelector('.loading-text').textContent = 'Cargando proyecto...';
+      await enterProject(card.dataset.pid);
+    };
+  });
+}
+
+function showProjectSelector() {
+  S.projectId = null;
+  S.project = null;
+  $('btn-change-project').style.display = 'none';
+  $('h-project-name').textContent = 'Annotix';
+  $('h-project-type').textContent = `${S.projects.length} proyectos`;
+  S.filter = 'all';
+  renderProjectSelector();
+  galleryLoading.style.display = 'none';
+  galleryContent.style.display = '';
+}
+
+/* ─── Gallery ────────────────────────────────────────────────────────────── */
+async function loadGallery() {
+  S.images = await API.getImages(S.projectId);
+  renderStats();
+  renderFilters();
+  renderGallery();
+}
+
+function renderStats() {
+  const total = S.images.length;
+  const done = S.images.filter(i => i.annotationCount > 0).length;
+  const pending = total - done;
+  const totalAnns = S.images.reduce((s, i) => s + i.annotationCount, 0);
+  galleryStats.innerHTML = `
+    <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Total</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:var(--success)">${done}</div><div class="stat-label">Anotadas</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:var(--warning)">${pending}</div><div class="stat-label">Pendientes</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:var(--primary)">${totalAnns}</div><div class="stat-label">Anotaciones</div></div>
+  `;
+}
+
+function renderFilters() {
+  const counts = {
+    all: S.images.length,
+    pending: S.images.filter(i => i.annotationCount === 0).length,
+    annotated: S.images.filter(i => i.annotationCount > 0).length,
+  };
+  galleryFilters.innerHTML = ['all', 'pending', 'annotated'].map(f => `
+    <button class="filter-btn ${S.filter === f ? 'active' : ''}" data-filter="${f}">
+      ${{all:'Todas', pending:'Pendientes', annotated:'Anotadas'}[f]} (${counts[f]})
+    </button>
+  `).join('');
+  galleryFilters.querySelectorAll('.filter-btn').forEach(b => {
+    b.onclick = () => { S.filter = b.dataset.filter; renderFilters(); renderGallery(); };
+  });
+}
+
+function renderGallery() {
+  let filtered = S.images;
+  if (S.filter === 'pending') filtered = filtered.filter(i => i.annotationCount === 0);
+  if (S.filter === 'annotated') filtered = filtered.filter(i => i.annotationCount > 0);
+
+  if (filtered.length === 0) {
+    galleryGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <div>Sin imágenes${S.filter !== 'all' ? ' en este filtro' : ''}</div>
+    </div>`;
+    return;
+  }
+
+  galleryGrid.innerHTML = filtered.map((img, i) => {
+    const realIdx = S.images.indexOf(img);
+    const isDone = img.annotationCount > 0;
+    return `
+      <div class="gallery-card ${isDone ? 'annotated' : ''}" data-idx="${realIdx}" style="animation-delay:${i * 0.03}s">
+        <img src="${API.thumbUrl(S.projectId, img.id)}" loading="lazy" alt="${img.name}">
+        <div class="card-badge ${isDone ? 'done' : 'pending'}">${isDone ? img.annotationCount : '—'}</div>
+        <div class="card-overlay"><div class="card-name">${img.name}</div></div>
+      </div>
+    `;
+  }).join('');
+
+  galleryGrid.querySelectorAll('.gallery-card').forEach(card => {
+    card.onclick = () => openImage(parseInt(card.dataset.idx));
+  });
+}
+
+/* ─── Open Image ─────────────────────────────────────────────────────────── */
+async function openImage(idx) {
+  // Forzar guardado si hay cambios pendientes
+  if (S.dirty && S.currentImage) {
+    clearTimeout(autoSaveTimer);
+    await doAutoSave();
+  }
+
+  S.currentIdx = idx;
+  S.selectedId = null;
+  S.drawing = null;
+  btnDelete.disabled = true;
+  floatFinish.classList.remove('visible');
+  annView.classList.add('visible');
+  updateNav();
+
+  const imgData = await API.getImage(S.projectId, S.images[idx].id);
+  S.currentImage = imgData;
+  S.annotations = (imgData.annotations || []).map(a => ({...a}));
+  S.undoStack = [];
+  S.dirty = false;
+  updateUndoBtn();
+  saveIndicator.className = 'save-indicator';
+  saveText.textContent = '—';
+  triggerAutoSave();
+
+  renderAnnList();
+  $('float-imgname').textContent = S.images[idx]?.name || '';
+
+  const imgEl = new Image();
+  imgEl.crossOrigin = 'anonymous';
+  imgEl.onload = () => {
+    S.img = imgEl;
+    fitImage();
+    render();
+  };
+  imgEl.src = API.imgUrl(S.projectId, imgData.id);
+}
+
+function fitImage() {
+  if (!S.img) return;
+  const cw = canvasWrap.clientWidth;
+  const ch = canvasWrap.clientHeight;
+  canvas.width = cw;
+  canvas.height = ch;
+  const sx = cw / S.img.width;
+  const sy = ch / S.img.height;
+  S.scale = Math.min(sx, sy) * 0.92;
+  S.offsetX = (cw - S.img.width * S.scale) / 2;
+  S.offsetY = (ch - S.img.height * S.scale) / 2;
+}
+
+function updateNav() {
+  navCounter.textContent = `${S.currentIdx + 1} / ${S.images.length}`;
+  $('btn-prev').disabled = S.currentIdx <= 0;
+  $('btn-next').disabled = S.currentIdx >= S.images.length - 1;
+}
+
+function updateUndoBtn() { btnUndo.disabled = S.undoStack.length === 0; }
+
+/* ─── Auto-save ──────────────────────────────────────────────────────────── */
+let autoSaveTimer = null;
+let saving = false;
+
+function triggerAutoSave() {
+  if (!S.currentImage) return;
+  S.dirty = true;
+  if (S.autoSave) {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(doAutoSave, 400);
+  } else {
+    // Modo manual: mostrar indicador de cambios sin guardar
+    saveIndicator.className = 'save-indicator';
+    saveText.textContent = 'Sin guardar';
+    manualSaveBtn.style.display = '';
+  }
+}
+
+async function doAutoSave() {
+  if (!S.currentImage || !S.dirty || saving) return;
+  saving = true;
+  saveIndicator.className = 'save-indicator saving';
+  saveText.textContent = 'Guardando...';
+  try {
+    await API.saveAnnotations(S.projectId, S.currentImage.id, S.annotations);
+    S.dirty = false;
+    if (S.images[S.currentIdx]) {
+      S.images[S.currentIdx].annotationCount = S.annotations.length;
+      S.images[S.currentIdx].status = S.annotations.length > 0 ? 'annotated' : 'pending';
+    }
+    saveIndicator.className = 'save-indicator saved';
+    saveText.textContent = 'Guardado';
+    manualSaveBtn.style.display = 'none';
+  } catch (e) {
+    saveIndicator.className = 'save-indicator';
+    saveText.textContent = 'Error';
+    toast('Error al guardar: ' + e.message, 'error');
+  } finally {
+    saving = false;
+  }
+}
+
+/* ─── Render ─────────────────────────────────────────────────────────────── */
+function render() {
+  if (!S.img) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(S.offsetX, S.offsetY);
+  ctx.scale(S.scale, S.scale);
+
+  // Imagen
+  ctx.drawImage(S.img, 0, 0);
+
+  // Anotaciones
+  for (const ann of S.annotations) drawAnnotation(ann, ann.id === S.selectedId);
+
+  // Dibujo en progreso
+  if (S.drawing) {
+    const color = getClassColor(S.activeClassId);
+    if (S.drawing.type === 'bbox') drawBBox(S.drawing.data, color, false, 0.3);
+    if (S.drawing.type === 'polygon') drawPolyProgress(S.drawing.points, color);
+  }
+
+  ctx.restore();
+}
+
+function drawAnnotation(ann, sel) {
+  const c = getClassColor(ann.classId);
+  const t = ann.type;
+  if (t === 'bbox' || t === 'obb') drawBBox(ann.data, c, sel);
+  else if (t === 'polygon') drawPoly(ann.data, c, sel);
+}
+
+function drawBBox(d, color, sel, alpha) {
+  ctx.save();
+  if (d.rotation) {
+    const cx = d.x + d.width / 2, cy = d.y + d.height / 2;
+    ctx.translate(cx, cy);
+    ctx.rotate(d.rotation * Math.PI / 180);
+    ctx.translate(-cx, -cy);
+  }
+  ctx.fillStyle = hexToRgba(color, alpha || 0.2);
+  ctx.fillRect(d.x, d.y, d.width, d.height);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = (sel ? 3 : 2) / S.scale;
+  if (sel) { ctx.setLineDash([6 / S.scale, 4 / S.scale]); }
+  ctx.strokeRect(d.x, d.y, d.width, d.height);
+  ctx.setLineDash([]);
+
+  // Corner handles when selected
+  if (sel) {
+    const hs = 5 / S.scale;
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5 / S.scale;
+    for (const [cx, cy] of [[d.x, d.y], [d.x + d.width, d.y], [d.x, d.y + d.height], [d.x + d.width, d.y + d.height]]) {
+      ctx.fillRect(cx - hs, cy - hs, hs * 2, hs * 2);
+      ctx.strokeRect(cx - hs, cy - hs, hs * 2, hs * 2);
+    }
+  }
+  ctx.restore();
+}
+
+function drawPoly(d, color, sel) {
+  const pts = d.points;
+  if (!pts || pts.length < 2) return;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.closePath();
+  ctx.fillStyle = hexToRgba(color, 0.2);
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = (sel ? 3 : 2) / S.scale;
+  if (sel) ctx.setLineDash([6 / S.scale, 4 / S.scale]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // Vertices
+  for (const p of pts) {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, (sel ? 5 : 4) / S.scale, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5 / S.scale;
+    ctx.stroke();
+  }
+}
+
+function drawPolyProgress(pts, color) {
+  if (!pts.length) return;
+  // Lines
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2 / S.scale;
+  ctx.setLineDash([6 / S.scale, 4 / S.scale]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // Fill preview
+  if (pts.length >= 3) {
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.closePath();
+    ctx.fillStyle = hexToRgba(color, 0.12);
+    ctx.fill();
+  }
+  // Points
+  for (let i = 0; i < pts.length; i++) {
+    ctx.beginPath();
+    ctx.arc(pts[i].x, pts[i].y, (i === 0 ? 6 : 4) / S.scale, 0, Math.PI * 2);
+    ctx.fillStyle = i === 0 ? '#fff' : color;
+    ctx.fill();
+    ctx.strokeStyle = i === 0 ? color : '#fff';
+    ctx.lineWidth = 2 / S.scale;
+    ctx.stroke();
+  }
+}
+
+/* ─── Annotations List ───────────────────────────────────────────────────── */
+function renderAnnList() {
+  annList.innerHTML = '';
+  for (const ann of S.annotations) {
+    const color = getClassColor(ann.classId);
+    const name = getClassName(ann.classId);
+    const chip = document.createElement('div');
+    chip.className = 'ann-chip' + (ann.id === S.selectedId ? ' selected' : '');
+    chip.innerHTML = `
+      <div class="ann-chip-color" style="background:${color}"></div>
+      <div class="ann-chip-label">${name}</div>
+      <div class="ann-chip-type">${ann.type}</div>
+    `;
+    chip.onclick = () => {
+      S.selectedId = ann.id === S.selectedId ? null : ann.id;
+      btnDelete.disabled = !S.selectedId;
+      render();
+      renderAnnList();
+    };
+    annList.appendChild(chip);
+  }
+}
+
+/* ─── Coordinates ────────────────────────────────────────────────────────── */
+function screenToImage(sx, sy) {
+  const r = canvas.getBoundingClientRect();
+  return { x: (sx - r.left - S.offsetX) / S.scale, y: (sy - r.top - S.offsetY) / S.scale };
+}
+
+/* ─── Classes ────────────────────────────────────────────────────────────── */
+function renderClasses() {
+  classBar.innerHTML = '';
+  for (const cls of S.project.classes) {
+    const p = document.createElement('button');
+    p.className = 'class-pill' + (cls.id === S.activeClassId ? ' active' : '');
+    p.style.background = hexToRgba(cls.color, 0.15);
+    p.style.color = cls.color;
+    p.innerHTML = `<span class="cdot" style="background:${cls.color}"></span>${cls.name}`;
+    p.onclick = () => { S.activeClassId = cls.id; renderClasses(); };
+    classBar.appendChild(p);
+  }
+}
+
+function getClassColor(id) {
+  return S.project?.classes.find(c => c.id === id)?.color || '#667eea';
+}
+
+function getClassName(id) {
+  return S.project?.classes.find(c => c.id === id)?.name || '';
+}
+
+/* ─── Tools ──────────────────────────────────────────────────────────────── */
+function setTool(tool) {
+  S.activeTool = tool;
+  S.drawing = null;
+  S.selectedId = null;
+  btnDelete.disabled = true;
+  floatFinish.classList.remove('visible');
+  document.querySelectorAll('.tool-btn[data-tool]').forEach(b => {
+    b.classList.toggle('active', b.dataset.tool === tool);
+  });
+  render();
+}
+
+document.querySelectorAll('.tool-btn[data-tool]').forEach(b => {
+  b.onclick = () => setTool(b.dataset.tool);
+});
+
+/* ─── Input Mode (pen/finger) ────────────────────────────────────────────── */
+function updateInputModeBtn() {
+  btnInputMode.className = 'tool-btn ' + (S.inputMode === 'pen' ? 'mode-pen' : 'mode-finger');
+  btnInputMode.title = S.inputMode === 'pen'
+    ? 'Modo Lápiz: lápiz dibuja, dedo mueve'
+    : 'Modo Dedo: todo sigue la herramienta activa';
+  btnInputMode.innerHTML = S.inputMode === 'pen'
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>';
+}
+
+btnInputMode.onclick = () => {
+  S.inputMode = S.inputMode === 'pen' ? 'finger' : 'pen';
+  updateInputModeBtn();
+  toast(S.inputMode === 'pen' ? 'Modo Lápiz: lápiz dibuja, dedo mueve' : 'Modo Dedo: todo sigue herramienta activa');
+};
+updateInputModeBtn();
+
+/**
+ * Determina la herramienta efectiva según el modo de entrada y el tipo de pointer.
+ * En modo 'pen': stylus → herramienta activa, touch → pan, mouse → herramienta activa
+ * En modo 'finger': todo → herramienta activa
+ */
+function effectiveTool(pointerType) {
+  if (S.inputMode === 'finger') return S.activeTool;
+  // Modo pen
+  if (pointerType === 'touch') return 'pan';
+  return S.activeTool; // pen o mouse → herramienta activa
+}
+
+/* ─── Undo ───────────────────────────────────────────────────────────────── */
+function pushUndo() {
+  S.undoStack.push(JSON.parse(JSON.stringify(S.annotations)));
+  if (S.undoStack.length > 50) S.undoStack.shift();
+  updateUndoBtn();
+}
+
+btnUndo.onclick = () => {
+  if (!S.undoStack.length) return;
+  S.annotations = S.undoStack.pop();
+  S.dirty = true; S.selectedId = null; btnDelete.disabled = true;
+  updateUndoBtn(); triggerAutoSave(); render(); renderAnnList();
+};
+
+/* ─── Hit test ───────────────────────────────────────────────────────────── */
+function hitTest(pt) {
+  for (let i = S.annotations.length - 1; i >= 0; i--) {
+    const a = S.annotations[i];
+    if ((a.type === 'bbox' || a.type === 'obb') && insideBBox(pt, a.data)) return a;
+    if (a.type === 'polygon' && insidePoly(pt, a.data.points)) return a;
+  }
+  return null;
+}
+
+function insideBBox(pt, d) {
+  return pt.x >= d.x && pt.x <= d.x + d.width && pt.y >= d.y && pt.y <= d.y + d.height;
+}
+
+function insidePoly(pt, verts) {
+  if (!verts || verts.length < 3) return false;
+  let inside = false;
+  for (let i = 0, j = verts.length - 1; i < verts.length; j = i++) {
+    const xi = verts[i].x, yi = verts[i].y, xj = verts[j].x, yj = verts[j].y;
+    if (((yi > pt.y) !== (yj > pt.y)) && (pt.x < (xj - xi) * (pt.y - yi) / (yj - yi) + xi))
+      inside = !inside;
+  }
+  return inside;
+}
+
+/* ─── Pointer Events ─────────────────────────────────────────────────────── */
+canvas.addEventListener('pointerdown', onDown, { passive: false });
+canvas.addEventListener('pointermove', onMove, { passive: false });
+canvas.addEventListener('pointerup', onUp, { passive: false });
+canvas.addEventListener('pointercancel', onUp, { passive: false });
+canvas.addEventListener('touchstart', onPinchStart, { passive: false });
+canvas.addEventListener('touchmove', onPinchMove, { passive: false });
+canvas.addEventListener('touchend', e => { S.activeTouches = e.touches.length; }, { passive: false });
+canvas.addEventListener('wheel', onWheel, { passive: false });
+
+function onDown(e) {
+  e.preventDefault();
+  if (e.pointerType === 'touch') S.activeTouches++;
+  if (S.activeTouches > 1) return;
+
+  const tool = effectiveTool(e.pointerType);
+  const imgPt = screenToImage(e.clientX, e.clientY);
+  S.pointerDown = true;
+  S.pointerStart = { sx: e.clientX, sy: e.clientY, ix: imgPt.x, iy: imgPt.y, ox: S.offsetX, oy: S.offsetY, tool };
+
+  // Hit-test siempre
+  const hit = hitTest(imgPt);
+
+  if (tool === 'pan') {
+    S.selectedId = hit ? hit.id : null;
+    btnDelete.disabled = !hit;
+    render(); renderAnnList();
+  } else if (tool === 'bbox') {
+    if (hit && !S.drawing) {
+      S.selectedId = hit.id;
+      btnDelete.disabled = false;
+      S.pointerDown = false;
+      render(); renderAnnList();
+      return;
+    }
+    S.selectedId = null;
+    btnDelete.disabled = true;
+    S.drawing = { type: 'bbox', data: { x: imgPt.x, y: imgPt.y, width: 0, height: 0 } };
+    renderAnnList();
+  } else if (tool === 'polygon') {
+    if (!S.drawing || S.drawing.type !== 'polygon') {
+      S.drawing = { type: 'polygon', points: [{ x: imgPt.x, y: imgPt.y }] };
+      floatFinish.classList.add('visible');
+    } else {
+      // Close if clicking near first point
+      const first = S.drawing.points[0];
+      const dist = Math.hypot(imgPt.x - first.x, imgPt.y - first.y) * S.scale;
+      if (S.drawing.points.length >= 3 && dist < 20) {
+        finishPolygon();
+        return;
+      }
+      S.drawing.points.push({ x: imgPt.x, y: imgPt.y });
+    }
+    render();
+    S.pointerDown = false;
+  }
+}
+
+function onMove(e) {
+  e.preventDefault();
+  if (!S.pointerDown || S.activeTouches > 1) return;
+  const tool = S.pointerStart?.tool || 'pan';
+
+  if (tool === 'pan') {
+    S.offsetX = S.pointerStart.ox + (e.clientX - S.pointerStart.sx);
+    S.offsetY = S.pointerStart.oy + (e.clientY - S.pointerStart.sy);
+    render();
+  } else if (tool === 'bbox' && S.drawing) {
+    const pt = screenToImage(e.clientX, e.clientY);
+    S.drawing.data.width = pt.x - S.pointerStart.ix;
+    S.drawing.data.height = pt.y - S.pointerStart.iy;
+    render();
+  }
+}
+
+function onUp(e) {
+  e.preventDefault();
+  if (e.pointerType === 'touch') S.activeTouches = Math.max(0, S.activeTouches - 1);
+  if (!S.pointerDown) return;
+  S.pointerDown = false;
+  const tool = S.pointerStart?.tool || 'pan';
+
+  if (tool === 'bbox' && S.drawing) {
+    const pt = screenToImage(e.clientX, e.clientY);
+    const w = pt.x - S.pointerStart.ix, h = pt.y - S.pointerStart.iy;
+    const bbox = {
+      x: w < 0 ? S.pointerStart.ix + w : S.pointerStart.ix,
+      y: h < 0 ? S.pointerStart.iy + h : S.pointerStart.iy,
+      width: Math.abs(w), height: Math.abs(h),
+    };
+    if (bbox.width > 5 && bbox.height > 5) {
+      pushUndo();
+      const type = S.project.type === 'obb' ? 'obb' : 'bbox';
+      S.annotations.push({
+        id: uuid(), type, classId: S.activeClassId,
+        data: type === 'obb' ? { ...bbox, rotation: 0 } : bbox,
+        source: 'user',
+      });
+      S.dirty = true;
+      triggerAutoSave();
+      renderAnnList();
+    }
+    S.drawing = null;
+    render();
+  }
+}
+
+/* ─── Pinch Zoom ─────────────────────────────────────────────────────────── */
+function onPinchStart(e) {
+  if (e.touches.length === 2) {
+    e.preventDefault();
+    S.pinchDist = touchDist(e.touches);
+    S.pinchScale = S.scale;
+    S.pointerDown = false;
+  }
+}
+
+function onPinchMove(e) {
+  if (e.touches.length !== 2) return;
+  e.preventDefault();
+  const d = touchDist(e.touches);
+  const mid = touchMid(e.touches);
+  const factor = d / S.pinchDist;
+  const ns = Math.max(0.1, Math.min(20, S.pinchScale * factor));
+  const r = canvas.getBoundingClientRect();
+  const cx = mid.x - r.left, cy = mid.y - r.top;
+  S.offsetX = cx - (cx - S.offsetX) * (ns / S.scale);
+  S.offsetY = cy - (cy - S.offsetY) * (ns / S.scale);
+  S.scale = ns;
+  render();
+}
+
+function touchDist(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
+function touchMid(t) { return { x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 }; }
+
+function onWheel(e) {
+  e.preventDefault();
+  const r = canvas.getBoundingClientRect();
+  const cx = e.clientX - r.left, cy = e.clientY - r.top;
+  const f = e.deltaY < 0 ? 1.12 : 0.89;
+  const ns = Math.max(0.1, Math.min(20, S.scale * f));
+  S.offsetX = cx - (cx - S.offsetX) * (ns / S.scale);
+  S.offsetY = cy - (cy - S.offsetY) * (ns / S.scale);
+  S.scale = ns;
+  render();
+}
+
+/* ─── Polygon finish/cancel ──────────────────────────────────────────────── */
+function finishPolygon() {
+  if (S.drawing?.type === 'polygon' && S.drawing.points.length >= 3) {
+    pushUndo();
+    S.annotations.push({
+      id: uuid(), type: 'polygon', classId: S.activeClassId,
+      data: { points: S.drawing.points }, source: 'user',
+    });
+    S.dirty = true;
+    triggerAutoSave();
+    renderAnnList();
+  }
+  S.drawing = null;
+  floatFinish.classList.remove('visible');
+  render();
+}
+
+$('btn-finish-poly').onclick = finishPolygon;
+$('btn-cancel-poly').onclick = () => {
+  S.drawing = null;
+  floatFinish.classList.remove('visible');
+  render();
+};
+
+/* ─── Delete ─────────────────────────────────────────────────────────────── */
+btnDelete.onclick = () => {
+  if (!S.selectedId) return;
+  pushUndo();
+  S.annotations = S.annotations.filter(a => a.id !== S.selectedId);
+  S.selectedId = null; S.dirty = true;
+  btnDelete.disabled = true;
+  triggerAutoSave(); render(); renderAnnList();
+};
+
+/* ─── Navigation ─────────────────────────────────────────────────────────── */
+async function goBack() {
+  if (S.dirty && S.currentImage) {
+    clearTimeout(autoSaveTimer);
+    await doAutoSave();
+  }
+  annView.classList.remove('visible');
+  S.drawing = null;
+  floatFinish.classList.remove('visible');
+  loadGallery();
+}
+
+function goBackToProjects() {
+  if (S.projects.length > 1) {
+    annView.classList.remove('visible');
+    showProjectSelector();
+  }
+}
+$('btn-back').onclick = goBack;
+$('float-back').onclick = goBack;
+
+$('btn-prev').onclick = () => { if (S.currentIdx > 0) openImage(S.currentIdx - 1); };
+$('btn-next').onclick = () => { if (S.currentIdx < S.images.length - 1) openImage(S.currentIdx + 1); };
+
+/* ─── Manual save ────────────────────────────────────────────────────────── */
+manualSaveBtn.onclick = () => { if (S.dirty) doAutoSave(); };
+
+/* ─── Resize ─────────────────────────────────────────────────────────────── */
+window.addEventListener('resize', () => {
+  if (annView.classList.contains('visible') && S.img) { fitImage(); render(); }
+});
+
+/* ─── Keyboard Shortcuts ─────────────────────────────────────────────────── */
+document.addEventListener('keydown', e => {
+  if (!annView.classList.contains('visible')) return;
+
+  // Ctrl+S / Cmd+S — guardar manual
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    if (S.dirty) doAutoSave();
+    return;
+  }
+  // Ctrl+Z / Cmd+Z — deshacer
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    e.preventDefault();
+    btnUndo.click();
+    return;
+  }
+
+  // No procesar si hay foco en input
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  switch (e.key) {
+    case 'ArrowLeft':
+      e.preventDefault();
+      if (S.currentIdx > 0) openImage(S.currentIdx - 1);
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      if (S.currentIdx < S.images.length - 1) openImage(S.currentIdx + 1);
+      break;
+    case 'Delete':
+    case 'Backspace':
+      if (S.selectedId) { e.preventDefault(); btnDelete.click(); }
+      break;
+    case 'Escape':
+      if (S.drawing) {
+        S.drawing = null;
+        floatFinish.classList.remove('visible');
+        render();
+      } else {
+        $('btn-back').click();
+      }
+      break;
+    case '1': setTool('pan'); break;
+    case '2': setTool('bbox'); break;
+    case '3': setTool('polygon'); break;
+    case 'Enter':
+      if (S.drawing?.type === 'polygon') { e.preventDefault(); finishPolygon(); }
+      break;
+  }
+});
+
+/* ─── Start ──────────────────────────────────────────────────────────────── */
+init();
+</script>
+</body>
+</html>

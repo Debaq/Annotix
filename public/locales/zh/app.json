@@ -4,5 +4,9 @@
   "branding": {
     "fablab": "TecMedHub",
     "university": "Universidad Austral de Chile - 蒙特港校区"
+  },
+  "update": {
+    "available": "Annotix v{{version}} 可用",
+    "download": "下载新版本"
   }
 }

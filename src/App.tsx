@@ -24,6 +24,7 @@ import { Button } from './components/ui/button';
 import { ProjectType } from './lib/db';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { toast } from '@/hooks/use-toast';
 import { ConfirmDialog } from './features/core/components/ConfirmDialog';
 import { useP2pSession } from './features/p2p/hooks/useP2pSession';
 import { TeamView } from './features/p2p/components/TeamView';
@@ -513,6 +514,7 @@ const TimeSeriesView = () => {
 function App() {
   const { addAnnotation } = useAnnotations();
   const [setupComplete, setSetupComplete] = useState<boolean | null>(null);
+  const { t } = useTranslation();
 
   // Initialize keyboard shortcuts
   useKeyboardShortcuts();
@@ -526,6 +528,36 @@ function App() {
       .then(setSetupComplete)
       .catch(() => setSetupComplete(false));
   }, []);
+
+  // Check for updates on startup
+  useEffect(() => {
+    if (setupComplete !== true) return;
+    invoke<{
+      updateAvailable: boolean;
+      currentVersion: string;
+      latestVersion: string;
+      releaseUrl: string;
+    }>('check_for_updates')
+      .then((info) => {
+        if (info.updateAvailable) {
+          toast({
+            title: t('app.update.available', { version: info.latestVersion }),
+            description: (
+              <a
+                href={info.releaseUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline text-[var(--annotix-primary)] hover:opacity-80"
+              >
+                {t('app.update.download')}
+              </a>
+            ),
+            duration: 15000,
+          });
+        }
+      })
+      .catch(() => { /* silently ignore network errors */ });
+  }, [setupComplete, t]);
 
   // Handle annotation creation events from tools
   useEffect(() => {
