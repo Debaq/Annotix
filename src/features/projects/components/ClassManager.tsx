@@ -42,6 +42,14 @@ export function ClassManager({ classes, onChange }: ClassManagerProps) {
     onChange(classes.filter((cls) => cls.id !== id));
   };
 
+  const handleMove = (index: number, delta: number) => {
+    const target = index + delta;
+    if (target < 0 || target >= classes.length) return;
+    const next = [...classes];
+    [next[index], next[target]] = [next[target], next[index]];
+    onChange(next);
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleAddClass();
@@ -65,6 +73,24 @@ export function ClassManager({ classes, onChange }: ClassManagerProps) {
               color={cls.color}
               onChange={(color) => handleUpdateClass(cls.id, { color })}
             />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleMove(index, -1)}
+              disabled={index === 0}
+              title={t('classes.moveUp', 'Mover arriba')}
+            >
+              <i className="fas fa-arrow-up"></i>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleMove(index, 1)}
+              disabled={index === classes.length - 1}
+              title={t('classes.moveDown', 'Mover abajo')}
+            >
+              <i className="fas fa-arrow-down"></i>
+            </Button>
             <Button
               variant="ghost"
               size="icon"

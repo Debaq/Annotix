@@ -57,6 +57,21 @@ pub async fn update_project(
 }
 
 #[tauri::command]
+pub async fn save_classes(
+    state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
+    app: AppHandle,
+    project_id: String,
+    classes: Vec<ClassDef>,
+) -> Result<(), String> {
+    p2p.check_permission(&project_id, P2pPermission::EditClasses).await?;
+    state.save_classes(&project_id, classes)?;
+    let _ = app.emit("db:projects-changed", ());
+    let _ = app.emit("db:images-changed", ());
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn delete_project(
     state: State<'_, AppState>,
     p2p: State<'_, P2pState>,

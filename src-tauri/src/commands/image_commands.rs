@@ -15,7 +15,16 @@ pub async fn upload_images(
     file_paths: Vec<String>,
 ) -> Result<Vec<String>, String> {
     p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
-    let ids = state.upload_images(&project_id, &file_paths)?;
+    let app_cb = app.clone();
+    let pid = project_id.clone();
+    let ids = state.upload_images_with_progress(&project_id, &file_paths, move |current, total, name| {
+        let _ = app_cb.emit("upload:progress", serde_json::json!({
+            "projectId": pid,
+            "current": current,
+            "total": total,
+            "fileName": name,
+        }));
+    })?;
     let _ = app.emit("db:images-changed", &project_id);
 
     // Sincronizar imágenes nuevas al doc P2P si hay sesión activa

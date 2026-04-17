@@ -468,10 +468,12 @@ fn handle_python_event(
 /// Resuelve el class_id del proyecto para una detección.
 ///
 /// Estrategia (en orden de prioridad):
-/// 1. Match exacto por nombre (case-insensitive) con clases del proyecto
-/// 2. Si hay class_mapping configurado con project_class_id, usar eso
-/// 3. Si el proyecto tiene exactamente 1 clase, usar esa (modelo single-class)
-/// 4. Usar la primera clase del proyecto como fallback
+/// 1. Si el modelo tiene class_mapping con esa entrada poblada, usar ese mapeo
+///    (manual del usuario tiene prioridad absoluta).
+/// 2. Match exacto por nombre (case-insensitive) con clases del proyecto.
+/// 3. Single-class fallback: solo si el modelo también es single-class
+///    (length de class_names <= 1) y el proyecto tiene exactamente 1 clase.
+/// 4. None: descartar la detección. Sin fallback ciego a "primera clase".
 fn resolve_project_class(
     app: &AppHandle,
     project_id: &str,
@@ -482,13 +484,10 @@ fn resolve_project_class(
     use tauri::Manager;
     let state = app.state::<AppState>();
     state.with_project(project_id, |pf| {
-        // 1. Match por nombre
-        if let Some(cls) = pf.classes.iter().find(|c| c.name.eq_ignore_ascii_case(model_class_name)) {
-            return Some(cls.id);
-        }
+        let model = pf.inference_models.iter().find(|m| m.id == model_id);
 
-        // 2. Match por class_mapping configurado
-        if let Some(model) = pf.inference_models.iter().find(|m| m.id == model_id) {
+        // 1. Mapping manual del usuario (máxima prioridad)
+        if let Some(model) = model {
             if let Some(mapping) = model.class_mapping.iter().find(|m| m.model_class_id == model_class_id) {
                 if let Some(ref pid) = mapping.project_class_id {
                     if let Ok(id) = pid.parse::<i64>() {
@@ -500,13 +499,19 @@ fn resolve_project_class(
             }
         }
 
-        // 3. Si el proyecto tiene 1 sola clase, usar esa
-        if pf.classes.len() == 1 {
+        // 2. Match por nombre exacto
+        if let Some(cls) = pf.classes.iter().find(|c| c.name.eq_ignore_ascii_case(model_class_name)) {
+            return Some(cls.id);
+        }
+
+        // 3. Single-class real (modelo y proyecto ambos single-class)
+        let model_single = model.map(|m| m.class_names.len() <= 1).unwrap_or(true);
+        if model_single && pf.classes.len() == 1 {
             return Some(pf.classes[0].id);
         }
 
-        // 4. Fallback: primera clase del proyecto
-        pf.classes.first().map(|c| c.id)
+        // 4. Sin fallback: descartar
+        None
     }).ok().flatten()
 }
 

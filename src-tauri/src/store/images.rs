@@ -136,10 +136,11 @@ impl AppState {
         })
     }
 
-    pub fn upload_images(
+    pub fn upload_images_with_progress<F: Fn(usize, usize, &str)>(
         &self,
         project_id: &str,
         file_paths: &[String],
+        on_progress: F,
     ) -> Result<Vec<String>, String> {
         let images_dir = self.project_images_dir(project_id)?;
         std::fs::create_dir_all(&images_dir)
@@ -147,14 +148,17 @@ impl AppState {
 
         let now = js_timestamp();
         let mut new_entries = Vec::new();
+        let total = file_paths.len();
 
-        for file_path in file_paths {
+        for (i, file_path) in file_paths.iter().enumerate() {
             let source = PathBuf::from(file_path);
             let file_name = source
                 .file_name()
                 .ok_or("Nombre de archivo inválido")?
                 .to_string_lossy()
                 .to_string();
+
+            on_progress(i, total, &file_name);
 
             let id = uuid::Uuid::new_v4().to_string();
             let unique_name = format!("{}_{}", id, file_name);
@@ -190,6 +194,8 @@ impl AppState {
             pf.images.extend(new_entries);
             pf.updated = now;
         })?;
+
+        on_progress(total, total, "");
 
         Ok(ids)
     }

@@ -893,5 +893,44 @@
     "date": "2026-04-11T13:55:58Z",
     "commits": [],
     "issues": []
+  },
+  {
+    "code": "pwwum",
+    "version": "2.4.4",
+    "buildNumber": 36,
+    "date": "2026-04-17T23:08:40Z",
+    "commits": [
+      {
+        "hash": "6ebeefc",
+        "message": "fix: tecla E en diálogo de clases + toggle visibilidad por anotación"
+      }
+    ],
+    "issues": []
+  },
+  {
+    "code": "pqhyo",
+    "version": "2.4.4",
+    "buildNumber": 37,
+    "date": "2026-04-17T23:37:31Z",
+    "commits": [
+      {
+        "hash": "6ebeefc",
+        "message": "fix: tecla E en diálogo de clases + toggle visibilidad por anotación"
+      }
+    ],
+    "issues": []
+  },
+  {
+    "code": "qucrd",
+    "version": "2.4.4",
+    "buildNumber": 38,
+    "date": "2026-04-17T23:54:40Z",
+    "commits": [
+      {
+        "hash": "6ebeefc",
+        "message": "fix: tecla E en diálogo de clases + toggle visibilidad por anotación"
+      }
+    ],
+    "issues": []
   }
 ]

@@ -23,7 +23,7 @@ interface ProjectSettingsDialogProps {
 
 export function ProjectSettingsDialog({ project, trigger }: ProjectSettingsDialogProps) {
   const { t } = useTranslation();
-  const { updateProject } = useProjects();
+  const { updateProject, saveClasses } = useProjects();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(project.name);
   const [classes, setClasses] = useState<ClassDefinition[]>(project.classes);
@@ -44,10 +44,8 @@ export function ProjectSettingsDialog({ project, trigger }: ProjectSettingsDialo
 
     setIsUpdating(true);
     try {
-      await updateProject(project.id!, {
-        name: name.trim(),
-        classes,
-      });
+      await updateProject(project.id!, { name: name.trim() });
+      await saveClasses(project.id!, classes);
       setOpen(false);
     } catch (error) {
       console.error('Failed to update project:', error);

@@ -63,8 +63,9 @@ pub fn update_model_config(
     input_size: Option<u32>,
     task: Option<String>,
     output_format: Option<String>,
+    class_names: Option<Vec<String>>,
 ) -> Result<(), String> {
-    state.update_model_config(&project_id, &model_id, class_mapping, input_size, task, output_format)
+    state.update_model_config(&project_id, &model_id, class_mapping, input_size, task, output_format, class_names)
 }
 
 // ─── Detección de metadatos ──────────────────────────────────────────────────

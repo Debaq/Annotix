@@ -1,4 +1,5 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { InferenceLogModal } from '../../inference/components/InferenceLogModal';
 import { useTranslation } from 'react-i18next';
 import { useUIStore } from '../../core/store/uiStore';
 import { useInferenceModels } from '../../inference/hooks/useInferenceModels';
@@ -25,11 +26,17 @@ export function GalleryFilters() {
     toast({ title: `Error: ${event.error}`, variant: 'destructive', duration: 5000 });
   }, [toast]);
 
-  const { running, progress, startBatch } = useInferenceRunner(undefined, handleBatchCompleted, handleBatchError);
+  const { running, startBatch, cancel } = useInferenceRunner(undefined, handleBatchCompleted, handleBatchError);
+  const [logOpen, setLogOpen] = useState(false);
+  const [batchTotal, setBatchTotal] = useState(0);
 
-  const progressPercent = running && progress
-    ? Math.round((progress.current / progress.total) * 100)
-    : 0;
+  const fileNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const img of images) {
+      if (img.id) m.set(img.id, img.name ?? img.id);
+    }
+    return m;
+  }, [images]);
 
   const handleInferAll = useCallback(async () => {
     if (!currentProjectId || !selectedModel || images.length === 0) return;
@@ -40,6 +47,8 @@ export function GalleryFilters() {
       iouThreshold: 0.45,
     };
     const imageIds = images.map((img) => img.id).filter((id): id is string => !!id);
+    setBatchTotal(imageIds.length);
+    setLogOpen(true);
     await startBatch(currentProjectId, selectedModel.id, imageIds, config);
   }, [currentProjectId, selectedModel, images, startBatch]);
 
@@ -66,61 +75,34 @@ export function GalleryFilters() {
           </button>
         ))}
       </div>
-      {selectedModel && !running && (
+      {selectedModel && (
         <button
-          onClick={handleInferAll}
-          disabled={images.length === 0}
+          onClick={running ? () => setLogOpen(true) : handleInferAll}
+          disabled={!running && images.length === 0}
           className="annotix-btn w-full mt-2"
           style={{
             background: '#7c3aed',
             color: 'white',
-            opacity: images.length === 0 ? 0.6 : 1,
+            opacity: !running && images.length === 0 ? 0.6 : 1,
             fontSize: '0.75rem',
           }}
         >
-          <i className="fas fa-brain mr-1"></i>
-          {t('gallery.inferAll', 'Inferir todas')}
+          <i className={`fas ${running ? 'fa-spinner fa-spin' : 'fa-brain'} mr-1`}></i>
+          {running
+            ? t('gallery.inferRunning', 'Inferencia en curso (ver log)')
+            : t('gallery.inferAll', 'Inferir todas')}
         </button>
       )}
-      {selectedModel && running && (
-        <div
-          className="w-full mt-2 relative overflow-hidden"
-          style={{
-            height: '28px',
-            borderRadius: '6px',
-            background: 'white',
-            border: '1px solid #7c3aed',
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              bottom: 0,
-              width: `${progressPercent}%`,
-              background: '#7c3aed',
-              transition: 'width 0.3s ease',
-            }}
-          />
-          <span
-            style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              fontSize: '0.7rem',
-              fontWeight: 600,
-              color: progressPercent > 50 ? 'white' : '#7c3aed',
-              zIndex: 1,
-            }}
-          >
-            <i className="fas fa-spinner fa-spin mr-1"></i>
-            {progress ? `${progress.current}/${progress.total}` : '...'}
-          </span>
-        </div>
-      )}
+      <InferenceLogModal
+        open={logOpen}
+        total={batchTotal}
+        fileNameById={fileNameById}
+        onCancel={async () => {
+          await cancel();
+          setLogOpen(false);
+        }}
+        onClose={() => setLogOpen(false)}
+      />
     </div>
   );
 }

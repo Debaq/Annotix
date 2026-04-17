@@ -460,9 +460,31 @@ fn resolve_v8_layout(
     num_classes_config: usize,
     task: &str,
 ) -> Result<(usize, usize, usize), String> {
+    // Mínimo de slots no-clase según task
+    let min_non_class: usize = match task {
+        "obb" => 5,        // 4 bbox + 1 angle
+        "segment" => 36,   // 4 bbox + 32 mask
+        "pose" => 4,       // 4 bbox (extra = K*3 además de clases)
+        _ => 4,            // detect/classify: 4 bbox
+    };
+
     if num_classes_config > 0 {
-        let extra = det_len.saturating_sub(4 + num_classes_config);
-        return Ok((num_classes_config, 4 + num_classes_config, extra));
+        if 4 + num_classes_config <= det_len {
+            let extra = det_len.saturating_sub(4 + num_classes_config);
+            return Ok((num_classes_config, 4 + num_classes_config, extra));
+        }
+        log::warn!(
+            "[ORT/YOLOv8] num_classes_config={} no cabe en features={} (task={}). \
+             Ignorando config, infiriendo desde shape.",
+            num_classes_config, det_len, task
+        );
+    }
+
+    if det_len <= min_non_class {
+        return Err(format!(
+            "YOLOv8 task={}: features={} insuficiente (mínimo {}+1)",
+            task, det_len, min_non_class
+        ));
     }
 
     // Inferir num_classes desde shape y task
@@ -1074,11 +1096,11 @@ fn find_best_class(
     let mut best_score = f64::NEG_INFINITY;
     for c in 0..num_classes {
         let col = class_offset + c;
-        let v = if transposed {
-            data[col * stride + det_idx]
-        } else {
-            data[det_idx * stride + col]
-        } as f64;
+        let idx = if transposed { col * stride + det_idx } else { det_idx * stride + col };
+        if idx >= data.len() {
+            break;
+        }
+        let v = data[idx] as f64;
         if v > best_score {
             best_score = v;
             best_cls = c;
@@ -1095,11 +1117,11 @@ fn sample_needs_sigmoid(
     for i in 0..n {
         for c in 0..count {
             let col = offset + c;
-            let v = if transposed {
-                data[col * stride + i]
-            } else {
-                data[i * stride + col]
-            };
+            let idx = if transposed { col * stride + i } else { i * stride + col };
+            if idx >= data.len() {
+                return false;
+            }
+            let v = data[idx];
             if v > 1.0 || v < 0.0 {
                 return true;
             }

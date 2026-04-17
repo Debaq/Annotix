@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 
 export function AnnotationList() {
   const { t } = useTranslation();
-  const { annotations, deleteAnnotation, clearAnnotations, saveAnnotations, hiddenAnnotationIds, toggleAnnotationVisibility } = useAnnotations();
+  const { annotations, deleteAnnotation, clearAnnotations, saveAnnotations, hiddenAnnotationIds, toggleAnnotationVisibility, selectedAnnotationIds, updateAnnotation } = useAnnotations();
   const { project } = useCurrentProject();
   const { activeClassId, setActiveClassId } = useUIStore();
 
@@ -36,7 +36,17 @@ export function AnnotationList() {
           {project.classes.map((cls, index) => (
             <button
               key={cls.id}
-              onClick={() => setActiveClassId(cls.id)}
+              onClick={() => {
+                if (selectedAnnotationIds.size > 0) {
+                  for (const id of selectedAnnotationIds) {
+                    const ann = annotations.find((a) => a.id === id);
+                    if (ann && ann.classId !== cls.id) {
+                      updateAnnotation(id, { classId: cls.id });
+                    }
+                  }
+                }
+                setActiveClassId(cls.id);
+              }}
               className={cn(
                 "flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs transition-colors hover:bg-muted",
                 activeClassId === cls.id ? "bg-accent text-accent-foreground shadow-sm ring-1 ring-border" : "text-muted-foreground"

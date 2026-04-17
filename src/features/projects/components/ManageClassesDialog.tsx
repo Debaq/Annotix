@@ -21,7 +21,7 @@ interface ManageClassesDialogProps {
 
 export function ManageClassesDialog({ project, trigger }: ManageClassesDialogProps) {
   const { t } = useTranslation();
-  const { updateProject } = useProjects();
+  const { saveClasses } = useProjects();
   const [open, setOpen] = useState(false);
   const [classes, setClasses] = useState<ClassDefinition[]>(project.classes);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -35,9 +35,7 @@ export function ManageClassesDialog({ project, trigger }: ManageClassesDialogPro
   const handleUpdate = async () => {
     setIsUpdating(true);
     try {
-      await updateProject(project.id!, {
-        classes,
-      });
+      await saveClasses(project.id!, classes);
       setOpen(false);
     } catch (error) {
       console.error('Failed to update classes:', error);

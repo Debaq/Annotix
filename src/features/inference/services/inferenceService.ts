@@ -50,6 +50,7 @@ export const inferenceService = {
     inputSize: number | null,
     task: string | null,
     outputFormat?: string | null,
+    classNames?: string[] | null,
   ): Promise<void> {
     return invoke('update_model_config', {
       projectId,
@@ -58,6 +59,7 @@ export const inferenceService = {
       inputSize,
       task,
       outputFormat: outputFormat ?? null,
+      classNames: classNames ?? null,
     });
   },
 

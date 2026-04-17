@@ -1,6 +1,7 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { inferenceService } from '../services/inferenceService';
+import { useUIStore } from '../../core/store/uiStore';
 import type { InferenceModelEntry, ClassMapping, ModelMetadata, ModelConfigResult } from '../types';
 
 interface UseInferenceModelsResult {
@@ -19,27 +20,33 @@ interface UseInferenceModelsResult {
 
 export function useInferenceModels(projectId: string | null): UseInferenceModelsResult {
   const [models, setModels] = useState<InferenceModelEntry[]>([]);
-  const [selectedModel, setSelectedModel] = useState<InferenceModelEntry | null>(null);
+  const selectedModelId = useUIStore((s) => s.selectedInferenceModelId);
+  const setSelectedModelId = useUIStore((s) => s.setSelectedInferenceModelId);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastConfigResult, setLastConfigResult] = useState<ModelConfigResult | null>(null);
+
+  const selectedModel = useMemo(
+    () => models.find((m) => m.id === selectedModelId) ?? null,
+    [models, selectedModelId],
+  );
 
   const refreshModels = useCallback(async () => {
     if (!projectId) return;
     try {
       const list = await inferenceService.listModels(projectId);
       setModels(list);
-      if (selectedModel) {
-        const still = list.find((m) => m.id === selectedModel.id);
-        setSelectedModel(still || list[0] || null);
+      const currentId = useUIStore.getState().selectedInferenceModelId;
+      if (currentId) {
+        const still = list.find((m) => m.id === currentId);
+        if (!still) setSelectedModelId(list[0]?.id ?? null);
       } else if (list.length > 0) {
-        // Auto-seleccionar el primer modelo si no hay selección
-        setSelectedModel(list[0]);
+        setSelectedModelId(list[0].id);
       }
     } catch (err) {
       setError(String(err));
     }
-  }, [projectId, selectedModel]);
+  }, [projectId, setSelectedModelId]);
 
   useEffect(() => {
     refreshModels();
@@ -135,7 +142,7 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
         rawMetadata,
       );
 
-      setSelectedModel(entry);
+      setSelectedModelId(entry.id);
       await refreshModels();
     } catch (err) {
       setError(String(err));
@@ -148,19 +155,20 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
     if (!projectId) return;
     try {
       await inferenceService.deleteModel(projectId, modelId);
-      if (selectedModel?.id === modelId) {
-        setSelectedModel(null);
+      if (useUIStore.getState().selectedInferenceModelId === modelId) {
+        setSelectedModelId(null);
       }
       await refreshModels();
     } catch (err) {
       setError(String(err));
     }
-  }, [projectId, selectedModel, refreshModels]);
+  }, [projectId, setSelectedModelId, refreshModels]);
 
   const updateMapping = useCallback(async (modelId: string, mapping: ClassMapping[]) => {
     if (!projectId) return;
     try {
-      await inferenceService.updateModelConfig(projectId, modelId, mapping, null, null);
+      const classNames = mapping.map((m) => m.modelClassName);
+      await inferenceService.updateModelConfig(projectId, modelId, mapping, null, null, null, classNames);
       await refreshModels();
     } catch (err) {
       setError(String(err));
@@ -173,7 +181,7 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
     loading,
     error,
     lastConfigResult,
-    selectModel: setSelectedModel,
+    selectModel: (model) => setSelectedModelId(model?.id ?? null),
     uploadModel,
     deleteModel,
     updateMapping,

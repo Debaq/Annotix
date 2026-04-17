@@ -1,4 +1,4 @@
-import { Project, NewProject } from '@/lib/db';
+import { Project, NewProject, ClassDefinition } from '@/lib/db';
 import { projectService } from '../services/projectService';
 import { useTauriQuery } from '@/hooks/useTauriQuery';
 
@@ -37,11 +37,21 @@ export function useProjects() {
     }
   };
 
+  const saveClasses = async (id: string, classes: ClassDefinition[]) => {
+    try {
+      await projectService.saveClasses(id, classes);
+    } catch (error) {
+      console.error('Failed to save classes:', error);
+      throw error;
+    }
+  };
+
   return {
     projects: projects || [],
     isLoading,
     createProject,
     updateProject,
     deleteProject,
+    saveClasses,
   };
 }

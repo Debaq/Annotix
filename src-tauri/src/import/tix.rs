@@ -40,10 +40,28 @@ pub fn import_data(
         let name = entry.get("name").and_then(|n| n.as_str()).unwrap_or("");
         if name.is_empty() { continue; }
 
-        let image_path = format!("images/{}", name);
-        let image_data = match read_zip_bytes(archive, &image_path) {
+        // El archivo en disco puede tener prefijo uuid (campo `file`). Fallback a `name` para tix antiguos.
+        let file_on_disk = entry.get("file").and_then(|f| f.as_str()).unwrap_or(name);
+        let image_data = match read_zip_bytes(archive, &format!("images/{}", file_on_disk)) {
             Ok(d) => d,
-            Err(_) => continue,
+            Err(_) => match read_zip_bytes(archive, &format!("images/{}", name)) {
+                Ok(d) => d,
+                Err(_) => {
+                    // Último recurso: buscar en zip cualquier archivo images/* que termine con `_{name}` o `/{name}`
+                    let suffix_under = format!("_{}", name);
+                    let suffix_slash = format!("/{}", name);
+                    let found = archive.file_names()
+                        .find(|n| n.starts_with("images/") && (n.ends_with(&suffix_under) || n.ends_with(&suffix_slash)))
+                        .map(|s| s.to_string());
+                    match found {
+                        Some(zip_path) => match read_zip_bytes(archive, &zip_path) {
+                            Ok(d) => d,
+                            Err(_) => continue,
+                        },
+                        None => continue,
+                    }
+                }
+            },
         };
 
         let entry_width = entry.get("width").and_then(|w| w.as_u64()).unwrap_or(0) as u32;

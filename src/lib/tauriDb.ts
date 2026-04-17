@@ -92,6 +92,13 @@ export async function deleteProject(id: string): Promise<void> {
   return invoke('delete_project', { id });
 }
 
+export async function saveClasses(
+  projectId: string,
+  classes: ClassDefinition[],
+): Promise<void> {
+  return invoke('save_classes', { projectId, classes });
+}
+
 export async function setProjectFolder(projectId: string, folder: string | null): Promise<void> {
   return invoke('set_project_folder', { projectId, folder });
 }

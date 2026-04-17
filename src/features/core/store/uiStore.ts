@@ -58,6 +58,10 @@ interface UIState {
   // Erase mode (for mask tool) (deprecated - now in useDrawingTool)
   eraseMode: boolean;
   setEraseMode: (mode: boolean) => void;
+
+  // Inference: modelo seleccionado compartido entre vistas
+  selectedInferenceModelId: string | null;
+  setSelectedInferenceModelId: (id: string | null) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -130,6 +134,10 @@ export const useUIStore = create<UIState>()(
       // Erase mode (deprecated)
       eraseMode: false,
       setEraseMode: (mode) => set({ eraseMode: mode }),
+
+      // Inference selección global
+      selectedInferenceModelId: null,
+      setSelectedInferenceModelId: (id) => set({ selectedInferenceModelId: id }),
     }),
     {
       name: 'annotix-ui-storage',

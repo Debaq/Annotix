@@ -433,17 +433,23 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   useEffect(() => {
     if (!containerRef.current) return;
 
+    let firstCallback = true;
     const resizeObserver = new ResizeObserver(() => {
-      if (konvaImage && containerRef.current) {
+      if (firstCallback) {
+        firstCallback = false;
+        return;
+      }
+      const base = originalImageRef.current;
+      if (base && containerRef.current) {
         const containerWidth = containerRef.current.clientWidth;
         const containerHeight = containerRef.current.clientHeight || 600;
 
-        const scaleX = containerWidth / konvaImage.width;
-        const scaleY = containerHeight / konvaImage.height;
+        const scaleX = containerWidth / base.width;
+        const scaleY = containerHeight / base.height;
         const newScale = Math.min(scaleX, scaleY) * 0.9;
 
-        const scaledWidth = konvaImage.width * newScale;
-        const scaledHeight = konvaImage.height * newScale;
+        const scaledWidth = base.width * newScale;
+        const scaledHeight = base.height * newScale;
         const offsetX = (containerWidth - scaledWidth) / 2;
         const offsetY = (containerHeight - scaledHeight) / 2;
 
@@ -455,7 +461,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
 
     resizeObserver.observe(containerRef.current);
     return () => resizeObserver.disconnect();
-  }, [konvaImage]);
+  }, [image?.id]);
 
   // Update transformer when selection changes
   useEffect(() => {

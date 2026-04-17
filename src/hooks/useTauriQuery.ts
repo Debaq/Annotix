@@ -18,11 +18,13 @@ export function useTauriQuery<T>(
   const [isLoading, setIsLoading] = useState(true);
   const mountedRef = useRef(true);
 
+  const dataRef = useRef<T | undefined>(undefined);
   const load = useCallback(async () => {
-    setIsLoading(true);
+    if (dataRef.current === undefined) setIsLoading(true);
     try {
       const result = await queryFn();
       if (mountedRef.current) {
+        dataRef.current = result;
         setData(result);
       }
     } catch (error) {

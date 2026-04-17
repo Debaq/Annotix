@@ -185,6 +185,99 @@ impl AppState {
         })
     }
 
+    /// Guarda las clases con renumeración de IDs por posición y remapeo de referencias.
+    /// El array de entrada define el nuevo orden; las IDs se reasignan 0..N-1.
+    /// Las anotaciones, tracks, eventos, etc., que referencian una clase existente se remapean.
+    /// Las clases eliminadas dejan anotaciones huérfanas que son removidas.
+    pub fn save_classes(&self, project_id: &str, classes: Vec<ClassDef>) -> Result<(), String> {
+        self.with_project_mut(project_id, |pf| {
+            // Mapa old_id → new_id (solo para clases que existían antes)
+            let existing_ids: std::collections::HashSet<i64> =
+                pf.classes.iter().map(|c| c.id).collect();
+            let mut id_map: std::collections::HashMap<i64, i64> = std::collections::HashMap::new();
+            for (new_idx, cls) in classes.iter().enumerate() {
+                if existing_ids.contains(&cls.id) {
+                    id_map.insert(cls.id, new_idx as i64);
+                }
+            }
+
+            // Reescribir clases con IDs = posición
+            pf.classes = classes
+                .into_iter()
+                .enumerate()
+                .map(|(i, c)| ClassDef {
+                    id: i as i64,
+                    name: c.name,
+                    color: c.color,
+                })
+                .collect();
+
+            // Remapear anotaciones de imágenes (descartar huérfanas)
+            for img in pf.images.iter_mut() {
+                img.annotations.retain_mut(|ann| match id_map.get(&ann.class_id) {
+                    Some(&new_id) => {
+                        ann.class_id = new_id;
+                        true
+                    }
+                    None => false,
+                });
+                // Predicciones no referencian project class_id directamente; se omiten.
+            }
+
+            // Remapear tracks de video
+            for vid in pf.videos.iter_mut() {
+                vid.tracks.retain_mut(|tr| match id_map.get(&tr.class_id) {
+                    Some(&new_id) => {
+                        tr.class_id = new_id;
+                        true
+                    }
+                    None => false,
+                });
+            }
+
+            // Remapear audio
+            for a in pf.audio.iter_mut() {
+                if let Some(cid) = a.class_id {
+                    a.class_id = id_map.get(&cid).copied();
+                }
+                a.events.retain_mut(|ev| match id_map.get(&ev.class_id) {
+                    Some(&new_id) => {
+                        ev.class_id = new_id;
+                        true
+                    }
+                    None => false,
+                });
+            }
+
+            // Remapear anotaciones de series temporales
+            for ts in pf.timeseries.iter_mut() {
+                ts.annotations.retain_mut(|ann| match ann.class_id {
+                    Some(cid) => match id_map.get(&cid) {
+                        Some(&new_id) => {
+                            ann.class_id = Some(new_id);
+                            true
+                        }
+                        None => false,
+                    },
+                    None => true,
+                });
+            }
+
+            // Remapear mapeos de modelos de inferencia (projectClassId se almacena como string)
+            for model in pf.inference_models.iter_mut() {
+                for m in model.class_mapping.iter_mut() {
+                    if let Some(s) = m.project_class_id.as_ref() {
+                        if let Ok(old) = s.parse::<i64>() {
+                            m.project_class_id = id_map.get(&old).map(|v| v.to_string());
+                        }
+                    }
+                }
+            }
+
+            pf.updated = js_timestamp();
+        })
+    }
+
     pub fn update_project(
         &self,
         project_id: &str,

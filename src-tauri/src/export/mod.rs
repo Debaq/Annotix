@@ -194,6 +194,14 @@ pub fn export_dataset(
     let file = std::fs::File::create(output_path)
         .map_err(|e| format!("Error creando archivo de salida: {}", e))?;
 
+    // ── Formato Annotix (.tix): archivo completo del proyecto ──────────────
+    if format == "tix" {
+        // Asegurar que project.json en disco esté actualizado
+        let _ = state.flush_project(project_id);
+        let project_dir = state.project_dir(project_id)?;
+        return tix::export(&pf, &project_dir, file, emit_progress);
+    }
+
     // ── Audio formats ──────────────────────────────────────────────────────
     if ["huggingface-asr", "ljspeech", "csv-audio-classification", "csv-sound-events"].contains(&format) {
         let audio_dir = state.project_dir(project_id)?.join("audio");
@@ -269,7 +277,6 @@ pub fn export_dataset(
         "csv-landmarks" => csv_export::export(&pf, &images, &images_dir, file, "landmarks", emit_progress),
         "folders-by-class" => folders_by_class::export(&pf, &images, &images_dir, file, emit_progress),
         "unet-masks" => unet_masks::export(&pf, &images, &images_dir, file, emit_progress),
-        "tix" => tix::export(&pf, &images, &images_dir, file, emit_progress),
         _ => Err(format!("Formato no soportado: {}", format)),
     }
 }

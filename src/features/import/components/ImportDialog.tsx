@@ -18,6 +18,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/hooks/use-toast';
 import { useUIStore } from '@/features/core/store/uiStore';
 import { pickZipFile } from '@/lib/nativeDialogs';
+import { useProjects } from '@/features/projects/hooks/useProjects';
 
 interface DetectionResult {
   format: string;
@@ -44,6 +45,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { setCurrentProjectId } = useUIStore();
+  const { projects } = useProjects();
 
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<'select' | 'analyze' | 'configure' | 'importing' | 'success'>('select');
@@ -53,6 +55,22 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [importedProjectId, setImportedProjectId] = useState<string | null>(null);
+
+  const existingNames = React.useMemo(
+    () => new Set((projects ?? []).map((p: any) => (p.name ?? '').toLowerCase())),
+    [projects]
+  );
+
+  const suggestUniqueName = (base: string): string => {
+    if (!existingNames.has(base.toLowerCase())) return base;
+    for (let i = 2; i < 1000; i++) {
+      const candidate = `${base}_${i}`;
+      if (!existingNames.has(candidate.toLowerCase())) return candidate;
+    }
+    return `${base}_${Date.now()}`;
+  };
+
+  const nameExists = projectName.trim() !== '' && existingNames.has(projectName.trim().toLowerCase());
 
   const getProjectTypeLabel = (type: string): string => {
     const typeMap: Record<string, string> = {
@@ -90,7 +108,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
       setProgress(100);
 
       const baseName = fileName.replace(/\.zip$|\.tix$/i, '');
-      setProjectName(baseName);
+      setProjectName(suggestUniqueName(baseName));
 
       setStep('configure');
     } catch (err) {
@@ -109,6 +127,11 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
 
     if (!/^[a-zA-Z0-9\-_.]+$/.test(projectName)) {
       setError(t('import.error.invalidProjectName'));
+      return;
+    }
+
+    if (existingNames.has(projectName.trim().toLowerCase())) {
+      setError(t('import.error.duplicateName', 'Ya existe un proyecto con ese nombre. Cambialo antes de importar.'));
       return;
     }
 
@@ -248,6 +271,21 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
                   placeholder="My Dataset"
                   className="mt-1"
                 />
+                {nameExists && (
+                  <div className="mt-2 flex items-start gap-2 p-2 rounded border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 text-xs">
+                    <i className="fas fa-exclamation-triangle mt-0.5"></i>
+                    <div className="flex-1">
+                      <p>{t('import.duplicateNameWarning', 'Ya existe un proyecto con ese nombre.')}</p>
+                      <button
+                        type="button"
+                        className="mt-1 underline font-medium"
+                        onClick={() => setProjectName(suggestUniqueName(projectName))}
+                      >
+                        {t('import.useSuggestedName', 'Usar')} "{suggestUniqueName(projectName)}"
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -293,7 +331,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
                 <Button
                   onClick={handleImport}
                   className="flex-1"
-                  disabled={!projectName.trim()}
+                  disabled={!projectName.trim() || nameExists}
                 >
                   {t('import.import')}
                 </Button>

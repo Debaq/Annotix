@@ -31,4 +31,8 @@ export const projectService = {
   async delete(id: string): Promise<void> {
     await tauriDb.deleteProject(id);
   },
+
+  async saveClasses(id: string, classes: ClassDefinition[]): Promise<void> {
+    await tauriDb.saveClasses(id, classes);
+  },
 };

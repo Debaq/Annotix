@@ -64,25 +64,14 @@ impl AppState {
 
         let now = js_timestamp();
 
-        // Generar mapeo automático: sin mapear inicialmente
-        let class_mapping: Vec<ClassMapping> = class_names
-            .iter()
-            .enumerate()
-            .map(|(i, name)| ClassMapping {
-                model_class_id: i,
-                model_class_name: name.clone(),
-                project_class_id: None,
-            })
-            .collect();
-
-        let entry = InferenceModelEntry {
+        let entry_template = InferenceModelEntry {
             id: id.clone(),
             name: name.to_string(),
             file: dest_name,
             format: format.to_string(),
             task: task.to_string(),
-            class_names,
-            class_mapping,
+            class_names: class_names.clone(),
+            class_mapping: Vec::new(),
             input_size,
             output_format,
             model_hash,
@@ -90,10 +79,39 @@ impl AppState {
             metadata,
         };
 
-        let entry_clone = entry.clone();
-        self.with_project_mut(project_id, |pf| {
-            pf.inference_models.push(entry_clone);
+        let entry = self.with_project_mut_ret(project_id, |pf| {
+            // Auto-mapeo por nombre (case-insensitive). Si el modelo es single-class
+            // y el proyecto también, mapear directo a esa única clase.
+            let model_single = class_names.len() <= 1;
+            let project_single = pf.classes.len() == 1;
+            let class_mapping: Vec<ClassMapping> = class_names
+                .iter()
+                .enumerate()
+                .map(|(i, mname)| {
+                    let pid = if let Some(cls) = pf
+                        .classes
+                        .iter()
+                        .find(|c| c.name.eq_ignore_ascii_case(mname))
+                    {
+                        Some(cls.id.to_string())
+                    } else if model_single && project_single {
+                        Some(pf.classes[0].id.to_string())
+                    } else {
+                        None
+                    };
+                    ClassMapping {
+                        model_class_id: i,
+                        model_class_name: mname.clone(),
+                        project_class_id: pid,
+                    }
+                })
+                .collect();
+
+            let mut entry = entry_template.clone();
+            entry.class_mapping = class_mapping;
+            pf.inference_models.push(entry.clone());
             pf.updated = now;
+            entry
         })?;
 
         Ok(entry)
@@ -145,6 +163,7 @@ impl AppState {
         input_size: Option<u32>,
         task: Option<String>,
         output_format: Option<String>,
+        class_names: Option<Vec<String>>,
     ) -> Result<(), String> {
         self.with_project_mut(project_id, |pf| {
             if let Some(model) = pf.inference_models.iter_mut().find(|m| m.id == model_id) {
@@ -157,6 +176,9 @@ impl AppState {
                 }
                 // output_format: Some("yolov5") sets it, Some("") or None clears it
                 model.output_format = output_format.filter(|s| !s.is_empty());
+                if let Some(names) = class_names {
+                    model.class_names = names;
+                }
             }
             pf.updated = js_timestamp();
         })
