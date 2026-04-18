@@ -11,6 +11,60 @@ mod utils;
 
 use tauri::Manager;
 
+#[cfg(target_os = "linux")]
+fn install_desktop_entry() {
+    use std::fs;
+
+    let Some(base) = directories::BaseDirs::new() else { return; };
+    let data_home = base.data_local_dir();
+    let apps_dir = data_home.join("applications");
+    let icons_dir = data_home.join("icons/hicolor/512x512/apps");
+    let desktop_path = apps_dir.join("annotix.desktop");
+    let icon_path = icons_dir.join("annotix.png");
+
+    let icon_bytes = include_bytes!("../icons/icon.png");
+    if fs::create_dir_all(&icons_dir).is_ok() {
+        let needs_write = fs::metadata(&icon_path)
+            .map(|m| m.len() as usize != icon_bytes.len())
+            .unwrap_or(true);
+        if needs_write {
+            let _ = fs::write(&icon_path, icon_bytes);
+        }
+    }
+
+    let exec = std::env::current_exe()
+        .ok()
+        .and_then(|p| p.to_str().map(String::from))
+        .unwrap_or_else(|| "annotix".to_string());
+
+    let content = format!(
+        "[Desktop Entry]\n\
+         Name=Annotix\n\
+         Comment=ML Dataset Annotation Tool\n\
+         Exec=\"{exec}\" %U\n\
+         Icon=annotix\n\
+         Type=Application\n\
+         Categories=Development;Graphics;Science;\n\
+         StartupNotify=true\n\
+         StartupWMClass=annotix\n"
+    );
+
+    if fs::create_dir_all(&apps_dir).is_ok() {
+        let needs_write = fs::read_to_string(&desktop_path)
+            .map(|s| s != content)
+            .unwrap_or(true);
+        if needs_write {
+            let _ = fs::write(&desktop_path, &content);
+            let _ = std::process::Command::new("update-desktop-database")
+                .arg(&apps_dir)
+                .status();
+            let _ = std::process::Command::new("gtk-update-icon-cache")
+                .arg("-f").arg("-t").arg(data_home.join("icons/hicolor"))
+                .status();
+        }
+    }
+}
+
 use store::AppState;
 use training::runner::TrainingProcessManager;
 use training::cloud::CloudTrainingManager;
@@ -21,6 +75,9 @@ use browser_automation::BrowserAutomationManager;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     ffmpeg_the_third::init().expect("Error inicializando ffmpeg");
+
+    #[cfg(target_os = "linux")]
+    install_desktop_entry();
 
     let app_state = AppState::new().expect("Error inicializando AppState");
 
@@ -45,13 +102,7 @@ pub fn run() {
                 )?;
             }
 
-            // Icono de ventana (taskbar/dock en Linux)
             if let Some(window) = app.get_webview_window("main") {
-                let icon_bytes = include_bytes!("../icons/icon.png");
-                if let Ok(icon) = tauri::image::Image::from_bytes(icon_bytes) {
-                    let _ = window.set_icon(icon);
-                }
-
                 // Permitir acceso al micrófono en WebKitGTK (Linux)
                 #[cfg(target_os = "linux")]
                 {

@@ -136,6 +136,7 @@ dependencies = [
  "tauri-plugin-fs",
  "tauri-plugin-log",
  "tauri-plugin-opener",
+ "tauri-winres",
  "tempfile",
  "tokio",
  "tokio-stream",
