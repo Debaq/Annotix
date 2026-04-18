@@ -29,13 +29,13 @@
       "name": "Deseleziona",
       "key": "Esc"
     },
-    "prevImage": {
-      "name": "Immagine precedente",
-      "key": "←"
+    "prevSample": {
+      "name": "Campione precedente",
+      "key": "PageUp"
     },
-    "nextImage": {
-      "name": "Immagine successiva",
-      "key": "→"
+    "nextSample": {
+      "name": "Campione successivo",
+      "key": "PageDown"
     },
     "zoomIn": {
       "name": "Ingrandisci",
@@ -147,12 +147,6 @@
     },
     "videoNewTrack": {
       "name": "Nuova Traccia"
-    },
-    "videoPrevFrame": {
-      "name": "Fotogramma Precedente"
-    },
-    "videoNextFrame": {
-      "name": "Fotogramma Successivo"
     },
     "tsToolSelect": {
       "name": "Selezione (Serie Temporali)"

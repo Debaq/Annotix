@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware';
 
 type ToolType = 'pan' | 'bbox' | 'mask' | 'polygon' | 'keypoints' | 'landmarks' | 'obb';
 type GalleryFilterType = 'all' | 'annotated' | 'unannotated';
+export type GalleryMode = 'normal' | 'compact' | 'hidden';
 
 interface UIState {
   // Sidebar
@@ -45,11 +46,18 @@ interface UIState {
   galleryFilter: GalleryFilterType;
   setGalleryFilter: (filter: GalleryFilterType) => void;
 
+  // Gallery mode (layout)
+  galleryMode: GalleryMode;
+  setGalleryMode: (mode: GalleryMode) => void;
+  cycleGalleryMode: () => void;
+
   // UI flags
   showLabels: boolean;
   showGrid: boolean;
+  annotationsVisible: boolean;
   toggleLabels: () => void;
   toggleGrid: () => void;
+  toggleAnnotationsVisible: () => void;
 
   // Brush size (for mask tool) (deprecated - now in useDrawingTool)
   brushSize: number;
@@ -121,11 +129,20 @@ export const useUIStore = create<UIState>()(
       galleryFilter: 'all',
       setGalleryFilter: (filter) => set({ galleryFilter: filter }),
 
+      // Gallery mode
+      galleryMode: 'normal',
+      setGalleryMode: (mode) => set({ galleryMode: mode }),
+      cycleGalleryMode: () => set((state) => ({
+        galleryMode: state.galleryMode === 'normal' ? 'compact' : state.galleryMode === 'compact' ? 'hidden' : 'normal',
+      })),
+
       // UI flags
       showLabels: true,
       showGrid: false,
+      annotationsVisible: true,
       toggleLabels: () => set((state) => ({ showLabels: !state.showLabels })),
       toggleGrid: () => set((state) => ({ showGrid: !state.showGrid })),
+      toggleAnnotationsVisible: () => set((state) => ({ annotationsVisible: !state.annotationsVisible })),
 
       // Brush size (deprecated)
       brushSize: 20,
@@ -147,6 +164,8 @@ export const useUIStore = create<UIState>()(
         if ((merged.activeTool as string) === 'select') {
           merged.activeTool = 'pan';
         }
+        // galleryMode no se persiste: siempre iniciar en 'normal'
+        merged.galleryMode = 'normal';
         return merged;
       },
     }

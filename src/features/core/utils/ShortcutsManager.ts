@@ -85,17 +85,17 @@ class ShortcutsManager {
 
       // Navegación
       {
-        id: 'prev-image',
-        nameKey: 'shortcuts.items.prevImage.name',
-        key: '←',
+        id: 'prev-sample',
+        nameKey: 'shortcuts.items.prevSample.name',
+        key: 'PageUp',
         category: 'navigation',
         enabled: true,
         editable: true,
       },
       {
-        id: 'next-image',
-        nameKey: 'shortcuts.items.nextImage.name',
-        key: '→',
+        id: 'next-sample',
+        nameKey: 'shortcuts.items.nextSample.name',
+        key: 'PageDown',
         category: 'navigation',
         enabled: true,
         editable: true,
@@ -270,25 +270,6 @@ class ShortcutsManager {
         enabled: true,
         editable: true,
       },
-      {
-        id: 'video-prev-frame',
-        nameKey: 'shortcuts.items.videoPrevFrame.name',
-        key: '←',
-        category: 'navigation',
-        context: 'video',
-        enabled: true,
-        editable: true,
-      },
-      {
-        id: 'video-next-frame',
-        nameKey: 'shortcuts.items.videoNextFrame.name',
-        key: '→',
-        category: 'navigation',
-        context: 'video',
-        enabled: true,
-        editable: true,
-      },
-
       // Timeseries
       {
         id: 'ts-tool-select',

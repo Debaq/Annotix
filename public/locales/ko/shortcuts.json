@@ -29,13 +29,13 @@
       "name": "선택 해제",
       "key": "Esc"
     },
-    "prevImage": {
-      "name": "이전 이미지",
-      "key": "←"
+    "prevSample": {
+      "name": "이전 샘플",
+      "key": "PageUp"
     },
-    "nextImage": {
-      "name": "다음 이미지",
-      "key": "→"
+    "nextSample": {
+      "name": "다음 샘플",
+      "key": "PageDown"
     },
     "zoomIn": {
       "name": "확대",
@@ -147,12 +147,6 @@
     },
     "videoNewTrack": {
       "name": "새 트랙"
-    },
-    "videoPrevFrame": {
-      "name": "이전 프레임"
-    },
-    "videoNextFrame": {
-      "name": "다음 프레임"
     },
     "tsToolSelect": {
       "name": "선택 (시계열)"

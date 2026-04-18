@@ -4,6 +4,8 @@ import { invoke } from '@tauri-apps/api/core';
 import { AppLayout } from './features/core/components/AppLayout';
 import { ProjectList } from './features/projects/components/ProjectList';
 import { ImageGallery } from './features/gallery/components/ImageGallery';
+import { CompactGallery } from './features/gallery/components/CompactGallery';
+import { CompactClassesBar } from './features/gallery/components/CompactClassesBar';
 import { AnnotationCanvas } from './features/canvas/components/AnnotationCanvas';
 import { ClassificationPanel } from './features/classification/components/ClassificationPanel';
 import { TimeSeriesGallery } from './features/timeseries/components/TimeSeriesGallery';
@@ -296,7 +298,7 @@ const ProjectView = () => {
 
 const ImageView = () => {
   const { projectId, imageId } = useParams();
-  const { setCurrentProjectId, setCurrentImageId, activeClassId, setActiveClassId } = useUIStore();
+  const { setCurrentProjectId, setCurrentImageId, activeClassId, setActiveClassId, galleryMode, setGalleryMode } = useUIStore();
   const { project } = useCurrentProject();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -320,18 +322,47 @@ const ImageView = () => {
     );
   }
 
+  const layoutCols =
+    galleryMode === 'normal'
+      ? 'var(--sidebar-width) minmax(0, 1fr) var(--right-panel-width)'
+      : 'minmax(0, 1fr)';
+
   // LAYOUT LEGACY para Canvas: 3 columnas (Galería | Canvas | Clases)
   return (
-    <div className="annotix-layout">
-      {/* LEFT PANEL: Image Gallery */}
-      <div className="annotix-panel">
-        <ImageGallery />
+    <div className="annotix-layout" style={{ gridTemplateColumns: layoutCols, gridTemplateRows: '100%' }}>
+      {/* LEFT PANEL: Image Gallery (solo en modo normal) */}
+      {galleryMode === 'normal' && (
+        <div className="annotix-panel">
+          <ImageGallery />
+        </div>
+      )}
+
+      {/* CENTER: Canvas (con CompactGallery arriba si aplica) */}
+      <div className="flex flex-col h-full min-h-0 relative">
+        {galleryMode === 'compact' && <CompactGallery />}
+        {galleryMode !== 'normal' && (
+          <div className="flex items-stretch">
+            {galleryMode === 'hidden' && (
+              <button
+                className="annotix-gallery-reveal-inline"
+                onClick={() => setGalleryMode('compact')}
+                title={t('gallery.show', 'Mostrar galería (G)')}
+              >
+                <i className="fas fa-images"></i>
+              </button>
+            )}
+            <div className="flex-1 min-w-0">
+              <CompactClassesBar />
+            </div>
+          </div>
+        )}
+        <div className="flex-1 min-h-0 relative">
+          <AnnotationCanvas />
+        </div>
       </div>
 
-      {/* CENTER: Canvas */}
-      <AnnotationCanvas />
-
-      {/* RIGHT PANEL: Classes */}
+      {/* RIGHT PANEL: Classes (solo en modo normal) */}
+      {galleryMode === 'normal' && (
       <div className="annotix-panel border-l">
         <div className="annotix-panel-section">
           <div className="flex items-center justify-between mb-3">
@@ -398,6 +429,7 @@ const ImageView = () => {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 };

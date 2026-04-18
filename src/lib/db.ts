@@ -25,6 +25,7 @@ export interface ClassDefinition {
   id: number;
   name: string;
   color: string; // Hex color
+  description?: string;
 }
 
 export type ProjectType =

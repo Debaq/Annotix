@@ -69,6 +69,8 @@ pub struct ClassDef {
     pub id: i64,
     pub name: String,
     pub color: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
 }
 
 // ─── Imágenes ───────────────────────────────────────────────────────────────

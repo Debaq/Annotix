@@ -4,6 +4,14 @@ import { ClassDefinition } from '@/lib/db';
 import { ClassColorPicker } from './ClassColorPicker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface ClassManagerProps {
   classes: ClassDefinition[];
@@ -18,6 +26,21 @@ const PRESET_COLORS = [
 export function ClassManager({ classes, onChange }: ClassManagerProps) {
   const { t } = useTranslation();
   const [newClassName, setNewClassName] = useState('');
+  const [descEditingId, setDescEditingId] = useState<number | null>(null);
+  const [descDraft, setDescDraft] = useState('');
+
+  const descEditing = classes.find((c) => c.id === descEditingId) ?? null;
+
+  const openDescription = (cls: ClassDefinition) => {
+    setDescEditingId(cls.id);
+    setDescDraft(cls.description ?? '');
+  };
+
+  const saveDescription = () => {
+    if (descEditingId === null) return;
+    handleUpdateClass(descEditingId, { description: descDraft.trim() || undefined });
+    setDescEditingId(null);
+  };
 
   const handleAddClass = () => {
     if (!newClassName.trim()) return;
@@ -76,6 +99,14 @@ export function ClassManager({ classes, onChange }: ClassManagerProps) {
             <Button
               variant="ghost"
               size="icon"
+              onClick={() => openDescription(cls)}
+              title={t('classes.editDescription', 'Descripción')}
+            >
+              <i className={`fas fa-align-left ${cls.description ? 'text-primary' : ''}`}></i>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => handleMove(index, -1)}
               disabled={index === 0}
               title={t('classes.moveUp', 'Mover arriba')}
@@ -116,6 +147,36 @@ export function ClassManager({ classes, onChange }: ClassManagerProps) {
           {t('classes.add')}
         </Button>
       </div>
+
+      <Dialog
+        open={descEditingId !== null}
+        onOpenChange={(o) => { if (!o) setDescEditingId(null); }}
+      >
+        <DialogContent onKeyDown={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle>
+              {t('classes.editDescription', 'Descripción')}
+              {descEditing ? ` — ${descEditing.name}` : ''}
+            </DialogTitle>
+            <DialogDescription>
+              {t('classes.descriptionHelp', 'Notas o criterios para anotar esta clase.')}
+            </DialogDescription>
+          </DialogHeader>
+          <textarea
+            value={descDraft}
+            onChange={(e) => setDescDraft(e.target.value)}
+            rows={6}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            placeholder={t('classes.descriptionPlaceholder', 'Describe esta clase…')}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDescEditingId(null)}>
+              {t('classes.cancel')}
+            </Button>
+            <Button onClick={saveDescription}>{t('classes.save')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

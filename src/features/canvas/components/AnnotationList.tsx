@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAnnotations } from '../hooks/useAnnotations';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
@@ -13,6 +14,18 @@ export function AnnotationList() {
   const { annotations, deleteAnnotation, clearAnnotations, saveAnnotations, hiddenAnnotationIds, toggleAnnotationVisibility, selectedAnnotationIds, updateAnnotation } = useAnnotations();
   const { project } = useCurrentProject();
   const { activeClassId, setActiveClassId } = useUIStore();
+
+  useEffect(() => {
+    if (selectedAnnotationIds.size === 0) return;
+    const selected = annotations.filter((a) => selectedAnnotationIds.has(a.id));
+    if (selected.length === 0) return;
+    const firstClassId = selected[0].classId;
+    if (firstClassId === undefined || firstClassId === null) return;
+    const allSame = selected.every((a) => a.classId === firstClassId);
+    if (allSame && firstClassId !== activeClassId) {
+      setActiveClassId(firstClassId);
+    }
+  }, [selectedAnnotationIds, annotations, activeClassId, setActiveClassId]);
 
   if (!project) return null;
 

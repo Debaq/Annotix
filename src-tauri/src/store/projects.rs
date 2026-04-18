@@ -209,6 +209,7 @@ impl AppState {
                     id: i as i64,
                     name: c.name,
                     color: c.color,
+                    description: c.description,
                 })
                 .collect();
 

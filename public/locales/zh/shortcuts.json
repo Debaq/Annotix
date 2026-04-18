@@ -29,13 +29,13 @@
       "name": "取消选择",
       "key": "Esc"
     },
-    "prevImage": {
-      "name": "上一张图像",
-      "key": "←"
+    "prevSample": {
+      "name": "上一个样本",
+      "key": "PageUp"
     },
-    "nextImage": {
-      "name": "下一张图像",
-      "key": "→"
+    "nextSample": {
+      "name": "下一个样本",
+      "key": "PageDown"
     },
     "zoomIn": {
       "name": "放大",
@@ -147,12 +147,6 @@
     },
     "videoNewTrack": {
       "name": "新建轨道"
-    },
-    "videoPrevFrame": {
-      "name": "上一帧"
-    },
-    "videoNextFrame": {
-      "name": "下一帧"
     },
     "tsToolSelect": {
       "name": "选择（时间序列）"

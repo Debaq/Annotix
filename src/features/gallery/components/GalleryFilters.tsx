@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
 import { InferenceLogModal } from '../../inference/components/InferenceLogModal';
+import { InferencePanel } from '../../inference/components/InferencePanel';
 import { useTranslation } from 'react-i18next';
 import { useUIStore } from '../../core/store/uiStore';
 import { useInferenceModels } from '../../inference/hooks/useInferenceModels';
 import { useInferenceRunner } from '../../inference/hooks/useInferenceRunner';
+import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useImages } from '../hooks/useImages';
 import { useToast } from '@/components/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -15,6 +17,7 @@ export function GalleryFilters() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { currentProjectId, galleryFilter, setGalleryFilter } = useUIStore();
+  const { project } = useCurrentProject();
   const { images } = useImages();
   const { selectedModel } = useInferenceModels(currentProjectId);
 
@@ -75,23 +78,45 @@ export function GalleryFilters() {
           </button>
         ))}
       </div>
-      {selectedModel && (
-        <button
-          onClick={running ? () => setLogOpen(true) : handleInferAll}
-          disabled={!running && images.length === 0}
-          className="annotix-btn w-full mt-2"
-          style={{
-            background: '#7c3aed',
-            color: 'white',
-            opacity: !running && images.length === 0 ? 0.6 : 1,
-            fontSize: '0.75rem',
-          }}
-        >
-          <i className={`fas ${running ? 'fa-spinner fa-spin' : 'fa-brain'} mr-1`}></i>
-          {running
-            ? t('gallery.inferRunning', 'Inferencia en curso (ver log)')
-            : t('gallery.inferAll', 'Inferir todas')}
-        </button>
+
+      {/* Inferencia: sin modelo = cargar; con modelo = inferir todas + engrane */}
+      {!selectedModel ? (
+        <div className="mt-2">
+          <InferencePanel project={project} trigger={
+            <button className="annotix-btn annotix-btn-outline w-full" style={{ fontSize: '0.75rem' }}>
+              <i className="fas fa-brain mr-2" style={{ color: '#7c3aed' }} />
+              {t('inference.loadModel', 'Cargar modelo')}
+            </button>
+          } />
+        </div>
+      ) : (
+        <div className="mt-2 flex gap-1">
+          <button
+            onClick={running ? () => setLogOpen(true) : handleInferAll}
+            disabled={!running && images.length === 0}
+            className="annotix-btn flex-1"
+            style={{
+              background: '#7c3aed',
+              color: 'white',
+              opacity: !running && images.length === 0 ? 0.6 : 1,
+              fontSize: '0.75rem',
+            }}
+          >
+            <i className={`fas ${running ? 'fa-spinner fa-spin' : 'fa-brain'} mr-1`}></i>
+            {running
+              ? t('gallery.inferRunning', 'Inferencia en curso (ver log)')
+              : t('gallery.inferAll', 'Inferir todas')}
+          </button>
+          <InferencePanel project={project} trigger={
+            <button
+              className="annotix-btn annotix-btn-outline"
+              style={{ fontSize: '0.75rem', padding: '0 8px', flexShrink: 0 }}
+              title={t('inference.config', 'Configurar modelo')}
+            >
+              <i className="fas fa-cog"></i>
+            </button>
+          } />
+        </div>
       )}
       <InferenceLogModal
         open={logOpen}

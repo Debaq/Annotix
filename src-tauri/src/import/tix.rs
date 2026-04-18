@@ -22,7 +22,10 @@ pub fn import_data(
             let id = c.get("id").and_then(|v| v.as_i64()).unwrap_or(i as i64);
             let name = c.get("name").and_then(|v| v.as_str()).unwrap_or("unknown");
             let color = c.get("color").and_then(|v| v.as_str());
-            create_class(id, name, color)
+            let description = c.get("description").and_then(|v| v.as_str()).map(|s| s.to_string());
+            let mut cls = create_class(id, name, color);
+            cls.description = description;
+            cls
         }).collect()
     } else {
         vec![create_class(0, "Default", Some("#FF0000"))]

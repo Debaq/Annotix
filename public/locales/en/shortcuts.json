@@ -29,13 +29,13 @@
       "name": "Deselect",
       "key": "Esc"
     },
-    "prevImage": {
-      "name": "Previous image",
-      "key": "←"
+    "prevSample": {
+      "name": "Previous sample",
+      "key": "PageUp"
     },
-    "nextImage": {
-      "name": "Next image",
-      "key": "→"
+    "nextSample": {
+      "name": "Next sample",
+      "key": "PageDown"
     },
     "zoomIn": {
       "name": "Zoom in",
@@ -147,12 +147,6 @@
     },
     "videoNewTrack": {
       "name": "New Track"
-    },
-    "videoPrevFrame": {
-      "name": "Previous Frame"
-    },
-    "videoNextFrame": {
-      "name": "Next Frame"
     },
     "tsToolSelect": {
       "name": "Select (Time Series)"

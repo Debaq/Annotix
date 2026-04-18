@@ -115,12 +115,12 @@ export function VideoView() {
       }
 
       // Video navigation
-      if (matchesShortcut(e, 'video-prev-frame')) {
+      if (matchesShortcut(e, 'prev-sample')) {
         e.preventDefault();
         if (currentFrameIndex > 0) setCurrentFrameIndex(currentFrameIndex - 1);
         return;
       }
-      if (matchesShortcut(e, 'video-next-frame')) {
+      if (matchesShortcut(e, 'next-sample')) {
         e.preventDefault();
         if (currentFrameIndex < totalFrames - 1) setCurrentFrameIndex(currentFrameIndex + 1);
         return;

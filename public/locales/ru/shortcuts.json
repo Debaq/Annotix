@@ -29,13 +29,13 @@
       "name": "Снять выделение",
       "key": "Esc"
     },
-    "prevImage": {
-      "name": "Предыдущее изображение",
-      "key": "←"
+    "prevSample": {
+      "name": "Предыдущий образец",
+      "key": "PageUp"
     },
-    "nextImage": {
-      "name": "Следующее изображение",
-      "key": "→"
+    "nextSample": {
+      "name": "Следующий образец",
+      "key": "PageDown"
     },
     "zoomIn": {
       "name": "Увеличить",
@@ -147,12 +147,6 @@
     },
     "videoNewTrack": {
       "name": "Новый трек"
-    },
-    "videoPrevFrame": {
-      "name": "Предыдущий кадр"
-    },
-    "videoNextFrame": {
-      "name": "Следующий кадр"
     },
     "tsToolSelect": {
       "name": "Выбор (временные ряды)"

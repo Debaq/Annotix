@@ -66,6 +66,7 @@ pub fn create_class(id: i64, name: &str, color: Option<&str>) -> ClassDef {
         id,
         name: name.to_string(),
         color: color.map(|c| c.to_string()).unwrap_or_else(|| generate_color(id as usize)),
+        description: None,
     }
 }
 

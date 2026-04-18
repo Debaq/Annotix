@@ -29,13 +29,13 @@
       "name": "選択解除",
       "key": "Esc"
     },
-    "prevImage": {
-      "name": "前の画像",
-      "key": "←"
+    "prevSample": {
+      "name": "前のサンプル",
+      "key": "PageUp"
     },
-    "nextImage": {
-      "name": "次の画像",
-      "key": "→"
+    "nextSample": {
+      "name": "次のサンプル",
+      "key": "PageDown"
     },
     "zoomIn": {
       "name": "拡大",
@@ -147,12 +147,6 @@
     },
     "videoNewTrack": {
       "name": "新規トラック"
-    },
-    "videoPrevFrame": {
-      "name": "前のフレーム"
-    },
-    "videoNextFrame": {
-      "name": "次のフレーム"
     },
     "tsToolSelect": {
       "name": "選択（時系列）"

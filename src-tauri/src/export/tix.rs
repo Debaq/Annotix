@@ -89,6 +89,7 @@ pub fn export<F: Fn(f64)>(
                 "id": cls.id,
                 "name": cls.name,
                 "color": cls.color,
+                "description": cls.description,
             })).collect::<Vec<_>>(),
             "preprocessingConfig": { "enabled": false },
             "createdAt": project.created,

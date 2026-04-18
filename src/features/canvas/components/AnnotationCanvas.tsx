@@ -40,7 +40,7 @@ import type { InferenceConfig, InferenceResultEvent, InferenceCompletedEvent, In
 import { useToast } from '@/components/hooks/use-toast';
 
 const ZOOM_WHEEL_FACTOR = 1.05;
-const MIN_ZOOM_SCALE = 0.1;
+const MIN_ZOOM_SCALE = 1;
 const MAX_ZOOM_SCALE = 20;
 
 function formatFrameTime(frameIndex: number, fps: number): string {
@@ -77,7 +77,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   const { annotations, selectedAnnotationId, selectedAnnotationIds, selectAnnotation, updateAnnotation, addAnnotation, deleteAnnotation } = overrideAnnotations ?? defaults;
   const { hiddenAnnotationIds } = defaults;
   const { replaceAnnotations } = defaults;
-  const { activeTool, activeClassId, setActiveTool } = useUIStore();
+  const { activeTool, activeClassId, setActiveTool, annotationsVisible, galleryMode } = useUIStore();
 
   // Auto-lock/unlock para presencia P2P
   useImagePresence(project?.id, image?.id);
@@ -380,7 +380,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
         const containerHeight = containerRef.current.clientHeight || 600;
         const scaleX = containerWidth / img.width;
         const scaleY = containerHeight / img.height;
-        const newScale = Math.min(scaleX, scaleY) * 0.9;
+        const newScale = Math.min(scaleX, scaleY);
         const scaledWidth = img.width * newScale;
         const scaledHeight = img.height * newScale;
         const offsetX = (containerWidth - scaledWidth) / 2;
@@ -433,12 +433,15 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   useEffect(() => {
     if (!containerRef.current) return;
 
-    let firstCallback = true;
+    let lastW = 0;
+    let lastH = 0;
     const resizeObserver = new ResizeObserver(() => {
-      if (firstCallback) {
-        firstCallback = false;
-        return;
-      }
+      if (!containerRef.current) return;
+      const w = containerRef.current.clientWidth;
+      const h = containerRef.current.clientHeight || 600;
+      if (w === lastW && h === lastH) return;
+      lastW = w;
+      lastH = h;
       const base = originalImageRef.current;
       if (base && containerRef.current) {
         const containerWidth = containerRef.current.clientWidth;
@@ -446,7 +449,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
 
         const scaleX = containerWidth / base.width;
         const scaleY = containerHeight / base.height;
-        const newScale = Math.min(scaleX, scaleY) * 0.9;
+        const newScale = Math.min(scaleX, scaleY);
 
         const scaledWidth = base.width * newScale;
         const scaledHeight = base.height * newScale;
@@ -462,6 +465,28 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     resizeObserver.observe(containerRef.current);
     return () => resizeObserver.disconnect();
   }, [image?.id]);
+
+  // Recentrar al cambiar modo de galería (el layout cambia sin cambiar la imagen)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      const base = originalImageRef.current;
+      if (!base || !containerRef.current) return;
+      const containerWidth = containerRef.current.clientWidth;
+      const containerHeight = containerRef.current.clientHeight || 600;
+      if (containerWidth === 0 || containerHeight === 0) return;
+      const scaleX = containerWidth / base.width;
+      const scaleY = containerHeight / base.height;
+      const newScale = Math.min(scaleX, scaleY);
+      const scaledWidth = base.width * newScale;
+      const scaledHeight = base.height * newScale;
+      const offsetX = (containerWidth - scaledWidth) / 2;
+      const offsetY = (containerHeight - scaledHeight) / 2;
+      setScale(newScale);
+      setImageOffset({ x: offsetX, y: offsetY });
+      setStageSize({ width: containerWidth, height: containerHeight });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [galleryMode]);
 
   // Update transformer when selection changes
   useEffect(() => {
@@ -515,19 +540,28 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     const clampedScale = Math.max(MIN_ZOOM_SCALE, Math.min(MAX_ZOOM_SCALE, newScale));
 
     setStageScale(clampedScale);
-    setStagePos({
-      x: pointer.x - mousePointTo.x * clampedScale,
-      y: pointer.y - mousePointTo.y * clampedScale,
-    });
+    if (clampedScale <= MIN_ZOOM_SCALE) {
+      setStagePos({ x: 0, y: 0 });
+    } else {
+      setStagePos({
+        x: pointer.x - mousePointTo.x * clampedScale,
+        y: pointer.y - mousePointTo.y * clampedScale,
+      });
+    }
   };
 
   // Handle stage drag
   const handleDragEnd = (e: any) => {
     if (e.target === e.target.getStage()) {
-      setStagePos({
-        x: e.target.x(),
-        y: e.target.y(),
-      });
+      if (stageScale <= MIN_ZOOM_SCALE) {
+        e.target.position({ x: 0, y: 0 });
+        setStagePos({ x: 0, y: 0 });
+      } else {
+        setStagePos({
+          x: e.target.x(),
+          y: e.target.y(),
+        });
+      }
     }
   };
 
@@ -679,6 +713,9 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     if (middlePanRef.current?.active) {
       const wasDrag = middlePanRef.current.moved;
       middlePanRef.current = null;
+      if (stageScale <= MIN_ZOOM_SCALE) {
+        setStagePos({ x: 0, y: 0 });
+      }
       // If it was a click (no drag) on a mask project, reclassify
       if (!wasDrag && project?.type === 'mask') {
         handleMiddleClickReclassify(e);
@@ -1041,7 +1078,11 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   }, []);
 
   const handleZoomOut = useCallback(() => {
-    setStageScale(prev => Math.max(MIN_ZOOM_SCALE, prev / 1.2));
+    setStageScale(prev => {
+      const next = Math.max(MIN_ZOOM_SCALE, prev / 1.2);
+      if (next <= MIN_ZOOM_SCALE) setStagePos({ x: 0, y: 0 });
+      return next;
+    });
   }, []);
 
   useEffect(() => {
@@ -1136,10 +1177,10 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
 
   return (
     <div
-      ref={containerRef}
       className="annotix-canvas-container"
       onMouseDown={(e) => { if (e.button === 1) e.preventDefault(); }}
     >
+      <div ref={containerRef} className="annotix-canvas-stage-area">
       {/* Floating Tools (Left) */}
       <FloatingTools
         maskBrushSize={maskBrushSize}
@@ -1278,7 +1319,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
         </Layer>
 
         {/* Annotations Layer */}
-        <Layer>
+        <Layer visible={annotationsVisible}>
           {annotations.map((ann) => {
             if (hiddenAnnotationIds.has(ann.id)) return null;
             const classInfo = project.classes.find(c => c.id === ann.classId);
@@ -1651,6 +1692,8 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
           />
         </Layer>
       </Stage>
+
+      </div>
 
       {/* Annotations Bar (Bottom) */}
       <AnnotationsBar image={konvaImage} />

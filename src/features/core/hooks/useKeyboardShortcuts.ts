@@ -7,7 +7,7 @@ import { CLASS_SHORTCUTS } from '../constants';
 import { matchesShortcut } from '../utils/matchShortcut';
 
 export function useKeyboardShortcuts() {
-  const { setActiveTool, setActiveClassId } = useUIStore();
+  const { setActiveTool, setActiveClassId, cycleGalleryMode, toggleAnnotationsVisible } = useUIStore();
   const { project } = useCurrentProject();
   const { navigatePrevious, navigateNext } = useImageNavigation();
   const { annotations, selectedAnnotationIds, deleteAnnotation, updateAnnotation } = useAnnotations();
@@ -119,6 +119,20 @@ export function useKeyboardShortcuts() {
       // Cualquier otra tecla: flush buffer
       flushBuffer();
 
+      // Toggle gallery mode
+      if (key === 'g' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+        e.preventDefault();
+        cycleGalleryMode();
+        return;
+      }
+
+      // Toggle annotations visibility
+      if (key === 'h' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+        e.preventDefault();
+        toggleAnnotationsVisible();
+        return;
+      }
+
       // Tool shortcuts
       if (matchesShortcut(e, 'tool-box')) {
         e.preventDefault();
@@ -144,12 +158,12 @@ export function useKeyboardShortcuts() {
       }
 
       // Navigation (only if no annotation is selected)
-      if (matchesShortcut(e, 'prev-image')) {
+      if (matchesShortcut(e, 'prev-sample')) {
         if (selectedAnnotationIds.size === 0) {
           e.preventDefault();
           navigatePrevious();
         }
-      } else if (matchesShortcut(e, 'next-image')) {
+      } else if (matchesShortcut(e, 'next-sample')) {
         if (selectedAnnotationIds.size === 0) {
           e.preventDefault();
           navigateNext();
@@ -214,5 +228,5 @@ export function useKeyboardShortcuts() {
         digitTimerRef.current = null;
       }
     };
-  }, [project, setActiveTool, setActiveClassId, navigatePrevious, navigateNext, selectedAnnotationIds, annotations, deleteAnnotation, updateAnnotation]);
+  }, [project, setActiveTool, setActiveClassId, cycleGalleryMode, toggleAnnotationsVisible, navigatePrevious, navigateNext, selectedAnnotationIds, annotations, deleteAnnotation, updateAnnotation]);
 }

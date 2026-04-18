@@ -10,12 +10,11 @@ import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useTauriQuery } from '@/hooks/useTauriQuery';
 import { videoService } from '../../video/services/videoService';
 import { P2pGuard } from '../../p2p/components/P2pGuard';
-import { InferencePanel } from '../../inference/components/InferencePanel';
 
 export function ImageGallery() {
   const { t } = useTranslation();
   const { images, isLoading } = useImages();
-  const { currentProjectId } = useUIStore();
+  const { currentProjectId, cycleGalleryMode, currentImageId } = useUIStore();
   const { project } = useCurrentProject();
 
   const CANVAS_IMAGE_TYPES = ['bbox', 'mask', 'polygon', 'keypoints', 'landmarks', 'obb', 'instance-segmentation'];
@@ -43,6 +42,19 @@ export function ImageGallery() {
 
   return (
     <div className="flex h-full flex-col">
+      {/* Toggle modo galería (solo si hay imagen seleccionada) */}
+      {currentImageId && (
+        <div className="flex justify-end px-2 pt-2">
+          <button
+            onClick={cycleGalleryMode}
+            className="h-7 w-7 rounded text-xs bg-[var(--annotix-gray-light)] hover:bg-[var(--annotix-primary)] hover:text-white transition-colors flex items-center justify-center"
+            title={t('gallery.toggleMode', 'Compactar galería (G)')}
+          >
+            <i className="fas fa-compress-alt"></i>
+          </button>
+        </div>
+      )}
+
       {/* Upload Buttons Section */}
       <div className="annotix-panel-section">
         <P2pGuard permission="upload_data">
@@ -79,14 +91,6 @@ export function ImageGallery() {
 
       {/* Inference Config + Filters */}
       <div className="panel-section">
-        <div className="mb-2">
-          <InferencePanel project={project} trigger={
-            <button className="annotix-btn annotix-btn-outline w-full" style={{ fontSize: '0.75rem' }}>
-              <i className="fas fa-brain mr-2" style={{ color: '#7c3aed' }} />
-              {t('inference.title')}
-            </button>
-          } />
-        </div>
         <GalleryFilters />
       </div>
 
