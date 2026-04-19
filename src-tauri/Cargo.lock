@@ -106,7 +106,7 @@ dependencies = [
 
 [[package]]
 name = "annotix"
-version = "2.6.2"
+version = "2.7.0"
 dependencies = [
  "axum",
  "base64 0.22.1",

@@ -9,6 +9,9 @@ mod store;
 mod training;
 mod utils;
 
+#[cfg(test)]
+mod tests;
+
 use tauri::Manager;
 
 #[cfg(target_os = "linux")]

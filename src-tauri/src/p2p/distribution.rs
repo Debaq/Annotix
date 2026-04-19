@@ -356,3 +356,67 @@ fn round_robin_assign(
         assignments[i % n].image_ids.push(iid.clone());
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn mk_assignment(node_id: &str) -> WorkAssignment {
+        WorkAssignment {
+            node_id: node_id.into(),
+            display_name: node_id.into(),
+            video_ids: vec![],
+            image_ids: vec![],
+            updated_at: 0.0,
+        }
+    }
+
+    #[test]
+    fn round_robin_assign_no_ops_when_empty_peers() {
+        let mut empty: Vec<WorkAssignment> = vec![];
+        round_robin_assign(&mut empty, &["v".into()], &["i".into()]);
+        assert!(empty.is_empty());
+    }
+
+    #[test]
+    fn round_robin_assign_distributes_evenly() {
+        let mut peers = vec![mk_assignment("a"), mk_assignment("b"), mk_assignment("c")];
+        let videos: Vec<String> = (0..6).map(|i| format!("v{}", i)).collect();
+        let images: Vec<String> = (0..5).map(|i| format!("i{}", i)).collect();
+
+        round_robin_assign(&mut peers, &videos, &images);
+
+        // Videos: 6 items / 3 peers = 2 c/u
+        assert_eq!(peers[0].video_ids, vec!["v0", "v3"]);
+        assert_eq!(peers[1].video_ids, vec!["v1", "v4"]);
+        assert_eq!(peers[2].video_ids, vec!["v2", "v5"]);
+
+        // Imágenes: 5/3 → 2, 2, 1
+        assert_eq!(peers[0].image_ids, vec!["i0", "i3"]);
+        assert_eq!(peers[1].image_ids, vec!["i1", "i4"]);
+        assert_eq!(peers[2].image_ids, vec!["i2"]);
+    }
+
+    #[test]
+    fn round_robin_assign_single_peer_gets_all() {
+        let mut peers = vec![mk_assignment("solo")];
+        let videos: Vec<String> = vec!["v1".into(), "v2".into()];
+        let images: Vec<String> = vec!["i1".into()];
+
+        round_robin_assign(&mut peers, &videos, &images);
+
+        assert_eq!(peers[0].video_ids.len(), 2);
+        assert_eq!(peers[0].image_ids.len(), 1);
+    }
+
+    #[test]
+    fn round_robin_assign_preserves_existing_items() {
+        let mut peers = vec![mk_assignment("a"), mk_assignment("b")];
+        peers[0].video_ids.push("existing".into());
+
+        round_robin_assign(&mut peers, &["new1".into()], &[]);
+
+        assert_eq!(peers[0].video_ids, vec!["existing", "new1"]);
+        assert!(peers[1].video_ids.is_empty());
+    }
+}

@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust-tests:
+    name: Rust tests (cargo test --lib)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            pkg-config \
+            clang \
+            nasm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+          shared-key: ci-tests
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
+      - name: Run tests (nextest, junit report)
+        working-directory: src-tauri
+        run: cargo nextest run --lib --profile ci
+        env:
+          CARGO_HTTP_TIMEOUT: 300
+          CARGO_NET_RETRY: 5
+
+      - name: Upload junit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-test-results
+          path: src-tauri/target/nextest/ci/junit.xml
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Publish test summary
+        if: always()
+        uses: mikepenz/action-junit-report@v5
+        with:
+          report_paths: src-tauri/target/nextest/ci/junit.xml
+          check_name: Rust tests
+          fail_on_failure: true
+
+  frontend-build:
+    name: Frontend build (tsc + vite)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate dummy build info
+        run: |
+          printf '// CI stub\nexport const BUILD_NUMBER = 0;\nexport const BUILD_CODE = "ci";\nexport const BUILD_DATE = "";\nexport const BUILD_COMMIT = "%s";\n' "${{ github.sha }}" > src/lib/buildInfo.ts
+
+      - name: Build (tsc + vite)
+        run: npm run build

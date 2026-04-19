@@ -110,6 +110,41 @@ fn base32_encode(data: &[u8]) -> String {
     result
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn base32_roundtrip_preserves_bytes() {
+        let samples: &[&[u8]] = &[
+            b"",
+            b"f",
+            b"fo",
+            b"foo",
+            b"foobar",
+            b"annotix-p2p-ticket-test",
+        ];
+        for s in samples {
+            let enc = base32_encode(s);
+            let dec = base32_decode(&enc).expect("decode");
+            assert_eq!(&dec, s, "roundtrip para {:?}", s);
+        }
+    }
+
+    #[test]
+    fn base32_decode_rejects_invalid_chars() {
+        assert!(base32_decode("AAAA1").is_err()); // '1' no está en alfabeto
+        assert!(base32_decode("AAAA#").is_err());
+    }
+
+    #[test]
+    fn base32_alphabet_is_rfc4648() {
+        // Alfabeto RFC 4648 sin padding: letras mayúsculas + dígitos 2-7
+        let enc = base32_encode(b"\x00\x00\x00\x00\x00");
+        assert!(enc.chars().all(|c| c.is_ascii_uppercase() || ('2'..='7').contains(&c)));
+    }
+}
+
 fn base32_decode(input: &str) -> Result<Vec<u8>, String> {
     let mut result = Vec::new();
     let mut bits = 0u32;
