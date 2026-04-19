@@ -5,6 +5,7 @@
     "general": "General",
     "pythonEnv": "Entorno Python",
     "trainingModels": "Modelos de Entrenamiento",
+    "sam": "Segment Anything (SAM)",
     "cloudProviders": "Proveedores Cloud",
     "keyboardShortcuts": "Atajos de Teclado",
     "browserAutomation": "Automatización del Navegador",

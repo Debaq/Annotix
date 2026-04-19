@@ -8,7 +8,7 @@ use std::sync::Mutex;
 
 use ort::session::Session;
 
-use super::SamMask;
+use super::{SamMask, SamPrediction};
 
 /// Sesiones ONNX cargadas (encoder + decoder emparejados).
 #[allow(dead_code)]
@@ -38,6 +38,9 @@ pub struct SamState {
     /// Candidatos AMG por `image_id`. Efímero, nunca persiste.
     /// v1 mantiene 1 imagen; estructura lista para LRU.
     pub candidates: Mutex<HashMap<String, Vec<SamMask>>>,
+    /// Última predicción del modo refine (sam_predict). Stash efímero para que
+    /// `sam_accept_refine` reuse el pipeline conversión sin reenviar bytes por IPC.
+    pub refine: Mutex<Option<SamPrediction>>,
 }
 
 impl SamState {
@@ -46,6 +49,7 @@ impl SamState {
             sessions: Mutex::new(None),
             cache: Mutex::new(None),
             candidates: Mutex::new(HashMap::new()),
+            refine: Mutex::new(None),
         }
     }
 
@@ -55,6 +59,7 @@ impl SamState {
         if let Ok(mut s) = self.sessions.lock() { *s = None; }
         if let Ok(mut c) = self.cache.lock() { *c = None; }
         if let Ok(mut m) = self.candidates.lock() { m.clear(); }
+        if let Ok(mut r) = self.refine.lock() { *r = None; }
     }
 
     /// Invalida solo cache de embedding + candidatos (cambio de imagen / reencode).
@@ -62,6 +67,7 @@ impl SamState {
     pub fn clear_runtime(&self) {
         if let Ok(mut c) = self.cache.lock() { *c = None; }
         if let Ok(mut m) = self.candidates.lock() { m.clear(); }
+        if let Ok(mut r) = self.refine.lock() { *r = None; }
     }
 }
 

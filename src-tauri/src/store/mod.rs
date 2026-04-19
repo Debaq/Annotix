@@ -9,5 +9,6 @@ pub mod videos;
 pub mod tabular;
 pub mod audio;
 pub mod inference;
+pub mod sam_models;
 
 pub use state::AppState;

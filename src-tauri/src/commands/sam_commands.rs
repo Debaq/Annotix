@@ -20,26 +20,32 @@ use crate::inference::sam::postprocess::{
 };
 use crate::inference::sam::preprocess::{preprocess_image, transform_points};
 use crate::inference::sam::state::{SamEmbeddingCache, SamSessions, SamState};
+use crate::store::sam_models;
 use crate::store::AppState;
 
 const AMG_PROGRESS_EVENT: &str = "sam:amg_progress";
 
-/// Carga par encoder+decoder desde `InferenceModelEntry` del proyecto.
+/// Carga par encoder+decoder desde el catálogo SAM app-level.
 /// Invalida cache y candidates (cambio de modelo).
 /// Devuelve `pair_id` usado para invalidaciones posteriores.
 #[tauri::command]
 pub fn sam_load_model(
     state: State<'_, AppState>,
     sam: State<'_, SamState>,
-    project_id: String,
     encoder_model_id: String,
     decoder_model_id: String,
 ) -> Result<String, String> {
-    let encoder_path = state.get_model_file_path(&project_id, &encoder_model_id)?;
-    let decoder_path = state.get_model_file_path(&project_id, &decoder_model_id)?;
+    let encoder_path = sam_models::get_model_path(&state.data_dir, &encoder_model_id)?;
+    let decoder_path = sam_models::get_model_path(&state.data_dir, &decoder_model_id)?;
+    let encoder_str = encoder_path
+        .to_str()
+        .ok_or_else(|| "encoder path no UTF-8".to_string())?;
+    let decoder_str = decoder_path
+        .to_str()
+        .ok_or_else(|| "decoder path no UTF-8".to_string())?;
 
-    let encoder = load_encoder(&encoder_path)?;
-    let decoder = load_decoder(&decoder_path)?;
+    let encoder = load_encoder(encoder_str)?;
+    let decoder = load_decoder(decoder_str)?;
 
     let pair_id = format!("{}:{}", encoder_model_id, decoder_model_id);
 
@@ -213,13 +219,20 @@ pub fn sam_predict(
         .map(|(i, _)| i)
         .unwrap_or(0);
 
-    Ok(SamPrediction {
+    let prediction = SamPrediction {
         masks_lowres,
         scores: scores_out,
         best_index,
         lowres_size,
         orig_size,
-    })
+    };
+
+    // Stash para sam_accept_refine — evita reenviar bytes por IPC al aceptar.
+    if let Ok(mut r) = sam.refine.lock() {
+        *r = Some(prediction.clone());
+    }
+
+    Ok(prediction)
 }
 
 /// Ejecuta AMG sobre la imagen ya encodeada. Emite `sam:amg_progress`.
@@ -343,9 +356,92 @@ pub fn sam_accept_mask(
     mask_to_annotation(&bin, target, dp_tolerance)
 }
 
+/// Acepta la última predicción del modo refinamiento (`sam_predict`) y la
+/// convierte al formato de la herramienta activa. Limpia el stash al finalizar.
+#[tauri::command]
+pub fn sam_accept_refine(
+    sam: State<'_, SamState>,
+    active_multimask_idx: u8,
+    target: MaskTarget,
+    dp_tolerance: f32,
+) -> Result<serde_json::Value, String> {
+    let prediction = {
+        let mut r = sam.refine.lock().map_err(|e| e.to_string())?;
+        r.take()
+            .ok_or_else(|| "sam_accept_refine: sin predicción previa (llamar sam_predict)".to_string())?
+    };
+
+    let idx = active_multimask_idx as usize;
+    let lowres = prediction
+        .masks_lowres
+        .get(idx)
+        .ok_or_else(|| format!(
+            "sam_accept_refine: idx {} fuera de rango (len={})",
+            idx,
+            prediction.masks_lowres.len()
+        ))?
+        .clone();
+
+    let bin = upscale_and_threshold(&lowres, prediction.lowres_size, prediction.orig_size)?;
+    mask_to_annotation(&bin, target, dp_tolerance)
+}
+
+/// Descarta la predicción del modo refine sin convertir.
+#[tauri::command]
+pub fn sam_clear_refine(sam: State<'_, SamState>) -> Result<(), String> {
+    if let Ok(mut r) = sam.refine.lock() {
+        *r = None;
+    }
+    Ok(())
+}
+
 /// Libera cache runtime (embedding + candidatos). Sesiones siguen cargadas.
 #[tauri::command]
 pub fn sam_clear_cache(sam: State<'_, SamState>) -> Result<(), String> {
     sam.clear_runtime();
+    Ok(())
+}
+
+// ─── Catálogo app-level (no por proyecto) ───────────────────────────────────
+
+#[tauri::command]
+pub fn sam_list_app_models(
+    state: State<'_, AppState>,
+) -> Result<Vec<sam_models::SamAppModel>, String> {
+    sam_models::list_models(&state.data_dir)
+}
+
+/// Copia un .onnx al directorio app-level y lo registra.
+/// `kind` debe ser "encoder" o "decoder".
+#[tauri::command]
+pub fn sam_upload_app_model(
+    state: State<'_, AppState>,
+    src_path: String,
+    name: String,
+    kind: String,
+) -> Result<sam_models::SamAppModel, String> {
+    let src = std::path::PathBuf::from(&src_path);
+    if !src.exists() {
+        return Err(format!("ruta no existe: {}", src_path));
+    }
+    sam_models::add_model(&state.data_dir, &src, &name, &kind)
+}
+
+#[tauri::command]
+pub fn sam_delete_app_model(
+    state: State<'_, AppState>,
+    sam: State<'_, SamState>,
+    model_id: String,
+) -> Result<(), String> {
+    sam_models::delete_model(&state.data_dir, &model_id)?;
+    // Si el modelo eliminado estaba cargado, invalidar sesiones.
+    if let Ok(sessions) = sam.sessions.lock() {
+        if let Some(s) = sessions.as_ref() {
+            if s.pair_id.contains(&model_id) {
+                drop(sessions);
+                sam.clear_all();
+            }
+        }
+    }
     Ok(())
 }

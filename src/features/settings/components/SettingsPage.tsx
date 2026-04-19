@@ -8,8 +8,9 @@ import { CloudProvidersSection } from './CloudProvidersSection';
 import { KeyboardShortcutsSection } from './KeyboardShortcutsSection';
 import { BrowserAutomationSection } from './BrowserAutomationSection';
 import { NetworkSection } from './NetworkSection';
+import { SamSettingsSection } from '../../sam/components/SamSettingsSection';
 
-type SettingsSection = 'general' | 'network' | 'python-env' | 'training-models' | 'cloud-providers' | 'keyboard-shortcuts' | 'browser-automation';
+type SettingsSection = 'general' | 'network' | 'python-env' | 'training-models' | 'cloud-providers' | 'keyboard-shortcuts' | 'browser-automation' | 'sam';
 
 export function SettingsPage() {
   const { t } = useTranslation();
@@ -21,6 +22,7 @@ export function SettingsPage() {
     { id: 'network', icon: 'fas fa-wifi', labelKey: 'settings.sections.network' },
     { id: 'python-env', icon: 'fab fa-python', labelKey: 'settings.sections.pythonEnv' },
     { id: 'training-models', icon: 'fas fa-brain', labelKey: 'settings.sections.trainingModels' },
+    { id: 'sam', icon: 'fas fa-magic', labelKey: 'settings.sections.sam' },
     { id: 'cloud-providers', icon: 'fas fa-cloud', labelKey: 'settings.sections.cloudProviders' },
     { id: 'keyboard-shortcuts', icon: 'fas fa-keyboard', labelKey: 'settings.sections.keyboardShortcuts' },
     { id: 'browser-automation', icon: 'fas fa-robot', labelKey: 'settings.sections.browserAutomation' },
@@ -71,6 +73,7 @@ export function SettingsPage() {
           {activeSection === 'network' && <NetworkSection />}
           {activeSection === 'python-env' && <PythonEnvironmentSection />}
           {activeSection === 'training-models' && <TrainingModelsSection />}
+          {activeSection === 'sam' && <SamSettingsSection />}
           {activeSection === 'cloud-providers' && <CloudProvidersSection />}
           {activeSection === 'keyboard-shortcuts' && <KeyboardShortcutsSection />}
           {activeSection === 'browser-automation' && <BrowserAutomationSection />}

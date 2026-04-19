@@ -653,13 +653,36 @@ export function onPdfExtractionProgress(
 // SAM — Segment Anything Model
 // ============================================================================
 
+export interface SamAppModel {
+  id: string;
+  name: string;
+  kind: 'encoder' | 'decoder';
+  file: string;
+  size: number;
+  uploaded: number;
+}
+
+export function samListAppModels(): Promise<SamAppModel[]> {
+  return invoke<SamAppModel[]>('sam_list_app_models');
+}
+
+export function samUploadAppModel(
+  srcPath: string,
+  name: string,
+  kind: 'encoder' | 'decoder',
+): Promise<SamAppModel> {
+  return invoke<SamAppModel>('sam_upload_app_model', { srcPath, name, kind });
+}
+
+export function samDeleteAppModel(modelId: string): Promise<void> {
+  return invoke<void>('sam_delete_app_model', { modelId });
+}
+
 export function samLoadModel(
-  projectId: string,
   encoderModelId: string,
   decoderModelId: string,
 ): Promise<string> {
   return invoke<string>('sam_load_model', {
-    projectId,
     encoderModelId,
     decoderModelId,
   });
@@ -720,6 +743,22 @@ export function samAcceptMask(
     target,
     dpTolerance,
   });
+}
+
+export function samAcceptRefine(
+  activeMultimaskIdx: number,
+  target: MaskTarget,
+  dpTolerance: number,
+): Promise<unknown> {
+  return invoke<unknown>('sam_accept_refine', {
+    activeMultimaskIdx,
+    target,
+    dpTolerance,
+  });
+}
+
+export function samClearRefine(): Promise<void> {
+  return invoke<void>('sam_clear_refine');
 }
 
 export function samClearCache(): Promise<void> {

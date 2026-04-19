@@ -3,6 +3,7 @@ import { useUIStore } from '../store/uiStore';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useImageNavigation } from '../../gallery/hooks/useImageNavigation';
 import { useAnnotations } from '../../canvas/hooks/useAnnotations';
+import { useSamStore } from '../../sam/store/useSamStore';
 import { CLASS_SHORTCUTS } from '../constants';
 import { matchesShortcut } from '../utils/matchShortcut';
 
@@ -118,6 +119,22 @@ export function useKeyboardShortcuts() {
 
       // Cualquier otra tecla: flush buffer
       flushBuffer();
+
+      // Toggle SAM Assist (solo si hay par cargado). Al activar, dispara AMG
+      // automático si no hay candidatos.
+      if (key === 's' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+        const sam = useSamStore.getState();
+        if (sam.pairId) {
+          e.preventDefault();
+          if (sam.samAssistActive) {
+            sam.setSamAssistActive(false);
+          } else {
+            sam.setSamAssistActive(true);
+            if (sam.candidates.length === 0 && !sam.generating) sam.requestAmg();
+          }
+          return;
+        }
+      }
 
       // Toggle gallery mode
       if (key === 'g' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {

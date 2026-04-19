@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
 import { useUIStore } from '@/features/core/store/uiStore';
+import { useSamStore } from '@/features/sam/store/useSamStore';
 import { getAvailableTools } from '../config/toolsConfig';
 import { shortcutsManager } from '@/features/core/utils/ShortcutsManager';
 import { cn } from '@/lib/utils';
@@ -52,6 +53,24 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
   const { t } = useTranslation();
   const { project } = useCurrentProject();
   const { activeTool, setActiveTool, annotationsVisible, toggleAnnotationsVisible, showLabels, toggleLabels } = useUIStore();
+  const samPairId = useSamStore((s) => s.pairId);
+  const samAssistActive = useSamStore((s) => s.samAssistActive);
+  const samGenerating = useSamStore((s) => s.generating);
+  const samCandidatesCount = useSamStore((s) => s.candidates.length);
+  const setSamAssistActive = useSamStore((s) => s.setSamAssistActive);
+  const requestSamAmg = useSamStore((s) => s.requestAmg);
+
+  const samAvailable = !!samPairId && project?.type !== undefined
+    && project.type !== 'keypoints' && project.type !== 'landmarks';
+  const handleSamClick = () => {
+    if (!samPairId) return;
+    if (samAssistActive) {
+      setSamAssistActive(false);
+      return;
+    }
+    setSamAssistActive(true);
+    if (samCandidatesCount === 0 && !samGenerating) requestSamAmg();
+  };
 
   if (!project) return null;
 
@@ -214,6 +233,34 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
           >
             <i className="fas fa-tag"></i>
           </button>
+
+          {/* Botón SAM Assist (varita) */}
+          {samAvailable && (
+            <>
+              <div style={{ height: 1, background: 'var(--annotix-border)', margin: '2px 0' }} />
+              <button
+                onClick={handleSamClick}
+                disabled={samGenerating}
+                className={cn('annotix-tool-btn', samAssistActive && 'active')}
+                style={
+                  samAssistActive || samGenerating
+                    ? undefined
+                    : { background: '#7c3aed', color: 'white' }
+                }
+                title={
+                  samGenerating
+                    ? t('sam.panel.progress')
+                    : samAssistActive
+                      ? t('sam.toolbarTooltip') + ' (S)'
+                      : t('sam.toolbarTooltip') + ' (S)'
+                }
+              >
+                <i
+                  className={`fas ${samGenerating ? 'fa-spinner fa-spin' : 'fa-wand-magic-sparkles'}`}
+                ></i>
+              </button>
+            </>
+          )}
 
           {/* Botón de inferencia AI */}
           {inferenceAvailable && (

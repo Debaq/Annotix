@@ -344,7 +344,12 @@ pub fn run() {
             commands::sam_commands::sam_get_candidates,
             commands::sam_commands::sam_refilter_candidates,
             commands::sam_commands::sam_accept_mask,
+            commands::sam_commands::sam_accept_refine,
+            commands::sam_commands::sam_clear_refine,
             commands::sam_commands::sam_clear_cache,
+            commands::sam_commands::sam_list_app_models,
+            commands::sam_commands::sam_upload_app_model,
+            commands::sam_commands::sam_delete_app_model,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

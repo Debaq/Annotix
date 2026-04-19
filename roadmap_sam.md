@@ -27,6 +27,22 @@ decoder con prompts manuales (puntos pos/neg + bbox).
 
 ---
 
+## Almacenamiento de modelos (migración A — completada)
+
+Los modelos SAM **NO** son por proyecto: viven a nivel aplicación porque pesan
+mucho y el mismo par sirve para todos los proyectos del usuario.
+
+```
+{data_dir}/sam_models/
+ ├ index.json        — { models: [{ id, name, kind: "encoder"|"decoder", file, size, uploaded }] }
+ └ {uuid}.onnx       — binarios (renombrados a uuid para evitar colisiones)
+```
+
+- Backend: `src-tauri/src/store/sam_models.rs` (`list_models`, `add_model`, `delete_model`, `get_model_path`)
+- Frontend: `SamSettingsSection` en Settings global (sección "Segment Anything (SAM)")
+- `sam_load_model(encoder_id, decoder_id)` ya no recibe `project_id`
+- Auto-descarga desde HuggingFace queda como **PR8** (presets MobileSAM / SAM ViT-B / SAM2)
+
 ## Decisiones cerradas
 
 | # | Decisión | Valor |
@@ -86,13 +102,18 @@ pub enum MaskTarget { Bbox, Obb, Polygon, Mask }
 
 | Comando | Entrada | Salida | Estado |
 |---|---|---|---|
-| `sam_load_model` | `project_id, encoder_model_id, decoder_model_id` | `pair_id: String` | ✅ PR2 |
+| `sam_load_model` | `encoder_model_id, decoder_model_id` (app-level) | `pair_id: String` | ✅ PR2 / migrado app-level |
+| `sam_list_app_models` | — | `Vec<SamAppModel>` | ✅ migración A |
+| `sam_upload_app_model` | `src_path, name, kind` | `SamAppModel` | ✅ migración A |
+| `sam_delete_app_model` | `model_id` | `()` | ✅ migración A |
+| `sam_accept_refine` | `active_multimask_idx, target, dp_tolerance` | `Value` | ✅ PR7 |
+| `sam_clear_refine` | — | `()` | ✅ PR7 |
 | `sam_encode_image` | `project_id, image_id` | `SamEncodeInfo {image_id, orig_size, cached}` | ✅ PR2 |
 | `sam_predict` | `prompts: SamPrompts` | `SamPrediction` | ✅ PR3 |
 | `sam_auto_generate_masks` | `project_id, image_id, config: AmgConfig, existing_bboxes?` | `Vec<SamMask>` + evento `sam:amg_progress` | ✅ PR4 |
 | `sam_get_candidates` | `image_id` | `Vec<SamMask>` | ✅ PR2 (vacío si no hay AMG) |
 | `sam_refilter_candidates` | `image_id, existing_bboxes, overlap_thresh` | `Vec<SamMask>` | ✅ PR4 |
-| `sam_accept_mask` | `image_id, mask_id, active_multimask_idx, target, dp_tolerance` | `AnnotationEntry.data` | ⏳ PR5 |
+| `sam_accept_mask` | `image_id, mask_id, active_multimask_idx, target, dp_tolerance` | `AnnotationEntry.data` | ✅ PR5 |
 | `sam_clear_cache` | — | `()` | ✅ PR2 |
 
 Evento: `sam:amg_progress` → `{phase, current, total, image_id}`.
@@ -168,49 +189,72 @@ Notas:
 - Decoder se llama `N²` veces (batch=1) — el export oficial no soporta múltiples grupos. Para `points_per_side=16` son 256 calls.
 - `orig_im_size` escalado a 256 funciona: el decoder remueve padding proporcionalmente con base en esas dimensiones, consistente con preprocess.
 
-### ⏳ PR5 — Conversión mask → formatos
+### ✅ PR5 — Conversión mask → formatos (completado)
 
-- `postprocess::upscale_and_threshold` — bilinear lowres→orig + threshold 128
+Implementado:
+- `postprocess::upscale_and_threshold` — bilinear lowres→orig + threshold 128 → `GrayImage` binario
 - `conversion::mask_to_annotation(mask, target, dp_tolerance)`:
-  - `Bbox` → `{x, y, width, height}` del contorno axis-aligned
-  - `Obb` → `{x, y, width, height, rotation}` vía minAreaRect (impl propia sobre contorno con rotating calipers, o aproximación)
-  - `Polygon` → `{points: [{x,y}], closed: true}` con `geo::algorithm::simplify::Simplify` (Douglas-Peucker)
-  - `Mask` → `{base64png}` reusando encoder de `pixel_commands.rs`
-- `sam_accept_mask` — pega todo: upscale, caso especial re-encode para `tool=Mask`, invoca conversión, elimina candidato del cache, devuelve `Value` listo para `AnnotationEntry.data`
+  - `Bbox` → `{x,y,width,height}` (bounds axis-aligned)
+  - `Obb` → `{x,y,width,height,rotation}` vía convex hull (`geo::ConvexHull`) + rotating calipers (`min_area_rect` propio)
+  - `Polygon` → `{points:[{x,y}], closed:true}` con `imageproc::find_contours` (mayor) + `geo::Simplify` (Douglas-Peucker)
+  - `Mask` → `{base64png}` RGBA (255,255,255,255 dentro / 0,0,0,0 fuera)
+- `sam_accept_mask` — extrae candidato, upscale, convierte, lo elimina del cache, devuelve `Value` listo para `AnnotationEntry.data`
 
-### ⏳ PR6 — UI sub-modo SAM (frontend)
+### ✅ PR6 — UI sub-modo SAM (completado)
 
-- `useSamStore` (Zustand): `samAssistActive`, `candidates`, `activeMaskIdx` (0/1/2), `hoverMaskId`, `filters {predIouMin, stabilityMin, nmsThresh}`, `idMap: Uint16Array(256×256)`
-- `src/features/sam/`:
-  - `SamToolbarButton.tsx` — botón + tooltip ghosted, atajo `S`
-  - `SamOverlay.tsx` — layer Konva con imagen compuesta offscreen
-  - `SamSliders.tsx` — granularidad (0/1/2), score, NMS
-  - `useSamComposite.ts` — recompone overlay + id_map offscreen al cambiar filtros
-  - `useSamHitTest.ts` — lee id_map por coord
-- Integración en `CanvasStage`:
-  - Si `samAssistActive`: intercepta mousemove (hover), click (asignar), keydown (clases)
-  - Canal asignar: `class_shortcut` → `sam_accept_mask` → `saveAnnotations` existente → remove del candidates frontend
-- Wire eventos: `onSamAmgProgress` → toast/modal progreso
-- Invalidación frontend: cambio de `currentImageId` → `samClearCache` + volver a ofrecer AMG
+Implementado:
+- `src/features/sam/store/useSamStore.ts` (Zustand) — `samAssistActive`, `pairId`, `hqMode`, `candidates`, `activeMaskIdx`, `hoverMaskId`, `filters`, `amgProgress`, `encoding` + (PR7) campos refine
+- `src/features/sam/components/`:
+  - `SamSettingsSection.tsx` — sección en Settings global (tras migración A): subir/eliminar/listar encoders/decoders, cargar par, HQ mode, liberar memoria
+  - `SamFloatingPanel.tsx` — panel `right-4 top-4`: AMG, sliders, granularidad 0/1/2, contador, refine toggle
+  - `SamOverlay.tsx` — Layer Konva offscreen + idMap 256×256 expuesto en `window.__samComposite` para hit-test sin prop drilling
+- `src/features/sam/hooks/useSamClassAccept.ts` — captura tecla de clase tras hover sobre candidate (capture-phase)
+- `CanvasToolbar.tsx` — botón Wand2 con tooltip ghosted (sin par o tool incompatible)
+- `useKeyboardShortcuts.ts` — atajo `S` global toggle
+- `AnnotationCanvas.tsx` — `samEncodeImage` automático al cambiar imagen, intercept eventos, monta overlay + panel + refine layer
+- i18n: `public/locales/{es,en}/sam.json` (resto fallback inglés)
 
-### ⏳ PR7 — Modo refinamiento click-por-click
+### ✅ PR7 — Modo refinamiento click-por-click (completado)
 
-- Botón secundario "Refinar con click" (sub-modo dentro de SAM Assist)
-- `SamRefineHandler`:
-  - Click izq: agrega `SamPoint{label:1}`
-  - Shift+click: `SamPoint{label:0}`
-  - Drag: bbox
-  - `Enter`: acepta (pasa por misma conversión y pipeline de `sam_accept_mask`, pero con `SamPrediction` directo, no `SamMask`)
-  - `Esc`: descarta
-- `Tab`: ciclar entre las 3 máscaras multimask antes de aceptar
+Implementado:
 
-### ⏳ PR8 — Polish
+Backend:
+- `SamState.refine: Mutex<Option<SamPrediction>>` — stash de la última predicción
+- `sam_predict` ahora guarda en stash (sin coste extra: clone barato vs IPC)
+- `sam_accept_refine(active_idx, target, dp_tolerance)` — toma del stash, upscale + `mask_to_annotation`, devuelve `Value`
+- `sam_clear_refine` — descarta stash
 
-- Ghosting total cuando tool ∈ {keypoints, landmarks, pan}
-- HQ mode toggle (32×32) en settings de proyecto
-- Indicador "encoding…" durante primer embedding
-- Preset MobileSAM (detección automática por hash)
-- Licencias en `DOCS/SAM_LICENSES.md` (Apache 2.0 MobileSAM, Apache 2.0 SAM ViT, Apache 2.0 SAM2)
+Frontend:
+- Store extendido: `refineMode`, `refinePoints: SamPoint[]`, `refineBbox`, `refinePrediction`, `refineActiveIdx`, `refineRunning` + acciones (`addRefinePoint`, `cycleRefineActiveIdx`, `resetRefine`, etc.)
+- `SamRefineLayer.tsx` — Layer Konva con Rect cover que captura mouse en coords imagen:
+  - Click izq → punto `label=1` (verde)
+  - Shift+click → punto `label=0` (rojo)
+  - Drag → bbox (violeta dashed)
+  - Auto-`samPredict` debounced 120ms al cambiar prompts
+  - Renderiza máscara preview (logits uint8 → canvas violeta α=130) sobre la imagen
+- `useSamRefineKeyboard.ts`:
+  - `Tab` cicla entre 3 máscaras multimask
+  - `Esc` limpia (1° pulsación) → sale del modo (2° pulsación si nada que limpiar)
+  - Tecla de clase (1-0, Q-P) → `sam_accept_refine` → agrega `Annotation` → limpia para siguiente refine
+- `SamFloatingPanel` — botón "Refinar con click" toggle + ayuda inline
+- `AnnotationCanvas` — early-return en mouseDown si `refineMode` (el SamRefineLayer captura)
+
+### ⏳ PR8 — Auto-descarga + presets + polish
+
+- **Auto-descarga HF** (movido desde "más adelante"):
+  - Presets predefinidos: MobileSAM (~40MB), SAM ViT-B (~360MB), SAM2-small
+  - Comando `sam_download_preset(preset_id)` con `reqwest` async
+  - Hash check (sha256) tras descarga
+  - Evento progreso bytes `sam:download_progress`
+  - UI en `SamSettingsSection`: lista de presets descargables con barra de progreso
+  - Auto-registro en index app-level al completar
+- **Polish**:
+  - Ghosting total cuando tool ∈ {keypoints, landmarks, pan} ✅ (ya en PR6)
+  - HQ mode toggle (32×32) ✅ (ya en PR6)
+  - Indicador "encoding…" durante primer embedding ✅ (ya en PR6)
+  - Preset MobileSAM (detección automática por hash) — pendiente
+  - Licencias en `DOCS/SAM_LICENSES.md` (Apache 2.0 MobileSAM, Apache 2.0 SAM ViT, Apache 2.0 SAM2)
+- **Filtro stability per-mask**: backend debería exponer `stability_score` por máscara en `SamMask` para que el slider del panel filtre frontend (hoy queda inerte)
 
 ---
 

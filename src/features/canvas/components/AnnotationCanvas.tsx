@@ -38,6 +38,14 @@ import { useInferenceModels } from '../../inference/hooks/useInferenceModels';
 import { useInferenceRunner } from '../../inference/hooks/useInferenceRunner';
 import type { InferenceConfig, InferenceResultEvent, InferenceCompletedEvent, InferenceErrorEvent } from '../../inference/types';
 import { useToast } from '@/components/hooks/use-toast';
+import { useSamStore } from '../../sam/store/useSamStore';
+import { SamOverlay, samHitTest } from '../../sam/components/SamOverlay';
+import { SamFloatingPanel } from '../../sam/components/SamFloatingPanel';
+import { SamRefineLayer } from '../../sam/components/SamRefineLayer';
+import { useSamClassAccept } from '../../sam/hooks/useSamClassAccept';
+import { useSamRefineKeyboard } from '../../sam/hooks/useSamRefineKeyboard';
+import { useSamAutoGenerate } from '../../sam/hooks/useSamAutoGenerate';
+import { samEncodeImage } from '@/lib/tauriDb';
 
 const ZOOM_WHEEL_FACTOR = 1.05;
 const MIN_ZOOM_SCALE = 1;
@@ -217,6 +225,51 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     maskHandlerRef.current = new MaskHandler(null, addAnnotation, '#667eea');
   }
   const maskHandler = maskHandlerRef.current;
+
+  // ─── SAM Assist hooks ──────────────────────────────────────────────────────
+  const samAssistActive = useSamStore((s) => s.samAssistActive);
+  const samPairId = useSamStore((s) => s.pairId);
+  const setSamHover = useSamStore((s) => s.setHoverMaskId);
+  const setSamEncoding = useSamStore((s) => s.setEncoding);
+  const setSamCandidates = useSamStore((s) => s.setCandidates);
+
+  // Encode automático al cambiar imagen mientras SAM Assist está activo.
+  useEffect(() => {
+    if (!samAssistActive || !samPairId || !projectId || !currentImageId) return;
+    let cancelled = false;
+    setSamEncoding(true);
+    setSamCandidates([]);
+    setSamHover(null);
+    samEncodeImage(projectId, currentImageId)
+      .catch((err) => {
+        if (!cancelled) console.error('[SAM] encode_image falló:', err);
+      })
+      .finally(() => {
+        if (!cancelled) setSamEncoding(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [samAssistActive, samPairId, projectId, currentImageId, setSamEncoding, setSamCandidates, setSamHover]);
+
+  useSamClassAccept({
+    projectType: project?.type,
+    classes: project?.classes,
+    imageId: currentImageId,
+    addAnnotation,
+  });
+
+  useSamRefineKeyboard({
+    projectType: project?.type,
+    classes: project?.classes,
+    addAnnotation,
+  });
+
+  useSamAutoGenerate({
+    projectId,
+    imageId: currentImageId,
+    annotations,
+  });
 
   const getActiveClassMaskBase = useCallback((): string | undefined => {
     if (activeClassId === null) return undefined;
@@ -640,6 +693,16 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     const clickedOnImage = e.target.getClassName() === 'Image';
 
     if (clickedOnEmpty || clickedOnImage) {
+      // SAM Assist: si el click cae sobre una máscara candidata, no iniciar dibujo;
+      // el usuario debe presionar una clase para confirmar (lo gestiona useSamClassAccept).
+      if (samAssistActive && useSamStore.getState().hoverMaskId) {
+        return;
+      }
+      // SAM Refine: el SamRefineLayer captura los eventos. No disparar handler de tool.
+      if (samAssistActive && useSamStore.getState().refineMode) {
+        return;
+      }
+
       selectAnnotation(null, false);
 
       if (activeTool === 'mask' && konvaImage) {
@@ -684,6 +747,12 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
 
     const coords = getImageCoordinates(stageRef.current);
     if (coords) {
+      // SAM Assist: actualizar hover (no interfiere con tool actual).
+      if (samAssistActive && image) {
+        const hit = samHitTest(coords.imageX, coords.imageY, image.width, image.height);
+        setSamHover(hit);
+      }
+
       if (currentHandler) {
         currentHandler.onMouseMove(coords);
       }
@@ -1735,6 +1804,24 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
           )}
         </Layer>
 
+        {/* SAM overlay (debajo del Transformer, encima de anotaciones) */}
+        <SamOverlay
+          imageWidth={konvaImage.width}
+          imageHeight={konvaImage.height}
+          imageOffsetX={imageOffset.x}
+          imageOffsetY={imageOffset.y}
+          scale={scale}
+        />
+
+        {/* SAM refine layer (PR7): captura mouse para puntos+bbox+preview */}
+        <SamRefineLayer
+          imageWidth={konvaImage.width}
+          imageHeight={konvaImage.height}
+          imageOffsetX={imageOffset.x}
+          imageOffsetY={imageOffset.y}
+          scale={scale}
+        />
+
         {/* Transformer Layer */}
         <Layer>
           <Transformer
@@ -1750,6 +1837,12 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
           />
         </Layer>
       </Stage>
+
+      <SamFloatingPanel
+        projectId={projectId}
+        imageId={currentImageId}
+        annotations={annotations}
+      />
 
       </div>
 

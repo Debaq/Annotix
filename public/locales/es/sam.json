@@ -1,0 +1,37 @@
+{
+  "title": "Segment Anything",
+  "toolbarTooltip": "Generar máscaras SAM",
+  "toolbarTooltipNoModel": "Carga un par encoder/decoder en Configuración → SAM",
+  "section": {
+    "title": "Segment Anything (SAM)",
+    "appLevelHint": "Los modelos SAM se almacenan a nivel de aplicación y sirven para todos los proyectos.",
+    "encoders": "Encoders",
+    "decoders": "Decoders",
+    "uploadEncoder": "Subir encoder",
+    "uploadDecoder": "Subir decoder",
+    "selectOnnx": "Seleccionar archivo ONNX",
+    "empty": "Sin modelos. Sube uno.",
+    "deleteConfirm": "Eliminar el modelo \"{{name}}\"?",
+    "loadPair": "Cargar par seleccionado",
+    "pairLoaded": "Par cargado",
+    "hqMode": "Modo HQ (32×32)",
+    "hqModeHint": "Más candidatos, más lento",
+    "clearCache": "Liberar memoria SAM"
+  },
+  "panel": {
+    "title": "SAM Assist",
+    "generate": "Generar máscaras",
+    "candidates": "candidatos",
+    "granularity": "Granularidad",
+    "predIou": "IoU pred. mín.",
+    "stability": "Estabilidad mín.",
+    "overlap": "Overlap con anotaciones",
+    "clear": "Limpiar",
+    "encoding": "Encoding...",
+    "progress": "Procesando...",
+    "refine": "Refinar con click",
+    "refineExit": "Salir de refine",
+    "refineHelp": "Click izq: punto +. Shift+click: punto −. Arrastrar: bbox. Tab: cambiar máscara. Enter: aceptar. Esc: descartar.",
+    "refineRunning": "Calculando máscara..."
+  }
+}

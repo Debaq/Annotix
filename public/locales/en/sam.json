@@ -1,0 +1,37 @@
+{
+  "title": "Segment Anything",
+  "toolbarTooltip": "Generate SAM masks",
+  "toolbarTooltipNoModel": "Load an encoder/decoder pair in Settings → SAM",
+  "section": {
+    "title": "Segment Anything (SAM)",
+    "appLevelHint": "SAM models are stored at the application level and used across all projects.",
+    "encoders": "Encoders",
+    "decoders": "Decoders",
+    "uploadEncoder": "Upload encoder",
+    "uploadDecoder": "Upload decoder",
+    "selectOnnx": "Select ONNX file",
+    "empty": "No models. Upload one.",
+    "deleteConfirm": "Delete model \"{{name}}\"?",
+    "loadPair": "Load selected pair",
+    "pairLoaded": "Pair loaded",
+    "hqMode": "HQ mode (32×32)",
+    "hqModeHint": "More candidates, slower",
+    "clearCache": "Free SAM memory"
+  },
+  "panel": {
+    "title": "SAM Assist",
+    "generate": "Generate masks",
+    "candidates": "candidates",
+    "granularity": "Granularity",
+    "predIou": "Min predicted IoU",
+    "stability": "Min stability",
+    "overlap": "Overlap with annotations",
+    "clear": "Clear",
+    "encoding": "Encoding...",
+    "progress": "Processing...",
+    "refine": "Refine with click",
+    "refineExit": "Exit refine",
+    "refineHelp": "Left click: + point. Shift+click: − point. Drag: bbox. Tab: change mask. Enter: accept. Esc: discard.",
+    "refineRunning": "Computing mask..."
+  }
+}
