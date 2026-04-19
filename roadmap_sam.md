@@ -239,6 +239,31 @@ Frontend:
 - `SamFloatingPanel` — botón "Refinar con click" toggle + ayuda inline
 - `AnnotationCanvas` — early-return en mouseDown si `refineMode` (el SamRefineLayer captura)
 
+### ✅ PR7.5 — Fix UX toolbar + encoder multi-layout (completado)
+
+Arreglos post-PR7 al integrar SAM con la toolbar real:
+
+- **Botón Wand2 en toolbar real (`FloatingTools.tsx`)**: el botón vivía en `CanvasToolbar.tsx` que es un componente huérfano (no renderizado). Se movió/duplicó a `FloatingTools` (`fa-wand-magic-sparkles`, violeta, encima del botón de inferencia).
+- **Wand2 independiente de la tool activa**: se quitó la restricción `activeTool ∈ {pan, keypoints, landmarks}`. Ahora `samAvailable = !!pairId && project.type ∉ {keypoints, landmarks}`. El formato de anotación al aceptar se deriva de `project.type` (ya lo hacía `useSamClassAccept`).
+- **Un clic → AMG automático**: el botón Wand2 activa `samAssistActive=true` y dispara AMG en el mismo gesto. Tecla `S` idem.
+  - Store: `amgRequestToken: number`, `generating: boolean`, `setGenerating`, `requestAmg()`.
+  - Hook nuevo `src/features/sam/hooks/useSamAutoGenerate.ts` — escucha el token en `AnnotationCanvas`, corre `samEncodeImage` (idempotente) + `samAutoGenerateMasks`.
+  - `SamFloatingPanel` usa `requestAmg` para su botón "Generar" (sin lógica IPC propia).
+- **Encoder ONNX multi-layout**: `encoder.rs` inspecciona `session.inputs()[0].dtype().tensor_shape()` y arma tensor NCHW `[1,3,H,W]`, CHW `[3,H,W]`, HWC `[H,W,3]` o NHWC `[1,H,W,3]`. Helper `chw_to_hwc` para permutar cuando el canal va al final.
+- **Panel flotante arrastrable**: `SamFloatingPanel` se mueve con drag en el header; coords calculadas respecto al `offsetParent` para evitar salto/offset grosero. Default position `right:16, top:320` para no quedar bajo `FloatingZoomControls` + `ImageAdjustments`.
+- **i18n**: `toolbarTooltip` → "Generar máscaras SAM" (es) / "Generate SAM masks" (en). Removido `toolbarTooltipDisabled`.
+
+Archivos tocados:
+- `src/features/canvas/components/FloatingTools.tsx` (botón Wand2)
+- `src/features/canvas/components/CanvasToolbar.tsx` (cambios quedaron pero componente sigue huérfano — candidato a borrar)
+- `src/features/canvas/components/AnnotationCanvas.tsx` (monta `useSamAutoGenerate`)
+- `src/features/sam/store/useSamStore.ts` (token, generating, requestAmg)
+- `src/features/sam/hooks/useSamAutoGenerate.ts` (nuevo)
+- `src/features/sam/components/SamFloatingPanel.tsx` (usa store + drag)
+- `src/features/core/hooks/useKeyboardShortcuts.ts` (tecla S dispara AMG)
+- `src-tauri/src/inference/sam/encoder.rs` (layouts)
+- `public/locales/{es,en}/sam.json`
+
 ### ⏳ PR8 — Auto-descarga + presets + polish
 
 - **Auto-descarga HF** (movido desde "más adelante"):
