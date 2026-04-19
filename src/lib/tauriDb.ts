@@ -18,6 +18,13 @@ import type {
   AudioEvent,
   TtsSentence,
   LlmConfig,
+  AmgConfig,
+  MaskTarget,
+  SamAmgProgress,
+  SamEncodeInfo,
+  SamMask,
+  SamPrediction,
+  SamPrompts,
 } from './db';
 
 // Re-export el tipo AnnotixImage adaptado para Tauri (sin Blob, con blobPath)
@@ -639,5 +646,90 @@ export function onPdfExtractionProgress(
 ): Promise<UnlistenFn> {
   return listen<PdfExtractionProgress>('pdf:extraction-progress', (event) =>
     callback(event.payload)
+  );
+}
+
+// ============================================================================
+// SAM — Segment Anything Model
+// ============================================================================
+
+export function samLoadModel(
+  projectId: string,
+  encoderModelId: string,
+  decoderModelId: string,
+): Promise<string> {
+  return invoke<string>('sam_load_model', {
+    projectId,
+    encoderModelId,
+    decoderModelId,
+  });
+}
+
+export function samEncodeImage(
+  projectId: string,
+  imageId: string,
+): Promise<SamEncodeInfo> {
+  return invoke<SamEncodeInfo>('sam_encode_image', { projectId, imageId });
+}
+
+export function samPredict(prompts: SamPrompts): Promise<SamPrediction> {
+  return invoke<SamPrediction>('sam_predict', { prompts });
+}
+
+export function samAutoGenerateMasks(
+  projectId: string,
+  imageId: string,
+  config: AmgConfig,
+  existingBboxes?: [number, number, number, number][],
+): Promise<SamMask[]> {
+  return invoke<SamMask[]>('sam_auto_generate_masks', {
+    projectId,
+    imageId,
+    config,
+    existingBboxes: existingBboxes ?? null,
+  });
+}
+
+export function samGetCandidates(imageId: string): Promise<SamMask[]> {
+  return invoke<SamMask[]>('sam_get_candidates', { imageId });
+}
+
+export function samRefilterCandidates(
+  imageId: string,
+  existingBboxes: [number, number, number, number][],
+  overlapThresh: number,
+): Promise<SamMask[]> {
+  return invoke<SamMask[]>('sam_refilter_candidates', {
+    imageId,
+    existingBboxes,
+    overlapThresh,
+  });
+}
+
+export function samAcceptMask(
+  imageId: string,
+  maskId: string,
+  activeMultimaskIdx: number,
+  target: MaskTarget,
+  dpTolerance: number,
+): Promise<unknown> {
+  return invoke<unknown>('sam_accept_mask', {
+    imageId,
+    maskId,
+    activeMultimaskIdx,
+    target,
+    dpTolerance,
+  });
+}
+
+export function samClearCache(): Promise<void> {
+  return invoke<void>('sam_clear_cache');
+}
+
+export function onSamAmgProgress(
+  callback: (data: SamAmgProgress) => void,
+): Promise<UnlistenFn> {
+  return listen<SamAmgProgress>('sam:amg_progress', (event) =>
+    callback(event.payload),
   );
 }

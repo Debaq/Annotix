@@ -77,7 +77,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   const { annotations, selectedAnnotationId, selectedAnnotationIds, selectAnnotation, updateAnnotation, addAnnotation, deleteAnnotation } = overrideAnnotations ?? defaults;
   const { hiddenAnnotationIds } = defaults;
   const { replaceAnnotations } = defaults;
-  const { activeTool, activeClassId, setActiveTool, annotationsVisible, galleryMode } = useUIStore();
+  const { activeTool, activeClassId, setActiveTool, annotationsVisible, galleryMode, showLabels } = useUIStore();
 
   // Auto-lock/unlock para presencia P2P
   useImagePresence(project?.id, image?.id);
@@ -1335,6 +1335,34 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
             const isSelected = selectedAnnotationIds.has(ann.id);
             const isDisabled = overrideAnnotations?.disabledAnnotationIds?.has(ann.id) ?? false;
             const annColor = isDisabled ? '#999999' : classInfo.color;
+
+            const renderLabel = (x: number, y: number) => {
+              if (!showLabels) return null;
+              const padX = 4;
+              const padY = 2;
+              const fontSize = 12;
+              const text = classInfo.name;
+              const textWidth = text.length * (fontSize * 0.6);
+              return (
+                <Group x={x} y={y - (fontSize + padY * 2) - 2} listening={false}>
+                  <Rect
+                    width={textWidth + padX * 2}
+                    height={fontSize + padY * 2}
+                    fill={annColor}
+                    cornerRadius={3}
+                    opacity={0.9}
+                  />
+                  <Text
+                    x={padX}
+                    y={padY}
+                    text={text}
+                    fontSize={fontSize}
+                    fill="white"
+                    fontStyle="bold"
+                  />
+                </Group>
+              );
+            };
             const commonProps = {
               scale,
               imageOffset,
@@ -1382,6 +1410,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
                         listening={false}
                       />
                     )}
+                    {renderLabel(bboxData.x * scale + imageOffset.x, bboxData.y * scale + imageOffset.y)}
                     {toggleFn && (
                       <Group
                         x={btnX}
@@ -1419,65 +1448,87 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
                 );
               }
 
-              case 'obb':
+              case 'obb': {
+                const obbData = ann.data as OBBData;
                 return (
-                  <OBBRenderer
-                    key={ann.id}
-                    id={'ann-' + ann.id}
-                    data={ann.data as OBBData}
-                    {...commonProps}
-                    draggable={activeTool !== 'pan' && isSelected}
-                    onDragEnd={(e) => handleOBBDragEnd(ann.id, e)}
-                    onTransformEnd={(e) => handleOBBTransform(ann.id, e)}
-                  />
+                  <React.Fragment key={ann.id}>
+                    <OBBRenderer
+                      id={'ann-' + ann.id}
+                      data={obbData}
+                      {...commonProps}
+                      draggable={activeTool !== 'pan' && isSelected}
+                      onDragEnd={(e) => handleOBBDragEnd(ann.id, e)}
+                      onTransformEnd={(e) => handleOBBTransform(ann.id, e)}
+                    />
+                    {renderLabel(
+                      (obbData.x - obbData.width / 2) * scale + imageOffset.x,
+                      (obbData.y - obbData.height / 2) * scale + imageOffset.y
+                    )}
+                  </React.Fragment>
                 );
+              }
 
-              case 'polygon':
+              case 'polygon': {
+                const polyData = ann.data as PolygonData;
+                const minX = polyData.points.length ? Math.min(...polyData.points.map(p => p.x)) : 0;
+                const minY = polyData.points.length ? Math.min(...polyData.points.map(p => p.y)) : 0;
                 return (
-                  <PolygonRenderer
-                    key={ann.id}
-                    id={'ann-' + ann.id}
-                    data={ann.data as PolygonData}
-                    {...commonProps}
-                    draggable={activeTool !== 'pan' && isSelected}
-                    onDragEnd={(e) => {
-                      const polygonData = ann.data as PolygonData;
-                      const group = e.target;
-                      const dx = group.x() / scale;
-                      const dy = group.y() / scale;
-                      const updatedPoints = polygonData.points.map(p => ({
-                        x: p.x + dx,
-                        y: p.y + dy
-                      }));
-                      updateAnnotation(ann.id, {
-                        data: {
-                          points: updatedPoints,
-                          closed: true,
-                        }
-                      });
-                      group.x(0);
-                      group.y(0);
-                    }}
-                  />
+                  <React.Fragment key={ann.id}>
+                    <PolygonRenderer
+                      id={'ann-' + ann.id}
+                      data={polyData}
+                      {...commonProps}
+                      draggable={activeTool !== 'pan' && isSelected}
+                      onDragEnd={(e) => {
+                        const group = e.target;
+                        const dx = group.x() / scale;
+                        const dy = group.y() / scale;
+                        const updatedPoints = polyData.points.map(p => ({
+                          x: p.x + dx,
+                          y: p.y + dy
+                        }));
+                        updateAnnotation(ann.id, {
+                          data: {
+                            points: updatedPoints,
+                            closed: true,
+                          }
+                        });
+                        group.x(0);
+                        group.y(0);
+                      }}
+                    />
+                    {renderLabel(minX * scale + imageOffset.x, minY * scale + imageOffset.y)}
+                  </React.Fragment>
                 );
+              }
 
-              case 'keypoints':
+              case 'keypoints': {
+                const kpData = ann.data as KeypointsData;
+                const anchor = kpData.points.find(p => p.visible) ?? kpData.points[0];
                 return (
-                  <KeypointsRenderer
-                    key={ann.id}
-                    data={ann.data as KeypointsData}
-                    {...commonProps}
-                  />
+                  <React.Fragment key={ann.id}>
+                    <KeypointsRenderer
+                      data={kpData}
+                      {...commonProps}
+                    />
+                    {anchor && renderLabel(anchor.x * scale + imageOffset.x, anchor.y * scale + imageOffset.y)}
+                  </React.Fragment>
                 );
+              }
 
-              case 'landmarks':
+              case 'landmarks': {
+                const lmData = ann.data as LandmarksData;
+                const anchor = lmData.points[0];
                 return (
-                  <LandmarksRenderer
-                    key={ann.id}
-                    data={ann.data as LandmarksData}
-                    {...commonProps}
-                  />
+                  <React.Fragment key={ann.id}>
+                    <LandmarksRenderer
+                      data={lmData}
+                      {...commonProps}
+                    />
+                    {anchor && renderLabel(anchor.x * scale + imageOffset.x, anchor.y * scale + imageOffset.y)}
+                  </React.Fragment>
                 );
+              }
 
               case 'mask':
                 if (activeTool === 'mask' && ann.classId === activeClassId && maskHandler.isActive()) {

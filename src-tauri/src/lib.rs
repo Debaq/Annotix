@@ -73,6 +73,7 @@ use training::runner::TrainingProcessManager;
 use training::cloud::CloudTrainingManager;
 use training::TrainingEnvCache;
 use inference::runner::InferenceProcessManager;
+use inference::sam::state::SamState;
 use browser_automation::BrowserAutomationManager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -90,6 +91,7 @@ pub fn run() {
         .manage(CloudTrainingManager::new())
         .manage(TrainingEnvCache::new())
         .manage(InferenceProcessManager::new())
+        .manage(SamState::new())
         .manage(BrowserAutomationManager::new())
         .manage(p2p::node::P2pState::new())
         .manage(serve::ServeState::new())
@@ -334,6 +336,15 @@ pub fn run() {
             commands::pixel_commands::compute_audio_peaks,
             // PDF extraction
             commands::pdf_commands::extract_pdf_pages,
+            // SAM (Segment Anything)
+            commands::sam_commands::sam_load_model,
+            commands::sam_commands::sam_encode_image,
+            commands::sam_commands::sam_predict,
+            commands::sam_commands::sam_auto_generate_masks,
+            commands::sam_commands::sam_get_candidates,
+            commands::sam_commands::sam_refilter_candidates,
+            commands::sam_commands::sam_accept_mask,
+            commands::sam_commands::sam_clear_cache,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

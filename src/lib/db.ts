@@ -424,3 +424,74 @@ export interface VideoInfo {
 export type NewAnnotixImage = Omit<AnnotixImage, 'id' | 'metadata'> & {
   metadata?: Partial<AnnotixImage['metadata']>;
 };
+
+// ============================================================================
+// SAM — Segment Anything Model (mirror de src-tauri/src/inference/sam)
+// ============================================================================
+
+export interface SamPoint {
+  x: number;
+  y: number;
+  label: 0 | 1;                // 1 = positivo, 0 = negativo
+}
+
+export interface SamPrompts {
+  points?: SamPoint[];
+  bbox?: [number, number, number, number]; // [x1,y1,x2,y2] px imagen original
+  multimaskOutput?: boolean;
+}
+
+export interface SamPrediction {
+  masksLowres: Uint8Array[];
+  scores: number[];
+  bestIndex: number;
+  lowresSize: [number, number];
+  origSize: [number, number];
+}
+
+export interface AmgConfig {
+  pointsPerSide: number;              // default 16
+  predIouThresh: number;              // 0.7
+  stabilityScoreThresh: number;       // 0.85
+  boxNmsThresh: number;               // 0.7
+  minMaskRegionArea: number;          // 100
+  overlapWithExistingThresh: number;  // 0.5
+}
+
+export const DEFAULT_AMG_CONFIG: AmgConfig = {
+  pointsPerSide: 16,
+  predIouThresh: 0.7,
+  stabilityScoreThresh: 0.85,
+  boxNmsThresh: 0.7,
+  minMaskRegionArea: 100,
+  overlapWithExistingThresh: 0.5,
+};
+
+/** Candidato AMG. Efímero (no se persiste en project.json). */
+export interface SamMask {
+  id: string;
+  /** 3 logits uint8 (serializados por Tauri como number[] | Uint8Array). */
+  masksLowres: [Uint8Array, Uint8Array, Uint8Array];
+  scores: [number, number, number];
+  bbox: [number, number, number, number]; // [x,y,w,h] px imagen original
+  origSize: [number, number];
+  lowresSize: [number, number];
+  colorSeed: number;
+}
+
+export interface SamEncodeInfo {
+  imageId: string;
+  origSize: [number, number];
+  cached: boolean;
+}
+
+export type SamAmgPhase = 'encoding' | 'decoding_batch' | 'filtering' | 'done';
+
+export interface SamAmgProgress {
+  phase: SamAmgPhase;
+  current: number;
+  total: number;
+  imageId: string;
+}
+
+export type MaskTarget = 'bbox' | 'obb' | 'polygon' | 'mask';

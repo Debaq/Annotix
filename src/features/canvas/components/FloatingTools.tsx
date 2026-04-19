@@ -51,7 +51,7 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
 }) => {
   const { t } = useTranslation();
   const { project } = useCurrentProject();
-  const { activeTool, setActiveTool, annotationsVisible, toggleAnnotationsVisible } = useUIStore();
+  const { activeTool, setActiveTool, annotationsVisible, toggleAnnotationsVisible, showLabels, toggleLabels } = useUIStore();
 
   if (!project) return null;
 
@@ -204,6 +204,15 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
             title={t(annotationsVisible ? 'tools.hideAnnotations' : 'tools.showAnnotations', annotationsVisible ? 'Ocultar marcas (H)' : 'Mostrar marcas (H)')}
           >
             <i className={`fas ${annotationsVisible ? 'fa-eye' : 'fa-eye-slash'}`}></i>
+          </button>
+
+          {/* Toggle etiquetas (nombre de clase sobre la anotación) */}
+          <button
+            onClick={toggleLabels}
+            className={cn('annotix-tool-btn', showLabels && 'active')}
+            title={t(showLabels ? 'tools.hideLabels' : 'tools.showLabels', showLabels ? 'Ocultar etiquetas' : 'Mostrar etiquetas')}
+          >
+            <i className="fas fa-tag"></i>
           </button>
 
           {/* Botón de inferencia AI */}

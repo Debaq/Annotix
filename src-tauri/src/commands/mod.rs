@@ -21,3 +21,4 @@ pub mod inference_commands;
 pub mod serve_commands;
 pub mod pixel_commands;
 pub mod pdf_commands;
+pub mod sam_commands;

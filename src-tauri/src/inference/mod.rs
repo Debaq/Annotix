@@ -1,5 +1,6 @@
 pub mod ort_runner;
 pub mod runner;
+pub mod sam;
 pub mod scripts;
 
 use serde::{Deserialize, Serialize};

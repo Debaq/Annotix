@@ -137,7 +137,7 @@ export const useUIStore = create<UIState>()(
       })),
 
       // UI flags
-      showLabels: true,
+      showLabels: false,
       showGrid: false,
       annotationsVisible: true,
       toggleLabels: () => set((state) => ({ showLabels: !state.showLabels })),
