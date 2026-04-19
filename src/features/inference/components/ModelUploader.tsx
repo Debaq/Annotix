@@ -47,7 +47,7 @@ export function ModelUploader({ model, loading, configResult, onUpload, onDelete
                   </>
                 )}
                 <span>·</span>
-                <span>{model.classNames.length} clases</span>
+                <span>{t('inference.classesCount', { count: model.classNames.length })}</span>
               </div>
               <div className="flex items-center gap-2 mt-0.5">
                 {model.format === 'onnx' ? (
@@ -114,7 +114,7 @@ export function ModelUploader({ model, loading, configResult, onUpload, onDelete
         <>
           <i className="fas fa-cloud-upload-alt text-2xl" />
           <span className="text-sm font-medium">{t('inference.uploadModel')}</span>
-          <span className="text-xs text-gray-500">.onnx o .pt + archivo de configuración (.json)</span>
+          <span className="text-xs text-gray-500">{t('inference.uploadHintFiles')}</span>
         </>
       )}
     </button>

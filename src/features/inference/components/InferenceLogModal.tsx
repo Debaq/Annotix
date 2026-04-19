@@ -51,7 +51,7 @@ export function InferenceLogModal({ open, total, fileNameById, onCancel, onClose
     const push = (level: LogLine['level'], text: string) =>
       setLines((prev) => [...prev, { ts: Date.now(), level, text }]);
 
-    push('info', `▶ ${tRef.current('inference.log.start', 'Inicio inferencia batch')} — ${total} ${tRef.current('inference.log.images', 'imágenes')}`);
+    push('info', `▶ ${tRef.current('inference.log.start')} — ${total} ${tRef.current('inference.log.images')}`);
 
     const subs: Promise<UnlistenFn>[] = [];
 
@@ -90,7 +90,7 @@ export function InferenceLogModal({ open, total, fileNameById, onCancel, onClose
     subs.push(
       listen<InferenceCompletedEvent>('inference:completed', () => {
         const elapsed = startRef.current ? Date.now() - startRef.current : 0;
-        push('info', `✔ ${tRef.current('inference.log.done', 'Completado')} — ${(elapsed / 1000).toFixed(1)}s`);
+        push('info', `✔ ${tRef.current('inference.log.done')} — ${(elapsed / 1000).toFixed(1)}s`);
         setDone(true);
       }),
     );
@@ -166,7 +166,7 @@ export function InferenceLogModal({ open, total, fileNameById, onCancel, onClose
         >
           <i className="fas fa-brain" style={{ color: '#a78bfa' }}></i>
           <span style={{ fontWeight: 600 }}>
-            {t('inference.log.title', 'Inferencia batch')}
+            {t('inference.log.title')}
           </span>
           <span style={{ marginLeft: 'auto', fontSize: 12, color: '#94a3b8' }}>
             {current}/{total} ({pct}%) · {totals.detections} det · ~{avgMs}ms/img
@@ -223,10 +223,10 @@ export function InferenceLogModal({ open, total, fileNameById, onCancel, onClose
           }}
         >
           <span style={{ color: '#94a3b8' }}>
-            {t('inference.log.elapsed', 'Transcurrido')}: {(elapsedMs / 1000).toFixed(1)}s
+            {t('inference.log.elapsed')}: {(elapsedMs / 1000).toFixed(1)}s
             {totals.errors > 0 && (
               <span style={{ color: '#f87171', marginLeft: 10 }}>
-                · {totals.errors} {t('inference.log.errors', 'errores')}
+                · {totals.errors} {t('inference.log.errors')}
               </span>
             )}
           </span>
@@ -246,8 +246,8 @@ export function InferenceLogModal({ open, total, fileNameById, onCancel, onClose
               >
                 <i className={`fas ${copied ? 'fa-check' : 'fa-copy'} mr-1`}></i>
                 {copied
-                  ? t('common.copied', 'Copiado')
-                  : t('common.copy', 'Copiar')}
+                  ? t('common.copied')
+                  : t('common.copy')}
               </button>
             )}
             {done ? (
@@ -263,7 +263,7 @@ export function InferenceLogModal({ open, total, fileNameById, onCancel, onClose
                   fontSize: 12,
                 }}
               >
-                {t('common.accept', 'Aceptar')}
+                {t('common.accept')}
               </button>
             ) : (
               onCancel && (
@@ -279,7 +279,7 @@ export function InferenceLogModal({ open, total, fileNameById, onCancel, onClose
                     fontSize: 12,
                   }}
                 >
-                  {t('common.cancel', 'Cancelar')}
+                  {t('common.cancel')}
                 </button>
               )
             )}

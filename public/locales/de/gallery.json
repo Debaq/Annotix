@@ -20,6 +20,7 @@
     "unannotated": "Nicht annotiert"
   },
   "inferAll": "Alle inferieren",
+  "inferRunning": "Inferenz läuft (Log anzeigen)",
   "inferring": "Inferiert...",
   "inferenceCompleted": "Batch-Inferenz abgeschlossen",
   "backToGallery": "Zurück zur Galerie",

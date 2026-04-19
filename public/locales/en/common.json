@@ -42,5 +42,8 @@
   "reloadApp": "Reload application",
   "copyError": "Copy error",
   "technicalDetails": "Technical details",
-  "confirmTitle": "Confirm Action"
+  "confirmTitle": "Confirm Action",
+  "accept": "Accept",
+  "copy": "Copy",
+  "copied": "Copied"
 }

@@ -375,9 +375,15 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       const saved = image.id ? adjustmentsMapRef.current.get(image.id) : undefined;
       setImageAdjustments(saved ? { ...saved } : { ...DEFAULT_ADJUSTMENTS });
 
-      if (containerRef.current) {
-        const containerWidth = containerRef.current.clientWidth;
-        const containerHeight = containerRef.current.clientHeight || 600;
+      const tryFit = (attempt: number) => {
+        if (cancelled) return;
+        const el = containerRef.current;
+        const containerWidth = el?.clientWidth ?? 0;
+        const containerHeight = el?.clientHeight ?? 0;
+        if (!el || containerWidth === 0 || containerHeight === 0) {
+          if (attempt < 30) requestAnimationFrame(() => tryFit(attempt + 1));
+          return;
+        }
         const scaleX = containerWidth / img.width;
         const scaleY = containerHeight / img.height;
         const newScale = Math.min(scaleX, scaleY);
@@ -390,7 +396,8 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
         setStageSize({ width: containerWidth, height: containerHeight });
         setStageScale(1);
         setStagePos({ x: 0, y: 0 });
-      }
+      };
+      tryFit(0);
     };
 
     const loadViaAssetProtocol = () => {

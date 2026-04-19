@@ -20,6 +20,7 @@
     "unannotated": "未アノテーション"
   },
   "inferAll": "すべて推論",
+  "inferRunning": "推論実行中（ログを見る）",
   "inferring": "推論中...",
   "inferenceCompleted": "バッチ推論完了",
   "backToGallery": "ギャラリーに戻る",

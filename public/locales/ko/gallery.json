@@ -20,6 +20,7 @@
     "unannotated": "주석 미완료"
   },
   "inferAll": "모두 추론",
+  "inferRunning": "추론 실행 중 (로그 보기)",
   "inferring": "추론 중...",
   "inferenceCompleted": "일괄 추론 완료",
   "backToGallery": "갤러리로 돌아가기",

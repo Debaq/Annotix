@@ -105,32 +105,32 @@ export function ClassMappingEditor({ mapping, projectClasses, onChange }: ClassM
               <button
                 onClick={autoMap}
                 className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
-                title="Mapear por nombre"
+                title={t('inference.mapByNameTitle')}
               >
-                Auto (nombre)
+                {t('inference.mapByName')}
               </button>
               <button
                 onClick={mapByIndex}
                 className="text-xs text-sky-400 hover:text-sky-300 transition-colors"
-                title="Mapear por índice"
+                title={t('inference.mapByIndexTitle')}
               >
-                Por índice
+                {t('inference.mapByIndex')}
               </button>
             </>
           )}
           <button
             onClick={handleAdd}
             className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
-            title="Agregar clase del modelo"
+            title={t('inference.addClassTitle')}
           >
             <i className="fas fa-plus mr-1" />
-            Agregar
+            {t('inference.addClass')}
           </button>
         </div>
       </div>
 
       <div className="flex items-center gap-2 text-xs">
-        <label className="text-gray-400">N° de clases del modelo:</label>
+        <label className="text-gray-400">{t('inference.modelClassCount')}</label>
         <input
           type="number"
           min={0}
@@ -140,7 +140,7 @@ export function ClassMappingEditor({ mapping, projectClasses, onChange }: ClassM
           className="w-20 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-gray-200 font-mono text-xs"
         />
         <span className="text-gray-500 italic">
-          (genera class_0…class_N-1)
+          {t('inference.modelClassCountHint')}
         </span>
       </div>
 
@@ -176,7 +176,7 @@ export function ClassMappingEditor({ mapping, projectClasses, onChange }: ClassM
               <button
                 onClick={() => handleRemove(m.modelClassId)}
                 className="text-red-400 hover:text-red-300 text-xs px-1"
-                title="Eliminar"
+                title={t('inference.removeClass')}
               >
                 <i className="fas fa-times" />
               </button>

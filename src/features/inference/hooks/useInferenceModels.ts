@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
+import i18n from '@/lib/i18n';
 import { inferenceService } from '../services/inferenceService';
 import { useUIStore } from '../../core/store/uiStore';
 import type { InferenceModelEntry, ClassMapping, ModelMetadata, ModelConfigResult } from '../types';
@@ -52,6 +53,15 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
     refreshModels();
   }, [projectId]);
 
+  // Si selectedId cambió globalmente (upload en otra instancia) y no está
+  // en la lista local, refrescar.
+  useEffect(() => {
+    if (!projectId || !selectedModelId) return;
+    if (!models.find((m) => m.id === selectedModelId)) {
+      refreshModels();
+    }
+  }, [selectedModelId, models, projectId, refreshModels]);
+
   const uploadModel = useCallback(async () => {
     if (!projectId) return;
     setError(null);
@@ -59,9 +69,9 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
     try {
       // 1. Seleccionar archivo del modelo
       const file = await open({
-        title: 'Seleccionar modelo (.onnx o .pt)',
+        title: i18n.t('inference.selectModelFile'),
         filters: [
-          { name: 'Modelos', extensions: ['pt', 'onnx'] },
+          { name: i18n.t('inference.dialogFilterModels'), extensions: ['pt', 'onnx'] },
         ],
       });
 
@@ -95,9 +105,9 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
       //    Para ONNX siempre, para PT solo si no se detectaron clases
       if (classNames.length === 0) {
         const configFile = await open({
-          title: 'Seleccionar archivo de configuración de clases',
+          title: i18n.t('inference.selectConfigFile'),
           filters: [
-            { name: 'Configuración', extensions: ['json', 'yaml', 'yml', 'txt'] },
+            { name: i18n.t('inference.dialogFilterConfig'), extensions: ['json', 'yaml', 'yml', 'txt'] },
           ],
         });
 
@@ -116,14 +126,14 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
               rawMetadata = configResult.rawMetadata;
               setLastConfigResult(configResult);
             } catch (err) {
-              setError(`Error parseando JSON: ${err}`);
+              setError(i18n.t('inference.parseJsonError', { error: String(err) }));
             }
           } else {
             // Parsear TXT o YAML simple
             try {
               classNames = await inferenceService.parseClassNames(configPath, configExt);
             } catch (err) {
-              setError(`Error parseando archivo de clases: ${err}`);
+              setError(i18n.t('inference.parseClassesError', { error: String(err) }));
             }
           }
         }

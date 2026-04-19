@@ -468,12 +468,10 @@ fn handle_python_event(
 /// Resuelve el class_id del proyecto para una detección.
 ///
 /// Estrategia (en orden de prioridad):
-/// 1. Si el modelo tiene class_mapping con esa entrada poblada, usar ese mapeo
-///    (manual del usuario tiene prioridad absoluta).
+/// 1. Mapping manual del usuario en `class_mapping` (máxima prioridad).
 /// 2. Match exacto por nombre (case-insensitive) con clases del proyecto.
-/// 3. Single-class fallback: solo si el modelo también es single-class
-///    (length de class_names <= 1) y el proyecto tiene exactamente 1 clase.
-/// 4. None: descartar la detección. Sin fallback ciego a "primera clase".
+/// 3. Single-class fallback: solo si modelo y proyecto tienen exactamente 1 clase.
+/// 4. Auto-crear clase en el proyecto y persistir mapping en el modelo.
 fn resolve_project_class(
     app: &AppHandle,
     project_id: &str,
@@ -483,10 +481,11 @@ fn resolve_project_class(
 ) -> Option<i64> {
     use tauri::Manager;
     let state = app.state::<AppState>();
-    state.with_project(project_id, |pf| {
+
+    // Intento rápido read-only: 1, 2, 3.
+    let fast = state.with_project(project_id, |pf| {
         let model = pf.inference_models.iter().find(|m| m.id == model_id);
 
-        // 1. Mapping manual del usuario (máxima prioridad)
         if let Some(model) = model {
             if let Some(mapping) = model.class_mapping.iter().find(|m| m.model_class_id == model_class_id) {
                 if let Some(ref pid) = mapping.project_class_id {
@@ -499,20 +498,85 @@ fn resolve_project_class(
             }
         }
 
-        // 2. Match por nombre exacto
-        if let Some(cls) = pf.classes.iter().find(|c| c.name.eq_ignore_ascii_case(model_class_name)) {
-            return Some(cls.id);
+        if !model_class_name.is_empty() {
+            if let Some(cls) = pf.classes.iter().find(|c| c.name.eq_ignore_ascii_case(model_class_name)) {
+                return Some(cls.id);
+            }
         }
 
-        // 3. Single-class real (modelo y proyecto ambos single-class)
-        let model_single = model.map(|m| m.class_names.len() <= 1).unwrap_or(true);
+        let model_single = model.map(|m| m.class_names.len() == 1).unwrap_or(false);
         if model_single && pf.classes.len() == 1 {
             return Some(pf.classes[0].id);
         }
 
-        // 4. Sin fallback: descartar
         None
-    }).ok().flatten()
+    }).ok().flatten();
+
+    if let Some(id) = fast {
+        return Some(id);
+    }
+
+    // Fallback: auto-crear clase en proyecto + persistir mapping en modelo.
+    state.with_project_mut_ret(project_id, |pf| {
+        // Re-check por carrera (otro frame puede haberla creado)
+        if !model_class_name.is_empty() {
+            if let Some(cls) = pf.classes.iter().find(|c| c.name.eq_ignore_ascii_case(model_class_name)) {
+                let id = cls.id;
+                persist_mapping(pf, model_id, model_class_id, model_class_name, id);
+                return id;
+            }
+        }
+
+        let name = if model_class_name.is_empty() {
+            format!("class_{}", model_class_id)
+        } else {
+            model_class_name.to_string()
+        };
+        let new_id = pf.classes.len() as i64;
+        let color = crate::import::generate_color(new_id as usize);
+        pf.classes.push(crate::store::project_file::ClassDef {
+            id: new_id,
+            name: name.clone(),
+            color,
+            description: Some(format!("Auto-creada desde modelo {}", model_id)),
+        });
+        persist_mapping(pf, model_id, model_class_id, &name, new_id);
+        log::info!(
+            "[Inference] Auto-creada clase '{}' (id={}) desde modelo {} (model_class_id={})",
+            name, new_id, model_id, model_class_id
+        );
+        new_id
+    }).ok()
+}
+
+fn persist_mapping(
+    pf: &mut crate::store::project_file::ProjectFile,
+    model_id: &str,
+    model_class_id: usize,
+    model_class_name: &str,
+    project_class_id: i64,
+) {
+    use crate::store::project_file::ClassMapping;
+    if let Some(m) = pf.inference_models.iter_mut().find(|m| m.id == model_id) {
+        while m.class_names.len() <= model_class_id {
+            m.class_names.push(format!("class_{}", m.class_names.len()));
+        }
+        if !model_class_name.is_empty() {
+            m.class_names[model_class_id] = model_class_name.to_string();
+        }
+        let pid_str = project_class_id.to_string();
+        let resolved_name = m.class_names[model_class_id].clone();
+        if let Some(existing) = m.class_mapping.iter_mut().find(|x| x.model_class_id == model_class_id) {
+            existing.model_class_name = resolved_name;
+            existing.project_class_id = Some(pid_str);
+        } else {
+            m.class_mapping.push(ClassMapping {
+                model_class_id,
+                model_class_name: resolved_name,
+                project_class_id: Some(pid_str),
+            });
+        }
+    }
 }
 
 /// Convierte detecciones ONNX a AnnotationEntry, determinando el tipo según los campos.
@@ -608,7 +672,7 @@ fn detections_to_annotations(
 
     if unmapped > 0 {
         log::warn!(
-            "[Inference] {} detecciones mapeadas, {} sin clase en el proyecto (el proyecto no tiene clases definidas)",
+            "[Inference] {} detecciones mapeadas, {} descartadas (error al auto-crear clase)",
             mapped, unmapped
         );
     } else {

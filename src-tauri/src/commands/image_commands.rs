@@ -1,4 +1,4 @@
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 
 use crate::p2p::node::P2pState;
 use crate::p2p::P2pPermission;
@@ -15,16 +15,25 @@ pub async fn upload_images(
     file_paths: Vec<String>,
 ) -> Result<Vec<String>, String> {
     p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
+    let _ = state;
     let app_cb = app.clone();
     let pid = project_id.clone();
-    let ids = state.upload_images_with_progress(&project_id, &file_paths, move |current, total, name| {
-        let _ = app_cb.emit("upload:progress", serde_json::json!({
-            "projectId": pid,
-            "current": current,
-            "total": total,
-            "fileName": name,
-        }));
-    })?;
+    let project_id_clone = project_id.clone();
+    let file_paths_clone = file_paths.clone();
+    let app_for_state = app.clone();
+    let ids = tauri::async_runtime::spawn_blocking(move || -> Result<Vec<String>, String> {
+        let state = app_for_state.state::<AppState>();
+        state.upload_images_with_progress(&project_id_clone, &file_paths_clone, move |current, total, name| {
+            let _ = app_cb.emit("upload:progress", serde_json::json!({
+                "projectId": pid,
+                "current": current,
+                "total": total,
+                "fileName": name,
+            }));
+        })
+    })
+    .await
+    .map_err(|e| format!("Join error: {}", e))??;
     let _ = app.emit("db:images-changed", &project_id);
 
     // Sincronizar imágenes nuevas al doc P2P si hay sesión activa
@@ -62,7 +71,17 @@ pub async fn upload_image_bytes(
     annotations: Vec<AnnotationEntry>,
 ) -> Result<String, String> {
     p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
-    let id = state.upload_image_bytes(&project_id, &file_name, &data, &annotations, None, None)?;
+    let _ = state;
+    let app_for_state = app.clone();
+    let pid = project_id.clone();
+    let fname = file_name.clone();
+    let annots = annotations.clone();
+    let id = tauri::async_runtime::spawn_blocking(move || -> Result<String, String> {
+        let state = app_for_state.state::<AppState>();
+        state.upload_image_bytes(&pid, &fname, &data, &annots, None, None)
+    })
+    .await
+    .map_err(|e| format!("Join error: {}", e))??;
     let _ = app.emit("db:images-changed", &project_id);
 
     // Sincronizar imagen al doc P2P si hay sesión activa

@@ -74,6 +74,31 @@ pub fn update_model_config(
 pub fn detect_model_metadata(
     model_path: String,
 ) -> Result<serde_json::Value, String> {
+    // Para .onnx: inspección nativa con ort (metadata + shape). Si arroja algo útil,
+    // retornar sin invocar Python.
+    let is_onnx = model_path.to_lowercase().ends_with(".onnx");
+    if is_onnx {
+        if let Ok(insp) = crate::inference::ort_runner::inspect_onnx(&model_path) {
+            let names: Vec<String> = match (&insp.class_names, insp.num_classes) {
+                (Some(names), _) if !names.is_empty() => names.clone(),
+                (_, Some(nc)) if nc > 0 => (0..nc).map(|i| format!("class_{}", i)).collect(),
+                _ => Vec::new(),
+            };
+            if !names.is_empty() {
+                log::info!(
+                    "[ORT] Inspección nativa: {} clases, input_size={:?}, format={:?}",
+                    names.len(), insp.input_size, insp.output_format
+                );
+                return Ok(serde_json::json!({
+                    "task": "detect",
+                    "classNames": names,
+                    "inputSize": insp.input_size,
+                    "outputFormat": insp.output_format,
+                }));
+            }
+        }
+    }
+
     let python = training::python_env::venv_python()?;
     if !python.exists() {
         return Err("Entorno Python no configurado".to_string());

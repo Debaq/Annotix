@@ -42,5 +42,8 @@
   "reloadApp": "アプリケーションをリロード",
   "copyError": "エラーをコピー",
   "technicalDetails": "技術的な詳細",
-  "confirmTitle": "操作を確認"
+  "confirmTitle": "操作を確認",
+  "accept": "承認",
+  "copy": "コピー",
+  "copied": "コピーしました"
 }

@@ -20,6 +20,7 @@
     "unannotated": "Sin anotar"
   },
   "inferAll": "Inferir todas",
+  "inferRunning": "Inferencia en curso (ver log)",
   "inferring": "Infiriendo...",
   "inferenceCompleted": "Inferencia batch completada",
   "backToGallery": "Volver a Galería",

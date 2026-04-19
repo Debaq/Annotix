@@ -62,11 +62,11 @@ export function InferencePanel({ trigger, project }: InferencePanelProps) {
       (img: any) => img.annotations && img.annotations.length > 0
     );
 
-    let warning = `Se reemplazarán las ${existingCount} clases actuales por ${classNames.length} clases del modelo.`;
+    let warning = t('inference.replaceClassesConfirm', { existing: existingCount, count: classNames.length });
     if (hasAnnotations) {
-      warning += '\n\n⚠️ El proyecto tiene anotaciones. Las de clases no coincidentes podrían quedar huérfanas.';
+      warning += '\n\n' + t('inference.replaceClassesAnnotationWarn');
     }
-    warning += '\n\n¿Continuar?';
+    warning += '\n\n' + t('inference.replaceClassesAsk');
 
     if (!window.confirm(warning)) return;
 
@@ -147,7 +147,7 @@ export function InferencePanel({ trigger, project }: InferencePanelProps) {
               onClick={handleSyncClasses}
             >
               <i className="fas fa-sync-alt mr-2" />
-              Reemplazar clases del proyecto con las del modelo ({selectedModel.classNames.length})
+              {t('inference.replaceClassesButton', { count: selectedModel.classNames.length })}
             </button>
           )}
 
@@ -259,7 +259,7 @@ export function InferencePanel({ trigger, project }: InferencePanelProps) {
           <DialogClose asChild>
             <button className="annotix-btn annotix-btn-primary">
               <i className="fas fa-check mr-1" />
-              {t('common.accept', 'Aceptar')}
+              {t('common.accept')}
             </button>
           </DialogClose>
         </DialogFooter>

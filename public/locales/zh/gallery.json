@@ -20,6 +20,7 @@
     "unannotated": "未标注"
   },
   "inferAll": "推理全部",
+  "inferRunning": "推理进行中（查看日志）",
   "inferring": "推理中...",
   "inferenceCompleted": "批量推理完成",
   "backToGallery": "返回图库",

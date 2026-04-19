@@ -106,6 +106,132 @@ pub fn load_model(model_path: &str) -> Result<Session, String> {
         .map_err(|e| format!("Error cargando modelo ONNX: {e}"))
 }
 
+/// Inspecciona un ONNX y devuelve info para auto-configurar clases.
+/// Retorna (num_classes, class_names_from_metadata, input_size, output_format_hint).
+/// Intenta leer `names` de metadata custom (ultralytics) y, si falla, infiere nc
+/// del output shape.
+pub fn inspect_onnx(model_path: &str) -> Result<OnnxInspection, String> {
+    let session = load_model(model_path)?;
+
+    // Metadata custom (ultralytics guarda "names" como dict Python-like)
+    let mut class_names_meta: Option<Vec<String>> = None;
+    if let Ok(meta) = session.metadata() {
+        if let Some(raw) = meta.custom("names") {
+            class_names_meta = parse_names_metadata(&raw);
+        }
+    }
+
+    // Input size del primer input tensor (dim HxW). Shape típica: [N, C, H, W]
+    let input_size = session.inputs().first().and_then(|inp| {
+        let shape = inp.dtype().tensor_shape()?;
+        let dims: &[i64] = shape;
+        if dims.len() == 4 && dims[2] > 0 && dims[2] == dims[3] {
+            Some(dims[2] as u32)
+        } else {
+            None
+        }
+    });
+
+    // Output shape del primer output
+    let output_shape: Vec<i64> = session.outputs().first().and_then(|out| {
+        let shape = out.dtype().tensor_shape()?;
+        let dims: &[i64] = shape;
+        Some(dims.to_vec())
+    }).unwrap_or_default();
+
+    let (nc_inferred, format_hint) = infer_nc_from_shape(&output_shape);
+
+    Ok(OnnxInspection {
+        num_classes: class_names_meta.as_ref().map(|v| v.len()).or(nc_inferred),
+        class_names: class_names_meta,
+        input_size,
+        output_format: format_hint,
+    })
+}
+
+pub struct OnnxInspection {
+    pub num_classes: Option<usize>,
+    pub class_names: Option<Vec<String>>,
+    pub input_size: Option<u32>,
+    pub output_format: Option<String>,
+}
+
+/// Parsea metadata "names": acepta JSON `{"0":"a","1":"b"}`, lista `["a","b"]`,
+/// o el formato Python de ultralytics `{0: 'a', 1: 'b'}`.
+fn parse_names_metadata(raw: &str) -> Option<Vec<String>> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() { return None; }
+
+    // Intento JSON directo
+    if let Ok(val) = serde_json::from_str::<serde_json::Value>(trimmed) {
+        return json_value_to_names(&val);
+    }
+
+    // Formato Python dict: reemplazar comillas simples por dobles y reintentar
+    let pythonish = trimmed.replace('\'', "\"");
+    if let Ok(val) = serde_json::from_str::<serde_json::Value>(&pythonish) {
+        return json_value_to_names(&val);
+    }
+
+    None
+}
+
+fn json_value_to_names(val: &serde_json::Value) -> Option<Vec<String>> {
+    match val {
+        serde_json::Value::Array(arr) => {
+            Some(arr.iter().map(|v| v.as_str().unwrap_or("").to_string()).collect())
+        }
+        serde_json::Value::Object(obj) => {
+            let mut pairs: Vec<(usize, String)> = obj.iter()
+                .filter_map(|(k, v)| {
+                    let idx = k.parse::<usize>().ok()?;
+                    let name = v.as_str()?.to_string();
+                    Some((idx, name))
+                })
+                .collect();
+            pairs.sort_by_key(|(i, _)| *i);
+            if pairs.is_empty() { None } else { Some(pairs.into_iter().map(|(_, n)| n).collect()) }
+        }
+        _ => None,
+    }
+}
+
+/// Infiere num_classes del shape del output primero. Retorna (nc, format_hint).
+fn infer_nc_from_shape(shape: &[i64]) -> (Option<usize>, Option<String>) {
+    // Solo dims concretas (>0) son útiles
+    let dims: Vec<i64> = shape.iter().copied().collect();
+    match dims.len() {
+        2 => {
+            // Clasificación [N, C]
+            if dims[1] > 0 {
+                return (Some(dims[1] as usize), Some("classification".to_string()));
+            }
+        }
+        3 => {
+            // [N, A, B]. v8: A=4+nc y A<B (transpuesto). v5/v8-no-trans: B=5+nc/4+nc y B<A.
+            let a = dims[1];
+            let b = dims[2];
+            if a > 0 && b > 0 {
+                // YOLOv10: [_, max_det, 6]
+                if b == 6 && a >= 10 && a <= 2000 {
+                    return (None, Some("yolov10".to_string()));
+                }
+                if a < b && a >= 5 {
+                    // v8 transpuesto: nc = a - 4 (si sin extras)
+                    return (Some((a - 4) as usize), Some("yolov8".to_string()));
+                }
+                if b < a && b >= 5 {
+                    // Ambiguo v5 (nc=b-5) vs v8-no-transpuesto (nc=b-4). Ultralytics exporta
+                    // v8 por defecto; asumir v8.
+                    return (Some((b - 4) as usize), Some("yolov8".to_string()));
+                }
+            }
+        }
+        _ => {}
+    }
+    (None, None)
+}
+
 // ─── Main Entry Point ───────────────────────────────────────────────────────
 
 /// Ejecuta inferencia sobre una imagen

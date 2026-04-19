@@ -215,7 +215,7 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
                 disabled={inferenceRunning}
                 className={cn('annotix-tool-btn', inferenceRunning && 'active')}
                 style={inferenceRunning ? undefined : { background: '#7c3aed', color: 'white' }}
-                title={inferenceModelName ? `Inferir: ${inferenceModelName}` : 'Inferencia AI'}
+                title={inferenceModelName ? t('inference.inferTooltip', { name: inferenceModelName }) : t('inference.aiInference')}
               >
                 <i className={`fas ${inferenceRunning ? 'fa-spinner fa-spin' : 'fa-brain'}`}></i>
               </button>

@@ -42,5 +42,8 @@
   "reloadApp": "애플리케이션 다시 로드",
   "copyError": "오류 복사",
   "technicalDetails": "기술적 세부 정보",
-  "confirmTitle": "작업 확인"
+  "confirmTitle": "작업 확인",
+  "accept": "수락",
+  "copy": "복사",
+  "copied": "복사됨"
 }

@@ -22,7 +22,7 @@ export function GalleryFilters() {
   const { selectedModel } = useInferenceModels(currentProjectId);
 
   const handleBatchCompleted = useCallback((_event: InferenceCompletedEvent) => {
-    toast({ title: t('gallery.inferenceCompleted', 'Inferencia batch completada'), duration: 4000 });
+    toast({ title: t('gallery.inferenceCompleted'), duration: 4000 });
   }, [toast, t]);
 
   const handleBatchError = useCallback((event: InferenceErrorEvent) => {
@@ -85,7 +85,7 @@ export function GalleryFilters() {
           <InferencePanel project={project} trigger={
             <button className="annotix-btn annotix-btn-outline w-full" style={{ fontSize: '0.75rem' }}>
               <i className="fas fa-brain mr-2" style={{ color: '#7c3aed' }} />
-              {t('inference.loadModel', 'Cargar modelo')}
+              {t('inference.loadModel')}
             </button>
           } />
         </div>
@@ -104,14 +104,14 @@ export function GalleryFilters() {
           >
             <i className={`fas ${running ? 'fa-spinner fa-spin' : 'fa-brain'} mr-1`}></i>
             {running
-              ? t('gallery.inferRunning', 'Inferencia en curso (ver log)')
-              : t('gallery.inferAll', 'Inferir todas')}
+              ? t('gallery.inferRunning')
+              : t('gallery.inferAll')}
           </button>
           <InferencePanel project={project} trigger={
             <button
               className="annotix-btn annotix-btn-outline"
               style={{ fontSize: '0.75rem', padding: '0 8px', flexShrink: 0 }}
-              title={t('inference.config', 'Configurar modelo')}
+              title={t('inference.config')}
             >
               <i className="fas fa-cog"></i>
             </button>

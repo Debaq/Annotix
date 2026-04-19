@@ -213,8 +213,16 @@ impl AppState {
 
             let id = uuid::Uuid::new_v4().to_string();
 
-            // Si webp, transcodear. Si jpg, copiar tal cual (preservando formato original jpg/png).
-            let (unique_name, width, height) = if target_format == "webp" {
+            let source_ext = Path::new(&file_name)
+                .extension()
+                .and_then(|e| e.to_str())
+                .unwrap_or("")
+                .to_lowercase();
+            let source_matches_target = source_ext == target_format
+                || (target_format == "jpg" && source_ext == "jpeg");
+
+            // Si webp y source no es webp, transcodear. Si source ya coincide con target, copiar tal cual.
+            let (unique_name, width, height) = if target_format == "webp" && !source_matches_target {
                 let img = image::open(&source)
                     .map_err(|e| format!("Error decodificando imagen {}: {}", file_name, e))?;
                 let w = img.width();
@@ -285,7 +293,15 @@ impl AppState {
 
         let id = uuid::Uuid::new_v4().to_string();
 
-        let (unique_name, width, height) = if target_format == "webp" {
+        let source_ext = Path::new(file_name)
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("")
+            .to_lowercase();
+        let source_matches_target = source_ext == target_format
+            || (target_format == "jpg" && source_ext == "jpeg");
+
+        let (unique_name, width, height) = if target_format == "webp" && !source_matches_target {
             let img = image::load_from_memory(data)
                 .map_err(|e| format!("Error decodificando imagen: {}", e))?;
             let w = img.width();
@@ -407,6 +423,9 @@ impl AppState {
 }
 
 fn get_image_dimensions(path: &PathBuf) -> Result<(u32, u32), String> {
+    if let Ok(dims) = image::image_dimensions(path) {
+        return Ok(dims);
+    }
     let img = image::open(path).map_err(|e| format!("Error leyendo dimensiones: {}", e))?;
     Ok((img.width(), img.height()))
 }

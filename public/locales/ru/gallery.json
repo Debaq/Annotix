@@ -20,6 +20,7 @@
     "unannotated": "Без аннотаций"
   },
   "inferAll": "Вывести все",
+  "inferRunning": "Инференс выполняется (см. лог)",
   "inferring": "Выполняется...",
   "inferenceCompleted": "Пакетный вывод завершён",
   "backToGallery": "Вернуться в галерею",

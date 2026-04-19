@@ -42,5 +42,8 @@
   "reloadApp": "重新加载应用",
   "copyError": "复制错误",
   "technicalDetails": "技术详情",
-  "confirmTitle": "确认操作"
+  "confirmTitle": "确认操作",
+  "accept": "接受",
+  "copy": "复制",
+  "copied": "已复制"
 }
