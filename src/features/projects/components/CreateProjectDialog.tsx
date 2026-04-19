@@ -98,6 +98,7 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
   const [classes, setClasses] = useState<ClassDefinition[]>([
     { id: 0, name: 'Object', color: '#ff0000' },
   ]);
+  const [imageFormat, setImageFormat] = useState<'jpg' | 'webp'>('jpg');
   const [isCreating, setIsCreating] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<string[]>([]);
@@ -117,6 +118,7 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
     setType('bbox');
     setActiveCategory('imageVideo');
     setClasses([{ id: 0, name: 'Object', color: '#ff0000' }]);
+    setImageFormat('jpg');
     setPendingFiles([]);
   };
 
@@ -155,6 +157,7 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
         name: name.trim(),
         type,
         classes: needsClasses(type) ? classes : [],
+        imageFormat: IMAGE_UPLOAD_TYPES.includes(type) ? imageFormat : undefined,
       });
 
       if (pendingFiles.length > 0 && projectId) {
@@ -382,6 +385,26 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
                 <div className="space-y-2">
                   <Label>{type === 'speech-recognition' ? t('audio.speakers', 'Speakers') : t('projects.classes')}</Label>
                   <ClassManager classes={classes} onChange={setClasses} />
+                </div>
+              )}
+
+              {/* Formato de imagen — solo para tipos basados en imagen */}
+              {IMAGE_UPLOAD_TYPES.includes(type) && (
+                <div className="space-y-2">
+                  <Label htmlFor="image-format">{t('project.imageFormat')}</Label>
+                  <select
+                    id="image-format"
+                    value={imageFormat}
+                    onChange={(e) => setImageFormat(e.target.value as 'jpg' | 'webp')}
+                    className="w-full border rounded px-3 py-2 bg-background text-foreground text-sm"
+                  >
+                    <option value="jpg">{t('project.imageFormatJpg')}</option>
+                    <option value="webp">{t('project.imageFormatWebp')}</option>
+                  </select>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    <i className="fas fa-info-circle mr-1.5" />
+                    {t('project.imageFormatInfo')}
+                  </p>
                 </div>
               )}
 

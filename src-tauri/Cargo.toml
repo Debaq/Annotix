@@ -23,6 +23,7 @@ tauri-plugin-log = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 image = "0.25"
+webp = "0.3"
 ort = { version = "2.0.0-rc.12", features = ["download-binaries"] }
 uuid = { version = "1", features = ["v4"] }
 directories = "5"

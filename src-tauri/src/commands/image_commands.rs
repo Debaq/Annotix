@@ -2,7 +2,7 @@ use tauri::{AppHandle, Emitter, State};
 
 use crate::p2p::node::P2pState;
 use crate::p2p::P2pPermission;
-use crate::store::images::ImageResponse;
+use crate::store::images::{ConversionReport, ImageResponse};
 use crate::store::project_file::AnnotationEntry;
 use crate::store::AppState;
 
@@ -148,6 +148,19 @@ pub async fn save_annotations(
     }
 
     Ok(())
+}
+
+#[tauri::command]
+pub fn convert_project_images(
+    state: State<'_, AppState>,
+    app: AppHandle,
+    project_id: String,
+    target_format: String,
+) -> Result<ConversionReport, String> {
+    let report = state.convert_project_images(&project_id, &target_format)?;
+    let _ = app.emit("db:projects-changed", ());
+    let _ = app.emit("db:images-changed", &project_id);
+    Ok(report)
 }
 
 #[tauri::command]

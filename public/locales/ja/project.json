@@ -554,5 +554,12 @@
     "allData": "すべての画像とアノテーションが削除されます",
     "noUndo": "削除されたデータを復元する方法はありません",
     "recommendation": "💡 推奨：削除前にプロジェクトを.tix形式でバックアップとしてエクスポートしてください"
-  }
+  },
+  "imageFormat": "画像形式",
+  "imageFormatJpg": "JPG（最大の互換性）",
+  "imageFormatWebp": "WebP（小さいサイズ、スムーズなギャラリー）",
+  "imageFormatInfo": "JPG：すべてのツールと互換性があります。WebP：約25〜30%軽量、ビューアでのデコードが最適化されています。デプロイでもWebPを使用する場合、WebPでの学習は有効です。",
+  "convertDataset": "データセットを変換",
+  "convertDatasetConfirm": "{{count}}枚の画像を{{format}}に変換します。続行しますか？",
+  "convertDatasetSuccess": "変換済: {{converted}}、スキップ: {{skipped}}、失敗: {{failed}}"
 }

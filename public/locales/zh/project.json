@@ -554,5 +554,12 @@
     "allData": "所有图像和标注都将被删除",
     "noUndo": "没有方法恢复已删除的数据",
     "recommendation": "💡 建议：删除前先将项目导出为 .tix 格式作为备份"
-  }
+  },
+  "imageFormat": "图像格式",
+  "imageFormatJpg": "JPG（最大兼容性）",
+  "imageFormatWebp": "WebP（更小体积，流畅画廊）",
+  "imageFormatInfo": "JPG：兼容所有工具。WebP：体积减小约 25-30%，查看器解码已优化。如果部署也使用 WebP，用 WebP 训练是有效的。",
+  "convertDataset": "转换数据集",
+  "convertDatasetConfirm": "将把 {{count}} 张图像转换为 {{format}}。继续？",
+  "convertDatasetSuccess": "已转换：{{converted}}，已跳过：{{skipped}}，失败：{{failed}}"
 }

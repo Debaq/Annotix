@@ -146,6 +146,7 @@ pub fn run() {
             commands::project_commands::set_project_folder,
             commands::project_commands::reveal_project_folder,
             commands::project_commands::zip_project,
+            commands::project_commands::update_project_image_format,
             // Imágenes
             commands::image_commands::upload_images,
             commands::image_commands::upload_image_bytes,
@@ -155,6 +156,7 @@ pub fn run() {
             commands::image_commands::get_image_file_path,
             commands::image_commands::save_annotations,
             commands::image_commands::delete_image,
+            commands::image_commands::convert_project_images,
             // Series temporales
             commands::timeseries_commands::create_timeseries,
             commands::timeseries_commands::get_timeseries,

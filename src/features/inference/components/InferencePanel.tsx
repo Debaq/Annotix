@@ -112,6 +112,19 @@ export function InferencePanel({ trigger, project }: InferencePanelProps) {
         </DialogHeader>
 
         <div className="overflow-y-auto max-h-[calc(85vh-120px)] space-y-4 pb-2">
+          {/* Info de fuente de imágenes */}
+          <div
+            className="text-xs p-2 rounded"
+            style={{ background: 'var(--annotix-gray-light)' }}
+          >
+            <i className="fas fa-info-circle mr-2" />
+            <strong>{t('inference.imageSource')}:</strong>{' '}
+            {project?.imageFormat === 'webp' ? 'WebP' : 'JPG/PNG'}
+            <span className="ml-1 opacity-70">
+              ({t('inference.imageSourceNote')})
+            </span>
+          </div>
+
           {/* Modelo */}
           <ModelUploader
             model={selectedModel}

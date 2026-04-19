@@ -6,9 +6,18 @@ export const projectService = {
     const id = await tauriDb.createProject(
       project.name,
       project.type,
-      project.classes
+      project.classes,
+      project.imageFormat
     );
     return id;
+  },
+
+  async setImageFormat(id: string, format: 'jpg' | 'webp'): Promise<void> {
+    await tauriDb.setProjectImageFormat(id, format);
+  },
+
+  async convertImages(id: string, targetFormat: 'jpg' | 'webp') {
+    return await tauriDb.convertProjectImages(id, targetFormat);
   },
 
   async get(id: string): Promise<Project | undefined> {

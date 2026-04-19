@@ -554,5 +554,12 @@
     "allData": "ALL images and annotations will be deleted",
     "noUndo": "There is no way to recover deleted data",
     "recommendation": "💡 Recommendation: Export the project in .tix format as a backup BEFORE deleting it"
-  }
+  },
+  "imageFormat": "Image format",
+  "imageFormatJpg": "JPG (maximum compatibility)",
+  "imageFormatWebp": "WebP (smaller size, fluid gallery)",
+  "imageFormatInfo": "JPG: compatible with all tools. WebP: ~25-30% smaller, optimized decoding in the viewer. Training with WebP is valid if deployment also uses WebP.",
+  "convertDataset": "Convert dataset",
+  "convertDatasetConfirm": "{{count}} images will be converted to {{format}}. Continue?",
+  "convertDatasetSuccess": "Converted: {{converted}}, skipped: {{skipped}}, failed: {{failed}}"
 }

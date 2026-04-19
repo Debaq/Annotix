@@ -330,5 +330,7 @@
   "format": "형식",
   "formatDescription": "형식 설명",
   "progress": "진행 상황",
-  "selectFormat": "내보내기 형식 선택"
+  "selectFormat": "내보내기 형식 선택",
+  "normalizeToJpg": "JPG로 정규화",
+  "normalizeToJpgInfo": "외부 도구와의 호환성을 위해 내보내기 중 WebP 이미지를 JPG로 변환합니다."
 }

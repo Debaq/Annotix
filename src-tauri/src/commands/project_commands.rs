@@ -14,10 +14,23 @@ pub fn create_project(
     name: String,
     project_type: String,
     classes: Vec<ClassDef>,
+    image_format: Option<String>,
 ) -> Result<String, String> {
-    let id = state.create_project(&name, &project_type, &classes)?;
+    let id = state.create_project(&name, &project_type, &classes, image_format.as_deref())?;
     let _ = app.emit("db:projects-changed", ());
     Ok(id)
+}
+
+#[tauri::command]
+pub fn update_project_image_format(
+    state: State<'_, AppState>,
+    app: AppHandle,
+    project_id: String,
+    format: String,
+) -> Result<(), String> {
+    state.update_project_image_format(&project_id, &format)?;
+    let _ = app.emit("db:projects-changed", ());
+    Ok(())
 }
 
 #[tauri::command]

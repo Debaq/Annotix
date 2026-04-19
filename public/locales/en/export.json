@@ -330,5 +330,7 @@
   "format": "Formats",
   "formatDescription": "Format description",
   "progress": "Progress",
-  "selectFormat": "Select export format"
+  "selectFormat": "Select export format",
+  "normalizeToJpg": "Normalize to JPG",
+  "normalizeToJpgInfo": "Converts WebP images to JPG during export for compatibility with external tools."
 }

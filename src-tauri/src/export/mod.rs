@@ -151,7 +151,80 @@ pub fn class_name(classes: &[ClassDef], class_id: i64) -> String {
         .unwrap_or_else(|| "unknown".to_string())
 }
 
+/// Transcodifica bytes de una imagen WebP a JPG (calidad 92).
+/// Las imágenes con canal alpha se componen sobre fondo blanco (JPG no soporta transparencia).
+pub fn transcode_to_jpg(data: &[u8]) -> Result<Vec<u8>, String> {
+    use image::codecs::jpeg::JpegEncoder;
+    use image::{DynamicImage, ImageEncoder};
+
+    let img = image::load_from_memory(data)
+        .map_err(|e| format!("Error decodificando imagen: {}", e))?;
+
+    // Para alpha, componer sobre blanco y convertir a RGB8
+    let rgb = match img {
+        DynamicImage::ImageRgb8(_) => img.to_rgb8(),
+        _ => {
+            let rgba = img.to_rgba8();
+            let (w, h) = rgba.dimensions();
+            let mut rgb = image::RgbImage::new(w, h);
+            for (x, y, px) in rgba.enumerate_pixels() {
+                let [r, g, b, a] = px.0;
+                let alpha = a as f32 / 255.0;
+                let inv = 1.0 - alpha;
+                let nr = (r as f32 * alpha + 255.0 * inv).round().clamp(0.0, 255.0) as u8;
+                let ng = (g as f32 * alpha + 255.0 * inv).round().clamp(0.0, 255.0) as u8;
+                let nb = (b as f32 * alpha + 255.0 * inv).round().clamp(0.0, 255.0) as u8;
+                rgb.put_pixel(x, y, image::Rgb([nr, ng, nb]));
+            }
+            rgb
+        }
+    };
+
+    let mut out = Vec::with_capacity(rgb.as_raw().len() / 4);
+    let encoder = JpegEncoder::new_with_quality(&mut out, 92);
+    encoder
+        .write_image(
+            rgb.as_raw(),
+            rgb.width(),
+            rgb.height(),
+            image::ExtendedColorType::Rgb8,
+        )
+        .map_err(|e| format!("Error codificando JPG: {}", e))?;
+    Ok(out)
+}
+
+/// Reemplaza la extensión `.webp` por `.jpg` en cada `ImageEntry.name`.
+/// El campo `file` (archivo en disco) se mantiene intacto: la transcodificación ocurre en `add_image_to_zip`.
+pub fn normalize_image_names_to_jpg(images: &[ImageEntry]) -> Vec<ImageEntry> {
+    images
+        .iter()
+        .map(|img| {
+            let mut cloned = img.clone();
+            if has_webp_ext(&cloned.name) {
+                cloned.name = replace_webp_with_jpg(&cloned.name);
+            }
+            cloned
+        })
+        .collect()
+}
+
+pub fn has_webp_ext(name: &str) -> bool {
+    name.to_ascii_lowercase().ends_with(".webp")
+}
+
+pub fn replace_webp_with_jpg(name: &str) -> String {
+    // Preserva el stem; cambia la extensión por .jpg
+    match name.rfind('.') {
+        Some(pos) => format!("{}.jpg", &name[..pos]),
+        None => format!("{}.jpg", name),
+    }
+}
+
 /// Agrega archivo de imagen al ZIP, leyendo los bytes desde disco.
+///
+/// Si el archivo en disco es `.webp` pero `image.name` ya no termina en `.webp`
+/// (porque se aplicó `normalize_image_names_to_jpg`), transcodifica a JPG antes
+/// de escribir en el ZIP.
 pub fn add_image_to_zip<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     folder: &str,
@@ -159,8 +232,14 @@ pub fn add_image_to_zip<W: Write + Seek>(
     images_dir: &Path,
 ) -> Result<(), String> {
     let file_path = images_dir.join(&image.file);
-    let data = std::fs::read(&file_path)
+    let mut data = std::fs::read(&file_path)
         .map_err(|e| format!("Error leyendo imagen {}: {}", image.name, e))?;
+
+    // Transcodificar WebP → JPG si el name destino es .jpg pero el file en disco es .webp
+    if has_webp_ext(&image.file) && !has_webp_ext(&image.name) {
+        data = transcode_to_jpg(&data)
+            .map_err(|e| format!("Error transcodificando {}: {}", image.file, e))?;
+    }
 
     let options = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
     let path = if folder.is_empty() {
@@ -178,11 +257,17 @@ pub fn add_image_to_zip<W: Write + Seek>(
 }
 
 /// Exportar dataset completo a un archivo ZIP en output_path.
+///
+/// `normalize_to_jpg`: cuando es `true`, las imágenes WebP del proyecto se transcodifican a JPG (q=92)
+/// y todas las referencias a nombre de archivo en los labels (YOLO txt, COCO json, Pascal xml, CSVs,
+/// folders-by-class, unet-masks) usan la extensión `.jpg`. No afecta al formato Annotix (.tix) ni a
+/// los formatos de audio.
 pub fn export_dataset(
     state: &AppState,
     project_id: &str,
     format: &str,
     output_path: &str,
+    normalize_to_jpg: bool,
     app_handle: &tauri::AppHandle,
 ) -> Result<(), String> {
     let pf = state.read_project_file(project_id)?;
@@ -265,6 +350,13 @@ pub fn export_dataset(
     if images.is_empty() {
         return Err("No hay imágenes anotadas para exportar".to_string());
     }
+
+    // Aplicar normalización de nombres WebP → JPG si se solicitó
+    let images = if normalize_to_jpg {
+        normalize_image_names_to_jpg(&images)
+    } else {
+        images
+    };
 
     match format {
         "yolo-detection" => yolo::export(&pf, &images, &images_dir, file, false, emit_progress),

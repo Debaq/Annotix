@@ -423,6 +423,7 @@ pub async fn doc_to_project_metadata(
         inference_models: vec![],
         folder: None,
         tts_sentences: vec![],
+        image_format: "jpg".to_string(),
     })
 }
 

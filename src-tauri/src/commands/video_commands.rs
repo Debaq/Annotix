@@ -1,6 +1,3 @@
-use std::io::Cursor;
-
-use image::codecs::jpeg::JpegEncoder;
 use image::{DynamicImage, RgbImage};
 use tauri::{AppHandle, Emitter, Manager, State};
 
@@ -251,6 +248,10 @@ fn do_extract_frames(
     std::fs::create_dir_all(&thumb_dir)
         .map_err(|e| format!("Error creando directorio de thumbnails: {}", e))?;
 
+    // Formato de imagen del proyecto: "jpg" | "webp"
+    let image_format = state.with_project(project_id, |pf| pf.image_format.clone())?;
+    let frame_ext = if image_format == "webp" { "webp" } else { "jpg" };
+
     let mut ictx = ffmpeg_the_third::format::input(video_path)
         .map_err(|e| format!("Error abriendo video: {}", e))?;
 
@@ -337,25 +338,23 @@ fn do_extract_frames(
             let img = RgbImage::from_raw(w as u32, h as u32, raw_rgb)
                 .ok_or("Error creando imagen RGB")?;
 
-            // Encodear a JPEG (imagen completa)
-            let mut jpeg_buf = Cursor::new(Vec::new());
-            let encoder = JpegEncoder::new_with_quality(&mut jpeg_buf, 90);
-            img.write_with_encoder(encoder)
-                .map_err(|e| format!("Error codificando JPEG: {}", e))?;
-            let jpeg_data = jpeg_buf.into_inner();
+            // Encodear al formato del proyecto (jpg/webp)
+            let dynamic_img = DynamicImage::ImageRgb8(img);
+            let encoded = crate::store::images::encode_image(&dynamic_img, &image_format)?;
 
             let frame_name = format!(
-                "{}_{}_frame_{:06}.jpg",
+                "{}_{}_frame_{:06}.{}",
                 uuid::Uuid::new_v4(),
                 video_id,
-                *fc
+                *fc,
+                frame_ext
             );
 
             // Escribir imagen a disco sin flush a project.json
             let (image_id, entry) = state.prepare_image_entry(
                 project_id,
                 &frame_name,
-                &jpeg_data,
+                &encoded,
                 w as u32,
                 h as u32,
                 Some(video_id),
@@ -364,8 +363,7 @@ fn do_extract_frames(
 
             pending.push(entry);
 
-            // Generar thumbnail (256px max)
-            let dynamic_img = DynamicImage::ImageRgb8(img);
+            // Generar thumbnail (256px max) — siempre JPG para uniformidad con el resto
             let thumb = dynamic_img.thumbnail(256, 256);
             let thumb_path = thumb_dir.join(format!("{}.jpg", image_id));
             let _ = thumb.save(&thumb_path);

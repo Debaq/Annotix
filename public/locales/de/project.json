@@ -554,5 +554,12 @@
     "allData": "ALLE Bilder und Annotationen werden gelöscht",
     "noUndo": "Es gibt keine Möglichkeit, die gelöschten Daten wiederherzustellen",
     "recommendation": "💡 Empfehlung: Exportiere das Projekt im .tix-Format als Backup BEVOR du es löschst"
-  }
+  },
+  "imageFormat": "Bildformat",
+  "imageFormatJpg": "JPG (maximale Kompatibilität)",
+  "imageFormatWebp": "WebP (kleinere Dateien, flüssige Galerie)",
+  "imageFormatInfo": "JPG: mit allen Werkzeugen kompatibel. WebP: ~25-30% kleiner, optimiertes Dekodieren im Viewer. Training mit WebP ist gültig, wenn das Deployment ebenfalls WebP verwendet.",
+  "convertDataset": "Datensatz konvertieren",
+  "convertDatasetConfirm": "{{count}} Bilder werden zu {{format}} konvertiert. Fortfahren?",
+  "convertDatasetSuccess": "Konvertiert: {{converted}}, übersprungen: {{skipped}}, fehlgeschlagen: {{failed}}"
 }

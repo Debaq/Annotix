@@ -19,6 +19,7 @@ export interface Project {
   p2pDownload?: { totalImages: number; downloadedImages: number };
   hasP2pConfig?: boolean;
   folder?: string;
+  imageFormat?: 'jpg' | 'webp';
 }
 
 export interface ClassDefinition {

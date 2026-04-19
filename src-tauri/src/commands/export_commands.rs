@@ -8,10 +8,18 @@ pub async fn export_dataset(
     project_id: String,
     format: String,
     output_path: String,
+    normalize_to_jpg: Option<bool>,
     state: State<'_, AppState>,
     p2p: State<'_, P2pState>,
     app: tauri::AppHandle,
 ) -> Result<(), String> {
     p2p.check_permission(&project_id, P2pPermission::Export).await?;
-    crate::export::export_dataset(&state, &project_id, &format, &output_path, &app)
+    crate::export::export_dataset(
+        &state,
+        &project_id,
+        &format,
+        &output_path,
+        normalize_to_jpg.unwrap_or(false),
+        &app,
+    )
 }

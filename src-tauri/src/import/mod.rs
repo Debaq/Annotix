@@ -148,6 +148,7 @@ pub fn import_dataset(
         project_name,
         &detection.project_type,
         &import_data.classes,
+        None,
     )?;
 
     // Guardar imágenes

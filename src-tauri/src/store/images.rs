@@ -1,7 +1,54 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::store::project_file::{AnnotationEntry, ImageEntry, PredictionEntry};
 use crate::store::state::AppState;
+
+/// Calidad WebP lossy (0..100). 92 = visualmente indistinguible de JPG q=95.
+const WEBP_QUALITY: f32 = 92.0;
+/// Calidad JPG usada para conversión retroactiva / normalización.
+const JPG_QUALITY: u8 = 92;
+
+/// Encodea una imagen dinámica al formato destino y devuelve los bytes.
+/// `target_format` debe ser "jpg" o "webp".
+pub fn encode_image(img: &image::DynamicImage, target_format: &str) -> Result<Vec<u8>, String> {
+    match target_format {
+        "webp" => {
+            // webp::Encoder requiere RGB/RGBA. from_image convierte internamente.
+            let encoder = webp::Encoder::from_image(img)
+                .map_err(|e| format!("Error creando encoder WebP: {}", e))?;
+            let data = encoder.encode(WEBP_QUALITY);
+            Ok(data.to_vec())
+        }
+        "jpg" | "jpeg" => {
+            use image::codecs::jpeg::JpegEncoder;
+            let rgb = img.to_rgb8();
+            let mut out = Vec::new();
+            let encoder = JpegEncoder::new_with_quality(&mut out, JPG_QUALITY);
+            rgb.write_with_encoder(encoder)
+                .map_err(|e| format!("Error codificando JPEG: {}", e))?;
+            Ok(out)
+        }
+        other => Err(format!("Formato no soportado: {}", other)),
+    }
+}
+
+/// Reemplaza la extensión de un nombre de archivo por la correspondiente al formato.
+pub fn filename_with_format(file_name: &str, target_format: &str) -> String {
+    let ext = if target_format == "webp" { "webp" } else { "jpg" };
+    let stem = Path::new(file_name)
+        .file_stem()
+        .map(|s| s.to_string_lossy().to_string())
+        .unwrap_or_else(|| file_name.to_string());
+    format!("{}.{}", stem, ext)
+}
+
+/// Reporte de conversión retroactiva
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ConversionReport {
+    pub converted: usize,
+    pub skipped: usize,
+    pub failed: Vec<String>,
+}
 
 /// Timestamp JS
 fn js_timestamp() -> f64 {
@@ -146,6 +193,10 @@ impl AppState {
         std::fs::create_dir_all(&images_dir)
             .map_err(|e| format!("Error creando directorio de imágenes: {}", e))?;
 
+        // Leer formato de imagen del proyecto
+        let image_format = self.with_project(project_id, |pf| pf.image_format.clone())?;
+        let target_format = image_format.as_str();
+
         let now = js_timestamp();
         let mut new_entries = Vec::new();
         let total = file_paths.len();
@@ -161,13 +212,28 @@ impl AppState {
             on_progress(i, total, &file_name);
 
             let id = uuid::Uuid::new_v4().to_string();
-            let unique_name = format!("{}_{}", id, file_name);
-            let dest = images_dir.join(&unique_name);
 
-            std::fs::copy(&source, &dest)
-                .map_err(|e| format!("Error copiando imagen {}: {}", file_name, e))?;
-
-            let (width, height) = get_image_dimensions(&dest)?;
+            // Si webp, transcodear. Si jpg, copiar tal cual (preservando formato original jpg/png).
+            let (unique_name, width, height) = if target_format == "webp" {
+                let img = image::open(&source)
+                    .map_err(|e| format!("Error decodificando imagen {}: {}", file_name, e))?;
+                let w = img.width();
+                let h = img.height();
+                let target_name = filename_with_format(&file_name, "webp");
+                let unique = format!("{}_{}", id, target_name);
+                let dest = images_dir.join(&unique);
+                let data = encode_image(&img, "webp")?;
+                std::fs::write(&dest, &data)
+                    .map_err(|e| format!("Error escribiendo WebP {}: {}", file_name, e))?;
+                (unique, w, h)
+            } else {
+                let unique = format!("{}_{}", id, file_name);
+                let dest = images_dir.join(&unique);
+                std::fs::copy(&source, &dest)
+                    .map_err(|e| format!("Error copiando imagen {}: {}", file_name, e))?;
+                let (w, h) = get_image_dimensions(&dest)?;
+                (unique, w, h)
+            };
 
             new_entries.push(ImageEntry {
                 id: id.clone(),
@@ -213,14 +279,32 @@ impl AppState {
         std::fs::create_dir_all(&images_dir)
             .map_err(|e| format!("Error creando directorio de imágenes: {}", e))?;
 
+        // Leer formato destino del proyecto
+        let image_format = self.with_project(project_id, |pf| pf.image_format.clone())?;
+        let target_format = image_format.as_str();
+
         let id = uuid::Uuid::new_v4().to_string();
-        let unique_name = format!("{}_{}", id, file_name);
-        let dest = images_dir.join(&unique_name);
 
-        std::fs::write(&dest, data)
-            .map_err(|e| format!("Error escribiendo imagen: {}", e))?;
-
-        let (width, height) = get_image_dimensions(&dest)?;
+        let (unique_name, width, height) = if target_format == "webp" {
+            let img = image::load_from_memory(data)
+                .map_err(|e| format!("Error decodificando imagen: {}", e))?;
+            let w = img.width();
+            let h = img.height();
+            let target_name = filename_with_format(file_name, "webp");
+            let unique = format!("{}_{}", id, target_name);
+            let dest = images_dir.join(&unique);
+            let webp_data = encode_image(&img, "webp")?;
+            std::fs::write(&dest, &webp_data)
+                .map_err(|e| format!("Error escribiendo WebP: {}", e))?;
+            (unique, w, h)
+        } else {
+            let unique = format!("{}_{}", id, file_name);
+            let dest = images_dir.join(&unique);
+            std::fs::write(&dest, data)
+                .map_err(|e| format!("Error escribiendo imagen: {}", e))?;
+            let (w, h) = get_image_dimensions(&dest)?;
+            (unique, w, h)
+        };
         let now = js_timestamp();
         let status = if annotations.is_empty() { "pending" } else { "annotated" };
 
@@ -325,4 +409,109 @@ impl AppState {
 fn get_image_dimensions(path: &PathBuf) -> Result<(u32, u32), String> {
     let img = image::open(path).map_err(|e| format!("Error leyendo dimensiones: {}", e))?;
     Ok((img.width(), img.height()))
+}
+
+impl AppState {
+    /// Convierte todas las imágenes del proyecto al formato destino.
+    /// Operación atómica por imagen (si falla una, la anterior queda intacta).
+    /// Regenera thumbnails. Actualiza pf.image_format.
+    pub fn convert_project_images(
+        &self,
+        project_id: &str,
+        target_format: &str,
+    ) -> Result<ConversionReport, String> {
+        if target_format != "jpg" && target_format != "webp" {
+            return Err(format!("Formato no soportado: {}", target_format));
+        }
+        let target_ext_lower = if target_format == "webp" { "webp" } else { "jpg" };
+
+        let images_dir = self.project_images_dir(project_id)?;
+        let thumbs_dir = self.project_thumbnails_dir(project_id)?;
+        std::fs::create_dir_all(&thumbs_dir)
+            .map_err(|e| format!("Error creando thumbnails dir: {}", e))?;
+
+        // Snapshot de imágenes (id, file) para iterar sin tener el lock
+        let entries: Vec<(String, String)> = self.with_project(project_id, |pf| {
+            pf.images.iter().map(|i| (i.id.clone(), i.file.clone())).collect()
+        })?;
+
+        let mut converted = 0usize;
+        let mut skipped = 0usize;
+        let mut failed: Vec<String> = Vec::new();
+
+        // Recorrer y convertir archivo por archivo
+        let mut new_files: Vec<(String, String)> = Vec::new(); // (image_id, new_file_name)
+
+        for (image_id, file_name) in entries.iter() {
+            let current_path = images_dir.join(file_name);
+            let current_ext = Path::new(file_name)
+                .extension()
+                .and_then(|e| e.to_str())
+                .unwrap_or("")
+                .to_lowercase();
+
+            if current_ext == target_ext_lower {
+                skipped += 1;
+                continue;
+            }
+
+            // Decodificar
+            let img = match image::open(&current_path) {
+                Ok(i) => i,
+                Err(e) => {
+                    failed.push(format!("{}: decode fail ({})", file_name, e));
+                    continue;
+                }
+            };
+
+            // Nuevo nombre preservando UUID prefix si lo tiene
+            let new_file_name = filename_with_format(file_name, target_format);
+            let new_path = images_dir.join(&new_file_name);
+
+            // Si coincide exactamente con el viejo path, evitar clobber
+            if new_path == current_path {
+                skipped += 1;
+                continue;
+            }
+
+            // Encodear a destino
+            let encoded = match encode_image(&img, target_format) {
+                Ok(b) => b,
+                Err(e) => {
+                    failed.push(format!("{}: encode fail ({})", file_name, e));
+                    continue;
+                }
+            };
+
+            // Escribir nuevo archivo primero (atomicidad: si falla, el viejo queda)
+            if let Err(e) = std::fs::write(&new_path, &encoded) {
+                failed.push(format!("{}: write fail ({})", file_name, e));
+                continue;
+            }
+
+            // Eliminar archivo viejo solo si nuevo es distinto
+            let _ = std::fs::remove_file(&current_path);
+
+            // Regenerar thumbnail (siempre JPG con mismo layout que el resto del sistema)
+            let thumb = img.thumbnail(256, 256);
+            let thumb_path = thumbs_dir.join(format!("{}.jpg", image_id));
+            let _ = thumb.save(&thumb_path);
+
+            new_files.push((image_id.clone(), new_file_name));
+            converted += 1;
+        }
+
+        // Actualizar project.json con nuevos nombres y nuevo formato
+        self.with_project_mut(project_id, |pf| {
+            for (image_id, new_name) in new_files.iter() {
+                if let Some(img) = pf.images.iter_mut().find(|i| &i.id == image_id) {
+                    img.file = new_name.clone();
+                }
+            }
+            pf.image_format = target_format.to_string();
+            pf.updated = js_timestamp();
+        })?;
+
+        Ok(ConversionReport { converted, skipped, failed })
+    }
 }

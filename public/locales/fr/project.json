@@ -554,5 +554,12 @@
     "allData": "TOUTES les images et annotations seront supprimées",
     "noUndo": "Il n'y a aucun moyen de récupérer les données supprimées",
     "recommendation": "Recommandation : Exportez le projet au format .tix comme sauvegarde AVANT de le supprimer"
-  }
+  },
+  "imageFormat": "Format d'image",
+  "imageFormatJpg": "JPG (compatibilité maximale)",
+  "imageFormatWebp": "WebP (taille réduite, galerie fluide)",
+  "imageFormatInfo": "JPG : compatible avec tous les outils. WebP : ~25-30% plus léger, décodage optimisé dans le visualiseur. L'entraînement avec WebP est valide si le déploiement utilise aussi WebP.",
+  "convertDataset": "Convertir le dataset",
+  "convertDatasetConfirm": "{{count}} images seront converties en {{format}}. Continuer ?",
+  "convertDatasetSuccess": "Converties : {{converted}}, ignorées : {{skipped}}, échouées : {{failed}}"
 }

@@ -554,5 +554,12 @@
     "allData": "모든 이미지와 주석이 삭제됩니다",
     "noUndo": "삭제된 데이터를 복구할 방법이 없습니다",
     "recommendation": "💡 권장: 삭제하기 전에 프로젝트를 .tix 형식으로 백업으로 내보내세요"
-  }
+  },
+  "imageFormat": "이미지 형식",
+  "imageFormatJpg": "JPG (최대 호환성)",
+  "imageFormatWebp": "WebP (작은 크기, 부드러운 갤러리)",
+  "imageFormatInfo": "JPG: 모든 도구와 호환됩니다. WebP: 약 25~30% 작은 용량, 뷰어에서 최적화된 디코딩. 배포에서도 WebP를 사용한다면 WebP로 학습해도 유효합니다.",
+  "convertDataset": "데이터셋 변환",
+  "convertDatasetConfirm": "{{count}}개의 이미지를 {{format}}(으)로 변환합니다. 계속하시겠습니까?",
+  "convertDatasetSuccess": "변환됨: {{converted}}, 건너뜀: {{skipped}}, 실패: {{failed}}"
 }

@@ -33,6 +33,8 @@ pub struct ProjectSummary {
     pub folder: Option<String>,
     #[serde(rename = "inferenceModelCount")]
     pub inference_model_count: usize,
+    #[serde(rename = "imageFormat")]
+    pub image_format: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -48,7 +50,12 @@ impl AppState {
         name: &str,
         project_type: &str,
         classes: &[ClassDef],
+        image_format: Option<&str>,
     ) -> Result<String, String> {
+        let image_format = match image_format.unwrap_or("jpg") {
+            "jpg" | "webp" => image_format.unwrap_or("jpg").to_string(),
+            other => return Err(format!("Formato de imagen no soportado: {}", other)),
+        };
         let projects_dir = self.projects_dir()?;
         let id = uuid::Uuid::new_v4().to_string();
         let project_dir = projects_dir.join(&id);
@@ -81,6 +88,7 @@ impl AppState {
             inference_models: vec![],
             folder: None,
             tts_sentences: vec![],
+            image_format,
         };
 
         io::write_project(&project_dir, &project)?;
@@ -139,6 +147,7 @@ impl AppState {
                         has_p2p_config,
                         folder: pf.folder,
                         inference_model_count: pf.inference_models.len(),
+                        image_format: pf.image_format,
                     });
                 }
                 Err(e) => {
@@ -175,8 +184,19 @@ impl AppState {
                 has_p2p_config: pf.p2p.is_some(),
                 folder: pf.folder.clone(),
                 inference_model_count: pf.inference_models.len(),
+                image_format: pf.image_format.clone(),
             }
         }).map(Some)
+    }
+
+    pub fn update_project_image_format(&self, project_id: &str, format: &str) -> Result<(), String> {
+        if format != "jpg" && format != "webp" {
+            return Err(format!("Formato de imagen no soportado: {}", format));
+        }
+        self.with_project_mut(project_id, |pf| {
+            pf.image_format = format.to_string();
+            pf.updated = js_timestamp();
+        })
     }
 
     pub fn set_project_folder(&self, project_id: &str, folder: Option<String>) -> Result<(), String> {

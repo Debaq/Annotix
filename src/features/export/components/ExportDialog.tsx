@@ -31,6 +31,7 @@ export function ExportDialog({ trigger }: ExportDialogProps) {
   const validFormats = getValidFormats(project?.type);
   const defaultFormat = getDefaultFormat(project?.type);
   const [format, setFormat] = useState<ExportFormat>(defaultFormat || 'yolo-detection');
+  const [normalizeToJpg, setNormalizeToJpg] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -70,6 +71,7 @@ export function ExportDialog({ trigger }: ExportDialogProps) {
         projectId: project.id,
         format,
         outputPath: savePath,
+        normalizeToJpg,
       });
 
       setOpen(false);
@@ -101,6 +103,22 @@ export function ExportDialog({ trigger }: ExportDialogProps) {
 
         <div className="space-y-4 py-4">
           <FormatSelector value={format} onChange={setFormat} validFormats={validFormats} />
+
+          <label className="flex items-start gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={normalizeToJpg}
+              onChange={(e) => setNormalizeToJpg(e.target.checked)}
+              className="mt-0.5"
+              title={t('export.normalizeToJpgInfo')}
+            />
+            <span>
+              <span className="font-medium">{t('export.normalizeToJpg')}</span>
+              <span className="block text-xs text-muted-foreground">
+                {t('export.normalizeToJpgInfo')}
+              </span>
+            </span>
+          </label>
 
           {isExporting && <ExportProgress progress={progress} />}
         </div>

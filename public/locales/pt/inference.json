@@ -90,5 +90,7 @@
   "noClassMapping": "No class mapping configured. Map model classes to project classes first.",
   "uploadModelPt": "Supports .pt (YOLO) and .onnx formats",
   "detectingMetadata": "Detecting model metadata...",
-  "modelTask": "Task"
+  "modelTask": "Task",
+  "imageSource": "Fonte de imagens",
+  "imageSourceNote": "as imagens armazenadas em disco"
 }

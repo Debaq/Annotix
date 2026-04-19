@@ -34,7 +34,12 @@ pub struct ProjectFile {
     pub folder: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub tts_sentences: Vec<TtsSentence>,
+    /// Formato de imágenes para uploads/frames nuevos: "jpg" | "webp"
+    #[serde(default = "default_image_format", rename = "imageFormat")]
+    pub image_format: String,
 }
+
+fn default_image_format() -> String { "jpg".to_string() }
 
 /// Estado de descarga P2P pendiente (imágenes por descargar)
 #[derive(Debug, Clone, Serialize, Deserialize)]

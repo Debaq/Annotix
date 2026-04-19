@@ -90,5 +90,7 @@
   "noClassMapping": "No hay mapeo de clases configurado. Mapea las clases del modelo a las del proyecto primero.",
   "uploadModelPt": "Soporta formatos .pt (YOLO) y .onnx",
   "detectingMetadata": "Detectando metadatos del modelo...",
-  "modelTask": "Tarea"
+  "modelTask": "Tarea",
+  "imageSource": "Fuente de imágenes",
+  "imageSourceNote": "las imágenes almacenadas en disco"
 }

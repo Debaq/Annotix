@@ -554,5 +554,12 @@
     "allData": "TODAS as imagens e anotações serão excluídas",
     "noUndo": "Não há como recuperar os dados excluídos",
     "recommendation": "Recomendação: Exporte o projeto no formato .tix como backup ANTES de excluí-lo"
-  }
+  },
+  "imageFormat": "Formato de imagem",
+  "imageFormatJpg": "JPG (máxima compatibilidade)",
+  "imageFormatWebp": "WebP (tamanho menor, galeria fluida)",
+  "imageFormatInfo": "JPG: compatível com todas as ferramentas. WebP: ~25-30% menor, decodificação otimizada no visualizador. Treinar com WebP é válido se o deployment também usar WebP.",
+  "convertDataset": "Converter dataset",
+  "convertDatasetConfirm": "{{count}} imagens serão convertidas para {{format}}. Continuar?",
+  "convertDatasetSuccess": "Convertidas: {{converted}}, ignoradas: {{skipped}}, falhas: {{failed}}"
 }

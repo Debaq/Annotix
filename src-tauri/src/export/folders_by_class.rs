@@ -60,8 +60,14 @@ fn add_image_to_folder<W: Write + Seek>(
     images_dir: &Path,
 ) -> Result<(), String> {
     let file_path = images_dir.join(&image.file);
-    let data = std::fs::read(&file_path)
+    let mut data = std::fs::read(&file_path)
         .map_err(|e| format!("Error leyendo imagen {}: {}", image.name, e))?;
+
+    // Transcodificar WebP → JPG si el file_name destino ya no es .webp (normalizado)
+    if super::has_webp_ext(&image.file) && !super::has_webp_ext(file_name) {
+        data = super::transcode_to_jpg(&data)
+            .map_err(|e| format!("Error transcodificando {}: {}", image.file, e))?;
+    }
 
     let options = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
     let path = format!("{}/{}", folder, file_name);

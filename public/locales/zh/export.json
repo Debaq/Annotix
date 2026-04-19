@@ -330,5 +330,7 @@
   "format": "格式",
   "formatDescription": "格式说明",
   "progress": "进度",
-  "selectFormat": "选择导出格式"
+  "selectFormat": "选择导出格式",
+  "normalizeToJpg": "归一化为 JPG",
+  "normalizeToJpgInfo": "导出时将 WebP 图像转换为 JPG，以兼容外部工具。"
 }

@@ -330,5 +330,7 @@
   "format": "フォーマット",
   "formatDescription": "フォーマットの説明",
   "progress": "進捗",
-  "selectFormat": "エクスポートフォーマットを選択"
+  "selectFormat": "エクスポートフォーマットを選択",
+  "normalizeToJpg": "JPGに正規化",
+  "normalizeToJpgInfo": "外部ツールとの互換性のため、エクスポート時にWebP画像をJPGに変換します。"
 }

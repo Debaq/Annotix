@@ -60,12 +60,37 @@ export interface StorageInfo {
 export async function createProject(
   name: string,
   projectType: string,
-  classes: ClassDefinition[]
+  classes: ClassDefinition[],
+  imageFormat?: 'jpg' | 'webp'
 ): Promise<string> {
   return invoke<string>('create_project', {
     name,
     projectType,
     classes,
+    imageFormat: imageFormat ?? 'jpg',
+  });
+}
+
+export async function setProjectImageFormat(
+  projectId: string,
+  format: 'jpg' | 'webp'
+): Promise<void> {
+  return invoke('update_project_image_format', { projectId, format });
+}
+
+export interface ConversionReport {
+  converted: number;
+  skipped: number;
+  failed: string[];
+}
+
+export async function convertProjectImages(
+  projectId: string,
+  targetFormat: 'jpg' | 'webp'
+): Promise<ConversionReport> {
+  return invoke<ConversionReport>('convert_project_images', {
+    projectId,
+    targetFormat,
   });
 }
 
