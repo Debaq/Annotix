@@ -6,6 +6,7 @@ pub mod csv_import;
 pub mod unet_masks;
 pub mod folders_by_class;
 pub mod tix;
+pub mod merge;
 
 use serde::{Deserialize, Serialize};
 use crate::store::project_file::{ClassDef, AnnotationEntry};

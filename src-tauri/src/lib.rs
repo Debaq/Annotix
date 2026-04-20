@@ -179,6 +179,8 @@ pub fn run() {
             // Import
             commands::import_commands::detect_import_format,
             commands::import_commands::import_dataset,
+            commands::import_commands::analyze_tix_projects,
+            commands::import_commands::merge_tix_projects,
             // CSV
             commands::csv_commands::parse_csv,
             commands::csv_commands::validate_csv,

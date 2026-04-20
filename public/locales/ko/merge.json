@@ -1,0 +1,22 @@
+{
+  "button": "Merge .tix",
+  "title": "Merge .tix projects",
+  "description": "Combine multiple .tix files harmonizing classes",
+  "selectMultiple": "Select 2 or more .tix files",
+  "needTwo": "Select at least two .tix files",
+  "analyzing": "Analyzing files...",
+  "mapClasses": "Harmonize classes",
+  "mapHelp": "Edit, reorder or remove canonical classes. Then map each source class to a canonical one or discard it.",
+  "canonicalClasses": "Canonical classes (order = index)",
+  "sourceMapping": "Mapping per source project",
+  "discard": "— Discard —",
+  "projectName": "Merged project name",
+  "mergeAction": "Merge",
+  "merging": "Merging projects...",
+  "success": "Merge completed",
+  "error": {
+    "mixedTypes": "Projects have different types. Only same-type merge is supported.",
+    "noName": "Enter a project name",
+    "noCanonical": "There must be at least one canonical class."
+  }
+}

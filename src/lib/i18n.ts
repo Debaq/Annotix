@@ -50,7 +50,7 @@ const NAMESPACES = [
   'preprocessing', 'classification', 'augmentation', 'pwa', 'storage',
   'inference', 'connector', 'timeseries', 'tabular', 'training', 'setup',
   'video', 'settings', 'wizard', 'p2p', 'automation', 'audio', 'projectDetail',
-  'sam',
+  'sam', 'merge',
 ] as const;
 
 // Load all namespace files for a locale and merge into one resource bundle

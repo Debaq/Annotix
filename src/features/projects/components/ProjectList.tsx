@@ -6,6 +6,7 @@ import { CreateProjectDialog } from './CreateProjectDialog';
 import { Button } from '@/components/ui/button';
 import { useUIStore } from '../../core/store/uiStore';
 import { ImportDialog } from '@/features/import/components/ImportDialog';
+import { MergeTixDialog } from '@/features/import/components/MergeTixDialog';
 import { P2pDialog } from '@/features/p2p/components/P2pDialog';
 import { Card, CardContent } from '@/components/ui/card';
 import * as tauriDb from '@/lib/tauriDb';
@@ -139,6 +140,16 @@ export function ProjectList() {
             </div>
             <h3 className="font-semibold text-sm">{t('import.import')}</h3>
             <p className="text-xs text-muted-foreground text-center">{t('import.orClickToSelect')}</p>
+          </button>
+        } />
+        <div className="w-px bg-border" />
+        <MergeTixDialog trigger={
+          <button className="flex-1 flex flex-col items-center justify-center gap-3 p-4 cursor-pointer hover:bg-primary/5 transition-colors">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
+              <i className="fas fa-code-merge text-lg"></i>
+            </div>
+            <h3 className="font-semibold text-sm">{t('merge.button', 'Fusionar .tix')}</h3>
+            <p className="text-xs text-muted-foreground text-center">{t('merge.description', 'Combinar varios .tix homogeneizando clases')}</p>
           </button>
         } />
         <div className="w-px bg-border" />

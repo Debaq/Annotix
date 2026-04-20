@@ -1,0 +1,22 @@
+{
+  "button": "Fusionar .tix",
+  "title": "Fusionar proyectos .tix",
+  "description": "Combina varios .tix homogeneizando clases",
+  "selectMultiple": "Selecciona 2 o más archivos .tix",
+  "needTwo": "Selecciona al menos dos archivos .tix",
+  "analyzing": "Analizando archivos...",
+  "mapClasses": "Homogeneizar clases",
+  "mapHelp": "Edita, reordena o elimina las clases canónicas. Luego asigna cada clase original a una canónica o descártala.",
+  "canonicalClasses": "Clases canónicas (orden = índice)",
+  "sourceMapping": "Mapeo por proyecto origen",
+  "discard": "— Descartar —",
+  "projectName": "Nombre del proyecto fusionado",
+  "mergeAction": "Fusionar",
+  "merging": "Fusionando proyectos...",
+  "success": "Fusión completada",
+  "error": {
+    "mixedTypes": "Los proyectos tienen tipos distintos. Solo se soporta fusión del mismo tipo.",
+    "noName": "Ingresa un nombre de proyecto",
+    "noCanonical": "Debe haber al menos una clase canónica."
+  }
+}
