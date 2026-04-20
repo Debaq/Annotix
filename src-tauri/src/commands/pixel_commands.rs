@@ -20,10 +20,11 @@ pub fn process_image_filters(
 
     let path = state.get_image_file_path(&project_id, &image_id)?;
     let img = image::open(&path).map_err(|e| format!("Error abriendo imagen: {}", e))?;
+    let (orig_w, orig_h) = (img.width(), img.height());
 
-    // Limitar a 2048 para rendimiento
+    // Procesar a max 2048 por rendimiento; reescalar de vuelta al final
     let max_dim = 2048u32;
-    let img = if img.width() > max_dim || img.height() > max_dim {
+    let img = if orig_w > max_dim || orig_h > max_dim {
         img.resize(max_dim, max_dim, image::imageops::FilterType::Lanczos3)
     } else {
         img
@@ -42,6 +43,16 @@ pub fn process_image_filters(
     if sharpness > 0 {
         let amount = (sharpness as f64 / 100.0) * 0.5;
         rgb = apply_sharpness(&rgb, amount);
+    }
+
+    // Reescalar a dimensiones originales si se redimensionó
+    if rgb.width() != orig_w || rgb.height() != orig_h {
+        rgb = image::imageops::resize(
+            &rgb,
+            orig_w,
+            orig_h,
+            image::imageops::FilterType::Lanczos3,
+        );
     }
 
     // Codificar como JPEG base64 (más rápido y pequeño que PNG para previews)
