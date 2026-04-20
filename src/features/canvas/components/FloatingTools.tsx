@@ -5,6 +5,7 @@ import { useUIStore } from '@/features/core/store/uiStore';
 import { useSamStore } from '@/features/sam/store/useSamStore';
 import { getAvailableTools } from '../config/toolsConfig';
 import { shortcutsManager } from '@/features/core/utils/ShortcutsManager';
+import { useDraggablePanel } from '../hooks/useDraggablePanel';
 import { cn } from '@/lib/utils';
 import type { ToolId } from '../config/toolsConfig';
 
@@ -52,6 +53,10 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
 }) => {
   const { t } = useTranslation();
   const { project } = useCurrentProject();
+  const { containerRef, handleMouseDown, position, dragging } = useDraggablePanel(
+    'tools',
+    project?.id,
+  );
   const { activeTool, setActiveTool, annotationsVisible, toggleAnnotationsVisible, showLabels, toggleLabels } = useUIStore();
   const samPairId = useSamStore((s) => s.pairId);
   const samAssistActive = useSamStore((s) => s.samAssistActive);
@@ -96,10 +101,19 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
     onMaskBrushSizeChange?.(next);
   };
 
+  const panelStyle: React.CSSProperties = position
+    ? { left: position.left, top: position.top }
+    : { left: '20px', top: '15%' };
+
   return (
-    <div className="annotix-floating" style={{ left: '20px', top: '15%' }}>
+    <div
+      ref={containerRef}
+      className="annotix-floating"
+      style={{ ...panelStyle, userSelect: dragging ? 'none' : undefined }}
+    >
       <div className="flex items-start gap-1">
         <h4
+          onMouseDown={handleMouseDown}
           className="text-[0.6em] uppercase font-semibold tracking-wider self-center"
           style={{
             color: 'var(--annotix-gray)',
@@ -107,6 +121,7 @@ export const FloatingTools: React.FC<FloatingToolsProps> = ({
             textOrientation: 'mixed',
             transform: 'rotate(180deg)',
             letterSpacing: '0.15em',
+            cursor: dragging ? 'grabbing' : 'grab',
           }}
         >
           {t('canvas.tools')}

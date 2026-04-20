@@ -1,5 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
+import { useDraggablePanel } from '../hooks/useDraggablePanel';
 
 interface FloatingZoomControlsProps {
   zoom: number;
@@ -15,11 +17,28 @@ export const FloatingZoomControls: React.FC<FloatingZoomControlsProps> = ({
   onZoomReset,
 }) => {
   const { t } = useTranslation();
+  const { project } = useCurrentProject();
+  const { containerRef, handleMouseDown, position, dragging } = useDraggablePanel(
+    'zoom',
+    project?.id,
+  );
+
+  const panelStyle: React.CSSProperties = position
+    ? { left: position.left, top: position.top }
+    : { top: '20px', right: '20px' };
 
   return (
-    <div className="annotix-floating" style={{ top: '20px', right: '20px' }}>
+    <div
+      ref={containerRef}
+      className="annotix-floating"
+      style={{ ...panelStyle, userSelect: dragging ? 'none' : undefined }}
+    >
       <div className="flex flex-col gap-2">
-        <h4 className="text-[0.7em] uppercase font-semibold tracking-wider mb-1 text-center" style={{ color: 'var(--annotix-gray)' }}>
+        <h4
+          onMouseDown={handleMouseDown}
+          className="text-[0.7em] uppercase font-semibold tracking-wider mb-1 text-center"
+          style={{ color: 'var(--annotix-gray)', cursor: dragging ? 'grabbing' : 'grab' }}
+        >
           {t('canvas.zoom')}
         </h4>
         <div className="flex items-center gap-1">

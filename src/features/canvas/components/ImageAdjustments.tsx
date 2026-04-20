@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
+import { useDraggablePanel } from '../hooks/useDraggablePanel';
 
 export interface ImageAdjustmentValues {
   brightness: number;   // -100 to 100
@@ -70,6 +72,11 @@ function SliderRow({ icon, label, value, min, max, onChange }: SliderRowProps) {
 export const ImageAdjustments: React.FC<ImageAdjustmentsProps> = ({ values, onChange }) => {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(true);
+  const { project } = useCurrentProject();
+  const { containerRef, handleMouseDown, position, dragging, justDraggedRef } = useDraggablePanel(
+    'adjustments',
+    project?.id,
+  );
 
   const isDefault = Object.keys(DEFAULT_ADJUSTMENTS).every(
     (k) => values[k as keyof ImageAdjustmentValues] === DEFAULT_ADJUSTMENTS[k as keyof ImageAdjustmentValues]
@@ -79,13 +86,27 @@ export const ImageAdjustments: React.FC<ImageAdjustmentsProps> = ({ values, onCh
     onChange({ ...values, [key]: v });
   };
 
+  const panelStyle: React.CSSProperties = position
+    ? { left: position.left, top: position.top }
+    : { top: '155px', right: '20px' };
+
   return (
-    <div className="annotix-floating" style={{ top: '155px', right: '20px' }}>
+    <div
+      ref={containerRef}
+      className="annotix-floating"
+      style={{ ...panelStyle, userSelect: dragging ? 'none' : undefined }}
+    >
       <div className="flex flex-col" style={{ width: collapsed ? 'auto' : '200px' }}>
         <button
-          onClick={() => setCollapsed((c) => !c)}
+          onClick={() => {
+            if (justDraggedRef.current) return;
+            setCollapsed((c) => !c);
+          }}
+          onMouseDown={(e) => {
+            if (e.button === 0) handleMouseDown(e);
+          }}
           className="flex items-center gap-1.5 w-full text-left"
-          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+          style={{ background: 'none', border: 'none', padding: 0, cursor: dragging ? 'grabbing' : 'grab' }}
         >
           <i
             className={`fas fa-sliders-h text-[0.65rem]`}
