@@ -1,0 +1,48 @@
+{
+  "title": "Annotix: An Open-Source Desktop Platform for Machine Learning Dataset Annotation",
+  "description": "<p>Annotix is an open-source cross-platform desktop application for ML dataset annotation, training and collaboration. It supports images, video, time series and tabular data, with built-in YOLO training, SAM-assisted annotation, 11 export formats and 8 import formats, and interfaces in 10 languages.</p>",
+  "license": "MIT",
+  "upload_type": "software",
+  "access_right": "open",
+  "creators": [
+    {
+      "name": "Baier Quezada, Nicol\u00e1s",
+      "affiliation": "Universidad Austral de Chile",
+      "orcid": "0000-0003-2818-0990"
+    },
+    {
+      "name": "L\u00f3pez, Fernanda",
+      "affiliation": "Universidad Austral de Chile",
+      "orcid": "0000-0002-0810-7684"
+    },
+    {
+      "name": "Uribe, Vanessa",
+      "affiliation": "Universidad Austral de Chile",
+      "orcid": "0009-0003-0795-7921"
+    }
+  ],
+  "keywords": [
+    "machine learning",
+    "dataset annotation",
+    "computer vision",
+    "YOLO",
+    "SAM",
+    "time series",
+    "video annotation",
+    "Tauri",
+    "Rust",
+    "React"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/Debaq/Annotix",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    },
+    {
+      "identifier": "10.20944/preprints202604.0919.v1",
+      "relation": "isDocumentedBy",
+      "scheme": "doi"
+    }
+  ]
+}
