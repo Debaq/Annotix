@@ -53,8 +53,8 @@ impl TrainingProcessManager {
             }
         })?;
 
-        // Preparar directorio del dataset
-        let dataset_dir = state.data_dir
+        // Preparar directorio del dataset (dentro del proyecto)
+        let dataset_dir = project_dir
             .join("training")
             .join(format!("job_{}", job_id));
         std::fs::create_dir_all(&dataset_dir)
@@ -221,7 +221,7 @@ impl TrainingProcessManager {
             }
         })?;
 
-        let dataset_dir = state.data_dir
+        let dataset_dir = project_dir
             .join("training")
             .join(format!("job_{}", job_id));
         std::fs::create_dir_all(&dataset_dir)
@@ -368,6 +368,131 @@ impl TrainingProcessManager {
                                 "error": error_msg,
                             }));
 
+                            update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
+                                job.status = "failed".to_string();
+                                job.updated_at = js_timestamp();
+                            });
+                        }
+                    }
+                }
+            }
+
+            update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
+                job.logs = logs;
+                job.updated_at = js_timestamp();
+            });
+        });
+
+        Ok(())
+    }
+
+    /// Reanuda un entrenamiento YOLO/RT-DETR existente usando `resume=True`
+    /// (mismo run dir, last.pt + args.yaml originales, épocas continuas).
+    pub fn resume_training(
+        &self,
+        state: &AppState,
+        app: &AppHandle,
+        project_id: &str,
+        job_id: &str,
+    ) -> Result<(), String> {
+        let python = python_env::venv_python()?;
+        if !python.exists() {
+            return Err("Entorno Python no configurado".to_string());
+        }
+
+        let project_dir = state.project_dir(project_id)?;
+        let pf = state.read_project_file(project_id)?;
+        let job = pf.training_jobs.iter().find(|j| j.id == job_id)
+            .ok_or("Job no encontrado")?;
+
+        // Ubicar last.pt
+        let result_dir = job.result_dir.as_ref()
+            .ok_or("Job sin result_dir. No se puede reanudar (requiere run previo).")?;
+        let last_pt = PathBuf::from(result_dir).join("weights").join("last.pt");
+        if !last_pt.exists() {
+            return Err(format!("No existe last.pt en {:?}", last_pt));
+        }
+
+        let dataset_dir = job.dataset_dir.as_ref()
+            .ok_or("Job sin dataset_dir")?;
+        let dataset_dir = PathBuf::from(dataset_dir);
+
+        // Generar script de resume en el dataset_dir
+        let script = scripts::generate_yolo_resume_script(&last_pt.to_string_lossy());
+        let script_path = dataset_dir.join("train_resume.py");
+        std::fs::write(&script_path, &script)
+            .map_err(|e| format!("Error escribiendo train_resume.py: {}", e))?;
+
+        // Marcar job como training otra vez
+        let job_id_owned = job_id.to_string();
+        state.with_project_mut(project_id, |pf| {
+            if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
+                job.status = "training".to_string();
+                job.updated_at = js_timestamp();
+            }
+        })?;
+        let _ = state.flush_project(project_id);
+
+        // Spawn Python
+        let mut cmd = Command::new(&python);
+        cmd.args(["-u", &script_path.to_string_lossy()])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        super::hide_console_window(&mut cmd);
+        let mut child = cmd.spawn()
+            .map_err(|e| format!("Error reanudando entrenamiento: {}", e))?;
+
+        let stdout = child.stdout.take();
+        let stderr = child.stderr.take();
+        {
+            let mut procs = self.processes.lock().map_err(|e| e.to_string())?;
+            procs.insert(job_id.to_string(), child);
+        }
+
+        let app_clone = app.clone();
+        let processes = self.processes.clone();
+        let project_dir_clone = project_dir.clone();
+        let job_id_thread = job_id.to_string();
+
+        std::thread::spawn(move || {
+            let mut logs: Vec<String> = Vec::new();
+
+            if let Some(stdout) = stdout {
+                let reader = BufReader::new(stdout);
+                for line in reader.lines().map_while(Result::ok) {
+                    if let Some(json_str) = line.strip_prefix("ANNOTIX_EVENT:") {
+                        if let Ok(event) = serde_json::from_str::<serde_json::Value>(json_str) {
+                            handle_event(&app_clone, &job_id_thread, &event, &project_dir_clone);
+                        }
+                    } else if !line.trim().is_empty() {
+                        logs.push(line.clone());
+                        let _ = app_clone.emit("training:log", serde_json::json!({
+                            "jobId": &job_id_thread,
+                            "message": line,
+                        }));
+                        if logs.len() % 10 == 0 {
+                            update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
+                                job.logs = logs.clone();
+                                job.updated_at = js_timestamp();
+                            });
+                        }
+                    }
+                }
+            }
+
+            {
+                let mut procs = processes.lock().unwrap();
+                if let Some(mut child) = procs.remove(&job_id_thread) {
+                    let status = child.wait();
+                    let success = status.map(|s| s.success()).unwrap_or(false);
+                    if !success {
+                        if let Some(stderr) = stderr {
+                            let reader = BufReader::new(stderr);
+                            let error_msg: String = reader.lines().map_while(Result::ok).collect::<Vec<_>>().join("\n");
+                            let _ = app_clone.emit("training:error", serde_json::json!({
+                                "jobId": &job_id_thread,
+                                "error": error_msg,
+                            }));
                             update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
                                 job.status = "failed".to_string();
                                 job.updated_at = js_timestamp();

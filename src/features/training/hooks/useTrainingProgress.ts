@@ -43,7 +43,14 @@ export function useTrainingProgress(jobId: string | null) {
 
       const u2 = await listen<{ jobId: string; message: string }>('training:log', (event) => {
         if (event.payload.jobId !== jobId) return;
-        setLogs((prev) => [...prev, event.payload.message]);
+        const raw = event.payload.message;
+        // Split por \n; dentro de cada segmento, \r = overwrite de la línea (última parte gana)
+        const parts = raw.split('\n').map((seg) => {
+          const idx = seg.lastIndexOf('\r');
+          return idx >= 0 ? seg.slice(idx + 1) : seg;
+        }).filter((l) => l.length > 0);
+        if (parts.length === 0) return;
+        setLogs((prev) => [...prev, ...parts]);
       });
       unlisteners.push(u2);
 

@@ -7,9 +7,10 @@ import type { TrainingJob } from '../types';
 interface TrainingJobListProps {
   projectId: string;
   onFineTune?: (job: TrainingJob) => void;
+  onResume?: (job: TrainingJob) => void;
 }
 
-export function TrainingJobList({ projectId, onFineTune }: TrainingJobListProps) {
+export function TrainingJobList({ projectId, onFineTune, onResume }: TrainingJobListProps) {
   const { t } = useTranslation();
   const { jobs, loading, loadJobs, deleteJob } = useTrainingJobs(projectId);
 
@@ -40,6 +41,7 @@ export function TrainingJobList({ projectId, onFineTune }: TrainingJobListProps)
             deleteJob(id);
           }}
           onFineTune={onFineTune}
+          onResume={onResume}
         />
       ))}
     </div>

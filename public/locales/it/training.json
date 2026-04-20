@@ -319,8 +319,82 @@
     "logs": "Log Addestramento",
     "waitingMetrics": "In attesa delle metriche...",
     "waitingLogs": "In attesa dei log...",
+    "copyLogs": "Copia",
+    "copied": "Copiato",
+    "saveLogs": "Salva log",
     "mIoU": "mIoU",
     "meanAccuracy": "Precisione Media"
+  },
+  "observations": {
+    "title": "Observations",
+    "stylePro": "Pro",
+    "styleFun": "Fun",
+    "rules": {
+      "waiting": {
+        "pro": "Waiting for data to analyze behavior.",
+        "fun": "Chill, the party hasn't started yet 🎬"
+      },
+      "warmingUp": {
+        "pro": "Warming up — need more epochs to evaluate trends ({{n}}/3).",
+        "fun": "Stretching before the run 🏃 ({{n}}/3)"
+      },
+      "healthy": {
+        "pro": "All OK: loss decreasing and metrics rising. Keep training.",
+        "fun": "Rolling like a freight train! Loss down, metrics up 🚂🔥"
+      },
+      "excellent": {
+        "pro": "Excellent performance ({{value}}%). Consider saving a checkpoint.",
+        "fun": "Brutal, {{value}}%! This model is plugged in ⚡"
+      },
+      "strong": {
+        "pro": "Good level ({{value}}%). Room to refine with lower LR or more epochs.",
+        "fun": "Looking sharp ({{value}}%). A little polish and it's gold ✨"
+      },
+      "overfitting": {
+        "pro": "Possible overfitting: train loss down but val loss up. Consider early stop, more augmentation or more data.",
+        "fun": "It's memorizing instead of learning 📚😅 More aug or stop it."
+      },
+      "valLossUp": {
+        "pro": "Val loss rising without train loss improvement. Check LR and regularization.",
+        "fun": "Validation is getting grumpy 😤 Lower the LR."
+      },
+      "mapDown": {
+        "pro": "mAP50 decreasing in the recent window. Consider stopping or reverting to best checkpoint.",
+        "fun": "mAP50 is rolling down the stairs 📉 Save best and stop."
+      },
+      "iouDown": {
+        "pro": "mIoU decreasing. Check LR or stop training.",
+        "fun": "IoU lost its way 🧭 Better stop."
+      },
+      "plateau": {
+        "pro": "Metric has plateaued over recent epochs. Consider early stop or LR drop.",
+        "fun": "Plateau sighted 🏞️ Not improving — keep going or cut?"
+      },
+      "lossExploding": {
+        "pro": "Loss exploded ({{ratio}}× the minimum). Lower learning rate or check optimizer.",
+        "fun": "BOOM 💥 Loss went supernova ({{ratio}}×). Drop the LR now."
+      },
+      "nan": {
+        "pro": "NaN/Inf values detected. Stop and check AMP, LR or data.",
+        "fun": "NaN showed up 👻 Stop and inspect — something broke."
+      },
+      "precisionHigh": {
+        "pro": "High precision ({{precision}}%) but low recall ({{recall}}%). Lower confidence threshold or raise cls weight.",
+        "fun": "Very precise ({{precision}}%) but shy ({{recall}}%). Let it speak up 🗣️"
+      },
+      "recallHigh": {
+        "pro": "High recall ({{recall}}%) but low precision ({{precision}}%). Raise threshold or tweak loss weights.",
+        "fun": "Talks a lot ({{recall}}%) but misses ({{precision}}%). More filter 🔇"
+      },
+      "valTooEasy": {
+        "pro": "Val loss noticeably lower than train loss. Possible leak or easy split.",
+        "fun": "Val seems easier than train 🤔 Leak or luck?"
+      },
+      "neutral": {
+        "pro": "No clear signals yet. Keep training.",
+        "fun": "All calm for now 🧘 carrying on."
+      }
+    }
   },
   "status": {
     "pending": "In attesa",
@@ -336,7 +410,9 @@
     "modelPaths": "File del Modello",
     "exported": "Modelli Esportati",
     "exportModel": "Esporta Modello",
-    "newTraining": "Nuovo Addestramento"
+    "newTraining": "Nuovo Addestramento",
+    "exportReport": "Esporta report PDF",
+    "generatingReport": "Generazione report..."
   },
   "fineTune": "Fine-tune",
   "fineTuneFrom": "Fine-tuning da: {{source}}",
@@ -377,5 +453,12 @@
     "runningOn": "In esecuzione su {{provider}}",
     "pollingInfo": "Aggiornamenti di progresso ogni 30 secondi",
     "viewJob": "Visualizza job"
-  }
+  },
+  "cancelConfirmTitle": "Annulla addestramento",
+  "cancelConfirmMessage": "Il progresso non salvato andrà perso. I checkpoint best/last restano sul disco. Annullare?",
+  "cancelConfirmOk": "Sì, annulla",
+  "cancelConfirmKeep": "Continua ad addestrare",
+  "runningShort": "Addestramento {{progress}}%",
+  "resume": "Riprendi",
+  "resumeAsFineTune": "Continua (fine-tune)"
 }

@@ -1,6 +1,6 @@
 import { ReactNode, useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { save } from '@tauri-apps/plugin-dialog';
+import { save, ask } from '@tauri-apps/plugin-dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -48,6 +48,7 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
   const [selectedPreset, setSelectedPreset] = useState<ScenarioPresetId | null>('small_objects');
   const [fineTuneSource, setFineTuneSource] = useState<string | null>(null);
   const [automationSessionId, setAutomationSessionId] = useState<string | null>(null);
+  const [trainingStartedAt, setTrainingStartedAt] = useState<number>(0);
 
   const projectType = project?.type || 'bbox';
 
@@ -114,6 +115,10 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
   // When user picks "Train locally" → check Python env + backend packages first
   const handleStartLocal = useCallback(async () => {
     if (!project?.id) return;
+    if (activeJobId) {
+      setPhase('training');
+      return;
+    }
 
     // 1) Check Python env
     try {
@@ -171,6 +176,7 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
       const request = buildRequest();
       const jobId = await trainingService.startTrainingV2(project.id, request);
       setActiveJobId(jobId);
+      setTrainingStartedAt(Date.now());
       setPhase('training');
     } catch (e) {
       console.error('Error starting training:', e);
@@ -190,11 +196,16 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
 
   const handleStartCloud = useCallback(async () => {
     if (!project?.id || !cloudProvider || !cloudConfig) return;
+    if (activeJobId) {
+      setPhase('training');
+      return;
+    }
 
     try {
       const request = buildRequest();
       const jobId = await trainingService.startTrainingV2(project.id, request);
       setActiveJobId(jobId);
+      setTrainingStartedAt(Date.now());
       setPhase('training');
     } catch (e) {
       console.error('Error starting cloud training:', e);
@@ -232,17 +243,23 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
   }, [project, backend, buildRequest]);
 
   const handleCancel = useCallback(async () => {
-    if (activeJobId && project?.id) {
-      try {
-        await trainingService.cancelTraining(project.id, activeJobId);
-      } catch {
-        // may already be cancelled
-      }
-      setPhase('config');
-      setActiveJobId(null);
-      resetProgress();
+    if (!activeJobId || !project?.id) return;
+    const confirmed = await ask(t('training.cancelConfirmMessage'), {
+      title: t('training.cancelConfirmTitle'),
+      kind: 'warning',
+      okLabel: t('training.cancelConfirmOk'),
+      cancelLabel: t('training.cancelConfirmKeep'),
+    });
+    if (!confirmed) return;
+    try {
+      await trainingService.cancelTraining(project.id, activeJobId);
+    } catch {
+      // may already be cancelled
     }
-  }, [activeJobId, project, resetProgress]);
+    setPhase('config');
+    setActiveJobId(null);
+    resetProgress();
+  }, [activeJobId, project, resetProgress, t]);
 
   const handleNewTraining = useCallback(() => {
     setPhase('backend');
@@ -251,6 +268,22 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
     setBaseModelPath(null);
     setFineTuneSource(null);
   }, [resetProgress, setBaseModelPath]);
+
+  const handleResume = useCallback(async (job: TrainingJob) => {
+    if (!project?.id || !job.id) return;
+    if (activeJobId) {
+      setPhase('training');
+      return;
+    }
+    try {
+      await trainingService.resumeTraining(project.id, job.id);
+      setActiveJobId(job.id);
+      setTrainingStartedAt(Date.now());
+      setPhase('training');
+    } catch (e) {
+      console.error('Error reanudando entrenamiento:', e);
+    }
+  }, [project, activeJobId]);
 
   const handleFineTune = useCallback((job: TrainingJob) => {
     if (!job.bestModelPath) return;
@@ -278,9 +311,25 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button className="bg-emerald-600 hover:bg-emerald-700">
-            <i className="fas fa-brain mr-2" />
-            {t('training.title')}
+          <Button
+            className={
+              activeJobId && phase === 'training'
+                ? 'bg-emerald-600 hover:bg-emerald-700 relative pr-3 pl-3'
+                : 'bg-emerald-600 hover:bg-emerald-700'
+            }
+          >
+            {activeJobId && phase === 'training' ? (
+              <>
+                <i className="fas fa-circle text-emerald-200 text-[8px] mr-2 animate-pulse" />
+                <span className="mr-2">{t('training.runningShort', { progress: progress.toFixed(0) })}</span>
+                <i className="fas fa-chart-line" />
+              </>
+            ) : (
+              <>
+                <i className="fas fa-brain mr-2" />
+                {t('training.title')}
+              </>
+            )}
           </Button>
         )}
       </DialogTrigger>
@@ -293,10 +342,24 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
           <DialogDescription>{t('training.description')}</DialogDescription>
         </DialogHeader>
 
+        {phase === 'training' ? (
+          <div className="flex-1 min-h-0 flex flex-col px-6 pb-6 overflow-hidden">
+            <TrainingMonitor
+              epoch={epoch}
+              totalEpochs={totalEpochs}
+              progress={progress}
+              metricsHistory={metricsHistory}
+              logs={logs}
+              phase={trainingPhase}
+              error={error}
+              onCancel={handleCancel}
+            />
+          </div>
+        ) : (
         <ScrollArea className="flex-1 w-full">
           <div className="px-6 pb-8 space-y-6">
             {/* Phase navigation breadcrumb */}
-            {phase !== 'setup' && phase !== 'training' && phase !== 'completed' && (
+            {phase !== 'setup' && phase !== 'completed' && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <button
                   onClick={() => setPhase('backend')}
@@ -324,7 +387,7 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
                   onSelect={handleBackendSelect}
                 />
                 <Separator />
-                <TrainingJobList projectId={project.id!} onFineTune={handleFineTune} />
+                <TrainingJobList projectId={project.id!} onFineTune={handleFineTune} onResume={handleResume} />
               </>
             )}
 
@@ -429,26 +492,32 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
               </div>
             )}
 
-            {/* Training phase */}
-            {phase === 'training' && (
-              <TrainingMonitor
-                epoch={epoch}
-                totalEpochs={totalEpochs}
-                progress={progress}
-                metricsHistory={metricsHistory}
-                logs={logs}
-                phase={trainingPhase}
-                error={error}
-                onCancel={handleCancel}
-              />
-            )}
-
             {/* Completed phase */}
             {phase === 'completed' && result && (
-              <TrainingResult result={result} onNewTraining={handleNewTraining} />
+              <TrainingResult
+                result={result}
+                onNewTraining={handleNewTraining}
+                projectName={project.name || project.id!}
+                backend={backend}
+                modelId={modelId}
+                modelSize={backend === 'yolo' ? modelSize : null}
+                startedAt={trainingStartedAt || Date.now()}
+                config={{
+                  backend,
+                  modelId,
+                  modelSize,
+                  executionMode,
+                  ...commonParams,
+                  ...backendParams,
+                  baseModelPath,
+                }}
+                metricsHistory={metricsHistory}
+                logs={logs}
+              />
             )}
           </div>
         </ScrollArea>
+        )}
       </DialogContent>
 
       {/* Automation control panel (floating) */}

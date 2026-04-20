@@ -122,6 +122,12 @@ pub fn run() {
                 }
             }
 
+            // Migrar entrenamientos legacy a carpeta del proyecto
+            {
+                let state = app.state::<store::AppState>();
+                training::migrate::migrate_legacy_training_dirs(&state);
+            }
+
             // Reanudar extracciones de video interrumpidas
             commands::video_commands::resume_pending_extractions(app.handle().clone());
 
@@ -218,6 +224,7 @@ pub fn run() {
             commands::training_commands::get_yolo_models,
             commands::training_commands::start_training,
             commands::training_commands::cancel_training,
+            commands::training_commands::resume_training,
             commands::training_commands::get_training_job,
             commands::training_commands::list_training_jobs,
             commands::training_commands::delete_training_job,

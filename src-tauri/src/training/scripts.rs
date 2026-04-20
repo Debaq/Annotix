@@ -234,6 +234,87 @@ if __name__ == "__main__":
     )
 }
 
+/// Genera un script que resume un entrenamiento YOLO/RT-DETR desde last.pt
+/// usando `resume=True` (mismo run dir, mismo optimizer state, épocas continuas).
+pub fn generate_yolo_resume_script(last_pt_path: &str) -> String {
+    let quoted = format!("r\"{}\"", last_pt_path.replace('\\', "/"));
+    format!(
+        r#"#!/usr/bin/env python3
+"""Resume YOLO training from last.pt (true resume)"""
+import json
+
+def main():
+    from ultralytics import YOLO
+
+    last_pt = {quoted}
+    model = YOLO(last_pt)
+
+    def on_fit_epoch_end(trainer):
+        metrics = {{}}
+        epoch = trainer.epoch + 1
+        total = trainer.epochs
+        if hasattr(trainer, 'metrics') and isinstance(trainer.metrics, dict):
+            m = trainer.metrics
+            metrics["precision"] = m.get("metrics/precision(B)", None)
+            metrics["recall"] = m.get("metrics/recall(B)", None)
+            metrics["mAP50"] = m.get("metrics/mAP50(B)", None)
+            metrics["mAP50_95"] = m.get("metrics/mAP50-95(B)", None)
+        if hasattr(trainer, 'loss_items') and trainer.loss_items is not None:
+            try:
+                li = trainer.loss_items.cpu().numpy()
+                if len(li) >= 3:
+                    metrics["boxLoss"] = float(li[0])
+                    metrics["clsLoss"] = float(li[1])
+                    metrics["dflLoss"] = float(li[2])
+            except Exception:
+                pass
+        if hasattr(trainer, 'tloss') and trainer.tloss is not None:
+            try:
+                metrics["trainLoss"] = float(trainer.tloss.cpu().numpy())
+            except Exception:
+                pass
+        progress = (epoch / total) * 100.0
+        event = {{
+            "type": "epoch",
+            "epoch": epoch,
+            "totalEpochs": total,
+            "progress": progress,
+            "metrics": metrics,
+        }}
+        print("ANNOTIX_EVENT:" + json.dumps(event), flush=True)
+
+    model.add_callback("on_fit_epoch_end", on_fit_epoch_end)
+
+    # resume=True → ultralytics reads args.yaml from the run dir containing last_pt
+    results = model.train(resume=True)
+
+    import os
+    train_dir = os.path.dirname(os.path.dirname(last_pt))  # weights/.. = run dir
+    best = os.path.join(train_dir, "weights", "best.pt")
+    last = os.path.join(train_dir, "weights", "last.pt")
+    result = {{
+        "type": "completed",
+        "bestModelPath": best if os.path.exists(best) else None,
+        "lastModelPath": last if os.path.exists(last) else None,
+        "resultsDir": train_dir,
+    }}
+    if results and hasattr(results, 'results_dict'):
+        rd = results.results_dict
+        result["finalMetrics"] = {{
+            "precision": rd.get("metrics/precision(B)", None),
+            "recall": rd.get("metrics/recall(B)", None),
+            "mAP50": rd.get("metrics/mAP50(B)", None),
+            "mAP50_95": rd.get("metrics/mAP50-95(B)", None),
+        }}
+    print("ANNOTIX_EVENT:" + json.dumps(result), flush=True)
+
+if __name__ == "__main__":
+    main()
+"#,
+        quoted = quoted,
+    )
+}
+
 /// Genera el script para exportar un modelo entrenado
 pub fn generate_export_script(model_path: &str, format: &str) -> String {
     format!(

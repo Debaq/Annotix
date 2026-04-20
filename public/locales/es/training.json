@@ -319,8 +319,82 @@
     "logs": "Logs de Entrenamiento",
     "waitingMetrics": "Esperando métricas...",
     "waitingLogs": "Esperando logs...",
+    "copyLogs": "Copiar",
+    "copied": "Copiado",
+    "saveLogs": "Guardar log",
     "mIoU": "mIoU",
     "meanAccuracy": "Precisión Media"
+  },
+  "observations": {
+    "title": "Observaciones",
+    "stylePro": "Pro",
+    "styleFun": "Fun",
+    "rules": {
+      "waiting": {
+        "pro": "Esperando datos para analizar el comportamiento.",
+        "fun": "Tranqui, aún no empieza la fiesta 🎬"
+      },
+      "warmingUp": {
+        "pro": "Calentando motor — faltan épocas para evaluar tendencias ({{n}}/3).",
+        "fun": "Estirando músculos antes de correr 🏃 ({{n}}/3)"
+      },
+      "healthy": {
+        "pro": "Todo OK: loss bajando y métricas subiendo. Continuar entrenamiento.",
+        "fun": "¡Va como tren! Loss pa' abajo, métricas pa' arriba 🚂🔥"
+      },
+      "excellent": {
+        "pro": "Rendimiento excelente ({{value}}%). Considera guardar checkpoint.",
+        "fun": "¡Brutal, {{value}}%! Este modelo viene enchufado ⚡"
+      },
+      "strong": {
+        "pro": "Buen nivel ({{value}}%). Margen para afinar con LR más bajo o más épocas.",
+        "fun": "Va fino ({{value}}%). Una pulidita y lo dejas impecable ✨"
+      },
+      "overfitting": {
+        "pro": "Posible overfitting: train loss baja pero val loss sube. Considera early stop, más augmentación o más datos.",
+        "fun": "Se está memorizando todo en vez de aprender 📚😅. Más augmentación o paro."
+      },
+      "valLossUp": {
+        "pro": "Val loss en ascenso sin mejora del train loss. Revisa LR y regularización.",
+        "fun": "La validación se enoja sola 😤 Bajale al LR."
+      },
+      "mapDown": {
+        "pro": "mAP50 en descenso en la ventana reciente. Considera detener o revertir a mejor checkpoint.",
+        "fun": "El mAP50 se está cayendo por las escaleras 📉 Guarda el best y frena."
+      },
+      "iouDown": {
+        "pro": "mIoU en descenso. Revisa LR o detén el entrenamiento.",
+        "fun": "El IoU perdió el rumbo 🧭 Mejor parar."
+      },
+      "plateau": {
+        "pro": "Métrica estancada en las últimas épocas. Valora early stop o reducir LR.",
+        "fun": "Plató a la vista 🏞️ Ya no mejora, ¿seguimos o cortamos?"
+      },
+      "lossExploding": {
+        "pro": "Loss disparada ({{ratio}}× el mínimo). Baja el learning rate o revisa el optimizador.",
+        "fun": "¡BOOM 💥! La loss explotó ({{ratio}}×). Baja el LR ya."
+      },
+      "nan": {
+        "pro": "Valores NaN/Inf detectados. Detén y revisa AMP, LR o datos.",
+        "fun": "Apareció NaN 👻 Corta y revisa, se rompió algo."
+      },
+      "precisionHigh": {
+        "pro": "Precisión alta ({{precision}}%) pero recall bajo ({{recall}}%). Bajá el umbral de confianza o sube el peso de cls.",
+        "fun": "Muy precisa ({{precision}}%) pero tímida ({{recall}}%). Que se anime a predecir más 🗣️"
+      },
+      "recallHigh": {
+        "pro": "Recall alto ({{recall}}%) pero precisión baja ({{precision}}%). Sube umbral o ajusta pesos de loss.",
+        "fun": "Habla mucho ({{recall}}%) pero se equivoca ({{precision}}%). Más filtro 🔇"
+      },
+      "valTooEasy": {
+        "pro": "Val loss notablemente menor que train loss. Puede haber leak o split fácil.",
+        "fun": "La validación es más fácil que el train 🤔 ¿Leak o suerte?"
+      },
+      "neutral": {
+        "pro": "Sin señales claras aún. Continúa entrenando.",
+        "fun": "Todo tranqui por ahora 🧘 seguimos."
+      }
+    }
   },
   "status": {
     "pending": "Pendiente",
@@ -336,7 +410,9 @@
     "modelPaths": "Archivos del Modelo",
     "exported": "Modelos Exportados",
     "exportModel": "Exportar Modelo",
-    "newTraining": "Nuevo Entrenamiento"
+    "newTraining": "Nuevo Entrenamiento",
+    "exportReport": "Exportar informe PDF",
+    "generatingReport": "Generando informe..."
   },
   "fineTune": "Fine-tune",
   "fineTuneFrom": "Fine-tuning desde: {{source}}",
@@ -377,5 +453,12 @@
     "runningOn": "Ejecutando en {{provider}}",
     "pollingInfo": "Actualizaciones de progreso cada 30 segundos",
     "viewJob": "Ver Trabajo"
-  }
+  },
+  "cancelConfirmTitle": "Cancelar entrenamiento",
+  "cancelConfirmMessage": "Se perderá el progreso no guardado. El checkpoint best/last seguirá en disco. ¿Cancelar?",
+  "cancelConfirmOk": "Sí, cancelar",
+  "cancelConfirmKeep": "Seguir entrenando",
+  "runningShort": "Entrenando {{progress}}%",
+  "resume": "Reanudar",
+  "resumeAsFineTune": "Continuar (fine-tune)"
 }

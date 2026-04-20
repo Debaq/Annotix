@@ -468,6 +468,7 @@ pub mod backends;
 pub mod package;
 pub mod notebook;
 pub mod cloud;
+pub mod migrate;
 
 /// En Windows, configura CREATE_NO_WINDOW para evitar que aparezca una ventana de consola.
 #[cfg(windows)]

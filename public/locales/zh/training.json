@@ -319,8 +319,82 @@
     "logs": "训练日志",
     "waitingMetrics": "等待指标...",
     "waitingLogs": "等待日志...",
+    "copyLogs": "复制",
+    "copied": "已复制",
+    "saveLogs": "保存日志",
     "mIoU": "mIoU",
     "meanAccuracy": "平均精度"
+  },
+  "observations": {
+    "title": "Observations",
+    "stylePro": "Pro",
+    "styleFun": "Fun",
+    "rules": {
+      "waiting": {
+        "pro": "Waiting for data to analyze behavior.",
+        "fun": "Chill, the party hasn't started yet 🎬"
+      },
+      "warmingUp": {
+        "pro": "Warming up — need more epochs to evaluate trends ({{n}}/3).",
+        "fun": "Stretching before the run 🏃 ({{n}}/3)"
+      },
+      "healthy": {
+        "pro": "All OK: loss decreasing and metrics rising. Keep training.",
+        "fun": "Rolling like a freight train! Loss down, metrics up 🚂🔥"
+      },
+      "excellent": {
+        "pro": "Excellent performance ({{value}}%). Consider saving a checkpoint.",
+        "fun": "Brutal, {{value}}%! This model is plugged in ⚡"
+      },
+      "strong": {
+        "pro": "Good level ({{value}}%). Room to refine with lower LR or more epochs.",
+        "fun": "Looking sharp ({{value}}%). A little polish and it's gold ✨"
+      },
+      "overfitting": {
+        "pro": "Possible overfitting: train loss down but val loss up. Consider early stop, more augmentation or more data.",
+        "fun": "It's memorizing instead of learning 📚😅 More aug or stop it."
+      },
+      "valLossUp": {
+        "pro": "Val loss rising without train loss improvement. Check LR and regularization.",
+        "fun": "Validation is getting grumpy 😤 Lower the LR."
+      },
+      "mapDown": {
+        "pro": "mAP50 decreasing in the recent window. Consider stopping or reverting to best checkpoint.",
+        "fun": "mAP50 is rolling down the stairs 📉 Save best and stop."
+      },
+      "iouDown": {
+        "pro": "mIoU decreasing. Check LR or stop training.",
+        "fun": "IoU lost its way 🧭 Better stop."
+      },
+      "plateau": {
+        "pro": "Metric has plateaued over recent epochs. Consider early stop or LR drop.",
+        "fun": "Plateau sighted 🏞️ Not improving — keep going or cut?"
+      },
+      "lossExploding": {
+        "pro": "Loss exploded ({{ratio}}× the minimum). Lower learning rate or check optimizer.",
+        "fun": "BOOM 💥 Loss went supernova ({{ratio}}×). Drop the LR now."
+      },
+      "nan": {
+        "pro": "NaN/Inf values detected. Stop and check AMP, LR or data.",
+        "fun": "NaN showed up 👻 Stop and inspect — something broke."
+      },
+      "precisionHigh": {
+        "pro": "High precision ({{precision}}%) but low recall ({{recall}}%). Lower confidence threshold or raise cls weight.",
+        "fun": "Very precise ({{precision}}%) but shy ({{recall}}%). Let it speak up 🗣️"
+      },
+      "recallHigh": {
+        "pro": "High recall ({{recall}}%) but low precision ({{precision}}%). Raise threshold or tweak loss weights.",
+        "fun": "Talks a lot ({{recall}}%) but misses ({{precision}}%). More filter 🔇"
+      },
+      "valTooEasy": {
+        "pro": "Val loss noticeably lower than train loss. Possible leak or easy split.",
+        "fun": "Val seems easier than train 🤔 Leak or luck?"
+      },
+      "neutral": {
+        "pro": "No clear signals yet. Keep training.",
+        "fun": "All calm for now 🧘 carrying on."
+      }
+    }
   },
   "status": {
     "pending": "等待中",
@@ -336,7 +410,9 @@
     "modelPaths": "模型文件",
     "exported": "已导出模型",
     "exportModel": "导出模型",
-    "newTraining": "开始新训练"
+    "newTraining": "开始新训练",
+    "exportReport": "导出 PDF 报告",
+    "generatingReport": "正在生成报告..."
   },
   "fineTune": "微调",
   "fineTuneFrom": "微调自: {{source}}",
@@ -377,5 +453,12 @@
     "runningOn": "正在{{provider}}上运行",
     "pollingInfo": "每30秒更新进度",
     "viewJob": "查看任务"
-  }
+  },
+  "cancelConfirmTitle": "取消训练",
+  "cancelConfirmMessage": "未保存的进度将丢失。best/last 检查点保留在磁盘上。取消？",
+  "cancelConfirmOk": "是，取消",
+  "cancelConfirmKeep": "继续训练",
+  "runningShort": "训练中 {{progress}}%",
+  "resume": "继续",
+  "resumeAsFineTune": "继续（微调）"
 }

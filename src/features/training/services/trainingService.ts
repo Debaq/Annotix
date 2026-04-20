@@ -40,6 +40,10 @@ export const trainingService = {
     return invoke('cancel_training', { projectId, jobId });
   },
 
+  resumeTraining(projectId: string, jobId: string): Promise<void> {
+    return invoke('resume_training', { projectId, jobId });
+  },
+
   getTrainingJob(projectId: string, jobId: string): Promise<TrainingJob | null> {
     return invoke('get_training_job', { projectId, jobId });
   },

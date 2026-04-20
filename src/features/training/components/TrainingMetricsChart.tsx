@@ -147,7 +147,6 @@ export function TrainingMetricsChart({ metricsHistory }: TrainingMetricsChartPro
           backgroundColor: 'rgba(6, 182, 212, 0.1)',
           tension: 0.3,
           pointRadius: 1,
-          hidden: true,
         },
         {
           label: 'Recall',
@@ -156,7 +155,20 @@ export function TrainingMetricsChart({ metricsHistory }: TrainingMetricsChartPro
           backgroundColor: 'rgba(249, 115, 22, 0.1)',
           tension: 0.3,
           pointRadius: 1,
-          hidden: true,
+        },
+        {
+          label: 'F1',
+          data: metricsHistory.map((m) => {
+            if (m.f1Score != null) return m.f1Score;
+            if (m.precision != null && m.recall != null && m.precision + m.recall > 0) {
+              return (2 * m.precision * m.recall) / (m.precision + m.recall);
+            }
+            return null;
+          }),
+          borderColor: 'rgb(217, 70, 239)',
+          backgroundColor: 'rgba(217, 70, 239, 0.1)',
+          tension: 0.3,
+          pointRadius: 1,
         },
       ],
     };

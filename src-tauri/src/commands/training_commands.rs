@@ -291,6 +291,20 @@ pub async fn cancel_training(
 }
 
 #[tauri::command]
+pub async fn resume_training(
+    state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
+    app: AppHandle,
+    manager: State<'_, TrainingProcessManager>,
+    project_id: String,
+    job_id: String,
+) -> Result<(), String> {
+    p2p.check_permission(&project_id, P2pPermission::Manage).await?;
+    manager.resume_training(&state, &app, &project_id, &job_id)?;
+    Ok(())
+}
+
+#[tauri::command]
 pub fn get_training_job(
     state: State<'_, AppState>,
     project_id: String,

@@ -7,6 +7,7 @@ interface TrainingJobCardProps {
   job: TrainingJob;
   onDelete: (jobId: string) => void;
   onFineTune?: (job: TrainingJob) => void;
+  onResume?: (job: TrainingJob) => void;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -17,7 +18,7 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: 'bg-zinc-500',
 };
 
-export function TrainingJobCard({ job, onDelete, onFineTune }: TrainingJobCardProps) {
+export function TrainingJobCard({ job, onDelete, onFineTune, onResume }: TrainingJobCardProps) {
   const { t } = useTranslation();
 
   const config = job.config as Record<string, unknown>;
@@ -53,6 +54,37 @@ export function TrainingJobCard({ job, onDelete, onFineTune }: TrainingJobCardPr
             <i className="fas fa-rotate text-xs" />
           </Button>
         )}
+        {(job.status === 'cancelled' || job.status === 'failed') && job.bestModelPath && (() => {
+          const backend = (config.backend as string) || 'yolo';
+          const canTrueResume = (backend === 'yolo' || backend === 'rt_detr') && !!onResume;
+          if (canTrueResume) {
+            return (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onResume!(job)}
+                className="text-muted-foreground hover:text-amber-500"
+                title={t('training.resume')}
+              >
+                <i className="fas fa-play text-xs" />
+              </Button>
+            );
+          }
+          if (onFineTune) {
+            return (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onFineTune(job)}
+                className="text-muted-foreground hover:text-amber-500"
+                title={t('training.resumeAsFineTune')}
+              >
+                <i className="fas fa-rotate text-xs" />
+              </Button>
+            );
+          }
+          return null;
+        })()}
         <Button
           variant="ghost"
           size="sm"

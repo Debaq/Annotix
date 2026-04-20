@@ -1,9 +1,13 @@
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { TrainingMetricsChart } from './TrainingMetricsChart';
 import { TrainingLogViewer } from './TrainingLogViewer';
+import { TrainingObservations, type ObservationStyle } from './TrainingObservations';
 import type { TrainingEpochMetrics } from '../types';
+
+const STYLE_STORAGE_KEY = 'training.observations.style';
 
 interface TrainingMonitorProps {
   epoch: number;
@@ -34,6 +38,14 @@ export function TrainingMonitor({
 }: TrainingMonitorProps) {
   const { t } = useTranslation();
 
+  const [obsStyle, setObsStyle] = useState<ObservationStyle>(() => {
+    const stored = typeof window !== 'undefined' ? window.localStorage.getItem(STYLE_STORAGE_KEY) : null;
+    return stored === 'fun' ? 'fun' : 'pro';
+  });
+  useEffect(() => {
+    try { window.localStorage.setItem(STYLE_STORAGE_KEY, obsStyle); } catch { /* ignore */ }
+  }, [obsStyle]);
+
   const latestMetrics = metricsHistory.length > 0
     ? metricsHistory[metricsHistory.length - 1]
     : null;
@@ -49,7 +61,7 @@ export function TrainingMonitor({
       : t('training.monitor.title');
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 flex flex-col flex-1 min-h-0 h-full">
       {/* Progress header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -103,7 +115,7 @@ export function TrainingMonitor({
 
       {/* Current metrics */}
       {latestMetrics && (
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-5 gap-3">
           {latestMetrics.meanIoU != null ? (
             <>
               <MetricCard label={t('training.monitor.mIoU')} value={latestMetrics.meanIoU} format="percent" />
@@ -131,16 +143,39 @@ export function TrainingMonitor({
               {latestMetrics.recall != null && (
                 <MetricCard label={t('training.monitor.recall')} value={latestMetrics.recall} format="percent" />
               )}
+              {(() => {
+                const f1 = latestMetrics.f1Score ?? (
+                  latestMetrics.precision != null && latestMetrics.recall != null && latestMetrics.precision + latestMetrics.recall > 0
+                    ? (2 * latestMetrics.precision * latestMetrics.recall) / (latestMetrics.precision + latestMetrics.recall)
+                    : null
+                );
+                return f1 != null ? <MetricCard label="F1" value={f1} format="percent" /> : null;
+              })()}
             </>
           )}
         </div>
       )}
 
-      {/* Charts */}
-      <TrainingMetricsChart metricsHistory={metricsHistory} />
+      {/* Charts + observations */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="col-span-2">
+          <TrainingMetricsChart metricsHistory={metricsHistory} />
+        </div>
+        <div className="col-span-1 min-h-[13rem]">
+          <TrainingObservations
+            metricsHistory={metricsHistory}
+            style={obsStyle}
+            onStyleChange={setObsStyle}
+          />
+        </div>
+      </div>
 
       {/* Logs */}
-      <TrainingLogViewer logs={logs} />
+      <TrainingLogViewer
+        logs={logs}
+        fillHeight
+        canSave={phase === 'completed' || phase === 'error' || phase === 'cancelled'}
+      />
 
       {/* Error */}
       {error && (
