@@ -52,8 +52,8 @@ jobs:
           BUILD_COMMIT=$(git rev-parse --short HEAD)
           printf '// Auto-generado por CI\nexport const BUILD_NUMBER = 0;\nexport const BUILD_CODE = "%s";\nexport const BUILD_DATE = "%s";\nexport const BUILD_COMMIT = "%s";\n' "${{ github.ref_name }}" "$BUILD_DATE" "$BUILD_COMMIT" > src/lib/buildInfo.ts
 
-      - name: Build Tauri (binary + AppImage)
-        run: npx tauri build --bundles appimage
+      - name: Build Tauri (binary only, sin bundles)
+        run: npx tauri build --no-bundle
         env:
           CARGO_HTTP_TIMEOUT: 300
           CARGO_NET_RETRY: 5
@@ -62,12 +62,6 @@ jobs:
         run: |
           mv src-tauri/target/release/annotix \
              src-tauri/target/release/annotix-v${APP_VERSION}-linux-x86_64.bin
-          for f in src-tauri/target/release/bundle/appimage/*.AppImage; do
-            base=$(basename "$f")
-            if ! echo "$base" | grep -q "$APP_VERSION"; then
-              mv "$f" "$(dirname "$f")/Annotix-v${APP_VERSION}-linux-x86_64.AppImage"
-            fi
-          done
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -75,7 +69,6 @@ jobs:
           name: annotix-linux
           path: |
             src-tauri/target/release/annotix-v*.bin
-            src-tauri/target/release/bundle/appimage/*.AppImage
           retention-days: 30
 
   build-windows:
@@ -199,6 +192,5 @@ jobs:
           generate_release_notes: true
           files: |
             dist/linux/annotix-v*.bin
-            dist/linux/bundle/appimage/*.AppImage
             dist/windows/nsis/*.exe
             dist/windows/msi/*.msi
