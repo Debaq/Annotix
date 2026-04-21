@@ -35,7 +35,7 @@ impl InferenceProcessManager {
         project_id: &str,
         model_id: &str,
         image_ids: &[String],
-        config: InferenceConfig,
+        mut config: InferenceConfig,
     ) -> Result<String, String> {
         let job_id = uuid::Uuid::new_v4().to_string();
 
@@ -48,6 +48,28 @@ impl InferenceProcessManager {
         })?;
 
         let model_info = model_info.ok_or("Modelo de inferencia no encontrado")?;
+
+        // Si no viene preprocess en config, leer de metadata.preprocess del modelo
+        if config.preprocess.is_none() {
+            if let Some(meta) = &model_info.metadata {
+                if let Some(pre) = meta.get("preprocess") {
+                    if let Ok(pc) = serde_json::from_value::<super::PreprocessConfig>(pre.clone()) {
+                        config.preprocess = Some(pc);
+                    }
+                }
+            }
+        }
+
+        // ONNX aún no soporta preprocess nativo
+        if model_info.format == "onnx" {
+            if let Some(ref p) = config.preprocess {
+                if p.clahe || p.fundus_crop {
+                    log::warn!(
+                        "[Inference] preprocess CLAHE/fundus ignorado: modelo ONNX aún no lo soporta nativamente"
+                    );
+                }
+            }
+        }
 
         // Obtener ruta del modelo
         let model_path = state.get_model_file_path(project_id, model_id)?;
@@ -131,19 +153,50 @@ impl InferenceProcessManager {
         std::thread::spawn(move || {
             let total = image_paths_owned.len();
 
-            for (idx, (image_id, image_path)) in image_paths_owned.iter().enumerate() {
+            // Pipeline: thread productor preprocesa imagen N+1 mientras el consumidor
+            // corre session.run sobre N. Canal bounded=2 evita acumulación.
+            type PreprocItem = (usize, String, String, Option<(u32, u32)>, Result<Vec<f32>, String>);
+            let (tx, rx) = std::sync::mpsc::sync_channel::<PreprocItem>(2);
+            let producer_cancel = cancel.clone();
+            let producer_paths = image_paths_owned.clone();
+            std::thread::spawn(move || {
+                for (idx, (image_id, image_path)) in producer_paths.iter().enumerate() {
+                    if producer_cancel.load(Ordering::Relaxed) {
+                        break;
+                    }
+                    let dims = image::image_dimensions(image_path).ok();
+                    let data = super::ort_runner::preprocess_image(image_path, input_size);
+                    if tx.send((idx, image_id.clone(), image_path.clone(), dims, data)).is_err() {
+                        break;
+                    }
+                }
+            });
+
+            while let Ok((idx, image_id_s, _image_path, img_dims, data_res)) = rx.recv() {
                 if cancel.load(Ordering::Relaxed) {
                     break;
                 }
-
+                let image_id = &image_id_s;
                 let start = std::time::Instant::now();
 
-                // Leer dimensiones de la imagen original para denormalizar coordenadas
-                let img_dims = image::image_dimensions(image_path).ok();
+                let input_data = match data_res {
+                    Ok(d) => d,
+                    Err(err) => {
+                        let _ = app_clone.emit(
+                            "inference:error",
+                            serde_json::json!({
+                                "jobId": &job_id_owned,
+                                "imageId": image_id,
+                                "error": err,
+                            }),
+                        );
+                        continue;
+                    }
+                };
 
-                match super::ort_runner::run_inference(
+                match super::ort_runner::run_inference_prepared(
                     &mut session,
-                    image_path,
+                    input_data,
                     conf_threshold,
                     iou_threshold,
                     input_size,

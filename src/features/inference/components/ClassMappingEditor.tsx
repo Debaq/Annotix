@@ -164,7 +164,7 @@ export function ClassMappingEditor({ mapping, projectClasses, onChange }: ClassM
               <select
                 value={m.projectClassId || ''}
                 onChange={(e) => handleChange(m.modelClassId, e.target.value || null)}
-                className="flex-1 min-w-0 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-gray-300 text-xs"
+                className="annotix-select flex-1 min-w-0 text-xs"
               >
                 <option value="">{t('inference.unmapped')}</option>
                 {projectClasses.map((c) => (

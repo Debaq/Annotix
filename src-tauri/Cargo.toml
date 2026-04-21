@@ -24,6 +24,9 @@ tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 image = "0.25"
 imageproc = "0.25"
+fast_image_resize = { version = "5", features = ["image"] }
+num_cpus = "1"
+ab_glyph = "0.2"
 geo = "0.29"
 webp = "0.3"
 ort = { version = "2.0.0-rc.12", features = ["download-binaries"] }
@@ -58,3 +61,9 @@ webkit2gtk = "2.0"
 [features]
 default = ["ffmpeg-build"]
 ffmpeg-build = ["ffmpeg-the-third/build"]
+# EP GPU opt-in: rebuild con --features cuda|tensorrt|directml|coreml
+# Runtime hace fallback a CPU si el EP no está disponible.
+cuda = ["ort/cuda"]
+tensorrt = ["ort/tensorrt"]
+directml = ["ort/directml"]
+coreml = ["ort/coreml"]

@@ -356,16 +356,29 @@
 
 /* Select */
 .annotix-select {
-  background: var(--annotix-white);
+  background-color: var(--annotix-white);
   border: 1px solid var(--annotix-border);
   border-radius: 6px;
   color: var(--annotix-dark);
+  padding: 6px 28px 6px 8px;
   outline: none;
   transition: var(--annotix-transition);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='currentColor' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  cursor: pointer;
 }
 
 .annotix-select:focus {
   border-color: var(--annotix-primary);
+}
+
+.annotix-select option {
+  background-color: var(--annotix-white);
+  color: var(--annotix-dark);
 }
 
 /* Range slider */

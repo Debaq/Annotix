@@ -9,7 +9,67 @@
 //! Tasks soportadas: detect, segment (→polygon), obb, pose, classify
 
 use ort::session::Session;
+use ort::session::builder::{GraphOptimizationLevel, SessionBuilder};
 use ort::value::Tensor;
+
+// ─── Session Builder Config ─────────────────────────────────────────────────
+
+/// Configura un `SessionBuilder` con graph opt Level3, intra_threads=cores y EPs
+/// según las features de compilación (cuda/tensorrt/directml/coreml). CPU
+/// siempre se agrega como fallback — si un EP GPU no está disponible en runtime,
+/// ORT cae automáticamente a CPU.
+pub fn configure_builder(mut builder: SessionBuilder) -> Result<SessionBuilder, String> {
+    builder = builder
+        .with_optimization_level(GraphOptimizationLevel::Level3)
+        .map_err(|e| format!("Error set opt level: {e}"))?
+        .with_intra_threads(num_cpus::get())
+        .map_err(|e| format!("Error set intra_threads: {e}"))?;
+
+    #[allow(unused_mut)]
+    let mut eps: Vec<ort::execution_providers::ExecutionProviderDispatch> = Vec::new();
+    #[cfg(feature = "tensorrt")]
+    eps.push(ort::execution_providers::TensorRTExecutionProvider::default().build());
+    #[cfg(feature = "cuda")]
+    eps.push(ort::execution_providers::CUDAExecutionProvider::default().build());
+    #[cfg(feature = "directml")]
+    eps.push(ort::execution_providers::DirectMLExecutionProvider::default().build());
+    #[cfg(feature = "coreml")]
+    eps.push(ort::execution_providers::CoreMLExecutionProvider::default().build());
+    eps.push(ort::execution_providers::CPUExecutionProvider::default().build());
+
+    builder = builder
+        .with_execution_providers(eps)
+        .map_err(|e| format!("Error registering EPs: {e}"))?;
+    Ok(builder)
+}
+
+/// Crea un builder ya configurado (helper para call sites).
+pub fn new_configured_builder() -> Result<SessionBuilder, String> {
+    let b = Session::builder().map_err(|e| format!("Error creando session builder: {e}"))?;
+    configure_builder(b)
+}
+
+// ─── Fast Preprocess (SIMD resize via fast_image_resize) ────────────────────
+
+/// Redimensiona a `size x size` RGB8 usando fast_image_resize (SIMD, Bilinear).
+/// Mucho más rápido que `image::DynamicImage::resize_exact(Lanczos3)`.
+pub fn fast_resize_to_rgb8(img: &image::DynamicImage, size: u32) -> Result<Vec<u8>, String> {
+    use fast_image_resize as fir;
+    use fir::images::Image as FirImage;
+
+    let src_rgb = img.to_rgb8();
+    let (sw, sh) = (src_rgb.width(), src_rgb.height());
+    let src = FirImage::from_vec_u8(sw, sh, src_rgb.into_raw(), fir::PixelType::U8x3)
+        .map_err(|e| format!("fir src: {e}"))?;
+    let mut dst = FirImage::new(size, size, fir::PixelType::U8x3);
+    let mut resizer = fir::Resizer::new();
+    let opts = fir::ResizeOptions::new()
+        .resize_alg(fir::ResizeAlg::Convolution(fir::FilterType::Bilinear));
+    resizer
+        .resize(&src, &mut dst, &opts)
+        .map_err(|e| format!("fir resize: {e}"))?;
+    Ok(dst.into_vec())
+}
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -100,8 +160,7 @@ impl OutputFormat {
 // ─── Model Loading ──────────────────────────────────────────────────────────
 
 pub fn load_model(model_path: &str) -> Result<Session, String> {
-    Session::builder()
-        .map_err(|e| format!("Error creando session builder: {e}"))?
+    new_configured_builder()?
         .commit_from_file(model_path)
         .map_err(|e| format!("Error cargando modelo ONNX: {e}"))
 }
@@ -238,9 +297,30 @@ fn infer_nc_from_shape(shape: &[i64]) -> (Option<usize>, Option<String>) {
 ///
 /// - `task`: "detect", "segment", "obb", "pose", "classify"
 /// - `format_hint`: override de formato ("yolov5", "yolov8", "yolov10", "classification")
-pub fn run_inference(
+/// Preprocesa una imagen a tensor CHW f32 [3*size*size] listo para ORT.
+/// Pensado para ejecutarse en thread productor (overlap con session.run).
+pub fn preprocess_image(image_path: &str, input_size: u32) -> Result<Vec<f32>, String> {
+    let img = image::open(image_path)
+        .map_err(|e| format!("Error abriendo imagen {image_path}: {e}"))?;
+    let isz = input_size as usize;
+    let plane = isz * isz;
+    let rgb_buf = fast_resize_to_rgb8(&img, input_size)?;
+    let mut input_data = vec![0.0f32; 3 * plane];
+    let (r, rest) = input_data.split_at_mut(plane);
+    let (g, b) = rest.split_at_mut(plane);
+    for i in 0..plane {
+        let o = i * 3;
+        r[i] = rgb_buf[o] as f32 / 255.0;
+        g[i] = rgb_buf[o + 1] as f32 / 255.0;
+        b[i] = rgb_buf[o + 2] as f32 / 255.0;
+    }
+    Ok(input_data)
+}
+
+/// Variante de `run_inference` que recibe el tensor ya preprocesado.
+pub fn run_inference_prepared(
     session: &mut Session,
-    image_path: &str,
+    input_data: Vec<f32>,
     conf_threshold: f64,
     iou_threshold: f64,
     input_size: u32,
@@ -248,23 +328,7 @@ pub fn run_inference(
     task: &str,
     format_hint: Option<&str>,
 ) -> Result<InferenceResult, String> {
-    // ── Preprocesar imagen ──────────────────────────────────────────────────
-    let img = image::open(image_path)
-        .map_err(|e| format!("Error abriendo imagen {image_path}: {e}"))?;
-    let resized = img.resize_exact(input_size, input_size, image::imageops::FilterType::Lanczos3);
-    let rgb = resized.to_rgb8();
-
     let isz = input_size as usize;
-    let mut input_data = vec![0.0f32; 3 * isz * isz];
-    for y in 0..isz {
-        for x in 0..isz {
-            let pixel = rgb.get_pixel(x as u32, y as u32);
-            input_data[y * isz + x] = pixel[0] as f32 / 255.0;
-            input_data[isz * isz + y * isz + x] = pixel[1] as f32 / 255.0;
-            input_data[2 * isz * isz + y * isz + x] = pixel[2] as f32 / 255.0;
-        }
-    }
-
     let input_tensor = Tensor::from_array(([1i64, 3, isz as i64, isz as i64], input_data))
         .map_err(|e| format!("Error creando tensor de entrada: {e}"))?;
 

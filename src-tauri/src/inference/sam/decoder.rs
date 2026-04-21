@@ -31,8 +31,7 @@ const MASK_INPUT_H: i64 = 256;
 const MASK_INPUT_W: i64 = 256;
 
 pub fn load_decoder(model_path: &str) -> Result<Session, String> {
-    Session::builder()
-        .map_err(|e| format!("Error creando session builder (decoder): {e}"))?
+    crate::inference::ort_runner::new_configured_builder()?
         .commit_from_file(model_path)
         .map_err(|e| format!("Error cargando decoder ONNX: {e}"))
 }

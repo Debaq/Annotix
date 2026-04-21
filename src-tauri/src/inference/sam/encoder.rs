@@ -31,8 +31,7 @@ fn chw_to_hwc(chw: &[f32], side: usize) -> Vec<f32> {
 }
 
 pub fn load_encoder(model_path: &str) -> Result<Session, String> {
-    Session::builder()
-        .map_err(|e| format!("Error creando session builder (encoder): {e}"))?
+    crate::inference::ort_runner::new_configured_builder()?
         .commit_from_file(model_path)
         .map_err(|e| format!("Error cargando encoder ONNX: {e}"))
 }
