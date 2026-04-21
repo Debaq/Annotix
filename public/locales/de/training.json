@@ -460,5 +460,11 @@
   "cancelConfirmKeep": "Weiter trainieren",
   "runningShort": "Training {{progress}}%",
   "resume": "Fortsetzen",
-  "resumeAsFineTune": "Fortsetzen (Fine-tune)"
+  "resumeAsFineTune": "Fortsetzen (Fine-tune)",
+  "weights": {
+    "bestHint": "best.pt verfügbar",
+    "lastHint": "last.pt verfügbar (echtes Resume möglich)",
+    "noneHint": "keine Gewichte gespeichert",
+    "none": "keine Gewichte"
+  }
 }

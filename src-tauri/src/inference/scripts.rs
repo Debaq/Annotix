@@ -1,4 +1,4 @@
-use super::InferenceConfig;
+use super::{InferenceConfig, PreprocessConfig};
 
 /// Genera el script Python para inferencia con modelo .pt (ultralytics YOLO)
 pub fn generate_pt_inference_script(
@@ -10,6 +10,7 @@ pub fn generate_pt_inference_script(
     let model_path_escaped = model_path.replace('\\', "/");
     let device = format_device(&config.device);
     let input_size = config.input_size.unwrap_or(640);
+    let preprocess_block = render_preprocess_block(config.preprocess.as_ref());
 
     // Serializar lista de imágenes como JSON
     let images_json: Vec<String> = image_paths
@@ -35,6 +36,8 @@ import sys
 import json
 import time
 import os
+import tempfile
+{preprocess_block}
 
 def main():
     from ultralytics import YOLO
@@ -47,6 +50,7 @@ def main():
     ]
 
     total = len(images)
+    _tmp_preproc_dir = tempfile.mkdtemp(prefix="annotix_preproc_")
 
     for idx, img_info in enumerate(images):
         image_id = img_info["id"]
@@ -63,8 +67,12 @@ def main():
         start_time = time.time()
 
         try:
+            infer_path = image_path
+            if _PREPROCESS_ENABLED:
+                infer_path = _apply_preprocess(image_path, _tmp_preproc_dir, idx)
+
             results = model.predict(
-                source=image_path,
+                source=infer_path,
                 conf={conf},
                 iou={iou},
                 imgsz={imgsz},
@@ -141,6 +149,12 @@ def main():
     print("ANNOTIX_EVENT:" + json.dumps({{"type": "completed"}}))
     sys.stdout.flush()
 
+    try:
+        import shutil as _sh
+        _sh.rmtree(_tmp_preproc_dir, ignore_errors=True)
+    except Exception:
+        pass
+
 if __name__ == "__main__":
     main()
 "#,
@@ -151,6 +165,84 @@ if __name__ == "__main__":
         iou = config.iou_threshold,
         imgsz = input_size,
         device = device,
+        preprocess_block = preprocess_block,
+    )
+}
+
+/// Genera el bloque Python con la función de preprocesamiento.
+/// Si no hay preproc habilitado, emite un stub que deja la imagen original.
+fn render_preprocess_block(cfg: Option<&PreprocessConfig>) -> String {
+    let (enabled, clahe, clip, tile, channel, fundus) = match cfg {
+        Some(p) => (
+            p.clahe || p.fundus_crop,
+            p.clahe,
+            p.clip_limit,
+            p.tile_grid.max(1),
+            p.channel.clone(),
+            p.fundus_crop,
+        ),
+        None => (false, false, 2.0, 8, "l_lab".to_string(), false),
+    };
+
+    if !enabled {
+        return "_PREPROCESS_ENABLED = False\n\ndef _apply_preprocess(p, d, i):\n    return p\n".to_string();
+    }
+
+    format!(
+        r#"_PREPROCESS_ENABLED = True
+import cv2
+import numpy as np
+
+_CLAHE_ON = {clahe_on}
+_CLIP = {clip}
+_TILE = {tile}
+_CHANNEL = "{channel}"
+_FUNDUS = {fundus}
+
+def _fundus_crop(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    _, thresh = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY)
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if contours:
+        c = max(contours, key=cv2.contourArea)
+        x, y, w, h = cv2.boundingRect(c)
+        if x > img.shape[1] * 0.02 or y > img.shape[0] * 0.02:
+            return img[y:y+h, x:x+w]
+    return img
+
+def _apply_clahe(img):
+    clahe = cv2.createCLAHE(clipLimit=_CLIP, tileGridSize=(_TILE, _TILE))
+    if _CHANNEL == "l_lab":
+        lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+        l = clahe.apply(l)
+        return cv2.cvtColor(cv2.merge([l, a, b]), cv2.COLOR_LAB2BGR)
+    if _CHANNEL == "gray":
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        gray = clahe.apply(gray)
+        return cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+    # all_bgr: CLAHE por canal
+    chans = list(cv2.split(img))
+    chans = [clahe.apply(c) for c in chans]
+    return cv2.merge(chans)
+
+def _apply_preprocess(src_path, tmp_dir, idx):
+    img = cv2.imread(src_path)
+    if img is None:
+        return src_path
+    if _FUNDUS:
+        img = _fundus_crop(img)
+    if _CLAHE_ON:
+        img = _apply_clahe(img)
+    out = os.path.join(tmp_dir, f"pre_{{idx}}.jpg")
+    cv2.imwrite(out, img, [cv2.IMWRITE_JPEG_QUALITY, 95])
+    return out
+"#,
+        clahe_on = if clahe { "True" } else { "False" },
+        clip = clip,
+        tile = tile,
+        channel = channel,
+        fundus = if fundus { "True" } else { "False" },
     )
 }
 

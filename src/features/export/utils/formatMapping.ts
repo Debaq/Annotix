@@ -12,6 +12,8 @@ export type ExportFormat =
   | 'csv-landmarks'
   | 'folders-by-class'
   | 'unet-masks'
+  | 'preview-rasterized'
+  | 'preview-rasterized-labels'
   | 'huggingface-asr'
   | 'ljspeech'
   | 'csv-audio-classification'
@@ -79,6 +81,16 @@ export const FORMAT_INFO: Record<ExportFormat, FormatInfo> = {
     labelKey: 'export.formats.unetMasks',
     descriptionKey: 'export.formats.unetMasksDesc',
   },
+  'preview-rasterized': {
+    id: 'preview-rasterized',
+    labelKey: 'export.formats.previewRasterized',
+    descriptionKey: 'export.formats.previewRasterizedDesc',
+  },
+  'preview-rasterized-labels': {
+    id: 'preview-rasterized-labels',
+    labelKey: 'export.formats.previewRasterizedLabels',
+    descriptionKey: 'export.formats.previewRasterizedLabelsDesc',
+  },
   'huggingface-asr': {
     id: 'huggingface-asr',
     labelKey: 'export.formats.huggingfaceAsr',
@@ -107,21 +119,23 @@ export const FORMAT_INFO: Record<ExportFormat, FormatInfo> = {
 export function getValidFormats(projectType: ProjectType | undefined): ExportFormat[] {
   if (!projectType) return ['yolo-detection']; // fallback
 
+  const preview: ExportFormat[] = ['preview-rasterized', 'preview-rasterized-labels'];
+
   switch (projectType) {
     case 'bbox':
-      return ['yolo-detection', 'pascal-voc', 'coco', 'csv-detection', 'tix'];
+      return ['yolo-detection', 'pascal-voc', 'coco', 'csv-detection', 'tix', ...preview];
 
     case 'obb':
-      return ['yolo-detection', 'pascal-voc', 'coco'];
+      return ['yolo-detection', 'pascal-voc', 'coco', ...preview];
 
     case 'instance-segmentation':
-      return ['yolo-segmentation', 'coco', 'unet-masks', 'tix'];
+      return ['yolo-segmentation', 'coco', 'unet-masks', 'tix', ...preview];
 
     case 'polygon':
-      return ['coco', 'unet-masks', 'tix'];
+      return ['coco', 'unet-masks', 'tix', ...preview];
 
     case 'mask':
-      return ['unet-masks', 'coco', 'tix'];
+      return ['unet-masks', 'coco', 'tix', ...preview];
 
     case 'classification':
     case 'multi-label-classification':

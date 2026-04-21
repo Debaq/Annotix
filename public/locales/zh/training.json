@@ -460,5 +460,11 @@
   "cancelConfirmKeep": "继续训练",
   "runningShort": "训练中 {{progress}}%",
   "resume": "继续",
-  "resumeAsFineTune": "继续（微调）"
+  "resumeAsFineTune": "继续（微调）",
+  "weights": {
+    "bestHint": "有 best.pt",
+    "lastHint": "有 last.pt（可真正 resume）",
+    "noneHint": "未保存权重",
+    "none": "无权重"
+  }
 }

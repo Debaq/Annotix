@@ -56,7 +56,25 @@ export interface InferenceConfig {
   inputSize: number | null;
   device: string;
   iouThreshold: number;
+  preprocess?: PreprocessConfig | null;
 }
+
+export interface PreprocessConfig {
+  clahe: boolean;
+  clipLimit: number;
+  tileGrid: number;
+  /** "l_lab" | "all_bgr" | "gray" */
+  channel: string;
+  fundusCrop: boolean;
+}
+
+export const DEFAULT_PREPROCESS: PreprocessConfig = {
+  clahe: false,
+  clipLimit: 2.0,
+  tileGrid: 8,
+  channel: 'l_lab',
+  fundusCrop: false,
+};
 
 // ─── Eventos ─────────────────────────────────────────────────────────────────
 

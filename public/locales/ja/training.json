@@ -460,5 +460,11 @@
   "cancelConfirmKeep": "続ける",
   "runningShort": "学習中 {{progress}}%",
   "resume": "再開",
-  "resumeAsFineTune": "続行（ファインチューン）"
+  "resumeAsFineTune": "続行（ファインチューン）",
+  "weights": {
+    "bestHint": "best.pt あり",
+    "lastHint": "last.pt あり (真の resume 可)",
+    "noneHint": "重み未保存",
+    "none": "重みなし"
+  }
 }

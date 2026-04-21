@@ -95,9 +95,9 @@ export function ImageGallery() {
       </div>
 
       {/* Gallery Grid */}
-      <div className="flex-1 overflow-auto p-3">
+      <div className="flex-1 min-h-0">
         {images.length === 0 ? (
-          <div className="flex h-full items-center justify-center">
+          <div className="flex h-full items-center justify-center p-3">
             <div className="text-center" style={{ color: 'var(--annotix-gray)' }}>
               <i className="fas fa-images text-5xl mb-3 opacity-30"></i>
               <p className="text-sm font-medium">{t('gallery.empty.title')}</p>

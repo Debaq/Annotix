@@ -132,25 +132,7 @@ impl TrainingProcessManager {
             if let Some(stdout) = stdout {
                 let reader = BufReader::new(stdout);
                 for line in reader.lines().map_while(Result::ok) {
-                    if let Some(json_str) = line.strip_prefix("ANNOTIX_EVENT:") {
-                        if let Ok(event) = serde_json::from_str::<serde_json::Value>(json_str) {
-                            handle_event(&app_clone, &job_id_thread, &event, &project_dir_clone);
-                        }
-                    } else if !line.trim().is_empty() {
-                        logs.push(line.clone());
-                        let _ = app_clone.emit("training:log", serde_json::json!({
-                            "jobId": &job_id_thread,
-                            "message": line,
-                        }));
-
-                        // Actualizar logs periódicamente (cada 10 líneas)
-                        if logs.len() % 10 == 0 {
-                            update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
-                                job.logs = logs.clone();
-                                job.updated_at = js_timestamp();
-                            });
-                        }
-                    }
+                    process_log_line(&app_clone, &job_id_thread, &line, &mut logs, &project_dir_clone);
                 }
             }
 
@@ -328,24 +310,7 @@ impl TrainingProcessManager {
             if let Some(stdout) = stdout {
                 let reader = BufReader::new(stdout);
                 for line in reader.lines().map_while(Result::ok) {
-                    if let Some(json_str) = line.strip_prefix("ANNOTIX_EVENT:") {
-                        if let Ok(event) = serde_json::from_str::<serde_json::Value>(json_str) {
-                            handle_event(&app_clone, &job_id_thread, &event, &project_dir_clone);
-                        }
-                    } else if !line.trim().is_empty() {
-                        logs.push(line.clone());
-                        let _ = app_clone.emit("training:log", serde_json::json!({
-                            "jobId": &job_id_thread,
-                            "message": line,
-                        }));
-
-                        if logs.len() % 10 == 0 {
-                            update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
-                                job.logs = logs.clone();
-                                job.updated_at = js_timestamp();
-                            });
-                        }
-                    }
+                    process_log_line(&app_clone, &job_id_thread, &line, &mut logs, &project_dir_clone);
                 }
             }
 
@@ -423,11 +388,20 @@ impl TrainingProcessManager {
         std::fs::write(&script_path, &script)
             .map_err(|e| format!("Error escribiendo train_resume.py: {}", e))?;
 
+        // Hidratar metrics_history desde results.csv si está vacío (jobs legacy
+        // o que crashearon antes de este fix). Idempotente: no toca si ya hay datos.
+        let hydrated = hydrate_history_from_results_csv(&PathBuf::from(result_dir));
+
         // Marcar job como training otra vez
         let job_id_owned = job_id.to_string();
         state.with_project_mut(project_id, |pf| {
             if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
                 job.status = "training".to_string();
+                if job.metrics_history.is_empty() {
+                    if let Some(ref h) = hydrated {
+                        job.metrics_history = h.clone();
+                    }
+                }
                 job.updated_at = js_timestamp();
             }
         })?;
@@ -460,23 +434,7 @@ impl TrainingProcessManager {
             if let Some(stdout) = stdout {
                 let reader = BufReader::new(stdout);
                 for line in reader.lines().map_while(Result::ok) {
-                    if let Some(json_str) = line.strip_prefix("ANNOTIX_EVENT:") {
-                        if let Ok(event) = serde_json::from_str::<serde_json::Value>(json_str) {
-                            handle_event(&app_clone, &job_id_thread, &event, &project_dir_clone);
-                        }
-                    } else if !line.trim().is_empty() {
-                        logs.push(line.clone());
-                        let _ = app_clone.emit("training:log", serde_json::json!({
-                            "jobId": &job_id_thread,
-                            "message": line,
-                        }));
-                        if logs.len() % 10 == 0 {
-                            update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
-                                job.logs = logs.clone();
-                                job.updated_at = js_timestamp();
-                            });
-                        }
-                    }
+                    process_log_line(&app_clone, &job_id_thread, &line, &mut logs, &project_dir_clone);
                 }
             }
 
@@ -529,13 +487,135 @@ impl TrainingProcessManager {
     }
 }
 
+/// Strip ANSI CSI/OSC escape sequences from text produced por procesos Python
+/// (ultralytics colorea con códigos `\x1b[...m`).
+fn strip_ansi(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut chars = s.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c != '\x1b' {
+            out.push(c);
+            continue;
+        }
+        match chars.peek().copied() {
+            Some('[') => {
+                chars.next();
+                while let Some(nc) = chars.next() {
+                    if ('@'..='~').contains(&nc) { break; }
+                }
+            }
+            Some(']') => {
+                chars.next();
+                while let Some(nc) = chars.next() {
+                    if nc == '\x07' { break; }
+                    if nc == '\x1b' {
+                        if let Some(&'\\') = chars.peek() { chars.next(); }
+                        break;
+                    }
+                }
+            }
+            Some(_) => { chars.next(); }
+            None => {}
+        }
+    }
+    out
+}
+
+/// Convierte una línea cruda (potencialmente con `\r` de progress-bars y ANSI)
+/// en una o varias líneas limpias, aptas para log viewer.
+fn sanitize_log_line(line: &str) -> Vec<String> {
+    line.split('\r')
+        .map(strip_ansi)
+        .map(|s| s.trim_end().to_string())
+        .filter(|s| !s.trim().is_empty())
+        .collect()
+}
+
+/// Procesa una línea de stdout del trainer: si es un evento estructurado
+/// (`ANNOTIX_EVENT:`) lo despacha; en caso contrario la sanea y emite/guarda
+/// como log legible.
+fn process_log_line(
+    app: &AppHandle,
+    job_id: &str,
+    line: &str,
+    logs: &mut Vec<String>,
+    project_dir: &PathBuf,
+) {
+    if let Some(json_str) = line.strip_prefix("ANNOTIX_EVENT:") {
+        if let Ok(event) = serde_json::from_str::<serde_json::Value>(json_str) {
+            handle_event(app, job_id, &event, project_dir);
+        }
+        return;
+    }
+    for clean in sanitize_log_line(line) {
+        logs.push(clean.clone());
+        let _ = app.emit("training:log", serde_json::json!({
+            "jobId": job_id,
+            "message": clean,
+        }));
+        if logs.len() % 10 == 0 {
+            update_job_in_project(project_dir, job_id, |job| {
+                job.logs = logs.clone();
+                job.updated_at = js_timestamp();
+            });
+        }
+    }
+}
+
+/// Lee `results.csv` de ultralytics y reconstruye `metrics_history`.
+/// Devuelve `None` si no hay csv o no se puede parsear.
+fn hydrate_history_from_results_csv(result_dir: &PathBuf) -> Option<Vec<serde_json::Value>> {
+    let csv_path = result_dir.join("results.csv");
+    let content = std::fs::read_to_string(&csv_path).ok()?;
+    let mut lines = content.lines();
+    let header = lines.next()?;
+    let cols: Vec<&str> = header.split(',').map(|s| s.trim()).collect();
+    let idx = |name: &str| cols.iter().position(|c| *c == name);
+    let i_epoch = idx("epoch")?;
+    let i_p = idx("metrics/precision(B)");
+    let i_r = idx("metrics/recall(B)");
+    let i_m50 = idx("metrics/mAP50(B)");
+    let i_m5095 = idx("metrics/mAP50-95(B)");
+    let i_box = idx("train/box_loss");
+    let i_cls = idx("train/cls_loss");
+    let i_dfl = idx("train/dfl_loss");
+    let mut out: Vec<serde_json::Value> = Vec::new();
+    for line in lines {
+        let parts: Vec<&str> = line.split(',').map(|s| s.trim()).collect();
+        if parts.len() <= i_epoch { continue; }
+        let epoch: u64 = match parts[i_epoch].parse() { Ok(v) => v, Err(_) => continue };
+        let get = |i: Option<usize>| -> Option<f64> {
+            i.and_then(|i| parts.get(i)).and_then(|s| s.parse().ok())
+        };
+        let mut m = serde_json::Map::new();
+        if let Some(v) = get(i_p) { m.insert("precision".into(), v.into()); }
+        if let Some(v) = get(i_r) { m.insert("recall".into(), v.into()); }
+        if let Some(v) = get(i_m50) { m.insert("mAP50".into(), v.into()); }
+        if let Some(v) = get(i_m5095) { m.insert("mAP50_95".into(), v.into()); }
+        if let Some(v) = get(i_box) { m.insert("boxLoss".into(), v.into()); }
+        if let Some(v) = get(i_cls) { m.insert("clsLoss".into(), v.into()); }
+        if let Some(v) = get(i_dfl) { m.insert("dflLoss".into(), v.into()); }
+        out.push(serde_json::json!({
+            "epoch": epoch,
+            "metrics": serde_json::Value::Object(m),
+            "ts": 0.0,
+            "fromCsv": true,
+        }));
+    }
+    if out.is_empty() { None } else { Some(out) }
+}
+
 fn handle_event(app: &AppHandle, job_id: &str, event: &serde_json::Value, project_dir: &PathBuf) {
     let event_type = event["type"].as_str().unwrap_or("");
 
     match event_type {
         "epoch" => {
+            let project_id = project_dir.file_name()
+                .and_then(|s| s.to_str())
+                .map(|s| s.to_string());
             let progress_event = TrainingProgressEvent {
                 job_id: job_id.to_string(),
+                project_id,
                 epoch: event["epoch"].as_u64().unwrap_or(0) as u32,
                 total_epochs: event["totalEpochs"].as_u64().unwrap_or(0) as u32,
                 progress: event["progress"].as_f64().unwrap_or(0.0),
@@ -549,9 +629,25 @@ fn handle_event(app: &AppHandle, job_id: &str, event: &serde_json::Value, projec
             let progress = progress_event.progress;
             let metrics_json = serde_json::to_value(&progress_event.metrics).ok();
 
+            let epoch_num = progress_event.epoch;
+            let total_num = progress_event.total_epochs;
             update_job_in_project(project_dir, job_id, |job| {
                 job.progress = progress;
                 if let Some(m) = metrics_json {
+                    // Append al historial (dedup por epoch: si reaparece, sustituye).
+                    let entry = serde_json::json!({
+                        "epoch": epoch_num,
+                        "totalEpochs": total_num,
+                        "metrics": &m,
+                        "ts": js_timestamp(),
+                    });
+                    if let Some(idx) = job.metrics_history.iter().position(|e| {
+                        e.get("epoch").and_then(|v| v.as_u64()) == Some(epoch_num as u64)
+                    }) {
+                        job.metrics_history[idx] = entry;
+                    } else {
+                        job.metrics_history.push(entry);
+                    }
                     job.metrics = Some(m);
                 }
                 job.updated_at = js_timestamp();

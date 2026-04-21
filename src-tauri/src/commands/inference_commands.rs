@@ -64,8 +64,9 @@ pub fn update_model_config(
     task: Option<String>,
     output_format: Option<String>,
     class_names: Option<Vec<String>>,
+    metadata_patch: Option<serde_json::Value>,
 ) -> Result<(), String> {
-    state.update_model_config(&project_id, &model_id, class_mapping, input_size, task, output_format, class_names)
+    state.update_model_config(&project_id, &model_id, class_mapping, input_size, task, output_format, class_names, metadata_patch)
 }
 
 // ─── Detección de metadatos ──────────────────────────────────────────────────

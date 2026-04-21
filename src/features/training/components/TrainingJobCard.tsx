@@ -33,7 +33,33 @@ export function TrainingJobCard({ job, onDelete, onFineTune, onResume }: Trainin
         </Badge>
         <div>
           <p className="text-sm font-medium font-mono">{model.toUpperCase()}</p>
-          <p className="text-xs text-muted-foreground">{date}</p>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <p className="text-xs text-muted-foreground">{date}</p>
+            {job.hasBest && (
+              <span
+                className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-500 font-mono"
+                title={t('training.weights.bestHint')}
+              >
+                best.pt
+              </span>
+            )}
+            {job.hasLast && (
+              <span
+                className="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-500 font-mono"
+                title={t('training.weights.lastHint')}
+              >
+                last.pt
+              </span>
+            )}
+            {!job.hasBest && !job.hasLast && (job.status === 'cancelled' || job.status === 'failed') && (
+              <span
+                className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-500/15 text-muted-foreground font-mono"
+                title={t('training.weights.noneHint')}
+              >
+                {t('training.weights.none')}
+              </span>
+            )}
+          </div>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -54,9 +80,10 @@ export function TrainingJobCard({ job, onDelete, onFineTune, onResume }: Trainin
             <i className="fas fa-rotate text-xs" />
           </Button>
         )}
-        {(job.status === 'cancelled' || job.status === 'failed') && job.bestModelPath && (() => {
+        {(job.status === 'cancelled' || job.status === 'failed') && (job.hasBest || job.hasLast) && (() => {
           const backend = (config.backend as string) || 'yolo';
-          const canTrueResume = (backend === 'yolo' || backend === 'rt_detr') && !!onResume;
+          const isUltralytics = backend === 'yolo' || backend === 'rt_detr';
+          const canTrueResume = isUltralytics && job.hasLast && !!onResume;
           if (canTrueResume) {
             return (
               <Button

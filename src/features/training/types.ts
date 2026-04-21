@@ -130,6 +130,7 @@ export interface GpuDevice {
 
 export interface TrainingProgressEvent {
   jobId: string;
+  projectId?: string;
   epoch: number;
   totalEpochs: number;
   progress: number;
@@ -218,6 +219,11 @@ export interface TrainingJob {
   createdAt: number;
   updatedAt: number;
   bestModelPath?: string | null;
+  lastModelPath?: string | null;
+  resultDir?: string | null;
+  datasetDir?: string | null;
+  hasBest?: boolean;
+  hasLast?: boolean;
   cloudProvider?: string | null;
   cloudJobId?: string | null;
   cloudJobUrl?: string | null;

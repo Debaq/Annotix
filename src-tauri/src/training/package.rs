@@ -7,7 +7,9 @@ use super::dataset;
 use super::scripts;
 use super::notebook;
 
-/// Generates a ZIP training package at output_path
+/// Generates a ZIP training package at output_path.
+/// El ZIP es relocatable: todas las rutas al dataset son relativas al propio paquete
+/// (Colab, otra PC, etc.), usando el directorio del script como anclaje.
 pub fn generate_training_package(
     images_dir: &Path,
     project: &ProjectFile,
@@ -22,33 +24,65 @@ pub fn generate_training_package(
     std::fs::create_dir_all(&dataset_dir)
         .map_err(|e| format!("Error creando dataset dir: {}", e))?;
 
-    // 1. Prepare dataset
+    // 1. Prepare dataset (escribe imágenes, labels, data.yaml con rutas absolutas)
     let dataset_path = dataset::prepare_dataset_for_backend(
         images_dir, project, images, &dataset_dir,
         request.val_split, &request.task, &request.backend,
     )?;
 
-    // 2. Generate scripts
+    // Absolute prefix usado por scripts/yamls generados; lo sustituimos por
+    // una expresión Python resuelta en runtime a partir de `__file__`.
+    let abs_ds = dataset_dir.to_string_lossy().replace('\\', "/");
+
+    // 2. Generate scripts (con rutas absolutas del tmp) y reescribirlas relativas
     let num_classes = project.classes.len();
     let script_files = scripts::generate_train_script_for_backend(request, &dataset_path, num_classes);
 
+    let mut train_script_rewritten = String::new();
     for (filename, content) in &script_files {
+        let rewritten = if filename.ends_with(".py") {
+            make_script_relative(content, &abs_ds)
+        } else if filename.ends_with(".yaml") || filename.ends_with(".yml") {
+            content.replace(&abs_ds, ".")
+        } else {
+            content.clone()
+        };
+        if filename == "train.py" {
+            train_script_rewritten = rewritten.clone();
+        }
         let path = pkg_dir.join(filename);
-        std::fs::write(&path, content)
+        std::fs::write(&path, rewritten)
             .map_err(|e| format!("Error escribiendo {}: {}", filename, e))?;
     }
 
-    // 3. Generate requirements.txt
+    // 3. Reescribir data.yaml: remover `path:` absoluto. Ultralytics cae a
+    //    `Path(yaml_file).parent` cuando falta `path:`, que es justo el
+    //    dataset dir extraído. Entradas `train: images/train` etc. son
+    //    relativas a ese parent — funciona en Colab y local sin tocar nada.
+    let data_yaml_path = dataset_dir.join("data.yaml");
+    if data_yaml_path.exists() {
+        if let Ok(content) = std::fs::read_to_string(&data_yaml_path) {
+            let cleaned: String = content
+                .lines()
+                .filter(|l| !l.trim_start().starts_with("path:"))
+                .collect::<Vec<_>>()
+                .join("\n");
+            std::fs::write(&data_yaml_path, cleaned)
+                .map_err(|e| format!("Error reescribiendo data.yaml: {}", e))?;
+        }
+    }
+
+    // 4. Generate requirements.txt
     let requirements = scripts::get_requirements_for_backend(&request.backend);
     let req_content = requirements.join("\n") + "\n";
     std::fs::write(pkg_dir.join("requirements.txt"), &req_content)
         .map_err(|e| format!("Error escribiendo requirements.txt: {}", e))?;
 
-    // 4. Generate notebook
-    let train_script = script_files.iter()
-        .find(|(name, _)| name == "train.py")
-        .map(|(_, content)| content.as_str())
-        .unwrap_or("");
+    // 5. Nombre del ZIP y backend legible
+    let zip_filename = Path::new(output_path)
+        .file_name()
+        .map(|s| s.to_string_lossy().to_string())
+        .unwrap_or_else(|| "training_package.zip".to_string());
 
     let backend_name = match request.backend {
         TrainingBackend::Yolo => "YOLO",
@@ -72,21 +106,36 @@ pub fn generate_training_package(
         TrainingBackend::Sklearn => "Scikit-learn",
     };
 
-    let nb_content = notebook::script_to_notebook(
-        &format!("{} Training — {}", backend_name, request.model_id),
-        &format!("Training package for {} model {} on task: {}", backend_name, request.model_id, request.task),
-        &requirements,
-        train_script,
-    );
-    std::fs::write(pkg_dir.join("train.ipynb"), &nb_content)
-        .map_err(|e| format!("Error escribiendo train.ipynb: {}", e))?;
+    // 6. Generate notebooks — uno por plataforma (Colab, Kaggle, HF, local)
+    for platform in notebook::Platform::all() {
+        let nb_content = notebook::script_to_notebook(
+            platform,
+            &format!("{} Training — {}", backend_name, request.model_id),
+            &project.name,
+            backend_name,
+            &request.model_id,
+            &request.task,
+            &zip_filename,
+            &requirements,
+            &train_script_rewritten,
+        );
+        std::fs::write(pkg_dir.join(platform.filename()), &nb_content)
+            .map_err(|e| format!("Error escribiendo {}: {}", platform.filename(), e))?;
+    }
 
-    // 5. Generate README
-    let readme = generate_readme(backend_name, &request.model_id, &request.task, &requirements);
+    // 7. Generate README
+    let readme = generate_readme(
+        &project.name,
+        backend_name,
+        &request.model_id,
+        &request.task,
+        &zip_filename,
+        &requirements,
+    );
     std::fs::write(pkg_dir.join("README.md"), &readme)
         .map_err(|e| format!("Error escribiendo README.md: {}", e))?;
 
-    // 6. Create ZIP
+    // 8. Create ZIP
     let zip_path = Path::new(output_path);
     let zip_file = std::fs::File::create(zip_path)
         .map_err(|e| format!("Error creando ZIP: {}", e))?;
@@ -100,6 +149,31 @@ pub fn generate_training_package(
         .map_err(|e| format!("Error finalizando ZIP: {}", e))?;
 
     Ok(output_path.to_string())
+}
+
+/// Inyecta un prólogo al script Python que resuelve `_ANNOTIX_DATASET_DIR`
+/// relativo al propio archivo, y reescribe los literales absolutos del dataset
+/// para que apunten a esa ruta. Resultado: funciona tras descomprimir el ZIP
+/// en cualquier sistema (Colab incluido) sin editar nada.
+fn make_script_relative(script: &str, abs_ds: &str) -> String {
+    let preamble = r#"# ─────────────────────────────────────────────────────────────
+# Annotix training package — relocatable path bootstrap
+# Resuelve la carpeta del dataset relativa a este script para que
+# el paquete funcione tras un `unzip` en cualquier máquina o en Colab.
+# ─────────────────────────────────────────────────────────────
+import os as _annotix_os
+_ANNOTIX_PKG_DIR = _annotix_os.path.dirname(_annotix_os.path.abspath(__file__)) \
+    if "__file__" in globals() else _annotix_os.getcwd()
+_ANNOTIX_DATASET_DIR = _annotix_os.path.join(_ANNOTIX_PKG_DIR, "dataset")
+# ─────────────────────────────────────────────────────────────
+
+"#;
+    let raw_pat = format!("r\"{}", abs_ds);
+    let plain_pat = format!("\"{}", abs_ds);
+    let s = script
+        .replace(&raw_pat, "_ANNOTIX_DATASET_DIR + r\"")
+        .replace(&plain_pat, "_ANNOTIX_DATASET_DIR + \"");
+    format!("{preamble}{s}")
 }
 
 fn add_dir_to_zip(
@@ -130,44 +204,114 @@ fn add_dir_to_zip(
     Ok(())
 }
 
-fn generate_readme(backend: &str, model_id: &str, task: &str, requirements: &[&str]) -> String {
-    format!(
-r#"# Training Package — {backend}
+fn generate_readme(
+    project_name: &str,
+    backend: &str,
+    model_id: &str,
+    task: &str,
+    zip_filename: &str,
+    requirements: &[&str],
+) -> String {
+    let req_list = requirements.iter()
+        .map(|r| format!("- `{}`", r))
+        .collect::<Vec<_>>()
+        .join("\n");
 
-**Model:** {model_id}
-**Task:** {task}
-**Generated by:** Annotix
+    format!(
+r#"# {project_name} — Training Package
+
+> Generated by **[Annotix](https://github.com/)** — professional annotation & training tool.
+> Exported on-demand from the Annotix desktop app; reproducible, portable, offline-friendly.
+
+| Field    | Value |
+|----------|-------|
+| Project  | **{project_name}** |
+| Backend  | **{backend}** |
+| Model    | `{model_id}` |
+| Task     | `{task}` |
+| Archive  | `{zip_filename}` |
+
+---
 
 ## Contents
 
-- `dataset/` — Prepared training dataset
-- `train.py` — Training script
-- `train.ipynb` — Jupyter notebook (equivalent)
-- `requirements.txt` — Python dependencies
+```
+{zip_filename}
+├── dataset/           # Training data (images, labels, data.yaml)
+├── train.py           # Entry point (relocatable — uses relative paths)
+├── colab_train.ipynb  # Notebook for Google Colab
+├── kaggle_train.ipynb # Notebook for Kaggle Notebooks
+├── hf_train.ipynb     # Notebook for HuggingFace (login + Hub upload)
+├── local_train.ipynb  # Generic / local notebook
+├── requirements.txt   # Python dependencies
+└── README.md          # This file
+```
 
-## Quick Start
+Paths inside `train.py` and the notebook resolve **relative to the script itself**, so the package runs identically on your laptop, a server, or Google Colab — no path editing needed.
+
+---
+
+## Option A · Google Colab (recommended for GPU)
+
+1. Open a fresh notebook at [colab.research.google.com](https://colab.research.google.com).
+2. Upload `{zip_filename}` using the sidebar **Files** tab (or drag-and-drop).
+3. Run the following in a cell (replace nothing — `{zip_filename}` is literal):
+
+   ```python
+   !unzip -o "{zip_filename}"
+   %cd /content
+   !pip install -r requirements.txt
+   !python train.py
+   ```
+
+   Or — easier — upload the included **`colab_train.ipynb`** to Colab (`File → Upload notebook`); its first cell asks for the zip and extracts it.
+
+4. Enable GPU: **Runtime → Change runtime type → T4 GPU** (or better).
+
+---
+
+## Option B · Local machine
 
 ```bash
-# 1. Install dependencies
+unzip "{zip_filename}"
+cd "{pkg_name}"
+python -m venv .venv
+source .venv/bin/activate           # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-
-# 2. Run training
 python train.py
 ```
 
-## Using the Notebook
+Or open the local notebook:
 
 ```bash
-jupyter notebook train.ipynb
+jupyter notebook local_train.ipynb
 ```
+
+For Kaggle, upload the zip as a *Dataset* and open `kaggle_train.ipynb`.
+For HuggingFace, use `hf_train.ipynb` (handles login and optionally pushes the weights to the Hub).
+
+---
 
 ## Requirements
 
 {req_list}
+
+---
+
+## Output
+
+Training artifacts (weights, metrics, plots) are written **inside `dataset/`** next to the training script. Look for `dataset/train/weights/best.pt` (or backend equivalent) when training finishes.
+
+---
+
+*Built with [Annotix](https://github.com/). Annotate → Train → Export, all in one place.*
 "#,
+        project_name = project_name,
         backend = backend,
         model_id = model_id,
         task = task,
-        req_list = requirements.iter().map(|r| format!("- {}", r)).collect::<Vec<_>>().join("\n"),
+        zip_filename = zip_filename,
+        pkg_name = zip_filename.trim_end_matches(".zip"),
+        req_list = req_list,
     )
 }

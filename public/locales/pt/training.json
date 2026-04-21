@@ -460,5 +460,11 @@
   "cancelConfirmKeep": "Continuar treinando",
   "runningShort": "Treinando {{progress}}%",
   "resume": "Retomar",
-  "resumeAsFineTune": "Continuar (fine-tune)"
+  "resumeAsFineTune": "Continuar (fine-tune)",
+  "weights": {
+    "bestHint": "best.pt disponível",
+    "lastHint": "last.pt disponível (resume real)",
+    "noneHint": "sem pesos salvos",
+    "none": "sem pesos"
+  }
 }

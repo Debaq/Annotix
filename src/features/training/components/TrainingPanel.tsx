@@ -1,4 +1,4 @@
-import { ReactNode, useState, useCallback, useEffect } from 'react';
+import { ReactNode, useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { save, ask } from '@tauri-apps/plugin-dialog';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,8 @@ import { AutomationControlPanel } from '../../browser-automation/components/Auto
 import { automationService } from '../../browser-automation/services/automationService';
 import type { TrainingPhase, PythonEnvStatus, ScenarioPresetId, TrainingJob, TrainingBackend } from '../types';
 import type { GpuInfo } from '../types';
+import { useGlobalTrainingStatus } from '../hooks/useGlobalTrainingStatus';
+import { useTrainingModalStore } from '../store/trainingModalStore';
 
 interface TrainingPanelProps {
   trigger?: ReactNode;
@@ -106,6 +108,23 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
       setPhase('completed');
     }
   }, [trainingPhase, result]);
+
+  // Sincronización con indicador global: al cambiar el contador de
+  // `requestOpenActive` (p.ej. click en la barra del Header), auto-abrir este
+  // panel y saltar directo a la vista de entrenamiento si el job activo
+  // pertenece al proyecto actual.
+  const globalStatus = useGlobalTrainingStatus();
+  const openActiveSignal = useTrainingModalStore((s) => s.openActiveSignal);
+  const lastHandledSignal = useRef(openActiveSignal);
+  useEffect(() => {
+    if (openActiveSignal === lastHandledSignal.current) return;
+    lastHandledSignal.current = openActiveSignal;
+    if (!globalStatus.active || !globalStatus.jobId) return;
+    if (globalStatus.projectId && project?.id && globalStatus.projectId !== project.id) return;
+    setActiveJobId(globalStatus.jobId);
+    setPhase('training');
+    setOpen(true);
+  }, [openActiveSignal, globalStatus.active, globalStatus.jobId, globalStatus.projectId, project?.id]);
 
   const handleBackendSelect = useCallback((selectedBackend: typeof backend) => {
     setBackend(selectedBackend);
@@ -229,9 +248,15 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
   const handleDownloadPackage = useCallback(async () => {
     if (!project?.id) return;
     try {
+      const slug = (project.name || 'project')
+        .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 60) || 'project';
       const filePath = await save({
         filters: [{ name: 'ZIP', extensions: ['zip'] }],
-        defaultPath: `training_package_${backend}.zip`,
+        defaultPath: `annotix-${slug}-${backend}.zip`,
       });
       if (!filePath) return;
 

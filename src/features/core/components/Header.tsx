@@ -10,6 +10,8 @@ import { useUIStore } from '../store/uiStore';
 import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
 import { ExportDialog } from '@/features/export/components/ExportDialog';
 import { TrainingPanel } from '@/features/training/components/TrainingPanel';
+import { useGlobalTrainingStatus } from '@/features/training/hooks/useGlobalTrainingStatus';
+import { useTrainingModalStore } from '@/features/training/store/trainingModalStore';
 import { P2pStatusIndicator } from '@/features/p2p/components/P2pStatusIndicator';
 import { P2pGuard } from '@/features/p2p/components/P2pGuard';
 import { ServeButton } from '@/features/serve/components/ServeButton';
@@ -23,6 +25,20 @@ export const Header: React.FC = () => {
   const navigate = useNavigate();
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
+  const trainingStatus = useGlobalTrainingStatus();
+  const requestOpenActiveTraining = useTrainingModalStore((s) => s.requestOpenActive);
+
+  const handleActiveTrainingClick = useCallback(() => {
+    // Saltar al proyecto dueño del job si no estamos ahí, y abrir el panel
+    // directamente en la vista de entrenamiento (bypass del selector).
+    const pid = trainingStatus.projectId;
+    if (pid && project?.id !== pid) {
+      setCurrentProjectId(pid);
+      navigate(`/projects/${pid}`);
+    }
+    // Pequeño delay para que TrainingPanel del ProjectView monte antes de la señal.
+    setTimeout(() => requestOpenActiveTraining(), 0);
+  }, [trainingStatus.projectId, project?.id, navigate, setCurrentProjectId, requestOpenActiveTraining]);
 
   React.useEffect(() => {
     appWindow.isMaximized().then(setIsMaximized);
@@ -92,6 +108,30 @@ export const Header: React.FC = () => {
       {/* Center Section: Project Controls */}
       <div className="flex items-center gap-2">
         <ServeButton projectId={project?.id ?? null} />
+
+        {/* Indicador de entrenamiento activo: siempre visible en cualquier vista
+            (solo hay un training a la vez). Click navega al proyecto dueño y
+            abre el panel directamente en la vista de entrenamiento. */}
+        {trainingStatus.active && (
+          <>
+            <div className="h-6 w-px bg-white/30 mx-1" />
+            <button
+              onClick={handleActiveTrainingClick}
+              className="relative h-9 px-3 rounded border border-emerald-400/40 text-white text-sm transition-all flex items-center gap-2 overflow-hidden bg-emerald-900/40 hover:bg-emerald-800/60"
+              title={`${t('training.status.training')} ${trainingStatus.progress.toFixed(0)}%`}
+            >
+              <span
+                className="absolute inset-y-0 left-0 bg-emerald-500/80 transition-[width] duration-500 ease-out"
+                style={{ width: `${Math.max(0, Math.min(100, trainingStatus.progress))}%` }}
+              />
+              <i className="fas fa-brain relative z-10 animate-pulse"></i>
+              <span className="hidden sm:inline relative z-10 font-mono">
+                {t('training.status.training')} {trainingStatus.progress.toFixed(0)}%
+              </span>
+            </button>
+          </>
+        )}
+
         {project && (
           <>
             <div className="h-6 w-px bg-white/30 mx-1" />
@@ -110,13 +150,19 @@ export const Header: React.FC = () => {
             </P2pGuard>
             <TrainingPanel
               trigger={
-                <button
-                  className="h-9 px-3 rounded bg-emerald-600/80 border border-emerald-500/30 text-white text-sm hover:bg-emerald-600 transition-all flex items-center gap-2"
-                  title={t('training.title')}
-                >
-                  <i className="fas fa-brain"></i>
-                  <span className="hidden sm:inline">{t('training.title')}</span>
-                </button>
+                trainingStatus.active ? (
+                  // Trigger oculto: el Dialog debe seguir montado para abrirse
+                  // vía señal global desde el indicador del Header.
+                  <span aria-hidden className="hidden" />
+                ) : (
+                  <button
+                    className="h-9 px-3 rounded bg-emerald-600/80 border border-emerald-500/30 text-white text-sm hover:bg-emerald-600 transition-all flex items-center gap-2"
+                    title={t('training.title')}
+                  >
+                    <i className="fas fa-brain"></i>
+                    <span className="hidden sm:inline">{t('training.title')}</span>
+                  </button>
+                )
               }
             />
             <button

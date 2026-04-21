@@ -4,6 +4,7 @@ pub mod pascal_voc;
 pub mod csv_export;
 pub mod unet_masks;
 pub mod folders_by_class;
+pub mod preview_rasterized;
 pub mod tix;
 pub mod audio_export;
 
@@ -369,6 +370,8 @@ pub fn export_dataset(
         "csv-landmarks" => csv_export::export(&pf, &images, &images_dir, file, "landmarks", emit_progress),
         "folders-by-class" => folders_by_class::export(&pf, &images, &images_dir, file, emit_progress),
         "unet-masks" => unet_masks::export(&pf, &images, &images_dir, file, emit_progress),
+        "preview-rasterized" => preview_rasterized::export(&pf, &images, &images_dir, file, false, emit_progress),
+        "preview-rasterized-labels" => preview_rasterized::export(&pf, &images, &images_dir, file, true, emit_progress),
         _ => Err(format!("Formato no soportado: {}", format)),
     }
 }

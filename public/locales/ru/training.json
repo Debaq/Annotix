@@ -460,5 +460,11 @@
   "cancelConfirmKeep": "Продолжить обучение",
   "runningShort": "Обучение {{progress}}%",
   "resume": "Возобновить",
-  "resumeAsFineTune": "Продолжить (fine-tune)"
+  "resumeAsFineTune": "Продолжить (fine-tune)",
+  "weights": {
+    "bestHint": "best.pt есть",
+    "lastHint": "last.pt есть (возможен настоящий resume)",
+    "noneHint": "веса не сохранены",
+    "none": "без весов"
+  }
 }

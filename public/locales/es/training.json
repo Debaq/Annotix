@@ -331,68 +331,116 @@
     "styleFun": "Fun",
     "rules": {
       "waiting": {
-        "pro": "Esperando datos para analizar el comportamiento.",
-        "fun": "Tranqui, aún no empieza la fiesta 🎬"
+        "pro": "Aún no llega la primera época completa. Cuando termine, podremos leer train_loss, val_loss y la métrica objetivo para empezar a diagnosticar.",
+        "fun": "Tranqui, aún sin datos para analizar 🎬"
       },
       "warmingUp": {
-        "pro": "Calentando motor — faltan épocas para evaluar tendencias ({{n}}/3).",
-        "fun": "Estirando músculos antes de correr 🏃 ({{n}}/3)"
+        "pro": "Llevamos {{n}} de 3 épocas mínimas. Con pocas épocas cualquier tendencia es ruido: necesito al menos 3 puntos para estimar pendiente de loss y métrica. Esperando más datos antes de emitir juicios.",
+        "fun": "Calentando motores 🏃 ({{n}}/3), aún no se puede juzgar"
       },
       "healthy": {
-        "pro": "Todo OK: loss bajando y métricas subiendo. Continuar entrenamiento.",
-        "fun": "¡Va como tren! Loss pa' abajo, métricas pa' arriba 🚂🔥"
+        "pro": "Entrenamiento sano: train_loss desciende y la métrica objetivo mejora ≈{{rate}}%/época en ventana reciente. Es el escenario esperado; si se mantiene así hasta el final del schedule, no hay que hacer nada.",
+        "fun": "¡Va como tren! Loss ↓, métrica ↑ a {{rate}}%/época 🚂"
       },
       "excellent": {
-        "pro": "Rendimiento excelente ({{value}}%). Considera guardar checkpoint.",
-        "fun": "¡Brutal, {{value}}%! Este modelo viene enchufado ⚡"
+        "pro": "{{metric}} = {{value}}% — muy alto. Antes de celebrar, conviene validar en un set de prueba independiente para descartar overfitting o fuga de datos entre train/val. Si confirma, este checkpoint ya es exportable.",
+        "fun": "¡Brutal, {{metric}} {{value}}%! Validá en test igual ⚡"
       },
       "strong": {
-        "pro": "Buen nivel ({{value}}%). Margen para afinar con LR más bajo o más épocas.",
-        "fun": "Va fino ({{value}}%). Una pulidita y lo dejas impecable ✨"
+        "pro": "{{metric}} = {{value}}% es un nivel competitivo. Suele haber margen adicional bajando la tasa de aprendizaje (lr0 × 0.1) en épocas finales, o extendiendo el entrenamiento con augmentación fuerte para ganar generalización.",
+        "fun": "Va fino ({{metric}} {{value}}%). Pulidita y queda 10/10 ✨"
       },
       "overfitting": {
-        "pro": "Posible overfitting: train loss baja pero val loss sube. Considera early stop, más augmentación o más datos.",
-        "fun": "Se está memorizando todo en vez de aprender 📚😅. Más augmentación o paro."
+        "pro": "Indicio de overfitting: train_loss sigue bajando pero val_loss empezó a subir. Significa que el modelo está memorizando el train en vez de generalizar. Aún leve — si persiste 5-6 épocas más, conviene subir weight_decay, reforzar augmentación (mosaic, mixup, hsv) o activar early stop.",
+        "fun": "Empieza a memorizar 📚. Si sigue así, más augmentación."
+      },
+      "overfitSevere": {
+        "pro": "Overfitting severo sostenido: la brecha val_loss − train_loss creció a {{gap}} y sigue abriéndose durante varias épocas. El modelo ya no generaliza. Conviene recuperar el mejor checkpoint anterior y relanzar con más regularización (weight_decay, dropout, augmentación) o más datos.",
+        "fun": "Overfit serio 🚨 brecha {{gap}} y creciendo. Volvé al best."
       },
       "valLossUp": {
-        "pro": "Val loss en ascenso sin mejora del train loss. Revisa LR y regularización.",
-        "fun": "La validación se enoja sola 😤 Bajale al LR."
+        "pro": "val_loss sube sin que train_loss mejore lo suficiente. Distinto del overfitting clásico: aquí el modelo tampoco está aprendiendo bien en train. Sospechas típicas: LR demasiado alto para esta etapa, datos ruidosos o conflicto entre batch-norm y batch pequeño.",
+        "fun": "Val enojada sin razón 😤 revisá LR y datos."
       },
-      "mapDown": {
-        "pro": "mAP50 en descenso en la ventana reciente. Considera detener o revertir a mejor checkpoint.",
-        "fun": "El mAP50 se está cayendo por las escaleras 📉 Guarda el best y frena."
+      "lrTooHigh": {
+        "pro": "train_loss oscila con coeficiente de variación {{cv}}% y múltiples cambios de signo, sin descender. Es el patrón típico de LR demasiado alto: los pasos pasan de largo el mínimo. Probá bajar lr0 a la mitad o activar cos_lr para que decaiga suave.",
+        "fun": "Loss rebota (CV {{cv}}%). LR muy alto, bajalo."
       },
-      "iouDown": {
-        "pro": "mIoU en descenso. Revisa LR o detén el entrenamiento.",
-        "fun": "El IoU perdió el rumbo 🧭 Mejor parar."
+      "lrTooLow": {
+        "pro": "Tras varias épocas, la métrica apenas se mueve y la loss desciende lentísimo. Causa probable: lr0 demasiado chico, o modelo sin capacidad para esta tarea. Subí lr0 ×2-3, probá un modelo más grande, o verificá que pretrained=True.",
+        "fun": "Paso de tortuga 🐢 subile el LR."
+      },
+      "boxDominates": {
+        "pro": "box_loss promedia {{ratio}}× cls_loss en la ventana reciente. El entrenamiento se está enfocando mucho en localizar cajas y poco en clasificar. Si la clasificación te importa tanto como la detección, sube el peso 'cls' en la config de loss.",
+        "fun": "box se come a cls ({{ratio}}×). Sube peso de cls."
+      },
+      "clsDominates": {
+        "pro": "cls_loss promedia {{ratio}}× box_loss. El modelo clasifica bien pero localiza flojo, o hay desbalance fuerte entre clases. Revisá distribución de clases y considerá subir el peso 'box'.",
+        "fun": "cls domina ({{ratio}}×). Chequeá balance de clases."
+      },
+      "dflHigh": {
+        "pro": "dfl_loss alta respecto a box_loss indica que la distribución de las coordenadas de caja no está convergiendo: cajas poco precisas. Sube el peso 'dfl' o mejora la calidad/consistencia del anotado.",
+        "fun": "Cajas imprecisas. Subile a dfl."
+      },
+      "regression": {
+        "pro": "{{metric}} retrocedió de {{best}} a {{now}} durante {{epochs}} épocas consecutivas. Ya no es ruido puntual: el modelo empeoró de forma sostenida. Vale la pena comparar con el checkpoint best y, si el schedule no contempla recuperación, detener y volver al best.",
+        "fun": "Retrocede hace rato: {{metric}} {{best}}→{{now}} en {{epochs}} épocas 📉"
+      },
+      "earlyStop": {
+        "pro": "El mejor valor lleva {{epochs}} épocas sin ser superado. No garantiza que no vaya a mejorar más adelante (LR schedules pueden despertar al modelo), pero estadísticamente el ROI decae — razonable detener y quedarse con el best si el tiempo de cómputo pesa.",
+        "fun": "{{epochs}} épocas sin superar el best. Parar es opción 🛑"
       },
       "plateau": {
-        "pro": "Métrica estancada en las últimas épocas. Valora early stop o reducir LR.",
-        "fun": "Plató a la vista 🏞️ Ya no mejora, ¿seguimos o cortamos?"
+        "pro": "La métrica objetivo apenas se mueve en las últimas épocas. Puede ser un estancamiento real o una meseta previa a otro salto cuando decaiga el LR. Si no tenés cos_lr activo, bajar lr0 ×0.1 manualmente suele romper el plateau.",
+        "fun": "Plató 🏞️ probá bajar el LR."
+      },
+      "plateauLow": {
+        "pro": "Estancado en {{value}}%, un valor bajo como para detenerse ahí. Causas típicas: dataset demasiado pequeño o desbalanceado, etiquetas ruidosas, o modelo inadecuado para la complejidad del problema. Revisa los datos antes de tocar hiperparámetros.",
+        "fun": "Atorado en {{value}}% 😬 revisá el dataset."
+      },
+      "converged": {
+        "pro": "Convergencia: {{metric}} = {{value}}% estable durante varias épocas. El modelo ya exprimió lo que podía con este schedule. Épocas extras no aportan; exporta y valida.",
+        "fun": "Llegó al tope ({{metric}} {{value}}%). Exportá 🎯"
       },
       "lossExploding": {
-        "pro": "Loss disparada ({{ratio}}× el mínimo). Baja el learning rate o revisa el optimizador.",
-        "fun": "¡BOOM 💥! La loss explotó ({{ratio}}×). Baja el LR ya."
+        "pro": "train_loss se disparó ×{{ratio}} ({{from}} → {{to}}). Es divergencia: el optimizador se fue de mambo. Causas frecuentes: lr0 demasiado alto, AMP con mal escalado, o gradientes sin clipping. Reducir lr0 o bajar AMP suele resolverlo.",
+        "fun": "¡BOOM! loss ×{{ratio}} ({{from}}→{{to}}) 💥 bajá LR ya"
       },
       "nan": {
-        "pro": "Valores NaN/Inf detectados. Detén y revisa AMP, LR o datos.",
-        "fun": "Apareció NaN 👻 Corta y revisa, se rompió algo."
+        "pro": "Aparecieron NaN/Inf en la loss. Con eso no hay recuperación: los pesos quedan corruptos. Causas comunes: lr0 demasiado alto, inestabilidad de AMP, imágenes corruptas o anotaciones inválidas (cajas fuera de rango, etc.). Hay que reiniciar.",
+        "fun": "NaN 👻 se quebró, reiniciá."
+      },
+      "deadModel": {
+        "pro": "Con {{metric}} = {{value}}% tras {{epochs}} épocas, el modelo no está aprendiendo nada. No es un problema de afinado: revisa lo básico — etiquetas bien formateadas, pretrained=True, LR razonable, y que el dataset realmente contenga lo que querés detectar.",
+        "fun": "Modelo plano 💀 ({{metric}} {{value}}%). Revisá lo básico."
       },
       "precisionHigh": {
-        "pro": "Precisión alta ({{precision}}%) pero recall bajo ({{recall}}%). Bajá el umbral de confianza o sube el peso de cls.",
-        "fun": "Muy precisa ({{precision}}%) pero tímida ({{recall}}%). Que se anime a predecir más 🗣️"
+        "pro": "Precision {{precision}}% con recall {{recall}}%: el modelo es conservador, solo predice cuando está muy seguro y deja pasar muchos positivos. Útil si priorizás evitar falsos positivos; si no, bajá el umbral de confianza o aumentá el peso de cls.",
+        "fun": "Precisa ({{precision}}%) pero tímida ({{recall}}%). Bajá umbral."
       },
       "recallHigh": {
-        "pro": "Recall alto ({{recall}}%) pero precisión baja ({{precision}}%). Sube umbral o ajusta pesos de loss.",
-        "fun": "Habla mucho ({{recall}}%) pero se equivoca ({{precision}}%). Más filtro 🔇"
+        "pro": "Recall {{recall}}% con precision {{precision}}%: el modelo predice demasiado, con muchos falsos positivos. Útil si no querés perder ningún positivo; si no, subí el umbral de confianza o ajustá el IoU de NMS.",
+        "fun": "Habla mucho ({{recall}}%) y falla ({{precision}}%). Subí umbral."
       },
       "valTooEasy": {
-        "pro": "Val loss notablemente menor que train loss. Puede haber leak o split fácil.",
-        "fun": "La validación es más fácil que el train 🤔 ¿Leak o suerte?"
+        "pro": "train_loss ({{train}}) mayor que val_loss ({{val}}) de forma sostenida es inusual. Suele indicar fuga de datos (las mismas imágenes en train y val) o que el split de validación quedó más fácil que el de entrenamiento. Revisa cómo se armó el split.",
+        "fun": "Val ({{val}}) más fácil que train ({{train}}) 🤔 ¿leak?"
+      },
+      "noisy": {
+        "pro": "train_loss desciende pero con ruido alto (CV={{cv}}%). Suele pasar con batch chico o datos muy heterogéneos: cada batch da una señal distinta. Subir el batch size, activar AMP o aumentar nbs estabiliza el entrenamiento.",
+        "fun": "Loss nerviosa (CV {{cv}}%). Agrandá el batch."
+      },
+      "warmupPhase": {
+        "pro": "Fase de warmup activa: el LR aún está subiendo desde un valor bajo hacia lr0. Las métricas en este tramo no reflejan todavía el comportamiento real del entrenamiento — hay que esperar a que el LR se estabilice.",
+        "fun": "Warmup 🔥 aguantá, aún calentando"
+      },
+      "lrDecayed": {
+        "pro": "El LR actual es ínfimo comparado con el pico: el scheduler ya gastó su margen de decay. En esta etapa el modelo cambia muy poco. Si no hay mejora reciente, no la va a haber sin reanudar con un nuevo ciclo.",
+        "fun": "LR ya casi cero. Sin jugo para mejorar."
       },
       "neutral": {
-        "pro": "Sin señales claras aún. Continúa entrenando.",
-        "fun": "Todo tranqui por ahora 🧘 seguimos."
+        "pro": "Sin patrones concluyentes en la ventana reciente: ni señal fuerte de overfitting, ni divergencia, ni convergencia. Seguir entrenando y observar.",
+        "fun": "Todo tranqui por ahora 🧘"
       }
     }
   },
@@ -460,5 +508,11 @@
   "cancelConfirmKeep": "Seguir entrenando",
   "runningShort": "Entrenando {{progress}}%",
   "resume": "Reanudar",
-  "resumeAsFineTune": "Continuar (fine-tune)"
+  "resumeAsFineTune": "Continuar (fine-tune)",
+  "weights": {
+    "bestHint": "best.pt disponible (mejor modelo guardado)",
+    "lastHint": "last.pt disponible (último checkpoint, permite resume puro)",
+    "noneHint": "sin pesos guardados",
+    "none": "sin pesos"
+  }
 }

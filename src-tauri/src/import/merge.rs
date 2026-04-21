@@ -12,6 +12,7 @@ pub struct AnalyzeClassInfo {
     pub name: String,
     pub color: String,
     pub description: Option<String>,
+    pub annotation_count: usize,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -86,7 +87,7 @@ pub fn analyze(paths: Vec<String>) -> Result<AnalyzeResult, String> {
             .unwrap_or("bbox")
             .to_string();
 
-        let classes: Vec<AnalyzeClassInfo> = project_obj
+        let mut classes: Vec<AnalyzeClassInfo> = project_obj
             .and_then(|p| p.get("classes"))
             .and_then(|c| c.as_array())
             .map(|arr| {
@@ -108,10 +109,68 @@ pub fn analyze(paths: Vec<String>) -> Result<AnalyzeResult, String> {
                             .get("description")
                             .and_then(|v| v.as_str())
                             .map(|s| s.to_string()),
+                        annotation_count: 0,
                     })
                     .collect()
             })
             .unwrap_or_default();
+
+        // Conteo de anotaciones por clase: scan images[].annotations[].classId
+        // + timeseries[].annotations[].classId + videos[].tracks[].keyframes[].classId
+        let mut counts: std::collections::HashMap<i64, usize> = std::collections::HashMap::new();
+        let mut count_from = |arr_name: &str, ann_path: &[&str]| {
+            if let Some(arr) = data.get(arr_name).and_then(|v| v.as_array()) {
+                for item in arr {
+                    let mut node: &serde_json::Value = item;
+                    let mut ok = true;
+                    for seg in ann_path {
+                        if let Some(next) = node.get(*seg) {
+                            node = next;
+                        } else {
+                            ok = false;
+                            break;
+                        }
+                    }
+                    if !ok {
+                        continue;
+                    }
+                    if let Some(anns) = node.as_array() {
+                        for a in anns {
+                            let cid = a
+                                .get("classId")
+                                .or_else(|| a.get("class_id"))
+                                .or_else(|| a.get("class"))
+                                .and_then(|v| v.as_i64());
+                            if let Some(cid) = cid {
+                                *counts.entry(cid).or_insert(0) += 1;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        count_from("images", &["annotations"]);
+        count_from("timeseries", &["annotations"]);
+        // Videos: tracks → class_id directo (una track = una etiqueta)
+        if let Some(vids) = data.get("videos").and_then(|v| v.as_array()) {
+            for v in vids {
+                if let Some(tracks) = v.get("tracks").and_then(|t| t.as_array()) {
+                    for t in tracks {
+                        let cid = t
+                            .get("classId")
+                            .or_else(|| t.get("class_id"))
+                            .or_else(|| t.get("class"))
+                            .and_then(|v| v.as_i64());
+                        if let Some(cid) = cid {
+                            *counts.entry(cid).or_insert(0) += 1;
+                        }
+                    }
+                }
+            }
+        }
+        for c in classes.iter_mut() {
+            c.annotation_count = *counts.get(&c.id).unwrap_or(&0);
+        }
 
         let image_count = data
             .get("images")
@@ -234,7 +293,7 @@ pub fn merge<F: Fn(f64)>(
             let prefixed_name = format!("{}__{}", proj_name, img.name);
 
             total_annotations += img.annotations.len();
-            state.upload_image_bytes(
+            let new_image_id = state.upload_image_bytes(
                 &project_id,
                 &prefixed_name,
                 &img.data,
@@ -243,6 +302,15 @@ pub fn merge<F: Fn(f64)>(
                 None,
             )?;
             total_images += 1;
+
+            // Pre-generar thumbnail para que al entrar al proyecto no haya una
+            // cascada de on-demand generations que cuelga la UI.
+            let _ = crate::commands::image_processing_commands::generate_thumbnail_internal(
+                state,
+                &project_id,
+                &new_image_id,
+                crate::commands::image_processing_commands::THUMBNAIL_MAX_SIZE,
+            );
 
             let per_proj = (img_idx as f64 + 1.0) / n_imgs;
             let base = 8.0 + (proj_idx as f64 / n_projects) * 90.0;

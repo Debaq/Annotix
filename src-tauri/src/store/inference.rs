@@ -164,6 +164,7 @@ impl AppState {
         task: Option<String>,
         output_format: Option<String>,
         class_names: Option<Vec<String>>,
+        metadata_patch: Option<serde_json::Value>,
     ) -> Result<(), String> {
         self.with_project_mut(project_id, |pf| {
             if let Some(model) = pf.inference_models.iter_mut().find(|m| m.id == model_id) {
@@ -178,6 +179,23 @@ impl AppState {
                 model.output_format = output_format.filter(|s| !s.is_empty());
                 if let Some(names) = class_names {
                     model.class_names = names;
+                }
+                // Merge superficial de metadata (patch)
+                if let Some(patch) = metadata_patch {
+                    let mut current = model
+                        .metadata
+                        .clone()
+                        .unwrap_or_else(|| serde_json::json!({}));
+                    if let (Some(cur_map), Some(patch_map)) =
+                        (current.as_object_mut(), patch.as_object())
+                    {
+                        for (k, v) in patch_map {
+                            cur_map.insert(k.clone(), v.clone());
+                        }
+                    } else {
+                        current = patch;
+                    }
+                    model.metadata = Some(current);
                 }
             }
             pf.updated = js_timestamp();

@@ -460,5 +460,11 @@
   "cancelConfirmKeep": "계속 학습",
   "runningShort": "학습 중 {{progress}}%",
   "resume": "재개",
-  "resumeAsFineTune": "계속 (파인튜닝)"
+  "resumeAsFineTune": "계속 (파인튜닝)",
+  "weights": {
+    "bestHint": "best.pt 있음",
+    "lastHint": "last.pt 있음 (진짜 재개 가능)",
+    "noneHint": "저장된 가중치 없음",
+    "none": "가중치 없음"
+  }
 }

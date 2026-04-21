@@ -19,42 +19,15 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/hooks/use-toast';
 import { useUIStore } from '@/features/core/store/uiStore';
 import { useProjects } from '@/features/projects/hooks/useProjects';
-
-interface AnalyzeClass {
-  id: number;
-  name: string;
-  color: string;
-  description?: string | null;
-}
-interface AnalyzeProject {
-  path: string;
-  name: string;
-  projectType: string;
-  classes: AnalyzeClass[];
-  imageCount: number;
-}
-interface AnalyzeResult {
-  projects: AnalyzeProject[];
-  sameType: boolean;
-  projectType: string;
-  warnings: string[];
-}
-
-interface CanonicalClass {
-  name: string;
-  color: string;
-  description?: string | null;
-}
-
-// Mapping: (projectIndex, sourceClassId) → canonicalIndex (-1 = descartar)
-type MappingKey = string; // `${pi}:${cid}`
-
-const DEFAULT_COLORS = [
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
-  '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#82E0AA',
-];
-
-const normalize = (s: string) => s.trim().toLowerCase();
+import { MergeMatrixStep } from './merge/MergeMatrixStep';
+import {
+  AnalyzeResult,
+  AssignmentMap,
+  CanonicalClass,
+  countByState,
+  initFromProject,
+  toBackendMappings,
+} from './merge/types';
 
 interface Props {
   trigger?: React.ReactNode;
@@ -72,7 +45,7 @@ export const MergeTixDialog: React.FC<Props> = ({ trigger }) => {
   const [paths, setPaths] = useState<string[]>([]);
   const [analysis, setAnalysis] = useState<AnalyzeResult | null>(null);
   const [canonical, setCanonical] = useState<CanonicalClass[]>([]);
-  const [mapping, setMapping] = useState<Record<MappingKey, number>>({});
+  const [assignments, setAssignments] = useState<AssignmentMap>({});
   const [projectName, setProjectName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
@@ -80,9 +53,11 @@ export const MergeTixDialog: React.FC<Props> = ({ trigger }) => {
 
   const existingNames = useMemo(
     () => new Set((projects ?? []).map((p: any) => (p.name ?? '').toLowerCase())),
-    [projects]
+    [projects],
   );
   const nameExists = projectName.trim() !== '' && existingNames.has(projectName.trim().toLowerCase());
+
+  const counts = useMemo(() => countByState(assignments), [assignments]);
 
   const reset = () => {
     setOpen(false);
@@ -90,7 +65,7 @@ export const MergeTixDialog: React.FC<Props> = ({ trigger }) => {
     setPaths([]);
     setAnalysis(null);
     setCanonical([]);
-    setMapping({});
+    setAssignments({});
     setProjectName('');
     setError(null);
     setProgress(0);
@@ -118,40 +93,19 @@ export const MergeTixDialog: React.FC<Props> = ({ trigger }) => {
 
       if (!res.sameType) {
         setError(
-          t('merge.error.mixedTypes',
-            'Los proyectos tienen tipos distintos. Solo se soporta fusión del mismo tipo.'
-          )
+          t(
+            'merge.error.mixedTypes',
+            'Los proyectos tienen tipos distintos. Solo se soporta fusión del mismo tipo.',
+          ),
         );
         setStep('select');
         setPaths([]);
         return;
       }
 
-      // Auto-construir clases canónicas por nombre
-      const canon: CanonicalClass[] = [];
-      const nameToIdx = new Map<string, number>();
-      const map: Record<MappingKey, number> = {};
-
-      res.projects.forEach((proj, pi) => {
-        proj.classes.forEach((cls) => {
-          const key = `${pi}:${cls.id}`;
-          const norm = normalize(cls.name);
-          let idx = nameToIdx.get(norm);
-          if (idx === undefined) {
-            idx = canon.length;
-            canon.push({
-              name: cls.name,
-              color: cls.color || DEFAULT_COLORS[idx % DEFAULT_COLORS.length],
-              description: cls.description || null,
-            });
-            nameToIdx.set(norm, idx);
-          }
-          map[key] = idx;
-        });
-      });
-
-      setCanonical(canon);
-      setMapping(map);
+      const { canonical: c0, assignments: a0 } = initFromProject(res, 0);
+      setCanonical(c0);
+      setAssignments(a0);
       setProjectName(`merged_${Date.now().toString(36)}`);
       setStep('map');
     } catch (err) {
@@ -159,50 +113,6 @@ export const MergeTixDialog: React.FC<Props> = ({ trigger }) => {
       setStep('select');
       setPaths([]);
     }
-  };
-
-  const updateCanonicalName = (idx: number, name: string) => {
-    setCanonical((arr) => arr.map((c, i) => (i === idx ? { ...c, name } : c)));
-  };
-  const updateCanonicalColor = (idx: number, color: string) => {
-    setCanonical((arr) => arr.map((c, i) => (i === idx ? { ...c, color } : c)));
-  };
-  const addCanonicalClass = () => {
-    setCanonical((arr) => [
-      ...arr,
-      {
-        name: `class_${arr.length}`,
-        color: DEFAULT_COLORS[arr.length % DEFAULT_COLORS.length],
-      },
-    ]);
-  };
-  const removeCanonicalClass = (idx: number) => {
-    if (canonical.length <= 1) return;
-    const newCanon = canonical.filter((_, i) => i !== idx);
-    setCanonical(newCanon);
-    // Re-mapear: entradas con target==idx → -1; target>idx → target-1
-    const newMap: Record<MappingKey, number> = {};
-    for (const [k, v] of Object.entries(mapping)) {
-      if (v === idx) newMap[k] = -1;
-      else if (v > idx) newMap[k] = v - 1;
-      else newMap[k] = v;
-    }
-    setMapping(newMap);
-  };
-  const moveCanonical = (idx: number, dir: -1 | 1) => {
-    const newIdx = idx + dir;
-    if (newIdx < 0 || newIdx >= canonical.length) return;
-    const newCanon = [...canonical];
-    [newCanon[idx], newCanon[newIdx]] = [newCanon[newIdx], newCanon[idx]];
-    setCanonical(newCanon);
-    const swapMap = (v: number) => (v === idx ? newIdx : v === newIdx ? idx : v);
-    const newMap: Record<MappingKey, number> = {};
-    for (const [k, v] of Object.entries(mapping)) newMap[k] = swapMap(v);
-    setMapping(newMap);
-  };
-
-  const setSourceMapping = (pi: number, cid: number, canonIdx: number) => {
-    setMapping((m) => ({ ...m, [`${pi}:${cid}`]: canonIdx }));
   };
 
   const handleMerge = async () => {
@@ -223,15 +133,22 @@ export const MergeTixDialog: React.FC<Props> = ({ trigger }) => {
       setError(t('merge.error.noCanonical', 'Debe haber al menos una clase canónica.'));
       return;
     }
+    if (counts.pending > 0) {
+      setError(
+        t(
+          'merge.error.pending',
+          'Quedan clases sin asignar. Asígnalas a una canónica o descártalas explícitamente.',
+        ),
+      );
+      return;
+    }
 
-    const mappings = Object.entries(mapping).map(([k, v]) => {
-      const [pi, cid] = k.split(':').map(Number);
-      return {
-        projectIndex: pi,
-        sourceClassId: cid,
-        targetCanonicalIndex: v,
-      };
-    });
+    const mappings = toBackendMappings(canonical, assignments);
+    const canonicalPayload = canonical.map((c) => ({
+      name: c.name,
+      color: c.color,
+      description: c.description ?? null,
+    }));
 
     setStep('merging');
     setProgress(0);
@@ -240,15 +157,15 @@ export const MergeTixDialog: React.FC<Props> = ({ trigger }) => {
     const unlisten = await listen<number>('merge:progress', (e) => setProgress(e.payload));
 
     try {
-      const res = await invoke<{ projectId: string; stats: { imagesCount: number; classesCount: number; annotationsCount: number } }>(
-        'merge_tix_projects',
-        {
-          paths,
-          canonicalClasses: canonical,
-          mappings,
-          projectName,
-        }
-      );
+      const res = await invoke<{
+        projectId: string;
+        stats: { imagesCount: number; classesCount: number; annotationsCount: number };
+      }>('merge_tix_projects', {
+        paths,
+        canonicalClasses: canonicalPayload,
+        mappings,
+        projectName,
+      });
       setMergedProjectId(res.projectId);
       setStep('success');
       toast({
@@ -271,6 +188,12 @@ export const MergeTixDialog: React.FC<Props> = ({ trigger }) => {
     }
   };
 
+  const mergeDisabled =
+    !projectName.trim() ||
+    nameExists ||
+    canonical.length === 0 ||
+    counts.pending > 0;
+
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : reset())}>
       <DialogTrigger asChild>
@@ -281,14 +204,18 @@ export const MergeTixDialog: React.FC<Props> = ({ trigger }) => {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="max-w-[1200px] max-h-[95vh] overflow-y-auto"
+        preventClose={step === 'map' || step === 'analyzing' || step === 'merging'}
+      >
         {step === 'select' && (
           <>
             <DialogHeader>
               <DialogTitle>{t('merge.title', 'Fusionar proyectos .tix')}</DialogTitle>
               <DialogDescription>
-                {t('merge.description',
-                  'Selecciona varios archivos .tix para combinarlos en un único proyecto homogeneizando las clases.'
+                {t(
+                  'merge.description',
+                  'Selecciona varios archivos .tix para combinarlos en un único proyecto homogeneizando las clases.',
                 )}
               </DialogDescription>
             </DialogHeader>
@@ -298,7 +225,9 @@ export const MergeTixDialog: React.FC<Props> = ({ trigger }) => {
                 onClick={handleSelectFiles}
               >
                 <i className="fas fa-cloud-upload-alt text-3xl text-gray-400 dark:text-gray-500 mb-2 block"></i>
-                <p className="text-sm font-medium">{t('merge.selectMultiple', 'Selecciona 2 o más archivos .tix')}</p>
+                <p className="text-sm font-medium">
+                  {t('merge.selectMultiple', 'Selecciona 2 o más archivos .tix')}
+                </p>
               </div>
               {error && (
                 <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 px-4 py-3 rounded text-sm">
@@ -326,132 +255,67 @@ export const MergeTixDialog: React.FC<Props> = ({ trigger }) => {
             <DialogHeader>
               <DialogTitle>{t('merge.mapClasses', 'Homogeneizar clases')}</DialogTitle>
               <DialogDescription>
-                {t('merge.mapHelp',
-                  'Edita, reordena o elimina las clases canónicas. Luego asigna cada clase original a una canónica o descártala.'
+                {t(
+                  'merge.mapHelpMatrix',
+                  'Cada chip es una clase origen. Arrástralos mentalmente de pendientes a la celda de la canónica que les corresponde. Nada se pierde sin descarte explícito.',
                 )}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4">
-              {/* Clases canónicas */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label>{t('merge.canonicalClasses', 'Clases canónicas (orden = índice)')}</Label>
-                  <Button size="sm" variant="outline" onClick={addCanonicalClass}>
-                    <i className="fas fa-plus mr-1"></i>{t('common.add', 'Añadir')}
-                  </Button>
-                </div>
-                <div className="space-y-1 border border-gray-200 dark:border-gray-800 rounded p-2 max-h-56 overflow-y-auto">
-                  {canonical.map((c, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <span className="text-xs font-mono w-6 text-gray-500">{idx}</span>
-                      <input
-                        type="color"
-                        value={c.color}
-                        onChange={(e) => updateCanonicalColor(idx, e.target.value)}
-                        className="w-7 h-7 rounded cursor-pointer border border-gray-300"
-                      />
-                      <Input
-                        value={c.name}
-                        onChange={(e) => updateCanonicalName(idx, e.target.value)}
-                        className="flex-1 h-8"
-                      />
-                      <Button size="sm" variant="ghost" onClick={() => moveCanonical(idx, -1)} disabled={idx === 0}>
-                        <i className="fas fa-arrow-up"></i>
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => moveCanonical(idx, 1)} disabled={idx === canonical.length - 1}>
-                        <i className="fas fa-arrow-down"></i>
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => removeCanonicalClass(idx)} disabled={canonical.length <= 1}>
-                        <i className="fas fa-trash text-red-500"></i>
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <MergeMatrixStep
+              analysis={analysis}
+              canonical={canonical}
+              setCanonical={setCanonical}
+              assignments={assignments}
+              setAssignments={setAssignments}
+            />
 
-              {/* Mapeos por proyecto */}
-              <div>
-                <Label>{t('merge.sourceMapping', 'Mapeo por proyecto origen')}</Label>
-                <div className="space-y-3 mt-2">
-                  {analysis.projects.map((proj, pi) => (
-                    <div key={pi} className="border border-gray-200 dark:border-gray-800 rounded p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <p className="font-medium text-sm">{proj.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {proj.projectType} · {proj.imageCount} {t('common.images', 'imágenes')} · {proj.classes.length} {t('common.classes', 'clases')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        {proj.classes.map((cls) => {
-                          const key = `${pi}:${cls.id}`;
-                          const val = mapping[key] ?? -1;
-                          return (
-                            <div key={cls.id} className="flex items-center gap-2">
-                              <span
-                                className="w-3 h-3 rounded-sm"
-                                style={{ background: cls.color }}
-                              />
-                              <span className="text-xs font-mono w-8 text-gray-500">#{cls.id}</span>
-                              <span className="text-sm flex-1 truncate">{cls.name}</span>
-                              <i className="fas fa-arrow-right text-xs text-gray-400"></i>
-                              <select
-                                value={val}
-                                onChange={(e) => setSourceMapping(pi, cls.id, Number(e.target.value))}
-                                className="text-xs border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 min-w-[180px]"
-                              >
-                                <option value={-1}>{t('merge.discard', '— Descartar —')}</option>
-                                {canonical.map((c, idx) => (
-                                  <option key={idx} value={idx}>
-                                    {idx}: {c.name}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-800">
+              <Label htmlFor="mergeName">{t('merge.projectName', 'Nombre del proyecto fusionado')}</Label>
+              <Input
+                id="mergeName"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+              />
+              {nameExists && (
+                <p className="text-xs text-amber-600">
+                  {t('import.duplicateNameWarning', 'Ya existe un proyecto con ese nombre.')}
+                </p>
+              )}
+            </div>
 
-              {/* Nombre + acción */}
-              <div>
-                <Label htmlFor="mergeName">{t('merge.projectName', 'Nombre del proyecto fusionado')}</Label>
-                <Input
-                  id="mergeName"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                  className="mt-1"
-                />
-                {nameExists && (
-                  <p className="text-xs text-amber-600 mt-1">
-                    {t('import.duplicateNameWarning', 'Ya existe un proyecto con ese nombre.')}
-                  </p>
+            {error && (
+              <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 px-4 py-3 rounded text-sm">
+                {error}
+              </div>
+            )}
+
+            {counts.pending > 0 && (
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-amber-800 dark:text-amber-300 px-4 py-2 rounded text-xs">
+                <i className="fas fa-triangle-exclamation mr-1.5"></i>
+                {t(
+                  'merge.pendingBlockHint',
+                  'No puedes fusionar mientras haya clases pendientes. Asígnalas o descártalas desde el menú del chip.',
                 )}
               </div>
+            )}
 
-              {error && (
-                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 px-4 py-3 rounded text-sm">
-                  {error}
-                </div>
-              )}
-
-              <div className="flex gap-2">
-                <Button onClick={reset} variant="outline" className="flex-1">
-                  {t('common.cancel')}
-                </Button>
-                <Button
-                  onClick={handleMerge}
-                  disabled={!projectName.trim() || nameExists || canonical.length === 0}
-                  className="flex-1"
-                >
-                  {t('merge.mergeAction', 'Fusionar')}
-                </Button>
-              </div>
+            <div className="flex gap-2">
+              <Button onClick={reset} variant="outline" className="flex-1">
+                {t('common.cancel')}
+              </Button>
+              <Button
+                onClick={handleMerge}
+                disabled={mergeDisabled}
+                className="flex-1"
+                title={
+                  counts.pending > 0
+                    ? t('merge.pendingBlockHint', 'Quedan clases sin asignar')
+                    : undefined
+                }
+              >
+                {t('merge.mergeAction', 'Fusionar')}
+              </Button>
             </div>
           </>
         )}

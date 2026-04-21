@@ -244,6 +244,7 @@ pub async fn start_training(
             progress: 0.0,
             logs: vec![],
             metrics: None,
+            metrics_history: Vec::new(),
             created_at: now,
             updated_at: now,
             result_dir: None,
@@ -319,9 +320,46 @@ pub fn get_training_job(
 pub fn list_training_jobs(
     state: State<'_, AppState>,
     project_id: String,
-) -> Result<Vec<TrainingJobEntry>, String> {
+) -> Result<Vec<serde_json::Value>, String> {
     state.with_project(&project_id, |pf| {
-        pf.training_jobs.clone()
+        pf.training_jobs.iter().map(|job| {
+            let (has_best, has_last, best_path, last_path) = match &job.result_dir {
+                Some(rd) => {
+                    let weights = std::path::Path::new(rd).join("weights");
+                    let best = weights.join("best.pt");
+                    let last = weights.join("last.pt");
+                    let best_on_disk = best.exists();
+                    let best_from_job = job.best_model_path.as_ref()
+                        .map(|p| std::path::Path::new(p).exists()).unwrap_or(false);
+                    let has_best = best_on_disk || best_from_job;
+                    let has_last = last.exists();
+                    let best_str = if best_on_disk {
+                        Some(best.to_string_lossy().to_string())
+                    } else {
+                        job.best_model_path.clone()
+                    };
+                    let last_str = if has_last { Some(last.to_string_lossy().to_string()) } else { None };
+                    (has_best, has_last, best_str, last_str)
+                }
+                None => {
+                    let has_best = job.best_model_path.as_ref()
+                        .map(|p| std::path::Path::new(p).exists()).unwrap_or(false);
+                    (has_best, false, job.best_model_path.clone(), None)
+                }
+            };
+            let mut v = serde_json::to_value(job).unwrap_or(serde_json::Value::Null);
+            if let Some(obj) = v.as_object_mut() {
+                obj.insert("hasBest".into(), serde_json::Value::Bool(has_best));
+                obj.insert("hasLast".into(), serde_json::Value::Bool(has_last));
+                if let Some(p) = best_path {
+                    obj.insert("bestModelPath".into(), serde_json::Value::String(p));
+                }
+                if let Some(p) = last_path {
+                    obj.insert("lastModelPath".into(), serde_json::Value::String(p));
+                }
+            }
+            v
+        }).collect()
     })
 }
 
@@ -504,6 +542,7 @@ pub async fn start_training_v2(
                 progress: 0.0,
                 logs: vec![],
                 metrics: None,
+                metrics_history: Vec::new(),
                 created_at: now,
                 updated_at: now,
                 result_dir: None,
@@ -559,6 +598,7 @@ pub async fn start_training_v2(
                 progress: 0.0,
                 logs: vec![],
                 metrics: None,
+                metrics_history: Vec::new(),
                 created_at: now,
                 updated_at: now,
                 result_dir: None,
@@ -590,6 +630,7 @@ pub async fn start_training_v2(
             progress: 0.0,
             logs: vec![],
             metrics: None,
+            metrics_history: Vec::new(),
             created_at: now,
             updated_at: now,
             result_dir: None,

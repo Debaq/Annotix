@@ -3,7 +3,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import i18n from '@/lib/i18n';
 import { inferenceService } from '../services/inferenceService';
 import { useUIStore } from '../../core/store/uiStore';
-import type { InferenceModelEntry, ClassMapping, ModelMetadata, ModelConfigResult } from '../types';
+import type { InferenceModelEntry, ClassMapping, ModelMetadata, ModelConfigResult, PreprocessConfig } from '../types';
 
 interface UseInferenceModelsResult {
   models: InferenceModelEntry[];
@@ -16,6 +16,7 @@ interface UseInferenceModelsResult {
   uploadModel: () => Promise<void>;
   deleteModel: (modelId: string) => Promise<void>;
   updateMapping: (modelId: string, mapping: ClassMapping[]) => Promise<void>;
+  updatePreprocess: (modelId: string, preprocess: PreprocessConfig | null) => Promise<void>;
   refreshModels: () => Promise<void>;
 }
 
@@ -185,6 +186,21 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
     }
   }, [projectId, refreshModels]);
 
+  const updatePreprocess = useCallback(async (modelId: string, preprocess: PreprocessConfig | null) => {
+    if (!projectId) return;
+    try {
+      const model = models.find((m) => m.id === modelId);
+      if (!model) return;
+      await inferenceService.updateModelConfig(
+        projectId, modelId, model.classMapping, null, null, null, null,
+        { preprocess },
+      );
+      await refreshModels();
+    } catch (err) {
+      setError(String(err));
+    }
+  }, [projectId, models, refreshModels]);
+
   return {
     models,
     selectedModel,
@@ -195,6 +211,7 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
     uploadModel,
     deleteModel,
     updateMapping,
+    updatePreprocess,
     refreshModels,
   };
 }

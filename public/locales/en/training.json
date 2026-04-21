@@ -94,68 +94,116 @@
     "styleFun": "Fun",
     "rules": {
       "waiting": {
-        "pro": "Waiting for data to analyze behavior.",
-        "fun": "Chill, the party hasn't started yet 🎬"
+        "pro": "First complete epoch hasn't finished yet. Once it does, we'll read train_loss, val_loss and the target metric to begin diagnosing.",
+        "fun": "Waiting for data to analyze 🎬"
       },
       "warmingUp": {
-        "pro": "Warming up — need more epochs to evaluate trends ({{n}}/3).",
-        "fun": "Stretching before the run 🏃 ({{n}}/3)"
+        "pro": "{{n}} of 3 minimum epochs. With so few points any trend is noise: at least 3 samples are needed to estimate loss and metric slopes. Holding off on judgment.",
+        "fun": "Warming up 🏃 ({{n}}/3), too early to judge"
       },
       "healthy": {
-        "pro": "All OK: loss decreasing and metrics rising. Keep training.",
-        "fun": "Rolling like a freight train! Loss down, metrics up 🚂🔥"
+        "pro": "Healthy training: train_loss is decreasing and the target metric improves ≈{{rate}}%/epoch over the recent window. This is the expected scenario; if it holds until the schedule ends, nothing to tweak.",
+        "fun": "Running smooth! Loss ↓, metric ↑ at {{rate}}%/epoch 🚂"
       },
       "excellent": {
-        "pro": "Excellent performance ({{value}}%). Consider saving a checkpoint.",
-        "fun": "Brutal, {{value}}%! This model is plugged in ⚡"
+        "pro": "{{metric}} = {{value}}% — very high. Before celebrating, validate on an independent test set to rule out overfitting or train/val data leakage. If confirmed, this checkpoint is ready to export.",
+        "fun": "Crushing it, {{metric}} {{value}}%! Validate on test too ⚡"
       },
       "strong": {
-        "pro": "Good level ({{value}}%). Room to refine with lower LR or more epochs.",
-        "fun": "Looking sharp ({{value}}%). A little polish and it's gold ✨"
+        "pro": "{{metric}} = {{value}}% is a competitive level. There's usually additional margin by dropping the learning rate (lr0 × 0.1) in final epochs, or extending training with strong augmentation for better generalization.",
+        "fun": "Looking sharp ({{metric}} {{value}}%). A bit of polish ✨"
       },
       "overfitting": {
-        "pro": "Possible overfitting: train loss down but val loss up. Consider early stop, more augmentation or more data.",
-        "fun": "It's memorizing instead of learning 📚😅 More aug or stop it."
+        "pro": "Overfitting signal: train_loss still drops but val_loss has started to rise. Means the model is memorizing train instead of generalizing. Still mild — if it persists 5-6 more epochs, raise weight_decay, strengthen augmentation (mosaic, mixup, hsv), or enable early stop.",
+        "fun": "Starting to memorize 📚. If it keeps up, more aug."
+      },
+      "overfitSevere": {
+        "pro": "Sustained severe overfitting: the val_loss − train_loss gap grew to {{gap}} and keeps widening over several epochs. The model no longer generalizes. Restore the best previous checkpoint and relaunch with more regularization (weight_decay, dropout, augmentation) or more data.",
+        "fun": "Serious overfit 🚨 gap {{gap}} and growing. Back to best."
       },
       "valLossUp": {
-        "pro": "Val loss rising without train loss improvement. Check LR and regularization.",
-        "fun": "Validation is getting grumpy 😤 Lower the LR."
+        "pro": "val_loss rising without matching progress in train_loss. Different from classic overfitting: here the model isn't learning train well either. Typical suspects: LR too high for this stage, noisy data, or batch-norm conflicting with a small batch.",
+        "fun": "Val angry for no reason 😤 check LR and data."
       },
-      "mapDown": {
-        "pro": "mAP50 decreasing in the recent window. Consider stopping or reverting to best checkpoint.",
-        "fun": "mAP50 is rolling down the stairs 📉 Save best and stop."
+      "lrTooHigh": {
+        "pro": "train_loss oscillates with coefficient of variation {{cv}}% and multiple sign changes, failing to descend. That's the classic too-high LR pattern: steps overshoot the minimum. Try halving lr0 or enabling cos_lr for smooth decay.",
+        "fun": "Loss bouncing (CV {{cv}}%). LR too high, drop it."
       },
-      "iouDown": {
-        "pro": "mIoU decreasing. Check LR or stop training.",
-        "fun": "IoU lost its way 🧭 Better stop."
+      "lrTooLow": {
+        "pro": "After several epochs, the metric barely moves and loss decreases very slowly. Probable cause: lr0 too small, or model underpowered for the task. Raise lr0 2-3×, try a larger model, or check pretrained=True.",
+        "fun": "Turtle pace 🐢 raise the LR."
+      },
+      "boxDominates": {
+        "pro": "box_loss averages {{ratio}}× cls_loss in the recent window. Training is focusing hard on locating boxes and little on classifying. If classification matters as much as detection, raise the 'cls' weight in loss config.",
+        "fun": "box eats cls ({{ratio}}×). Bump cls weight."
+      },
+      "clsDominates": {
+        "pro": "cls_loss averages {{ratio}}× box_loss. The model classifies well but localizes poorly, or there's strong class imbalance. Check class distribution and consider raising the 'box' weight.",
+        "fun": "cls dominates ({{ratio}}×). Check class balance."
+      },
+      "dflHigh": {
+        "pro": "dfl_loss high vs box_loss means the box-coordinate distribution isn't converging: imprecise boxes. Raise the 'dfl' weight or improve annotation quality/consistency.",
+        "fun": "Imprecise boxes. Raise dfl."
+      },
+      "regression": {
+        "pro": "{{metric}} dropped from {{best}} to {{now}} over {{epochs}} consecutive epochs. This is no longer punctual noise: the model has steadily gotten worse. Worth comparing against the best checkpoint and, if the schedule has no recovery mechanism, stopping and reverting to best.",
+        "fun": "Backing up for a while: {{metric}} {{best}}→{{now}} in {{epochs}} epochs 📉"
+      },
+      "earlyStop": {
+        "pro": "Best value hasn't been beaten in {{epochs}} epochs. No guarantee it won't improve later (LR schedules can revive the model), but statistically the ROI is decaying — reasonable to stop and keep the best if compute time matters.",
+        "fun": "{{epochs}} epochs with no new best. Stopping is fair 🛑"
       },
       "plateau": {
-        "pro": "Metric has plateaued over recent epochs. Consider early stop or LR drop.",
-        "fun": "Plateau sighted 🏞️ Not improving — keep going or cut?"
+        "pro": "Target metric barely moving in recent epochs. Could be a real stall or a plateau before another jump when LR decays. If cos_lr isn't active, manually dropping lr0 by ×0.1 often breaks plateaus.",
+        "fun": "Plateau 🏞️ try lowering the LR."
+      },
+      "plateauLow": {
+        "pro": "Stuck at {{value}}%, a low level to settle on. Typical causes: dataset too small or imbalanced, noisy labels, or model inadequate for the problem's complexity. Inspect the data before tuning hyperparameters.",
+        "fun": "Stuck at {{value}}% 😬 check the dataset."
+      },
+      "converged": {
+        "pro": "Converged: {{metric}} = {{value}}% stable for several epochs. The model has squeezed what it could from this schedule. Extra epochs won't help; export and validate.",
+        "fun": "Hit the ceiling ({{metric}} {{value}}%). Export 🎯"
       },
       "lossExploding": {
-        "pro": "Loss exploded ({{ratio}}× the minimum). Lower learning rate or check optimizer.",
-        "fun": "BOOM 💥 Loss went supernova ({{ratio}}×). Drop the LR now."
+        "pro": "train_loss spiked ×{{ratio}} ({{from}} → {{to}}). That's divergence: the optimizer went off the rails. Common causes: lr0 too high, AMP with bad scaling, or gradients without clipping. Lowering lr0 or disabling AMP usually fixes it.",
+        "fun": "BOOM! loss ×{{ratio}} ({{from}}→{{to}}) 💥 drop LR now"
       },
       "nan": {
-        "pro": "NaN/Inf values detected. Stop and check AMP, LR or data.",
-        "fun": "NaN showed up 👻 Stop and inspect — something broke."
+        "pro": "NaN/Inf appeared in the loss. No recovery from that: weights are corrupted. Common causes: lr0 too high, AMP instability, corrupt images, or invalid annotations (boxes out of range, etc.). Must restart.",
+        "fun": "NaN 👻 broke, restart."
+      },
+      "deadModel": {
+        "pro": "With {{metric}} = {{value}}% after {{epochs}} epochs, the model isn't learning. It's not a tuning issue — check the basics: properly formatted labels, pretrained=True, reasonable LR, and that the dataset actually contains what you want to detect.",
+        "fun": "Flat model 💀 ({{metric}} {{value}}%). Check basics."
       },
       "precisionHigh": {
-        "pro": "High precision ({{precision}}%) but low recall ({{recall}}%). Lower confidence threshold or raise cls weight.",
-        "fun": "Very precise ({{precision}}%) but shy ({{recall}}%). Let it speak up 🗣️"
+        "pro": "Precision {{precision}}% with recall {{recall}}%: the model is conservative, only predicting when very confident and missing many positives. Useful if avoiding false positives is the priority; otherwise, lower the confidence threshold or raise the cls weight.",
+        "fun": "Precise ({{precision}}%) but shy ({{recall}}%). Lower threshold."
       },
       "recallHigh": {
-        "pro": "High recall ({{recall}}%) but low precision ({{precision}}%). Raise threshold or tweak loss weights.",
-        "fun": "Talks a lot ({{recall}}%) but misses ({{precision}}%). More filter 🔇"
+        "pro": "Recall {{recall}}% with precision {{precision}}%: the model over-predicts with many false positives. Useful if missing positives is unacceptable; otherwise, raise the confidence threshold or tune NMS IoU.",
+        "fun": "Chatty ({{recall}}%) and wrong ({{precision}}%). Raise threshold."
       },
       "valTooEasy": {
-        "pro": "Val loss noticeably lower than train loss. Possible leak or easy split.",
-        "fun": "Val seems easier than train 🤔 Leak or luck?"
+        "pro": "train_loss ({{train}}) consistently above val_loss ({{val}}) is unusual. Usually indicates data leakage (same images in train and val) or a validation split easier than the training split. Inspect how the split was built.",
+        "fun": "Val ({{val}}) easier than train ({{train}}) 🤔 leak?"
+      },
+      "noisy": {
+        "pro": "train_loss is decreasing but with high noise (CV={{cv}}%). Happens with small batches or very heterogeneous data: each batch gives a different signal. Increasing batch size, enabling AMP, or raising nbs stabilizes training.",
+        "fun": "Jittery loss (CV {{cv}}%). Bigger batch."
+      },
+      "warmupPhase": {
+        "pro": "Warmup phase active: LR is still rising from a low value toward lr0. Metrics in this stretch don't yet reflect real training behavior — wait for LR to stabilize.",
+        "fun": "Warmup 🔥 hold on, still heating"
+      },
+      "lrDecayed": {
+        "pro": "Current LR is tiny compared to the peak: the scheduler has used up its decay range. At this stage the model barely changes. If there's no recent improvement, it won't come without resuming with a new cycle.",
+        "fun": "LR near zero. No juice to improve."
       },
       "neutral": {
-        "pro": "No clear signals yet. Keep training.",
-        "fun": "All calm for now 🧘 carrying on."
+        "pro": "No conclusive patterns in the recent window: no strong overfitting, no divergence, no convergence either. Keep training and observe.",
+        "fun": "All quiet for now 🧘"
       }
     }
   },
@@ -460,5 +508,11 @@
   "cancelConfirmKeep": "Keep training",
   "runningShort": "Training {{progress}}%",
   "resume": "Resume",
-  "resumeAsFineTune": "Continue (fine-tune)"
+  "resumeAsFineTune": "Continue (fine-tune)",
+  "weights": {
+    "bestHint": "best.pt available (best saved model)",
+    "lastHint": "last.pt available (last checkpoint, enables true resume)",
+    "noneHint": "no weights saved",
+    "none": "no weights"
+  }
 }

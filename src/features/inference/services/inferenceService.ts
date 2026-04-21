@@ -51,6 +51,7 @@ export const inferenceService = {
     task: string | null,
     outputFormat?: string | null,
     classNames?: string[] | null,
+    metadataPatch?: Record<string, unknown> | null,
   ): Promise<void> {
     return invoke('update_model_config', {
       projectId,
@@ -60,6 +61,7 @@ export const inferenceService = {
       task,
       outputFormat: outputFormat ?? null,
       classNames: classNames ?? null,
+      metadataPatch: metadataPatch ?? null,
     });
   },
 

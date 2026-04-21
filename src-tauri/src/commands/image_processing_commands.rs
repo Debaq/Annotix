@@ -1,7 +1,7 @@
 use tauri::{AppHandle, Manager};
 use crate::store::AppState;
 
-const THUMBNAIL_MAX_SIZE: u32 = 256;
+pub const THUMBNAIL_MAX_SIZE: u32 = 256;
 
 #[tauri::command]
 pub async fn generate_thumbnail(
@@ -60,7 +60,7 @@ pub async fn generate_thumbnails_batch(
     .map_err(|e| format!("Join error: {}", e))?
 }
 
-fn generate_thumbnail_internal(
+pub fn generate_thumbnail_internal(
     state: &AppState,
     project_id: &str,
     image_id: &str,

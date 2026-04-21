@@ -204,6 +204,8 @@ pub struct GpuDevice {
 pub struct TrainingProgressEvent {
     #[serde(rename = "jobId")]
     pub job_id: String,
+    #[serde(rename = "projectId", skip_serializing_if = "Option::is_none")]
+    pub project_id: Option<String>,
     pub epoch: u32,
     #[serde(rename = "totalEpochs")]
     pub total_epochs: u32,

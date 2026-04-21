@@ -247,6 +247,42 @@ def main():
     from ultralytics import YOLO
 
     last_pt = {quoted}
+
+    # Parchear rutas embebidas en el checkpoint: ultralytics con resume=True
+    # ignora overrides y usa train_args picklados dentro de last.pt, que pueden
+    # tener project/save_dir/data apuntando a una ubicación legacy tras migración.
+    import os as _os
+    run_dir = _os.path.dirname(_os.path.dirname(last_pt))
+    project_dir = _os.path.dirname(run_dir)
+    run_name = _os.path.basename(run_dir)
+    data_yaml = _os.path.join(project_dir, "data.yaml")
+    try:
+        import torch
+        ckpt = torch.load(last_pt, map_location="cpu", weights_only=False)
+        ta = ckpt.get("train_args") if isinstance(ckpt, dict) else None
+        if ta is not None:
+            def _set(obj, key, val):
+                if isinstance(obj, dict):
+                    obj[key] = val
+                else:
+                    try:
+                        setattr(obj, key, val)
+                    except Exception:
+                        pass
+            _set(ta, "project", project_dir)
+            _set(ta, "name", run_name)
+            _set(ta, "save_dir", run_dir)
+            if _os.path.exists(data_yaml):
+                _set(ta, "data", data_yaml)
+            _set(ta, "exist_ok", True)
+            # El path del propio modelo también puede estar embebido
+            _set(ta, "model", last_pt)
+            _set(ta, "resume", last_pt)
+            torch.save(ckpt, last_pt)
+            print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": "checkpoint args patched"}}), flush=True)
+    except Exception as _e:
+        print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": f"checkpoint patch skipped: {{_e}}"}}), flush=True)
+
     model = YOLO(last_pt)
 
     def on_fit_epoch_end(trainer):
@@ -285,8 +321,19 @@ def main():
 
     model.add_callback("on_fit_epoch_end", on_fit_epoch_end)
 
-    # resume=True → ultralytics reads args.yaml from the run dir containing last_pt
-    results = model.train(resume=True)
+    # resume=True → ultralytics reads args.yaml from the run dir containing last_pt.
+    # Forzamos overrides por si args.yaml tiene rutas obsoletas (ej. tras migración).
+    import os as _os
+    run_dir = _os.path.dirname(_os.path.dirname(last_pt))  # .../weights/.. = run dir
+    project_dir = _os.path.dirname(run_dir)                # dataset_dir
+    data_yaml = _os.path.join(project_dir, "data.yaml")
+    overrides = {{"resume": True}}
+    if _os.path.exists(data_yaml):
+        overrides["data"] = data_yaml
+    overrides["project"] = project_dir
+    overrides["name"] = _os.path.basename(run_dir)
+    overrides["exist_ok"] = True
+    results = model.train(**overrides)
 
     import os
     train_dir = os.path.dirname(os.path.dirname(last_pt))  # weights/.. = run dir

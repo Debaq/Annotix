@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AnnotixImage } from '@/lib/db';
@@ -21,34 +21,65 @@ export function ImageCard({ image }: ImageCardProps) {
   const { projectId } = useParams();
   const { currentImageId } = useUIStore();
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
+  const [inView, setInView] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const canDelete = useP2pPermission('delete');
 
+  // IntersectionObserver: solo marca inView=true cuando la card entra (o está cerca) del viewport.
+  // Evita que 500+ cards lancen todos sus invokes al montarse simultáneamente.
   useEffect(() => {
-    if (!image.id || !projectId) return;
+    const el = rootRef.current;
+    if (!el) return;
+    if (inView) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            setInView(true);
+            io.disconnect();
+            return;
+          }
+        }
+      },
+      { rootMargin: '300px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [inView]);
 
-    // Intentar asset protocol, si falla cargar bytes directamente
-    const tryAsset = (path: string) => {
+  useEffect(() => {
+    if (!inView || !image.id || !projectId) return;
+
+    let cancelled = false;
+    const trySetUrl = (path: string) => {
       const url = convertFileSrc(path);
       const testImg = new window.Image();
-      testImg.onload = () => setThumbnailUrl(url);
-      testImg.onerror = () => {
-        // Fallback: cargar bytes del backend (Windows paths con espacios, etc.)
-        invoke<number[]>('get_image_data', { projectId, id: image.id }).then((bytes) => {
-          const blob = new Blob([new Uint8Array(bytes)]);
-          setThumbnailUrl(URL.createObjectURL(blob));
-        }).catch(() => {});
+      testImg.onload = () => {
+        if (!cancelled) setThumbnailUrl(url);
       };
+      // Si el asset protocol falla (caso raro: paths con caracteres especiales),
+      // dejamos la card sin thumbnail en vez de descargar los bytes completos.
+      // Antes hacía fallback con `get_image_data` (bytes completos) → con 500 cards
+      // y errores en cadena eso colgaba la app.
       testImg.src = url;
     };
 
     invoke<string>('get_thumbnail_path', { projectId, imageId: image.id })
-      .then(tryAsset)
+      .then((p) => {
+        if (!cancelled) trySetUrl(p);
+      })
       .catch(() => {
         invoke<string>('get_image_file_path', { projectId, id: image.id })
-          .then(tryAsset)
+          .then((p) => {
+            if (!cancelled) trySetUrl(p);
+          })
           .catch(() => {});
       });
-  }, [image.id, image.blobPath, projectId]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [inView, image.id, image.blobPath, projectId]);
 
   const isPendingDownload = image.downloadStatus === 'pending';
   const imgId = image.id || '';
@@ -83,6 +114,7 @@ export function ImageCard({ image }: ImageCardProps) {
 
   return (
     <div
+      ref={rootRef}
       className={cn(
         "annotix-gallery-item group",
         isSelected && "active",

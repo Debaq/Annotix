@@ -7,6 +7,13 @@ import {
 } from 'lucide-react';
 import { TtsSentence } from '@/lib/db';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface Props {
   projectId: string;
@@ -165,13 +172,16 @@ Output format:
             <div className="grid grid-cols-4 gap-3">
               <div>
                 <label className="text-xs font-medium text-[var(--annotix-dark)] mb-1 block">{t('tts.language')}</label>
-                <select
-                  value={language}
-                  onChange={e => onLanguageChange(e.target.value)}
-                  className="w-full px-2 py-1.5 text-sm rounded border border-[var(--annotix-border)] bg-[var(--annotix-white)]"
-                >
-                  {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
-                </select>
+                <Select value={language} onValueChange={onLanguageChange}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map(l => (
+                      <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="text-xs font-medium text-[var(--annotix-dark)] mb-1 block">{t('tts.sentenceCountLabel')}</label>
@@ -184,19 +194,33 @@ Output format:
               </div>
               <div>
                 <label className="text-xs font-medium text-[var(--annotix-dark)] mb-1 block">{t('tts.domain')}</label>
-                <select value={domain} onChange={e => setDomain(e.target.value)}
-                  className="w-full px-2 py-1.5 text-sm rounded border border-[var(--annotix-border)] bg-[var(--annotix-white)]"
-                >
-                  {DOMAINS.map(d => <option key={d} value={d}>{t(`tts.domain${d.charAt(0).toUpperCase() + d.slice(1)}`)}</option>)}
-                </select>
+                <Select value={domain} onValueChange={setDomain}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DOMAINS.map(d => (
+                      <SelectItem key={d} value={d}>
+                        {t(`tts.domain${d.charAt(0).toUpperCase() + d.slice(1)}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="text-xs font-medium text-[var(--annotix-dark)] mb-1 block">{t('tts.sentenceLength')}</label>
-                <select value={length} onChange={e => setLength(e.target.value)}
-                  className="w-full px-2 py-1.5 text-sm rounded border border-[var(--annotix-border)] bg-[var(--annotix-white)]"
-                >
-                  {LENGTHS.map(l => <option key={l} value={l}>{t(`tts.length${l.charAt(0).toUpperCase() + l.slice(1)}`)}</option>)}
-                </select>
+                <Select value={length} onValueChange={setLength}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LENGTHS.map(l => (
+                      <SelectItem key={l} value={l}>
+                        {t(`tts.length${l.charAt(0).toUpperCase() + l.slice(1)}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

@@ -14,7 +14,9 @@ import { projectService } from '../../projects/services/projectService';
 import { useInferenceModels } from '../hooks/useInferenceModels';
 import { ModelUploader } from './ModelUploader';
 import { ClassMappingEditor } from './ClassMappingEditor';
+import { PreprocessEditor } from './PreprocessEditor';
 import type { ClassDefinition, Project } from '@/lib/db';
+import { DEFAULT_PREPROCESS, type PreprocessConfig } from '../types';
 
 interface InferencePanelProps {
   trigger?: ReactNode;
@@ -41,7 +43,12 @@ export function InferencePanel({ trigger, project }: InferencePanelProps) {
     uploadModel,
     deleteModel,
     updateMapping,
+    updatePreprocess,
   } = useInferenceModels(projectId);
+
+  const currentPreprocess: PreprocessConfig =
+    ((selectedModel?.metadata as { preprocess?: PreprocessConfig } | null)?.preprocess) ??
+    DEFAULT_PREPROCESS;
 
   const projectClasses = (project?.classes || []) as Array<{
     id: number;
@@ -184,6 +191,15 @@ export function InferencePanel({ trigger, project }: InferencePanelProps) {
                 mapping={selectedModel.classMapping}
                 projectClasses={projectClasses}
                 onChange={(mapping) => updateMapping(selectedModel.id, mapping)}
+              />
+
+              <Separator style={{ background: 'var(--annotix-border)' }} />
+
+              {/* Preprocesamiento */}
+              <PreprocessEditor
+                value={currentPreprocess}
+                modelFormat={selectedModel.format}
+                onChange={(pre) => updatePreprocess(selectedModel.id, pre)}
               />
 
               <Separator style={{ background: 'var(--annotix-border)' }} />
