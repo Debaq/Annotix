@@ -52,7 +52,7 @@ const LANGUAGES = [
 const DOMAINS = ['general', 'medical', 'tech', 'news', 'conversational', 'literature'];
 const LENGTHS = ['short', 'medium', 'long'];
 
-export function TtsSentenceSetup({ projectId, sentences, onSentencesChange, loading, onNext, language, onLanguageChange }: Props) {
+export function TtsSentenceSetup({ projectId: _projectId, sentences, onSentencesChange, loading: _loading, onNext, language, onLanguageChange }: Props) {
   const { t } = useTranslation('audio');
   const [activeTab, setActiveTab] = useState<Tab>('file');
   const [count, setCount] = useState(100);

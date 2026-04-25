@@ -20,8 +20,8 @@ interface VideoAnnotationCanvasProps {
  */
 export function VideoAnnotationCanvas({
   interpolatedBBoxes,
-  tracks,
-  classes,
+  tracks: _tracks,
+  classes: _classes,
   video,
 }: VideoAnnotationCanvasProps) {
   const { currentFrameIndex } = useUIStore();

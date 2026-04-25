@@ -4,7 +4,6 @@ import type {
   ExecutionMode,
   TrainingRequest,
   BackendInfo,
-  BackendModelInfo,
   CloudProvider,
   CloudTrainingConfig,
 } from '../types';

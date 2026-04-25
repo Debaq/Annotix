@@ -56,7 +56,7 @@ export class OBBHandler implements BaseHandler {
     }
   }
 
-  onMouseUp(event: MouseEventData): void {
+  onMouseUp(_event: MouseEventData): void {
     if (!this.drawingState.isDrawing || !this.drawingState.data || this.activeClassId === null) {
       this.drawingState.isDrawing = false;
       if (this.onDrawingDataUpdate) {

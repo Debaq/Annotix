@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ALL_MODELS, BACKEND_META, TASK_LABELS,
+  ALL_MODELS, TASK_LABELS,
   getBackendById, getModelById, getModelsByBackend,
 } from '../data/backendsData';
 import { BackendSidebar } from './training-models/BackendSidebar';

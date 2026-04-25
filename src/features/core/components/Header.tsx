@@ -20,7 +20,7 @@ const appWindow = getCurrentWindow();
 
 export const Header: React.FC = () => {
   const { t } = useTranslation();
-  const { setCurrentProjectId, currentImageId } = useUIStore();
+  const { setCurrentProjectId } = useUIStore();
   const { project } = useCurrentProject();
   const navigate = useNavigate();
   const [showShortcuts, setShowShortcuts] = useState(false);

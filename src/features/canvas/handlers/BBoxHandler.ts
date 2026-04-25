@@ -67,7 +67,7 @@ export class BBoxHandler implements BaseHandler {
     }
   }
 
-  onMouseUp(event: MouseEventData): void {
+  onMouseUp(_event: MouseEventData): void {
     if (!this.drawingState.isDrawing || !this.drawingState.data || this.activeClassId === null) {
       console.log('[BBoxHandler] onMouseUp - no hay dibujo o sin clase activa');
       this.drawingState.isDrawing = false;
@@ -108,11 +108,11 @@ export class BBoxHandler implements BaseHandler {
     }
   }
 
-  onAnnotationDragEnd(annotationId: string, data: { x: number; y: number; width: number; height: number }): void {
+  onAnnotationDragEnd(_annotationId: string, _data: { x: number; y: number; width: number; height: number }): void {
     // Handled by canvas
   }
 
-  onAnnotationTransform(annotationId: string, data: { x: number; y: number; width: number; height: number }): void {
+  onAnnotationTransform(_annotationId: string, _data: { x: number; y: number; width: number; height: number }): void {
     // Handled by canvas
   }
 

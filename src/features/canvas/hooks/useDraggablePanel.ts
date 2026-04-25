@@ -44,7 +44,7 @@ export function useDraggablePanel(
           return;
         }
       }
-    } catch {}
+    } catch { /* ignore */ }
     setPosition(null);
   }, [storageKey]);
 
@@ -67,8 +67,6 @@ export function useDraggablePanel(
     if (e.button !== 0) return;
     const el = containerRef.current;
     if (!el) return;
-    const parent = el.offsetParent as HTMLElement | null;
-    const parentRect = parent?.getBoundingClientRect() ?? { left: 0, top: 0 };
     const rect = el.getBoundingClientRect();
     dragStateRef.current = {
       offsetX: e.clientX - rect.left,
@@ -119,7 +117,7 @@ export function useDraggablePanel(
       if (storageKey && wasDrag) {
         setPosition((p) => {
           if (p) {
-            try { localStorage.setItem(storageKey, JSON.stringify(p)); } catch {}
+            try { localStorage.setItem(storageKey, JSON.stringify(p)); } catch { /* ignore */ }
           }
           return p;
         });

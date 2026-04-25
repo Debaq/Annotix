@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LineChart, Trash2 } from 'lucide-react';
 import { useTimeSeries } from '../hooks/useTimeSeries';
-import { useUIStore } from '../../core/store/uiStore';
 import { CSVImporter } from './CSVImporter';
 
 export function TimeSeriesGallery() {

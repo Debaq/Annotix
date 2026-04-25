@@ -67,11 +67,6 @@ export function AudioClassificationAnnotator({
     }
   }, [audio.id, projectId, selectedClassId, onSaved]);
 
-  const handleSaveAndNext = useCallback(async () => {
-    await handleSave();
-    onNext();
-  }, [handleSave, onNext]);
-
   const handleClassSelect = useCallback(async (classId: number) => {
     const newId = selectedClassId === classId ? null : classId;
     setSelectedClassId(newId);

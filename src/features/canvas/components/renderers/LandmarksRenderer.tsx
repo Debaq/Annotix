@@ -16,7 +16,7 @@ export function LandmarksRenderer({
   scale,
   imageOffset,
   color,
-  isSelected = false,
+  isSelected: _isSelected = false,
   listening = true,
   onClick,
 }: LandmarksRendererProps) {

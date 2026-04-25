@@ -35,7 +35,6 @@ export function Waveform({
   onEditSplitPointChange,
 }: WaveformProps) {
   const isEditRangeMode = !!onEditSelectionChange;
-  const isEditPointMode = !!onEditSplitPointChange;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const peaksRef = useRef<number[]>([]);

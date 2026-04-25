@@ -34,7 +34,7 @@ export function TabularView() {
   const { toast } = useToast();
   const [selectedEntry, setSelectedEntry] = useState<TabularDataEntry | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [savingConfig, setSavingConfig] = useState(false);
+  const [, setSavingConfig] = useState(false);
   const [activeTab, setActiveTab] = useState<'view' | 'edit'>('view');
 
   // New Table Dialog state

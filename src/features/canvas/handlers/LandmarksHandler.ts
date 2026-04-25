@@ -32,11 +32,11 @@ export class LandmarksHandler implements BaseHandler {
     });
   }
 
-  onMouseMove(event: MouseEventData): void {
+  onMouseMove(_event: MouseEventData): void {
     // No dragging for landmarks during creation
   }
 
-  onMouseUp(event: MouseEventData): void {
+  onMouseUp(_event: MouseEventData): void {
     // Landmarks are added on mouse down
   }
 

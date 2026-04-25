@@ -21,7 +21,7 @@ export function OBBRenderer({
   scale,
   imageOffset,
   color,
-  isSelected = false,
+  isSelected: _isSelected = false,
   draggable = false,
   listening = true,
   onClick,

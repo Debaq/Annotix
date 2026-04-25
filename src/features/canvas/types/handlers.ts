@@ -1,5 +1,3 @@
-import type { Annotation } from '@/lib/db';
-
 export interface Point {
   x: number;
   y: number;

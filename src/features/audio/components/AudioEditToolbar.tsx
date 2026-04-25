@@ -25,6 +25,7 @@ export type EditTool =
   | 'eq'
   | null;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const RANGE_TOOLS: EditTool[] = ['trim', 'cut', 'delete', 'silence'];
 
 interface AudioEditToolbarProps {

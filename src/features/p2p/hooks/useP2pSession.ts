@@ -35,7 +35,7 @@ export function useP2pSession() {
         try {
           const dist = await p2pService.getDistribution(session.projectId);
           if (dist) setDistribution(session.projectId, dist);
-        } catch {}
+        } catch { /* ignore */ }
       }
     }).catch(() => {});
 
@@ -45,7 +45,7 @@ export function useP2pSession() {
       try {
         const dist = await p2pService.getDistribution(session.projectId);
         if (dist) setDistribution(session.projectId, dist);
-      } catch {}
+      } catch { /* ignore */ }
     }).then((fn) => unlisteners.push(fn));
 
     listen<DownloadProgress>('p2p:download-progress', (event) => {

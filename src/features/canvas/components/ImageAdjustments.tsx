@@ -14,6 +14,7 @@ export interface ImageAdjustmentValues {
   sharpness: number;    // 0 to 100
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const DEFAULT_ADJUSTMENTS: ImageAdjustmentValues = {
   brightness: 0,
   contrast: 0,

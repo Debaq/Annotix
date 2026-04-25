@@ -1,9 +1,8 @@
-import { useTranslation } from 'react-i18next';
 import { TrainingParamGroup, type ParamDefinition } from './TrainingParamGroup';
 import { TrainingAdvancedConfig } from './TrainingAdvancedConfig';
 import { TrainingAugmentation } from './TrainingAugmentation';
 import { DatasetSplitVisualizer } from './DatasetSplitVisualizer';
-import type { TrainingBackend, TrainingConfig, TrainingRequest } from '../types';
+import type { TrainingBackend, TrainingConfig } from '../types';
 import { OPTIMIZERS } from '../utils/presets';
 
 interface BackendConfigPanelProps {
@@ -130,7 +129,6 @@ export function BackendConfigPanel({
   onYoloConfigChange,
   onYoloAugChange,
 }: BackendConfigPanelProps) {
-  const { t } = useTranslation();
 
   const splitVisualizer = (
     <DatasetSplitVisualizer

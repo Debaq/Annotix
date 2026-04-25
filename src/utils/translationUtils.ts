@@ -8,7 +8,7 @@ export function withTranslationLogging<OriginalProps extends WithTranslation>(
 ): React.ComponentType<Omit<OriginalProps, keyof WithTranslation>> {
   const WrappedComponent: React.ComponentType<Omit<OriginalProps, keyof WithTranslation>> = (props) => {
     // Create a wrapper for the t function
-    const wrappedT = (key: string, options?: any) => {
+    const _wrappedT = (key: string, options?: any) => {
       const currentLang = i18n.language;
       
       // Check if the key exists in the current language

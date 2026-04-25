@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { useTranslation } from 'react-i18next';
 
 interface AppConfig {
   serve: {
@@ -13,7 +12,6 @@ interface AppConfig {
 }
 
 export function NetworkSection() {
-  const { t } = useTranslation();
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [saving, setSaving] = useState(false);
 

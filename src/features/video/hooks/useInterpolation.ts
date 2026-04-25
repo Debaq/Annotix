@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { VideoTrack, InterpolatedBBox } from '@/lib/db';
+import { VideoTrack } from '@/lib/db';
 import { interpolateBBoxesForFrame } from '../utils/interpolation';
 
 export function useInterpolation(tracks: VideoTrack[], frameIndex: number) {

@@ -116,7 +116,7 @@ export class KeypointsHandler implements BaseHandler {
     this.notifyPreviewUpdate();
   }
 
-  onMouseUp(event: MouseEventData): void {
+  onMouseUp(_event: MouseEventData): void {
     this.isDragging = false;
   }
 

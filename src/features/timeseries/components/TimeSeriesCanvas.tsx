@@ -1,6 +1,6 @@
 // src/features/timeseries/components/TimeSeriesCanvas.tsx
 
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Chart as ChartJS,
@@ -12,7 +12,6 @@ import {
   Tooltip,
   Legend,
   ChartOptions,
-  InteractionItem,
 } from 'chart.js';
 import { getRelativePosition } from 'chart.js/helpers';
 import annotationPlugin from 'chartjs-plugin-annotation';
@@ -54,7 +53,6 @@ export function TimeSeriesCanvas() {
   const { project } = useCurrentProject();
   const { activeClassId } = useUIStore();
   const chartRef = useRef<ChartJS<'line'>>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const {
     annotations,

@@ -6,7 +6,6 @@ import { Project } from '@/lib/db';
 import { useProjects } from '../hooks/useProjects';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ProjectSettingsDialog } from './ProjectSettingsDialog';
@@ -77,12 +76,6 @@ export function ProjectCard({ project, folders = [] }: ProjectCardProps) {
 
   const handleOpen = () => {
     navigate(`/projects/${project.id}`);
-  };
-
-  const handleDelete = async () => {
-    if (await confirm(t('projects.confirmDelete', { name: project.name }), { kind: 'warning' })) {
-      await deleteProject(project.id!);
-    }
   };
 
   const typeIconMap: Record<string, string> = {
@@ -319,7 +312,7 @@ export function ProjectCard({ project, folders = [] }: ProjectCardProps) {
                     : t('projects.confirmDelete', { name: project.name });
                   if (await confirm(msg, { kind: 'warning' })) {
                     if (isCollaborator) {
-                      try { await p2pService.leaveSession(project.id!); } catch {}
+                      try { await p2pService.leaveSession(project.id!); } catch { /* ignore */ }
                       useP2pStore.getState().reset(project.id!);
                     }
                     await deleteProject(project.id!);

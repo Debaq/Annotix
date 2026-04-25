@@ -22,7 +22,7 @@ export const AnnotationThumbnailCard: React.FC<AnnotationThumbnailCardProps> = (
   image,
   classColor,
   className,
-  classShortcut,
+  classShortcut: _classShortcut,
   isSelected,
   hideTypeBadge = false,
   onSelect,

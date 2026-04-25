@@ -45,7 +45,7 @@ export function PythonEnvironmentSection() {
 
   useEffect(() => {
     // Check if we are on a desktop platform
-    // @ts-ignore
+    // @ts-expect-error Tauri internals not typed
     const platform = window.__TAURI_INTERNALS__?.metadata?.platform || 'desktop';
     if (platform === 'android' || platform === 'ios') {
       setIsDesktop(false);

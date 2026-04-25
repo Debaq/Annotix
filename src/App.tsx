@@ -21,7 +21,6 @@ import { useUIStore } from './features/core/store/uiStore';
 import { useKeyboardShortcuts } from './features/core/hooks/useKeyboardShortcuts';
 import { useCurrentProject } from './features/projects/hooks/useCurrentProject';
 import { useAnnotations } from './features/canvas/hooks/useAnnotations';
-import { ExportDialog } from './features/export/components/ExportDialog';
 import { Button } from './components/ui/button';
 import { ProjectType } from './lib/db';
 import { Toaster } from '@/components/ui/toaster';

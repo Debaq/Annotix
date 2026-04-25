@@ -36,7 +36,7 @@ import type { ToolId } from '../config/toolsConfig';
 import { reclassifyIsland } from '../utils/maskReclassify';
 import { useInferenceModels } from '../../inference/hooks/useInferenceModels';
 import { useInferenceRunner } from '../../inference/hooks/useInferenceRunner';
-import type { InferenceConfig, InferenceResultEvent, InferenceCompletedEvent, InferenceErrorEvent } from '../../inference/types';
+import type { InferenceConfig, InferenceResultEvent, InferenceErrorEvent } from '../../inference/types';
 import { useToast } from '@/components/hooks/use-toast';
 import { useSamStore } from '../../sam/store/useSamStore';
 import { SamOverlay, samHitTest } from '../../sam/components/SamOverlay';
@@ -82,7 +82,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   const { image } = useCurrentImage();
   const { project } = useCurrentProject();
   const defaults = useAnnotations();
-  const { annotations, selectedAnnotationId, selectedAnnotationIds, selectAnnotation, updateAnnotation, addAnnotation, deleteAnnotation } = overrideAnnotations ?? defaults;
+  const { annotations, selectedAnnotationIds, selectAnnotation, updateAnnotation, addAnnotation } = overrideAnnotations ?? defaults;
   const { hiddenAnnotationIds } = defaults;
   const { replaceAnnotations } = defaults;
   const { activeTool, activeClassId, setActiveTool, annotationsVisible, galleryMode, showLabels } = useUIStore();
@@ -641,7 +641,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   }, [stagePos, stageScale, imageOffset, scale]);
 
   // Middle-click: reclasificar isla de píxeles a la clase activa
-  const handleMiddleClickReclassify = useCallback(async (e: any) => {
+  const handleMiddleClickReclassify = useCallback(async (_e: any) => {
     if (!konvaImage || !stageRef.current || activeClassId === null) return;
     const coords = getImageCoordinates(stageRef.current);
     if (!coords) return;

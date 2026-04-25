@@ -30,8 +30,8 @@ export function VideoView() {
   } = useUIStore();
   const { project } = useCurrentProject();
   const { video } = useCurrentVideo();
-  const { currentFrameIndex, totalFrames, currentFrame } = useVideoNavigation();
-  const { tracks, createTrack, deleteTrack, updateTrack, setKeyframe, removeKeyframe, bake } = useVideoTracks();
+  const { currentFrameIndex, totalFrames } = useVideoNavigation();
+  const { tracks, createTrack, deleteTrack, updateTrack, removeKeyframe, bake } = useVideoTracks();
   const { byClass: globalByClass } = useClassCounts();
 
   const localByClass = useMemo(() => {

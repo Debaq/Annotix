@@ -27,11 +27,11 @@ export class PolygonHandler implements BaseHandler {
     });
   }
 
-  onMouseMove(event: MouseEventData): void {
+  onMouseMove(_event: MouseEventData): void {
     // No live preview during drawing
   }
 
-  onMouseUp(event: MouseEventData): void {
+  onMouseUp(_event: MouseEventData): void {
     // Points are added on mouse down
   }
 

@@ -31,7 +31,7 @@ function hslColor(seed: number, alpha: number): [number, number, number, number]
   const c = (1 - Math.abs(2 * l - 1)) * s;
   const hp = h / 60;
   const x = c * (1 - Math.abs((hp % 2) - 1));
-  let r = 0, g = 0, b = 0;
+  let r: number, g: number, b: number;
   if (hp < 1) [r, g, b] = [c, x, 0];
   else if (hp < 2) [r, g, b] = [x, c, 0];
   else if (hp < 3) [r, g, b] = [0, c, x];
@@ -223,6 +223,7 @@ export function SamOverlay({
  * Hit-test sobre el id_map global. Recibe coords en píxeles de la
  * imagen original. Devuelve mask_id o null.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function samHitTest(
   imageX: number,
   imageY: number,
