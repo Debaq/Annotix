@@ -23,13 +23,25 @@ pub async fn upload_images(
     let app_for_state = app.clone();
     let ids = tauri::async_runtime::spawn_blocking(move || -> Result<Vec<String>, String> {
         let state = app_for_state.state::<AppState>();
+        // Throttle ~10 eventos/seg para uploads masivos. Siempre emite primer
+        // y último ítem para que el usuario vea inicio y fin.
+        let last_emit = std::sync::Mutex::new(
+            std::time::Instant::now()
+                .checked_sub(std::time::Duration::from_secs(1))
+                .unwrap_or_else(std::time::Instant::now),
+        );
         state.upload_images_with_progress(&project_id_clone, &file_paths_clone, move |current, total, name| {
-            let _ = app_cb.emit("upload:progress", serde_json::json!({
-                "projectId": pid,
-                "current": current,
-                "total": total,
-                "fileName": name,
-            }));
+            let mut le = last_emit.lock().unwrap();
+            let is_edge = current == 1 || current == total;
+            if is_edge || le.elapsed() >= std::time::Duration::from_millis(100) {
+                let _ = app_cb.emit("upload:progress", serde_json::json!({
+                    "projectId": pid,
+                    "current": current,
+                    "total": total,
+                    "fileName": name,
+                }));
+                *le = std::time::Instant::now();
+            }
         })
     })
     .await
