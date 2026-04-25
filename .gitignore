@@ -40,3 +40,7 @@ src-tauri/ffmpeg-dlls/
 
 # Build output
 out/
+
+# Modelos sueltos en raíz (artefactos de prueba, no parte del repo)
+/yolo*.pt
+/src-tauri/yolo*.pt
