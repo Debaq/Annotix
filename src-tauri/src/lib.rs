@@ -107,11 +107,11 @@ pub fn run() {
                 )?;
             }
 
-            if let Some(window) = app.get_webview_window("main") {
+            if let Some(_window) = app.get_webview_window("main") {
                 // Permitir acceso al micrófono en WebKitGTK (Linux)
                 #[cfg(target_os = "linux")]
                 {
-                    window.with_webview(|wv| {
+                    _window.with_webview(|wv| {
                         use webkit2gtk::{WebViewExt, PermissionRequestExt};
                         let wv = wv.inner();
                         wv.connect_permission_request(|_wv, req: &webkit2gtk::PermissionRequest| {

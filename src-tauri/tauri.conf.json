@@ -77,6 +77,9 @@
           "Russian",
           "SimpChinese"
         ],
+        "customLanguageFiles": {
+          "Korean": "nsis/Korean.nsh"
+        },
         "compression": "lzma"
       }
     }

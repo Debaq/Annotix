@@ -177,20 +177,17 @@ fn find_system_micromamba() -> Option<String> {
     }
 
     // 2. Apps GUI no heredan el PATH completo — buscar en rutas comunes
-    let home = if cfg!(target_os = "windows") {
-        std::env::var_os("USERPROFILE").map(PathBuf::from)
-    } else {
-        std::env::var_os("HOME").map(PathBuf::from)
-    }?;
-
     #[cfg(not(windows))]
-    let well_known: Vec<PathBuf> = vec![
-        home.join(".local/bin/micromamba"),
-        home.join("micromamba/bin/micromamba"),
-        home.join("bin/micromamba"),
-        PathBuf::from("/opt/homebrew/bin/micromamba"),
-        PathBuf::from("/usr/local/bin/micromamba"),
-    ];
+    let well_known: Vec<PathBuf> = {
+        let home = std::env::var_os("HOME").map(PathBuf::from)?;
+        vec![
+            home.join(".local/bin/micromamba"),
+            home.join("micromamba/bin/micromamba"),
+            home.join("bin/micromamba"),
+            PathBuf::from("/opt/homebrew/bin/micromamba"),
+            PathBuf::from("/usr/local/bin/micromamba"),
+        ]
+    };
 
     #[cfg(windows)]
     let well_known: Vec<PathBuf> = {
