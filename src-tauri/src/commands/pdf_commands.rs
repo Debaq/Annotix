@@ -1,32 +1,78 @@
-use std::path::PathBuf;
-use std::process::Command;
+use std::io::Cursor;
+use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
+
+use image::{DynamicImage, ImageFormat};
+use pdfium_render::prelude::*;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::store::AppState;
 
-/// Obtiene el número de páginas de un PDF usando pdfinfo.
-fn pdf_page_count(pdf_path: &str) -> Result<u32, String> {
-    let output = Command::new("pdfinfo")
-        .arg(pdf_path)
-        .output()
-        .map_err(|e| format!("Error ejecutando pdfinfo: {}. ¿Está instalado poppler-utils?", e))?;
+static PDFIUM_LIB_PATH: OnceLock<Option<PathBuf>> = OnceLock::new();
 
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("pdfinfo falló: {}", stderr));
-    }
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    for line in stdout.lines() {
-        if line.starts_with("Pages:") {
-            let count_str = line["Pages:".len()..].trim();
-            return count_str
-                .parse::<u32>()
-                .map_err(|_| format!("No se pudo parsear número de páginas: '{}'", count_str));
+/// Resuelve ruta a la librería pdfium bundleada.
+/// Orden:
+///   1. env var PDFIUM_DYNAMIC_LIB_PATH (override)
+///   2. resource_dir/pdfium/<lib>
+///   3. exe_dir/pdfium/<lib>
+///   4. None → bind_to_system_library
+fn resolve_pdfium_path(app: &AppHandle) -> Option<PathBuf> {
+    if let Ok(p) = std::env::var("PDFIUM_DYNAMIC_LIB_PATH") {
+        let pb = PathBuf::from(p);
+        if pb.exists() {
+            return Some(pb);
         }
     }
 
-    Err("No se encontró información de páginas en el PDF".into())
+    let lib_name = Pdfium::pdfium_platform_library_name();
+
+    if let Ok(res_dir) = app.path().resource_dir() {
+        for sub in ["pdfium", ""] {
+            let candidate = if sub.is_empty() {
+                res_dir.join(&lib_name)
+            } else {
+                res_dir.join(sub).join(&lib_name)
+            };
+            if candidate.exists() {
+                return Some(candidate);
+            }
+        }
+    }
+
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(parent) = exe.parent() {
+            for sub in ["pdfium", ""] {
+                let candidate = if sub.is_empty() {
+                    parent.join(&lib_name)
+                } else {
+                    parent.join(sub).join(&lib_name)
+                };
+                if candidate.exists() {
+                    return Some(candidate);
+                }
+            }
+        }
+    }
+
+    None
+}
+
+fn build_pdfium(app: &AppHandle) -> Result<Pdfium, String> {
+    let path_opt = PDFIUM_LIB_PATH
+        .get_or_init(|| resolve_pdfium_path(app))
+        .clone();
+
+    let bindings = match path_opt.as_ref() {
+        Some(lib_path) => Pdfium::bind_to_library(lib_path)
+            .map_err(|e| format!("No se pudo cargar pdfium desde '{}': {}", lib_path.display(), e))?,
+        None => Pdfium::bind_to_system_library()
+            .map_err(|e| format!(
+                "pdfium no encontrado. Instalá libpdfium en el sistema o coloca la lib en resources/pdfium/. Error: {}",
+                e
+            ))?,
+    };
+
+    Ok(Pdfium::new(bindings))
 }
 
 /// Extrae páginas de un PDF como imágenes JPEG y las agrega al proyecto.
@@ -37,48 +83,29 @@ pub async fn extract_pdf_pages(
     pdf_path: String,
     dpi: Option<u32>,
 ) -> Result<Vec<String>, String> {
-    let dpi = dpi.unwrap_or(200);
+    let dpi = dpi.unwrap_or(200).max(50).min(600);
 
-    // Validar que el archivo existe
-    if !PathBuf::from(&pdf_path).exists() {
+    if !Path::new(&pdf_path).exists() {
         return Err(format!("Archivo no encontrado: {}", pdf_path));
     }
-
-    // Obtener número de páginas
-    let total_pages = pdf_page_count(&pdf_path)?;
-    if total_pages == 0 {
-        return Err("El PDF no tiene páginas".into());
-    }
-
-    // Emitir inicio
-    let _ = app.emit(
-        "pdf:extraction-progress",
-        serde_json::json!({
-            "pdfPath": &pdf_path,
-            "progress": 0,
-            "current": 0,
-            "total": total_pages,
-        }),
-    );
 
     let app_bg = app.clone();
     let pid = project_id.clone();
 
     let ids = tauri::async_runtime::spawn_blocking(move || {
-        extract_pages_blocking(&app_bg, &pid, &pdf_path, total_pages, dpi)
+        extract_pages_blocking(&app_bg, &pid, &pdf_path, dpi)
     })
     .await
     .map_err(|e| format!("Error en tarea de extracción: {}", e))??;
 
-    // Emitir finalización
     let _ = app.emit("db:images-changed", &project_id);
     let _ = app.emit(
         "pdf:extraction-progress",
         serde_json::json!({
             "pdfPath": "",
             "progress": 100,
-            "current": total_pages,
-            "total": total_pages,
+            "current": ids.len(),
+            "total": ids.len(),
         }),
     );
 
@@ -89,97 +116,72 @@ fn extract_pages_blocking(
     app: &AppHandle,
     project_id: &str,
     pdf_path: &str,
-    total_pages: u32,
     dpi: u32,
 ) -> Result<Vec<String>, String> {
     let state = app.state::<AppState>();
+    let pdfium = build_pdfium(app)?;
 
-    // Nombre base del PDF
     let pdf_name = PathBuf::from(pdf_path)
         .file_stem()
         .map(|s| s.to_string_lossy().to_string())
         .unwrap_or_else(|| "document".to_string());
 
-    // Crear directorio temporal
-    let tmp_dir = tempfile::tempdir()
-        .map_err(|e| format!("Error creando directorio temporal: {}", e))?;
+    let document = pdfium
+        .load_pdf_from_file(pdf_path, None)
+        .map_err(|e| format!("Error abriendo PDF: {}", e))?;
 
-    let output_prefix = tmp_dir.path().join("page");
-    let prefix_str = output_prefix.to_string_lossy().to_string();
-
-    // Ejecutar pdftoppm
-    let output = Command::new("pdftoppm")
-        .args(["-jpeg", "-r", &dpi.to_string(), pdf_path, &prefix_str])
-        .output()
-        .map_err(|e| {
-            format!(
-                "Error ejecutando pdftoppm: {}. ¿Está instalado poppler-utils?",
-                e
-            )
-        })?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("pdftoppm falló: {}", stderr));
+    let pages = document.pages();
+    let total_pages = pages.len() as u32;
+    if total_pages == 0 {
+        return Err("El PDF no tiene páginas".into());
     }
 
-    // Recopilar archivos generados (page-01.jpg, page-02.jpg, etc.)
-    let mut page_files: Vec<(u32, PathBuf)> = Vec::new();
-    for entry in std::fs::read_dir(tmp_dir.path())
-        .map_err(|e| format!("Error leyendo directorio temporal: {}", e))?
-    {
-        let entry = entry.map_err(|e| format!("Error leyendo entrada: {}", e))?;
-        let path = entry.path();
-        if let Some(ext) = path.extension() {
-            if ext == "jpg" {
-                if let Some(stem) = path.file_stem() {
-                    let stem_str = stem.to_string_lossy();
-                    if let Some(num_str) = stem_str.rsplit('-').next() {
-                        if let Ok(page_num) = num_str.parse::<u32>() {
-                            page_files.push((page_num, path));
-                        }
-                    }
-                }
-            }
-        }
-    }
+    let _ = app.emit(
+        "pdf:extraction-progress",
+        serde_json::json!({
+            "pdfPath": pdf_path,
+            "progress": 0,
+            "current": 0,
+            "total": total_pages,
+        }),
+    );
 
-    page_files.sort_by_key(|(n, _)| *n);
+    let scale = dpi as f32 / 72.0;
+    let render_cfg = PdfRenderConfig::new().scale_page_by_factor(scale);
 
-    if page_files.is_empty() {
-        return Err("pdftoppm no generó imágenes. Verifica que el PDF es válido.".into());
-    }
-
-    // Importar cada página
-    let mut all_ids = Vec::new();
+    let mut all_ids = Vec::with_capacity(total_pages as usize);
     let mut pending_entries = Vec::new();
-    let batch_size = 20;
+    let batch_size: usize = 20;
 
-    for (i, (page_num, page_path)) in page_files.iter().enumerate() {
-        let page_data = std::fs::read(page_path)
-            .map_err(|e| format!("Error leyendo página {}: {}", page_num, e))?;
+    for (i, page) in pages.iter().enumerate() {
+        let bitmap = page
+            .render_with_config(&render_cfg)
+            .map_err(|e| format!("Error renderizando página {}: {}", i + 1, e))?;
 
-        let file_name = format!("{}_page_{:03}.jpg", pdf_name, page_num);
+        let dyn_img: DynamicImage = bitmap.as_image();
+        let rgb = dyn_img.to_rgb8();
+        let (w, h) = rgb.dimensions();
 
-        let img = image::open(page_path)
-            .map_err(|e| format!("Error decodificando página {}: {}", page_num, e))?;
-        let (w, h) = (img.width(), img.height());
+        let mut buf = Vec::with_capacity((w * h * 3 / 2) as usize);
+        DynamicImage::ImageRgb8(rgb)
+            .write_to(&mut Cursor::new(&mut buf), ImageFormat::Jpeg)
+            .map_err(|e| format!("Error encodeando JPEG página {}: {}", i + 1, e))?;
+
+        let file_name = format!("{}_page_{:03}.jpg", pdf_name, i + 1);
 
         let (id, entry) =
-            state.prepare_image_entry(project_id, &file_name, &page_data, w, h, None, None)?;
+            state.prepare_image_entry(project_id, &file_name, &buf, w, h, None, None)?;
 
         all_ids.push(id);
         pending_entries.push(entry);
 
-        // Flush periódico
         if pending_entries.len() >= batch_size {
             let batch = std::mem::take(&mut pending_entries);
             state.commit_image_entries(project_id, batch)?;
             let _ = app.emit("db:images-changed", project_id);
         }
 
-        // Progreso
-        let progress = ((i as f64 + 1.0) / total_pages as f64 * 100.0).min(99.0) as i32;
+        let progress = (((i as f64 + 1.0) / total_pages as f64) * 100.0).min(99.0) as i32;
         let _ = app.emit(
             "pdf:extraction-progress",
             serde_json::json!({
@@ -191,7 +193,6 @@ fn extract_pages_blocking(
         );
     }
 
-    // Flush restantes
     if !pending_entries.is_empty() {
         state.commit_image_entries(project_id, pending_entries)?;
     }

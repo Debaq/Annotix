@@ -14,10 +14,19 @@ export async function pickImages(): Promise<string[] | null> {
     filters: [
       {
         name: 'Imágenes y PDF',
-        extensions: [
-          'jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'pdf',
-          'JPG', 'JPEG', 'PNG', 'WEBP', 'BMP', 'GIF', 'PDF',
-        ],
+        extensions: ['jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'pdf'],
+      },
+      {
+        name: 'PDF',
+        extensions: ['pdf'],
+      },
+      {
+        name: 'Imágenes',
+        extensions: ['jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif'],
+      },
+      {
+        name: 'Todos los archivos',
+        extensions: ['*'],
       },
     ],
   });

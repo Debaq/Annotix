@@ -58,6 +58,15 @@ jobs:
           CARGO_HTTP_TIMEOUT: 300
           CARGO_NET_RETRY: 5
 
+      - name: Download pdfium (PDF rasterization)
+        run: |
+          PDFIUM_VER="chromium/7202"
+          curl -fL "https://github.com/bblanchon/pdfium-binaries/releases/download/${PDFIUM_VER}/pdfium-linux-x64.tgz" -o pdfium.tgz
+          mkdir -p pdfium-tmp
+          tar -xzf pdfium.tgz -C pdfium-tmp
+          cp pdfium-tmp/lib/libpdfium.so src-tauri/target/release/libpdfium.so
+          rm -rf pdfium-tmp pdfium.tgz
+
       - name: Rename artifacts with version and platform
         run: |
           mv src-tauri/target/release/annotix \
@@ -69,6 +78,7 @@ jobs:
           name: annotix-linux
           path: |
             src-tauri/target/release/annotix-v*.bin
+            src-tauri/target/release/libpdfium.so
           retention-days: 30
 
   build-windows:
@@ -110,6 +120,17 @@ jobs:
           $dir = (Get-ChildItem ffmpeg-tmp -Directory)[0].FullName
           Move-Item $dir D:\ffmpeg
           echo "FFMPEG_DIR=D:\ffmpeg" >> $env:GITHUB_ENV
+
+      - name: Download pdfium (PDF rasterization)
+        shell: pwsh
+        run: |
+          $version = "chromium/7202"
+          $url = "https://github.com/bblanchon/pdfium-binaries/releases/download/$version/pdfium-win-x64.tgz"
+          Invoke-WebRequest -Uri $url -OutFile pdfium.tgz
+          New-Item -ItemType Directory -Force -Path pdfium-tmp | Out-Null
+          tar -xzf pdfium.tgz -C pdfium-tmp
+          Copy-Item pdfium-tmp\bin\pdfium.dll src-tauri\pdfium.dll
+          Remove-Item -Recurse -Force pdfium-tmp, pdfium.tgz
 
       - name: Bundle FFmpeg DLLs con el instalador
         shell: pwsh
@@ -192,5 +213,6 @@ jobs:
           generate_release_notes: true
           files: |
             dist/linux/annotix-v*.bin
+            dist/linux/libpdfium.so
             dist/windows/nsis/*.exe
             dist/windows/msi/*.msi

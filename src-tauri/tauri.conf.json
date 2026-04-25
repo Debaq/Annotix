@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Annotix",
-  "version": "2.9.1",
+  "version": "2.9.2",
   "identifier": "com.tecmedhub.annotix",
   "build": {
     "frontendDist": "../dist",
@@ -48,6 +48,9 @@
   "bundle": {
     "active": true,
     "targets": ["nsis", "msi"],
+    "resources": {
+      "resources/pdfium/*": "pdfium/"
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
