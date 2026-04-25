@@ -8,9 +8,10 @@ interface ModelUploaderProps {
   configResult?: ModelConfigResult | null;
   onUpload: () => void;
   onDelete: (modelId: string) => void;
+  isDragging?: boolean;
 }
 
-export function ModelUploader({ model, loading, configResult, onUpload, onDelete }: ModelUploaderProps) {
+export function ModelUploader({ model, loading, configResult, onUpload, onDelete, isDragging }: ModelUploaderProps) {
   const { t } = useTranslation();
 
   // Extraer info del modelo desde metadata si existe
@@ -103,7 +104,11 @@ export function ModelUploader({ model, loading, configResult, onUpload, onDelete
     <button
       onClick={onUpload}
       disabled={loading}
-      className="w-full p-6 rounded-lg border-2 border-dashed border-gray-600 hover:border-purple-500/50 transition-colors flex flex-col items-center gap-2 text-gray-400 hover:text-purple-400"
+      className={`w-full p-6 rounded-lg border-2 border-dashed transition-colors flex flex-col items-center gap-2 ${
+        isDragging
+          ? 'border-purple-500 bg-purple-500/10 text-purple-300'
+          : 'border-gray-600 hover:border-purple-500/50 text-gray-400 hover:text-purple-400'
+      }`}
     >
       {loading ? (
         <>

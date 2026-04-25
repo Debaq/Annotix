@@ -137,6 +137,73 @@ pub fn detect_model_metadata(
     Err("No se pudieron detectar metadatos del modelo".to_string())
 }
 
+#[derive(Serialize)]
+pub struct ExtractedModel {
+    pub path: String,
+    pub original_name: String,
+    pub format: String,
+}
+
+/// Extrae el primer .onnx (preferido) o .pt encontrado dentro de un zip a un
+/// directorio temporal y devuelve la ruta del archivo extraído.
+#[tauri::command]
+pub fn extract_model_archive(archive_path: String) -> Result<ExtractedModel, String> {
+    let file = std::fs::File::open(&archive_path)
+        .map_err(|e| format!("Error abriendo archivo: {}", e))?;
+    let mut archive = zip::ZipArchive::new(file)
+        .map_err(|e| format!("Error leyendo zip: {}", e))?;
+
+    let mut onnx_idx: Option<(usize, String)> = None;
+    let mut pt_idx: Option<(usize, String)> = None;
+    for i in 0..archive.len() {
+        let entry = archive
+            .by_index(i)
+            .map_err(|e| format!("Error leyendo entrada zip: {}", e))?;
+        if entry.is_dir() {
+            continue;
+        }
+        let name = entry.name().to_string();
+        let lower = name.to_lowercase();
+        if lower.ends_with(".onnx") && onnx_idx.is_none() {
+            onnx_idx = Some((i, name));
+        } else if lower.ends_with(".pt") && pt_idx.is_none() {
+            pt_idx = Some((i, name));
+        }
+    }
+
+    let (idx, inner_name) = onnx_idx
+        .or(pt_idx)
+        .ok_or_else(|| "No se encontró ningún archivo .onnx o .pt dentro del zip".to_string())?;
+
+    let mut entry = archive
+        .by_index(idx)
+        .map_err(|e| format!("Error leyendo entrada zip: {}", e))?;
+
+    let basename = std::path::Path::new(&inner_name)
+        .file_name()
+        .ok_or("Nombre interno inválido")?
+        .to_string_lossy()
+        .to_string();
+    let format = if basename.to_lowercase().ends_with(".onnx") {
+        "onnx".to_string()
+    } else {
+        "pt".to_string()
+    };
+
+    let tmp_dir = std::env::temp_dir().join(format!("annotix_model_{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&tmp_dir).map_err(|e| format!("Error creando temp dir: {}", e))?;
+    let out_path = tmp_dir.join(&basename);
+    let mut out = std::fs::File::create(&out_path)
+        .map_err(|e| format!("Error creando archivo extraído: {}", e))?;
+    std::io::copy(&mut entry, &mut out).map_err(|e| format!("Error extrayendo: {}", e))?;
+
+    Ok(ExtractedModel {
+        path: out_path.to_string_lossy().to_string(),
+        original_name: basename,
+        format,
+    })
+}
+
 /// Parsea nombres de clases desde archivos .txt, .yaml o .json
 #[tauri::command]
 pub fn parse_class_names(

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { useTauriPathDrop } from '@/hooks/useTauriPathDrop';
 import {
   Dialog,
   DialogContent,
@@ -86,8 +87,8 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
     return typeMap[type] || type;
   };
 
-  const handleSelectFile = async () => {
-    const filePath = await pickZipFile();
+  const handleSelectFile = useCallback(async (prefilledPath?: string) => {
+    const filePath = prefilledPath ?? (await pickZipFile());
     if (!filePath) return;
 
     const fileName = filePath.split('/').pop() || filePath.split('\\').pop() || filePath;
@@ -117,7 +118,13 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
       );
       setStep('select');
     }
-  };
+  }, [t, existingNames]);
+
+  const { isDragging: isDraggingImport } = useTauriPathDrop({
+    active: open && step === 'select',
+    extensions: ['zip', 'tix'],
+    onDrop: (paths) => handleSelectFile(paths[0]),
+  });
 
   const handleImport = async () => {
     if (!selectedFilePath || !projectName.trim() || !detection) {
@@ -210,8 +217,12 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
 
             <div className="space-y-4">
               <div
-                className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 dark:hover:border-gray-600 transition"
-                onClick={handleSelectFile}
+                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${
+                  isDraggingImport
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30'
+                    : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
+                }`}
+                onClick={() => handleSelectFile()}
               >
                 <i className="fas fa-cloud-upload-alt text-3xl text-gray-400 dark:text-gray-500 mb-2 block"></i>
                 <p className="text-sm font-medium">{t('import.dragFiles')}</p>

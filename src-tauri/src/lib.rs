@@ -347,6 +347,7 @@ pub fn run() {
             commands::inference_commands::list_inference_models,
             commands::inference_commands::update_model_config,
             commands::inference_commands::detect_model_metadata,
+            commands::inference_commands::extract_model_archive,
             commands::inference_commands::parse_class_names,
             commands::inference_commands::parse_model_config,
             commands::inference_commands::start_batch_inference,

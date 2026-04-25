@@ -13,7 +13,7 @@ interface UseInferenceModelsResult {
   /** Metadata rica del último JSON de configuración cargado */
   lastConfigResult: ModelConfigResult | null;
   selectModel: (model: InferenceModelEntry | null) => void;
-  uploadModel: () => Promise<void>;
+  uploadModel: (prefilledPath?: string) => Promise<void>;
   deleteModel: (modelId: string) => Promise<void>;
   updateMapping: (modelId: string, mapping: ClassMapping[]) => Promise<void>;
   updatePreprocess: (modelId: string, preprocess: PreprocessConfig | null) => Promise<void>;
@@ -63,24 +63,43 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
     }
   }, [selectedModelId, models, projectId, refreshModels]);
 
-  const uploadModel = useCallback(async () => {
+  const uploadModel = useCallback(async (prefilledPath?: string) => {
     if (!projectId) return;
     setError(null);
 
     try {
-      // 1. Seleccionar archivo del modelo
-      const file = await open({
-        title: i18n.t('inference.selectModelFile'),
-        filters: [
-          { name: i18n.t('inference.dialogFilterModels'), extensions: ['pt', 'onnx'] },
-        ],
-      });
-
-      if (!file) return;
+      let filePath: string;
+      if (prefilledPath) {
+        filePath = prefilledPath;
+      } else {
+        const file = await open({
+          title: i18n.t('inference.selectModelFile'),
+          filters: [
+            { name: i18n.t('inference.dialogFilterModels'), extensions: ['pt', 'onnx', 'zip'] },
+          ],
+        });
+        if (!file) return;
+        filePath = typeof file === 'string' ? file : file;
+      }
       setLoading(true);
 
-      const filePath = typeof file === 'string' ? file : file;
-      const ext = filePath.split('.').pop()?.toLowerCase() || '';
+      let ext = filePath.split('.').pop()?.toLowerCase() || '';
+
+      if (ext === 'zip') {
+        try {
+          const extracted = await inferenceService.extractModelArchive(filePath);
+          filePath = extracted.path;
+          ext = extracted.format;
+        } catch (err) {
+          setError(String(err));
+          return;
+        }
+      }
+
+      if (ext !== 'pt' && ext !== 'onnx') {
+        setError(i18n.t('inference.error.invalidModelFile', { ext }));
+        return;
+      }
       const format = ext === 'pt' ? 'pt' : 'onnx';
       const baseName = filePath.split('/').pop()?.split('\\').pop() || 'model';
 

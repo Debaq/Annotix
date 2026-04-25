@@ -15,6 +15,7 @@ import { useInferenceModels } from '../hooks/useInferenceModels';
 import { ModelUploader } from './ModelUploader';
 import { ClassMappingEditor } from './ClassMappingEditor';
 import { PreprocessEditor } from './PreprocessEditor';
+import { useTauriPathDrop } from '@/hooks/useTauriPathDrop';
 import type { ClassDefinition, Project } from '@/lib/db';
 import { DEFAULT_PREPROCESS, type PreprocessConfig } from '../types';
 
@@ -45,6 +46,12 @@ export function InferencePanel({ trigger, project }: InferencePanelProps) {
     updateMapping,
     updatePreprocess,
   } = useInferenceModels(projectId);
+
+  const { isDragging: isDraggingModel } = useTauriPathDrop({
+    active: open && !selectedModel,
+    extensions: ['pt', 'onnx', 'zip'],
+    onDrop: (paths) => uploadModel(paths[0]),
+  });
 
   const currentPreprocess: PreprocessConfig =
     ((selectedModel?.metadata as { preprocess?: PreprocessConfig } | null)?.preprocess) ??
@@ -137,8 +144,9 @@ export function InferencePanel({ trigger, project }: InferencePanelProps) {
             model={selectedModel}
             loading={modelLoading}
             configResult={lastConfigResult}
-            onUpload={uploadModel}
+            onUpload={() => uploadModel()}
             onDelete={deleteModel}
+            isDragging={isDraggingModel}
           />
 
           {/* Sync clases */}

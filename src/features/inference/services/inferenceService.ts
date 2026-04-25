@@ -71,6 +71,10 @@ export const inferenceService = {
     return invoke('detect_model_metadata', { modelPath });
   },
 
+  extractModelArchive(archivePath: string): Promise<{ path: string; originalName: string; format: string }> {
+    return invoke('extract_model_archive', { archivePath });
+  },
+
   parseClassNames(filePath: string, format: string): Promise<string[]> {
     return invoke('parse_class_names', { filePath, format });
   },
