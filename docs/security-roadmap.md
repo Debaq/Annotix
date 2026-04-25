@@ -14,14 +14,15 @@ Auditoría 2026-04-25. 3 bloqueadores release + 2 defensa-en-profundidad.
 
 ## Cambios aplicados
 
-### Vuln 1 (commit pendiente)
+### Vuln 1 (shipped v2.9.3, commit `15a7448`)
 - `src-tauri/Cargo.toml`: `rand 0.8` + `subtle 2`
 - `src-tauri/src/serve/server.rs`: `generate_token()` 256 bits hex con `OsRng`, almacenado en `ServeSession`, propagado a `ServeInfo` y URLs (`?token=`)
 - `src-tauri/src/serve/routes.rs`: middleware axum `auth_middleware` con `subtle::ConstantTimeEq`. Acepta `Authorization: Bearer <t>` o `?token=<t>`. Aplicado vía `from_fn_with_state` a router `protected` (todas las rutas `/api/projects/...`). `/` y `/api/health` quedan abiertos.
 - `src-tauri/src/serve/web_ui.html`: extrae token de URL/sessionStorage, prepende `Authorization` header en fetch, `?token=` en `<img src>`.
 - `src/features/serve/components/{ServeButton,ServeDialog}.tsx`: campo `token` en interfaz `ServeInfo`.
 
-### Vuln 2 (commit pendiente)
+### Vuln 2 (shipped v2.9.3, commit `6c71df2`)
+- Tests `safe_path`: 3/3 pass.
 - `src-tauri/src/store/safe_path.rs`: nuevo módulo con `sanitize_filename()` y `safe_join()` + tests unitarios
 - `src-tauri/src/store/mod.rs`: expone `safe_path`
 - `src-tauri/src/store/images.rs`: `sanitize_filename` en `prepare_image_entry`, `upload_images_with_progress`, `upload_image_bytes` antes de cualquier `format!("{}_{}", id, file_name)`
@@ -113,9 +114,9 @@ Validar dev URL `http://localhost:5173` con `devCsp` separado si necesario. Smok
 
 ## Orden ejecución
 
-**Sprint 1 (release blocker):**
-- [ ] Vuln 1 — HTTP serve auth
-- [ ] Vuln 2 — Path traversal sanitize
+**Sprint 1 (release blocker) — ✅ shipped v2.9.3:**
+- [x] Vuln 1 — HTTP serve auth
+- [x] Vuln 2 — Path traversal sanitize
 
 **Sprint 2:**
 - [ ] Vuln 3 — Python script whitelist
