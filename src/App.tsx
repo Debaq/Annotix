@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Routes, Route, useParams, useNavigate, Navigate } from 'react-router-dom';
 import { invoke } from '@tauri-apps/api/core';
 import { AppLayout } from './features/core/components/AppLayout';
@@ -35,6 +35,65 @@ import { ManageClassesDialog } from './features/projects/components/ManageClasse
 import { CLASS_SHORTCUTS } from './features/core/constants';
 import { cn } from '@/lib/utils';
 import { SplashScreen } from './features/core/components/SplashScreen';
+import { useClassCounts } from './features/projects/hooks/useClassCounts';
+import { useAnnotationStore } from './features/canvas/hooks/useAnnotations';
+import type { ClassDefinition } from './lib/db';
+
+interface ClassRowProps {
+  cls: ClassDefinition;
+  index: number;
+  active: boolean;
+  onClick: () => void;
+  imageCount?: number;
+  projectCount?: number;
+}
+
+const ClassRow = ({ cls, index, active, onClick, imageCount, projectCount }: ClassRowProps) => (
+  <button
+    onClick={onClick}
+    className={cn(
+      'flex w-full items-center gap-2 rounded-lg border p-2 transition-all',
+      active
+        ? 'border-[var(--annotix-primary)] bg-[var(--annotix-primary)]/10 shadow-sm'
+        : 'border-[var(--annotix-border)] bg-[var(--annotix-white)] hover:border-[var(--annotix-primary)]/50',
+    )}
+  >
+    {index < CLASS_SHORTCUTS.length ? (
+      <span className="flex h-6 w-6 items-center justify-center rounded bg-[var(--annotix-gray-light)] text-[10px] font-mono font-bold">
+        {CLASS_SHORTCUTS[index]}
+      </span>
+    ) : (
+      <span className="flex h-6 w-6 items-center justify-center rounded bg-[var(--annotix-gray-light)] text-xs font-medium">
+        {index + 1}
+      </span>
+    )}
+    <div
+      className="h-4 w-4 rounded-full shrink-0 border border-black/20"
+      style={{ backgroundColor: cls.color }}
+    />
+    <span className="flex-1 text-sm text-left font-medium truncate text-[var(--annotix-dark)]">
+      {cls.name}
+    </span>
+    {(imageCount != null || projectCount != null) && (
+      <span className="text-[10px] font-mono tabular-nums text-[var(--annotix-gray)] px-1.5 py-0.5 rounded bg-[var(--annotix-gray-light)]">
+        {imageCount != null ? `${imageCount}/${projectCount ?? 0}` : projectCount}
+      </span>
+    )}
+    {active && <div className="h-2 w-2 rounded-full bg-[var(--annotix-primary)]" />}
+  </button>
+);
+
+function useImageByClassCounts() {
+  const annotations = useAnnotationStore((s) => s.annotations);
+  return useMemo(() => {
+    const m: Record<number, number> = {};
+    for (const a of annotations) {
+      if (a.classId == null) continue;
+      m[a.classId] = (m[a.classId] ?? 0) + 1;
+    }
+    return m;
+  }, [annotations]);
+}
 
 // Helper functions
 function isTimeSeriesProject(type: ProjectType): boolean {
@@ -79,6 +138,7 @@ const ProjectView = () => {
   const { project } = useCurrentProject();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { byClass: projectByClass } = useClassCounts();
 
   // Sync URL -> Store
   useEffect(() => {
@@ -152,25 +212,14 @@ const ProjectView = () => {
               </div>
               <div className="space-y-2">
                 {project.classes.map((cls, index) => (
-                  <button
+                  <ClassRow
                     key={cls.id}
+                    cls={cls}
+                    index={index}
+                    active={activeClassId === cls.id}
                     onClick={() => setActiveClassId(cls.id)}
-                    className={cn(
-                      "flex w-full items-center gap-2 rounded-lg border p-2 transition-all",
-                      activeClassId === cls.id
-                        ? "border-[var(--annotix-primary)] bg-[var(--annotix-primary)]/10 shadow-sm"
-                        : "border-[var(--annotix-border)] bg-[var(--annotix-white)] hover:border-[var(--annotix-primary)]/50"
-                    )}
-                  >
-                    {index < CLASS_SHORTCUTS.length && (
-                      <span className="flex h-6 w-6 items-center justify-center rounded bg-[var(--annotix-gray-light)] text-[10px] font-mono font-bold">
-                        {CLASS_SHORTCUTS[index]}
-                      </span>
-                    )}
-                    <div className="h-4 w-4 rounded-full shrink-0 border border-black/20" style={{ backgroundColor: cls.color }}></div>
-                    <span className="flex-1 text-sm text-left font-medium truncate text-[var(--annotix-dark)]">{cls.name}</span>
-                    {activeClassId === cls.id && <div className="h-2 w-2 rounded-full bg-[var(--annotix-primary)]" />}
-                  </button>
+                    projectCount={projectByClass[cls.id] ?? 0}
+                  />
                 ))}
               </div>
             </div>
@@ -243,34 +292,14 @@ const ProjectView = () => {
           </div>
           <div className="space-y-2">
             {project.classes.map((cls, index) => (
-              <button
+              <ClassRow
                 key={cls.id}
+                cls={cls}
+                index={index}
+                active={activeClassId === cls.id}
                 onClick={() => setActiveClassId(cls.id)}
-                className={cn(
-                  "flex w-full items-center gap-2 rounded-lg border p-2 transition-all",
-                  activeClassId === cls.id
-                    ? "border-[var(--annotix-primary)] bg-[var(--annotix-primary)]/10 shadow-sm"
-                    : "border-[var(--annotix-border)] bg-[var(--annotix-white)] hover:border-[var(--annotix-primary)]/50"
-                )}
-              >
-                {index < CLASS_SHORTCUTS.length ? (
-                  <span className="flex h-6 w-6 items-center justify-center rounded bg-[var(--annotix-gray-light)] text-[10px] font-mono font-bold">
-                    {CLASS_SHORTCUTS[index]}
-                  </span>
-                ) : (
-                  <span className="flex h-6 w-6 items-center justify-center rounded bg-[var(--annotix-gray-light)] text-xs font-medium">
-                    {index + 1}
-                  </span>
-                )}
-                <div
-                  className="h-4 w-4 rounded-full shrink-0 border border-black/20"
-                  style={{ backgroundColor: cls.color }}
-                ></div>
-                <span className="flex-1 text-sm text-left font-medium truncate text-[var(--annotix-dark)]">{cls.name}</span>
-                {activeClassId === cls.id && (
-                  <div className="h-2 w-2 rounded-full bg-[var(--annotix-primary)]" />
-                )}
-              </button>
+                projectCount={projectByClass[cls.id] ?? 0}
+              />
             ))}
           </div>
         </div>
@@ -302,6 +331,8 @@ const ImageView = () => {
   const { project } = useCurrentProject();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { byClass: projectByClass } = useClassCounts();
+  const imageByClass = useImageByClassCounts();
 
   useEffect(() => {
     if (projectId) setCurrentProjectId(projectId);
@@ -381,34 +412,15 @@ const ImageView = () => {
           </div>
           <div className="space-y-2">
             {project.classes.map((cls, index) => (
-              <button
+              <ClassRow
                 key={cls.id}
+                cls={cls}
+                index={index}
+                active={activeClassId === cls.id}
                 onClick={() => setActiveClassId(cls.id)}
-                className={cn(
-                  "flex w-full items-center gap-2 rounded-lg border p-2 transition-all",
-                  activeClassId === cls.id
-                    ? "border-[var(--annotix-primary)] bg-[var(--annotix-primary)]/10 shadow-sm"
-                    : "border-[var(--annotix-border)] bg-[var(--annotix-white)] hover:border-[var(--annotix-primary)]/50"
-                )}
-              >
-                {index < CLASS_SHORTCUTS.length ? (
-                  <span className="flex h-6 w-6 items-center justify-center rounded bg-[var(--annotix-gray-light)] text-[10px] font-mono font-bold">
-                    {CLASS_SHORTCUTS[index]}
-                  </span>
-                ) : (
-                  <span className="flex h-6 w-6 items-center justify-center rounded bg-[var(--annotix-gray-light)] text-xs font-medium">
-                    {index + 1}
-                  </span>
-                )}
-                <div
-                  className="h-4 w-4 rounded-full shrink-0 border border-black/20"
-                  style={{ backgroundColor: cls.color }}
-                ></div>
-                <span className="flex-1 text-sm text-left font-medium truncate text-[var(--annotix-dark)]">{cls.name}</span>
-                {activeClassId === cls.id && (
-                  <div className="h-2 w-2 rounded-full bg-[var(--annotix-primary)]" />
-                )}
-              </button>
+                imageCount={imageByClass[cls.id] ?? 0}
+                projectCount={projectByClass[cls.id] ?? 0}
+              />
             ))}
           </div>
         </div>
@@ -440,6 +452,7 @@ const AudioView = () => {
   const { project } = useCurrentProject();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { byClass: projectByClass } = useClassCounts();
 
   useEffect(() => {
     if (projectId) setCurrentProjectId(projectId);
@@ -471,25 +484,14 @@ const AudioView = () => {
             </div>
             <div className="space-y-2">
               {project.classes.map((cls, index) => (
-                <button
+                <ClassRow
                   key={cls.id}
+                  cls={cls}
+                  index={index}
+                  active={activeClassId === cls.id}
                   onClick={() => setActiveClassId(cls.id)}
-                  className={cn(
-                    "flex w-full items-center gap-2 rounded-lg border p-2 transition-all",
-                    activeClassId === cls.id
-                      ? "border-[var(--annotix-primary)] bg-[var(--annotix-primary)]/10 shadow-sm"
-                      : "border-[var(--annotix-border)] bg-[var(--annotix-white)] hover:border-[var(--annotix-primary)]/50"
-                  )}
-                >
-                  {index < CLASS_SHORTCUTS.length && (
-                    <span className="flex h-6 w-6 items-center justify-center rounded bg-[var(--annotix-gray-light)] text-[10px] font-mono font-bold">
-                      {CLASS_SHORTCUTS[index]}
-                    </span>
-                  )}
-                  <div className="h-4 w-4 rounded-full shrink-0 border border-black/20" style={{ backgroundColor: cls.color }}></div>
-                  <span className="flex-1 text-sm text-left font-medium truncate text-[var(--annotix-dark)]">{cls.name}</span>
-                  {activeClassId === cls.id && <div className="h-2 w-2 rounded-full bg-[var(--annotix-primary)]" />}
-                </button>
+                  projectCount={projectByClass[cls.id] ?? 0}
+                />
               ))}
             </div>
           </div>

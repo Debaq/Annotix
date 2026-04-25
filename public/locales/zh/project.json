@@ -561,5 +561,19 @@
   "imageFormatInfo": "JPG：兼容所有工具。WebP：体积减小约 25-30%，查看器解码已优化。如果部署也使用 WebP，用 WebP 训练是有效的。",
   "convertDataset": "转换数据集",
   "convertDatasetConfirm": "将把 {{count}} 张图像转换为 {{format}}。继续？",
-  "convertDatasetSuccess": "已转换：{{converted}}，已跳过：{{skipped}}，失败：{{failed}}"
+  "convertDatasetSuccess": "已转换：{{converted}}，已跳过：{{skipped}}，失败：{{failed}}",
+  "webpPreset": "WebP 质量",
+  "webpPresetLossless": "无损（医疗关键）",
+  "webpPresetMax": "最高 (95)",
+  "webpPresetHigh": "高 (90, 推荐)",
+  "webpPresetBalanced": "均衡 (82)",
+  "webpPresetFast": "快速 (75)",
+  "webpPresetInfo": {
+    "lossless": "像素精确。无信息损失。文件大2-3倍，编码较慢。",
+    "max": "质量几乎无法区分。推荐用于标准医疗图像。",
+    "high": "出色的质量和平衡的大小。对大多数项目安全的默认选项。",
+    "balanced": "良好的大小，仅在高缩放时可见损失。大型非关键数据集。",
+    "fast": "更快的编码。适用于原型或批量导入。"
+  },
+  "webpMedicalWarning": "有损 WebP 会丢弃图像信息。对于 X 光、显微镜或关键医疗图像，请使用无损或最高。"
 }

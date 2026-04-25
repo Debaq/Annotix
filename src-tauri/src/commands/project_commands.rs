@@ -34,6 +34,18 @@ pub fn update_project_image_format(
 }
 
 #[tauri::command]
+pub fn update_project_webp_preset(
+    state: State<'_, AppState>,
+    app: AppHandle,
+    project_id: String,
+    preset: String,
+) -> Result<(), String> {
+    state.update_project_webp_preset(&project_id, &preset)?;
+    let _ = app.emit("db:projects-changed", ());
+    Ok(())
+}
+
+#[tauri::command]
 pub fn get_project(
     state: State<'_, AppState>,
     id: String,

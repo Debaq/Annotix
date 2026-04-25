@@ -561,5 +561,19 @@
   "imageFormatInfo": "JPG: compatible with all tools. WebP: ~25-30% smaller, optimized decoding in the viewer. Training with WebP is valid if deployment also uses WebP.",
   "convertDataset": "Convert dataset",
   "convertDatasetConfirm": "{{count}} images will be converted to {{format}}. Continue?",
-  "convertDatasetSuccess": "Converted: {{converted}}, skipped: {{skipped}}, failed: {{failed}}"
+  "convertDatasetSuccess": "Converted: {{converted}}, skipped: {{skipped}}, failed: {{failed}}",
+  "webpPreset": "WebP quality",
+  "webpPresetLossless": "Lossless (critical medical)",
+  "webpPresetMax": "Maximum (95)",
+  "webpPresetHigh": "High (90, recommended)",
+  "webpPresetBalanced": "Balanced (82)",
+  "webpPresetFast": "Fast (75)",
+  "webpPresetInfo": {
+    "lossless": "Exact pixels. No information loss. Files 2-3× larger and slower encoding.",
+    "max": "Quality nearly indistinguishable. Recommended for standard medical images.",
+    "high": "Excellent quality with balanced size. Safe default for most projects.",
+    "balanced": "Good size with loss visible only at high zoom. Large non-critical datasets.",
+    "fast": "Faster encoding. Useful for prototypes or massive imports."
+  },
+  "webpMedicalWarning": "Lossy WebP discards image information. For X-rays, microscopy or critical medical images use Lossless or Maximum."
 }

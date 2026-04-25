@@ -1,6 +1,6 @@
 [package]
 name = "annotix"
-version = "2.9.0"
+version = "2.9.1"
 description = "Annotix - ML Dataset Annotation Tool"
 authors = ["TecMedHub"]
 license = "MIT"
@@ -29,6 +29,7 @@ num_cpus = "1"
 ab_glyph = "0.2"
 geo = "0.29"
 webp = "0.3"
+rayon = "1.10"
 ort = { version = "2.0.0-rc.12", features = ["download-binaries"] }
 uuid = { version = "1", features = ["v4"] }
 directories = "5"

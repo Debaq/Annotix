@@ -12,6 +12,7 @@ pub fn process_image_filters(
     image_id: String,
     clahe: u32,
     sharpness: u32,
+    clahe_mode: Option<String>,
     state: State<'_, AppState>,
 ) -> Result<String, String> {
     if clahe == 0 && sharpness == 0 {
@@ -37,7 +38,12 @@ pub fn process_image_filters(
         let tiles = (rgb.width().max(rgb.height()) as f64 / 128.0)
             .round()
             .clamp(2.0, 8.0) as u32;
-        apply_clahe(&mut rgb, clip_limit, tiles, tiles);
+        let mode = clahe_mode.as_deref().unwrap_or("luma");
+        if mode == "rgb" {
+            apply_clahe_per_channel(&mut rgb, clip_limit, tiles, tiles);
+        } else {
+            apply_clahe(&mut rgb, clip_limit, tiles, tiles);
+        }
     }
 
     if sharpness > 0 {
@@ -163,6 +169,104 @@ fn apply_clahe(img: &mut RgbImage, clip_limit: f64, tile_grid_x: u32, tile_grid_
             out[0] = (p[0] as f64 * ratio).round().min(255.0) as u8;
             out[1] = (p[1] as f64 * ratio).round().min(255.0) as u8;
             out[2] = (p[2] as f64 * ratio).round().min(255.0) as u8;
+        }
+    }
+}
+
+/// CLAHE por canal: equaliza R, G, B de forma independiente.
+/// Cambia colores (puede corregir dominantes) — útil en imágenes submarinas/médicas.
+fn apply_clahe_per_channel(img: &mut RgbImage, clip_limit: f64, tile_grid_x: u32, tile_grid_y: u32) {
+    let (width, height) = img.dimensions();
+    let tile_w = (width + tile_grid_x - 1) / tile_grid_x;
+    let tile_h = (height + tile_grid_y - 1) / tile_grid_y;
+    let n_tiles = (tile_grid_y * tile_grid_x) as usize;
+
+    // LUTs por canal: [tile_idx][channel][bin]
+    let mut luts: Vec<[[u8; 256]; 3]> = vec![[[0u8; 256]; 3]; n_tiles];
+
+    for ty in 0..tile_grid_y {
+        for tx in 0..tile_grid_x {
+            let x0 = tx * tile_w;
+            let y0 = ty * tile_h;
+            let x1 = (x0 + tile_w).min(width);
+            let y1 = (y0 + tile_h).min(height);
+
+            let mut hists = [[0u32; 256]; 3];
+            let mut pixel_count = 0u32;
+
+            for y in y0..y1 {
+                for x in x0..x1 {
+                    let p = img.get_pixel(x, y);
+                    hists[0][p[0] as usize] += 1;
+                    hists[1][p[1] as usize] += 1;
+                    hists[2][p[2] as usize] += 1;
+                    pixel_count += 1;
+                }
+            }
+
+            for c in 0..3 {
+                let hist = &mut hists[c];
+                if clip_limit > 1.0 {
+                    let limit = ((clip_limit * pixel_count as f64) / 256.0).round().max(1.0) as u32;
+                    let mut excess = 0u32;
+                    for h in hist.iter_mut() {
+                        if *h > limit {
+                            excess += *h - limit;
+                            *h = limit;
+                        }
+                    }
+                    let increment = excess / 256;
+                    let remainder = (excess - increment * 256) as usize;
+                    for (i, h) in hist.iter_mut().enumerate() {
+                        *h += increment + if i < remainder { 1 } else { 0 };
+                    }
+                }
+
+                let mut lut = [0u8; 256];
+                let mut cdf = 0u32;
+                let scale = 255.0 / pixel_count.max(1) as f64;
+                for i in 0..256 {
+                    cdf += hist[i];
+                    lut[i] = (cdf as f64 * scale).round().min(255.0) as u8;
+                }
+                luts[(ty * tile_grid_x + tx) as usize][c] = lut;
+            }
+        }
+    }
+
+    let src = img.clone();
+
+    for y in 0..height {
+        for x in 0..width {
+            let p = src.get_pixel(x, y);
+
+            let fx = (x as f64 / tile_w as f64) - 0.5;
+            let fy = (y as f64 / tile_h as f64) - 0.5;
+            let tx0 = fx.floor().max(0.0) as u32;
+            let ty0 = fy.floor().max(0.0) as u32;
+            let tx1 = (tx0 + 1).min(tile_grid_x - 1);
+            let ty1 = (ty0 + 1).min(tile_grid_y - 1);
+            let ax = (fx - tx0 as f64).clamp(0.0, 1.0);
+            let ay = (fy - ty0 as f64).clamp(0.0, 1.0);
+
+            let i00 = (ty0 * tile_grid_x + tx0) as usize;
+            let i10 = (ty0 * tile_grid_x + tx1) as usize;
+            let i01 = (ty1 * tile_grid_x + tx0) as usize;
+            let i11 = (ty1 * tile_grid_x + tx1) as usize;
+
+            let out = img.get_pixel_mut(x, y);
+            for c in 0..3usize {
+                let idx = p[c] as usize;
+                let v00 = luts[i00][c][idx] as f64;
+                let v10 = luts[i10][c][idx] as f64;
+                let v01 = luts[i01][c][idx] as f64;
+                let v11 = luts[i11][c][idx] as f64;
+                let mapped = v00 * (1.0 - ax) * (1.0 - ay)
+                    + v10 * ax * (1.0 - ay)
+                    + v01 * (1.0 - ax) * ay
+                    + v11 * ax * ay;
+                out[c] = mapped.round().clamp(0.0, 255.0) as u8;
+            }
         }
     }
 }

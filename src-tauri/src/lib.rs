@@ -178,6 +178,7 @@ pub fn run() {
             commands::project_commands::reveal_project_folder,
             commands::project_commands::zip_project,
             commands::project_commands::update_project_image_format,
+            commands::project_commands::update_project_webp_preset,
             // Imágenes
             commands::image_commands::upload_images,
             commands::image_commands::upload_image_bytes,

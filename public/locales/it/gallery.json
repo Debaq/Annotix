@@ -27,6 +27,8 @@
   "selectImage": "Seleziona un'immagine",
   "uploadOrSelect": "Carica o seleziona un'immagine",
   "uploading": "Caricamento immagini",
+  "uploadingImages": "Importazione immagini",
+  "copyingFiles": "Copia dei file nel progetto...",
   "extractingPdf": "PDF {{current}}/{{total}}",
   "dropImages": "Trascina le immagini qui",
   "dropHint": "immagini da aggiungere al progetto",

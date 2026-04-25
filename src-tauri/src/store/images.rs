@@ -3,20 +3,61 @@ use std::path::{Path, PathBuf};
 use crate::store::project_file::{AnnotationEntry, ImageEntry, PredictionEntry};
 use crate::store::state::AppState;
 
-/// Calidad WebP lossy (0..100). 92 = visualmente indistinguible de JPG q=95.
-const WEBP_QUALITY: f32 = 92.0;
 /// Calidad JPG usada para conversión retroactiva / normalización.
 const JPG_QUALITY: u8 = 92;
 
-/// Encodea una imagen dinámica al formato destino y devuelve los bytes.
-/// `target_format` debe ser "jpg" o "webp".
+/// Parámetros WebP derivados de un preset.
+/// method: 0 (rápido) .. 6 (lento, mejor compresión).
+struct WebpParams {
+    lossless: bool,
+    quality: f32,
+    method: i32,
+}
+
+fn webp_params_for_preset(preset: &str) -> WebpParams {
+    match preset {
+        "lossless" => WebpParams { lossless: true,  quality: 100.0, method: 4 },
+        "max"      => WebpParams { lossless: false, quality: 95.0,  method: 4 },
+        "high"     => WebpParams { lossless: false, quality: 90.0,  method: 4 },
+        "balanced" => WebpParams { lossless: false, quality: 82.0,  method: 2 },
+        "fast"     => WebpParams { lossless: false, quality: 75.0,  method: 0 },
+        _          => WebpParams { lossless: false, quality: 90.0,  method: 4 },
+    }
+}
+
+/// Encodea con preset por defecto ("high"). Mantiene compatibilidad.
 pub fn encode_image(img: &image::DynamicImage, target_format: &str) -> Result<Vec<u8>, String> {
+    encode_image_with_preset(img, target_format, "high")
+}
+
+/// Encodea una imagen al formato destino con preset de calidad.
+/// `target_format` debe ser "jpg" o "webp". `preset` solo aplica a webp.
+pub fn encode_image_with_preset(
+    img: &image::DynamicImage,
+    target_format: &str,
+    preset: &str,
+) -> Result<Vec<u8>, String> {
     match target_format {
         "webp" => {
-            // webp::Encoder requiere RGB/RGBA. from_image convierte internamente.
+            let p = webp_params_for_preset(preset);
             let encoder = webp::Encoder::from_image(img)
                 .map_err(|e| format!("Error creando encoder WebP: {}", e))?;
-            let data = encoder.encode(WEBP_QUALITY);
+            let data = if p.lossless {
+                // encode_lossless ignora method/quality del config simple
+                encoder.encode_lossless()
+            } else if p.method == 4 {
+                // Path simple: usa default method del libwebp wrapper
+                encoder.encode(p.quality)
+            } else {
+                // Path avanzado: configurar method explícito
+                let mut config = webp::WebPConfig::new()
+                    .map_err(|_| "Error inicializando WebPConfig".to_string())?;
+                config.lossless = 0;
+                config.quality = p.quality;
+                config.method = p.method;
+                encoder.encode_advanced(&config)
+                    .map_err(|e| format!("Error WebP encode_advanced: {:?}", e))?
+            };
             Ok(data.to_vec())
         }
         "jpg" | "jpeg" => {
@@ -183,83 +224,98 @@ impl AppState {
         })
     }
 
-    pub fn upload_images_with_progress<F: Fn(usize, usize, &str)>(
+    pub fn upload_images_with_progress<F: Fn(usize, usize, &str) + Send + Sync>(
         &self,
         project_id: &str,
         file_paths: &[String],
         on_progress: F,
     ) -> Result<Vec<String>, String> {
+        use rayon::prelude::*;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
         let images_dir = self.project_images_dir(project_id)?;
         std::fs::create_dir_all(&images_dir)
             .map_err(|e| format!("Error creando directorio de imágenes: {}", e))?;
 
-        // Leer formato de imagen del proyecto
-        let image_format = self.with_project(project_id, |pf| pf.image_format.clone())?;
+        // Leer formato y preset del proyecto
+        let (image_format, webp_preset) = self.with_project(project_id, |pf| {
+            (pf.image_format.clone(), pf.webp_quality_preset.clone())
+        })?;
         let target_format = image_format.as_str();
 
         let now = js_timestamp();
-        let mut new_entries = Vec::new();
         let total = file_paths.len();
+        let done = AtomicUsize::new(0);
 
-        for (i, file_path) in file_paths.iter().enumerate() {
-            let source = PathBuf::from(file_path);
-            let file_name = source
-                .file_name()
-                .ok_or("Nombre de archivo inválido")?
-                .to_string_lossy()
-                .to_string();
+        // Procesar imágenes en paralelo (decode + encode + write)
+        let entries: Vec<Result<ImageEntry, String>> = file_paths
+            .par_iter()
+            .map(|file_path| {
+                let source = PathBuf::from(file_path);
+                let file_name = source
+                    .file_name()
+                    .ok_or("Nombre de archivo inválido")?
+                    .to_string_lossy()
+                    .to_string();
 
-            on_progress(i, total, &file_name);
+                let id = uuid::Uuid::new_v4().to_string();
 
-            let id = uuid::Uuid::new_v4().to_string();
+                let source_ext = Path::new(&file_name)
+                    .extension()
+                    .and_then(|e| e.to_str())
+                    .unwrap_or("")
+                    .to_lowercase();
+                let source_matches_target = source_ext == target_format
+                    || (target_format == "jpg" && source_ext == "jpeg");
 
-            let source_ext = Path::new(&file_name)
-                .extension()
-                .and_then(|e| e.to_str())
-                .unwrap_or("")
-                .to_lowercase();
-            let source_matches_target = source_ext == target_format
-                || (target_format == "jpg" && source_ext == "jpeg");
+                let (unique_name, width, height) = if target_format == "webp" && !source_matches_target {
+                    let img = image::open(&source)
+                        .map_err(|e| format!("Error decodificando imagen {}: {}", file_name, e))?;
+                    let w = img.width();
+                    let h = img.height();
+                    let target_name = filename_with_format(&file_name, "webp");
+                    let unique = format!("{}_{}", id, target_name);
+                    let dest = images_dir.join(&unique);
+                    let data = encode_image_with_preset(&img, "webp", &webp_preset)?;
+                    std::fs::write(&dest, &data)
+                        .map_err(|e| format!("Error escribiendo WebP {}: {}", file_name, e))?;
+                    (unique, w, h)
+                } else {
+                    let unique = format!("{}_{}", id, file_name);
+                    let dest = images_dir.join(&unique);
+                    std::fs::copy(&source, &dest)
+                        .map_err(|e| format!("Error copiando imagen {}: {}", file_name, e))?;
+                    let (w, h) = get_image_dimensions(&dest)?;
+                    (unique, w, h)
+                };
 
-            // Si webp y source no es webp, transcodear. Si source ya coincide con target, copiar tal cual.
-            let (unique_name, width, height) = if target_format == "webp" && !source_matches_target {
-                let img = image::open(&source)
-                    .map_err(|e| format!("Error decodificando imagen {}: {}", file_name, e))?;
-                let w = img.width();
-                let h = img.height();
-                let target_name = filename_with_format(&file_name, "webp");
-                let unique = format!("{}_{}", id, target_name);
-                let dest = images_dir.join(&unique);
-                let data = encode_image(&img, "webp")?;
-                std::fs::write(&dest, &data)
-                    .map_err(|e| format!("Error escribiendo WebP {}: {}", file_name, e))?;
-                (unique, w, h)
-            } else {
-                let unique = format!("{}_{}", id, file_name);
-                let dest = images_dir.join(&unique);
-                std::fs::copy(&source, &dest)
-                    .map_err(|e| format!("Error copiando imagen {}: {}", file_name, e))?;
-                let (w, h) = get_image_dimensions(&dest)?;
-                (unique, w, h)
-            };
+                let i = done.fetch_add(1, Ordering::Relaxed);
+                on_progress(i + 1, total, &file_name);
 
-            new_entries.push(ImageEntry {
-                id: id.clone(),
-                name: file_name,
-                file: unique_name,
-                width,
-                height,
-                uploaded: now,
-                annotated: None,
-                status: "pending".to_string(),
-                annotations: vec![],
-                video_id: None,
-                frame_index: None,
-                locked_by: None,
-                lock_expires: None,
-                download_status: None,
-                predictions: vec![],
-            });
+                Ok(ImageEntry {
+                    id,
+                    name: file_name,
+                    file: unique_name,
+                    width,
+                    height,
+                    uploaded: now,
+                    annotated: None,
+                    status: "pending".to_string(),
+                    annotations: vec![],
+                    video_id: None,
+                    frame_index: None,
+                    locked_by: None,
+                    lock_expires: None,
+                    download_status: None,
+                    predictions: vec![],
+                })
+            })
+            .collect();
+
+        // Si alguna falló, retornar error de la primera
+        let mut new_entries = Vec::with_capacity(entries.len());
+        for r in entries {
+            new_entries.push(r?);
         }
 
         let ids: Vec<String> = new_entries.iter().map(|e| e.id.clone()).collect();
@@ -287,8 +343,10 @@ impl AppState {
         std::fs::create_dir_all(&images_dir)
             .map_err(|e| format!("Error creando directorio de imágenes: {}", e))?;
 
-        // Leer formato destino del proyecto
-        let image_format = self.with_project(project_id, |pf| pf.image_format.clone())?;
+        // Leer formato destino y preset del proyecto
+        let (image_format, webp_preset) = self.with_project(project_id, |pf| {
+            (pf.image_format.clone(), pf.webp_quality_preset.clone())
+        })?;
         let target_format = image_format.as_str();
 
         let id = uuid::Uuid::new_v4().to_string();
@@ -309,7 +367,7 @@ impl AppState {
             let target_name = filename_with_format(file_name, "webp");
             let unique = format!("{}_{}", id, target_name);
             let dest = images_dir.join(&unique);
-            let webp_data = encode_image(&img, "webp")?;
+            let webp_data = encode_image_with_preset(&img, "webp", &webp_preset)?;
             std::fs::write(&dest, &webp_data)
                 .map_err(|e| format!("Error escribiendo WebP: {}", e))?;
             (unique, w, h)
@@ -444,24 +502,27 @@ impl AppState {
         }
         let target_ext_lower = if target_format == "webp" { "webp" } else { "jpg" };
 
+        use rayon::prelude::*;
+
         let images_dir = self.project_images_dir(project_id)?;
         let thumbs_dir = self.project_thumbnails_dir(project_id)?;
         std::fs::create_dir_all(&thumbs_dir)
             .map_err(|e| format!("Error creando thumbnails dir: {}", e))?;
 
-        // Snapshot de imágenes (id, file) para iterar sin tener el lock
-        let entries: Vec<(String, String)> = self.with_project(project_id, |pf| {
-            pf.images.iter().map(|i| (i.id.clone(), i.file.clone())).collect()
+        // Snapshot de imágenes y preset para iterar sin tener el lock
+        let (entries, webp_preset): (Vec<(String, String)>, String) = self.with_project(project_id, |pf| {
+            let e = pf.images.iter().map(|i| (i.id.clone(), i.file.clone())).collect();
+            (e, pf.webp_quality_preset.clone())
         })?;
 
-        let mut converted = 0usize;
-        let mut skipped = 0usize;
-        let mut failed: Vec<String> = Vec::new();
+        enum ConvertOutcome {
+            Converted(String, String), // (image_id, new_file_name)
+            Skipped,
+            Failed(String),
+        }
 
-        // Recorrer y convertir archivo por archivo
-        let mut new_files: Vec<(String, String)> = Vec::new(); // (image_id, new_file_name)
-
-        for (image_id, file_name) in entries.iter() {
+        // Procesar en paralelo
+        let outcomes: Vec<ConvertOutcome> = entries.par_iter().map(|(image_id, file_name)| {
             let current_path = images_dir.join(file_name);
             let current_ext = Path::new(file_name)
                 .extension()
@@ -470,54 +531,49 @@ impl AppState {
                 .to_lowercase();
 
             if current_ext == target_ext_lower {
-                skipped += 1;
-                continue;
+                return ConvertOutcome::Skipped;
             }
 
-            // Decodificar
             let img = match image::open(&current_path) {
                 Ok(i) => i,
-                Err(e) => {
-                    failed.push(format!("{}: decode fail ({})", file_name, e));
-                    continue;
-                }
+                Err(e) => return ConvertOutcome::Failed(format!("{}: decode fail ({})", file_name, e)),
             };
 
-            // Nuevo nombre preservando UUID prefix si lo tiene
             let new_file_name = filename_with_format(file_name, target_format);
             let new_path = images_dir.join(&new_file_name);
 
-            // Si coincide exactamente con el viejo path, evitar clobber
             if new_path == current_path {
-                skipped += 1;
-                continue;
+                return ConvertOutcome::Skipped;
             }
 
-            // Encodear a destino
-            let encoded = match encode_image(&img, target_format) {
+            let encoded = match encode_image_with_preset(&img, target_format, &webp_preset) {
                 Ok(b) => b,
-                Err(e) => {
-                    failed.push(format!("{}: encode fail ({})", file_name, e));
-                    continue;
-                }
+                Err(e) => return ConvertOutcome::Failed(format!("{}: encode fail ({})", file_name, e)),
             };
 
-            // Escribir nuevo archivo primero (atomicidad: si falla, el viejo queda)
             if let Err(e) = std::fs::write(&new_path, &encoded) {
-                failed.push(format!("{}: write fail ({})", file_name, e));
-                continue;
+                return ConvertOutcome::Failed(format!("{}: write fail ({})", file_name, e));
             }
 
-            // Eliminar archivo viejo solo si nuevo es distinto
             let _ = std::fs::remove_file(&current_path);
 
-            // Regenerar thumbnail (siempre JPG con mismo layout que el resto del sistema)
             let thumb = img.thumbnail(256, 256);
             let thumb_path = thumbs_dir.join(format!("{}.jpg", image_id));
             let _ = thumb.save(&thumb_path);
 
-            new_files.push((image_id.clone(), new_file_name));
-            converted += 1;
+            ConvertOutcome::Converted(image_id.clone(), new_file_name)
+        }).collect();
+
+        let mut converted = 0usize;
+        let mut skipped = 0usize;
+        let mut failed: Vec<String> = Vec::new();
+        let mut new_files: Vec<(String, String)> = Vec::new();
+        for o in outcomes {
+            match o {
+                ConvertOutcome::Converted(id, name) => { converted += 1; new_files.push((id, name)); }
+                ConvertOutcome::Skipped => skipped += 1,
+                ConvertOutcome::Failed(msg) => failed.push(msg),
+            }
         }
 
         // Actualizar project.json con nuevos nombres y nuevo formato

@@ -19,7 +19,7 @@ export function ImageCard({ image }: ImageCardProps) {
   const { t } = useTranslation('gallery');
   const navigate = useNavigate();
   const { projectId } = useParams();
-  const { currentImageId } = useUIStore();
+  const { currentImageId, setCurrentImageId } = useUIStore();
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
   const [inView, setInView] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -92,9 +92,9 @@ export function ImageCard({ image }: ImageCardProps) {
   const hasDistribution = projectId ? !!useP2pStore.getState().distributionByProject[projectId] : false;
 
   const handleSelect = () => {
-    if (projectId && !isPendingDownload) {
-      navigate(`/projects/${projectId}/images/${image.id}`);
-    }
+    if (!projectId || isPendingDownload || !image.id) return;
+    if (currentImageId !== image.id) setCurrentImageId(image.id);
+    navigate(`/projects/${projectId}/images/${image.id}`);
   };
 
   const handleDelete = async (e: React.MouseEvent) => {

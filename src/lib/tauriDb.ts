@@ -85,6 +85,15 @@ export async function setProjectImageFormat(
   return invoke('update_project_image_format', { projectId, format });
 }
 
+export type WebpQualityPreset = 'lossless' | 'max' | 'high' | 'balanced' | 'fast';
+
+export async function setProjectWebpPreset(
+  projectId: string,
+  preset: WebpQualityPreset
+): Promise<void> {
+  return invoke('update_project_webp_preset', { projectId, preset });
+}
+
 export interface ConversionReport {
   converted: number;
   skipped: number;
@@ -566,12 +575,14 @@ export async function processImageFilters(
   imageId: string,
   clahe: number,
   sharpness: number,
+  claheMode: 'luma' | 'rgb' = 'luma',
 ): Promise<string> {
   return invoke<string>('process_image_filters', {
     projectId,
     imageId,
     clahe,
     sharpness,
+    claheMode,
   });
 }
 

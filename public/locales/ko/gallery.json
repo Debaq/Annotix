@@ -27,6 +27,8 @@
   "selectImage": "이미지를 선택하세요",
   "uploadOrSelect": "이미지를 업로드하거나 선택하세요",
   "uploading": "이미지 업로드 중",
+  "uploadingImages": "이미지 가져오는 중",
+  "copyingFiles": "프로젝트로 파일 복사 중...",
   "extractingPdf": "PDF {{current}}/{{total}}",
   "dropImages": "여기에 이미지를 놓으세요",
   "dropHint": "프로젝트에 추가할 이미지",

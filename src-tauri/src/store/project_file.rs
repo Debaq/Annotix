@@ -37,9 +37,13 @@ pub struct ProjectFile {
     /// Formato de imágenes para uploads/frames nuevos: "jpg" | "webp"
     #[serde(default = "default_image_format", rename = "imageFormat")]
     pub image_format: String,
+    /// Preset de calidad WebP: "lossless" | "max" | "high" | "balanced" | "fast"
+    #[serde(default = "default_webp_preset", rename = "webpQualityPreset")]
+    pub webp_quality_preset: String,
 }
 
 fn default_image_format() -> String { "jpg".to_string() }
+fn default_webp_preset() -> String { "high".to_string() }
 
 /// Estado de descarga P2P pendiente (imágenes por descargar)
 #[derive(Debug, Clone, Serialize, Deserialize)]

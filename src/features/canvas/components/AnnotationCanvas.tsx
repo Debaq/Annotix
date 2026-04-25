@@ -426,7 +426,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       originalImageRef.current = img;
       setProcessedImage(null);
       const saved = image.id ? adjustmentsMapRef.current.get(image.id) : undefined;
-      setImageAdjustments(saved ? { ...saved } : { ...DEFAULT_ADJUSTMENTS });
+      setImageAdjustments(saved ? { ...DEFAULT_ADJUSTMENTS, ...saved } : { ...DEFAULT_ADJUSTMENTS });
 
       const tryFit = (attempt: number) => {
         if (cancelled) return;
@@ -1212,6 +1212,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
         imgId,
         imageAdjustments.clahe,
         imageAdjustments.sharpness,
+        imageAdjustments.claheMode,
       ).then((dataUrl) => {
         if (cancelled) return;
         const img = new window.Image();
@@ -1230,7 +1231,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [imageAdjustments.clahe, imageAdjustments.sharpness, project?.id, image?.id]);
+  }, [imageAdjustments.clahe, imageAdjustments.sharpness, imageAdjustments.claheMode, project?.id, image?.id]);
 
   if (!image) {
     return (

@@ -125,12 +125,17 @@ export function useAnnotations() {
   // Se bloquea durante saves locales para que no sobrescriba cambios optimistas.
   // Después de cada save local, reload() fuerza una recarga que re-dispara este effect.
   useEffect(() => {
-    if (pendingSaves > 0) return;
+    // Si cambió la imagen, sincronizar siempre (aunque haya saves pendientes
+    // de la imagen anterior — los saves se hacen contra el id capturado, no
+    // sobrescriben la nueva). Sin esto, el canvas queda mostrando annotations
+    // viejas al cambiar rápido entre imágenes.
+    const imageChanged = prevImageIdRef.current !== (image?.id ?? null);
+    if (!imageChanged && pendingSaves > 0) return;
     if (image) {
       setAnnotations(image.annotations || []);
-      // Reset undo history al cambiar de imagen
-      if (prevImageIdRef.current !== image.id) {
+      if (imageChanged) {
         prevImageIdRef.current = image.id ?? null;
+        setSelectedAnnotationIds(new Set());
         undoStore.reset(image.id ?? null);
       }
     } else {
@@ -216,17 +221,29 @@ export function useAnnotations() {
   const selectAnnotation = useCallback((id: string | null, addToSelection = false) => {
     if (id === null) {
       setSelectedAnnotationIds(new Set());
-    } else if (addToSelection) {
+      return;
+    }
+    let nextIds: Set<string>;
+    if (addToSelection) {
       const current = useAnnotationStore.getState().selectedAnnotationIds;
-      const next = new Set(current);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      setSelectedAnnotationIds(next);
+      nextIds = new Set(current);
+      if (nextIds.has(id)) nextIds.delete(id);
+      else nextIds.add(id);
     } else {
-      setSelectedAnnotationIds(new Set([id]));
+      nextIds = new Set([id]);
+    }
+    setSelectedAnnotationIds(nextIds);
+
+    // Auto-sync clase activa con la selección si todas comparten la misma clase
+    const allAnns = useAnnotationStore.getState().annotations;
+    const selected = allAnns.filter((a) => nextIds.has(a.id));
+    if (selected.length === 0) return;
+    const firstClassId = selected[0].classId;
+    if (firstClassId == null) return;
+    const allSame = selected.every((a) => a.classId === firstClassId);
+    if (allSame) {
+      const ui = useUIStore.getState();
+      if (ui.activeClassId !== firstClassId) ui.setActiveClassId(firstClassId);
     }
   }, [setSelectedAnnotationIds]);
 
@@ -291,6 +308,19 @@ export function useAnnotations() {
     window.addEventListener('annotix:save', handleSave);
     return () => window.removeEventListener('annotix:save', handleSave);
   }, [saveAnnotations]);
+
+  // Auto-sync activeClassId con la selección (cubre selección por lasso/box/teclado)
+  useEffect(() => {
+    if (selectedAnnotationIds.size === 0) return;
+    const selected = annotations.filter((a) => selectedAnnotationIds.has(a.id));
+    if (selected.length === 0) return;
+    const firstClassId = selected[0].classId;
+    if (firstClassId == null) return;
+    const allSame = selected.every((a) => a.classId === firstClassId);
+    if (!allSame) return;
+    const ui = useUIStore.getState();
+    if (ui.activeClassId !== firstClassId) ui.setActiveClassId(firstClassId);
+  }, [selectedAnnotationIds, annotations]);
 
   return {
     annotations,

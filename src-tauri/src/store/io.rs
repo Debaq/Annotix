@@ -61,9 +61,12 @@ pub struct ProjectSummaryRaw {
     pub folder: Option<String>,
     #[serde(default = "default_image_format", rename = "imageFormat")]
     pub image_format: String,
+    #[serde(default = "default_webp_preset", rename = "webpQualityPreset")]
+    pub webp_quality_preset: String,
 }
 
 fn default_image_format() -> String { "jpg".to_string() }
+fn default_webp_preset() -> String { "high".to_string() }
 
 pub fn read_project_summary(dir: &Path) -> Result<ProjectSummaryRaw, String> {
     let path = dir.join("project.json");

@@ -561,5 +561,19 @@
   "imageFormatInfo": "JPG：すべてのツールと互換性があります。WebP：約25〜30%軽量、ビューアでのデコードが最適化されています。デプロイでもWebPを使用する場合、WebPでの学習は有効です。",
   "convertDataset": "データセットを変換",
   "convertDatasetConfirm": "{{count}}枚の画像を{{format}}に変換します。続行しますか？",
-  "convertDatasetSuccess": "変換済: {{converted}}、スキップ: {{skipped}}、失敗: {{failed}}"
+  "convertDatasetSuccess": "変換済: {{converted}}、スキップ: {{skipped}}、失敗: {{failed}}",
+  "webpPreset": "WebP 品質",
+  "webpPresetLossless": "可逆圧縮 (重要な医療用)",
+  "webpPresetMax": "最大 (95)",
+  "webpPresetHigh": "高 (90, 推奨)",
+  "webpPresetBalanced": "バランス (82)",
+  "webpPresetFast": "高速 (75)",
+  "webpPresetInfo": {
+    "lossless": "ピクセルが正確。情報損失なし。ファイルが2〜3倍大きく、エンコードが遅い。",
+    "max": "ほぼ判別できない品質。標準的な医療画像に推奨。",
+    "high": "優れた品質とサイズのバランス。ほとんどのプロジェクトで安全なデフォルト。",
+    "balanced": "良好なサイズで、損失は高ズーム時のみ見える。大規模で重要でないデータセット向け。",
+    "fast": "より高速なエンコード。プロトタイプや大量インポートに有用。"
+  },
+  "webpMedicalWarning": "可逆でないWebPは画像情報を捨てます。X線、顕微鏡、重要な医療画像には可逆圧縮または最大を使用してください。"
 }

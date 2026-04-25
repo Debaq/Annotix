@@ -3,10 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
 import { useDraggablePanel } from '../hooks/useDraggablePanel';
 
+export type ClaheMode = 'luma' | 'rgb';
+
 export interface ImageAdjustmentValues {
   brightness: number;   // -100 to 100
   contrast: number;     // -100 to 100
   clahe: number;        // 0 to 100
+  claheMode: ClaheMode; // luma = global por luminancia, rgb = independiente por canal
   temperature: number;  // -100 to 100
   sharpness: number;    // 0 to 100
 }
@@ -15,6 +18,7 @@ export const DEFAULT_ADJUSTMENTS: ImageAdjustmentValues = {
   brightness: 0,
   contrast: 0,
   clahe: 0,
+  claheMode: 'luma',
   temperature: 0,
   sharpness: 0,
 };
@@ -150,6 +154,29 @@ export const ImageAdjustments: React.FC<ImageAdjustmentsProps> = ({ values, onCh
               max={100}
               onChange={update('clahe')}
             />
+            <div className="flex items-center gap-1 pl-[68px]">
+              {(['luma', 'rgb'] as const).map((m) => {
+                const active = values.claheMode === m;
+                return (
+                  <button
+                    key={m}
+                    onClick={() => onChange({ ...values, claheMode: m })}
+                    className="px-1.5 py-0.5 rounded text-[0.55rem] font-medium transition-colors"
+                    style={{
+                      background: active ? 'var(--annotix-primary)' : 'var(--annotix-white)',
+                      color: active ? 'white' : 'var(--annotix-gray)',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                    title={m === 'luma'
+                      ? t('canvas.claheLumaTip', 'Equaliza por luminancia (preserva color)')
+                      : t('canvas.claheRgbTip', 'Equaliza R/G/B independientes (puede corregir dominantes)')}
+                  >
+                    {m === 'luma' ? t('canvas.claheLuma', 'Luma') : 'RGB'}
+                  </button>
+                );
+              })}
+            </div>
             <SliderRow
               icon="fa-thermometer-half"
               label={t('canvas.temperature', 'Temperatura')}

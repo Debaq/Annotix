@@ -16,6 +16,10 @@ export const projectService = {
     await tauriDb.setProjectImageFormat(id, format);
   },
 
+  async setWebpPreset(id: string, preset: tauriDb.WebpQualityPreset): Promise<void> {
+    await tauriDb.setProjectWebpPreset(id, preset);
+  },
+
   async convertImages(id: string, targetFormat: 'jpg' | 'webp') {
     return await tauriDb.convertProjectImages(id, targetFormat);
   },

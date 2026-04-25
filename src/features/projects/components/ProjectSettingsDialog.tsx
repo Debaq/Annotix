@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Project, ClassDefinition } from '@/lib/db';
+import type { WebpQualityPreset } from '@/lib/tauriDb';
 
 interface ProjectSettingsDialogProps {
   project: Project;
@@ -29,6 +30,7 @@ export function ProjectSettingsDialog({ project, trigger }: ProjectSettingsDialo
   const [name, setName] = useState(project.name);
   const [classes, setClasses] = useState<ClassDefinition[]>(project.classes);
   const [imageFormat, setImageFormat] = useState<'jpg' | 'webp'>(project.imageFormat ?? 'jpg');
+  const [webpPreset, setWebpPreset] = useState<WebpQualityPreset>(project.webpQualityPreset ?? 'high');
   const [isUpdating, setIsUpdating] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [conversionMsg, setConversionMsg] = useState<string | null>(null);
@@ -39,6 +41,7 @@ export function ProjectSettingsDialog({ project, trigger }: ProjectSettingsDialo
       setName(project.name);
       setClasses(project.classes);
       setImageFormat(project.imageFormat ?? 'jpg');
+      setWebpPreset(project.webpQualityPreset ?? 'high');
       setConversionMsg(null);
     }
   }, [open, project]);
@@ -56,6 +59,17 @@ export function ProjectSettingsDialog({ project, trigger }: ProjectSettingsDialo
       }
     }
   };
+
+  const handleWebpPresetChange = async (next: WebpQualityPreset) => {
+    setWebpPreset(next);
+    try {
+      await projectService.setWebpPreset(project.id!, next);
+    } catch (e) {
+      console.error('Failed to set webp preset:', e);
+    }
+  };
+
+  const lossyPreset = webpPreset !== 'lossless' && webpPreset !== 'max';
 
   const handleConvertDataset = async () => {
     if (!project.id) return;
@@ -180,6 +194,41 @@ export function ProjectSettingsDialog({ project, trigger }: ProjectSettingsDialo
               </p>
             )}
           </div>
+
+          {imageFormat === 'webp' && (
+            <div className="space-y-2">
+              <Label htmlFor="edit-webp-preset">{t('project.webpPreset')}</Label>
+              <select
+                id="edit-webp-preset"
+                value={webpPreset}
+                onChange={(e) => handleWebpPresetChange(e.target.value as WebpQualityPreset)}
+                className="w-full border rounded px-3 py-2 bg-background text-foreground text-sm"
+              >
+                <option value="lossless">{t('project.webpPresetLossless')}</option>
+                <option value="max">{t('project.webpPresetMax')}</option>
+                <option value="high">{t('project.webpPresetHigh')}</option>
+                <option value="balanced">{t('project.webpPresetBalanced')}</option>
+                <option value="fast">{t('project.webpPresetFast')}</option>
+              </select>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <i className="fas fa-info-circle mr-1.5" />
+                {t(`project.webpPresetInfo.${webpPreset}`)}
+              </p>
+              {lossyPreset && (
+                <div
+                  className="text-xs rounded px-3 py-2 border"
+                  style={{
+                    background: 'rgba(255, 193, 7, 0.12)',
+                    borderColor: 'rgba(255, 193, 7, 0.5)',
+                    color: 'var(--annotix-text)',
+                  }}
+                >
+                  <i className="fas fa-triangle-exclamation mr-1.5" style={{ color: '#ff9800' }} />
+                  {t('project.webpMedicalWarning')}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <DialogFooter>

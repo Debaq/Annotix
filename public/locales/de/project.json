@@ -561,5 +561,19 @@
   "imageFormatInfo": "JPG: mit allen Werkzeugen kompatibel. WebP: ~25-30% kleiner, optimiertes Dekodieren im Viewer. Training mit WebP ist gültig, wenn das Deployment ebenfalls WebP verwendet.",
   "convertDataset": "Datensatz konvertieren",
   "convertDatasetConfirm": "{{count}} Bilder werden zu {{format}} konvertiert. Fortfahren?",
-  "convertDatasetSuccess": "Konvertiert: {{converted}}, übersprungen: {{skipped}}, fehlgeschlagen: {{failed}}"
+  "convertDatasetSuccess": "Konvertiert: {{converted}}, übersprungen: {{skipped}}, fehlgeschlagen: {{failed}}",
+  "webpPreset": "WebP-Qualität",
+  "webpPresetLossless": "Verlustfrei (kritisch medizinisch)",
+  "webpPresetMax": "Maximum (95)",
+  "webpPresetHigh": "Hoch (90, empfohlen)",
+  "webpPresetBalanced": "Ausgewogen (82)",
+  "webpPresetFast": "Schnell (75)",
+  "webpPresetInfo": {
+    "lossless": "Exakte Pixel. Kein Informationsverlust. Dateien 2-3× größer und langsamere Kodierung.",
+    "max": "Qualität nahezu nicht unterscheidbar. Empfohlen für medizinische Standardbilder.",
+    "high": "Hervorragende Qualität bei ausgewogener Größe. Sicherer Standard für die meisten Projekte.",
+    "balanced": "Gute Größe, Verlust nur bei hohem Zoom sichtbar. Große, nicht kritische Datensätze.",
+    "fast": "Schnellere Kodierung. Nützlich für Prototypen oder Massenimporte."
+  },
+  "webpMedicalWarning": "Verlustbehaftetes WebP verwirft Bildinformationen. Für Röntgen-, Mikroskopie- oder kritische medizinische Bilder Verlustfrei oder Maximum verwenden."
 }

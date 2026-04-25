@@ -561,5 +561,19 @@
   "imageFormatInfo": "JPG: 모든 도구와 호환됩니다. WebP: 약 25~30% 작은 용량, 뷰어에서 최적화된 디코딩. 배포에서도 WebP를 사용한다면 WebP로 학습해도 유효합니다.",
   "convertDataset": "데이터셋 변환",
   "convertDatasetConfirm": "{{count}}개의 이미지를 {{format}}(으)로 변환합니다. 계속하시겠습니까?",
-  "convertDatasetSuccess": "변환됨: {{converted}}, 건너뜀: {{skipped}}, 실패: {{failed}}"
+  "convertDatasetSuccess": "변환됨: {{converted}}, 건너뜀: {{skipped}}, 실패: {{failed}}",
+  "webpPreset": "WebP 품질",
+  "webpPresetLossless": "무손실 (의료 중요)",
+  "webpPresetMax": "최대 (95)",
+  "webpPresetHigh": "높음 (90, 권장)",
+  "webpPresetBalanced": "균형 (82)",
+  "webpPresetFast": "빠름 (75)",
+  "webpPresetInfo": {
+    "lossless": "픽셀이 정확합니다. 정보 손실 없음. 파일이 2~3배 크고 인코딩이 느립니다.",
+    "max": "거의 구별 불가능한 품질. 표준 의료 이미지에 권장됩니다.",
+    "high": "탁월한 품질과 균형 잡힌 크기. 대부분의 프로젝트에 안전한 기본값.",
+    "balanced": "좋은 크기, 손실은 높은 줌에서만 보임. 대규모 비중요 데이터셋에 적합.",
+    "fast": "더 빠른 인코딩. 프로토타입이나 대량 가져오기에 유용."
+  },
+  "webpMedicalWarning": "손실이 있는 WebP는 이미지 정보를 버립니다. X-ray, 현미경 또는 중요한 의료 이미지의 경우 무손실 또는 최대를 사용하세요."
 }

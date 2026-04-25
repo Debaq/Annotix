@@ -14,7 +14,10 @@ export async function pickImages(): Promise<string[] | null> {
     filters: [
       {
         name: 'Imágenes y PDF',
-        extensions: ['jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'pdf'],
+        extensions: [
+          'jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'pdf',
+          'JPG', 'JPEG', 'PNG', 'WEBP', 'BMP', 'GIF', 'PDF',
+        ],
       },
     ],
   });
@@ -34,7 +37,10 @@ export async function pickVideo(): Promise<string | null> {
     filters: [
       {
         name: 'Video',
-        extensions: ['mp4', 'avi', 'mov', 'mkv', 'webm'],
+        extensions: [
+          'mp4', 'avi', 'mov', 'mkv', 'webm',
+          'MP4', 'AVI', 'MOV', 'MKV', 'WEBM',
+        ],
       },
     ],
   });

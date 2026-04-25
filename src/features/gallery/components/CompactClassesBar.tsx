@@ -1,14 +1,24 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useUIStore } from '../../core/store/uiStore';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { CLASS_SHORTCUTS } from '../../core/constants';
 import { useClassCounts } from '../../projects/hooks/useClassCounts';
+import { useAnnotationStore } from '../../canvas/hooks/useAnnotations';
 import { cn } from '@/lib/utils';
 
 export function CompactClassesBar() {
   const { project } = useCurrentProject();
   const { activeClassId, setActiveClassId } = useUIStore();
   const { byClass: globalByClass } = useClassCounts();
+  const annotations = useAnnotationStore((s) => s.annotations);
+  const imageByClass = useMemo(() => {
+    const m: Record<number, number> = {};
+    for (const a of annotations) {
+      if (a.classId == null) continue;
+      m[a.classId] = (m[a.classId] ?? 0) + 1;
+    }
+    return m;
+  }, [annotations]);
   const listRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
 
@@ -56,7 +66,9 @@ export function CompactClassesBar() {
             style={{ backgroundColor: cls.color }}
           />
           <span className="annotix-compact-class-name">{cls.name}</span>
-          <span className="annotix-compact-class-count">{globalByClass[cls.id] ?? 0}</span>
+          <span className="annotix-compact-class-count">
+            {imageByClass[cls.id] ?? 0}/{globalByClass[cls.id] ?? 0}
+          </span>
         </button>
       ))}
     </div>

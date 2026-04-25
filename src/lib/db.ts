@@ -20,6 +20,7 @@ export interface Project {
   hasP2pConfig?: boolean;
   folder?: string;
   imageFormat?: 'jpg' | 'webp';
+  webpQualityPreset?: 'lossless' | 'max' | 'high' | 'balanced' | 'fast';
 }
 
 export interface ClassDefinition {

@@ -119,13 +119,62 @@ impl KaggleRunner {
             .json(&metadata)
             .send()
             .map_err(|e| format!("Error creando dataset Kaggle: {}", e))?;
-        if !create_resp.status().is_success() {
-            let status = create_resp.status();
-            let body = create_resp.text().unwrap_or_default();
-            return Err(format!("Error Kaggle dataset create ({}): {}", status, body.chars().take(300).collect::<String>()));
+        let create_status = create_resp.status();
+        let create_body = create_resp.text().unwrap_or_default();
+        log::info!("Kaggle dataset create response ({}): {}", create_status, create_body.chars().take(500).collect::<String>());
+        if !create_status.is_success() {
+            return Err(format!("Error Kaggle dataset create ({}): {}", create_status, create_body.chars().take(300).collect::<String>()));
+        }
+        if let Ok(v) = serde_json::from_str::<serde_json::Value>(&create_body) {
+            if v.get("hasError").and_then(|b| b.as_bool()).unwrap_or(false)
+                || !v.get("error").and_then(|e| e.as_str()).unwrap_or("").is_empty()
+            {
+                return Err(format!(
+                    "Error Kaggle dataset create: {}",
+                    v.get("error").and_then(|e| e.as_str()).unwrap_or(&create_body)
+                ));
+            }
         }
 
+        // Esperar a que el dataset esté procesado
+        self.wait_dataset_ready(&self.username, &dataset_slug_only)?;
+
         Ok(dataset_ref)
+    }
+
+    fn wait_dataset_ready(&self, owner: &str, slug: &str) -> Result<(), String> {
+        let url = format!("https://www.kaggle.com/api/v1/datasets/status/{}/{}", owner, slug);
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(300);
+        loop {
+            let resp = self.client()
+                .get(&url)
+                .header("Authorization", self.auth_header())
+                .send()
+                .map_err(|e| format!("Error consultando status dataset: {}", e))?;
+            let status_http = resp.status();
+            let body = resp.text().unwrap_or_default();
+            if status_http.is_success() {
+                let status_str = serde_json::from_str::<serde_json::Value>(&body)
+                    .ok()
+                    .and_then(|v| v.get("status").and_then(|s| s.as_str()).map(String::from))
+                    .unwrap_or_else(|| body.trim().trim_matches('"').to_string());
+                let s = status_str.to_lowercase();
+                if s == "complete" || s == "ready" {
+                    log::info!("Kaggle dataset {}/{} listo", owner, slug);
+                    return Ok(());
+                }
+                if s == "error" || s == "failed" {
+                    return Err(format!("Dataset Kaggle falló al procesar: {}", body));
+                }
+                log::info!("Esperando dataset Kaggle ({}/{}): status={}", owner, slug, status_str);
+            } else {
+                log::warn!("Status dataset HTTP {} body={}", status_http, body.chars().take(200).collect::<String>());
+            }
+            if std::time::Instant::now() >= deadline {
+                return Err("Timeout esperando que dataset Kaggle esté listo (5 min)".to_string());
+            }
+            std::thread::sleep(std::time::Duration::from_secs(5));
+        }
     }
 
     fn generate_notebook_source(
@@ -275,23 +324,26 @@ impl CloudRunner for KaggleRunner {
 
         // 2. Generate notebook
         let notebook_source = self.generate_notebook_source(request, &dataset_slug, project_classes);
-        let kernel_slug = format!("{}/annotix-train-{}", self.username, uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("k"));
+        let slug_short = uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("k").to_string();
+        let kernel_slug_only = format!("annotix-train-{}", slug_short);
+        let kernel_slug = format!("{}/{}", self.username, kernel_slug_only);
 
         let accelerator = config.kaggle_accelerator.as_deref().unwrap_or("gpu");
 
         let kernel_push = serde_json::json!({
-            "id": kernel_slug,
-            "title": "Annotix Training",
-            "code_file_type": "script",
+            "slug": kernel_slug,
+            "newTitle": format!("Annotix Training {}", slug_short),
             "language": "python",
-            "kernel_type": "script",
-            "is_private": true,
-            "enable_gpu": accelerator != "none",
-            "enable_tpu": accelerator == "tpu",
-            "enable_internet": true,
-            "dataset_sources": [dataset_slug],
-            "competition_sources": [],
-            "kernel_sources": [],
+            "kernelType": "script",
+            "isPrivate": true,
+            "enableGpu": accelerator != "none",
+            "enableTpu": accelerator == "tpu",
+            "enableInternet": true,
+            "datasetDataSources": [dataset_slug],
+            "competitionDataSources": [],
+            "kernelDataSources": [],
+            "modelDataSources": [],
+            "categoryIds": [],
             "text": notebook_source,
         });
 
@@ -302,17 +354,41 @@ impl CloudRunner for KaggleRunner {
             .send()
             .map_err(|e| format!("Error creando kernel en Kaggle: {}", e))?;
 
-        if !resp.status().is_success() {
-            let body = resp.text().unwrap_or_default();
-            return Err(format!("Error Kaggle kernel push: {}", body));
+        let status = resp.status();
+        let body_text = resp.text().unwrap_or_default();
+        log::info!("Kaggle kernel push response ({}): {}", status, body_text.chars().take(500).collect::<String>());
+
+        if !status.is_success() {
+            return Err(format!("Error Kaggle kernel push ({}): {}", status, body_text));
         }
 
-        let resp_body: serde_json::Value = resp.json().map_err(|e| e.to_string())?;
+        let resp_body: serde_json::Value = serde_json::from_str(&body_text)
+            .map_err(|e| format!("Respuesta push inválida: {} | body: {}", e, body_text))?;
+
+        // Kaggle a veces devuelve 200 con error en body
+        if let Some(err_msg) = resp_body.get("message").and_then(|v| v.as_str()) {
+            if resp_body.get("code").and_then(|v| v.as_i64()).map(|c| c >= 400).unwrap_or(false) {
+                return Err(format!("Error Kaggle kernel push: {}", err_msg));
+            }
+        }
+
+        // Verificar que se creó (debe traer ref o url)
+        let kernel_ref = resp_body.get("ref").and_then(|v| v.as_str()).map(String::from);
+        let kernel_url = resp_body.get("url").and_then(|v| v.as_str()).map(String::from);
+        if kernel_ref.is_none() && kernel_url.is_none() {
+            return Err(format!(
+                "Kaggle no creó el kernel. Respuesta: {}. Verifica que tu token tenga scope 'kernels' (los KGAT_ tokens requieren permisos de Kernels al crearlos).",
+                body_text.chars().take(300).collect::<String>()
+            ));
+        }
         let _version_number = resp_body["versionNumber"].as_i64().unwrap_or(1);
 
+        let final_slug = kernel_ref.unwrap_or_else(|| kernel_slug.clone());
+        let final_url = kernel_url.unwrap_or_else(|| format!("https://www.kaggle.com/code/{}", final_slug));
+
         Ok(CloudJobHandle {
-            job_id: kernel_slug.clone(),
-            job_url: Some(format!("https://www.kaggle.com/code/{}", kernel_slug)),
+            job_id: final_slug,
+            job_url: Some(final_url),
             provider: CloudProvider::Kaggle,
         })
     }

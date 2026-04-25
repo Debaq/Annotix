@@ -35,6 +35,8 @@ pub struct ProjectSummary {
     pub inference_model_count: usize,
     #[serde(rename = "imageFormat")]
     pub image_format: String,
+    #[serde(rename = "webpQualityPreset")]
+    pub webp_quality_preset: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -89,6 +91,7 @@ impl AppState {
             folder: None,
             tts_sentences: vec![],
             image_format,
+            webp_quality_preset: "high".to_string(),
         };
 
         io::write_project(&project_dir, &project)?;
@@ -177,6 +180,7 @@ impl AppState {
                 folder: summary_raw.folder,
                 inference_model_count: summary_raw.inference_models.0,
                 image_format: summary_raw.image_format,
+                webp_quality_preset: summary_raw.webp_quality_preset,
             });
         }
 
@@ -207,6 +211,7 @@ impl AppState {
                 folder: pf.folder.clone(),
                 inference_model_count: pf.inference_models.len(),
                 image_format: pf.image_format.clone(),
+                webp_quality_preset: pf.webp_quality_preset.clone(),
             }
         }).map(Some)
     }
@@ -217,6 +222,17 @@ impl AppState {
         }
         self.with_project_mut(project_id, |pf| {
             pf.image_format = format.to_string();
+            pf.updated = js_timestamp();
+        })
+    }
+
+    pub fn update_project_webp_preset(&self, project_id: &str, preset: &str) -> Result<(), String> {
+        match preset {
+            "lossless" | "max" | "high" | "balanced" | "fast" => {}
+            _ => return Err(format!("Preset WebP no soportado: {}", preset)),
+        }
+        self.with_project_mut(project_id, |pf| {
+            pf.webp_quality_preset = preset.to_string();
             pf.updated = js_timestamp();
         })
     }
