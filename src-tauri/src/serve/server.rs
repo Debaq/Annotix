@@ -1,5 +1,6 @@
 use std::net::SocketAddr;
 
+use rand::RngCore;
 use serde::Serialize;
 use tokio::sync::RwLock;
 use tokio::task::JoinHandle;
@@ -19,6 +20,7 @@ pub struct ServeInfo {
     pub firewall_help: String,
     #[serde(rename = "autoSave")]
     pub auto_save: bool,
+    pub token: String,
 }
 
 struct ServeSession {
@@ -26,8 +28,21 @@ struct ServeSession {
     port: u16,
     local_ips: Vec<String>,
     auto_save: bool,
+    token: String,
     shutdown_tx: tokio::sync::watch::Sender<bool>,
     handle: JoinHandle<()>,
+}
+
+fn generate_token() -> String {
+    let mut bytes = [0u8; 32];
+    rand::rngs::OsRng.fill_bytes(&mut bytes);
+    bytes.iter().map(|b| format!("{:02x}", b)).collect()
+}
+
+fn urls_with_token(ips: &[String], port: u16, token: &str) -> Vec<String> {
+    ips.iter()
+        .map(|ip| format!("http://{}:{}/?token={}", ip, port, token))
+        .collect()
 }
 
 /// Estado gestionado por Tauri para el servidor HTTP
@@ -65,8 +80,9 @@ impl ServeState {
 
         let local_ips = get_local_ips();
         let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
+        let token = generate_token();
 
-        let router = routes::build_router(project_ids.clone(), app_handle);
+        let router = routes::build_router(project_ids.clone(), app_handle, token.clone());
 
         // Intentar el puerto solicitado; si está ocupado, buscar uno libre
         let listener = find_available_port(port).await
@@ -87,9 +103,7 @@ impl ServeState {
             let _ = server.await;
         });
 
-        let urls: Vec<String> = local_ips.iter()
-            .map(|ip| format!("http://{}:{}", ip, actual_port))
-            .collect();
+        let urls = urls_with_token(&local_ips, actual_port, &token);
 
         tokio::time::sleep(std::time::Duration::from_millis(200)).await;
         let reachable = self_check_tcp(&local_ips, actual_port).await;
@@ -103,6 +117,7 @@ impl ServeState {
             reachable,
             firewall_help,
             auto_save,
+            token: token.clone(),
         };
 
         *self.inner.write().await = Some(ServeSession {
@@ -110,6 +125,7 @@ impl ServeState {
             port: actual_port,
             local_ips,
             auto_save,
+            token,
             shutdown_tx,
             handle,
         });
@@ -138,11 +154,12 @@ impl ServeState {
         Some(ServeInfo {
             project_ids: session.project_ids.clone(),
             port: session.port,
-            urls: session.local_ips.iter().map(|ip| format!("http://{}:{}", ip, session.port)).collect(),
+            urls: urls_with_token(&session.local_ips, session.port, &session.token),
             active: true,
             reachable,
             firewall_help: get_firewall_help(session.port),
             auto_save: session.auto_save,
+            token: session.token.clone(),
         })
     }
 }

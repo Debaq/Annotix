@@ -9,6 +9,7 @@ interface ServeInfo {
   reachable: boolean;
   firewallHelp: string;
   autoSave: boolean;
+  token: string;
 }
 
 interface ProjectSummary {

@@ -1,12 +1,14 @@
 use axum::{
     Router,
-    extract::{Path, State},
+    extract::{Path, Request, State},
     http::{StatusCode, header},
-    response::{Html, IntoResponse},
+    middleware::{self, Next},
+    response::{Html, IntoResponse, Response},
     routing::{get, post},
     Json,
 };
 use serde::{Deserialize, Serialize};
+use subtle::ConstantTimeEq;
 use tauri::{Emitter, Manager};
 
 use crate::store::AppState;
@@ -20,6 +22,7 @@ use super::web_ui;
 pub struct AppServeState {
     pub app_handle: tauri::AppHandle,
     pub project_ids: Vec<String>,
+    pub token: String,
 }
 
 impl AppServeState {
@@ -42,11 +45,11 @@ impl AppServeState {
 pub fn build_router(
     project_ids: Vec<String>,
     app_handle: tauri::AppHandle,
+    token: String,
 ) -> Router {
-    let state = AppServeState { app_handle, project_ids };
+    let state = AppServeState { app_handle, project_ids, token };
 
-    Router::new()
-        .route("/", get(serve_index))
+    let protected = Router::new()
         .route("/api/projects", get(list_projects))
         .route("/api/projects/{project_id}", get(get_project_info))
         .route("/api/projects/{project_id}/images", get(list_images))
@@ -55,8 +58,73 @@ pub fn build_router(
         .route("/api/projects/{project_id}/images/{image_id}/thumbnail", get(get_image_thumbnail))
         .route("/api/projects/{project_id}/images/{image_id}/annotations", get(get_annotations))
         .route("/api/projects/{project_id}/images/{image_id}/annotations", post(save_annotations))
+        .layer(middleware::from_fn_with_state(state.clone(), auth_middleware));
+
+    Router::new()
+        .route("/", get(serve_index))
         .route("/api/health", get(health_check))
+        .merge(protected)
         .with_state(state)
+}
+
+// ─── Auth middleware ────────────────────────────────────────────────────────
+
+async fn auth_middleware(
+    State(state): State<AppServeState>,
+    req: Request,
+    next: Next,
+) -> Result<Response, StatusCode> {
+    let provided = extract_token(&req);
+    let provided = match provided {
+        Some(t) => t,
+        None => return Err(StatusCode::UNAUTHORIZED),
+    };
+    let expected = state.token.as_bytes();
+    let got = provided.as_bytes();
+    if expected.len() != got.len() || expected.ct_eq(got).unwrap_u8() != 1 {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+    Ok(next.run(req).await)
+}
+
+fn extract_token(req: &Request) -> Option<String> {
+    if let Some(h) = req.headers().get(header::AUTHORIZATION) {
+        if let Ok(s) = h.to_str() {
+            if let Some(rest) = s.strip_prefix("Bearer ") {
+                return Some(rest.trim().to_string());
+            }
+        }
+    }
+    let q = req.uri().query()?;
+    for pair in q.split('&') {
+        let mut it = pair.splitn(2, '=');
+        let k = it.next()?;
+        let v = it.next()?;
+        if k == "token" {
+            return Some(urlencoding_decode(v));
+        }
+    }
+    None
+}
+
+fn urlencoding_decode(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let bytes = s.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'%' && i + 2 < bytes.len() {
+            let hi = (bytes[i + 1] as char).to_digit(16);
+            let lo = (bytes[i + 2] as char).to_digit(16);
+            if let (Some(h), Some(l)) = (hi, lo) {
+                out.push(((h * 16 + l) as u8) as char);
+                i += 3;
+                continue;
+            }
+        }
+        if bytes[i] == b'+' { out.push(' '); } else { out.push(bytes[i] as char); }
+        i += 1;
+    }
+    out
 }
 
 // ─── Handlers ───────────────────────────────────────────────────────────────

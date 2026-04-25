@@ -584,9 +584,17 @@ const S = {
 };
 
 /* ─── API ────────────────────────────────────────────────────────────────── */
+const TOKEN = (() => {
+  const u = new URL(window.location.href);
+  const t = u.searchParams.get('token') || sessionStorage.getItem('annotix_token') || '';
+  if (t) sessionStorage.setItem('annotix_token', t);
+  return t;
+})();
+const authHeaders = (extra = {}) => TOKEN ? { Authorization: `Bearer ${TOKEN}`, ...extra } : extra;
+const withTok = url => TOKEN ? `${url}${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(TOKEN)}` : url;
 const API = {
   async get(url) {
-    const r = await fetch(url);
+    const r = await fetch(url, { headers: authHeaders() });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return r.json();
   },
@@ -594,13 +602,13 @@ const API = {
   getProject(pid) { return this.get(`/api/projects/${pid}`); },
   getImages(pid) { return this.get(`/api/projects/${pid}/images`); },
   getImage(pid, id) { return this.get(`/api/projects/${pid}/images/${id}`); },
-  imgUrl(pid, id) { return `/api/projects/${pid}/images/${id}/file`; },
-  thumbUrl(pid, id) { return `/api/projects/${pid}/images/${id}/thumbnail`; },
+  imgUrl(pid, id) { return withTok(`/api/projects/${pid}/images/${id}/file`); },
+  thumbUrl(pid, id) { return withTok(`/api/projects/${pid}/images/${id}/thumbnail`); },
   async saveAnnotations(pid, imageId, anns) {
     const payload = JSON.stringify({ annotations: anns });
     const r = await fetch(`/api/projects/${pid}/images/${imageId}/annotations`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: payload,
     });
     if (!r.ok) {
