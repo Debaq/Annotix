@@ -458,27 +458,51 @@ export function onProjectsChanged(callback: () => void): Promise<UnlistenFn> {
   return listen('db:projects-changed', () => callback());
 }
 
+/** Payload enriquecido emitido por el backend (>= 0.x).
+ * Mantenemos compat con el formato legacy (string proyecto). */
+export interface ImagesChangedPayload {
+  projectId?: string | null;
+  action?: 'added' | 'updated' | 'deleted';
+  imageIds?: string[];
+}
+
+function parseImagesChanged(payload: unknown): ImagesChangedPayload {
+  if (typeof payload === 'string') return { projectId: payload };
+  if (payload && typeof payload === 'object') return payload as ImagesChangedPayload;
+  return {};
+}
+
 export function onImagesChanged(
-  callback: (projectId: string) => void
+  callback: (projectId: string | null | undefined, payload: ImagesChangedPayload) => void
 ): Promise<UnlistenFn> {
-  return listen<string>('db:images-changed', (event) =>
-    callback(event.payload)
-  );
+  return listen<unknown>('db:images-changed', (event) => {
+    const parsed = parseImagesChanged(event.payload);
+    callback(parsed.projectId ?? null, parsed);
+  });
+}
+
+function parseProjectIdPayload(payload: unknown): string | null {
+  if (typeof payload === 'string') return payload;
+  if (payload && typeof payload === 'object') {
+    const obj = payload as { projectId?: string | null };
+    return obj.projectId ?? null;
+  }
+  return null;
 }
 
 export function onTimeseriesChanged(
-  callback: (projectId: string) => void
+  callback: (projectId: string | null) => void
 ): Promise<UnlistenFn> {
-  return listen<string>('db:timeseries-changed', (event) =>
-    callback(event.payload)
+  return listen<unknown>('db:timeseries-changed', (event) =>
+    callback(parseProjectIdPayload(event.payload))
   );
 }
 
 export function onVideosChanged(
-  callback: (projectId: string) => void
+  callback: (projectId: string | null) => void
 ): Promise<UnlistenFn> {
-  return listen<string>('db:videos-changed', (event) =>
-    callback(event.payload)
+  return listen<unknown>('db:videos-changed', (event) =>
+    callback(parseProjectIdPayload(event.payload))
   );
 }
 

@@ -801,5 +801,8 @@ fn save_ai_annotations(
         }
     });
     // Notificar al frontend que las anotaciones cambiaron
-    let _ = app.emit("db:images-changed", project_id);
+    let _ = app.emit("db:images-changed", serde_json::json!({
+        "projectId": project_id,
+        "action": "updated",
+    }));
 }

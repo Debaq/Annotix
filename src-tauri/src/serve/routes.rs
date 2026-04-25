@@ -287,7 +287,11 @@ async fn save_annotations(
     state.app_state().save_annotations(&project_id, &image_id, &parsed.annotations)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
 
-    match state.app_handle.emit("db:images-changed", &project_id) {
+    match state.app_handle.emit("db:images-changed", serde_json::json!({
+        "projectId": &project_id,
+        "action": "updated",
+        "imageIds": [&image_id],
+    })) {
         Ok(_) => log::info!("Evento db:images-changed emitido para {}", project_id),
         Err(e) => log::error!("Error emitiendo evento: {}", e),
     }

@@ -949,7 +949,11 @@ async fn download_single_image(
                         img.download_status = None;
                     }
                 });
-                let _ = app_handle.emit("db:images-changed", &*project_id);
+                let _ = app_handle.emit("db:images-changed", serde_json::json!({
+                    "projectId": &*project_id,
+                    "action": "updated",
+                    "imageIds": [&image_id],
+                }));
                 log::info!("Imagen P2P descargada: {} ({} bytes)", image_id, blob_data.len());
                 return;
             }
@@ -1125,7 +1129,11 @@ pub fn start_doc_watcher(
                                             pf.updated = now;
                                         });
 
-                                        let _ = app_handle.emit("db:images-changed", &*project_id);
+                                        let _ = app_handle.emit("db:images-changed", serde_json::json!({
+                                            "projectId": &*project_id,
+                                            "action": "added",
+                                            "imageIds": [&image_id],
+                                        }));
                                         log::info!("Nueva imagen remota agregada: {} en proyecto {}", image_id, project_id);
 
                                         // Descargar blob en background

@@ -98,7 +98,11 @@ pub async fn extract_pdf_pages(
     .await
     .map_err(|e| format!("Error en tarea de extracción: {}", e))??;
 
-    let _ = app.emit("db:images-changed", &project_id);
+    let _ = app.emit("db:images-changed", serde_json::json!({
+        "projectId": &project_id,
+        "action": "added",
+        "imageIds": &ids,
+    }));
     let _ = app.emit(
         "pdf:extraction-progress",
         serde_json::json!({
@@ -178,7 +182,10 @@ fn extract_pages_blocking(
         if pending_entries.len() >= batch_size {
             let batch = std::mem::take(&mut pending_entries);
             state.commit_image_entries(project_id, batch)?;
-            let _ = app.emit("db:images-changed", project_id);
+            let _ = app.emit("db:images-changed", serde_json::json!({
+                "projectId": project_id,
+                "action": "added",
+            }));
         }
 
         let progress = (((i as f64 + 1.0) / total_pages as f64) * 100.0).min(99.0) as i32;
