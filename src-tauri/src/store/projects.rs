@@ -442,7 +442,8 @@ impl AppState {
             pf.images.iter().find(|i| i.id == image_id).map(|i| i.file.clone())
         })?;
         let file = file.ok_or_else(|| format!("Imagen {} no encontrada", image_id))?;
-        let path = self.project_dir(project_id)?.join("images").join(&file);
+        let images_dir = self.project_dir(project_id)?.join("images");
+        let path = crate::store::safe_path::safe_join(&images_dir, &file)?;
         if !path.exists() {
             return Err(format!("Archivo de imagen no encontrado: {:?}", path));
         }

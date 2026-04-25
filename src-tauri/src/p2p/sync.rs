@@ -6,6 +6,7 @@ use tauri::{Emitter, Manager};
 use tokio::pin;
 
 use crate::store::project_file::{AnnotationEntry, ClassDef, ImageEntry, ProjectFile};
+use crate::store::safe_path::sanitize_filename;
 
 use super::node::{IrohNode, P2pState};
 use super::{ImageLockInfo, SessionRules};
@@ -361,7 +362,8 @@ pub async fn doc_to_project_metadata(
                 .and_then(|b| serde_json::from_slice(b).ok())
                 .unwrap_or_default();
 
-            let file_name = meta["file"].as_str().unwrap_or(&format!("{}.jpg", img_id)).to_string();
+            let raw_file = meta["file"].as_str().unwrap_or(&format!("{}.jpg", img_id)).to_string();
+            let file_name = sanitize_filename(&raw_file);
 
             let now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -510,6 +512,8 @@ pub async fn download_project_images(
     let retry_delay = std::time::Duration::from_secs(3);
 
     for (img_id, file_name) in &pending_images {
+        let file_name = sanitize_filename(file_name);
+        let file_name = &file_name;
         let blob_key = format!("images/{}/blob", img_id);
 
         let mut success = false;
@@ -847,6 +851,7 @@ async fn download_single_image(
     file_name: String,
     app_handle: tauri::AppHandle,
 ) {
+    let file_name = sanitize_filename(&file_name);
     let p2p = app_handle.state::<P2pState>();
     let app_state = app_handle.state::<crate::store::state::AppState>();
 
@@ -1095,7 +1100,7 @@ pub fn start_doc_watcher(
                                     }).unwrap_or(true);
 
                                     if !exists {
-                                        let file_name = img_meta["file"].as_str().unwrap_or("").to_string();
+                                        let file_name = sanitize_filename(img_meta["file"].as_str().unwrap_or(""));
                                         let img_name = img_meta["name"].as_str().unwrap_or("").to_string();
                                         let width = img_meta["width"].as_u64().unwrap_or(0) as u32;
                                         let height = img_meta["height"].as_u64().unwrap_or(0) as u32;

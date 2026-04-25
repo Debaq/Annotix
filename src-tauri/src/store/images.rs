@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::store::project_file::{AnnotationEntry, ImageEntry, PredictionEntry};
+use crate::store::safe_path::sanitize_filename;
 use crate::store::state::AppState;
 
 /// Calidad JPG usada para conversión retroactiva / normalización.
@@ -179,7 +180,8 @@ impl AppState {
             .map_err(|e| format!("Error creando directorio de imágenes: {}", e))?;
 
         let id = uuid::Uuid::new_v4().to_string();
-        let unique_name = format!("{}_{}", id, file_name);
+        let safe_file = sanitize_filename(file_name);
+        let unique_name = format!("{}_{}", id, safe_file);
         let dest = images_dir.join(&unique_name);
 
         std::fs::write(&dest, data)
@@ -268,12 +270,13 @@ impl AppState {
                 let source_matches_target = source_ext == target_format
                     || (target_format == "jpg" && source_ext == "jpeg");
 
+                let safe_file = sanitize_filename(&file_name);
                 let (unique_name, width, height) = if target_format == "webp" && !source_matches_target {
                     let img = image::open(&source)
                         .map_err(|e| format!("Error decodificando imagen {}: {}", file_name, e))?;
                     let w = img.width();
                     let h = img.height();
-                    let target_name = filename_with_format(&file_name, "webp");
+                    let target_name = filename_with_format(&safe_file, "webp");
                     let unique = format!("{}_{}", id, target_name);
                     let dest = images_dir.join(&unique);
                     let data = encode_image_with_preset(&img, "webp", &webp_preset)?;
@@ -281,7 +284,7 @@ impl AppState {
                         .map_err(|e| format!("Error escribiendo WebP {}: {}", file_name, e))?;
                     (unique, w, h)
                 } else {
-                    let unique = format!("{}_{}", id, file_name);
+                    let unique = format!("{}_{}", id, safe_file);
                     let dest = images_dir.join(&unique);
                     std::fs::copy(&source, &dest)
                         .map_err(|e| format!("Error copiando imagen {}: {}", file_name, e))?;
@@ -359,12 +362,13 @@ impl AppState {
         let source_matches_target = source_ext == target_format
             || (target_format == "jpg" && source_ext == "jpeg");
 
+        let safe_file = sanitize_filename(file_name);
         let (unique_name, width, height) = if target_format == "webp" && !source_matches_target {
             let img = image::load_from_memory(data)
                 .map_err(|e| format!("Error decodificando imagen: {}", e))?;
             let w = img.width();
             let h = img.height();
-            let target_name = filename_with_format(file_name, "webp");
+            let target_name = filename_with_format(&safe_file, "webp");
             let unique = format!("{}_{}", id, target_name);
             let dest = images_dir.join(&unique);
             let webp_data = encode_image_with_preset(&img, "webp", &webp_preset)?;
@@ -372,7 +376,7 @@ impl AppState {
                 .map_err(|e| format!("Error escribiendo WebP: {}", e))?;
             (unique, w, h)
         } else {
-            let unique = format!("{}_{}", id, file_name);
+            let unique = format!("{}_{}", id, safe_file);
             let dest = images_dir.join(&unique);
             std::fs::write(&dest, data)
                 .map_err(|e| format!("Error escribiendo imagen: {}", e))?;

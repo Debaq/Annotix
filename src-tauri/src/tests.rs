@@ -91,6 +91,7 @@ fn make_project(name: &str, ptype: &str, classes: Vec<ClassDef>) -> ProjectFile 
         folder: None,
         tts_sentences: vec![],
         image_format: "jpg".into(),
+        webp_quality_preset: "high".into(),
     }
 }
 
