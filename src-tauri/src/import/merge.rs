@@ -56,15 +56,32 @@ pub struct ClassMapping {
     pub target_canonical_index: i64,
 }
 
-pub fn analyze(paths: Vec<String>) -> Result<AnalyzeResult, String> {
+pub fn analyze(paths: Vec<String>, app: Option<&tauri::AppHandle>) -> Result<AnalyzeResult, String> {
+    use tauri::Emitter;
     if paths.is_empty() {
         return Err("No se proporcionaron archivos .tix".into());
     }
 
-    let mut projects: Vec<AnalyzeProject> = Vec::with_capacity(paths.len());
+    let total = paths.len();
+    let mut projects: Vec<AnalyzeProject> = Vec::with_capacity(total);
     let mut warnings: Vec<String> = Vec::new();
 
-    for path in &paths {
+    for (idx, path) in paths.iter().enumerate() {
+        if let Some(app) = app {
+            let file_name = std::path::Path::new(path)
+                .file_name()
+                .and_then(|s| s.to_str())
+                .unwrap_or(path)
+                .to_string();
+            let _ = app.emit(
+                "merge:analyze-progress",
+                serde_json::json!({
+                    "current": idx,
+                    "total": total,
+                    "fileName": file_name,
+                }),
+            );
+        }
         let file = std::fs::File::open(path)
             .map_err(|e| format!("Error abriendo {}: {}", path, e))?;
         let mut archive = ZipArchive::new(file)
@@ -200,6 +217,17 @@ pub fn analyze(paths: Vec<String>) -> Result<AnalyzeResult, String> {
         ));
     }
 
+    if let Some(app) = app {
+        let _ = app.emit(
+            "merge:analyze-progress",
+            serde_json::json!({
+                "current": total,
+                "total": total,
+                "fileName": "",
+            }),
+        );
+    }
+
     Ok(AnalyzeResult {
         projects,
         same_type,
@@ -226,7 +254,7 @@ pub fn merge<F: Fn(f64)>(
     emit_progress(2.0);
 
     // Verificar tipo común
-    let analysis = analyze(paths.clone())?;
+    let analysis = analyze(paths.clone(), None)?;
     if !analysis.same_type {
         return Err("Los proyectos no comparten el mismo tipo — no se puede fusionar".into());
     }

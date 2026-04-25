@@ -94,7 +94,11 @@ pub async fn upload_video(
         info.height,
     )?;
 
-    let _ = app.emit("db:videos-changed", &project_id);
+    let _ = app.emit("db:videos-changed", serde_json::json!({
+        "projectId": &project_id,
+        "action": "added",
+        "videoIds": [&video_id],
+    }));
     Ok(video_id)
 }
 
@@ -162,8 +166,15 @@ async fn launch_extraction(
     .map_err(|e| format!("Error en thread de extracción: {}", e))??;
 
     // Notificar al frontend
-    let _ = app.emit("db:videos-changed", project_id);
-    let _ = app.emit("db:images-changed", project_id);
+    let _ = app.emit("db:videos-changed", serde_json::json!({
+        "projectId": project_id,
+        "action": "updated",
+        "videoIds": [video_id],
+    }));
+    let _ = app.emit("db:images-changed", serde_json::json!({
+        "projectId": project_id,
+        "action": "added",
+    }));
 
     Ok(result)
 }
@@ -241,7 +252,11 @@ fn do_extract_frames(
 
     // Marcar video como "extracting"
     state.update_video_status(project_id, video_id, "extracting", skip_frames)?;
-    let _ = app.emit("db:videos-changed", project_id);
+    let _ = app.emit("db:videos-changed", serde_json::json!({
+        "projectId": project_id,
+        "action": "updated",
+        "videoIds": [video_id],
+    }));
 
     // Preparar directorio de thumbnails
     let thumb_dir = state.project_thumbnails_dir(project_id)?;
@@ -297,6 +312,10 @@ fn do_extract_frames(
     let mut frame_count: i64 = 0; // cuenta global (incluye skipped)
     let mut next_pts: i64 = 0;
     let mut pending_entries: Vec<crate::store::project_file::ImageEntry> = Vec::new();
+    // Throttle de progreso: max ~10 eventos/seg para no saturar IPC ni UI.
+    let mut last_progress_emit = std::time::Instant::now()
+        .checked_sub(std::time::Duration::from_secs(1))
+        .unwrap_or_else(std::time::Instant::now);
 
     let mut process_decoded = |decoder: &mut ffmpeg_the_third::decoder::Video,
                                 pending: &mut Vec<crate::store::project_file::ImageEntry>,
@@ -375,26 +394,36 @@ fn do_extract_frames(
                 let batch = std::mem::take(pending);
                 state.commit_image_entries(project_id, batch)?;
                 state.update_video_status(project_id, video_id, "extracting", *fc)?;
-                let _ = app.emit("db:images-changed", project_id);
-                let _ = app.emit("db:videos-changed", project_id);
+                let _ = app.emit("db:images-changed", serde_json::json!({
+                    "projectId": project_id,
+                    "action": "added",
+                }));
+                let _ = app.emit("db:videos-changed", serde_json::json!({
+                    "projectId": project_id,
+                    "action": "updated",
+                    "videoIds": [video_id],
+                }));
             }
 
-            // Emitir progreso al frontend
-            let progress = if estimated_total > 0 {
-                ((*fc as f64 / estimated_total as f64) * 100.0).min(99.0) as i32
-            } else {
-                0
-            };
+            // Emitir progreso al frontend (throttle ~10/seg)
+            if last_progress_emit.elapsed() >= std::time::Duration::from_millis(100) {
+                let progress = if estimated_total > 0 {
+                    ((*fc as f64 / estimated_total as f64) * 100.0).min(99.0) as i32
+                } else {
+                    0
+                };
 
-            let _ = app.emit(
-                "video:extraction-progress",
-                serde_json::json!({
-                    "videoId": video_id,
-                    "progress": progress,
-                    "current": *fc,
-                    "total": estimated_total,
-                }),
-            );
+                let _ = app.emit(
+                    "video:extraction-progress",
+                    serde_json::json!({
+                        "videoId": video_id,
+                        "progress": progress,
+                        "current": *fc,
+                        "total": estimated_total,
+                    }),
+                );
+                last_progress_emit = std::time::Instant::now();
+            }
         }
         Ok(())
     };
@@ -424,6 +453,17 @@ fn do_extract_frames(
 
     // Actualizar estado del video
     state.update_video_status(project_id, video_id, "ready", frame_count)?;
+
+    // Asegurar evento final con 100% (último estado real, sobrescribe throttling)
+    let _ = app.emit(
+        "video:extraction-progress",
+        serde_json::json!({
+            "videoId": video_id,
+            "progress": 100,
+            "current": frame_count,
+            "total": estimated_total.max(frame_count),
+        }),
+    );
 
     Ok(frame_count)
 }
@@ -466,8 +506,15 @@ pub async fn delete_video(
 ) -> Result<(), String> {
     p2p.check_permission(&project_id, P2pPermission::Delete).await?;
     state.delete_video(&project_id, &video_id)?;
-    let _ = app.emit("db:videos-changed", &project_id);
-    let _ = app.emit("db:images-changed", &project_id);
+    let _ = app.emit("db:videos-changed", serde_json::json!({
+        "projectId": &project_id,
+        "action": "deleted",
+        "videoIds": [&video_id],
+    }));
+    let _ = app.emit("db:images-changed", serde_json::json!({
+        "projectId": &project_id,
+        "action": "deleted",
+    }));
     Ok(())
 }
 
@@ -681,7 +728,10 @@ pub async fn bake_video_tracks(
         pf.updated = now;
     })?;
 
-    let _ = app.emit("db:images-changed", &project_id);
+    let _ = app.emit("db:images-changed", serde_json::json!({
+        "projectId": &project_id,
+        "action": "updated",
+    }));
     Ok(baked_count)
 }
 

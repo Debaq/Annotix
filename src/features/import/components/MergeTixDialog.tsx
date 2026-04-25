@@ -48,6 +48,7 @@ export const MergeTixDialog: React.FC<Props> = ({ trigger }) => {
   const [assignments, setAssignments] = useState<AssignmentMap>({});
   const [projectName, setProjectName] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [analyzeProgress, setAnalyzeProgress] = useState<{ current: number; total: number; fileName: string }>({ current: 0, total: 0, fileName: '' });
   const [progress, setProgress] = useState(0);
   const [mergedProjectId, setMergedProjectId] = useState<string | null>(null);
 
@@ -86,6 +87,12 @@ export const MergeTixDialog: React.FC<Props> = ({ trigger }) => {
     setPaths(list);
     setError(null);
     setStep('analyzing');
+    setAnalyzeProgress({ current: 0, total: list.length, fileName: '' });
+
+    const unlistenAnalyze = await listen<{ current: number; total: number; fileName: string }>(
+      'merge:analyze-progress',
+      (e) => setAnalyzeProgress(e.payload),
+    );
 
     try {
       const res = await invoke<AnalyzeResult>('analyze_tix_projects', { paths: list });
@@ -112,6 +119,8 @@ export const MergeTixDialog: React.FC<Props> = ({ trigger }) => {
       setError(String(err));
       setStep('select');
       setPaths([]);
+    } finally {
+      unlistenAnalyze();
     }
   };
 
@@ -246,7 +255,17 @@ export const MergeTixDialog: React.FC<Props> = ({ trigger }) => {
             <DialogHeader>
               <DialogTitle>{t('merge.analyzing', 'Analizando archivos...')}</DialogTitle>
             </DialogHeader>
-            <Progress value={50} className="h-2" />
+            <div className="space-y-2">
+              <Progress
+                value={analyzeProgress.total > 0 ? (analyzeProgress.current / analyzeProgress.total) * 100 : 0}
+                className="h-2"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {analyzeProgress.total > 0
+                  ? `${analyzeProgress.current}/${analyzeProgress.total}${analyzeProgress.fileName ? ` — ${analyzeProgress.fileName}` : ''}`
+                  : ''}
+              </p>
+            </div>
           </>
         )}
 

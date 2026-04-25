@@ -55,6 +55,8 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
   const [detection, setDetection] = useState<DetectionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [importPhase, setImportPhase] = useState<string>('');
+  const [importPhaseDetail, setImportPhaseDetail] = useState<string>('');
   const [importedProjectId, setImportedProjectId] = useState<string | null>(null);
 
   const existingNames = React.useMemo(
@@ -144,11 +146,29 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
 
     setStep('importing');
     setProgress(0);
+    setImportPhase('');
+    setImportPhaseDetail('');
     setError(null);
 
-    const unlisten = await listen<number>('import:progress', (event) => {
-      setProgress(event.payload);
-    });
+    const unlisten = await listen<number | { phase?: string; percentage?: number; current?: number; total?: number }>(
+      'import:progress',
+      (event) => {
+        const p = event.payload;
+        if (typeof p === 'number') {
+          setProgress(p);
+          return;
+        }
+        if (p && typeof p === 'object') {
+          if (typeof p.percentage === 'number') setProgress(p.percentage);
+          if (typeof p.phase === 'string') setImportPhase(p.phase);
+          if (typeof p.current === 'number' && typeof p.total === 'number' && p.total > 0) {
+            setImportPhaseDetail(`${p.current}/${p.total}`);
+          } else {
+            setImportPhaseDetail('');
+          }
+        }
+      }
+    );
 
     try {
       const result = await invoke<ImportResult>('import_dataset', {
@@ -361,7 +381,16 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  {t('import.processing')}...
+                  {(() => {
+                    const phaseLabels: Record<string, string> = {
+                      detecting: t('import.phase.detecting', 'Detectando formato'),
+                      parsing: t('import.phase.parsing', 'Leyendo archivos'),
+                      saving: t('import.phase.saving', 'Guardando imágenes'),
+                      done: t('import.phase.done', 'Finalizando'),
+                    };
+                    const label = importPhase ? phaseLabels[importPhase] ?? t('import.processing', 'Procesando') : t('import.processing', 'Procesando');
+                    return importPhaseDetail ? `${label} (${importPhaseDetail})` : `${label}...`;
+                  })()}
                 </p>
                 <Progress value={progress} className="h-2" />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{Math.round(progress)}%</p>

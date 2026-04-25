@@ -24,8 +24,13 @@ pub async fn import_dataset(
 }
 
 #[tauri::command]
-pub fn analyze_tix_projects(paths: Vec<String>) -> Result<AnalyzeResult, String> {
-    crate::import::merge::analyze(paths)
+pub async fn analyze_tix_projects(
+    app: tauri::AppHandle,
+    paths: Vec<String>,
+) -> Result<AnalyzeResult, String> {
+    tauri::async_runtime::spawn_blocking(move || crate::import::merge::analyze(paths, Some(&app)))
+        .await
+        .map_err(|e| format!("Error en tarea de análisis: {}", e))?
 }
 
 #[tauri::command]

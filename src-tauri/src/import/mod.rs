@@ -102,23 +102,31 @@ pub fn import_dataset(
 ) -> Result<ImportResult, String> {
     use tauri::Emitter;
 
-    let emit_progress = |progress: f64| {
-        let _ = app_handle.emit("import:progress", progress);
+    let emit_phase = |phase: &str, percentage: f64, current: usize, total: usize| {
+        let _ = app_handle.emit(
+            "import:progress",
+            serde_json::json!({
+                "phase": phase,
+                "percentage": percentage,
+                "current": current,
+                "total": total,
+            }),
+        );
     };
 
     // Detectar formato
-    emit_progress(5.0);
+    emit_phase("detecting", 5.0, 0, 0);
     let detection = detect_format(file_path)?;
 
     // Abrir ZIP
-    emit_progress(15.0);
+    emit_phase("parsing", 15.0, 0, 0);
     let file = std::fs::File::open(file_path)
         .map_err(|e| format!("Error abriendo archivo: {}", e))?;
     let mut archive = zip::ZipArchive::new(file)
         .map_err(|e| format!("Error leyendo ZIP: {}", e))?;
 
     // Importar datos según formato
-    emit_progress(25.0);
+    emit_phase("parsing", 25.0, 0, 0);
     let import_data = match detection.format.as_str() {
         "yolo-detection" | "yolo-segmentation" => {
             let is_seg = detection.format == "yolo-segmentation";
@@ -144,7 +152,7 @@ pub fn import_dataset(
     }
 
     // Crear proyecto usando AppState
-    emit_progress(50.0);
+    emit_phase("saving", 50.0, 0, import_data.images.len());
     let project_id = state.create_project(
         project_name,
         &detection.project_type,
@@ -152,9 +160,13 @@ pub fn import_dataset(
         None,
     )?;
 
-    // Guardar imágenes
-    let total = import_data.images.len() as f64;
+    // Guardar imágenes (throttle progreso ~10/seg)
+    let total_imgs = import_data.images.len();
+    let total = total_imgs as f64;
     let mut total_annotations = 0;
+    let mut last_emit = std::time::Instant::now()
+        .checked_sub(std::time::Duration::from_secs(1))
+        .unwrap_or_else(std::time::Instant::now);
 
     for (i, img) in import_data.images.iter().enumerate() {
         total_annotations += img.annotations.len();
@@ -169,10 +181,14 @@ pub fn import_dataset(
             None, // frame_index
         )?;
 
-        emit_progress(50.0 + ((i + 1) as f64 / total) * 45.0);
+        if last_emit.elapsed() >= std::time::Duration::from_millis(100) || i + 1 == total_imgs {
+            let pct = 50.0 + ((i + 1) as f64 / total) * 45.0;
+            emit_phase("saving", pct, i + 1, total_imgs);
+            last_emit = std::time::Instant::now();
+        }
     }
 
-    emit_progress(100.0);
+    emit_phase("done", 100.0, total_imgs, total_imgs);
 
     Ok(ImportResult {
         project_id,
