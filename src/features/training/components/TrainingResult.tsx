@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { TrainingModelExport } from './TrainingModelExport';
 import { TrainingMetricsChart } from './TrainingMetricsChart';
 import { generateTrainingReport } from '../services/trainingReportService';
+import { trainingService } from '../services/trainingService';
+import { buildModelDownloadName, sanitizeForFilename, timestampForFilename } from '../utils/downloadName';
 import type {
   TrainingResult as TrainingResultType,
   TrainingEpochMetrics,
@@ -41,15 +43,44 @@ export function TrainingResult({
   const { t } = useTranslation();
   const chartsRef = useRef<HTMLDivElement>(null);
   const [generating, setGenerating] = useState(false);
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloadMsg, setDownloadMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+
+  const handleDownloadModel = async (srcPath: string, variant: string) => {
+    if (downloading) return;
+    setDownloading(variant);
+    setDownloadMsg(null);
+    try {
+      const ext = srcPath.match(/\.([A-Za-z0-9]+)$/)?.[1] ?? 'pt';
+      const defaultName = buildModelDownloadName({
+        projectName,
+        variant,
+        extension: ext,
+      });
+      const filePath = await save({
+        filters: [{ name: ext.toUpperCase(), extensions: [ext] }],
+        defaultPath: defaultName,
+      });
+      if (!filePath) return;
+      await trainingService.downloadTrainedModel(srcPath, filePath);
+      setDownloadMsg({ kind: 'ok', text: t('training.result.downloadOk', { path: filePath }) });
+    } catch (e) {
+      console.error('Model download failed:', e);
+      setDownloadMsg({ kind: 'err', text: `${t('training.result.downloadError')}: ${String(e)}` });
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   const handleExportPdf = async () => {
     if (generating) return;
     setGenerating(true);
     try {
-      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const proj = sanitizeForFilename(projectName);
+      const ts = timestampForFilename();
       const filePath = await save({
         filters: [{ name: 'PDF', extensions: ['pdf'] }],
-        defaultPath: `training_report_${backend}_${ts}.pdf`,
+        defaultPath: `${proj}_${backend}_report_${ts}.pdf`,
       });
       if (!filePath) return;
 
@@ -152,6 +183,35 @@ export function TrainingResult({
             <div><span className="text-muted-foreground">Last: </span>{result.lastModelPath}</div>
           )}
         </div>
+        <div className="flex gap-2 mt-2">
+          {result.bestModelPath && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleDownloadModel(result.bestModelPath!, 'best')}
+              disabled={downloading !== null}
+            >
+              <i className={`fas ${downloading === 'best' ? 'fa-spinner fa-spin' : 'fa-download'} mr-2`} />
+              {t('training.result.downloadBest')}
+            </Button>
+          )}
+          {result.lastModelPath && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleDownloadModel(result.lastModelPath!, 'last')}
+              disabled={downloading !== null}
+            >
+              <i className={`fas ${downloading === 'last' ? 'fa-spinner fa-spin' : 'fa-download'} mr-2`} />
+              {t('training.result.downloadLast')}
+            </Button>
+          )}
+        </div>
+        {downloadMsg && (
+          <p className={`mt-2 text-xs ${downloadMsg.kind === 'ok' ? 'text-green-500' : 'text-red-500'}`}>
+            {downloadMsg.text}
+          </p>
+        )}
       </div>
 
       {/* Exported models */}
@@ -170,7 +230,7 @@ export function TrainingResult({
 
       {/* Export model button */}
       {result.bestModelPath && (
-        <TrainingModelExport modelPath={result.bestModelPath} />
+        <TrainingModelExport modelPath={result.bestModelPath} projectName={projectName} />
       )}
 
       {/* Export PDF report */}

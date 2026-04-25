@@ -410,8 +410,35 @@ pub fn export_trained_model(
 }
 
 #[tauri::command]
+pub fn download_trained_model(src_path: String, dest_path: String) -> Result<(), String> {
+    let src = std::path::Path::new(&src_path);
+    if !src.exists() {
+        return Err(format!("Modelo no encontrado: {}", src_path));
+    }
+    let dest = std::path::Path::new(&dest_path);
+    if let Some(parent) = dest.parent() {
+        std::fs::create_dir_all(parent)
+            .map_err(|e| format!("No se pudo crear carpeta destino: {}", e))?;
+    }
+    std::fs::copy(src, dest)
+        .map_err(|e| format!("Error copiando modelo: {}", e))?;
+    Ok(())
+}
+
+#[tauri::command]
 pub fn get_available_backends(project_type: String) -> Result<Vec<BackendInfo>, String> {
     Ok(crate::training::backends::get_available_backends(&project_type))
+}
+
+/// Cuenta imágenes con al menos 1 anotación. Usa el cache en memoria del
+/// proyecto si está cargado; lectura ligera, sin tocar la galería.
+#[tauri::command]
+pub fn count_annotated_images(state: State<'_, AppState>, project_id: String) -> Result<usize, String> {
+    state.with_project(&project_id, |pf| {
+        pf.images.iter()
+            .filter(|i| i.video_id.is_none() && !i.annotations.is_empty())
+            .count()
+    })
 }
 
 #[tauri::command]
@@ -687,6 +714,7 @@ fn convert_request_to_yolo_config(req: &TrainingRequest) -> TrainingConfig {
         lrf: bp.get("lrf").and_then(|v| v.as_f64()).unwrap_or(0.01),
         patience: req.patience,
         val_split: req.val_split,
+        test_split: req.test_split,
         workers: req.workers,
         augmentation: serde_json::from_value(
             bp.get("augmentation").cloned().unwrap_or_default()
@@ -785,41 +813,48 @@ pub fn validate_cloud_credentials(
 ) -> Result<(), String> {
     let config = state.get_app_config()?;
 
-    match provider.as_str() {
-        "gcp" => {
-            let gcp = config.cloud_providers.gcp
-                .ok_or("GCP no configurado")?;
-            let sa_path = gcp.service_account_path
-                .ok_or("Falta Service Account JSON path")?;
-            crate::training::cloud::gcp_auth::validate_credentials(&sa_path)
+    // reqwest::blocking no puede correr dentro del runtime tokio del comando.
+    // Aislamos en thread propio.
+    let provider_owned = provider.clone();
+    std::thread::spawn(move || -> Result<(), String> {
+        match provider_owned.as_str() {
+            "gcp" => {
+                let gcp = config.cloud_providers.gcp
+                    .ok_or("GCP no configurado")?;
+                let sa_path = gcp.service_account_path
+                    .ok_or("Falta Service Account JSON path")?;
+                crate::training::cloud::gcp_auth::validate_credentials(&sa_path)
+            }
+            "kaggle" => {
+                let kaggle = config.cloud_providers.kaggle
+                    .ok_or("Kaggle no configurado")?;
+                let username = kaggle.username.unwrap_or_default();
+                let api_key = kaggle.api_key.ok_or("Falta API key")?;
+                crate::training::cloud::kaggle::validate_credentials(&username, &api_key)
+            }
+            "lightning_ai" => {
+                let lai = config.cloud_providers.lightning_ai
+                    .ok_or("Lightning AI no configurado")?;
+                let api_key = lai.api_key.ok_or("Falta API key")?;
+                crate::training::cloud::lightning::validate_credentials(&api_key)
+            }
+            "huggingface" => {
+                let hf = config.cloud_providers.huggingface
+                    .ok_or("Hugging Face no configurado")?;
+                let token = hf.token.ok_or("Falta token")?;
+                crate::training::cloud::huggingface::validate_credentials(&token)
+            }
+            "saturn_cloud" => {
+                let sc = config.cloud_providers.saturn_cloud
+                    .ok_or("Saturn Cloud no configurado")?;
+                let api_token = sc.api_token.ok_or("Falta API token")?;
+                crate::training::cloud::saturn::validate_credentials(&api_token)
+            }
+            _ => Err(format!("Proveedor desconocido: {}", provider_owned)),
         }
-        "kaggle" => {
-            let kaggle = config.cloud_providers.kaggle
-                .ok_or("Kaggle no configurado")?;
-            let username = kaggle.username.ok_or("Falta username")?;
-            let api_key = kaggle.api_key.ok_or("Falta API key")?;
-            crate::training::cloud::kaggle::validate_credentials(&username, &api_key)
-        }
-        "lightning_ai" => {
-            let lai = config.cloud_providers.lightning_ai
-                .ok_or("Lightning AI no configurado")?;
-            let api_key = lai.api_key.ok_or("Falta API key")?;
-            crate::training::cloud::lightning::validate_credentials(&api_key)
-        }
-        "huggingface" => {
-            let hf = config.cloud_providers.huggingface
-                .ok_or("Hugging Face no configurado")?;
-            let token = hf.token.ok_or("Falta token")?;
-            crate::training::cloud::huggingface::validate_credentials(&token)
-        }
-        "saturn_cloud" => {
-            let sc = config.cloud_providers.saturn_cloud
-                .ok_or("Saturn Cloud no configurado")?;
-            let api_token = sc.api_token.ok_or("Falta API token")?;
-            crate::training::cloud::saturn::validate_credentials(&api_token)
-        }
-        _ => Err(format!("Proveedor desconocido: {}", provider)),
-    }
+    })
+    .join()
+    .map_err(|_| "panic validando credenciales".to_string())?
 }
 
 #[tauri::command]

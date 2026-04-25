@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TrainingParamGroup, type ParamDefinition } from './TrainingParamGroup';
 import { OPTIMIZERS } from '../utils/presets';
@@ -71,12 +72,13 @@ const ADVANCED_PARAMS: ParamDefinition[] = [
   { key: 'single_cls', type: 'checkbox' },
   { key: 'warmup_momentum', type: 'number', min: 0, max: 0.95, step: 0.01 },
   { key: 'warmup_bias_lr', type: 'number', min: 0, max: 0.2, step: 0.01 },
-  { key: 'valSplit', type: 'number', min: 0.05, max: 0.5, step: 0.05 },
+  { key: 'valSplit', type: 'number', min: 0, max: 0.5, step: 0.05 },
+  { key: 'testSplit', type: 'number', min: 0, max: 0.5, step: 0.05 },
   { key: 'workers', type: 'number', min: 0, max: 32 },
   { key: 'device', type: 'select', options: DEVICE_OPTIONS },
 ];
 
-export function TrainingAdvancedConfig({ config, onChange }: TrainingAdvancedConfigProps) {
+export const TrainingAdvancedConfig = memo(function TrainingAdvancedConfig({ config, onChange }: TrainingAdvancedConfigProps) {
   const { t: _t } = useTranslation();
 
   // Flatten config to a Record for the param groups
@@ -107,6 +109,7 @@ export function TrainingAdvancedConfig({ config, onChange }: TrainingAdvancedCon
     warmup_momentum: config.warmup_momentum,
     warmup_bias_lr: config.warmup_bias_lr,
     valSplit: config.valSplit,
+    testSplit: config.testSplit,
     workers: config.workers,
     device: config.device,
   };
@@ -169,4 +172,4 @@ export function TrainingAdvancedConfig({ config, onChange }: TrainingAdvancedCon
       />
     </div>
   );
-}
+});

@@ -174,6 +174,34 @@ def main():
             "mAP50_95": rd.get("metrics/mAP50-95(B)", None),
         }}
 
+    # Evaluación final en split de test si existe en el data.yaml
+    try:
+        import yaml as _yaml
+        with open(data_yaml, "r") as _f:
+            _yaml_doc = _yaml.safe_load(_f)
+        if isinstance(_yaml_doc, dict) and _yaml_doc.get("test"):
+            print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": "Evaluating best.pt on test split..."}}), flush=True)
+            best_for_test = best_model if best_model and os.path.exists(best_model) else None
+            test_model = YOLO(best_for_test) if best_for_test else model
+            test_results = test_model.val(
+                data=data_yaml,
+                split="test",
+                imgsz={imgsz},
+                batch={batch},
+                device={device_quoted},
+                verbose=False,
+            )
+            if test_results and hasattr(test_results, "results_dict"):
+                trd = test_results.results_dict
+                result["testMetrics"] = {{
+                    "precision": trd.get("metrics/precision(B)", None),
+                    "recall": trd.get("metrics/recall(B)", None),
+                    "mAP50": trd.get("metrics/mAP50(B)", None),
+                    "mAP50_95": trd.get("metrics/mAP50-95(B)", None),
+                }}
+    except Exception as _e:
+        print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": f"Test eval skipped: {{_e}}"}}), flush=True)
+
     {export_section}
 
     print("ANNOTIX_EVENT:" + json.dumps(result), flush=True)
@@ -883,6 +911,7 @@ pub fn generate_train_script_for_backend(
                 lrf: req.backend_params.get("lrf").and_then(|v| v.as_f64()).unwrap_or(0.01),
                 patience: req.patience,
                 val_split: req.val_split,
+                test_split: req.test_split,
                 workers: req.workers,
                 augmentation: serde_json::from_value(
                     req.backend_params.get("augmentation").cloned().unwrap_or_default()

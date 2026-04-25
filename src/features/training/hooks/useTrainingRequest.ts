@@ -27,6 +27,7 @@ interface PersistedConfig {
     lr: number;
     patience: number;
     valSplit: number;
+    testSplit: number;
     workers: number;
     amp: boolean;
   };
@@ -262,15 +263,20 @@ export function useTrainingRequest(projectType: string) {
   const [executionMode, setExecutionMode] = useState<ExecutionMode>(persisted.current?.executionMode ?? 'local');
   const [backends, setBackends] = useState<BackendInfo[]>([]);
 
-  const [commonParams, setCommonParams] = useState(persisted.current?.commonParams ?? {
-    epochs: 100,
-    batchSize: -1,
-    imageSize: 640,
-    lr: 0.01,
-    patience: 50,
-    valSplit: 0.2,
-    workers: 4,
-    amp: true,
+  const [commonParams, setCommonParams] = useState(() => {
+    const persistedCommon = persisted.current?.commonParams;
+    return {
+      epochs: 100,
+      batchSize: -1,
+      imageSize: 640,
+      lr: 0.01,
+      patience: 50,
+      valSplit: 0.2,
+      testSplit: 0,
+      workers: 4,
+      amp: true,
+      ...(persistedCommon ?? {}),
+    };
   });
 
   const [backendParams, setBackendParams] = useState<Record<string, unknown>>(
@@ -357,6 +363,7 @@ export function useTrainingRequest(projectType: string) {
       lr: commonParams.lr,
       patience: commonParams.patience,
       valSplit: commonParams.valSplit,
+      testSplit: commonParams.testSplit,
       workers: commonParams.workers,
       amp: commonParams.amp,
       resume: false,

@@ -1,17 +1,21 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { save } from '@tauri-apps/plugin-dialog';
 import { Button } from '@/components/ui/button';
 import { trainingService } from '../services/trainingService';
 import { EXPORT_FORMATS } from '../utils/presets';
+import { buildModelDownloadName, extensionFromPath } from '../utils/downloadName';
 
 interface TrainingModelExportProps {
   modelPath: string;
+  projectName: string;
 }
 
-export function TrainingModelExport({ modelPath }: TrainingModelExportProps) {
+export function TrainingModelExport({ modelPath, projectName }: TrainingModelExportProps) {
   const { t } = useTranslation();
   const [exporting, setExporting] = useState<string | null>(null);
   const [exported, setExported] = useState<{ format: string; path: string }[]>([]);
+  const [downloading, setDownloading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleExport = async (format: string) => {
@@ -24,6 +28,30 @@ export function TrainingModelExport({ modelPath }: TrainingModelExportProps) {
       setError(String(e));
     } finally {
       setExporting(null);
+    }
+  };
+
+  const handleDownload = async (format: string, srcPath: string) => {
+    if (downloading) return;
+    setDownloading(format);
+    setError(null);
+    try {
+      const ext = extensionFromPath(srcPath);
+      const defaultName = buildModelDownloadName({
+        projectName,
+        variant: format,
+        extension: ext,
+      });
+      const dest = await save({
+        filters: [{ name: ext.toUpperCase(), extensions: [ext] }],
+        defaultPath: defaultName,
+      });
+      if (!dest) return;
+      await trainingService.downloadTrainedModel(srcPath, dest);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setDownloading(null);
     }
   };
 
@@ -58,9 +86,20 @@ export function TrainingModelExport({ modelPath }: TrainingModelExportProps) {
       {exported.length > 0 && (
         <div className="space-y-1">
           {exported.map((e) => (
-            <p key={e.format} className="text-xs font-mono text-muted-foreground">
-              {e.format.toUpperCase()}: {e.path}
-            </p>
+            <div key={e.format} className="flex items-center gap-2">
+              <p className="flex-1 text-xs font-mono text-muted-foreground truncate">
+                {e.format.toUpperCase()}: {e.path}
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={downloading !== null}
+                onClick={() => handleDownload(e.format, e.path)}
+              >
+                <i className={`fas ${downloading === e.format ? 'fa-spinner fa-spin' : 'fa-download'} mr-1`} />
+                {t('training.result.downloadExported')}
+              </Button>
+            </div>
           ))}
         </div>
       )}

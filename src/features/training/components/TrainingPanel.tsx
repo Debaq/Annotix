@@ -1,4 +1,4 @@
-import { ReactNode, useState, useCallback, useEffect, useRef } from 'react';
+import { ReactNode, useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { save, ask } from '@tauri-apps/plugin-dialog';
 import { Button } from '@/components/ui/button';
@@ -13,21 +13,23 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
+import { useAnnotatedCount } from '../hooks/useAnnotatedCount';
 import { useTrainingConfig } from '../hooks/useTrainingConfig';
 import { useTrainingProgress } from '../hooks/useTrainingProgress';
 import { useTrainingRequest } from '../hooks/useTrainingRequest';
 import { trainingService } from '../services/trainingService';
-import { PythonEnvSetup } from './PythonEnvSetup';
 import { BackendSelector } from './BackendSelector';
 import { BackendModelSelector } from './BackendModelSelector';
-import { BackendConfigPanel } from './BackendConfigPanel';
 import { ExecutionModeSelector } from './ExecutionModeSelector';
 import { TrainingPresets } from './TrainingPresets';
 import { GpuIndicator } from './GpuIndicator';
-import { TrainingMonitor } from './TrainingMonitor';
-import { TrainingResult } from './TrainingResult';
-import { TrainingJobList } from './TrainingJobList';
-import { AutomationControlPanel } from '../../browser-automation/components/AutomationControlPanel';
+// Lazy: solo se cargan cuando el usuario llega a esa fase del flujo.
+const PythonEnvSetup = lazy(() => import('./PythonEnvSetup').then(m => ({ default: m.PythonEnvSetup })));
+const BackendConfigPanel = lazy(() => import('./BackendConfigPanel').then(m => ({ default: m.BackendConfigPanel })));
+const TrainingMonitor = lazy(() => import('./TrainingMonitor').then(m => ({ default: m.TrainingMonitor })));
+const TrainingResult = lazy(() => import('./TrainingResult').then(m => ({ default: m.TrainingResult })));
+const TrainingJobList = lazy(() => import('./TrainingJobList').then(m => ({ default: m.TrainingJobList })));
+const AutomationControlPanel = lazy(() => import('../../browser-automation/components/AutomationControlPanel').then(m => ({ default: m.AutomationControlPanel })));
 import { automationService } from '../../browser-automation/services/automationService';
 import type { TrainingPhase, PythonEnvStatus, ScenarioPresetId, TrainingJob, TrainingBackend } from '../types';
 import type { GpuInfo } from '../types';
@@ -36,12 +38,13 @@ import { useTrainingModalStore } from '../store/trainingModalStore';
 
 interface TrainingPanelProps {
   trigger?: ReactNode;
+  defaultOpen?: boolean;
 }
 
-export function TrainingPanel({ trigger }: TrainingPanelProps) {
+export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelProps) {
   const { t } = useTranslation();
   const { project } = useCurrentProject();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   // Start directly on backend selection — no Python check upfront
   const [phase, setPhase] = useState<TrainingPhase>('backend');
   const [envStatus, setEnvStatus] = useState<PythonEnvStatus | null>(null);
@@ -53,6 +56,7 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
   const [trainingStartedAt, setTrainingStartedAt] = useState<number>(0);
 
   const projectType = project?.type || 'bbox';
+  const annotatedCount = useAnnotatedCount(project?.id ?? null, open);
 
   // Legacy YOLO config (for presets + backward compat)
   const { config: yoloConfig, updateConfig: updateYoloConfig, updateAugmentation: updateYoloAug, applyPreset } = useTrainingConfig(projectType);
@@ -93,15 +97,9 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
     reset: resetProgress,
   } = useTrainingProgress(activeJobId);
 
-  // Fetch env status lazily (for backend install badges) — non-blocking
-  useEffect(() => {
-    if (open && !envStatus) {
-      trainingService.checkPythonEnv().then((info) => {
-        setEnvStatus(info.env);
-        setGpuInfo(info.gpu);
-      }).catch(() => {});
-    }
-  }, [open, envStatus]);
+  // El estado del env Python se consulta SOLO cuando el usuario hace click en
+  // "Entrenar localmente" (handleStartLocal). Abrir el modal es una decisión y
+  // no debe esperar 5-15s a que arranque torch+CUDA.
 
   useEffect(() => {
     if (trainingPhase === 'completed' && result) {
@@ -367,6 +365,11 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
           <DialogDescription>{t('training.description')}</DialogDescription>
         </DialogHeader>
 
+        <Suspense fallback={
+          <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground">
+            <i className="fas fa-spinner fa-spin mr-2" /> {t('common.loading') || 'Cargando…'}
+          </div>
+        }>
         {phase === 'training' ? (
           <div className="flex-1 min-h-0 flex flex-col px-6 pb-6 overflow-hidden">
             <TrainingMonitor
@@ -479,6 +482,7 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
                   commonParams={commonParams}
                   backendParams={backendParams}
                   yoloConfig={backend === 'yolo' ? yoloConfig : undefined}
+                  totalImages={annotatedCount}
                   onCommonChange={updateCommonParam}
                   onBackendParamChange={updateBackendParam}
                   onYoloConfigChange={backend === 'yolo' ? updateYoloConfig : undefined}
@@ -543,14 +547,17 @@ export function TrainingPanel({ trigger }: TrainingPanelProps) {
           </div>
         </ScrollArea>
         )}
+        </Suspense>
       </DialogContent>
 
       {/* Automation control panel (floating) */}
       {automationSessionId && (
-        <AutomationControlPanel
-          sessionId={automationSessionId}
-          onClose={() => setAutomationSessionId(null)}
-        />
+        <Suspense fallback={null}>
+          <AutomationControlPanel
+            sessionId={automationSessionId}
+            onClose={() => setAutomationSessionId(null)}
+          />
+        </Suspense>
       )}
     </Dialog>
   );

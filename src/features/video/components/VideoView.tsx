@@ -13,6 +13,7 @@ import { VideoTrackList } from './VideoTrackList';
 import { AnnotationCanvas } from '../../canvas/components/AnnotationCanvas';
 import { Button } from '@/components/ui/button';
 import { ManageClassesDialog } from '../../projects/components/ManageClassesDialog';
+import { useClassCounts } from '../../projects/hooks/useClassCounts';
 import { cn } from '@/lib/utils';
 import { CLASS_SHORTCUTS } from '../../core/constants';
 import { matchesShortcut } from '../../core/utils/matchShortcut';
@@ -31,6 +32,15 @@ export function VideoView() {
   const { video } = useCurrentVideo();
   const { currentFrameIndex, totalFrames, currentFrame } = useVideoNavigation();
   const { tracks, createTrack, deleteTrack, updateTrack, setKeyframe, removeKeyframe, bake } = useVideoTracks();
+  const { byClass: globalByClass } = useClassCounts();
+
+  const localByClass = useMemo(() => {
+    const acc: Record<number, number> = {};
+    for (const tr of tracks) {
+      if (tr.classId != null) acc[tr.classId] = (acc[tr.classId] ?? 0) + 1;
+    }
+    return acc;
+  }, [tracks]);
 
   const isBboxProject = project?.type === 'bbox';
 
@@ -219,6 +229,9 @@ export function VideoView() {
                     style={{ backgroundColor: cls.color }}
                   />
                   <span className="flex-1 text-left font-medium truncate">{cls.name}</span>
+                  <span className="font-mono text-[10px] tabular-nums opacity-70 shrink-0">
+                    {localByClass[cls.id] ?? 0}/{globalByClass[cls.id] ?? 0}
+                  </span>
                 </button>
               ))}
             </div>

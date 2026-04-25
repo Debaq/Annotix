@@ -458,6 +458,11 @@
     "modelPaths": "Archivos del Modelo",
     "exported": "Modelos Exportados",
     "exportModel": "Exportar Modelo",
+    "downloadBest": "Descargar best.pt",
+    "downloadLast": "Descargar last.pt",
+    "downloadExported": "Descargar",
+    "downloadOk": "Modelo guardado en {{path}}",
+    "downloadError": "Error al guardar el modelo",
     "newTraining": "Nuevo Entrenamiento",
     "exportReport": "Exportar informe PDF",
     "generatingReport": "Generando informe..."

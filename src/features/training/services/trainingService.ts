@@ -60,6 +60,10 @@ export const trainingService = {
     return invoke('export_trained_model', { modelPath, format });
   },
 
+  downloadTrainedModel(srcPath: string, destPath: string): Promise<void> {
+    return invoke('download_trained_model', { srcPath, destPath });
+  },
+
   // Multi-backend API
   getAvailableBackends(projectType: string): Promise<BackendInfo[]> {
     return invoke('get_available_backends', { projectType });

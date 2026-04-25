@@ -69,6 +69,12 @@ pub trait CloudRunner: Send + Sync {
         status: &CloudJobStatus,
         output_dir: &str,
     ) -> Result<String, String>;
+
+    /// Devuelve eventos de progreso (`ANNOTIX_EVENT:` JSON) parseados desde los logs del job.
+    /// Default: vacío (provider sin soporte de progreso en vivo).
+    fn fetch_progress(&self, _handle: &CloudJobHandle) -> Result<Vec<serde_json::Value>, String> {
+        Ok(Vec::new())
+    }
 }
 
 // ─── Active Cloud Job ────────────────────────────────────────────────────────
@@ -105,7 +111,13 @@ impl CloudTrainingManager {
         project_classes: &[String],
     ) -> Result<String, String> {
         let runner = self.get_runner(&cloud_config.provider, state)?;
-        let handle = runner.submit_job(cloud_config, request, dataset_path, project_classes)?;
+        // reqwest::blocking no puede correr dentro del runtime tokio del comando Tauri.
+        // Aislamos la llamada en un thread propio.
+        let handle = std::thread::scope(|s| {
+            s.spawn(|| runner.submit_job(cloud_config, request, dataset_path, project_classes))
+                .join()
+                .map_err(|_| "panic en submit_job".to_string())?
+        })?;
 
         let cloud_job_id = handle.job_id.clone();
         let provider_str = provider_to_string(&cloud_config.provider);
@@ -269,6 +281,8 @@ impl CloudTrainingManager {
 
         std::thread::spawn(move || {
             let poll_interval = std::time::Duration::from_secs(30);
+            let mut seen_epochs: std::collections::HashSet<u64> = std::collections::HashSet::new();
+            let mut last_metrics_history: Vec<serde_json::Value> = Vec::new();
 
             loop {
                 std::thread::sleep(poll_interval);
@@ -292,7 +306,57 @@ impl CloudTrainingManager {
                     }
                 }
 
-                // Poll status
+                // Fetch progress events (ANNOTIX_EVENT del log)
+                if let Ok(events) = runner.fetch_progress(&handle) {
+                    for ev in events {
+                        let ev_type = ev["type"].as_str().unwrap_or("");
+                        if ev_type == "epoch" {
+                            let epoch = ev["epoch"].as_u64().unwrap_or(0);
+                            if epoch == 0 || !seen_epochs.insert(epoch) { continue; }
+                            let total_epochs = ev["totalEpochs"].as_u64().unwrap_or(0);
+                            let progress = ev["progress"].as_f64().unwrap_or(0.0);
+                            let metrics = ev["metrics"].clone();
+
+                            let _ = app.emit("training:progress", serde_json::json!({
+                                "jobId": training_job_id,
+                                "epoch": epoch,
+                                "totalEpochs": total_epochs,
+                                "progress": progress,
+                                "metrics": metrics,
+                                "phase": "training",
+                            }));
+
+                            let entry = serde_json::json!({
+                                "epoch": epoch,
+                                "metrics": metrics,
+                                "ts": 0.0,
+                            });
+                            if let Some(pos) = last_metrics_history.iter().position(|e| e["epoch"].as_u64() == Some(epoch)) {
+                                last_metrics_history[pos] = entry;
+                            } else {
+                                last_metrics_history.push(entry);
+                            }
+
+                            let history_clone = last_metrics_history.clone();
+                            if let Ok(mut pf) = io::read_project(&project_dir) {
+                                if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == training_job_id) {
+                                    job.progress = progress;
+                                    job.metrics_history = history_clone;
+                                }
+                                let _ = io::write_project(&project_dir, &pf);
+                            }
+                        } else if ev_type == "log" {
+                            if let Some(msg) = ev["message"].as_str() {
+                                let _ = app.emit("training:log", serde_json::json!({
+                                    "jobId": training_job_id,
+                                    "message": msg,
+                                }));
+                            }
+                        }
+                    }
+                }
+
+                // Poll status real
                 match runner.poll_status(&handle) {
                     Ok(status) => {
                         let state_str = match &status.state {

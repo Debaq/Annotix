@@ -81,7 +81,7 @@ impl TrainingProcessManager {
         // Preparar dataset en disco
         let data_yaml_path = dataset::prepare_dataset(
             &images_dir, &pf, &images, &dataset_dir,
-            config.val_split, &config.task,
+            config.val_split, config.test_split, &config.task,
         )?;
 
         // Generar script
@@ -255,7 +255,7 @@ impl TrainingProcessManager {
         } else {
             dataset::prepare_dataset_for_backend(
                 &images_dir, &pf, &images, &dataset_dir,
-                request.val_split, &request.task, &request.backend,
+                request.val_split, request.test_split, &request.task, &request.backend,
             )?
         };
 

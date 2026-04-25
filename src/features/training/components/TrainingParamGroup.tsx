@@ -64,16 +64,18 @@ export function TrainingParamGroup({
 
       {open && (
         <div className="px-3 pb-3 pt-1">
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-            {params.map((param) => (
-              <ParamInput
-                key={param.key}
-                param={param}
-                value={values[param.key]}
-                onChange={(v) => onChange(param.key, v)}
-              />
-            ))}
-          </div>
+          <TooltipProvider delayDuration={200}>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+              {params.map((param) => (
+                <ParamInput
+                  key={param.key}
+                  param={param}
+                  value={values[param.key]}
+                  onChange={(v) => onChange(param.key, v)}
+                />
+              ))}
+            </div>
+          </TooltipProvider>
         </div>
       )}
     </div>
@@ -100,16 +102,14 @@ function ParamInput({
     <Label className="text-xs flex items-center gap-1">
       {label}
       {hasDesc && (
-        <TooltipProvider delayDuration={200}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <i className="fas fa-info-circle text-[10px] text-muted-foreground cursor-help" />
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-[250px] text-xs">
-              {desc}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <i className="fas fa-info-circle text-[10px] text-muted-foreground cursor-help" />
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-[250px] text-xs">
+            {desc}
+          </TooltipContent>
+        </Tooltip>
       )}
     </Label>
   );

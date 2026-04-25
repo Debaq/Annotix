@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SCENARIO_PRESETS } from '../utils/presets';
 import type { ScenarioPresetId } from '../types';
@@ -8,7 +9,7 @@ interface TrainingPresetsProps {
   currentModelSize?: string;
 }
 
-export function TrainingPresets({ selected, onSelect, currentModelSize }: TrainingPresetsProps) {
+export const TrainingPresets = memo(function TrainingPresets({ selected, onSelect, currentModelSize }: TrainingPresetsProps) {
   const { t } = useTranslation();
 
   return (
@@ -49,7 +50,7 @@ export function TrainingPresets({ selected, onSelect, currentModelSize }: Traini
       })}
     </div>
   );
-}
+});
 
 function Tag({ label }: { label: string }) {
   return (

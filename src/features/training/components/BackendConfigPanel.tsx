@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { TrainingParamGroup, type ParamDefinition } from './TrainingParamGroup';
 import { TrainingAdvancedConfig } from './TrainingAdvancedConfig';
 import { TrainingAugmentation } from './TrainingAugmentation';
+import { DatasetSplitVisualizer } from './DatasetSplitVisualizer';
 import type { TrainingBackend, TrainingConfig, TrainingRequest } from '../types';
 import { OPTIMIZERS } from '../utils/presets';
 
@@ -14,11 +15,13 @@ interface BackendConfigPanelProps {
     lr: number;
     patience: number;
     valSplit: number;
+    testSplit: number;
     workers: number;
     amp: boolean;
   };
   backendParams: Record<string, unknown>;
   yoloConfig?: TrainingConfig;
+  totalImages?: number;
   onCommonChange: (key: string, value: unknown) => void;
   onBackendParamChange: (key: string, value: unknown) => void;
   onYoloConfigChange?: (partial: Partial<TrainingConfig>) => void;
@@ -32,7 +35,8 @@ const COMMON_PARAMS: ParamDefinition[] = [
   { key: 'imageSize', type: 'number', min: 32, max: 4096, step: 32 },
   { key: 'lr', type: 'number', min: 0.000001, max: 1, step: 0.0001 },
   { key: 'patience', type: 'number', min: 0, max: 1000 },
-  { key: 'valSplit', type: 'slider', min: 0.05, max: 0.5, step: 0.05 },
+  { key: 'valSplit', type: 'slider', min: 0, max: 0.5, step: 0.05 },
+  { key: 'testSplit', type: 'slider', min: 0, max: 0.5, step: 0.05 },
   { key: 'workers', type: 'number', min: 0, max: 32 },
   { key: 'amp', type: 'checkbox' },
 ];
@@ -120,6 +124,7 @@ export function BackendConfigPanel({
   commonParams,
   backendParams,
   yoloConfig,
+  totalImages,
   onCommonChange,
   onBackendParamChange,
   onYoloConfigChange,
@@ -127,10 +132,19 @@ export function BackendConfigPanel({
 }: BackendConfigPanelProps) {
   const { t } = useTranslation();
 
+  const splitVisualizer = (
+    <DatasetSplitVisualizer
+      total={totalImages ?? 0}
+      valSplit={commonParams.valSplit}
+      testSplit={commonParams.testSplit}
+    />
+  );
+
   // YOLO uses the existing advanced config UI
   if (backend === 'yolo' && yoloConfig && onYoloConfigChange && onYoloAugChange) {
     return (
       <div className="space-y-4">
+        {splitVisualizer}
         <TrainingParamGroup
           titleKey="training.params.commonTitle"
           icon="fas fa-sliders-h"
@@ -182,6 +196,7 @@ export function BackendConfigPanel({
 
   return (
     <div className="space-y-4">
+      {splitVisualizer}
       <TrainingParamGroup
         titleKey="training.params.commonTitle"
         icon="fas fa-sliders-h"

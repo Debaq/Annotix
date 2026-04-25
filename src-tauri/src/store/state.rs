@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Mutex;
+use std::time::SystemTime;
 
 use super::config::AppConfig;
-use super::io;
+use super::io::{self, ProjectSummaryRaw};
 use super::project_file::ProjectFile;
 
 /// Proyecto abierto en cache
@@ -13,11 +14,19 @@ pub(crate) struct CachedProject {
     pub(crate) dirty: bool,
 }
 
+/// Entrada de cache para summaries (lectura ligera + mtime de project.json)
+pub(crate) struct CachedSummary {
+    pub(crate) mtime: SystemTime,
+    pub(crate) summary: ProjectSummaryRaw,
+}
+
 pub struct AppState {
     pub config: Mutex<AppConfig>,
     pub data_dir: PathBuf,
     /// Cache de proyectos en memoria: project_id -> CachedProject
     pub(crate) cache: Mutex<HashMap<String, CachedProject>>,
+    /// Cache de summaries para list_projects (clave: ruta absoluta del project.json)
+    pub(crate) summary_cache: Mutex<HashMap<PathBuf, CachedSummary>>,
 }
 
 impl AppState {
@@ -37,6 +46,7 @@ impl AppState {
             config: Mutex::new(config),
             data_dir,
             cache: Mutex::new(HashMap::new()),
+            summary_cache: Mutex::new(HashMap::new()),
         })
     }
 

@@ -122,10 +122,30 @@ pub fn run() {
                 }
             }
 
-            // Migrar entrenamientos legacy a carpeta del proyecto
+            // Migrar entrenamientos legacy a carpeta del proyecto.
+            // Se ejecuta en thread separado para no bloquear el setup (UI).
+            // Además se salta si ya corrió una vez (flag persistente en config.json).
             {
-                let state = app.state::<store::AppState>();
-                training::migrate::migrate_legacy_training_dirs(&state);
+                let app_handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    let state = app_handle.state::<store::AppState>();
+                    let already_done = state.get_app_config()
+                        .map(|c| c.training_migration_v1_done)
+                        .unwrap_or(false);
+                    if already_done {
+                        log::info!("Migración training v1 ya ejecutada, saltando");
+                        return;
+                    }
+                    training::migrate::migrate_legacy_training_dirs(&state);
+                    // Persistir flag
+                    if let Ok(mut cfg) = state.get_app_config() {
+                        cfg.training_migration_v1_done = true;
+                        let _ = cfg.save(&state.data_dir);
+                        if let Ok(mut guard) = state.config.lock() {
+                            *guard = cfg;
+                        }
+                    }
+                });
             }
 
             // Reanudar extracciones de video interrumpidas
@@ -229,7 +249,9 @@ pub fn run() {
             commands::training_commands::list_training_jobs,
             commands::training_commands::delete_training_job,
             commands::training_commands::export_trained_model,
+            commands::training_commands::download_trained_model,
             commands::training_commands::get_available_backends,
+            commands::training_commands::count_annotated_images,
             commands::training_commands::install_backend_packages,
             commands::training_commands::start_training_v2,
             commands::training_commands::generate_training_package,

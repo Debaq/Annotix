@@ -187,7 +187,7 @@ training on the fly — **no need to edit `train.py`**.\n"
         "execution_count": null,
         "metadata": {},
         "outputs": [],
-        "source": code_lines(&results_cell(platform))
+        "source": code_lines(&results_cell(platform, backend, project_name, model_id))
     }));
 
     // ── Markdown: footer ──────────────────────────────────────────────────
@@ -397,50 +397,369 @@ Run the next cell to bundle and download them.",
     }
 }
 
-fn results_cell(platform: Platform) -> String {
-    match platform {
-        Platform::Colab => r#"# Bundle and download the results
-import os, shutil, glob
-from google.colab import files  # type: ignore
-
-run_dirs = sorted(glob.glob("dataset/**/weights", recursive=True))
-out_root = os.path.dirname(run_dirs[0]) if run_dirs else "dataset"
-zip_path = shutil.make_archive("annotix_results", "zip", out_root)
-print(f"[annotix] zip: {zip_path} ({os.path.getsize(zip_path)/1e6:.1f} MB)")
-files.download(zip_path)
-"#.to_string(),
-        Platform::Kaggle => r#"# Bundle results under /kaggle/working/ (exposed in the Output panel)
-import os, shutil, glob
-run_dirs = sorted(glob.glob("/kaggle/working/dataset/**/weights", recursive=True))
-out_root = os.path.dirname(run_dirs[0]) if run_dirs else "/kaggle/working/dataset"
-zip_path = shutil.make_archive("/kaggle/working/annotix_results", "zip", out_root)
-print(f"[annotix] zip: {zip_path} ({os.path.getsize(zip_path)/1e6:.1f} MB)")
-print("Download it from the 'Output' panel when the session ends.")
-"#.to_string(),
-        Platform::HuggingFace => r##"# Optional: push the weights to the Hub
-import os, glob
-HF_MODEL_REPO = os.environ.get("HF_MODEL_REPO", "").strip()
-if not HF_MODEL_REPO:
-    print("[annotix] HF_MODEL_REPO not set — skipping upload. "
-          "To upload, export HF_MODEL_REPO=<user>/<repo> and re-run this cell.")
+fn results_cell(platform: Platform, backend: &str, project_name: &str, model_id: &str) -> String {
+    let is_ultralytics = matches!(backend, "YOLO" | "RT-DETR" | "yolo" | "rt_detr");
+    let work_root = match platform {
+        Platform::Kaggle => "/kaggle/working",
+        _ => ".",
+    };
+    let download_block = match platform {
+        Platform::Colab => r#"
+try:
+    from google.colab import files  # type: ignore
+    files.download(full_zip)
+    files.download(weights_zip)
+except Exception as _e:
+    print(f"[annotix] auto-download skipped: {_e}")
+"#,
+        Platform::Kaggle => r#"
+print("\n📥 Download the zips from the Notebook 'Output' panel after the session ends.")
+"#,
+        Platform::HuggingFace => r#"
+import os as _os
+HF_MODEL_REPO = _os.environ.get("HF_MODEL_REPO", "").strip()
+if HF_MODEL_REPO:
+    try:
+        from huggingface_hub import HfApi, create_repo
+        api = HfApi()
+        create_repo(HF_MODEL_REPO, repo_type="model", exist_ok=True)
+        api.upload_folder(folder_path=OUTPUT_DIR, repo_id=HF_MODEL_REPO, repo_type="model")
+        print(f"\n✅ Uploaded release folder to https://huggingface.co/{HF_MODEL_REPO}")
+    except Exception as _e:
+        print(f"[annotix] HF upload failed: {_e}")
 else:
-    from huggingface_hub import HfApi, create_repo
-    api = HfApi()
-    create_repo(HF_MODEL_REPO, repo_type="model", exist_ok=True)
-    run_dirs = sorted(glob.glob("dataset/**/weights", recursive=True))
-    folder = os.path.dirname(run_dirs[0]) if run_dirs else "dataset"
-    card = f"# {HF_MODEL_REPO}\n\nModel trained with Annotix.\n"
-    with open(os.path.join(folder, "README.md"), "w") as f:
-        f.write(card)
-    api.upload_folder(folder_path=folder, repo_id=HF_MODEL_REPO, repo_type="model")
-    print(f"[annotix] uploaded to https://huggingface.co/{HF_MODEL_REPO}")
-"##.to_string(),
-        Platform::Generic => r#"# Local artifact summary
-import glob, os
-for p in sorted(glob.glob("dataset/**/weights/*", recursive=True)):
-    print(f"{p}  ({os.path.getsize(p)/1e6:.1f} MB)")
-"#.to_string(),
+    print("\n[annotix] HF_MODEL_REPO not set — release zips remain local.")
+"#,
+        Platform::Generic => "",
+    };
+
+    if !is_ultralytics {
+        // Backends que no son ultralytics: empaquetado simple
+        return format!(
+            r##"# ============================================================
+# Annotix · paquete de release
+# ============================================================
+import os, shutil, glob, json
+from pathlib import Path
+
+WORK_ROOT = "{work_root}"
+RUN_GLOB = sorted(glob.glob(os.path.join(WORK_ROOT, "dataset/**/weights"), recursive=True))
+RUN_DIR = os.path.dirname(RUN_GLOB[0]) if RUN_GLOB else os.path.join(WORK_ROOT, "dataset")
+OUTPUT_DIR = os.path.join(WORK_ROOT, "annotix_release")
+if os.path.exists(OUTPUT_DIR):
+    shutil.rmtree(OUTPUT_DIR)
+shutil.copytree(RUN_DIR, OUTPUT_DIR)
+
+readme = """# {project_name} — {backend} ({model_id})
+
+Modelo entrenado con Annotix.
+"""
+with open(os.path.join(OUTPUT_DIR, "README.md"), "w") as f:
+    f.write(readme)
+
+full_zip = shutil.make_archive(os.path.join(WORK_ROOT, "annotix_release_FULL"), "zip", OUTPUT_DIR)
+weights_zip = full_zip  # mismo paquete
+print(f"📦 {{full_zip}} ({{os.path.getsize(full_zip)/1e6:.1f}} MB)")
+{download_block}
+"##,
+            work_root = work_root,
+            project_name = project_name,
+            backend = backend,
+            model_id = model_id,
+            download_block = download_block,
+        );
     }
+
+    // Ultralytics (YOLO / RT-DETR): celda completa estilo "release"
+    let project_safe = sanitize_for_path(project_name);
+    format!(
+        r##"# ============================================================
+# Annotix · CELDA FINAL: validar, exportar ONNX, probar y empaquetar
+# ============================================================
+import os, shutil, json, time, glob
+from pathlib import Path
+
+WORK_ROOT = "{work_root}"
+PROJECT_NAME = "{project_safe}"
+MODEL_ID = "{model_id}"
+
+# Localizar run dir generado por ultralytics (project=dataset, name=train)
+_run_candidates = sorted(glob.glob(os.path.join(WORK_ROOT, "dataset/**/weights"), recursive=True))
+RUN_DIR = os.path.dirname(_run_candidates[0]) if _run_candidates else os.path.join(WORK_ROOT, "dataset", "train")
+BEST_PT = os.path.join(RUN_DIR, "weights", "best.pt")
+LAST_PT = os.path.join(RUN_DIR, "weights", "last.pt")
+DATA_YAML = os.path.join(WORK_ROOT, "dataset", "data.yaml")
+
+OUTPUT_DIR = os.path.join(WORK_ROOT, f"{{PROJECT_NAME}}_release")
+if os.path.exists(OUTPUT_DIR):
+    shutil.rmtree(OUTPUT_DIR)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+# Determinar imgsz desde args.yaml si existe
+EXPORT_IMGSZ = 640
+_args_yaml = os.path.join(RUN_DIR, "args.yaml")
+if os.path.exists(_args_yaml):
+    try:
+        import yaml as _yaml
+        with open(_args_yaml) as _f:
+            _args = _yaml.safe_load(_f) or {{}}
+        EXPORT_IMGSZ = int(_args.get("imgsz", 640))
+    except Exception:
+        pass
+
+print("="*60)
+print("PASO 1: Validar best.pt en val (y test si existe)")
+print("="*60)
+
+from ultralytics import YOLO
+model = YOLO(BEST_PT)
+
+def _collect_metrics(res):
+    if res is None or not hasattr(res, "box"):
+        return None
+    b = res.box
+    out = {{
+        "global": {{
+            "precision": float(getattr(b, "mp", float("nan"))),
+            "recall":    float(getattr(b, "mr", float("nan"))),
+            "mAP50":     float(getattr(b, "map50", float("nan"))),
+            "mAP50-95":  float(getattr(b, "map", float("nan"))),
+        }},
+        "per_class": {{}},
+    }}
+    try:
+        for i, name in model.names.items():
+            out["per_class"][name] = {{
+                "precision": float(b.p[i]),
+                "recall":    float(b.r[i]),
+                "mAP50":     float(b.ap50[i]),
+                "mAP50-95":  float(b.ap[i]),
+            }}
+    except Exception:
+        pass
+    return out
+
+val_metrics = None
+test_metrics = None
+try:
+    val_results = model.val(data=DATA_YAML, imgsz=EXPORT_IMGSZ, verbose=False)
+    val_metrics = _collect_metrics(val_results)
+    print(f"✅ val mAP50: {{val_metrics['global']['mAP50']:.4f}}  mAP50-95: {{val_metrics['global']['mAP50-95']:.4f}}")
+except Exception as _e:
+    print(f"⚠️  val falló: {{_e}}")
+
+try:
+    import yaml as _yaml
+    with open(DATA_YAML) as _f:
+        _yd = _yaml.safe_load(_f) or {{}}
+    if _yd.get("test"):
+        test_results = model.val(data=DATA_YAML, split="test", imgsz=EXPORT_IMGSZ, verbose=False)
+        test_metrics = _collect_metrics(test_results)
+        if test_metrics:
+            print(f"✅ test mAP50: {{test_metrics['global']['mAP50']:.4f}}  mAP50-95: {{test_metrics['global']['mAP50-95']:.4f}}")
+    else:
+        print("ℹ️  No hay split 'test' declarado en data.yaml — se omite")
+except Exception as _e:
+    print(f"⚠️  test eval skipped: {{_e}}")
+
+metrics_summary = {{
+    "project":     PROJECT_NAME,
+    "model":       MODEL_ID,
+    "imgsz":       EXPORT_IMGSZ,
+    "num_classes": len(model.names),
+    "class_names": list(model.names.values()),
+    "val":         val_metrics,
+    "test":        test_metrics,
+}}
+with open(os.path.join(OUTPUT_DIR, "metrics.json"), "w") as f:
+    json.dump(metrics_summary, f, indent=2)
+
+print("\n" + "="*60)
+print("PASO 2: Exportar a ONNX")
+print("="*60)
+
+onnx_path = None
+try:
+    onnx_path = model.export(format="onnx", imgsz=EXPORT_IMGSZ, simplify=True, opset=12, dynamic=False, half=False)
+    print(f"✅ ONNX exportado: {{onnx_path}}  ({{os.path.getsize(onnx_path)/1e6:.2f}} MB)")
+except Exception as _e:
+    print(f"⚠️  Export ONNX falló: {{_e}}")
+
+print("\n" + "="*60)
+print("PASO 3: Validar ONNX y benchmark inferencia")
+print("="*60)
+
+if onnx_path and os.path.exists(onnx_path):
+    try:
+        import onnx as _onnx
+        _m = _onnx.load(onnx_path)
+        _onnx.checker.check_model(_m)
+        i0 = _m.graph.input[0]; o0 = _m.graph.output[0]
+        print(f"✅ ONNX válido — input {{i0.name}}={{[d.dim_value for d in i0.type.tensor_type.shape.dim]}}  output {{o0.name}}={{[d.dim_value for d in o0.type.tensor_type.shape.dim]}}")
+    except Exception as _e:
+        print(f"⚠️  ONNX checker: {{_e}}")
+    try:
+        import onnxruntime as _ort, numpy as _np
+        _sess = _ort.InferenceSession(onnx_path, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+        _in = _sess.get_inputs()[0].name
+        _x = _np.random.randn(1, 3, EXPORT_IMGSZ, EXPORT_IMGSZ).astype(_np.float32)
+        for _ in range(3): _sess.run(None, {{_in: _x}})
+        _t = time.perf_counter()
+        for _ in range(10): _o = _sess.run(None, {{_in: _x}})
+        _ms = (time.perf_counter() - _t) / 10 * 1000
+        print(f"✅ ORT provider={{_sess.get_providers()[0]}}  ~{{_ms:.2f}} ms/img  out={{_o[0].shape}}")
+    except Exception as _e:
+        print(f"⚠️  onnxruntime: {{_e}}")
+
+print("\n" + "="*60)
+print("PASO 4: Comparativa PT vs ONNX en una imagen real")
+print("="*60)
+
+_split_dirs = [os.path.join(WORK_ROOT, "dataset", "images", s) for s in ("test", "val")]
+_test_image = None
+for _d in _split_dirs:
+    if os.path.isdir(_d):
+        _imgs = [f for f in os.listdir(_d) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp', '.webp'))]
+        if _imgs:
+            _test_image = os.path.join(_d, _imgs[0])
+            break
+if _test_image:
+    try:
+        _pt = YOLO(BEST_PT).predict(_test_image, imgsz=EXPORT_IMGSZ, conf=0.25, verbose=False)[0]
+        _pt_n = len(_pt.boxes) if _pt.boxes is not None else 0
+        _on_n = "n/a"
+        if onnx_path and os.path.exists(onnx_path):
+            _on = YOLO(onnx_path).predict(_test_image, imgsz=EXPORT_IMGSZ, conf=0.25, verbose=False)[0]
+            _on_n = len(_on.boxes) if _on.boxes is not None else 0
+        print(f"   imagen: {{os.path.basename(_test_image)}}  detecciones PT={{_pt_n}}  ONNX={{_on_n}}")
+        try:
+            import cv2 as _cv2
+            _cv2.imwrite(os.path.join(OUTPUT_DIR, "prediction_example.jpg"), _pt.plot())
+            print("   ✅ prediction_example.jpg guardado")
+        except Exception:
+            pass
+    except Exception as _e:
+        print(f"⚠️  comparativa: {{_e}}")
+else:
+    print("ℹ️  No se encontró imagen de val/test para comparar")
+
+print("\n" + "="*60)
+print("PASO 5: Copiar pesos, gráficos y data.yaml a release/")
+print("="*60)
+
+for _src, _name in [(BEST_PT, "best.pt"), (LAST_PT, "last.pt"), (onnx_path, "best.onnx")]:
+    if _src and os.path.exists(_src):
+        shutil.copy(_src, os.path.join(OUTPUT_DIR, _name))
+        print(f"   + {{_name}}")
+
+for _p in ["results.png", "results.csv", "confusion_matrix.png", "confusion_matrix_normalized.png",
+           "F1_curve.png", "PR_curve.png", "P_curve.png", "R_curve.png", "labels.jpg", "labels_correlogram.jpg", "args.yaml"]:
+    _src = os.path.join(RUN_DIR, _p)
+    if os.path.exists(_src):
+        shutil.copy(_src, os.path.join(OUTPUT_DIR, _p))
+
+if os.path.exists(DATA_YAML):
+    shutil.copy(DATA_YAML, os.path.join(OUTPUT_DIR, "data.yaml"))
+
+_param_count = sum(p.numel() for p in model.model.parameters())
+_class_lines = "\n".join([f"- {{i}}: {{n}}" for i, n in model.names.items()])
+_val_md = "n/a" if not val_metrics else (
+    f"- mAP50: **{{val_metrics['global']['mAP50']:.4f}}**\n"
+    f"- mAP50-95: **{{val_metrics['global']['mAP50-95']:.4f}}**\n"
+    f"- precision: {{val_metrics['global']['precision']:.4f}} / recall: {{val_metrics['global']['recall']:.4f}}"
+)
+_test_md = "" if not test_metrics else (
+    f"\n\n## Métricas (test)\n"
+    f"- mAP50: **{{test_metrics['global']['mAP50']:.4f}}**\n"
+    f"- mAP50-95: **{{test_metrics['global']['mAP50-95']:.4f}}**\n"
+    f"- precision: {{test_metrics['global']['precision']:.4f}} / recall: {{test_metrics['global']['recall']:.4f}}"
+)
+
+_readme = f"""# {{PROJECT_NAME}} · {{MODEL_ID}}
+
+Modelo entrenado con **Annotix**.
+
+## Configuración
+- Modelo base: `{{MODEL_ID}}` ({{_param_count:,}} parámetros)
+- Tamaño entrada: {{EXPORT_IMGSZ}}x{{EXPORT_IMGSZ}}
+- Clases ({{len(model.names)}}):
+{{_class_lines}}
+
+## Métricas (val)
+{{_val_md}}{{_test_md}}
+
+## Archivos
+- `best.pt` / `last.pt` — checkpoints PyTorch
+- `best.onnx` — modelo exportado a ONNX (deployment)
+- `metrics.json` — métricas detalladas por clase (val + test)
+- `data.yaml` — config dataset
+- `results.csv` / `results.png` — log de entrenamiento
+- `*_curve.png`, `confusion_matrix*.png` — gráficos
+- `prediction_example.jpg` — predicción de ejemplo
+
+## Uso
+```python
+from ultralytics import YOLO
+model = YOLO("best.pt")  # o "best.onnx"
+results = model.predict("img.jpg", conf=0.25)
+```
+"""
+with open(os.path.join(OUTPUT_DIR, "README.md"), "w") as f:
+    f.write(_readme)
+
+print("\n" + "="*60)
+print("PASO 6: Crear ZIPs (full + weights-only)")
+print("="*60)
+
+full_zip = shutil.make_archive(os.path.join(WORK_ROOT, f"{{PROJECT_NAME}}_FULL"), "zip", OUTPUT_DIR)
+print(f"📦 {{os.path.basename(full_zip)}}  ({{os.path.getsize(full_zip)/1e6:.1f}} MB)  — pesos + gráficos + métricas")
+
+_w_dir = os.path.join(WORK_ROOT, f"{{PROJECT_NAME}}_weights_only")
+if os.path.exists(_w_dir):
+    shutil.rmtree(_w_dir)
+os.makedirs(_w_dir)
+for _f in ["best.pt", "best.onnx", "metrics.json", "README.md", "data.yaml"]:
+    _src = os.path.join(OUTPUT_DIR, _f)
+    if os.path.exists(_src):
+        shutil.copy(_src, os.path.join(_w_dir, _f))
+weights_zip = shutil.make_archive(os.path.join(WORK_ROOT, f"{{PROJECT_NAME}}_weights_only"), "zip", _w_dir)
+print(f"📦 {{os.path.basename(weights_zip)}}  ({{os.path.getsize(weights_zip)/1e6:.1f}} MB)  — solo deployment")
+
+print("\n" + "="*60)
+print("MÉTRICAS POR CLASE")
+print("="*60)
+print(f"{{'Clase':<28}} {{'P':<8}} {{'R':<8}} {{'mAP50':<8}} {{'mAP50-95':<10}}")
+print("-" * 70)
+_per_class = (val_metrics or {{}}).get("per_class", {{}})
+for _n, _m in _per_class.items():
+    print(f"{{_n:<28}} {{_m['precision']:<8.3f}} {{_m['recall']:<8.3f}} {{_m['mAP50']:<8.3f}} {{_m['mAP50-95']:<10.3f}}")
+if val_metrics:
+    _g = val_metrics["global"]
+    print("-" * 70)
+    print(f"{{'GLOBAL (val)':<28}} {{_g['precision']:<8.3f}} {{_g['recall']:<8.3f}} {{_g['mAP50']:<8.3f}} {{_g['mAP50-95']:<10.3f}}")
+if test_metrics:
+    _g = test_metrics["global"]
+    print(f"{{'GLOBAL (test)':<28}} {{_g['precision']:<8.3f}} {{_g['recall']:<8.3f}} {{_g['mAP50']:<8.3f}} {{_g['mAP50-95']:<10.3f}}")
+{download_block}
+print("\n✅ Listo. Release en:", OUTPUT_DIR)
+"##,
+        work_root = work_root,
+        project_safe = project_safe,
+        model_id = model_id,
+        download_block = download_block,
+    )
+}
+
+fn sanitize_for_path(s: &str) -> String {
+    let mut out = String::new();
+    for c in s.chars() {
+        if c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.' {
+            out.push(c);
+        } else if c.is_whitespace() {
+            out.push('_');
+        }
+    }
+    if out.is_empty() { "annotix_project".to_string() } else { out }
 }
 
 /// Genera la celda de auto-tune: detecta GPU/CPU, elige batch/workers/amp

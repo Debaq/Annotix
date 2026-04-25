@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TrainingParamGroup, type ParamDefinition } from './TrainingParamGroup';
 import type { AugmentationConfig } from '../types';
@@ -27,7 +28,7 @@ const AUG_PARAMS: ParamDefinition[] = [
   { key: 'erasing', type: 'slider', min: 0, max: 1, step: 0.05 },
 ];
 
-export function TrainingAugmentation({
+export const TrainingAugmentation = memo(function TrainingAugmentation({
   augmentation,
   closeMosaic,
   onChange,
@@ -58,4 +59,4 @@ export function TrainingAugmentation({
       onChange={handleChange}
     />
   );
-}
+});

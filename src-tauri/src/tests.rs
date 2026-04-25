@@ -795,6 +795,7 @@ fn training_prepare_dataset_creates_yolo_structure() {
         &pf.images,
         out.path(),
         0.5,
+        0.0,
         "detect",
     )
     .expect("prepare");
@@ -818,7 +819,7 @@ fn training_prepare_dataset_empty_images_errors() {
     let tmp = tempfile::tempdir().unwrap();
     let out = tempfile::tempdir().unwrap();
     let pf = make_project("p", "detection", default_classes());
-    let e = dataset::prepare_dataset(tmp.path(), &pf, &[], out.path(), 0.2, "detect");
+    let e = dataset::prepare_dataset(tmp.path(), &pf, &[], out.path(), 0.2, 0.0, "detect");
     assert!(e.is_err());
 }
 
@@ -835,6 +836,7 @@ fn training_prepare_dataset_classify_uses_folders_by_class() {
         &pf.images,
         out.path(),
         0.5,
+        0.0,
         "classify",
     )
     .expect("prepare classify");
@@ -854,14 +856,14 @@ fn training_prepare_dataset_is_deterministic_per_project_id() {
     let (pf, imgs_dir) = build_detection_fixture();
 
     let out1 = tempfile::tempdir().unwrap();
-    dataset::prepare_dataset(imgs_dir.path(), &pf, &pf.images, out1.path(), 0.5, "detect").unwrap();
+    dataset::prepare_dataset(imgs_dir.path(), &pf, &pf.images, out1.path(), 0.5, 0.0, "detect").unwrap();
     let files1: Vec<_> = std::fs::read_dir(out1.path().join("images/train"))
         .unwrap()
         .map(|e| e.unwrap().file_name().to_string_lossy().to_string())
         .collect();
 
     let out2 = tempfile::tempdir().unwrap();
-    dataset::prepare_dataset(imgs_dir.path(), &pf, &pf.images, out2.path(), 0.5, "detect").unwrap();
+    dataset::prepare_dataset(imgs_dir.path(), &pf, &pf.images, out2.path(), 0.5, 0.0, "detect").unwrap();
     let files2: Vec<_> = std::fs::read_dir(out2.path().join("images/train"))
         .unwrap()
         .map(|e| e.unwrap().file_name().to_string_lossy().to_string())

@@ -679,6 +679,14 @@
   max-width: 100px;
 }
 
+.annotix-compact-class-count {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
 /* ============================================
    ANNOTATIONS BAR (Barra inferior)
    ============================================ */

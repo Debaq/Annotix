@@ -111,53 +111,75 @@ impl AppState {
         let entries = std::fs::read_dir(&projects_dir)
             .map_err(|e| format!("Error leyendo directorio de proyectos: {}", e))?;
 
+        // Snapshot del cache de summaries para evitar mantener el lock durante el I/O.
+        let mut cache_lock = self.summary_cache.lock().map_err(|e| e.to_string())?;
+
         for entry in entries {
             let entry = match entry {
                 Ok(e) => e,
                 Err(_) => continue,
             };
-
             let path = entry.path();
-            if !path.is_dir() {
-                continue;
-            }
-
+            if !path.is_dir() { continue; }
             let project_json = path.join("project.json");
-            if !project_json.exists() {
-                continue;
-            }
+            let metadata = match std::fs::metadata(&project_json) {
+                Ok(m) => m,
+                Err(_) => continue,
+            };
+            let mtime = metadata.modified().unwrap_or(std::time::UNIX_EPOCH);
 
-            // Leer summary ligero sin cargar todo en cache
-            match io::read_project(&path) {
-                Ok(pf) => {
-                    let p2p_download = pf.p2p_download.clone();
-                    let has_p2p_config = pf.p2p.is_some();
-                    summaries.push(ProjectSummary {
-                        id: pf.id,
-                        name: pf.name,
-                        project_type: pf.project_type,
-                        classes: pf.classes,
-                        image_count: pf.images.len(),
-                        metadata: ProjectMetadata {
-                            created: pf.created,
-                            updated: pf.updated,
-                            version: format!("{}", pf.version),
-                        },
-                        p2p_download,
-                        has_p2p_config,
-                        folder: pf.folder,
-                        inference_model_count: pf.inference_models.len(),
-                        image_format: pf.image_format,
-                    });
+            // Cache hit: mismo mtime → reutilizar summary ya parseado
+            let summary_raw = if let Some(cached) = cache_lock.get(&project_json) {
+                if cached.mtime == mtime {
+                    cached.summary.clone()
+                } else {
+                    match io::read_project_summary(&path) {
+                        Ok(s) => {
+                            cache_lock.insert(project_json.clone(), super::state::CachedSummary {
+                                mtime, summary: s.clone(),
+                            });
+                            s
+                        }
+                        Err(e) => {
+                            log::warn!("Error leyendo summary en {:?}: {}", path, e);
+                            continue;
+                        }
+                    }
                 }
-                Err(e) => {
-                    log::warn!("Error leyendo proyecto en {:?}: {}", path, e);
-                    continue;
+            } else {
+                match io::read_project_summary(&path) {
+                    Ok(s) => {
+                        cache_lock.insert(project_json.clone(), super::state::CachedSummary {
+                            mtime, summary: s.clone(),
+                        });
+                        s
+                    }
+                    Err(e) => {
+                        log::warn!("Error leyendo summary en {:?}: {}", path, e);
+                        continue;
+                    }
                 }
-            }
+            };
+
+            summaries.push(ProjectSummary {
+                id: summary_raw.id,
+                name: summary_raw.name,
+                project_type: summary_raw.project_type,
+                classes: summary_raw.classes,
+                image_count: summary_raw.images.0,
+                metadata: ProjectMetadata {
+                    created: summary_raw.created,
+                    updated: summary_raw.updated,
+                    version: format!("{}", summary_raw.version),
+                },
+                p2p_download: summary_raw.p2p_download,
+                has_p2p_config: summary_raw.p2p.is_some(),
+                folder: summary_raw.folder,
+                inference_model_count: summary_raw.inference_models.0,
+                image_format: summary_raw.image_format,
+            });
         }
 
-        // Ordenar por fecha de creación descendente
         summaries.sort_by(|a, b| b.metadata.created.partial_cmp(&a.metadata.created).unwrap_or(std::cmp::Ordering::Equal));
         Ok(summaries)
     }

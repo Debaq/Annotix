@@ -8,13 +8,47 @@ use crate::export::{parse_bbox, parse_obb, parse_polygon, parse_mask};
 use crate::utils::converters::normalize_coordinates;
 use super::TrainingBackend;
 
-/// Prepara el dataset en disco con split train/val para entrenamiento YOLO
+/// Resultado del split: cuántas imágenes en cada partición.
+#[allow(dead_code)]
+#[derive(Debug, Clone, Copy)]
+pub struct SplitCounts {
+    pub train: usize,
+    pub val: usize,
+    pub test: usize,
+}
+
+/// Calcula la división train/val/test garantizando mínimos sensatos.
+/// - val siempre ≥1 (excepto si total==1)
+/// - test ≥1 sólo si test_split>0 y queda al menos 1 para train
+pub fn compute_split(total: usize, val_split: f64, test_split: f64) -> SplitCounts {
+    if total == 0 {
+        return SplitCounts { train: 0, val: 0, test: 0 };
+    }
+    if total == 1 {
+        return SplitCounts { train: 1, val: 0, test: 0 };
+    }
+
+    let mut test = ((total as f64) * test_split.max(0.0)).round() as usize;
+    if test_split > 0.0 && test == 0 { test = 1; }
+    if test >= total { test = total - 2; }
+
+    let remaining = total - test;
+    let mut val = ((total as f64) * val_split.max(0.0)).ceil() as usize;
+    val = val.max(1).min(remaining.saturating_sub(1).max(1));
+    if val + test >= total { val = total - test - 1; }
+
+    let train = total - val - test;
+    SplitCounts { train, val, test }
+}
+
+/// Prepara el dataset en disco con split train/val/test para entrenamiento YOLO
 pub fn prepare_dataset(
     images_dir: &Path,
     project: &ProjectFile,
     images: &[ImageEntry],
     output_dir: &Path,
     val_split: f64,
+    test_split: f64,
     task: &str,
 ) -> Result<String, String> {
     let total = images.len();
@@ -24,29 +58,28 @@ pub fn prepare_dataset(
 
     // Shuffle con seed determinístico para reproducibilidad
     let mut indices: Vec<usize> = (0..total).collect();
-    // Simple Fisher-Yates shuffle con seed basado en project_id (hash del UUID)
     let seed = project.id.bytes().fold(42usize, |acc, b| acc.wrapping_mul(31).wrapping_add(b as usize));
     for i in (1..indices.len()).rev() {
         let j = (seed.wrapping_mul(i).wrapping_add(7)) % (i + 1);
         indices.swap(i, j);
     }
 
-    let val_count = ((total as f64) * val_split).ceil() as usize;
-    let val_count = val_count.max(1).min(total - 1);
-    let train_count = total - val_count;
+    let counts = compute_split(total, val_split, test_split);
 
-    let train_indices = &indices[..train_count];
-    let val_indices = &indices[train_count..];
+    let train_indices = &indices[..counts.train];
+    let val_indices = &indices[counts.train..counts.train + counts.val];
+    let test_indices = &indices[counts.train + counts.val..];
+    let has_test = !test_indices.is_empty();
 
     if task == "classify" {
-        prepare_classification_dataset(images_dir, project, images, output_dir, train_indices, val_indices)?;
+        prepare_classification_dataset(images_dir, project, images, output_dir, train_indices, val_indices, test_indices)?;
     } else {
-        prepare_detection_dataset(images_dir, project, images, output_dir, train_indices, val_indices, task)?;
+        prepare_detection_dataset(images_dir, project, images, output_dir, train_indices, val_indices, test_indices, task)?;
     }
 
     // Generar data.yaml
     let yaml_path = output_dir.join("data.yaml");
-    let yaml_content = generate_data_yaml(project, output_dir, task);
+    let yaml_content = generate_data_yaml(project, output_dir, task, has_test);
     std::fs::write(&yaml_path, &yaml_content)
         .map_err(|e| format!("Error escribiendo data.yaml: {}", e))?;
 
@@ -60,24 +93,25 @@ fn prepare_detection_dataset(
     output_dir: &Path,
     train_indices: &[usize],
     val_indices: &[usize],
+    test_indices: &[usize],
     task: &str,
 ) -> Result<(), String> {
-    // Crear estructura de directorios
-    for split in &["train", "val"] {
+    let mut splits: Vec<(&str, &[usize])> = vec![("train", train_indices), ("val", val_indices)];
+    if !test_indices.is_empty() {
+        splits.push(("test", test_indices));
+    }
+
+    for (split, _) in &splits {
         std::fs::create_dir_all(output_dir.join("images").join(split))
             .map_err(|e| format!("Error creando directorio images/{}: {}", split, e))?;
         std::fs::create_dir_all(output_dir.join("labels").join(split))
             .map_err(|e| format!("Error creando directorio labels/{}: {}", split, e))?;
     }
 
-    // Copiar imágenes y generar labels para train
-    for &idx in train_indices {
-        copy_image_and_label(images_dir, project, &images[idx], output_dir, "train", task)?;
-    }
-
-    // Copiar imágenes y generar labels para val
-    for &idx in val_indices {
-        copy_image_and_label(images_dir, project, &images[idx], output_dir, "val", task)?;
+    for (split, idxs) in &splits {
+        for &idx in *idxs {
+            copy_image_and_label(images_dir, project, &images[idx], output_dir, split, task)?;
+        }
     }
 
     Ok(())
@@ -90,21 +124,24 @@ fn prepare_classification_dataset(
     output_dir: &Path,
     train_indices: &[usize],
     val_indices: &[usize],
+    test_indices: &[usize],
 ) -> Result<(), String> {
-    // Para clasificación: carpetas por clase
-    for split in &["train", "val"] {
+    let mut splits: Vec<(&str, &[usize])> = vec![("train", train_indices), ("val", val_indices)];
+    if !test_indices.is_empty() {
+        splits.push(("test", test_indices));
+    }
+
+    for (split, _) in &splits {
         for cls in &project.classes {
             std::fs::create_dir_all(output_dir.join(split).join(&cls.name))
                 .map_err(|e| format!("Error creando directorio {}/{}: {}", split, cls.name, e))?;
         }
     }
 
-    for &idx in train_indices {
-        copy_classification_image(images_dir, project, &images[idx], output_dir, "train")?;
-    }
-
-    for &idx in val_indices {
-        copy_classification_image(images_dir, project, &images[idx], output_dir, "val")?;
+    for (split, idxs) in &splits {
+        for &idx in *idxs {
+            copy_classification_image(images_dir, project, &images[idx], output_dir, split)?;
+        }
     }
 
     Ok(())
@@ -175,7 +212,7 @@ fn copy_classification_image(
     Ok(())
 }
 
-fn generate_data_yaml(project: &ProjectFile, output_dir: &Path, task: &str) -> String {
+fn generate_data_yaml(project: &ProjectFile, output_dir: &Path, task: &str, has_test: bool) -> String {
     let mut lines = vec![
         "# YOLO Training Dataset".to_string(),
         "# Generated by Annotix".to_string(),
@@ -186,9 +223,15 @@ fn generate_data_yaml(project: &ProjectFile, output_dir: &Path, task: &str) -> S
     if task == "classify" {
         lines.push("train: train".to_string());
         lines.push("val: val".to_string());
+        if has_test {
+            lines.push("test: test".to_string());
+        }
     } else {
         lines.push("train: images/train".to_string());
         lines.push("val: images/val".to_string());
+        if has_test {
+            lines.push("test: images/test".to_string());
+        }
     }
 
     lines.push(String::new());
@@ -678,12 +721,13 @@ pub fn prepare_dataset_for_backend(
     images: &[ImageEntry],
     output_dir: &Path,
     val_split: f64,
+    test_split: f64,
     task: &str,
     backend: &TrainingBackend,
 ) -> Result<String, String> {
     match backend {
         TrainingBackend::Yolo | TrainingBackend::RtDetr | TrainingBackend::MmRotate => {
-            prepare_dataset(images_dir, project, images, output_dir, val_split, task)
+            prepare_dataset(images_dir, project, images, output_dir, val_split, test_split, task)
         }
         TrainingBackend::RfDetr => {
             prepare_coco_dataset(images_dir, project, images, output_dir, val_split, CocoLayout::RfDetr)
@@ -1022,7 +1066,7 @@ pub fn prepare_classification_dataset_imagefolder(
     val_split: f64,
 ) -> Result<String, String> {
     // Same as existing classification dataset but returns the base dir path
-    prepare_dataset(images_dir, project, images, output_dir, val_split, "classify")
+    prepare_dataset(images_dir, project, images, output_dir, val_split, 0.0, "classify")
 }
 
 // ─── MultiLabel CSV Dataset ──────────────────────────────────────────────────

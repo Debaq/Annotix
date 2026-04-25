@@ -27,7 +27,7 @@ pub fn generate_training_package(
     // 1. Prepare dataset (escribe imágenes, labels, data.yaml con rutas absolutas)
     let dataset_path = dataset::prepare_dataset_for_backend(
         images_dir, project, images, &dataset_dir,
-        request.val_split, &request.task, &request.backend,
+        request.val_split, request.test_split, &request.task, &request.backend,
     )?;
 
     // Absolute prefix usado por scripts/yamls generados; lo sustituimos por

@@ -41,6 +41,8 @@ pub struct TrainingConfig {
     pub patience: u32,
     #[serde(rename = "valSplit")]
     pub val_split: f64,
+    #[serde(rename = "testSplit", default)]
+    pub test_split: f64,
     pub workers: u32,
     pub augmentation: AugmentationConfig,
     #[serde(rename = "exportFormats")]
@@ -416,6 +418,8 @@ pub struct TrainingRequest {
     pub patience: u32,
     #[serde(rename = "valSplit")]
     pub val_split: f64,
+    #[serde(rename = "testSplit", default)]
+    pub test_split: f64,
     pub workers: u32,
     pub amp: bool,
     pub resume: bool,

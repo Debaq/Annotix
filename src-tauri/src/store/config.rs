@@ -159,6 +159,9 @@ pub struct AppConfig {
     /// Procesos P2P deshabilitados (no se reanudan al inicio)
     #[serde(default, rename = "p2pDisabled")]
     pub p2p_disabled: bool,
+    /// Marca migración legacy de training (v1) ya ejecutada
+    #[serde(default, rename = "trainingMigrationV1Done")]
+    pub training_migration_v1_done: bool,
 }
 
 impl AppConfig {

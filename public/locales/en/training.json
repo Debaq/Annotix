@@ -221,6 +221,11 @@
     "modelPaths": "Model Files",
     "exported": "Exported Models",
     "exportModel": "Export Model",
+    "downloadBest": "Download best.pt",
+    "downloadLast": "Download last.pt",
+    "downloadExported": "Download",
+    "downloadOk": "Model saved to {{path}}",
+    "downloadError": "Failed to save model",
     "newTraining": "Start New Training",
     "exportReport": "Export PDF report",
     "generatingReport": "Generating report..."

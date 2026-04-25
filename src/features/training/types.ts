@@ -13,6 +13,7 @@ export interface TrainingConfig {
   lrf: number;
   patience: number;
   valSplit: number;
+  testSplit: number;
   workers: number;
   augmentation: AugmentationConfig;
   exportFormats: string[];
@@ -76,7 +77,7 @@ export interface ScenarioPreset {
   selectedColor: string;
   suggestedModelSize: string;
   suggestedImgsz: number;
-  config: Omit<TrainingConfig, 'yoloVersion' | 'task' | 'modelSize' | 'device' | 'exportFormats' | 'resume' | 'valSplit' | 'workers'>;
+  config: Omit<TrainingConfig, 'yoloVersion' | 'task' | 'modelSize' | 'device' | 'exportFormats' | 'resume' | 'valSplit' | 'testSplit' | 'workers'>;
 }
 
 // ─── Python Env ─────────────────────────────────────────────────────────────
@@ -298,6 +299,7 @@ export interface TrainingRequest {
   lr: number;
   patience: number;
   valSplit: number;
+  testSplit: number;
   workers: number;
   amp: boolean;
   resume: boolean;

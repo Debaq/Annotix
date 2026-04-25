@@ -9,7 +9,7 @@ import { ShortcutsModal } from './ShortcutsModal';
 import { useUIStore } from '../store/uiStore';
 import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
 import { ExportDialog } from '@/features/export/components/ExportDialog';
-import { TrainingPanel } from '@/features/training/components/TrainingPanel';
+import { TrainingPanelLazy as TrainingPanel } from '@/features/training/components/TrainingPanelLazy';
 import { useGlobalTrainingStatus } from '@/features/training/hooks/useGlobalTrainingStatus';
 import { useTrainingModalStore } from '@/features/training/store/trainingModalStore';
 import { P2pStatusIndicator } from '@/features/p2p/components/P2pStatusIndicator';

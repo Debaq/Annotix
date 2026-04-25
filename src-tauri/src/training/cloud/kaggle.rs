@@ -15,62 +15,117 @@ impl KaggleRunner {
         reqwest::blocking::Client::new()
     }
 
+    fn is_token_auth(&self) -> bool {
+        self.api_key.to_uppercase().starts_with("KGAT_")
+    }
+
     fn auth_header(&self) -> String {
-        let credentials = base64::Engine::encode(
-            &base64::engine::general_purpose::STANDARD,
-            format!("{}:{}", self.username, self.api_key),
-        );
-        format!("Basic {}", credentials)
+        if self.is_token_auth() {
+            format!("Bearer {}", self.api_key)
+        } else {
+            let credentials = base64::Engine::encode(
+                &base64::engine::general_purpose::STANDARD,
+                format!("{}:{}", self.username, self.api_key),
+            );
+            format!("Basic {}", credentials)
+        }
     }
 
     fn create_dataset(&self, dataset_path: &str) -> Result<String, String> {
-        let dataset_slug = format!("{}/annotix-training-{}", self.username, uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("ds"));
+        if self.username.is_empty() {
+            return Err("Falta username de Kaggle (necesario como ownerSlug del dataset)".to_string());
+        }
+        let slug_short = uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("ds").to_string();
+        let dataset_slug_only = format!("annotix-training-{}", slug_short);
+        let dataset_ref = format!("{}/{}", self.username, dataset_slug_only);
 
-        // Read zip file
-        let _data = std::fs::read(dataset_path)
+        // Leer bytes
+        let data = std::fs::read(dataset_path)
             .map_err(|e| format!("Error leyendo dataset: {}", e))?;
+        let content_length = data.len();
+        let file_name = std::path::Path::new(dataset_path)
+            .file_name()
+            .and_then(|s| s.to_str())
+            .unwrap_or("dataset.zip")
+            .to_string();
+        let last_modified_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis() as u64)
+            .unwrap_or(0);
 
-        // Create dataset metadata
-        let metadata = serde_json::json!({
-            "title": format!("Annotix Training Dataset"),
-            "slug": dataset_slug,
-            "ownerSlug": self.username,
-            "licenseName": "unknown",
-            "isPrivate": true,
-            "files": [],
+        // 1. Solicitar URL de upload (Kaggle devuelve URL firmada GCS + token)
+        // Sanitizar filename (acepta solo alfanumérico/._-)
+        let safe_name: String = file_name.chars()
+            .map(|c| if c.is_ascii_alphanumeric() || matches!(c, '.'|'_'|'-') { c } else { '_' })
+            .collect();
+        let last_modified_secs = last_modified_ms / 1000;
+        // Kaggle API moderna: POST /api/v1/blobs/upload con body JSON
+        let blob_req = serde_json::json!({
+            "type": "dataset",
+            "name": safe_name,
+            "contentLength": content_length,
+            "contentType": "application/octet-stream",
+            "lastModifiedEpochSeconds": last_modified_secs,
         });
+        let start_resp = self.client()
+            .post("https://www.kaggle.com/api/v1/blobs/upload")
+            .header("Authorization", self.auth_header())
+            .json(&blob_req)
+            .send()
+            .map_err(|e| format!("Error iniciando upload Kaggle: {}", e))?;
+        if !start_resp.status().is_success() {
+            let status = start_resp.status();
+            let body = start_resp.text().unwrap_or_default();
+            return Err(format!("Error Kaggle upload start ({}): {}", status, body.chars().take(300).collect::<String>()));
+        }
+        let start_body: serde_json::Value = start_resp.json()
+            .map_err(|e| format!("Respuesta Kaggle inválida: {}", e))?;
 
-        // Create new dataset via API
-        let resp = self.client()
+        let create_url = start_body.get("createUrl")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| format!("Falta createUrl en respuesta Kaggle: {}", start_body))?
+            .to_string();
+        let token = start_body.get("token")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| format!("Falta token en respuesta Kaggle: {}", start_body))?
+            .to_string();
+
+        // 2. PUT bytes a la URL firmada (GCS)
+        let put_resp = self.client()
+            .put(&create_url)
+            .header("Content-Length", content_length.to_string())
+            .header("Content-Type", "application/octet-stream")
+            .body(data)
+            .send()
+            .map_err(|e| format!("Error subiendo bytes a Kaggle/GCS: {}", e))?;
+        if !put_resp.status().is_success() {
+            let status = put_resp.status();
+            let body = put_resp.text().unwrap_or_default();
+            return Err(format!("Error Kaggle PUT GCS ({}): {}", status, body.chars().take(300).collect::<String>()));
+        }
+
+        // 3. Crear dataset con el token
+        let metadata = serde_json::json!({
+            "title": "Annotix Training Dataset",
+            "slug": dataset_slug_only,
+            "ownerSlug": self.username,
+            "licenseName": "CC0-1.0",
+            "isPrivate": true,
+            "files": [{"token": token}],
+        });
+        let create_resp = self.client()
             .post("https://www.kaggle.com/api/v1/datasets/create/new")
             .header("Authorization", self.auth_header())
             .json(&metadata)
             .send()
-            .map_err(|e| format!("Error creando dataset en Kaggle: {}", e))?;
-
-        if !resp.status().is_success() {
-            let body = resp.text().unwrap_or_default();
-            return Err(format!("Error Kaggle dataset create: {}", body));
+            .map_err(|e| format!("Error creando dataset Kaggle: {}", e))?;
+        if !create_resp.status().is_success() {
+            let status = create_resp.status();
+            let body = create_resp.text().unwrap_or_default();
+            return Err(format!("Error Kaggle dataset create ({}): {}", status, body.chars().take(300).collect::<String>()));
         }
 
-        // Upload file content as blob
-        let form = reqwest::blocking::multipart::Form::new()
-            .file("fileName", dataset_path)
-            .map_err(|e| format!("Error preparando upload: {}", e))?;
-
-        let upload_resp = self.client()
-            .post(format!("https://www.kaggle.com/api/v1/datasets/upload/file/{}", 0))
-            .header("Authorization", self.auth_header())
-            .multipart(form)
-            .send()
-            .map_err(|e| format!("Error subiendo archivo a Kaggle: {}", e))?;
-
-        if !upload_resp.status().is_success() {
-            let body = upload_resp.text().unwrap_or_default();
-            return Err(format!("Error Kaggle file upload: {}", body));
-        }
-
-        Ok(dataset_slug)
+        Ok(dataset_ref)
     }
 
     fn generate_notebook_source(
@@ -83,23 +138,68 @@ impl KaggleRunner {
             .map(|c| format!("'{}'", c))
             .collect::<Vec<_>>()
             .join(", ");
+        let dataset_name = dataset_slug.rsplit('/').next().unwrap_or(dataset_slug);
 
         format!(
-            r#"# Annotix Cloud Training Notebook
-import subprocess
-subprocess.run(["pip", "install", "ultralytics"], check=True)
+            r#"# Annotix Cloud Training Notebook (Kaggle)
+import subprocess, sys, json, os, shutil
+subprocess.run([sys.executable, "-m", "pip", "install", "-q", "ultralytics"], check=True)
 
 from ultralytics import YOLO
-import os
 
-# Dataset path (mounted from Kaggle dataset)
-DATASET_DIR = f"/kaggle/input/{dataset_slug_name}"
+DATASET_DIR = "/kaggle/input/{dataset_name}"
+WORK_DIR = "/kaggle/working"
+os.makedirs(WORK_DIR, exist_ok=True)
 
 # Classes: [{classes}]
 
+def _emit(ev):
+    print("ANNOTIX_EVENT:" + json.dumps(ev), flush=True)
+
+_emit({{"type": "log", "message": "Starting training on Kaggle"}})
+
+data_yaml = os.path.join(DATASET_DIR, "dataset.yaml")
+if not os.path.exists(data_yaml):
+    for cand in os.listdir(DATASET_DIR):
+        if cand.endswith(".yaml") or cand.endswith(".yml"):
+            data_yaml = os.path.join(DATASET_DIR, cand); break
+
 model = YOLO("{model_id}")
+
+def on_fit_epoch_end(trainer):
+    metrics = {{}}
+    epoch = trainer.epoch + 1
+    total = trainer.epochs
+    m = getattr(trainer, "metrics", None)
+    if isinstance(m, dict):
+        metrics["precision"] = m.get("metrics/precision(B)")
+        metrics["recall"] = m.get("metrics/recall(B)")
+        metrics["mAP50"] = m.get("metrics/mAP50(B)")
+        metrics["mAP50_95"] = m.get("metrics/mAP50-95(B)")
+    li = getattr(trainer, "loss_items", None)
+    if li is not None:
+        try:
+            arr = li.cpu().numpy()
+            if len(arr) >= 3:
+                metrics["boxLoss"] = float(arr[0])
+                metrics["clsLoss"] = float(arr[1])
+                metrics["dflLoss"] = float(arr[2])
+        except Exception: pass
+    tloss = getattr(trainer, "tloss", None)
+    if tloss is not None:
+        try: metrics["trainLoss"] = float(tloss.cpu().numpy())
+        except Exception: pass
+    lr = getattr(trainer, "lr", None)
+    if lr:
+        try: metrics["lr"] = list(lr.values())[0] if isinstance(lr, dict) else float(lr)
+        except Exception: pass
+    _emit({{"type": "epoch", "epoch": epoch, "totalEpochs": total,
+            "progress": (epoch / max(total, 1)) * 100.0, "metrics": metrics}})
+
+model.add_callback("on_fit_epoch_end", on_fit_epoch_end)
+
 results = model.train(
-    data=os.path.join(DATASET_DIR, "dataset.yaml"),
+    data=data_yaml,
     epochs={epochs},
     batch={batch_size},
     imgsz={image_size},
@@ -107,10 +207,50 @@ results = model.train(
     lr0={lr},
     patience={patience},
     workers=2,
+    project=WORK_DIR,
+    name="train",
 )
-model.export(format="onnx")
+
+train_dir = os.path.join(WORK_DIR, "train")
+best = os.path.join(train_dir, "weights", "best.pt")
+last = os.path.join(train_dir, "weights", "last.pt")
+
+final = {{}}
+if results and hasattr(results, "results_dict"):
+    rd = results.results_dict
+    final = {{
+        "precision": rd.get("metrics/precision(B)"),
+        "recall": rd.get("metrics/recall(B)"),
+        "mAP50": rd.get("metrics/mAP50(B)"),
+        "mAP50_95": rd.get("metrics/mAP50-95(B)"),
+    }}
+
+# Export ONNX
+onnx_path = None
+try:
+    if os.path.exists(best):
+        onnx_path = YOLO(best).export(format="onnx")
+        if isinstance(onnx_path, (list, tuple)) and onnx_path:
+            onnx_path = onnx_path[0]
+except Exception as e:
+    _emit({{"type": "log", "message": f"ONNX export failed: {{e}}"}})
+
+# Copy models to /kaggle/working raíz para que aparezcan en output
+for src in [best, last, onnx_path]:
+    if src and os.path.exists(src):
+        try: shutil.copy2(src, os.path.join(WORK_DIR, os.path.basename(src)))
+        except Exception: pass
+
+_emit({{
+    "type": "completed",
+    "bestModelPath": best if os.path.exists(best) else None,
+    "lastModelPath": last if os.path.exists(last) else None,
+    "resultsDir": train_dir,
+    "finalMetrics": final,
+    "exportedModels": [p for p in [onnx_path] if p and os.path.exists(p)],
+}})
 "#,
-            dataset_slug_name = dataset_slug.rsplit('/').next().unwrap_or(dataset_slug),
+            dataset_name = dataset_name,
             classes = classes_str,
             model_id = request.model_id,
             epochs = request.epochs,
@@ -222,6 +362,49 @@ impl CloudRunner for KaggleRunner {
         Ok(())
     }
 
+    fn fetch_progress(&self, handle: &CloudJobHandle) -> Result<Vec<serde_json::Value>, String> {
+        let kernel_slug = handle.job_id.rsplit('/').next().unwrap_or(&handle.job_id);
+        let url = format!(
+            "https://www.kaggle.com/api/v1/kernels/output?userName={}&kernelSlug={}",
+            self.username, kernel_slug,
+        );
+        let resp = self.client()
+            .get(&url)
+            .header("Authorization", self.auth_header())
+            .send()
+            .map_err(|e| format!("Error fetch_progress Kaggle: {}", e))?;
+        if !resp.status().is_success() {
+            return Ok(Vec::new());
+        }
+        let body: serde_json::Value = match resp.json() { Ok(v) => v, Err(_) => return Ok(Vec::new()) };
+
+        // log puede venir como string JSON o array de entries
+        let mut texts: Vec<String> = Vec::new();
+        if let Some(arr) = body.get("log").and_then(|v| v.as_array()) {
+            for entry in arr {
+                if let Some(msg) = entry.get("message").and_then(|m| m.as_str()) {
+                    texts.push(msg.to_string());
+                } else if let Some(s) = entry.as_str() {
+                    texts.push(s.to_string());
+                }
+            }
+        } else if let Some(s) = body.get("log").and_then(|v| v.as_str()) {
+            texts.push(s.to_string());
+        }
+
+        let mut events = Vec::new();
+        for chunk in texts {
+            for line in chunk.lines() {
+                if let Some(json_str) = line.find("ANNOTIX_EVENT:").map(|i| &line[i + "ANNOTIX_EVENT:".len()..]) {
+                    if let Ok(ev) = serde_json::from_str::<serde_json::Value>(json_str.trim()) {
+                        events.push(ev);
+                    }
+                }
+            }
+        }
+        Ok(events)
+    }
+
     fn download_model(
         &self,
         handle: &CloudJobHandle,
@@ -256,15 +439,23 @@ impl CloudRunner for KaggleRunner {
 
 /// Valida credenciales de Kaggle intentando listar datasets
 pub fn validate_credentials(username: &str, api_key: &str) -> Result<(), String> {
-    let credentials = base64::Engine::encode(
-        &base64::engine::general_purpose::STANDARD,
-        format!("{}:{}", username, api_key),
-    );
+    let auth = if api_key.to_uppercase().starts_with("KGAT_") {
+        format!("Bearer {}", api_key)
+    } else {
+        if username.is_empty() {
+            return Err("Kaggle: username requerido para API key clásica (kaggle.json)".to_string());
+        }
+        let credentials = base64::Engine::encode(
+            &base64::engine::general_purpose::STANDARD,
+            format!("{}:{}", username, api_key),
+        );
+        format!("Basic {}", credentials)
+    };
 
     let client = reqwest::blocking::Client::new();
     let resp = client
         .get("https://www.kaggle.com/api/v1/datasets/list?page=1&pageSize=1")
-        .header("Authorization", format!("Basic {}", credentials))
+        .header("Authorization", auth)
         .send()
         .map_err(|e| format!("Error conectando con Kaggle: {}", e))?;
 

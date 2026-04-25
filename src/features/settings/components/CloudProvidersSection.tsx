@@ -276,9 +276,12 @@ export function CloudProvidersSection() {
                 type="password"
                 value={kaggle.apiKey || ''}
                 onChange={(e) => setKaggle((prev) => ({ ...prev, apiKey: e.target.value }))}
-                placeholder="xxxxxxxxxxxxxxxx"
+                placeholder="kaggle.json key  o  KGAT_..."
                 className="w-full px-3 py-2 text-xs rounded border border-border bg-background"
               />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Acepta API key clásica (kaggle.json) o nuevo token con prefijo <code>KGAT_</code>. El username sigue siendo necesario porque se usa como owner de los datasets/kernels creados.
+              </p>
             </div>
 
             <div className="flex items-center gap-2">

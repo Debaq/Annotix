@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ManageClassesDialog } from '../../projects/components/ManageClassesDialog';
 import { useUIStore } from '../../core/store/uiStore';
 import { CLASS_SHORTCUTS } from '../../core/constants';
+import { useClassCounts } from '../../projects/hooks/useClassCounts';
 import { cn } from '@/lib/utils';
 
 export function AnnotationList() {
@@ -14,6 +15,12 @@ export function AnnotationList() {
   const { annotations, deleteAnnotation, clearAnnotations, saveAnnotations, hiddenAnnotationIds, toggleAnnotationVisibility, selectedAnnotationIds, updateAnnotation } = useAnnotations();
   const { project } = useCurrentProject();
   const { activeClassId, setActiveClassId } = useUIStore();
+  const { byClass: globalByClass } = useClassCounts();
+
+  const localByClass = annotations.reduce<Record<number, number>>((acc, a) => {
+    if (a.classId != null) acc[a.classId] = (acc[a.classId] ?? 0) + 1;
+    return acc;
+  }, {});
 
   useEffect(() => {
     if (selectedAnnotationIds.size === 0) return;
@@ -75,6 +82,9 @@ export function AnnotationList() {
                 style={{ backgroundColor: cls.color }}
               />
               <span className="truncate flex-1 text-left font-medium">{cls.name}</span>
+              <span className="font-mono text-[10px] tabular-nums opacity-70 shrink-0">
+                {localByClass[cls.id] ?? 0}/{globalByClass[cls.id] ?? 0}
+              </span>
               {activeClassId === cls.id && (
                 <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
               )}
