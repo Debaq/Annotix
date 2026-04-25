@@ -178,6 +178,64 @@ export function useAnnotations() {
     }
   }, [image?.id, currentProjectId, toast, t]);
 
+  // ─── Debounce para saves durante drag de bbox ──────────────────────────────
+  // Cada movimiento de mouse podría disparar un invoke; agrupamos a 300ms.
+  // Flush inmediato al cambiar de imagen, en mouseup global y al desmontar.
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingSaveRef = useRef<{ projectId: string; imageId: string; annotations: Annotation[] } | null>(null);
+
+  const flushPendingSave = useCallback(async () => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+    const pending = pendingSaveRef.current;
+    if (!pending) return;
+    pendingSaveRef.current = null;
+    try {
+      pendingSaves++;
+      await annotationService.save(pending.projectId, pending.imageId, pending.annotations);
+    } catch (error) {
+      console.error('[useAnnotations] flushPendingSave - ERROR:', error);
+    } finally {
+      pendingSaves--;
+    }
+  }, []);
+
+  const saveAnnotationsDebounced = useCallback((targetAnnotations?: Annotation[]) => {
+    if (!image?.id || !currentProjectId) return;
+    const annsToSave = (targetAnnotations ?? useAnnotationStore.getState().annotations).map(a => ({ ...a }));
+    pendingSaveRef.current = {
+      projectId: currentProjectId,
+      imageId: image.id,
+      annotations: annsToSave,
+    };
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      debounceTimerRef.current = null;
+      void flushPendingSave();
+    }, 300);
+  }, [image?.id, currentProjectId, flushPendingSave]);
+
+  // Flush al cambiar de imagen
+  useEffect(() => {
+    return () => {
+      // Al cambiar image.id o desmontar: flush sincrónico (best-effort)
+      void flushPendingSave();
+    };
+  }, [image?.id, flushPendingSave]);
+
+  // Flush en mouseup global (asegura escritura tras drag de bbox)
+  useEffect(() => {
+    const handleMouseUp = () => { void flushPendingSave(); };
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('pointerup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('pointerup', handleMouseUp);
+    };
+  }, [flushPendingSave]);
+
   const pushUndo = useCallback(() => {
     const current = useAnnotationStore.getState().annotations;
     useUndoStore.getState().pushState(current.map(a => ({ ...a })));
@@ -204,6 +262,13 @@ export function useAnnotations() {
   const updateAnnotationLocal = useCallback((id: string, updates: Partial<Annotation>) => {
     updateAnnotationState(id, updates);
   }, [updateAnnotationState]);
+
+  // Variante debounced para drags continuos (mouse move).
+  // No empuja undo cada movimiento — el caller debe pushUndo() al iniciar el drag.
+  const updateAnnotationDebounced = useCallback((id: string, updates: Partial<Annotation>) => {
+    updateAnnotationState(id, updates);
+    saveAnnotationsDebounced();
+  }, [updateAnnotationState, saveAnnotationsDebounced]);
 
   const deleteAnnotation = useCallback(async (id: string) => {
     pushUndo();
@@ -331,6 +396,8 @@ export function useAnnotations() {
     addAnnotation,
     updateAnnotation,
     updateAnnotationLocal,
+    updateAnnotationDebounced,
+    flushPendingSave,
     deleteAnnotation,
     replaceAnnotations,
     selectAnnotation,

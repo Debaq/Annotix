@@ -34,7 +34,11 @@ pub async fn upload_images(
     })
     .await
     .map_err(|e| format!("Join error: {}", e))??;
-    let _ = app.emit("db:images-changed", &project_id);
+    let _ = app.emit("db:images-changed", serde_json::json!({
+        "projectId": &project_id,
+        "action": "added",
+        "imageIds": &ids,
+    }));
 
     // Sincronizar imágenes nuevas al doc P2P si hay sesión activa
     let has_session = p2p.get_session_info(&project_id).await.is_some();
@@ -82,7 +86,11 @@ pub async fn upload_image_bytes(
     })
     .await
     .map_err(|e| format!("Join error: {}", e))??;
-    let _ = app.emit("db:images-changed", &project_id);
+    let _ = app.emit("db:images-changed", serde_json::json!({
+        "projectId": &project_id,
+        "action": "added",
+        "imageIds": [&id],
+    }));
 
     // Sincronizar imagen al doc P2P si hay sesión activa
     let has_session = p2p.get_session_info(&project_id).await.is_some();
@@ -154,7 +162,11 @@ pub async fn save_annotations(
 ) -> Result<(), String> {
     p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
     state.save_annotations(&project_id, &image_id, &annotations)?;
-    let _ = app.emit("db:images-changed", &project_id);
+    let _ = app.emit("db:images-changed", serde_json::json!({
+        "projectId": &project_id,
+        "action": "updated",
+        "imageIds": [&image_id],
+    }));
 
     // Sincronizar anotaciones al doc P2P si hay sesión activa
     let has_session = p2p.get_session_info(&project_id).await.is_some();
@@ -178,7 +190,10 @@ pub fn convert_project_images(
 ) -> Result<ConversionReport, String> {
     let report = state.convert_project_images(&project_id, &target_format)?;
     let _ = app.emit("db:projects-changed", ());
-    let _ = app.emit("db:images-changed", &project_id);
+    let _ = app.emit("db:images-changed", serde_json::json!({
+        "projectId": &project_id,
+        "action": "updated",
+    }));
     Ok(report)
 }
 
@@ -192,6 +207,10 @@ pub async fn delete_image(
 ) -> Result<(), String> {
     p2p.check_permission(&project_id, P2pPermission::Delete).await?;
     state.delete_image(&project_id, &id)?;
-    let _ = app.emit("db:images-changed", &project_id);
+    let _ = app.emit("db:images-changed", serde_json::json!({
+        "projectId": &project_id,
+        "action": "deleted",
+        "imageIds": [&id],
+    }));
     Ok(())
 }

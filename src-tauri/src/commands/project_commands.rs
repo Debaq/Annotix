@@ -92,7 +92,10 @@ pub async fn save_classes(
     p2p.check_permission(&project_id, P2pPermission::EditClasses).await?;
     state.save_classes(&project_id, classes)?;
     let _ = app.emit("db:projects-changed", ());
-    let _ = app.emit("db:images-changed", ());
+    let _ = app.emit("db:images-changed", serde_json::json!({
+        "projectId": &project_id,
+        "action": "updated",
+    }));
     Ok(())
 }
 
@@ -106,7 +109,10 @@ pub async fn delete_project(
     p2p.check_permission(&id, P2pPermission::Manage).await?;
     state.delete_project(&id)?;
     let _ = app.emit("db:projects-changed", ());
-    let _ = app.emit("db:images-changed", ());
+    let _ = app.emit("db:images-changed", serde_json::json!({
+        "projectId": &id,
+        "action": "deleted",
+    }));
     Ok(())
 }
 

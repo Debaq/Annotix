@@ -159,8 +159,9 @@ const ProjectView = () => {
 
   if (!project) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex h-full flex-col items-center justify-center gap-4">
         <i className="fas fa-spinner fa-spin text-4xl text-muted-foreground"></i>
+        <p className="text-sm text-muted-foreground">{t('common.loadingProject')}</p>
       </div>
     );
   }

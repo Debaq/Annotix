@@ -45,5 +45,10 @@
   "confirmTitle": "작업 확인",
   "accept": "수락",
   "copy": "복사",
-  "copied": "복사됨"
+  "copied": "복사됨",
+  "updateAvailable": "새 버전 사용 가능",
+  "updateCurrent": "현재",
+  "updateDownload": "다운로드",
+  "updateDismiss": "닫기",
+  "loadingProject": "프로젝트 로딩 중..."
 }

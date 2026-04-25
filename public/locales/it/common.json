@@ -45,5 +45,10 @@
   "confirmTitle": "Conferma azione",
   "accept": "Accetta",
   "copy": "Copia",
-  "copied": "Copiato"
+  "copied": "Copiato",
+  "updateAvailable": "Nuova versione disponibile",
+  "updateCurrent": "attuale",
+  "updateDownload": "Scarica",
+  "updateDismiss": "Ignora",
+  "loadingProject": "Caricamento progetto..."
 }

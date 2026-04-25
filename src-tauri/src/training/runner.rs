@@ -3,6 +3,7 @@ use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::{Arc, Mutex};
+use std::time::Instant;
 
 use tauri::{AppHandle, Emitter};
 
@@ -152,6 +153,7 @@ impl TrainingProcessManager {
                                 .collect();
                             let error_msg = stderr_lines.join("\n");
 
+                            flush_log_throttle(&app_clone, &job_id_thread);
                             let _ = app_clone.emit("training:error", serde_json::json!({
                                 "jobId": &job_id_thread,
                                 "error": error_msg,
@@ -328,6 +330,7 @@ impl TrainingProcessManager {
                                 .collect();
                             let error_msg = stderr_lines.join("\n");
 
+                            flush_log_throttle(&app_clone, &job_id_thread);
                             let _ = app_clone.emit("training:error", serde_json::json!({
                                 "jobId": &job_id_thread,
                                 "error": error_msg,
@@ -447,6 +450,7 @@ impl TrainingProcessManager {
                         if let Some(stderr) = stderr {
                             let reader = BufReader::new(stderr);
                             let error_msg: String = reader.lines().map_while(Result::ok).collect::<Vec<_>>().join("\n");
+                            flush_log_throttle(&app_clone, &job_id_thread);
                             let _ = app_clone.emit("training:error", serde_json::json!({
                                 "jobId": &job_id_thread,
                                 "error": error_msg,
@@ -534,6 +538,42 @@ fn sanitize_log_line(line: &str) -> Vec<String> {
 /// Procesa una línea de stdout del trainer: si es un evento estructurado
 /// (`ANNOTIX_EVENT:`) lo despacha; en caso contrario la sanea y emite/guarda
 /// como log legible.
+/// Estado por-job para throttle de emisiones de log.
+/// Si llegan muchas líneas en <100ms, las acumula y emite el batch en la
+/// siguiente ventana (max 10 emit/seg). Siempre se emite el último batch al
+/// terminar el job (caller hace flush manual).
+#[derive(Default)]
+struct LogThrottle {
+    last_emit: Option<Instant>,
+    pending: Vec<String>,
+}
+
+thread_local! {
+    static LOG_THROTTLE: std::cell::RefCell<HashMap<String, LogThrottle>> = std::cell::RefCell::new(HashMap::new());
+}
+
+fn emit_log_throttled(app: &AppHandle, job_id: &str, message: String) {
+    LOG_THROTTLE.with(|cell| {
+        let mut map = cell.borrow_mut();
+        let entry = map.entry(job_id.to_string()).or_default();
+        entry.pending.push(message);
+        let now = Instant::now();
+        let should_emit = match entry.last_emit {
+            None => true,
+            Some(t) => now.duration_since(t).as_millis() >= 100,
+        };
+        if should_emit {
+            let batch: Vec<String> = std::mem::take(&mut entry.pending);
+            entry.last_emit = Some(now);
+            let combined = batch.join("\n");
+            let _ = app.emit("training:log", serde_json::json!({
+                "jobId": job_id,
+                "message": combined,
+            }));
+        }
+    });
+}
+
 fn process_log_line(
     app: &AppHandle,
     job_id: &str,
@@ -549,10 +589,7 @@ fn process_log_line(
     }
     for clean in sanitize_log_line(line) {
         logs.push(clean.clone());
-        let _ = app.emit("training:log", serde_json::json!({
-            "jobId": job_id,
-            "message": clean,
-        }));
+        emit_log_throttled(app, job_id, clean);
         if logs.len() % 10 == 0 {
             update_job_in_project(project_dir, job_id, |job| {
                 job.logs = logs.clone();
@@ -560,6 +597,25 @@ fn process_log_line(
             });
         }
     }
+}
+
+/// Fuerza la emisión del último batch de logs pendientes para un job.
+/// Debe llamarse al terminar/fallar el job para no perder el último burst.
+pub fn flush_log_throttle(app: &AppHandle, job_id: &str) {
+    LOG_THROTTLE.with(|cell| {
+        let mut map = cell.borrow_mut();
+        if let Some(entry) = map.get_mut(job_id) {
+            if !entry.pending.is_empty() {
+                let batch: Vec<String> = std::mem::take(&mut entry.pending);
+                let combined = batch.join("\n");
+                let _ = app.emit("training:log", serde_json::json!({
+                    "jobId": job_id,
+                    "message": combined,
+                }));
+            }
+            map.remove(job_id);
+        }
+    });
 }
 
 /// Lee `results.csv` de ultralytics y reconstruye `metrics_history`.
@@ -673,6 +729,9 @@ fn handle_event(app: &AppHandle, job_id: &str, event: &serde_json::Value, projec
                     })
                     .unwrap_or_default(),
             };
+
+            // Asegurar que el último batch de logs del entrenamiento llegue al frontend.
+            flush_log_throttle(app, job_id);
 
             let _ = app.emit("training:completed", serde_json::json!({
                 "jobId": job_id,

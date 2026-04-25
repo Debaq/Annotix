@@ -45,5 +45,10 @@
   "confirmTitle": "确认操作",
   "accept": "接受",
   "copy": "复制",
-  "copied": "已复制"
+  "copied": "已复制",
+  "updateAvailable": "有新版本可用",
+  "updateCurrent": "当前",
+  "updateDownload": "下载",
+  "updateDismiss": "关闭",
+  "loadingProject": "正在加载项目..."
 }

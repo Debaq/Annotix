@@ -97,7 +97,10 @@ pub fn write_project(dir: &Path, data: &ProjectFile) -> Result<(), String> {
     let path = dir.join("project.json");
     let tmp_path = dir.join("project.json.tmp");
 
-    let content = serde_json::to_string_pretty(data)
+    // JSON compacto en runtime: project.json puede tener miles de anotaciones,
+    // y `to_string_pretty` añade ~30-40% de tamaño en saltos/indentación que el
+    // usuario rara vez lee. Para debug/export usar `to_string_pretty` en otro sitio.
+    let content = serde_json::to_string(data)
         .map_err(|e| format!("Error serializando project.json: {}", e))?;
 
     // Escritura atómica: escribir a .tmp y luego renombrar

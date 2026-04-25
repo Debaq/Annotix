@@ -45,5 +45,10 @@
   "confirmTitle": "Подтвердить действие",
   "accept": "Принять",
   "copy": "Копировать",
-  "copied": "Скопировано"
+  "copied": "Скопировано",
+  "updateAvailable": "Доступна новая версия",
+  "updateCurrent": "текущая",
+  "updateDownload": "Скачать",
+  "updateDismiss": "Закрыть",
+  "loadingProject": "Загрузка проекта..."
 }
