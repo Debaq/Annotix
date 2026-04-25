@@ -77,13 +77,17 @@ impl InferenceProcessManager {
         // Obtener rutas de imágenes
         let images_dir = state.project_images_dir(project_id)?;
         let image_paths: Vec<(String, String)> = state.with_project(project_id, |pf| {
+            let index: std::collections::HashMap<&str, &str> = pf.images
+                .iter()
+                .map(|i| (i.id.as_str(), i.file.as_str()))
+                .collect();
             image_ids
                 .iter()
                 .filter_map(|id| {
-                    pf.images.iter().find(|i| i.id == *id).map(|img| {
+                    index.get(id.as_str()).map(|file| {
                         (
-                            img.id.clone(),
-                            images_dir.join(&img.file).to_string_lossy().to_string(),
+                            id.clone(),
+                            images_dir.join(file).to_string_lossy().to_string(),
                         )
                     })
                 })

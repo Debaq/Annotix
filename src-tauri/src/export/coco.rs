@@ -123,15 +123,17 @@ fn convert_annotation(
         }
         "polygon" => {
             let poly = parse_polygon(&ann.data)?;
-            let flat: Vec<f64> = poly.points.iter().flat_map(|&(x, y)| vec![x, y]).collect();
+            let flat: Vec<f64> = poly.points.iter().flat_map(|&(x, y)| [x, y]).collect();
             base["segmentation"] = json!([flat]);
 
-            let xs: Vec<f64> = poly.points.iter().map(|p| p.0).collect();
-            let ys: Vec<f64> = poly.points.iter().map(|p| p.1).collect();
-            let min_x = xs.iter().cloned().fold(f64::MAX, f64::min);
-            let min_y = ys.iter().cloned().fold(f64::MAX, f64::min);
-            let max_x = xs.iter().cloned().fold(f64::MIN, f64::max);
-            let max_y = ys.iter().cloned().fold(f64::MIN, f64::max);
+            let (mut min_x, mut min_y) = (f64::MAX, f64::MAX);
+            let (mut max_x, mut max_y) = (f64::MIN, f64::MIN);
+            for &(x, y) in &poly.points {
+                if x < min_x { min_x = x; }
+                if y < min_y { min_y = y; }
+                if x > max_x { max_x = x; }
+                if y > max_y { max_y = y; }
+            }
 
             base["bbox"] = json!([min_x, min_y, max_x - min_x, max_y - min_y]);
             base["area"] = json!(polygon_area(&poly.points));

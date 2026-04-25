@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
@@ -44,15 +44,7 @@ impl TrainingProcessManager {
         let images_dir = state.project_images_dir(project_id)?;
         let job_id_owned = job_id.to_string();
 
-        let pf = state.read_project_file(project_id)?;
-
-        // Actualizar estado a training
-        state.with_project_mut(project_id, |pf| {
-            if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
-                job.status = "training".to_string();
-                job.updated_at = js_timestamp();
-            }
-        })?;
+        let mut pf = state.read_project_file(project_id)?;
 
         // Preparar directorio del dataset (dentro del proyecto)
         let dataset_dir = project_dir
@@ -71,11 +63,11 @@ impl TrainingProcessManager {
             return Err("No hay imágenes en el proyecto".to_string());
         }
 
-        // Filtrar imágenes con anotaciones válidas
-        let images: Vec<ImageEntry> = pf.images.iter().cloned().map(|mut img| {
-            img.annotations.retain(|ann| {
-                pf.classes.iter().any(|c| c.id == ann.class_id)
-            });
+        // Filtrar anotaciones huérfanas: HashSet O(1) lookup, drain para evitar 2do clone
+        let class_ids: HashSet<i64> = pf.classes.iter().map(|c| c.id).collect();
+        let raw_images = std::mem::take(&mut pf.images);
+        let images: Vec<ImageEntry> = raw_images.into_iter().map(|mut img| {
+            img.annotations.retain(|ann| class_ids.contains(&ann.class_id));
             img
         }).collect();
 
@@ -91,11 +83,12 @@ impl TrainingProcessManager {
         std::fs::write(&script_path, &script_content)
             .map_err(|e| format!("Error escribiendo train.py: {}", e))?;
 
-        // Actualizar job con rutas
+        // Batch: status→training + rutas en un solo flush
         let ds_str = dataset_dir.to_string_lossy().to_string();
         let result_str = dataset_dir.join("train").to_string_lossy().to_string();
         state.with_project_mut(project_id, |pf| {
             if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
+                job.status = "training".to_string();
                 job.dataset_dir = Some(ds_str);
                 job.result_dir = Some(result_str);
                 job.updated_at = js_timestamp();
