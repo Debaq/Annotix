@@ -118,6 +118,8 @@
   "dialogFilterConfig": "Configuration",
   "parseJsonError": "Error parsing JSON: {{error}}",
   "parseClassesError": "Error parsing classes file: {{error}}",
+  "ptDetectFailedTitle": "Model saved without detected classes",
+  "ptDetectFailedDesc": "Python/ultralytics is not ready. Go to Settings to install the environment, or edit classes manually in the panel.",
   "log": {
     "title": "Batch inference",
     "start": "Batch inference start",

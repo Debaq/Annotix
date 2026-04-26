@@ -9,7 +9,16 @@
     "cloudProviders": "Proveedores Cloud",
     "keyboardShortcuts": "Atajos de Teclado",
     "browserAutomation": "Automatización del Navegador",
-    "network": "Red"
+    "network": "Red",
+    "diagnostics": "Diagnóstico"
+  },
+  "diagnostics": {
+    "description": "Registro de errores y advertencias de la aplicación. Cópialo y pégalo al reportar un problema.",
+    "copy": "Copiar",
+    "clear": "Limpiar",
+    "copied": "Registro copiado al portapapeles",
+    "empty": "(sin entradas)",
+    "autoScroll": "Auto-scroll"
   },
   "general": {
     "colorMode": "Apariencia",

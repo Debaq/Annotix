@@ -9,8 +9,9 @@ import { KeyboardShortcutsSection } from './KeyboardShortcutsSection';
 import { BrowserAutomationSection } from './BrowserAutomationSection';
 import { NetworkSection } from './NetworkSection';
 import { SamSettingsSection } from '../../sam/components/SamSettingsSection';
+import { DiagnosticsSection } from './DiagnosticsSection';
 
-type SettingsSection = 'general' | 'network' | 'python-env' | 'training-models' | 'cloud-providers' | 'keyboard-shortcuts' | 'browser-automation' | 'sam';
+type SettingsSection = 'general' | 'network' | 'python-env' | 'training-models' | 'cloud-providers' | 'keyboard-shortcuts' | 'browser-automation' | 'sam' | 'diagnostics';
 
 export function SettingsPage() {
   const { t } = useTranslation();
@@ -26,6 +27,7 @@ export function SettingsPage() {
     { id: 'cloud-providers', icon: 'fas fa-cloud', labelKey: 'settings.sections.cloudProviders' },
     { id: 'keyboard-shortcuts', icon: 'fas fa-keyboard', labelKey: 'settings.sections.keyboardShortcuts' },
     { id: 'browser-automation', icon: 'fas fa-robot', labelKey: 'settings.sections.browserAutomation' },
+    { id: 'diagnostics', icon: 'fas fa-bug', labelKey: 'settings.sections.diagnostics' },
   ];
 
   const activeLabelKey = sections.find(s => s.id === activeSection)?.labelKey ?? sections[0].labelKey;
@@ -77,6 +79,7 @@ export function SettingsPage() {
           {activeSection === 'cloud-providers' && <CloudProvidersSection />}
           {activeSection === 'keyboard-shortcuts' && <KeyboardShortcutsSection />}
           {activeSection === 'browser-automation' && <BrowserAutomationSection />}
+          {activeSection === 'diagnostics' && <DiagnosticsSection />}
         </div>
       </div>
     </div>

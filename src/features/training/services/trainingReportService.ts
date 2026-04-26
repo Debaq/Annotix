@@ -121,7 +121,13 @@ function fmtMetric(v: number | null | undefined, pct = true): string {
   return pct ? `${(v * 100).toFixed(2)}%` : v.toFixed(4);
 }
 
-export async function generateTrainingReport(params: ReportParams): Promise<Blob> {
+export interface ReportOutput {
+  blob: Blob;
+  warnings: string[];
+}
+
+export async function generateTrainingReport(params: ReportParams): Promise<ReportOutput> {
+  const warnings: string[] = [];
   const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
@@ -222,13 +228,24 @@ export async function generateTrainingReport(params: ReportParams): Promise<Blob
       }
     } catch (e) {
       console.error('charts snapshot failed:', e);
+      warnings.push(`charts snapshot failed: ${String(e)}`);
     }
+  } else if (params.metricsHistory.length > 0 && !params.chartsContainer) {
+    warnings.push('charts container not mounted; metrics chart skipped');
   }
 
   // --- Artifacts (backend-specific)
   if (params.result.resultsDir) {
     const collect = collectorFor(params.backend);
-    const artifacts = await collect(params.result.resultsDir);
+    let artifacts: Artifact[] = [];
+    try {
+      artifacts = await collect(params.result.resultsDir);
+    } catch (e) {
+      warnings.push(`artifact collection failed: ${String(e)}`);
+    }
+    if (artifacts.length === 0) {
+      warnings.push(`no artifacts found in ${params.result.resultsDir}`);
+    }
     for (const art of artifacts) {
       pdf.addPage(); y = margin;
       pdf.setFont('helvetica', 'bold'); pdf.setFontSize(13);
@@ -250,8 +267,11 @@ export async function generateTrainingReport(params: ReportParams): Promise<Blob
         pdf.addImage(art.dataUrl, art.mime === 'image/jpeg' ? 'JPEG' : 'PNG', margin, y, w, h);
       } catch (e) {
         console.error('add image failed:', art.filename, e);
+        warnings.push(`embed image failed (${art.filename}): ${String(e)}`);
       }
     }
+  } else {
+    warnings.push('result.resultsDir not set; artifacts skipped');
   }
 
   // --- Log tail
@@ -270,5 +290,5 @@ export async function generateTrainingReport(params: ReportParams): Promise<Blob
     }
   }
 
-  return pdf.output('blob');
+  return { blob: pdf.output('blob'), warnings };
 }

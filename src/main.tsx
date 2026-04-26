@@ -3,7 +3,10 @@ import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
 import './styles/globals.css'
 import './lib/i18n' // Initialize i18n
+import { initDiagnostics } from './lib/diagnosticsLog'
 import App from './App.tsx'
+
+initDiagnostics();
 import { ErrorBoundary } from './features/core/components/ErrorBoundary'
 
 // ─── Color Mode Initialization ──────────────────────────────────────────────

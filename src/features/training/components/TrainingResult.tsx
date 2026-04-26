@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/hooks/use-toast';
 import { TrainingModelExport } from './TrainingModelExport';
 import { TrainingMetricsChart } from './TrainingMetricsChart';
 import { generateTrainingReport } from '../services/trainingReportService';
@@ -45,6 +46,7 @@ export function TrainingResult({
   const [generating, setGenerating] = useState(false);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [downloadMsg, setDownloadMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+  const [reportMsg, setReportMsg] = useState<{ kind: 'ok' | 'err' | 'warn'; text: string } | null>(null);
 
   const handleDownloadModel = async (srcPath: string, variant: string) => {
     if (downloading) return;
@@ -75,7 +77,10 @@ export function TrainingResult({
   const handleExportPdf = async () => {
     if (generating) return;
     setGenerating(true);
+    setReportMsg(null);
+    let stage = 'init';
     try {
+      stage = 'dialog';
       const proj = sanitizeForFilename(projectName);
       const ts = timestampForFilename();
       const filePath = await save({
@@ -84,7 +89,8 @@ export function TrainingResult({
       });
       if (!filePath) return;
 
-      const blob = await generateTrainingReport({
+      stage = 'generate';
+      const { blob, warnings } = await generateTrainingReport({
         backend,
         projectName,
         modelId,
@@ -98,10 +104,24 @@ export function TrainingResult({
         result,
         chartsContainer: chartsRef.current,
       });
+
+      stage = 'write';
       const buf = new Uint8Array(await blob.arrayBuffer());
       await writeFile(filePath, buf);
+
+      if (warnings.length > 0) {
+        const text = `${t('training.result.reportPartial')}: ${warnings.join(' | ')}`;
+        setReportMsg({ kind: 'warn', text });
+        toast({ title: t('training.result.reportPartial'), description: warnings.join('\n'), duration: 10000 });
+      } else {
+        setReportMsg({ kind: 'ok', text: t('training.result.reportOk', { path: filePath }) });
+        toast({ title: t('training.result.reportOk', { path: filePath }), duration: 4000 });
+      }
     } catch (e) {
-      console.error('PDF report generation failed:', e);
+      const msg = `[${stage}] ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`;
+      console.error('PDF report generation failed:', msg, e);
+      setReportMsg({ kind: 'err', text: `${t('training.result.reportError')}: ${msg}` });
+      toast({ title: t('training.result.reportError'), description: msg, variant: 'destructive', duration: 12000 });
     } finally {
       setGenerating(false);
     }
@@ -238,6 +258,19 @@ export function TrainingResult({
         <i className={`fas ${generating ? 'fa-spinner fa-spin' : 'fa-file-pdf'} mr-2`} />
         {generating ? t('training.result.generatingReport') : t('training.result.exportReport')}
       </Button>
+      {reportMsg && (
+        <p
+          className={`text-xs whitespace-pre-wrap break-words ${
+            reportMsg.kind === 'ok'
+              ? 'text-green-500'
+              : reportMsg.kind === 'warn'
+                ? 'text-yellow-500'
+                : 'text-red-500'
+          }`}
+        >
+          {reportMsg.text}
+        </p>
+      )}
 
       {/* New training */}
       <Button onClick={onNewTraining} variant="outline" className="w-full">

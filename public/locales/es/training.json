@@ -465,7 +465,10 @@
     "downloadError": "Error al guardar el modelo",
     "newTraining": "Nuevo Entrenamiento",
     "exportReport": "Exportar informe PDF",
-    "generatingReport": "Generando informe..."
+    "generatingReport": "Generando informe...",
+    "reportOk": "Informe guardado: {{path}}",
+    "reportError": "Error generando informe",
+    "reportPartial": "Informe generado con advertencias"
   },
   "fineTune": "Fine-tune",
   "fineTuneFrom": "Fine-tuning desde: {{source}}",

@@ -118,6 +118,8 @@
   "dialogFilterConfig": "Configuración",
   "parseJsonError": "Error parseando JSON: {{error}}",
   "parseClassesError": "Error parseando archivo de clases: {{error}}",
+  "ptDetectFailedTitle": "Modelo guardado sin clases detectadas",
+  "ptDetectFailedDesc": "Python/ultralytics no está preparado. Ve a Configuración para instalar el entorno, o edita las clases manualmente en el panel.",
   "log": {
     "title": "Inferencia batch",
     "start": "Inicio inferencia batch",

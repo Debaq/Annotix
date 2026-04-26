@@ -3,6 +3,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import i18n from '@/lib/i18n';
 import { inferenceService } from '../services/inferenceService';
 import { useUIStore } from '../../core/store/uiStore';
+import { toast } from '@/components/hooks/use-toast';
 import type { InferenceModelEntry, ClassMapping, ModelMetadata, ModelConfigResult, PreprocessConfig } from '../types';
 
 interface UseInferenceModelsResult {
@@ -111,19 +112,22 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
       let rawMetadata: Record<string, unknown> | null = null;
 
       // Intentar detectar metadata automáticamente (para .pt y .onnx)
+      let detectFailed = false;
       try {
         const meta: ModelMetadata = await inferenceService.detectModelMetadata(filePath);
         task = meta.task || task;
         classNames = meta.classNames || classNames;
         inputSize = meta.inputSize || inputSize;
         outputFormat = meta.outputFormat || outputFormat;
+        if (meta.error) detectFailed = true;
       } catch {
-        // Fallo la detección automática, se pedirá config manual
+        detectFailed = true;
       }
 
-      // 2. Pedir archivo de configuración (JSON/YAML/TXT) para clases
-      //    Para ONNX siempre, para PT solo si no se detectaron clases
-      if (classNames.length === 0) {
+      // .pt: clases embebidas en el archivo. No pedir JSON nunca: si la
+      // detección falló (Python/ultralytics no listo), guardar igual y avisar.
+      // .onnx: pedir JSON solo si no se detectaron clases.
+      if (format === 'onnx' && classNames.length === 0) {
         const configFile = await open({
           title: i18n.t('inference.selectConfigFile'),
           filters: [
@@ -174,6 +178,14 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
 
       setSelectedModelId(entry.id);
       await refreshModels();
+
+      if (format === 'pt' && (detectFailed || classNames.length === 0)) {
+        toast({
+          title: i18n.t('inference.ptDetectFailedTitle'),
+          description: i18n.t('inference.ptDetectFailedDesc'),
+          duration: 8000,
+        });
+      }
     } catch (err) {
       setError(String(err));
     } finally {

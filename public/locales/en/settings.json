@@ -9,7 +9,16 @@
     "cloudProviders": "Cloud Providers",
     "keyboardShortcuts": "Keyboard Shortcuts",
     "browserAutomation": "Browser Automation",
-    "network": "Network"
+    "network": "Network",
+    "diagnostics": "Diagnostics"
+  },
+  "diagnostics": {
+    "description": "Application error and warning log. Copy and paste it when reporting an issue.",
+    "copy": "Copy",
+    "clear": "Clear",
+    "copied": "Log copied to clipboard",
+    "empty": "(no entries)",
+    "autoScroll": "Auto-scroll"
   },
   "general": {
     "colorMode": "Appearance",

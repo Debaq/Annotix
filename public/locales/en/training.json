@@ -228,7 +228,10 @@
     "downloadError": "Failed to save model",
     "newTraining": "Start New Training",
     "exportReport": "Export PDF report",
-    "generatingReport": "Generating report..."
+    "generatingReport": "Generating report...",
+    "reportOk": "Report saved: {{path}}",
+    "reportError": "Report generation failed",
+    "reportPartial": "Report generated with warnings"
   },
   "backend": {
     "title": "Training Backend",
