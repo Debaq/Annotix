@@ -1,0 +1,14 @@
+{
+  "search": "Search...",
+  "classFilter": "Class filter",
+  "classes": "Classes",
+  "selectClasses": "Select classes",
+  "mode": "Mode",
+  "minCount": "Minimum",
+  "types": "Types",
+  "noMatches": "no matches",
+  "onlyUsed": "used",
+  "onlyUsedHint": "Classes with global annotations > 0",
+  "onlyInImage": "in image",
+  "onlyInImageHint": "Classes present in current image"
+}

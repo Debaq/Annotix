@@ -1,0 +1,14 @@
+{
+  "search": "搜索...",
+  "classFilter": "类别筛选",
+  "classes": "类别",
+  "selectClasses": "选择类别",
+  "mode": "模式",
+  "minCount": "最小",
+  "types": "类型",
+  "noMatches": "无匹配",
+  "onlyUsed": "已使用",
+  "onlyUsedHint": "全局标注数 > 0 的类别",
+  "onlyInImage": "图像中",
+  "onlyInImageHint": "当前图像中存在的类别"
+}

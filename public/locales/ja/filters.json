@@ -1,0 +1,14 @@
+{
+  "search": "検索...",
+  "classFilter": "クラスフィルター",
+  "classes": "クラス",
+  "selectClasses": "クラスを選択",
+  "mode": "モード",
+  "minCount": "最小",
+  "types": "タイプ",
+  "noMatches": "一致なし",
+  "onlyUsed": "使用中",
+  "onlyUsedHint": "グローバル注釈 > 0 のクラス",
+  "onlyInImage": "画像内",
+  "onlyInImageHint": "現在の画像に存在するクラス"
+}

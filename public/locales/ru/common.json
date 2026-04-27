@@ -50,5 +50,7 @@
   "updateCurrent": "текущая",
   "updateDownload": "Скачать",
   "updateDismiss": "Закрыть",
-  "loadingProject": "Загрузка проекта..."
+  "loadingProject": "Загрузка проекта...",
+  "expand": "Развернуть",
+  "collapse": "Свернуть"
 }

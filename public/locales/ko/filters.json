@@ -1,0 +1,14 @@
+{
+  "search": "검색...",
+  "classFilter": "클래스 필터",
+  "classes": "클래스",
+  "selectClasses": "클래스 선택",
+  "mode": "모드",
+  "minCount": "최소",
+  "types": "유형",
+  "noMatches": "일치 항목 없음",
+  "onlyUsed": "사용됨",
+  "onlyUsedHint": "전역 주석 > 0 인 클래스",
+  "onlyInImage": "이미지 내",
+  "onlyInImageHint": "현재 이미지에 있는 클래스"
+}

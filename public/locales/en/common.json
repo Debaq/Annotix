@@ -50,5 +50,7 @@
   "updateCurrent": "current",
   "updateDownload": "Download",
   "updateDismiss": "Dismiss",
-  "loadingProject": "Loading project..."
+  "loadingProject": "Loading project...",
+  "expand": "Expand",
+  "collapse": "Collapse"
 }

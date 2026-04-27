@@ -50,5 +50,7 @@
   "updateCurrent": "attuale",
   "updateDownload": "Scarica",
   "updateDismiss": "Ignora",
-  "loadingProject": "Caricamento progetto..."
+  "loadingProject": "Caricamento progetto...",
+  "expand": "Espandi",
+  "collapse": "Comprimi"
 }

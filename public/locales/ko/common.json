@@ -50,5 +50,7 @@
   "updateCurrent": "현재",
   "updateDownload": "다운로드",
   "updateDismiss": "닫기",
-  "loadingProject": "프로젝트 로딩 중..."
+  "loadingProject": "프로젝트 로딩 중...",
+  "expand": "펼치기",
+  "collapse": "접기"
 }

@@ -50,5 +50,7 @@
   "updateCurrent": "現在",
   "updateDownload": "ダウンロード",
   "updateDismiss": "閉じる",
-  "loadingProject": "プロジェクトを読み込み中..."
+  "loadingProject": "プロジェクトを読み込み中...",
+  "expand": "展開",
+  "collapse": "折りたたみ"
 }

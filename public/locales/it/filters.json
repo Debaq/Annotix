@@ -1,0 +1,14 @@
+{
+  "search": "Cerca...",
+  "classFilter": "Filtro per classe",
+  "classes": "Classi",
+  "selectClasses": "Seleziona classi",
+  "mode": "Modalità",
+  "minCount": "Minimo",
+  "types": "Tipi",
+  "noMatches": "nessuna corrispondenza",
+  "onlyUsed": "usate",
+  "onlyUsedHint": "Classi con annotazioni globali > 0",
+  "onlyInImage": "nell'immagine",
+  "onlyInImageHint": "Classi presenti nell'immagine corrente"
+}

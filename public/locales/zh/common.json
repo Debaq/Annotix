@@ -50,5 +50,7 @@
   "updateCurrent": "当前",
   "updateDownload": "下载",
   "updateDismiss": "关闭",
-  "loadingProject": "正在加载项目..."
+  "loadingProject": "正在加载项目...",
+  "expand": "展开",
+  "collapse": "折叠"
 }

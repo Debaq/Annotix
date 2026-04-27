@@ -50,5 +50,7 @@
   "updateCurrent": "aktuell",
   "updateDownload": "Herunterladen",
   "updateDismiss": "Schließen",
-  "loadingProject": "Projekt wird geladen..."
+  "loadingProject": "Projekt wird geladen...",
+  "expand": "Erweitern",
+  "collapse": "Einklappen"
 }
