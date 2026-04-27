@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUIStore, type ClassFilterMode } from '../../core/store/uiStore';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
@@ -24,13 +24,15 @@ export function ClassFilterControls() {
   const { currentProjectId, projectFilters, setProjectFilter } = useUIStore();
   const { project } = useCurrentProject();
   const [open, setOpen] = useState(false);
-
-  if (!project || !currentProjectId) return null;
-  const filter = projectFilters[currentProjectId]?.classFilter;
+  const filter = currentProjectId ? projectFilters[currentProjectId]?.classFilter : undefined;
   const selectedIds = filter?.classIds ?? [];
   const mode: ClassFilterMode = filter?.mode ?? 'has';
   const minCount = filter?.minCount ?? 1;
   const active = selectedIds.length > 0;
+  const [minCountDraft, setMinCountDraft] = useState<string>(String(minCount));
+  useEffect(() => { setMinCountDraft(String(minCount)); }, [minCount]);
+
+  if (!project || !currentProjectId) return null;
 
   const update = (patch: Partial<NonNullable<typeof filter>>) => {
     const next = { classIds: selectedIds, mode, minCount, ...patch };
@@ -110,8 +112,16 @@ export function ClassFilterControls() {
         <input
           type="number"
           min={1}
-          value={minCount}
-          onChange={(e) => update({ minCount: Math.max(1, parseInt(e.target.value) || 1) })}
+          value={minCountDraft}
+          onChange={(e) => setMinCountDraft(e.target.value)}
+          onBlur={() => {
+            const n = Math.max(1, parseInt(minCountDraft) || 1);
+            setMinCountDraft(String(n));
+            if (n !== minCount) update({ minCount: n });
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+          }}
           className="annotix-btn annotix-btn-outline"
           style={{ fontSize: '0.7rem', padding: '4px 4px', width: '48px' }}
           title={t('filters.minCount', 'Mínimo')}

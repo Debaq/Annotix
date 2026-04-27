@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
-import { useUIStore } from '@/features/core/store/uiStore';
 import { useAnnotations } from '../hooks/useAnnotations';
 import { AnnotationThumbnailCard } from './AnnotationThumbnailCard';
 import { cn } from '@/lib/utils';
@@ -22,7 +21,6 @@ interface AnnotationsBarProps {
 export const AnnotationsBar: React.FC<AnnotationsBarProps> = ({ image }) => {
   const { t } = useTranslation();
   const { project } = useCurrentProject();
-  const currentImageId = useUIStore((s) => s.currentImageId);
   const { annotations, selectedAnnotationIds, selectAnnotation, deleteAnnotation } = useAnnotations();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [search, setSearch] = useState('');
@@ -31,13 +29,6 @@ export const AnnotationsBar: React.FC<AnnotationsBarProps> = ({ image }) => {
   const [filterOpen, setFilterOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-
-  // Reset filtros marks al cambiar imagen (opción B: marks = puntual)
-  useEffect(() => {
-    setSearch('');
-    setClassIdFilter(new Set());
-    setTypeFilter(new Set());
-  }, [currentImageId]);
 
   const presentClassIds = useMemo(() => {
     const s = new Set<number>();
