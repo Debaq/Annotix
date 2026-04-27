@@ -157,6 +157,12 @@ impl InferenceProcessManager {
         std::thread::spawn(move || {
             let total = image_paths_owned.len();
 
+            // Batch de anotaciones para evitar reescribir project.json 1 vez por imagen.
+            // Con miles de imágenes, el archivo crece y rewrite atómico se vuelve
+            // O(N²) en IO. Flush cada FLUSH_EVERY o al terminar.
+            const FLUSH_EVERY: usize = 50;
+            let mut pending: Vec<(String, Vec<AnnotationEntry>)> = Vec::with_capacity(FLUSH_EVERY);
+
             // Pipeline: thread productor preprocesa imagen N+1 mientras el consumidor
             // corre session.run sobre N. Canal bounded=2 evita acumulación.
             type PreprocItem = (usize, String, String, Option<(u32, u32)>, Result<Vec<f32>, String>);
@@ -234,9 +240,12 @@ impl InferenceProcessManager {
                             image_id, ann_count, elapsed
                         );
 
-                        save_ai_annotations(
-                            &app_clone, &project_id_owned, image_id, ai_annotations,
-                        );
+                        pending.push((image_id.clone(), ai_annotations));
+                        if pending.len() >= FLUSH_EVERY {
+                            flush_ai_annotations_batch(
+                                &app_clone, &project_id_owned, &mut pending,
+                            );
+                        }
 
                         let _ = app_clone.emit(
                             "inference:progress",
@@ -272,6 +281,13 @@ impl InferenceProcessManager {
                         );
                     }
                 }
+            }
+
+            // Flush final del batch pendiente.
+            if !pending.is_empty() {
+                flush_ai_annotations_batch(
+                    &app_clone, &project_id_owned, &mut pending,
+                );
             }
 
             let _ = app_clone.emit(
@@ -781,6 +797,41 @@ fn classifications_to_annotations(
             vec![]
         }
     }
+}
+
+/// Flush batched de varias imágenes en un único `with_project_mut` (1 sola
+/// reescritura de project.json + 1 solo emit al frontend). Vacía el buffer.
+fn flush_ai_annotations_batch(
+    app: &AppHandle,
+    project_id: &str,
+    pending: &mut Vec<(String, Vec<AnnotationEntry>)>,
+) {
+    use tauri::Manager;
+    if pending.is_empty() {
+        return;
+    }
+    let batch = std::mem::take(pending);
+    let state = app.state::<AppState>();
+    let _ = state.with_project_mut(project_id, |pf| {
+        let mut by_id: std::collections::HashMap<String, Vec<AnnotationEntry>> =
+            std::collections::HashMap::with_capacity(batch.len());
+        for (img_id, anns) in batch {
+            by_id.entry(img_id).or_default().extend(anns);
+        }
+        for img in pf.images.iter_mut() {
+            if let Some(new_anns) = by_id.remove(&img.id) {
+                img.annotations.retain(|a| a.source != "ai");
+                img.annotations.extend(new_anns);
+                if !img.annotations.is_empty() {
+                    img.status = "annotated".to_string();
+                }
+            }
+        }
+    });
+    let _ = app.emit("db:images-changed", serde_json::json!({
+        "projectId": project_id,
+        "action": "updated",
+    }));
 }
 
 /// Borra anotaciones AI previas de la imagen y agrega las nuevas

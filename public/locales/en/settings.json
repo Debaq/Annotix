@@ -18,7 +18,17 @@
     "clear": "Clear",
     "copied": "Log copied to clipboard",
     "empty": "(no entries)",
-    "autoScroll": "Auto-scroll"
+    "autoScroll": "Auto-scroll",
+    "logFiles": {
+      "title": "Log files",
+      "description": "Persistent app logs. Useful if Annotix crashes silently or fails in the background.",
+      "path": "Path",
+      "openFolder": "Open folder",
+      "copyPath": "Copy path",
+      "pathCopied": "Path copied",
+      "noFiles": "(no files yet)",
+      "totalLabel": "Total"
+    }
   },
   "general": {
     "colorMode": "Appearance",

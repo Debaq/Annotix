@@ -14,8 +14,81 @@ mod tests;
 
 use tauri::Manager;
 
+/// Auto-instala el binario y libpdfium.so en `~/.local/bin/` la primera vez que
+/// se ejecuta desde una carpeta arbitraria (Downloads, etc). Devuelve la ruta
+/// del binario instalado para que `install_desktop_entry` apunte ahí en lugar
+/// de a la carpeta temporal del usuario. Si ya estamos corriendo desde un dir
+/// "estable" (system path o ~/.local/bin), no hace nada.
 #[cfg(target_os = "linux")]
-fn install_desktop_entry() {
+fn self_install_to_local_bin() -> Option<std::path::PathBuf> {
+    use std::fs;
+    if cfg!(debug_assertions) {
+        return None;
+    }
+    let exe = std::env::current_exe().ok()?;
+    let exe_parent = exe.parent()?.to_path_buf();
+    let base = directories::BaseDirs::new()?;
+    let install_dir = base.home_dir().join(".local/bin");
+
+    // Si ya estamos en un path estable, no copiar.
+    let stable_prefixes = [
+        install_dir.clone(),
+        std::path::PathBuf::from("/usr/bin"),
+        std::path::PathBuf::from("/usr/local/bin"),
+        std::path::PathBuf::from("/opt"),
+    ];
+    if stable_prefixes.iter().any(|p| exe_parent.starts_with(p)) {
+        return None;
+    }
+
+    if fs::create_dir_all(&install_dir).is_err() {
+        return None;
+    }
+    let target_bin = install_dir.join("annotix");
+
+    // Copiar binario solo si difiere (tamaño + mtime) para soportar upgrades sin
+    // sobrescribir innecesariamente.
+    let src_meta = fs::metadata(&exe).ok();
+    let dst_meta = fs::metadata(&target_bin).ok();
+    let should_copy = match (src_meta.as_ref(), dst_meta.as_ref()) {
+        (Some(s), Some(d)) => s.len() != d.len()
+            || s.modified().ok() > d.modified().ok(),
+        (Some(_), None) => true,
+        _ => false,
+    };
+    if should_copy {
+        if fs::copy(&exe, &target_bin).is_err() {
+            return None;
+        }
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = fs::set_permissions(&target_bin, fs::Permissions::from_mode(0o755));
+        }
+    }
+
+    // Copiar libpdfium.so si está al lado del binario fuente.
+    let src_lib = exe_parent.join("libpdfium.so");
+    if src_lib.exists() {
+        let dst_lib = install_dir.join("libpdfium.so");
+        let need = fs::metadata(&dst_lib)
+            .ok()
+            .map(|d| {
+                fs::metadata(&src_lib).ok()
+                    .map(|s| s.len() != d.len() || s.modified().ok() > d.modified().ok())
+                    .unwrap_or(false)
+            })
+            .unwrap_or(true);
+        if need {
+            let _ = fs::copy(&src_lib, &dst_lib);
+        }
+    }
+
+    Some(target_bin)
+}
+
+#[cfg(target_os = "linux")]
+fn install_desktop_entry(installed_exec: Option<std::path::PathBuf>) {
     use std::fs;
 
     let Some(base) = directories::BaseDirs::new() else { return; };
@@ -35,9 +108,13 @@ fn install_desktop_entry() {
         }
     }
 
-    let exec = std::env::current_exe()
-        .ok()
+    let exec = installed_exec
         .and_then(|p| p.to_str().map(String::from))
+        .or_else(|| {
+            std::env::current_exe()
+                .ok()
+                .and_then(|p| p.to_str().map(String::from))
+        })
         .unwrap_or_else(|| "annotix".to_string());
 
     let content = format!(
@@ -81,7 +158,10 @@ pub fn run() {
     ffmpeg_the_third::init().expect("Error inicializando ffmpeg");
 
     #[cfg(target_os = "linux")]
-    install_desktop_entry();
+    {
+        let installed = self_install_to_local_bin();
+        install_desktop_entry(installed);
+    }
 
     let app_state = AppState::new().expect("Error inicializando AppState");
 
@@ -99,13 +179,21 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
-            }
+            // Logger activo en debug y release. En release escribe a archivo en
+            // el directorio estándar de logs del SO (Linux: ~/.local/share/<app>/logs,
+            // Windows: %APPDATA%\<app>\logs). Imprescindible para diagnosticar
+            // crashes silenciosos en producción.
+            app.handle().plugin(
+                tauri_plugin_log::Builder::default()
+                    .level(log::LevelFilter::Info)
+                    .targets([
+                        tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Stdout),
+                        tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::LogDir { file_name: None }),
+                    ])
+                    .max_file_size(10_000_000)
+                    .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepAll)
+                    .build(),
+            )?;
 
             if let Some(_window) = app.get_webview_window("main") {
                 // Permitir acceso al micrófono en WebKitGTK (Linux)
@@ -302,6 +390,8 @@ pub fn run() {
             commands::settings_commands::install_onnx,
             commands::settings_commands::remove_venv,
             commands::settings_commands::detect_system_gpu,
+            commands::settings_commands::get_log_dir_info,
+            commands::settings_commands::open_log_dir,
             // P2P
             commands::p2p_commands::p2p_create_session,
             commands::p2p_commands::p2p_join_session,

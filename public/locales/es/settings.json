@@ -18,7 +18,17 @@
     "clear": "Limpiar",
     "copied": "Registro copiado al portapapeles",
     "empty": "(sin entradas)",
-    "autoScroll": "Auto-scroll"
+    "autoScroll": "Auto-scroll",
+    "logFiles": {
+      "title": "Archivos de log",
+      "description": "Logs persistentes de la app. Útiles si Annotix se cierra solo o falla en segundo plano.",
+      "path": "Ruta",
+      "openFolder": "Abrir carpeta",
+      "copyPath": "Copiar ruta",
+      "pathCopied": "Ruta copiada",
+      "noFiles": "(aún no hay archivos)",
+      "totalLabel": "Total"
+    }
   },
   "general": {
     "colorMode": "Apariencia",

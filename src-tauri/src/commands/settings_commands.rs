@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 use serde::Serialize;
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 
 use crate::training::python_env;
 use crate::training::TrainingEnvCache;
@@ -332,6 +332,112 @@ pub fn detect_system_gpu() -> Result<SystemGpuInfo, String> {
             suggested_cuda: None,
         }),
     }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct LogDirInfo {
+    pub path: String,
+    pub exists: bool,
+    #[serde(rename = "fileCount")]
+    pub file_count: usize,
+    #[serde(rename = "totalBytes")]
+    pub total_bytes: u64,
+    #[serde(rename = "totalHuman")]
+    pub total_human: String,
+    pub files: Vec<LogFileEntry>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct LogFileEntry {
+    pub name: String,
+    pub bytes: u64,
+    #[serde(rename = "modifiedMs")]
+    pub modified_ms: i64,
+}
+
+#[tauri::command]
+pub fn get_log_dir_info(app: AppHandle) -> Result<LogDirInfo, String> {
+    let dir = app
+        .path()
+        .app_log_dir()
+        .map_err(|e| format!("No se pudo resolver el directorio de logs: {e}"))?;
+
+    let path = dir.to_string_lossy().to_string();
+    if !dir.exists() {
+        return Ok(LogDirInfo {
+            path,
+            exists: false,
+            file_count: 0,
+            total_bytes: 0,
+            total_human: "0 B".to_string(),
+            files: vec![],
+        });
+    }
+
+    let mut files: Vec<LogFileEntry> = Vec::new();
+    let mut total: u64 = 0;
+    if let Ok(entries) = std::fs::read_dir(&dir) {
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if !p.is_file() {
+                continue;
+            }
+            let meta = match p.metadata() {
+                Ok(m) => m,
+                Err(_) => continue,
+            };
+            let bytes = meta.len();
+            total += bytes;
+            let modified_ms = meta
+                .modified()
+                .ok()
+                .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|d| d.as_millis() as i64)
+                .unwrap_or(0);
+            files.push(LogFileEntry {
+                name: p.file_name().unwrap_or_default().to_string_lossy().to_string(),
+                bytes,
+                modified_ms,
+            });
+        }
+    }
+    files.sort_by(|a, b| b.modified_ms.cmp(&a.modified_ms));
+
+    Ok(LogDirInfo {
+        path,
+        exists: true,
+        file_count: files.len(),
+        total_bytes: total,
+        total_human: human_bytes(total),
+        files,
+    })
+}
+
+#[tauri::command]
+pub fn open_log_dir(app: AppHandle) -> Result<(), String> {
+    let dir = app
+        .path()
+        .app_log_dir()
+        .map_err(|e| format!("No se pudo resolver el directorio de logs: {e}"))?;
+    if !dir.exists() {
+        let _ = std::fs::create_dir_all(&dir);
+    }
+    open_path_in_file_manager(&dir)
+}
+
+fn open_path_in_file_manager(path: &std::path::Path) -> Result<(), String> {
+    #[cfg(target_os = "linux")]
+    let cmd = "xdg-open";
+    #[cfg(target_os = "windows")]
+    let cmd = "explorer";
+    #[cfg(target_os = "macos")]
+    let cmd = "open";
+
+    Command::new(cmd)
+        .arg(path)
+        .spawn()
+        .map_err(|e| format!("Error abriendo carpeta: {e}"))?;
+    Ok(())
 }
 
 fn suggest_cuda_from_driver(driver_version: &str) -> Option<String> {
