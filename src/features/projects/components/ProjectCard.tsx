@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ProjectSettingsDialog } from './ProjectSettingsDialog';
+import { ProjectInspectorTrigger } from './ProjectInspectorTrigger';
 import { P2pDialog } from '@/features/p2p/components/P2pDialog';
 import { useP2pStore } from '@/features/p2p/store/p2pStore';
 import { p2pService } from '@/features/p2p/services/p2pService';
@@ -241,6 +242,8 @@ export function ProjectCard({ project, folders = [] }: ProjectCardProps) {
                 <i className="fas fa-external-link-alt mr-2"></i>
                 {t('projects.revealFolder', 'Abrir en explorador')}
               </DropdownMenuItem>
+
+              <ProjectInspectorTrigger project={project} />
 
               <DropdownMenuItem onClick={async () => {
                 const path = await save({

@@ -18,19 +18,27 @@ import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useImages } from '../hooks/useImages';
 import { analyze, DEFAULT_OPTS, type AnalyzerOptions, type OverlapFinding } from '../utils/annotationStats';
 import { cn } from '@/lib/utils';
+import type { Project, AnnotixImage } from '@/lib/db';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  projectOverride?: Project | null;
+  imagesOverride?: AnnotixImage[];
+  // Si true, click en imagen no navega (evita cambiar contexto cuando se inspecciona proyecto no abierto)
+  navigationDisabled?: boolean;
 }
 
-export function AnnotationInspectorModal({ open, onOpenChange }: Props) {
+export function AnnotationInspectorModal({ open, onOpenChange, projectOverride, imagesOverride, navigationDisabled }: Props) {
   const { t } = useTranslation();
-  const { project } = useCurrentProject();
-  const { images } = useImages();
+  const currentProject = useCurrentProject();
+  const currentImages = useImages();
+  const project = projectOverride !== undefined ? projectOverride : currentProject.project;
+  const images = imagesOverride !== undefined ? imagesOverride : currentImages.images;
   const setCurrentImageId = useUIStore((s) => s.setCurrentImageId);
+  const setCurrentProjectId = useUIStore((s) => s.setCurrentProjectId);
 
   const [opts, setOpts] = useState<AnalyzerOptions>(DEFAULT_OPTS);
   const [imageSearch, setImageSearch] = useState('');
@@ -45,6 +53,8 @@ export function AnnotationInspectorModal({ open, onOpenChange }: Props) {
   }, [project]);
 
   const goTo = (imageId: string) => {
+    if (navigationDisabled) return;
+    if (projectOverride && project?.id) setCurrentProjectId(project.id);
     setCurrentImageId(imageId);
     onOpenChange(false);
   };

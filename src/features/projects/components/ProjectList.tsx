@@ -6,6 +6,7 @@ import { CreateProjectDialog } from './CreateProjectDialog';
 import { Button } from '@/components/ui/button';
 import { useUIStore } from '../../core/store/uiStore';
 import { ImportDialog } from '@/features/import/components/ImportDialog';
+import { MultiProjectInspectorModal } from './MultiProjectInspectorModal';
 import { MergeTixDialog } from '@/features/import/components/MergeTixDialog';
 import { P2pDialog } from '@/features/p2p/components/P2pDialog';
 import { Card, CardContent } from '@/components/ui/card';
@@ -33,6 +34,7 @@ export function ProjectList() {
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [emptyFolders, setEmptyFolders] = useState<string[]>(loadEmptyFolders);
+  const [multiInspectorOpen, setMultiInspectorOpen] = useState(false);
 
   useEffect(() => {
     setCurrentProjectId(null);
@@ -177,12 +179,22 @@ export function ProjectList() {
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setMultiInspectorOpen(true)}
+            disabled={projects.length === 0}
+          >
+            <i className="fas fa-chart-bar mr-2" />
+            {t('inspector.multiTitle', 'Comparar proyectos')}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setCreatingFolder(true)}
           >
             <i className="fas fa-folder-plus mr-2" />
             {t('projects.newFolder', 'Nueva carpeta')}
           </Button>
           <CreateProjectDialog />
+          <MultiProjectInspectorModal open={multiInspectorOpen} onOpenChange={setMultiInspectorOpen} />
         </div>
       </div>
 
