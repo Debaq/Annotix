@@ -9,6 +9,7 @@ import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useImages } from '../hooks/useImages';
 import { useToast } from '@/components/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { ClassFilterControls } from './ClassFilterControls';
 import type { InferenceConfig, InferenceCompletedEvent, InferenceErrorEvent } from '../../inference/types';
 
 type FilterType = 'all' | 'annotated' | 'unannotated';
@@ -78,6 +79,8 @@ export function GalleryFilters() {
           </button>
         ))}
       </div>
+
+      <ClassFilterControls />
 
       {/* Inferencia: sin modelo = cargar; con modelo = inferir todas + engrane */}
       {!selectedModel ? (

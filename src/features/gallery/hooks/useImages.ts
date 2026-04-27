@@ -1,9 +1,36 @@
 import { useUIStore } from '../../core/store/uiStore';
 import { imageService } from '../services/imageService';
 import { useTauriQuery } from '@/hooks/useTauriQuery';
+import type { AnnotixImage } from '@/lib/db';
+import type { ClassFilter } from '../../core/store/uiStore';
+
+export function applyClassFilter(images: AnnotixImage[], filter: ClassFilter | undefined): AnnotixImage[] {
+  if (!filter || filter.classIds.length === 0) return images;
+  const set = new Set(filter.classIds);
+  return images.filter((img) => {
+    const anns = img.annotations ?? [];
+    if (filter.mode === 'has') {
+      return anns.some((a) => set.has(a.classId));
+    }
+    if (filter.mode === 'lacks') {
+      return !anns.some((a) => set.has(a.classId));
+    }
+    if (filter.mode === 'only') {
+      if (anns.length === 0) return false;
+      return anns.every((a) => set.has(a.classId));
+    }
+    if (filter.mode === 'min') {
+      const min = filter.minCount ?? 1;
+      const count = anns.reduce((n, a) => n + (set.has(a.classId) ? 1 : 0), 0);
+      return count >= min;
+    }
+    return true;
+  });
+}
 
 export function useImages() {
-  const { currentProjectId, galleryFilter } = useUIStore();
+  const { currentProjectId, galleryFilter, projectFilters } = useUIStore();
+  const classFilter = currentProjectId ? projectFilters[currentProjectId]?.classFilter : undefined;
 
   const { data: images, isLoading } = useTauriQuery(
     async () => {
@@ -21,9 +48,11 @@ export function useImages() {
         data = data.filter((img) => img.annotations.length === 0);
       }
 
+      data = applyClassFilter(data, classFilter);
+
       return data;
     },
-    [currentProjectId, galleryFilter],
+    [currentProjectId, galleryFilter, classFilter],
     ['db:images-changed']
   );
 

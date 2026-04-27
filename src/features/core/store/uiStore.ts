@@ -6,6 +6,19 @@ type ToolType = 'pan' | 'bbox' | 'mask' | 'polygon' | 'keypoints' | 'landmarks' 
 type GalleryFilterType = 'all' | 'annotated' | 'unannotated';
 export type GalleryMode = 'normal' | 'compact' | 'hidden';
 
+export type ClassFilterMode = 'has' | 'lacks' | 'only' | 'min';
+export interface ClassFilter {
+  classIds: number[];
+  mode: ClassFilterMode;
+  minCount?: number;
+}
+export interface ProjectFilters {
+  classFilter?: ClassFilter;
+  classListSearch?: string;
+  classListOnlyUsed?: boolean;
+  classListOnlyInImage?: boolean;
+}
+
 interface UIState {
   // Sidebar
   sidebarOpen: boolean;
@@ -70,6 +83,11 @@ interface UIState {
   // Inference: modelo seleccionado compartido entre vistas
   selectedInferenceModelId: string | null;
   setSelectedInferenceModelId: (id: string | null) => void;
+
+  // Filtros por proyecto (debug/observación)
+  projectFilters: Record<string, ProjectFilters>;
+  setProjectFilter: (projectId: string, patch: Partial<ProjectFilters>) => void;
+  clearProjectFilter: (projectId: string) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -155,6 +173,22 @@ export const useUIStore = create<UIState>()(
       // Inference selección global
       selectedInferenceModelId: null,
       setSelectedInferenceModelId: (id) => set({ selectedInferenceModelId: id }),
+
+      // Filtros por proyecto
+      projectFilters: {},
+      setProjectFilter: (projectId, patch) => set((state) => {
+        const prev = state.projectFilters[projectId] ?? {};
+        const next = { ...prev, ...patch };
+        // Limpiar campos undefined explícitamente
+        for (const k of Object.keys(patch) as (keyof ProjectFilters)[]) {
+          if (patch[k] === undefined) delete (next as Record<string, unknown>)[k];
+        }
+        return { projectFilters: { ...state.projectFilters, [projectId]: next } };
+      }),
+      clearProjectFilter: (projectId) => set((state) => {
+        const { [projectId]: _, ...rest } = state.projectFilters;
+        return { projectFilters: rest };
+      }),
     }),
     {
       name: 'annotix-ui-storage',

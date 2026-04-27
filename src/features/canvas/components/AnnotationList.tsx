@@ -14,8 +14,15 @@ export function AnnotationList() {
   const { t } = useTranslation();
   const { annotations, deleteAnnotation, clearAnnotations, saveAnnotations, hiddenAnnotationIds, toggleAnnotationVisibility, selectedAnnotationIds, updateAnnotation } = useAnnotations();
   const { project } = useCurrentProject();
-  const { activeClassId, setActiveClassId } = useUIStore();
+  const { activeClassId, setActiveClassId, currentProjectId, projectFilters, setProjectFilter } = useUIStore();
   const { byClass: globalByClass } = useClassCounts();
+  const pf = currentProjectId ? projectFilters[currentProjectId] : undefined;
+  const classSearch = pf?.classListSearch ?? '';
+  const onlyUsed = pf?.classListOnlyUsed ?? false;
+  const onlyInImage = pf?.classListOnlyInImage ?? false;
+  const setPF = (patch: Parameters<typeof setProjectFilter>[1]) => {
+    if (currentProjectId) setProjectFilter(currentProjectId, patch);
+  };
 
   const localByClass = annotations.reduce<Record<number, number>>((acc, a) => {
     if (a.classId != null) acc[a.classId] = (acc[a.classId] ?? 0) + 1;
@@ -52,8 +59,49 @@ export function AnnotationList() {
           />
         </div>
         
+        <div className="mb-2 space-y-1">
+          <input
+            type="text"
+            value={classSearch}
+            onChange={(e) => setPF({ classListSearch: e.target.value || undefined })}
+            placeholder={t('filters.search', 'Buscar clase...')}
+            className="w-full rounded border bg-background px-2 py-1 text-xs"
+          />
+          <div className="flex gap-1 flex-wrap" style={{ fontSize: '0.65rem' }}>
+            <button
+              onClick={() => setPF({ classListOnlyUsed: !onlyUsed || undefined })}
+              className={cn(
+                'rounded border px-1.5 py-0.5',
+                onlyUsed ? 'bg-primary text-primary-foreground border-primary' : 'border-border'
+              )}
+              title={t('filters.onlyUsedHint', 'Clases con anotaciones globales > 0')}
+            >
+              <i className="fas fa-check mr-1"></i>{t('filters.onlyUsed', 'usadas')}
+            </button>
+            <button
+              onClick={() => setPF({ classListOnlyInImage: !onlyInImage || undefined })}
+              className={cn(
+                'rounded border px-1.5 py-0.5',
+                onlyInImage ? 'bg-primary text-primary-foreground border-primary' : 'border-border'
+              )}
+              title={t('filters.onlyInImageHint', 'Clases presentes en imagen actual')}
+            >
+              <i className="fas fa-image mr-1"></i>{t('filters.onlyInImage', 'en imagen')}
+            </button>
+          </div>
+        </div>
+
         <div className="max-h-48 space-y-1 overflow-y-auto pr-1">
-          {project.classes.map((cls, index) => (
+          {project.classes
+            .filter((cls) => {
+              if (classSearch && !cls.name.toLowerCase().includes(classSearch.toLowerCase())) return false;
+              if (onlyUsed && (globalByClass[cls.id] ?? 0) === 0) return false;
+              if (onlyInImage && (localByClass[cls.id] ?? 0) === 0) return false;
+              return true;
+            })
+            .map((cls) => {
+              const index = project.classes.findIndex((c) => c.id === cls.id);
+              return (
             <button
               key={cls.id}
               onClick={() => {
@@ -89,7 +137,8 @@ export function AnnotationList() {
                 <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
               )}
             </button>
-          ))}
+              );
+            })}
         </div>
       </div>
 
