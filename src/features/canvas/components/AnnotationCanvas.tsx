@@ -105,6 +105,13 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   const [bboxDrawingData, setBboxDrawingData] = useState<any>(null);
   const [obbDrawingData, setObbDrawingData] = useState<any>(null);
   const [maskBrushSize, setMaskBrushSize] = useState(15);
+  const [imageInfoCollapsed, setImageInfoCollapsed] = useState(() => {
+    try { return localStorage.getItem('annotix:imageInfoCollapsed') !== 'false'; } catch { return true; }
+  });
+  const toggleImageInfo = () => setImageInfoCollapsed((v) => {
+    try { localStorage.setItem('annotix:imageInfoCollapsed', String(!v)); } catch {}
+    return !v;
+  });
   const [maskEraseMode, setMaskEraseMode] = useState(false);
   const [maskBrushShape, setMaskBrushShape] = useState<'circle' | 'square'>('circle');
   const [maskMaxBrushSize, setMaskMaxBrushSize] = useState(100);
@@ -1297,47 +1304,64 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
         onChange={handleSetImageAdjustments}
       />
 
-      {/* Image/Frame Info (Top Left) */}
-      <div className="annotix-floating" style={{ top: '20px', left: '20px' }}>
-        <div className="flex flex-col gap-1">
-          {videoFrameInfo ? (
-            <>
-              <div className="flex items-center gap-2 text-sm">
-                <i className="fas fa-film" style={{ color: 'var(--annotix-primary)' }}></i>
-                <span className="font-medium text-[var(--annotix-dark)]">
-                  {t('video.frame', 'Frame')} {videoFrameInfo.frameIndex + 1}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--annotix-gray)' }}>
-                <i className="fas fa-clock"></i>
-                <span>{formatFrameTime(videoFrameInfo.frameIndex, videoFrameInfo.fps)}</span>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-2 text-sm">
-                <i className="fas fa-image" style={{ color: 'var(--annotix-primary)' }}></i>
-                <span className="font-medium text-[var(--annotix-dark)]" title={image.name}>
-                  {image.name.length > 14 ? image.name.slice(0, 10) + '...' + image.name.slice(image.name.lastIndexOf('.')) : image.name}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--annotix-gray)' }}>
-                <i className="fas fa-expand-arrows-alt"></i>
-                <span>{image.width} × {image.height}</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--annotix-gray)' }}>
-                <i className="fas fa-layer-group"></i>
-                <span>{annotations.length} {t('annotations.title')}</span>
-              </div>
-              {aiAnnotationsCount > 0 && (
-                <div className="flex items-center gap-2 text-xs" style={{ color: '#a855f7' }}>
-                  <i className="fas fa-robot"></i>
-                  <span>{aiAnnotationsCount} AI</span>
+      {/* Image/Frame Info (Top Left) - colapsable, default colapsado */}
+      <div
+        className="annotix-floating cursor-pointer select-none"
+        style={{ top: '20px', left: '20px' }}
+        onClick={toggleImageInfo}
+        title={imageInfoCollapsed ? t('common.expand', 'Expandir') : t('common.collapse', 'Colapsar')}
+      >
+        {imageInfoCollapsed ? (
+          <div className="flex items-center gap-2 text-xs">
+            <i className={videoFrameInfo ? 'fas fa-film' : 'fas fa-image'} style={{ color: 'var(--annotix-primary)' }}></i>
+            <span className="font-medium text-[var(--annotix-dark)]">
+              {videoFrameInfo ? `${videoFrameInfo.frameIndex + 1}` : `${annotations.length}`}
+            </span>
+            <i className="fas fa-chevron-down text-[10px]" style={{ color: 'var(--annotix-gray)' }}></i>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1">
+            {videoFrameInfo ? (
+              <>
+                <div className="flex items-center gap-2 text-sm">
+                  <i className="fas fa-film" style={{ color: 'var(--annotix-primary)' }}></i>
+                  <span className="font-medium text-[var(--annotix-dark)]">
+                    {t('video.frame', 'Frame')} {videoFrameInfo.frameIndex + 1}
+                  </span>
+                  <i className="fas fa-chevron-up text-[10px] ml-1" style={{ color: 'var(--annotix-gray)' }}></i>
                 </div>
-              )}
-            </>
-          )}
-        </div>
+                <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--annotix-gray)' }}>
+                  <i className="fas fa-clock"></i>
+                  <span>{formatFrameTime(videoFrameInfo.frameIndex, videoFrameInfo.fps)}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 text-sm">
+                  <i className="fas fa-image" style={{ color: 'var(--annotix-primary)' }}></i>
+                  <span className="font-medium text-[var(--annotix-dark)]" title={image.name}>
+                    {image.name.length > 14 ? image.name.slice(0, 10) + '...' + image.name.slice(image.name.lastIndexOf('.')) : image.name}
+                  </span>
+                  <i className="fas fa-chevron-up text-[10px] ml-1" style={{ color: 'var(--annotix-gray)' }}></i>
+                </div>
+                <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--annotix-gray)' }}>
+                  <i className="fas fa-expand-arrows-alt"></i>
+                  <span>{image.width} × {image.height}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--annotix-gray)' }}>
+                  <i className="fas fa-layer-group"></i>
+                  <span>{annotations.length} {t('annotations.title')}</span>
+                </div>
+                {aiAnnotationsCount > 0 && (
+                  <div className="flex items-center gap-2 text-xs" style={{ color: '#a855f7' }}>
+                    <i className="fas fa-robot"></i>
+                    <span>{aiAnnotationsCount} AI</span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Image Navigation (Circular buttons) - hidden during video playback (timeline handles navigation) */}

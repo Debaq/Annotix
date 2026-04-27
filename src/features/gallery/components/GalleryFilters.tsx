@@ -10,6 +10,7 @@ import { useImages } from '../hooks/useImages';
 import { useToast } from '@/components/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ClassFilterControls } from './ClassFilterControls';
+import { AnnotationInspectorModal } from './AnnotationInspectorModal';
 import type { InferenceConfig, InferenceCompletedEvent, InferenceErrorEvent } from '../../inference/types';
 
 type FilterType = 'all' | 'annotated' | 'unannotated';
@@ -33,6 +34,7 @@ export function GalleryFilters() {
   const { running, startBatch, cancel } = useInferenceRunner(undefined, handleBatchCompleted, handleBatchError);
   const [logOpen, setLogOpen] = useState(false);
   const [batchTotal, setBatchTotal] = useState(0);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
 
   const fileNameById = useMemo(() => {
     const m = new Map<string, string>();
@@ -81,6 +83,18 @@ export function GalleryFilters() {
       </div>
 
       <ClassFilterControls />
+
+      <button
+        onClick={() => setInspectorOpen(true)}
+        className="annotix-btn annotix-btn-outline mt-2 w-full"
+        style={{ fontSize: '0.75rem' }}
+        title={t('inspector.title', 'Inspector de anotaciones')}
+      >
+        <i className="fas fa-microscope mr-2"></i>
+        {t('inspector.title', 'Inspector de anotaciones')}
+      </button>
+
+      <AnnotationInspectorModal open={inspectorOpen} onOpenChange={setInspectorOpen} />
 
       {/* Inferencia: sin modelo = cargar; con modelo = inferir todas + engrane */}
       {!selectedModel ? (
