@@ -31,7 +31,8 @@ const TrainingResult = lazy(() => import('./TrainingResult').then(m => ({ defaul
 const TrainingJobList = lazy(() => import('./TrainingJobList').then(m => ({ default: m.TrainingJobList })));
 const AutomationControlPanel = lazy(() => import('../../browser-automation/components/AutomationControlPanel').then(m => ({ default: m.AutomationControlPanel })));
 import { automationService } from '../../browser-automation/services/automationService';
-import type { TrainingPhase, PythonEnvStatus, ScenarioPresetId, TrainingJob, TrainingBackend } from '../types';
+import type { TrainingPhase, PythonEnvStatus, ScenarioPresetId, TrainingJob, TrainingBackend, TrainingConfig, AugmentationConfig } from '../types';
+import { getPresetById } from '../utils/presets';
 import type { GpuInfo } from '../types';
 import { useGlobalTrainingStatus } from '../hooks/useGlobalTrainingStatus';
 import { useTrainingModalStore } from '../store/trainingModalStore';
@@ -323,10 +324,58 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
     setPhase('config');
   }, [setBaseModelPath, setBackend]);
 
+  // YOLO advanced UI escribe en yoloConfig (legacy). El request real se arma
+  // desde commonParams + backendParams, así que espejamos los cambios para que
+  // el entrenamiento use los valores que ve el usuario.
+  const YOLO_COMMON_KEY_MAP: Record<string, string> = {
+    epochs: 'epochs',
+    batchSize: 'batchSize',
+    imgsz: 'imageSize',
+    patience: 'patience',
+    lr0: 'lr',
+    valSplit: 'valSplit',
+    testSplit: 'testSplit',
+    workers: 'workers',
+    amp: 'amp',
+  };
+  const YOLO_BACKEND_PARAM_KEYS = new Set([
+    'optimizer','lrf','cos_lr','warmup_epochs','warmup_momentum','warmup_bias_lr',
+    'momentum','weight_decay','nbs','box','cls','dfl','close_mosaic','max_det',
+    'multi_scale','rect','cache','single_cls','pretrained','freeze',
+  ]);
+
+  const syncYoloPartial = useCallback((partial: Partial<TrainingConfig>) => {
+    for (const [k, v] of Object.entries(partial)) {
+      if (k in YOLO_COMMON_KEY_MAP) {
+        updateCommonParam(YOLO_COMMON_KEY_MAP[k], v);
+      } else if (YOLO_BACKEND_PARAM_KEYS.has(k)) {
+        updateBackendParam(k, v);
+      } else if (k === 'augmentation') {
+        updateBackendParam('augmentation', v);
+      }
+    }
+  }, [updateCommonParam, updateBackendParam]);
+
+  const handleYoloConfigChange = useCallback((partial: Partial<TrainingConfig>) => {
+    updateYoloConfig(partial);
+    if (backend === 'yolo') syncYoloPartial(partial);
+  }, [updateYoloConfig, syncYoloPartial, backend]);
+
+  const handleYoloAugChange = useCallback((partial: Partial<AugmentationConfig>) => {
+    updateYoloAug(partial);
+    if (backend !== 'yolo') return;
+    updateBackendParam('augmentation', { ...yoloConfig.augmentation, ...partial });
+  }, [updateYoloAug, updateBackendParam, backend, yoloConfig.augmentation]);
+
   const handlePresetSelect = useCallback((presetId: ScenarioPresetId) => {
     setSelectedPreset(presetId);
     applyPreset(presetId);
-  }, [applyPreset]);
+    const preset = getPresetById(presetId);
+    if (preset && backend === 'yolo') {
+      syncYoloPartial(preset.config as Partial<TrainingConfig>);
+    }
+  }, [applyPreset, syncYoloPartial, backend]);
+
 
   if (!project) return null;
 
@@ -415,7 +464,7 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
                   onSelect={handleBackendSelect}
                 />
                 <Separator />
-                <TrainingJobList projectId={project.id!} onFineTune={handleFineTune} onResume={handleResume} />
+                <TrainingJobList projectId={project.id!} projectName={project.name} onFineTune={handleFineTune} onResume={handleResume} />
               </>
             )}
 
@@ -485,8 +534,8 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
                   totalImages={annotatedCount}
                   onCommonChange={updateCommonParam}
                   onBackendParamChange={updateBackendParam}
-                  onYoloConfigChange={backend === 'yolo' ? updateYoloConfig : undefined}
-                  onYoloAugChange={backend === 'yolo' ? updateYoloAug : undefined}
+                  onYoloConfigChange={backend === 'yolo' ? handleYoloConfigChange : undefined}
+                  onYoloAugChange={backend === 'yolo' ? handleYoloAugChange : undefined}
                 />
 
                 <Separator />

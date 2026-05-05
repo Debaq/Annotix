@@ -1,7 +1,9 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { readFile, exists } from '@tauri-apps/plugin-fs';
-import type { TrainingBackend, TrainingEpochMetrics, TrainingResult } from '../types';
+import { readFile, exists, writeFile } from '@tauri-apps/plugin-fs';
+import { save } from '@tauri-apps/plugin-dialog';
+import type { TrainingBackend, TrainingEpochMetrics, TrainingResult, TrainingJob, ExportedModel } from '../types';
+import { sanitizeForFilename, timestampForFilename } from '../utils/downloadName';
 
 export interface ReportParams {
   backend: TrainingBackend;
@@ -291,4 +293,73 @@ export async function generateTrainingReport(params: ReportParams): Promise<Repo
   }
 
   return { blob: pdf.output('blob'), warnings };
+}
+
+// ─── From persisted job ─────────────────────────────────────────────────────
+
+export interface ExportFromJobResult {
+  filePath: string;
+  warnings: string[];
+}
+
+function metricsHistoryFromJob(job: TrainingJob): TrainingEpochMetrics[] {
+  const raw = (job as unknown as { metricsHistory?: unknown }).metricsHistory;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') return null;
+      const obj = entry as Record<string, unknown>;
+      const m = (obj.metrics ?? obj) as TrainingEpochMetrics | undefined;
+      return m && typeof m === 'object' ? m : null;
+    })
+    .filter((m): m is TrainingEpochMetrics => m !== null);
+}
+
+/**
+ * Genera y guarda el PDF de un job ya finalizado (lista de entrenamientos).
+ * Devuelve `null` si el usuario cancela el diálogo de guardado.
+ */
+export async function exportTrainingReportFromJob(
+  job: TrainingJob,
+  projectName: string,
+): Promise<ExportFromJobResult | null> {
+  const config = (job.config ?? {}) as Record<string, unknown>;
+  const backend = ((config.backend as TrainingBackend) || 'yolo') as TrainingBackend;
+  const modelId = (config.modelId as string) || (config.yoloVersion as string) || 'model';
+  const modelSize = (config.modelSize as string) ?? null;
+
+  const proj = sanitizeForFilename(projectName);
+  const ts = timestampForFilename();
+  const filePath = await save({
+    filters: [{ name: 'PDF', extensions: ['pdf'] }],
+    defaultPath: `${proj}_${backend}_report_${ts}.pdf`,
+  });
+  if (!filePath) return null;
+
+  const result: TrainingResult = {
+    bestModelPath: job.bestModelPath ?? null,
+    lastModelPath: job.lastModelPath ?? null,
+    resultsDir: job.resultDir ?? null,
+    finalMetrics: job.metrics ?? null,
+    exportedModels: ((config.exportedModels as ExportedModel[]) || []),
+  };
+
+  const { blob, warnings } = await generateTrainingReport({
+    backend,
+    projectName,
+    modelId,
+    modelSize,
+    startedAt: job.createdAt,
+    finishedAt: job.updatedAt,
+    config,
+    finalMetrics: job.metrics ?? null,
+    metricsHistory: metricsHistoryFromJob(job),
+    logs: job.logs ?? [],
+    result,
+    chartsContainer: null,
+  });
+
+  const buf = new Uint8Array(await blob.arrayBuffer());
+  await writeFile(filePath, buf);
+  return { filePath, warnings };
 }

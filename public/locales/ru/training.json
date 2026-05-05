@@ -306,7 +306,9 @@
     "pyodTitle": "PyOD Parameters",
     "tslearnTitle": "tslearn Parameters",
     "pypotsTitle": "PyPOTS Parameters",
-    "stumpyTitle": "STUMPY Parameters"
+    "stumpyTitle": "STUMPY Parameters",
+    "testSplit": "Тестовое разбиение",
+    "testSplitDesc": "Доля изображений для отложенного теста. 0 отключает тестовое разбиение."
   },
   "monitor": {
     "title": "Обучение выполняется",
@@ -452,7 +454,9 @@
     "hours": "часов",
     "runningOn": "Выполняется на {{provider}}",
     "pollingInfo": "Обновление прогресса каждые 30 секунд",
-    "viewJob": "Просмотр задачи"
+    "viewJob": "Просмотр задачи",
+    "freeTier": "Бесплатно",
+    "paidTier": "Платно"
   },
   "cancelConfirmTitle": "Отменить обучение",
   "cancelConfirmMessage": "Несохранённый прогресс будет потерян. Чекпоинты best/last останутся на диске. Отменить?",
@@ -466,5 +470,14 @@
     "lastHint": "last.pt есть (возможен настоящий resume)",
     "noneHint": "веса не сохранены",
     "none": "без весов"
+  },
+  "split": {
+    "title": "Разделение датасета",
+    "images": "изображений",
+    "train": "Обучение",
+    "val": "Валидация",
+    "test": "Тест",
+    "noImages": "В проекте нет аннотированных изображений",
+    "tinyWarning": "Очень маленький датасет. Отключите тестовое разбиение (0) или аннотируйте больше изображений."
   }
 }

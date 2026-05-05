@@ -306,7 +306,9 @@
     "pyodTitle": "PyOD Parameters",
     "tslearnTitle": "tslearn Parameters",
     "pypotsTitle": "PyPOTS Parameters",
-    "stumpyTitle": "STUMPY Parameters"
+    "stumpyTitle": "STUMPY Parameters",
+    "testSplit": "Test-Split",
+    "testSplitDesc": "Anteil der Bilder für separaten Testsatz. 0 deaktiviert den Test-Split."
   },
   "monitor": {
     "title": "Training läuft",
@@ -452,7 +454,9 @@
     "hours": "Stunden",
     "runningOn": "Läuft auf {{provider}}",
     "pollingInfo": "Fortschrittsaktualisierungen alle 30 Sekunden",
-    "viewJob": "Job anzeigen"
+    "viewJob": "Job anzeigen",
+    "freeTier": "Kostenlos",
+    "paidTier": "Kostenpflichtig"
   },
   "cancelConfirmTitle": "Training abbrechen",
   "cancelConfirmMessage": "Nicht gespeicherter Fortschritt geht verloren. Best/last-Checkpoints bleiben erhalten. Abbrechen?",
@@ -466,5 +470,14 @@
     "lastHint": "last.pt verfügbar (echtes Resume möglich)",
     "noneHint": "keine Gewichte gespeichert",
     "none": "keine Gewichte"
+  },
+  "split": {
+    "title": "Datensatz-Aufteilung",
+    "images": "Bilder",
+    "train": "Training",
+    "val": "Validierung",
+    "test": "Test",
+    "noImages": "Keine annotierten Bilder im Projekt",
+    "tinyWarning": "Sehr kleiner Datensatz. Test-Split (0) deaktivieren oder mehr Bilder annotieren."
   }
 }

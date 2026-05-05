@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/hooks/use-toast';
+import { exportTrainingReportFromJob } from '../services/trainingReportService';
 import type { TrainingJob } from '../types';
 
 interface TrainingJobCardProps {
@@ -8,6 +11,7 @@ interface TrainingJobCardProps {
   onDelete: (jobId: string) => void;
   onFineTune?: (job: TrainingJob) => void;
   onResume?: (job: TrainingJob) => void;
+  projectName?: string;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -18,12 +22,33 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: 'bg-zinc-500',
 };
 
-export function TrainingJobCard({ job, onDelete, onFineTune, onResume }: TrainingJobCardProps) {
+export function TrainingJobCard({ job, onDelete, onFineTune, onResume, projectName }: TrainingJobCardProps) {
   const { t } = useTranslation();
+  const [exporting, setExporting] = useState(false);
 
   const config = job.config as Record<string, unknown>;
-  const model = `${config.yoloVersion || '?'}${config.modelSize || ''}`;
+  const model = `${config.yoloVersion || config.modelId || '?'}${config.modelSize || ''}`;
   const date = new Date(job.createdAt).toLocaleString();
+  const canExportReport = job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled';
+
+  const handleExportReport = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const out = await exportTrainingReportFromJob(job, projectName || 'project');
+      if (!out) return;
+      if (out.warnings.length > 0) {
+        toast({ title: t('training.result.reportPartial'), description: out.warnings.join('\n'), duration: 8000 });
+      } else {
+        toast({ title: t('training.result.reportOk', { path: out.filePath }), duration: 4000 });
+      }
+    } catch (e) {
+      console.error('Job report export failed:', e);
+      toast({ title: t('training.result.reportError'), description: String(e), variant: 'destructive', duration: 10000 });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors">
@@ -112,6 +137,18 @@ export function TrainingJobCard({ job, onDelete, onFineTune, onResume }: Trainin
           }
           return null;
         })()}
+        {canExportReport && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleExportReport}
+            disabled={exporting}
+            className="text-muted-foreground hover:text-red-400"
+            title={t('training.result.exportReport')}
+          >
+            <i className={`fas ${exporting ? 'fa-spinner fa-spin' : 'fa-file-pdf'} text-xs`} />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"

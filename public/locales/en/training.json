@@ -457,7 +457,9 @@
     "pyodTitle": "PyOD Parameters",
     "tslearnTitle": "tslearn Parameters",
     "pypotsTitle": "PyPOTS Parameters",
-    "stumpyTitle": "STUMPY Parameters"
+    "stumpyTitle": "STUMPY Parameters",
+    "testSplit": "Test Split",
+    "testSplitDesc": "Fraction of images for hold-out test set. 0 disables test split."
   },
   "model": {
     "version": "Model Version",
@@ -508,7 +510,9 @@
     "hours": "hours",
     "runningOn": "Running on {{provider}}",
     "pollingInfo": "Progress updates every 30 seconds",
-    "viewJob": "View Job"
+    "viewJob": "View Job",
+    "freeTier": "Free tier",
+    "paidTier": "Paid"
   },
   "cancelConfirmTitle": "Cancel training",
   "cancelConfirmMessage": "Unsaved progress will be lost. Best/last checkpoints stay on disk. Cancel?",
@@ -522,5 +526,14 @@
     "lastHint": "last.pt available (last checkpoint, enables true resume)",
     "noneHint": "no weights saved",
     "none": "no weights"
+  },
+  "split": {
+    "title": "Dataset split",
+    "images": "images",
+    "train": "Train",
+    "val": "Val",
+    "test": "Test",
+    "noImages": "No annotated images in the project",
+    "tinyWarning": "Very small dataset. Consider disabling the test split (0) or annotating more images."
   }
 }

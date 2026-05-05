@@ -306,7 +306,9 @@
     "pyodTitle": "PyOD Parameters",
     "tslearnTitle": "tslearn Parameters",
     "pypotsTitle": "PyPOTS Parameters",
-    "stumpyTitle": "STUMPY Parameters"
+    "stumpyTitle": "STUMPY Parameters",
+    "testSplit": "测试集划分",
+    "testSplitDesc": "用于独立测试集的图像比例。0 表示禁用测试集划分。"
   },
   "monitor": {
     "title": "训练进行中",
@@ -452,7 +454,9 @@
     "hours": "小时",
     "runningOn": "正在{{provider}}上运行",
     "pollingInfo": "每30秒更新进度",
-    "viewJob": "查看任务"
+    "viewJob": "查看任务",
+    "freeTier": "免费",
+    "paidTier": "付费"
   },
   "cancelConfirmTitle": "取消训练",
   "cancelConfirmMessage": "未保存的进度将丢失。best/last 检查点保留在磁盘上。取消？",
@@ -466,5 +470,14 @@
     "lastHint": "有 last.pt（可真正 resume）",
     "noneHint": "未保存权重",
     "none": "无权重"
+  },
+  "split": {
+    "title": "数据集划分",
+    "images": "图像",
+    "train": "训练",
+    "val": "验证",
+    "test": "测试",
+    "noImages": "项目中没有已标注的图像",
+    "tinyWarning": "数据集过小。请考虑禁用测试集划分（0）或标注更多图像。"
   }
 }

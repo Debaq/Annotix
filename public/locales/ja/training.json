@@ -306,7 +306,9 @@
     "pyodTitle": "PyOD Parameters",
     "tslearnTitle": "tslearn Parameters",
     "pypotsTitle": "PyPOTS Parameters",
-    "stumpyTitle": "STUMPY Parameters"
+    "stumpyTitle": "STUMPY Parameters",
+    "testSplit": "テスト分割",
+    "testSplitDesc": "ホールドアウトテストセット用の画像の割合。0でテスト分割を無効化。"
   },
   "monitor": {
     "title": "トレーニング進行中",
@@ -452,7 +454,9 @@
     "hours": "時間",
     "runningOn": "{{provider}}で実行中",
     "pollingInfo": "30秒ごとに進捗を更新",
-    "viewJob": "ジョブを表示"
+    "viewJob": "ジョブを表示",
+    "freeTier": "無料枠",
+    "paidTier": "有料"
   },
   "cancelConfirmTitle": "学習をキャンセル",
   "cancelConfirmMessage": "未保存の進行状況は失われます。best/last チェックポイントはディスクに残ります。キャンセルしますか？",
@@ -466,5 +470,14 @@
     "lastHint": "last.pt あり (真の resume 可)",
     "noneHint": "重み未保存",
     "none": "重みなし"
+  },
+  "split": {
+    "title": "データセット分割",
+    "images": "画像",
+    "train": "訓練",
+    "val": "検証",
+    "test": "テスト",
+    "noImages": "プロジェクトに注釈付き画像がありません",
+    "tinyWarning": "データセットが非常に小さい。テスト分割を無効化（0）するか、画像をさらに注釈してください。"
   }
 }

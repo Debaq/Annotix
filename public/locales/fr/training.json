@@ -306,7 +306,9 @@
     "pyodTitle": "PyOD Parameters",
     "tslearnTitle": "tslearn Parameters",
     "pypotsTitle": "PyPOTS Parameters",
-    "stumpyTitle": "STUMPY Parameters"
+    "stumpyTitle": "STUMPY Parameters",
+    "testSplit": "Split Test",
+    "testSplitDesc": "Fraction d'images pour le jeu de test séparé. 0 désactive le split test."
   },
   "monitor": {
     "title": "Entraînement en cours",
@@ -452,7 +454,9 @@
     "hours": "heures",
     "runningOn": "En cours sur {{provider}}",
     "pollingInfo": "Mises à jour du progrès toutes les 30 secondes",
-    "viewJob": "Voir le job"
+    "viewJob": "Voir le job",
+    "freeTier": "Gratuit",
+    "paidTier": "Payant"
   },
   "cancelConfirmTitle": "Annuler l'entraînement",
   "cancelConfirmMessage": "Le progrès non sauvegardé sera perdu. Best/last checkpoints restent sur disque. Annuler ?",
@@ -466,5 +470,14 @@
     "lastHint": "last.pt disponible (reprise vraie)",
     "noneHint": "aucun poids sauvegardé",
     "none": "sans poids"
+  },
+  "split": {
+    "title": "Division du jeu de données",
+    "images": "images",
+    "train": "Entraînement",
+    "val": "Validation",
+    "test": "Test",
+    "noImages": "Aucune image annotée dans le projet",
+    "tinyWarning": "Jeu de données très petit. Désactivez le split de test (0) ou annotez plus d'images."
   }
 }

@@ -306,7 +306,9 @@
     "pyodTitle": "PyOD Parameters",
     "tslearnTitle": "tslearn Parameters",
     "pypotsTitle": "PyPOTS Parameters",
-    "stumpyTitle": "STUMPY Parameters"
+    "stumpyTitle": "STUMPY Parameters",
+    "testSplit": "Split Test",
+    "testSplitDesc": "Frazione di immagini per il set di test separato. 0 disattiva lo split di test."
   },
   "monitor": {
     "title": "Addestramento in Corso",
@@ -452,7 +454,9 @@
     "hours": "ore",
     "runningOn": "In esecuzione su {{provider}}",
     "pollingInfo": "Aggiornamenti di progresso ogni 30 secondi",
-    "viewJob": "Visualizza job"
+    "viewJob": "Visualizza job",
+    "freeTier": "Gratuito",
+    "paidTier": "A pagamento"
   },
   "cancelConfirmTitle": "Annulla addestramento",
   "cancelConfirmMessage": "Il progresso non salvato andrà perso. I checkpoint best/last restano sul disco. Annullare?",
@@ -466,5 +470,14 @@
     "lastHint": "last.pt disponibile (resume puro)",
     "noneHint": "nessun peso salvato",
     "none": "senza pesi"
+  },
+  "split": {
+    "title": "Suddivisione del dataset",
+    "images": "immagini",
+    "train": "Addestramento",
+    "val": "Validazione",
+    "test": "Test",
+    "noImages": "Nessuna immagine annotata nel progetto",
+    "tinyWarning": "Dataset molto piccolo. Disattiva lo split di test (0) o annota più immagini."
   }
 }

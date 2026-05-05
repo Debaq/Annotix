@@ -306,7 +306,9 @@
     "pyodTitle": "PyOD Parameters",
     "tslearnTitle": "tslearn Parameters",
     "pypotsTitle": "PyPOTS Parameters",
-    "stumpyTitle": "STUMPY Parameters"
+    "stumpyTitle": "STUMPY Parameters",
+    "testSplit": "테스트 분할",
+    "testSplitDesc": "홀드아웃 테스트 세트용 이미지 비율. 0이면 테스트 분할 비활성화."
   },
   "monitor": {
     "title": "학습 진행 중",
@@ -452,7 +454,9 @@
     "hours": "시간",
     "runningOn": "{{provider}}에서 실행 중",
     "pollingInfo": "30초마다 진행 상황 업데이트",
-    "viewJob": "작업 보기"
+    "viewJob": "작업 보기",
+    "freeTier": "무료 등급",
+    "paidTier": "유료"
   },
   "cancelConfirmTitle": "학습 취소",
   "cancelConfirmMessage": "저장되지 않은 진행 상황은 사라집니다. best/last 체크포인트는 디스크에 남습니다. 취소하시겠습니까?",
@@ -466,5 +470,14 @@
     "lastHint": "last.pt 있음 (진짜 재개 가능)",
     "noneHint": "저장된 가중치 없음",
     "none": "가중치 없음"
+  },
+  "split": {
+    "title": "데이터셋 분할",
+    "images": "이미지",
+    "train": "훈련",
+    "val": "검증",
+    "test": "테스트",
+    "noImages": "프로젝트에 주석이 달린 이미지가 없습니다",
+    "tinyWarning": "데이터셋이 매우 작습니다. 테스트 분할(0)을 비활성화하거나 이미지를 더 주석하세요."
   }
 }

@@ -82,17 +82,22 @@ export function TrainingModelExport({ modelPath, projectName }: TrainingModelExp
           );
         })}
       </div>
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-red-500 break-words">{error}</p>}
       {exported.length > 0 && (
         <div className="space-y-1">
           {exported.map((e) => (
-            <div key={e.format} className="flex items-center gap-2">
-              <p className="flex-1 text-xs font-mono text-muted-foreground truncate">
+            <div key={e.format} className="flex items-center gap-2 min-w-0">
+              <p
+                className="flex-1 min-w-0 text-xs font-mono text-muted-foreground truncate"
+                title={e.path}
+                dir="rtl"
+              >
                 {e.format.toUpperCase()}: {e.path}
               </p>
               <Button
                 size="sm"
                 variant="outline"
+                className="shrink-0"
                 disabled={downloading !== null}
                 onClick={() => handleDownload(e.format, e.path)}
               >
