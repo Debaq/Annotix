@@ -1,8 +1,98 @@
 use zip::ZipArchive;
 use serde_json::json;
 
-use super::{ImportData, ImageImportData, create_class, create_annotation};
+use super::{ImportData, ImageImportData, ImportResult, ImportStats, create_class, create_annotation};
 use super::yolo::{read_zip_text, read_zip_bytes, get_image_dimensions};
+use crate::store::{AppState, io as store_io};
+
+/// Restaura un .tix completo (con `project.json` en raíz) extrayendo todos los
+/// archivos al directorio de proyectos como un proyecto nuevo. Preserva videos,
+/// tracks, training_jobs, audio, timeseries, etc. byte-a-byte.
+pub fn restore_full_project<F: Fn(&str, f64, usize, usize)>(
+    state: &AppState,
+    archive: &mut ZipArchive<std::fs::File>,
+    project_name: &str,
+    emit: F,
+) -> Result<ImportResult, String> {
+    let projects_dir = state.projects_dir()?;
+    let new_id = uuid::Uuid::new_v4().to_string();
+    let dest_dir = projects_dir.join(&new_id);
+    std::fs::create_dir_all(&dest_dir)
+        .map_err(|e| format!("Error creando directorio del proyecto: {}", e))?;
+
+    let total = archive.len();
+    for i in 0..total {
+        let mut entry = archive.by_index(i)
+            .map_err(|e| format!("Error leyendo entrada ZIP: {}", e))?;
+        let rel = match entry.enclosed_name() {
+            Some(p) => p.to_path_buf(),
+            None => continue,
+        };
+        let out_path = dest_dir.join(&rel);
+        if entry.is_dir() {
+            std::fs::create_dir_all(&out_path)
+                .map_err(|e| format!("Error creando dir {:?}: {}", out_path, e))?;
+            continue;
+        }
+        if let Some(parent) = out_path.parent() {
+            std::fs::create_dir_all(parent)
+                .map_err(|e| format!("Error creando dir padre {:?}: {}", parent, e))?;
+        }
+        let mut out_file = std::fs::File::create(&out_path)
+            .map_err(|e| format!("Error creando {:?}: {}", out_path, e))?;
+        std::io::copy(&mut entry, &mut out_file)
+            .map_err(|e| format!("Error escribiendo {:?}: {}", out_path, e))?;
+        if i % 8 == 0 || i + 1 == total {
+            let pct = 50.0 + ((i + 1) as f64 / total.max(1) as f64) * 40.0;
+            emit("saving", pct, i + 1, total);
+        }
+    }
+
+    // Reasignar id/nombre/timestamps en project.json
+    let pj_path = dest_dir.join("project.json");
+    if !pj_path.exists() {
+        let _ = std::fs::remove_dir_all(&dest_dir);
+        return Err("project.json no encontrado en .tix".to_string());
+    }
+    let mut pf = store_io::read_project(&dest_dir)
+        .map_err(|e| { let _ = std::fs::remove_dir_all(&dest_dir); e })?;
+
+    let now = js_timestamp();
+    pf.id = new_id.clone();
+    pf.name = project_name.to_string();
+    pf.updated = now;
+    // Limpiar estado P2P / descarga heredada de la sesión exportada
+    pf.p2p = None;
+    pf.p2p_download = None;
+
+    let images_count = pf.images.len();
+    let classes_count = pf.classes.len();
+    let annotations_count: usize = pf.images.iter()
+        .map(|i| i.annotations.len())
+        .sum::<usize>()
+        + pf.videos.iter()
+            .map(|v| v.tracks.iter().map(|t| t.keyframes.len()).sum::<usize>())
+            .sum::<usize>();
+
+    store_io::write_project(&dest_dir, &pf)?;
+    state.insert_into_cache(&new_id, pf, dest_dir);
+
+    emit("done", 100.0, total, total);
+
+    Ok(ImportResult {
+        project_id: new_id,
+        stats: ImportStats {
+            images_count,
+            classes_count,
+            annotations_count,
+        },
+    })
+}
+
+fn js_timestamp() -> f64 {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as f64).unwrap_or(0.0)
+}
 
 pub fn import_data(
     archive: &mut ZipArchive<std::fs::File>,

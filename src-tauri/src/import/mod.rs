@@ -125,6 +125,21 @@ pub fn import_dataset(
     let mut archive = zip::ZipArchive::new(file)
         .map_err(|e| format!("Error leyendo ZIP: {}", e))?;
 
+    // TIX nativo (con project.json): restauración completa preservando
+    // videos/tracks/audio/timeseries/training_jobs.
+    if detection.format == "tix" {
+        let has_project_json = (0..archive.len())
+            .filter_map(|i| archive.by_index(i).ok().map(|f| f.name().to_string()))
+            .any(|n| n.eq_ignore_ascii_case("project.json"));
+        if has_project_json {
+            emit_phase("saving", 50.0, 0, 0);
+            let result = tix::restore_full_project(state, &mut archive, project_name, |phase, pct, cur, tot| {
+                emit_phase(phase, pct, cur, tot);
+            })?;
+            return Ok(result);
+        }
+    }
+
     // Importar datos según formato
     emit_phase("parsing", 25.0, 0, 0);
     let import_data = match detection.format.as_str() {

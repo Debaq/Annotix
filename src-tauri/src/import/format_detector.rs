@@ -23,7 +23,15 @@ pub fn detect(archive: &mut ZipArchive<std::fs::File>) -> Result<DetectionResult
         }
     }
 
-    // TIX: annotations.json con structure TIX (check before COCO)
+    // TIX: project.json en raíz (export Annotix nativo) — detección preferida,
+    // soporta proyectos con videos/audio/timeseries (sin carpeta images/).
+    if has_file(&lower_files, "project.json") {
+        if let Some(result) = detect_tix_full(archive) {
+            return Ok(result);
+        }
+    }
+
+    // TIX legacy: annotations.json con structure TIX (check before COCO)
     if has_file(&lower_files, "annotations.json") && has_folder(&lower_files, "images") {
         if let Some(result) = detect_tix(archive) {
             return Ok(result);
@@ -126,6 +134,26 @@ fn detect_coco(archive: &mut ZipArchive<std::fs::File>) -> Option<DetectionResul
         project_type: project_type.to_string(),
         confidence: 0.95,
         class_count: Some(categories.len()),
+    })
+}
+
+fn detect_tix_full(archive: &mut ZipArchive<std::fs::File>) -> Option<DetectionResult> {
+    let content = read_file_text(archive, "project.json")?;
+    let data: serde_json::Value = serde_json::from_str(&content).ok()?;
+    // Marcador mínimo de proyecto Annotix
+    data.get("id")?.as_str()?;
+    let project_type = data.get("type")
+        .and_then(|t| t.as_str())
+        .map(|t| normalize_project_type(t))
+        .unwrap_or_else(|| "bbox".to_string());
+    let class_count = data.get("classes")
+        .and_then(|c| c.as_array())
+        .map(|c| c.len());
+    Some(DetectionResult {
+        format: "tix".to_string(),
+        project_type,
+        confidence: 0.99,
+        class_count,
     })
 }
 
