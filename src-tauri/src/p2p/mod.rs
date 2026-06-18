@@ -5,6 +5,7 @@ pub mod locks;
 pub mod ticket;
 pub mod protocol;
 pub mod distribution;
+pub mod crypto;
 
 use serde::{Deserialize, Serialize};
 

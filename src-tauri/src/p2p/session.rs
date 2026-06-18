@@ -116,11 +116,12 @@ impl P2pState {
 
         let host_key = ticket::encode_host_key(&host_secret, &share_code);
 
-        // Persistir config P2P en project.json para auto-resume
+        // Persistir config P2P en project.json para auto-resume (secreto cifrado en reposo)
+        let enc_host_secret = self.encrypt_secret(&host_secret);
         app_state.with_project_mut(project_id, |pf| {
             pf.p2p = Some(P2pProjectConfig {
                 role: "lead_researcher".to_string(),
-                host_secret: Some(host_secret.clone()),
+                host_secret: Some(enc_host_secret.clone()),
                 display_name: display_name.to_string(),
                 namespace_id: format!("{}", namespace_id),
                 rules: serde_json::to_value(&rules).unwrap_or_default(),
@@ -340,11 +341,12 @@ impl P2pState {
             None
         };
 
-        // Persistir config P2P en project.json para auto-resume (todos los roles)
+        // Persistir config P2P en project.json para auto-resume (secreto cifrado en reposo)
+        let enc_host_secret = host_secret.as_ref().map(|s| self.encrypt_secret(s));
         let _ = app_state.with_project_mut(&project_id, |pf| {
             pf.p2p = Some(P2pProjectConfig {
                 role: role_str.clone(),
-                host_secret: host_secret.clone(),
+                host_secret: enc_host_secret.clone(),
                 display_name: display_name.to_string(),
                 namespace_id: format!("{}", namespace_id),
                 rules: serde_json::to_value(&rules).unwrap_or_default(),
@@ -570,7 +572,7 @@ impl P2pState {
         app_state: &AppState,
         app_handle: &tauri::AppHandle,
         project_id: &str,
-        config: P2pProjectConfig,
+        mut config: P2pProjectConfig,
     ) -> Result<P2pSessionInfo, String> {
         // Verificar que no haya sesión activa para este proyecto
         {
@@ -578,6 +580,11 @@ impl P2pState {
             if sessions.contains_key(project_id) {
                 return Err("Ya hay una sesión P2P activa para este proyecto".to_string());
             }
+        }
+
+        // Descifrar host_secret persistido (acepta legacy en texto plano)
+        if let Some(enc) = config.host_secret.take() {
+            config.host_secret = Some(self.decrypt_secret(&enc));
         }
 
         let project = app_state.read_project_file(project_id)?;

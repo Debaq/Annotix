@@ -120,6 +120,7 @@ pub async fn p2p_sync_annotations(
     image_id: String,
     annotations: Vec<AnnotationEntry>,
 ) -> Result<(), String> {
+    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
     crate::p2p::sync::sync_annotations_to_doc(&p2p, &project_id, &image_id, &annotations).await
 }
 

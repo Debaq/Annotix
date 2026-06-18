@@ -156,11 +156,19 @@ impl P2pState {
         let _ = std::fs::create_dir_all(&blobs_dir);
         let _ = std::fs::create_dir_all(&docs_dir);
 
-        // Crear endpoint
+        // Crear endpoint con discovery n0 (PkarrPublisher + DnsAddressLookup + relays).
+        // Sin esto los peers solo son alcanzables por las direcciones incrustadas en el
+        // ticket, lo que rompe la conexión cross-network.
         let endpoint = Endpoint::builder()
+            .preset(iroh::endpoint::presets::N0)
             .bind()
             .await
             .map_err(|e| format!("Error creando endpoint iroh: {}", e))?;
+
+        // Esperar a que el home relay esté registrado antes de generar tickets.
+        // doc.share() captura AddrInfo del endpoint; si corre antes de estar online
+        // el ticket sale con direcciones vacías/parciales y el joiner no conecta.
+        endpoint.online().await;
 
         // Blob store en filesystem
         let blobs_store = FsStore::load(&blobs_dir)
@@ -214,6 +222,16 @@ impl P2pState {
     /// Computa el hash blake3 de un secreto
     pub fn hash_secret(secret: &str) -> String {
         blake3::hash(secret.as_bytes()).to_hex().to_string()
+    }
+
+    /// Cifra un secreto para persistirlo en project.json
+    pub fn encrypt_secret(&self, plaintext: &str) -> String {
+        super::crypto::encrypt(&self.data_dir, plaintext)
+    }
+
+    /// Descifra un secreto leído de project.json (acepta legacy en texto plano)
+    pub fn decrypt_secret(&self, stored: &str) -> String {
+        super::crypto::decrypt(&self.data_dir, stored)
     }
 
     /// Lista todas las sesiones activas
