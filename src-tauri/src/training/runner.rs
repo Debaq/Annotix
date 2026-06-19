@@ -5,7 +5,7 @@ use std::process::{Child, Command, Stdio};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::store::AppState;
 use crate::store::project_file::ImageEntry;
@@ -113,60 +113,14 @@ impl TrainingProcessManager {
             procs.insert(job_id.to_string(), child);
         }
 
-        // Threads para leer stdout y stderr
-        let app_clone = app.clone();
-        let processes = self.processes.clone();
-        let project_dir_clone = project_dir.clone();
-        let job_id_thread = job_id.to_string();
-
-        std::thread::spawn(move || {
-            let mut logs: Vec<String> = Vec::new();
-
-            // Leer stdout
-            if let Some(stdout) = stdout {
-                let reader = BufReader::new(stdout);
-                for line in reader.lines().map_while(Result::ok) {
-                    process_log_line(&app_clone, &job_id_thread, &line, &mut logs, &project_dir_clone);
-                }
-            }
-
-            // Esperar a que el proceso termine
-            {
-                let mut procs = processes.lock().unwrap();
-                if let Some(mut child) = procs.remove(&job_id_thread) {
-                    let status = child.wait();
-                    let success = status.map(|s| s.success()).unwrap_or(false);
-
-                    if !success {
-                        // Leer stderr si falló
-                        if let Some(stderr) = stderr {
-                            let reader = BufReader::new(stderr);
-                            let stderr_lines: Vec<String> = reader.lines()
-                                .map_while(Result::ok)
-                                .collect();
-                            let error_msg = stderr_lines.join("\n");
-
-                            flush_log_throttle(&app_clone, &job_id_thread);
-                            let _ = app_clone.emit("training:error", serde_json::json!({
-                                "jobId": &job_id_thread,
-                                "error": error_msg,
-                            }));
-
-                            update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
-                                job.status = "failed".to_string();
-                                job.updated_at = js_timestamp();
-                            });
-                        }
-                    }
-                }
-            }
-
-            // Guardar logs finales
-            update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
-                job.logs = logs;
-                job.updated_at = js_timestamp();
-            });
-        });
+        spawn_monitor_thread(
+            app.clone(),
+            self.processes.clone(),
+            project_dir.clone(),
+            job_id.to_string(),
+            stdout,
+            stderr,
+        );
 
         Ok(())
     }
@@ -191,12 +145,9 @@ impl TrainingProcessManager {
 
         let pf = state.read_project_file(project_id)?;
 
-        state.with_project_mut(project_id, |pf| {
-            if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
-                job.status = "training".to_string();
-                job.updated_at = js_timestamp();
-            }
-        })?;
+        // NB: status="training" se setea recién antes del spawn (más abajo), no
+        // aquí: si la preparación de dataset/scripts falla, el job no debe quedar
+        // marcado "training" zombie.
 
         let dataset_dir = project_dir
             .join("training")
@@ -271,6 +222,7 @@ impl TrainingProcessManager {
         let result_str = dataset_dir.join("train").to_string_lossy().to_string();
         state.with_project_mut(project_id, |pf| {
             if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
+                job.status = "training".to_string();
                 job.dataset_dir = Some(ds_str);
                 job.result_dir = Some(result_str);
                 job.updated_at = js_timestamp();
@@ -294,55 +246,14 @@ impl TrainingProcessManager {
             procs.insert(job_id.to_string(), child);
         }
 
-        let app_clone = app.clone();
-        let processes = self.processes.clone();
-        let project_dir_clone = project_dir.clone();
-        let job_id_thread = job_id.to_string();
-
-        std::thread::spawn(move || {
-            let mut logs: Vec<String> = Vec::new();
-
-            if let Some(stdout) = stdout {
-                let reader = BufReader::new(stdout);
-                for line in reader.lines().map_while(Result::ok) {
-                    process_log_line(&app_clone, &job_id_thread, &line, &mut logs, &project_dir_clone);
-                }
-            }
-
-            {
-                let mut procs = processes.lock().unwrap();
-                if let Some(mut child) = procs.remove(&job_id_thread) {
-                    let status = child.wait();
-                    let success = status.map(|s| s.success()).unwrap_or(false);
-
-                    if !success {
-                        if let Some(stderr) = stderr {
-                            let reader = BufReader::new(stderr);
-                            let stderr_lines: Vec<String> = reader.lines()
-                                .map_while(Result::ok)
-                                .collect();
-                            let error_msg = stderr_lines.join("\n");
-
-                            flush_log_throttle(&app_clone, &job_id_thread);
-                            let _ = app_clone.emit("training:error", serde_json::json!({
-                                "jobId": &job_id_thread,
-                                "error": error_msg,
-                            }));
-
-                            update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
-                                job.status = "failed".to_string();
-                                job.updated_at = js_timestamp();
-                            });
-                        }
-                    }
-                }
-            }
-
-            update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
-                job.logs = logs;
-                job.updated_at = js_timestamp();
-            });
-        });
+        spawn_monitor_thread(
+            app.clone(),
+            self.processes.clone(),
+            project_dir.clone(),
+            job_id.to_string(),
+            stdout,
+            stderr,
+        );
 
         Ok(())
     }
@@ -419,49 +330,14 @@ impl TrainingProcessManager {
             procs.insert(job_id.to_string(), child);
         }
 
-        let app_clone = app.clone();
-        let processes = self.processes.clone();
-        let project_dir_clone = project_dir.clone();
-        let job_id_thread = job_id.to_string();
-
-        std::thread::spawn(move || {
-            let mut logs: Vec<String> = Vec::new();
-
-            if let Some(stdout) = stdout {
-                let reader = BufReader::new(stdout);
-                for line in reader.lines().map_while(Result::ok) {
-                    process_log_line(&app_clone, &job_id_thread, &line, &mut logs, &project_dir_clone);
-                }
-            }
-
-            {
-                let mut procs = processes.lock().unwrap();
-                if let Some(mut child) = procs.remove(&job_id_thread) {
-                    let status = child.wait();
-                    let success = status.map(|s| s.success()).unwrap_or(false);
-                    if !success {
-                        if let Some(stderr) = stderr {
-                            let reader = BufReader::new(stderr);
-                            let error_msg: String = reader.lines().map_while(Result::ok).collect::<Vec<_>>().join("\n");
-                            flush_log_throttle(&app_clone, &job_id_thread);
-                            let _ = app_clone.emit("training:error", serde_json::json!({
-                                "jobId": &job_id_thread,
-                                "error": error_msg,
-                            }));
-                            update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
-                                job.status = "failed".to_string();
-                                job.updated_at = js_timestamp();
-                            });
-                        }
-                    }
-                }
-            }
-
-            update_job_in_project(&project_dir_clone, &job_id_thread, |job| {
-                job.logs = logs;
-                job.updated_at = js_timestamp();
-            });
-        });
+        spawn_monitor_thread(
+            app.clone(),
+            self.processes.clone(),
+            project_dir.clone(),
+            job_id.to_string(),
+            stdout,
+            stderr,
+        );
 
         Ok(())
     }
@@ -567,29 +443,45 @@ fn emit_log_throttled(app: &AppHandle, job_id: &str, message: String) {
     });
 }
 
+/// Procesa una línea de stdout. Devuelve `true` si era el evento `completed`,
+/// para que el caller sepa que el job ya transicionó (y no aplique fallback).
 fn process_log_line(
     app: &AppHandle,
     job_id: &str,
     line: &str,
     logs: &mut Vec<String>,
     project_dir: &PathBuf,
-) {
+) -> bool {
     if let Some(json_str) = line.strip_prefix("ANNOTIX_EVENT:") {
         if let Ok(event) = serde_json::from_str::<serde_json::Value>(json_str) {
-            handle_event(app, job_id, &event, project_dir);
+            return handle_event(app, job_id, &event, project_dir);
         }
-        return;
+        return false;
     }
+    // Acumula en memoria + emite en vivo. La persistencia a project.json la
+    // hace el monitor por tiempo (ver spawn_monitor_thread), no por línea, para
+    // evitar reescribir el archivo entero en cada burst (antes: O(n²)).
     for clean in sanitize_log_line(line) {
         logs.push(clean.clone());
         emit_log_throttled(app, job_id, clean);
-        if logs.len() % 10 == 0 {
-            update_job_in_project(project_dir, job_id, |job| {
-                job.logs = logs.clone();
-                job.updated_at = js_timestamp();
-            });
-        }
     }
+    false
+}
+
+/// Máximo de líneas de log que se persisten en project.json (tail). El viewer
+/// en vivo recibe todo por evento; aquí solo guardamos las últimas para no
+/// inflar project.json ni reescribir un vector enorme. El reporte PDF usa
+/// tail(-400), así que esto sobra.
+const MAX_PERSISTED_LOG_LINES: usize = 2000;
+
+/// Persiste un tail acotado de los logs en project.json.
+fn persist_logs_tail(app: &AppHandle, project_dir: &PathBuf, job_id: &str, logs: &[String]) {
+    let start = logs.len().saturating_sub(MAX_PERSISTED_LOG_LINES);
+    let tail: Vec<String> = logs[start..].to_vec();
+    update_job_in_project(app, project_dir, job_id, |job| {
+        job.logs = tail;
+        job.updated_at = js_timestamp();
+    });
 }
 
 /// Fuerza la emisión del último batch de logs pendientes para un job.
@@ -654,7 +546,9 @@ fn hydrate_history_from_results_csv(result_dir: &PathBuf) -> Option<Vec<serde_js
     if out.is_empty() { None } else { Some(out) }
 }
 
-fn handle_event(app: &AppHandle, job_id: &str, event: &serde_json::Value, project_dir: &PathBuf) {
+/// Devuelve `true` solo si el evento era `completed` (el job ya quedó marcado
+/// como completado y no requiere fallback al cerrar el proceso).
+fn handle_event(app: &AppHandle, job_id: &str, event: &serde_json::Value, project_dir: &PathBuf) -> bool {
     let event_type = event["type"].as_str().unwrap_or("");
 
     match event_type {
@@ -680,7 +574,7 @@ fn handle_event(app: &AppHandle, job_id: &str, event: &serde_json::Value, projec
 
             let epoch_num = progress_event.epoch;
             let total_num = progress_event.total_epochs;
-            update_job_in_project(project_dir, job_id, |job| {
+            update_job_in_project(app, project_dir, job_id, |job| {
                 job.progress = progress;
                 if let Some(m) = metrics_json {
                     // Append al historial (dedup por epoch: si reaparece, sustituye).
@@ -701,6 +595,7 @@ fn handle_event(app: &AppHandle, job_id: &str, event: &serde_json::Value, projec
                 }
                 job.updated_at = js_timestamp();
             });
+            false
         }
         "completed" => {
             let result = TrainingResult {
@@ -734,7 +629,7 @@ fn handle_event(app: &AppHandle, job_id: &str, event: &serde_json::Value, projec
             // Actualizar project.json
             let best = result.best_model_path.clone();
             let final_metrics = result.final_metrics.clone();
-            update_job_in_project(project_dir, job_id, |job| {
+            update_job_in_project(app, project_dir, job_id, |job| {
                 job.status = "completed".to_string();
                 job.progress = 100.0;
                 if let Some(best) = best {
@@ -747,9 +642,39 @@ fn handle_event(app: &AppHandle, job_id: &str, event: &serde_json::Value, projec
                 }
                 job.updated_at = js_timestamp();
             });
+            true
         }
-        _ => {}
+        _ => false,
     }
+}
+
+/// Fallback de finalización: el proceso salió con código 0 pero nunca emitió el
+/// evento `completed` (evento perdido / JSON malformado / script terminó sin
+/// emitirlo). Sin esto el job queda "training" zombie y al reiniciar se marca
+/// "failed" pese a haber entrenado bien. Marca completed y localiza best.pt.
+fn finalize_completed_fallback(app: &AppHandle, project_dir: &PathBuf, job_id: &str) {
+    flush_log_throttle(app, job_id);
+    update_job_in_project(app, project_dir, job_id, |job| {
+        // Solo si sigue en "training" (no pisar cancelled/failed).
+        if job.status != "training" {
+            return;
+        }
+        job.status = "completed".to_string();
+        job.progress = 100.0;
+        if job.best_model_path.is_none() {
+            if let Some(rd) = job.result_dir.clone() {
+                let best = PathBuf::from(rd).join("weights").join("best.pt");
+                if best.exists() {
+                    job.best_model_path = Some(best.to_string_lossy().to_string());
+                }
+            }
+        }
+        job.updated_at = js_timestamp();
+    });
+    let _ = app.emit("training:completed", serde_json::json!({
+        "jobId": job_id,
+        "result": serde_json::Value::Null,
+    }));
 }
 
 fn parse_metrics(v: &serde_json::Value) -> Option<TrainingEpochMetrics> {
@@ -785,17 +710,116 @@ fn parse_metrics(v: &serde_json::Value) -> Option<TrainingEpochMetrics> {
     })
 }
 
-/// Actualiza un training job dentro de project.json directamente (para uso desde threads)
-fn update_job_in_project<F>(project_dir: &PathBuf, job_id: &str, f: F)
+/// Lanza el thread monitor de un proceso de training: drena stdout (logs +
+/// eventos), drena stderr en su propio thread (evita deadlock por pipe lleno),
+/// y al cerrar el proceso resuelve el estado final del job.
+fn spawn_monitor_thread(
+    app: AppHandle,
+    processes: Arc<Mutex<HashMap<String, Child>>>,
+    project_dir: PathBuf,
+    job_id: String,
+    stdout: Option<std::process::ChildStdout>,
+    stderr: Option<std::process::ChildStderr>,
+) {
+    // Drenar stderr concurrentemente: tqdm/ultralytics escriben las progress-bars
+    // a stderr y, si no se vacía el pipe, el SO bloquea al proceso Python al
+    // llenarse el buffer (~64KB) → training colgado. Lo leemos en su propio thread.
+    let stderr_buf = Arc::new(Mutex::new(Vec::<String>::new()));
+    let stderr_handle = stderr.map(|stderr| {
+        let buf = stderr_buf.clone();
+        std::thread::spawn(move || {
+            let reader = BufReader::new(stderr);
+            for line in reader.lines().map_while(Result::ok) {
+                if let Ok(mut b) = buf.lock() {
+                    b.push(line);
+                }
+            }
+        })
+    });
+
+    std::thread::spawn(move || {
+        let mut logs: Vec<String> = Vec::new();
+        let mut completed_seen = false;
+        let mut last_persist = Instant::now();
+
+        if let Some(stdout) = stdout {
+            let reader = BufReader::new(stdout);
+            for line in reader.lines().map_while(Result::ok) {
+                if process_log_line(&app, &job_id, &line, &mut logs, &project_dir) {
+                    completed_seen = true;
+                }
+                // Persistir por tiempo (≥2s), no por línea: corta el O(n²) de
+                // reescribir project.json en cada burst de logs.
+                if last_persist.elapsed() >= std::time::Duration::from_secs(2) {
+                    persist_logs_tail(&app, &project_dir, &job_id, &logs);
+                    last_persist = Instant::now();
+                }
+                // Acotar RAM: no retener un historial ilimitado en memoria.
+                if logs.len() > MAX_PERSISTED_LOG_LINES * 2 {
+                    let drain_to = logs.len() - MAX_PERSISTED_LOG_LINES;
+                    logs.drain(0..drain_to);
+                }
+            }
+        }
+
+        {
+            let mut procs = processes.lock().unwrap();
+            if let Some(mut child) = procs.remove(&job_id) {
+                let status = child.wait();
+                let success = status.map(|s| s.success()).unwrap_or(false);
+
+                // Esperar el drain de stderr antes de leer su buffer.
+                if let Some(h) = stderr_handle {
+                    let _ = h.join();
+                }
+
+                if success {
+                    // Proceso OK pero sin evento `completed` → finalizar igual
+                    // para no dejar el job "training" zombie.
+                    if !completed_seen {
+                        finalize_completed_fallback(&app, &project_dir, &job_id);
+                    }
+                } else {
+                    let error_msg = stderr_buf
+                        .lock()
+                        .map(|b| b.join("\n"))
+                        .unwrap_or_default();
+                    flush_log_throttle(&app, &job_id);
+                    let _ = app.emit("training:error", serde_json::json!({
+                        "jobId": &job_id,
+                        "error": error_msg,
+                    }));
+                    update_job_in_project(&app, &project_dir, &job_id, |job| {
+                        job.status = "failed".to_string();
+                        job.updated_at = js_timestamp();
+                    });
+                }
+            }
+        }
+
+        // Guardar logs finales (tail acotado)
+        persist_logs_tail(&app, &project_dir, &job_id, &logs);
+    });
+}
+
+/// Actualiza un training job desde un thread del runner.
+/// Rutea por el cache de `AppState` (`with_project_mut`) en vez de escribir a
+/// disco directo, para no dejar el cache en memoria stale (lost-update entre
+/// thread y comandos). `project_dir` se usa solo para derivar el `project_id`.
+fn update_job_in_project<F>(app: &AppHandle, project_dir: &PathBuf, job_id: &str, f: F)
 where
     F: FnOnce(&mut crate::store::project_file::TrainingJobEntry),
 {
-    if let Ok(mut pf) = crate::store::io::read_project(project_dir) {
+    let project_id = match project_dir.file_name().and_then(|s| s.to_str()) {
+        Some(s) => s.to_string(),
+        None => return,
+    };
+    let state = app.state::<AppState>();
+    let _ = state.with_project_mut(&project_id, |pf| {
         if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id) {
             f(job);
         }
-        let _ = crate::store::io::write_project(project_dir, &pf);
-    }
+    });
 }
 
 fn js_timestamp() -> f64 {
