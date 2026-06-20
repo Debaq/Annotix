@@ -30,6 +30,7 @@
   "startAnnotating": "주석 시작",
   "activeSession": "P2P 세션",
   "leaveSession": "세션 나가기",
+  "leaveAndDelete": "나가기 및 삭제",
   "pauseSession": "일시정지",
   "resumeSession": "P2P 재개",
   "pausedSession": "P2P 일시정지됨",

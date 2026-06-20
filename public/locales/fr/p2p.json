@@ -30,6 +30,7 @@
   "startAnnotating": "Commencer l'annotation",
   "activeSession": "Session P2P",
   "leaveSession": "Quitter la session",
+  "leaveAndDelete": "Quitter et supprimer",
   "pauseSession": "Pause",
   "resumeSession": "Reprendre P2P",
   "pausedSession": "P2P en pause",

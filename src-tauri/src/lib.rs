@@ -243,6 +243,8 @@ pub fn run() {
             {
                 let config = app.state::<store::AppState>().get_app_config().unwrap_or_default();
                 if !config.p2p_disabled {
+                    // Precalentar el nodo y, aparte, reanudar sesión si la había.
+                    warmup_p2p_node(app.handle().clone());
                     resume_p2p_session(app.handle().clone());
                 } else {
                     log::info!("P2P deshabilitado en configuración, no se reanuda");
@@ -479,6 +481,20 @@ pub fn run() {
 }
 
 /// Busca un proyecto con sesión P2P persistida y la reanuda en background
+/// Precalienta el nodo iroh en background al arrancar, para que crear/unirse a
+/// una sesión sea instantáneo en vez de quedarse "iniciando nodo p2p" (bind +
+/// relay online tardan segundos). El nodo es lazy y compartido: `get_or_create_node`
+/// es idempotente, así que si `resume_p2p_session` ya lo creó, esto lo reusa.
+fn warmup_p2p_node(app: tauri::AppHandle) {
+    tauri::async_runtime::spawn(async move {
+        let p2p = app.state::<p2p::node::P2pState>();
+        match p2p.get_or_create_node().await {
+            Ok(_) => log::info!("Nodo P2P precalentado"),
+            Err(e) => log::warn!("No se pudo precalentar el nodo P2P: {}", e),
+        }
+    });
+}
+
 fn resume_p2p_session(app: tauri::AppHandle) {
     tauri::async_runtime::spawn(async move {
         let app_state = app.state::<store::AppState>();

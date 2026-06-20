@@ -53,6 +53,7 @@ fn bbox_ann(class_id: i64, x: f64, y: f64, w: f64, h: f64) -> AnnotationEntry {
         source: "user".into(),
         confidence: None,
         model_class_name: None,
+        created_by: None,
     }
 }
 
@@ -67,6 +68,7 @@ fn polygon_ann(class_id: i64, pts: &[(f64, f64)]) -> AnnotationEntry {
         source: "user".into(),
         confidence: None,
         model_class_name: None,
+        created_by: None,
     }
 }
 

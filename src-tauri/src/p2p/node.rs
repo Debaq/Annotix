@@ -168,7 +168,15 @@ impl P2pState {
         // Esperar a que el home relay esté registrado antes de generar tickets.
         // doc.share() captura AddrInfo del endpoint; si corre antes de estar online
         // el ticket sale con direcciones vacías/parciales y el joiner no conecta.
-        endpoint.online().await;
+        // Con tope: en redes lentas online() puede tardar mucho y la UI queda
+        // "pegada en iniciando nodo p2p". El discovery N0 (pkarr/DNS) mantiene al
+        // peer alcanzable aunque el ticket salga con addresses parciales.
+        if tokio::time::timeout(std::time::Duration::from_secs(8), endpoint.online())
+            .await
+            .is_err()
+        {
+            log::warn!("endpoint.online() superó 8s; continuando con discovery N0");
+        }
 
         // Blob store en filesystem
         let blobs_store = FsStore::load(&blobs_dir)

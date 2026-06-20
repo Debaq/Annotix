@@ -40,6 +40,11 @@ export function AnnotationItem({ annotation, project, isHidden, onToggleVisibili
           <div>
             <p className="text-sm font-medium">{classInfo.name}</p>
             <p className="text-xs text-muted-foreground">{getAnnotationInfo()}</p>
+            {annotation.createdBy && (
+              <p className="text-[10px] text-muted-foreground/80">
+                <i className="fas fa-user mr-1"></i>{annotation.createdBy}
+              </p>
+            )}
           </div>
         </div>
         <Button variant="ghost" size="icon" onClick={onToggleVisibility}>

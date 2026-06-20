@@ -297,6 +297,7 @@ impl AppState {
                                 source: "user".to_string(),
                                 confidence: Some(pred.confidence),
                                 model_class_name: Some(pred.class_name.clone()),
+                                created_by: None,
                             };
                             img.annotations.push(annotation);
                             converted += 1;

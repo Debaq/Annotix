@@ -127,6 +127,9 @@ pub struct AnnotationEntry {
     /// Nombre de clase del modelo (solo para source="ai")
     #[serde(default, skip_serializing_if = "Option::is_none", rename = "modelClassName")]
     pub model_class_name: Option<String>,
+    /// Nombre del peer que creó la anotación (solo en sesiones P2P)
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "createdBy")]
+    pub created_by: Option<String>,
 }
 
 fn default_source() -> String {

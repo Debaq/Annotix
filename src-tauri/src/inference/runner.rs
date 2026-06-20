@@ -486,6 +486,7 @@ fn handle_python_event(
                                 source: "ai".to_string(),
                                 confidence: Some(confidence),
                                 model_class_name: Some(class_name),
+                                created_by: None,
                             })
                         })
                         .collect()
@@ -739,6 +740,7 @@ fn detections_to_annotations(
                 source: "ai".to_string(),
                 confidence: Some(det.confidence),
                 model_class_name: Some(class_name),
+                created_by: None,
             })
         })
         .collect();
@@ -791,6 +793,7 @@ fn classifications_to_annotations(
             source: "ai".to_string(),
             confidence: Some(top.confidence),
             model_class_name: Some(class_name),
+            created_by: None,
         }],
         None => {
             log::warn!("[Inference] Clasificación descartada: proyecto sin clases definidas");

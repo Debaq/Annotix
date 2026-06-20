@@ -88,6 +88,7 @@ export interface Annotation {
   source?: 'user' | 'ai';     // "user" por defecto, "ai" para inferencia
   confidence?: number;         // Solo para source="ai"
   modelClassName?: string;     // Nombre de clase del modelo (solo AI)
+  createdBy?: string;          // Nombre del peer que la creó (solo sesiones P2P)
 }
 
 export type AnnotationData =

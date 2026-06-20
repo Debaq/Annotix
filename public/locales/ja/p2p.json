@@ -30,6 +30,7 @@
   "startAnnotating": "アノテーション開始",
   "activeSession": "P2Pセッション",
   "leaveSession": "セッション退出",
+  "leaveAndDelete": "退出して削除",
   "pauseSession": "一時停止",
   "resumeSession": "P2P再開",
   "pausedSession": "P2P一時停止中",

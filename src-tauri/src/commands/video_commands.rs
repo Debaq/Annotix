@@ -711,6 +711,7 @@ pub async fn bake_video_tracks(
                         source: "user".to_string(),
                         confidence: None,
                         model_class_name: None,
+                        created_by: None,
                     });
                 }
             }

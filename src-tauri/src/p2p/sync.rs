@@ -931,13 +931,21 @@ async fn download_single_image(
 
         let hash = entry.content_hash();
 
-        if let Err(e) = downloader.download(hash, peer_endpoints.clone()).await {
-            log::warn!("Error descargando blob {} (intento {}): {}", image_id, attempt + 1, e);
-            continue;
+        // El blob puede ya estar local: la política de descarga por defecto del doc
+        // (EverythingExcept) baja el contenido automáticamente al sincronizar la entrada.
+        // Por eso intentamos leerlo primero; solo si falta lo pedimos explícitamente.
+        // (Antes se hacía `continue` ante un error de download aunque el blob ya
+        // estuviera en el store, dejando la imagen como "pending" para siempre.)
+        let mut blob_opt = blobs.blobs().get_bytes(hash).await.ok();
+        if blob_opt.is_none() {
+            if let Err(e) = downloader.download(hash, peer_endpoints.clone()).await {
+                log::warn!("Error descargando blob {} (intento {}): {}", image_id, attempt + 1, e);
+            }
+            blob_opt = blobs.blobs().get_bytes(hash).await.ok();
         }
 
-        match blobs.blobs().get_bytes(hash).await {
-            Ok(blob_data) => {
+        match blob_opt {
+            Some(blob_data) => {
                 let dest = images_dir.join(&file_name);
                 let tmp_dest = images_dir.join(format!("{}.tmp", file_name));
                 if std::fs::write(&tmp_dest, &blob_data).is_err() {
@@ -962,8 +970,8 @@ async fn download_single_image(
                 log::info!("Imagen P2P descargada: {} ({} bytes)", image_id, blob_data.len());
                 return;
             }
-            Err(e) => {
-                log::warn!("Error leyendo blob local {} (intento {}): {}", image_id, attempt + 1, e);
+            None => {
+                log::warn!("Blob {} aún no disponible (intento {})", image_id, attempt + 1);
                 continue;
             }
         }
@@ -1088,69 +1096,92 @@ pub fn start_doc_watcher(
                         let parts: Vec<&str> = key.split('/').collect();
                         if parts.len() == 3 && !project_id.is_empty() {
                             let image_id = parts[1].to_string();
-                            if let Ok(content) = read_entry_bytes(&entry, blobs).await {
-                                if let Ok(img_meta) = serde_json::from_slice::<serde_json::Value>(&content) {
-                                    let app_state = app_handle.state::<crate::store::state::AppState>();
-
-                                    // Verificar si la imagen ya existe localmente
-                                    let pid = project_id.clone();
-                                    let iid = image_id.clone();
-                                    let exists = app_state.with_project(&pid, |pf| {
-                                        pf.images.iter().any(|i| i.id == iid)
-                                    }).unwrap_or(true);
-
-                                    if !exists {
-                                        let file_name = sanitize_filename(img_meta["file"].as_str().unwrap_or(""));
-                                        let img_name = img_meta["name"].as_str().unwrap_or("").to_string();
-                                        let width = img_meta["width"].as_u64().unwrap_or(0) as u32;
-                                        let height = img_meta["height"].as_u64().unwrap_or(0) as u32;
-
-                                        let now = std::time::SystemTime::now()
-                                            .duration_since(std::time::UNIX_EPOCH)
-                                            .unwrap()
-                                            .as_millis() as f64;
-
-                                        let new_entry = ImageEntry {
-                                            id: image_id.clone(),
-                                            name: img_name,
-                                            file: file_name.clone(),
-                                            width,
-                                            height,
-                                            uploaded: now,
-                                            annotated: None,
-                                            status: img_meta["status"].as_str().unwrap_or("pending").to_string(),
-                                            annotations: vec![],
-                                            video_id: None,
-                                            frame_index: None,
-                                            locked_by: None,
-                                            lock_expires: None,
-                                            download_status: Some("pending".to_string()),
-                                            predictions: vec![],
-                                        };
-
-                                        let pid2 = project_id.clone();
-                                        let _ = app_state.with_project_mut(&pid2, |pf| {
-                                            pf.images.push(new_entry);
-                                            pf.updated = now;
-                                        });
-
-                                        let _ = app_handle.emit("db:images-changed", serde_json::json!({
-                                            "projectId": &*project_id,
-                                            "action": "added",
-                                            "imageIds": [&image_id],
-                                        }));
-                                        log::info!("Nueva imagen remota agregada: {} en proyecto {}", image_id, project_id);
-
-                                        // Descargar blob en background
-                                        let pid3 = project_id.clone();
-                                        let iid2 = image_id.clone();
-                                        let ah = app_handle.clone();
-                                        tokio::spawn(async move {
-                                            download_single_image(pid3, iid2, file_name, ah).await;
-                                        });
+                            // Procesar en una tarea aparte con reintentos: el contenido de la
+                            // entrada `meta` (la entrada llega por gossip antes que su blob) puede
+                            // no estar disponible en el instante del evento. Antes se leía una sola
+                            // vez sin reintentos y la imagen nueva se descartaba para siempre
+                            // (solo aparecía al reconectar). No bloquear el loop principal del watcher.
+                            let content_hash = entry.content_hash();
+                            let pid = project_id.clone();
+                            let ah = app_handle.clone();
+                            let bs = blobs_store.clone();
+                            tokio::spawn(async move {
+                                let blobs: &iroh_blobs::api::Store = &*bs;
+                                let mut content_opt = None;
+                                for attempt in 0..10u32 {
+                                    if attempt > 0 {
+                                        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+                                    }
+                                    if let Ok(c) = blobs.blobs().get_bytes(content_hash).await {
+                                        content_opt = Some(c);
+                                        break;
                                     }
                                 }
-                            }
+                                let content = match content_opt {
+                                    Some(c) => c,
+                                    None => {
+                                        log::warn!("No se pudo leer meta de imagen {} tras reintentos", image_id);
+                                        return;
+                                    }
+                                };
+                                let img_meta = match serde_json::from_slice::<serde_json::Value>(&content) {
+                                    Ok(m) => m,
+                                    Err(_) => return,
+                                };
+                                let app_state = ah.state::<crate::store::state::AppState>();
+
+                                // Verificar si la imagen ya existe localmente
+                                let iid = image_id.clone();
+                                let exists = app_state.with_project(&pid, |pf| {
+                                    pf.images.iter().any(|i| i.id == iid)
+                                }).unwrap_or(true);
+                                if exists {
+                                    return;
+                                }
+
+                                let file_name = sanitize_filename(img_meta["file"].as_str().unwrap_or(""));
+                                let img_name = img_meta["name"].as_str().unwrap_or("").to_string();
+                                let width = img_meta["width"].as_u64().unwrap_or(0) as u32;
+                                let height = img_meta["height"].as_u64().unwrap_or(0) as u32;
+
+                                let now = std::time::SystemTime::now()
+                                    .duration_since(std::time::UNIX_EPOCH)
+                                    .unwrap()
+                                    .as_millis() as f64;
+
+                                let new_entry = ImageEntry {
+                                    id: image_id.clone(),
+                                    name: img_name,
+                                    file: file_name.clone(),
+                                    width,
+                                    height,
+                                    uploaded: now,
+                                    annotated: None,
+                                    status: img_meta["status"].as_str().unwrap_or("pending").to_string(),
+                                    annotations: vec![],
+                                    video_id: None,
+                                    frame_index: None,
+                                    locked_by: None,
+                                    lock_expires: None,
+                                    download_status: Some("pending".to_string()),
+                                    predictions: vec![],
+                                };
+
+                                let _ = app_state.with_project_mut(&pid, |pf| {
+                                    pf.images.push(new_entry);
+                                    pf.updated = now;
+                                });
+
+                                let _ = ah.emit("db:images-changed", serde_json::json!({
+                                    "projectId": &pid,
+                                    "action": "added",
+                                    "imageIds": [&image_id],
+                                }));
+                                log::info!("Nueva imagen remota agregada: {} en proyecto {}", image_id, pid);
+
+                                // Descargar blob en background
+                                download_single_image(pid.clone(), image_id.clone(), file_name, ah.clone()).await;
+                            });
                         }
                     }
                     else if key.starts_with("images/") && key.ends_with("/annots") {
@@ -1185,17 +1216,45 @@ pub fn start_doc_watcher(
                                 if let Ok(annots) = serde_json::from_slice::<Vec<AnnotationEntry>>(&content) {
                                     let app_state = ah.state::<crate::store::state::AppState>();
                                     let iid = image_id.clone();
-                                    let annots_clone = annots.clone();
-                                    let _ = app_state.with_project_mut(&pid, |pf| {
-                                        if let Some(img) = pf.images.iter_mut().find(|i| i.id == iid) {
-                                            img.annotations = annots_clone;
+                                    // Aplicar reintentando: la imagen puede estar agregándose en
+                                    // paralelo por el handler de `meta` (imagen nueva). Sin esto las
+                                    // marcas de una imagen recién subida se descartaban (find = None)
+                                    // y nunca llegaban al peer.
+                                    let mut applied = false;
+                                    for attempt in 0..12u32 {
+                                        if attempt > 0 {
+                                            tokio::time::sleep(std::time::Duration::from_millis(300)).await;
                                         }
-                                    });
+                                        let found = app_state.with_project_mut_ret(&pid, |pf| {
+                                            if let Some(img) = pf.images.iter_mut().find(|i| i.id == iid) {
+                                                img.annotations = annots.clone();
+                                                true
+                                            } else {
+                                                false
+                                            }
+                                        }).unwrap_or(false);
+                                        if found {
+                                            applied = true;
+                                            break;
+                                        }
+                                    }
+                                    if !applied {
+                                        log::warn!("Marcas para imagen {} descartadas: imagen no presente tras reintentos", iid);
+                                        return;
+                                    }
                                     let _ = ah.emit("p2p:annotations-synced", serde_json::json!({
                                         "projectId": pid,
                                         "imageId": image_id,
                                         "annotations": annots,
                                         "from": from_str,
+                                    }));
+                                    // Disparar refresco reactivo de la galería y de la imagen
+                                    // abierta (useCurrentImage/useImages escuchan db:images-changed).
+                                    // Sin esto las marcas remotas solo aparecían al reabrir el proyecto.
+                                    let _ = ah.emit("db:images-changed", serde_json::json!({
+                                        "projectId": pid,
+                                        "action": "updated",
+                                        "imageIds": [&image_id],
                                     }));
                                 }
                             });

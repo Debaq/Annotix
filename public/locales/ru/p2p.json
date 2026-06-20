@@ -30,6 +30,7 @@
   "startAnnotating": "Начать аннотирование",
   "activeSession": "P2P Сессия",
   "leaveSession": "Покинуть сессию",
+  "leaveAndDelete": "Выйти и удалить",
   "pauseSession": "Пауза",
   "resumeSession": "Возобновить P2P",
   "pausedSession": "P2P на паузе",

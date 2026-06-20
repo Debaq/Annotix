@@ -170,9 +170,22 @@ pub async fn save_annotations(
     app: AppHandle,
     project_id: String,
     image_id: String,
-    annotations: Vec<AnnotationEntry>,
+    mut annotations: Vec<AnnotationEntry>,
 ) -> Result<(), String> {
     p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
+
+    // En sesión P2P, sellar autor en las marcas nuevas (las que aún no tienen).
+    // Permite mostrar quién creó cada anotación; se conserva al sincronizar/editar.
+    if let Some(info) = p2p.get_session_info(&project_id).await {
+        if !info.my_display_name.is_empty() {
+            for ann in annotations.iter_mut() {
+                if ann.created_by.is_none() {
+                    ann.created_by = Some(info.my_display_name.clone());
+                }
+            }
+        }
+    }
+
     state.save_annotations(&project_id, &image_id, &annotations)?;
     let _ = app.emit("db:images-changed", serde_json::json!({
         "projectId": &project_id,

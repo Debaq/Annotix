@@ -615,6 +615,12 @@ impl P2pState {
 
         let my_node_id = P2pState::endpoint_id_str(&node.endpoint.id());
 
+        // Iniciar el watcher ANTES de start_sync: el catch-up de cambios hechos
+        // mientras estábamos cerrados llega como InsertRemote justo al sincronizar.
+        // Si nos suscribimos después, esos eventos (imágenes/marcas nuevas) se pierden
+        // y el peer nunca los ve hasta el siguiente reinicio.
+        sync::start_doc_watcher(ns_id, project_id.to_string(), node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
+
         // Iniciar sync (se conectará con cualquier peer online)
         doc.start_sync(vec![])
             .await
@@ -687,8 +693,7 @@ impl P2pState {
             .await
             .map_err(|e| format!("Error registrando peer: {}", e))?;
 
-        // Iniciar watcher de cambios remotos y emitir peers existentes
-        sync::start_doc_watcher(ns_id, project_id.to_string(), node.docs.clone(), node.blobs_store.clone(), app_handle.clone());
+        // El watcher ya se inició antes de start_sync. Emitir peers existentes.
         sync::emit_existing_peers(ns_id, &node.docs, &node.blobs_store, app_handle, &my_node_id, project_id).await;
 
         // Iniciar heartbeat para presencia

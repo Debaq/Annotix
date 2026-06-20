@@ -30,6 +30,7 @@
   "startAnnotating": "Annotieren starten",
   "activeSession": "P2P-Sitzung",
   "leaveSession": "Sitzung verlassen",
+  "leaveAndDelete": "Verlassen und löschen",
   "pauseSession": "Pausieren",
   "resumeSession": "P2P fortsetzen",
   "pausedSession": "P2P pausiert",

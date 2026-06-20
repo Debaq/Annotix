@@ -30,6 +30,7 @@
   "startAnnotating": "开始标注",
   "activeSession": "P2P会话",
   "leaveSession": "离开会话",
+  "leaveAndDelete": "退出并删除",
   "pauseSession": "暂停",
   "resumeSession": "恢复P2P",
   "pausedSession": "P2P已暂停",
