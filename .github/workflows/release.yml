@@ -12,7 +12,7 @@ jobs:
   build-linux:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Read version from VERSION file
         run: echo "APP_VERSION=$(cat VERSION | tr -d '[:space:]')" >> $GITHUB_ENV
@@ -30,12 +30,12 @@ jobs:
             nasm
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 10
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: pnpm
@@ -113,7 +113,7 @@ jobs:
           ls -la "${PKG}.tar.gz"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: annotix-linux
           path: annotix-v*-linux-x86_64.tar.gz
@@ -122,7 +122,7 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Read version from VERSION file
         shell: pwsh
@@ -131,12 +131,12 @@ jobs:
           echo "APP_VERSION=$version" >> $env:GITHUB_ENV
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 10
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: pnpm
@@ -216,7 +216,7 @@ jobs:
           }
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: annotix-windows
           path: |
@@ -229,19 +229,19 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Read version
         run: echo "APP_VERSION=$(cat VERSION | tr -d '[:space:]')" >> $GITHUB_ENV
 
       - name: Download Linux artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: annotix-linux
           path: dist/linux
 
       - name: Download Windows artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: annotix-windows
           path: dist/windows
@@ -250,7 +250,7 @@ jobs:
         run: find dist -type f | head -20
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: Annotix v${{ env.APP_VERSION }}
           generate_release_notes: true
