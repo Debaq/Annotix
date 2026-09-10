@@ -84,10 +84,10 @@ Most annotation tools focus on a single data type or require cloud accounts. Ann
 | **Cloud training** (7 providers) | :white_check_mark: Stable | Vertex AI, Kaggle, Lightning AI, HuggingFace, Saturn Cloud, Colab Enterprise |
 | **Browser automation** (Colab free) | :white_check_mark: Stable | T4 GPU, real-time progress |
 | **Network sharing** (serve) | :white_check_mark: Stable | HTTP server on LAN with bearer-token auth, browser annotation UI |
+| **P2P collaboration** | :white_check_mark: Stable | Iroh QUIC + N0 discovery, live image/mark sync, work distribution, data approval, roles; syncs images/annotations/classes (not video, audio or time series) |
 | **Annotation inspector & filters** | :white_check_mark: Stable | Per-class/per-image filters, cross-project comparison |
 | **Keyboard shortcuts** | :white_check_mark: Stable | Fully customizable, conflict detection |
 | **i18n** (10 languages) | :white_check_mark: Stable | 47 namespaces, lazy loading, English fallback |
-| **P2P collaboration** | :construction: Beta | Live image/mark sync works; no auto-reconnection on network drop; last-write-wins conflicts; video frames excluded |
 | **Audio import** | :construction: In progress | Export implemented (HF ASR, LJSpeech, CSV); import not yet available |
 | **Audio training backends** | :construction: Not implemented | Audio projects annotate & export only; train externally |
 | **SAM model auto-download** | :construction: In progress | Manual upload works; HuggingFace presets (MobileSAM / ViT-B / SAM2) pending |
@@ -247,12 +247,22 @@ Run trained or third-party ONNX models over a whole project:
 
 ### P2P Collaboration
 
-Real-time collaborative annotation powered by [Iroh](https://iroh.computer/) (QUIC). No central server.
+Real-time collaborative annotation powered by [Iroh](https://iroh.computer/) (QUIC). No central server,
+no port forwarding: N0 discovery (pkarr + DNS + relays) keeps peers reachable across networks and
+re-syncs automatically when a peer comes back online.
 
-- Host or join with a session code (encrypted host secret)
-- Roles: LeadResearcher (full control) / Annotator / DataCurator (configurable permissions)
-- Image locking with 3-min TTL, batch assignment, live image/mark sync with author attribution
-- Peer list with online status
+- Host or join with a session code; the host secret is encrypted at rest
+- Roles: LeadResearcher (full control) / Annotator / DataCurator, with per-session rule overrides
+  (upload, export, edit classes, delete) and live role changes
+- Live sync of images, annotations and classes with author attribution; blob transfer with retries
+  and resumable downloads
+- Image presence locks (3-min TTL, auto-renewed) so you can see who is on which image
+- Work distribution: auto-assign batches across peers, adjust assignments, per-peer progress stats
+- Data approval queue: submissions from collaborators can require host approval
+- Pause / resume a session; peer list with heartbeat-based online status
+
+Conflict resolution is per-key last-write-wins (iroh-docs). Video, audio and time-series assets are
+not part of the synced document &mdash; share those via TIX export.
 
 ### Network Sharing (Serve)
 
