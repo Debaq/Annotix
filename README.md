@@ -29,6 +29,7 @@
 <p align="center">
   <a href="https://github.com/Debaq/Annotix/releases/latest"><strong>Download</strong></a> &nbsp;&bull;&nbsp;
   <a href="https://www.preprints.org/manuscript/202604.0919"><strong>Read the Paper</strong></a> &nbsp;&bull;&nbsp;
+  <a href="docs/antecedentes.md"><strong>System Overview</strong></a> &nbsp;&bull;&nbsp;
   <a href="#getting-started"><strong>Build from Source</strong></a> &nbsp;&bull;&nbsp;
   <a href="#citation"><strong>Cite</strong></a>
 </p>
@@ -143,20 +144,37 @@ and undo/redo with 100-step history.
 
 Segment Anything runs **locally via ONNX** &mdash; no cloud, no API key.
 
-- **AMG mode**: generates 20&ndash;200 candidate masks; click a mask + press a class key to
-  convert it into the active tool's format (BBox / OBB / Mask / Polygon)
+- **AMG mode**: a 16&times;16 point grid (32&times;32 in HQ mode) feeds the decoder in batch; click a
+  candidate mask + press a class key to convert it into the active tool's format
+  (BBox / OBB / Mask / Polygon)
 - **Refine mode**: click-by-click positive/negative prompts on a cached image embedding
+- Each candidate keeps all 3 multimask outputs as uint8 logits at 256px, so the granularity
+  slider switches between them without re-running the decoder
 - Frontend sliders (granularity, score, NMS, overlap) re-filter candidates without re-running AMG
 - Encoder/decoder models are stored **app-level** (`{data_dir}/sam_models/`), shared across projects
 - Candidates are ephemeral &mdash; never written to `project.json`
 
+| AMG default | Value | Role |
+|---|---|---|
+| `points_per_side` | 16 | prompt grid (32 in HQ mode) |
+| `pred_iou_thresh` | 0.70 | drops low-confidence decoder masks |
+| `stability_score_thresh` | 0.85 | stability under logit-threshold shift |
+| `box_nms_thresh` | 0.70 | non-max suppression over boxes |
+| `min_mask_region_area` | 100 px | smallest mask kept |
+| `overlap_with_existing_thresh` | 0.50 | max overlap with existing annotations |
+
 ### Project Types
 
-- **Images** &mdash; Object detection, oriented detection, semantic/instance segmentation, keypoints, landmarks, single & multi-label classification
-- **Video** &mdash; Frame extraction (FFmpeg), tracks with keyframes, linear interpolation, bake to per-frame annotations
-- **Audio** &mdash; Classification, speech recognition (transcription), sound event detection, TTS recording with phonetic-coverage analysis
-- **Time Series** &mdash; Univariate & multivariate CSV, 5 annotation types (point, range, classification, event, anomaly)
-- **Tabular** &mdash; Built-in editor with column selection and scikit-learn training
+23 project types across four families, each with its own editor and export path:
+
+- **Images** (9) &mdash; detection, oriented detection, semantic segmentation, instance segmentation, polygon, keypoints, landmarks, single- and multi-label classification
+- **Time Series** (9) &mdash; classification, forecasting, anomaly detection, segmentation, pattern recognition, event detection, regression, clustering, imputation
+- **Audio** (4) &mdash; classification, speech recognition, sound event detection, TTS recording
+- **Tabular** (1) &mdash; built-in editor with column selection and scikit-learn training
+
+**Video** is a capture path rather than a project type: FFmpeg extracts frames at a configurable
+rate into the project's images, annotated as tracks with keyframes and linear interpolation, then
+baked to per-frame annotations.
 
 Images can also be ingested from **PDF** documents (pages rasterized natively with pdfium) and
 stored as **WebP** per project.
@@ -239,7 +257,9 @@ Model export: PyTorch `.pt`, ONNX, TorchScript, TFLite, CoreML, TensorRT.
 
 Run trained or third-party ONNX models over a whole project:
 
-- Auto-detection of architecture and metadata (classes, input size, `nc`/`names`)
+- Auto-detection of architecture and metadata (classes, input size, `nc`/`names`) across five
+  output families: YOLOv8+, YOLOv5&ndash;v7 (objectness), YOLOv10/YOLO26 (end-to-end, no NMS),
+  multi-output (SSD, EfficientDet, Faster R-CNN, DETR) and classification
 - Batch inference with cancel, per-prediction accept/reject, conversion to annotations
 - Model archives can be dropped in directly (ZIP extraction + drag & drop import)
 - Execution providers are **opt-in** (TensorRT, CUDA, DirectML, CoreML); CPU path uses SIMD
@@ -267,7 +287,11 @@ not part of the synced document &mdash; share those via TIX export.
 ### Network Sharing (Serve)
 
 Publish a project over the LAN as an HTTP server with a **bearer-token** protected web UI &mdash;
-collaborators annotate from a browser with no install. Optional auto-save.
+collaborators annotate from a browser with no install. It picks a free port, enumerates local
+addresses and self-checks reachability before announcing the URL. Optional auto-save.
+
+REST endpoints: `/api/projects`, `/api/projects/{id}`, `/api/projects/{id}/images`, and per-image
+`…/{image_id}`, `…/file`, `…/thumbnail`, `…/annotations` (GET and POST).
 
 ### Browser Automation
 
@@ -419,17 +443,25 @@ SAM assist is toggled from the canvas toolbar; while active, `Tab` cycles candid
 All data stored as JSON + raw assets on disk. No database.
 
 ```
-~/.local/share/annotix/config.json        -> global configuration
+~/.local/share/annotix/config.json        -> global configuration (projects_dir)
 ~/.local/share/annotix/sam_models/        -> SAM encoder/decoder ONNX (app-level)
-{projects_dir}/{uuid}/project.json        -> project (metadata + classes + annotations)
+~/.local/share/annotix/p2p/iroh/          -> P2P blobs + replicated docs
+{projects_dir}/{uuid}/project.json        -> the whole project
 {projects_dir}/{uuid}/images/             -> original images
 {projects_dir}/{uuid}/thumbnails/         -> generated thumbnails
 {projects_dir}/{uuid}/videos/             -> video files
 {projects_dir}/{uuid}/audio/              -> audio files
-{projects_dir}/{uuid}/models/             -> trained models
+{projects_dir}/{uuid}/models/             -> registered inference models
+{projects_dir}/{uuid}/training/           -> per-job datasets and results
 ```
 
-In-memory cache with dirty-flag tracking, atomic writes (`.tmp` + `rename`).
+`project.json` is a single document holding metadata, classes, images with their annotations,
+time series, videos with their tracks, audio, tabular data, training jobs with per-epoch metric
+history, inference models, TTS sentences and the collaboration config. An in-memory cache with
+dirty-flag tracking sits in front of it; writes go to a `.tmp` file and are then renamed.
+
+IDs are UUID v4 end to end. Class IDs are reindexed to their position on save, and the remap
+propagates to image annotations, video tracks, audio and time series.
 
 ---
 
