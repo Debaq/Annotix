@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Open-source desktop platform for ML dataset annotation, training, and collaboration</strong><br/>
-  Images &middot; Video &middot; Time Series &middot; Tabular Data
+  Images &middot; Video &middot; Audio &middot; Time Series &middot; Tabular Data
 </p>
 
 <p align="center">
@@ -23,6 +23,7 @@
   <img alt="Rust" src="https://img.shields.io/badge/rust-1.89+-DEA584?style=flat-square" />
   <img alt="i18n" src="https://img.shields.io/badge/languages-10-purple?style=flat-square" />
   <img alt="ML Backends" src="https://img.shields.io/badge/ML%20backends-19-red?style=flat-square" />
+  <img alt="SAM" src="https://img.shields.io/badge/SAM-assisted%20segmentation-8A2BE2?style=flat-square" />
 </p>
 
 <p align="center">
@@ -53,38 +54,44 @@ Most annotation tools focus on a single data type or require cloud accounts. Ann
 | | Annotix | Cloud tools (CVAT, Label Studio) | Desktop tools (labelImg, LabelMe) |
 |---|:---:|:---:|:---:|
 | **Runs fully offline** | Yes | No | Yes |
-| **Images + Video + Time Series + Tabular** | Yes | Partial | No |
+| **Images + Video + Audio + Time Series + Tabular** | Yes | Partial | No |
+| **SAM-assisted segmentation (local ONNX)** | Yes | Partial | No |
 | **Integrated ML training (19 backends)** | Yes | No | No |
 | **P2P collaboration (no server)** | Yes | Server required | No |
+| **LAN sharing via browser (no install)** | Yes | Server required | No |
 | **Free GPU training (Colab automation)** | Yes | No | No |
-| **Export to 11 formats** | Yes | Yes | Limited |
+| **Export to 17 formats** | Yes | Yes | Limited |
 | **Cross-platform native app** | Yes | Browser | Partial |
 
 ---
 
 ## Status
 
-> Last updated: April 2026 &mdash; v2.4.4
+> Last updated: June 2026 &mdash; v2.9.10
 
 | Feature | Status | Notes |
 |---------|--------|-------|
 | **Image annotation** (7 tools) | :white_check_mark: Stable | BBox, OBB, Mask, Polygon, Keypoints, Landmarks, Pan |
+| **SAM assist** | :white_check_mark: Stable | Local ONNX encoder/decoder, AMG candidates, click-refine, app-level model store |
 | **Video annotation** | :white_check_mark: Stable | Tracks, keyframes, interpolation, bake |
+| **Audio annotation** | :white_check_mark: Stable | Waveform UI, classification, ASR transcription, sound events, TTS recording |
 | **Time series annotation** | :white_check_mark: Stable | 5 annotation types, Chart.js canvas |
 | **Tabular ML** | :white_check_mark: Stable | scikit-learn integration, column selector |
-| **ONNX inference** | :white_check_mark: Stable | Auto-detects YOLOv5-v12, DETR, SSD, classification |
-| **Export** (11 formats) | :white_check_mark: Stable | YOLO, COCO, VOC, CSV, U-Net, TIX, etc. |
-| **Import** (8 formats) | :white_check_mark: Stable | Auto-detection with confidence scoring |
-| **Local ML training** (19 backends) | :white_check_mark: Stable | Isolated Python env, GPU auto-detection |
+| **ONNX inference** | :white_check_mark: Stable | Auto-detects YOLOv5-v12, DETR, SSD, classification; opt-in TensorRT/CUDA/DirectML/CoreML EPs |
+| **Export** (17 formats) | :white_check_mark: Stable | YOLO, COCO, VOC, CSV, U-Net, TIX, rasterized previews, audio formats |
+| **Import** (8 formats) | :white_check_mark: Stable | Auto-detection with confidence scoring; PDF pages as images |
+| **Local ML training** (19 backends) | :white_check_mark: Stable | Isolated Python env, GPU auto-detection, live metrics, PDF report |
 | **Cloud training** (7 providers) | :white_check_mark: Stable | Vertex AI, Kaggle, Lightning AI, HuggingFace, Saturn Cloud, Colab Enterprise |
 | **Browser automation** (Colab free) | :white_check_mark: Stable | T4 GPU, real-time progress |
+| **Network sharing** (serve) | :white_check_mark: Stable | HTTP server on LAN with bearer-token auth, browser annotation UI |
+| **Annotation inspector & filters** | :white_check_mark: Stable | Per-class/per-image filters, cross-project comparison |
 | **Keyboard shortcuts** | :white_check_mark: Stable | Fully customizable, conflict detection |
-| **i18n** (10 languages) | :white_check_mark: Stable | Lazy loading, English fallback |
-| **P2P collaboration** | :construction: Beta | Works but no auto-reconnection on network drop; last-write-wins conflict resolution; video frames excluded from sync |
-| **Audio annotation** | :construction: In progress | Classification, speech recognition, sound event detection, TTS recording exist; waveform UI partially wired |
-| **Audio export** | :construction: In progress | HuggingFace ASR, LJSpeech, CSV formats implemented; import not yet available |
-| **Network sharing** (serve) | :construction: In development | HTTP server to share projects via browser; web annotation UI built; not yet released |
-| **LLM chat via browser** | :construction: Beta | Kimi, Qwen, DeepSeek, HuggingChat; generic runner works, provider-specific modules are stubs |
+| **i18n** (10 languages) | :white_check_mark: Stable | 47 namespaces, lazy loading, English fallback |
+| **P2P collaboration** | :construction: Beta | Live image/mark sync works; no auto-reconnection on network drop; last-write-wins conflicts; video frames excluded |
+| **Audio import** | :construction: In progress | Export implemented (HF ASR, LJSpeech, CSV); import not yet available |
+| **Audio training backends** | :construction: Not implemented | Audio projects annotate & export only; train externally |
+| **SAM model auto-download** | :construction: In progress | Manual upload works; HuggingFace presets (MobileSAM / ViT-B / SAM2) pending |
+| **LLM chat via browser** | :construction: Beta | Kimi, Qwen, DeepSeek, HuggingChat; generic runner works, provider modules partially wired |
 | **macOS build** | :warning: Not tested | No CI for macOS; should build from source but untested |
 
 :white_check_mark: = production-ready &nbsp;&middot;&nbsp; :construction: = usable but incomplete &nbsp;&middot;&nbsp; :warning: = known limitation
@@ -97,11 +104,18 @@ Pre-built binaries for the latest release:
 
 | Platform | Download |
 |----------|----------|
-| **Windows** (x64) | [`.exe` installer](https://github.com/Debaq/Annotix/releases/latest/download/Annotix_2.4.4_x64-setup.exe) &nbsp;\|&nbsp; [`.msi`](https://github.com/Debaq/Annotix/releases/latest/download/Annotix_2.4.4_x64_en-US.msi) |
-| **Linux** (x64) | [`.AppImage`](https://github.com/Debaq/Annotix/releases/latest/download/Annotix_2.4.4_amd64.AppImage) |
+| **Windows** (x64) | [`.exe` installer](https://github.com/Debaq/Annotix/releases/latest) &nbsp;\|&nbsp; [`.msi`](https://github.com/Debaq/Annotix/releases/latest) |
+| **Linux** (x64) | [`.tar.gz`](https://github.com/Debaq/Annotix/releases/latest) (portable binary + libs + installer script) |
 | **macOS** | Build from source (see [Getting Started](#getting-started)) |
 
+Linux packaging is a self-contained tarball (`annotix-v<version>-linux-x86_64.tar.gz`) with the
+binary, `libpdfium.so` and a `run.sh` launcher &mdash; no `.deb`/`.rpm`/AppImage. It needs
+`libwebkit2gtk-4.1-0`, `libgtk-3-0` and `librsvg2-2` on the system, and can register itself as a
+desktop entry. Windows installers bundle FFmpeg DLLs and pdfium.
+
 > All releases: [github.com/Debaq/Annotix/releases](https://github.com/Debaq/Annotix/releases)
+
+The app checks GitHub for new releases and shows an in-app update banner with a dynamic changelog.
 
 ---
 
@@ -121,18 +135,36 @@ Pre-built binaries for the latest release:
 | **Landmarks** | `L` | Named reference points with labels |
 | **Pan** | `H` | Canvas navigation |
 
-Plus: mouse wheel zoom, image rotation, label/grid toggles, quick class selection (`1`-`0`, `Q`-`P` for up to 20 classes), undo/redo with 100-step history.
+Plus: mouse wheel zoom, image rotation, label/grid toggles, per-annotation visibility, draggable
+floating panels persisted per project, quick class selection (`1`-`0`, `Q`-`P` for up to 20 classes),
+and undo/redo with 100-step history.
+
+### SAM-Assisted Segmentation
+
+Segment Anything runs **locally via ONNX** &mdash; no cloud, no API key.
+
+- **AMG mode**: generates 20&ndash;200 candidate masks; click a mask + press a class key to
+  convert it into the active tool's format (BBox / OBB / Mask / Polygon)
+- **Refine mode**: click-by-click positive/negative prompts on a cached image embedding
+- Frontend sliders (granularity, score, NMS, overlap) re-filter candidates without re-running AMG
+- Encoder/decoder models are stored **app-level** (`{data_dir}/sam_models/`), shared across projects
+- Candidates are ephemeral &mdash; never written to `project.json`
 
 ### Project Types
 
 - **Images** &mdash; Object detection, oriented detection, semantic/instance segmentation, keypoints, landmarks, single & multi-label classification
 - **Video** &mdash; Frame extraction (FFmpeg), tracks with keyframes, linear interpolation, bake to per-frame annotations
+- **Audio** &mdash; Classification, speech recognition (transcription), sound event detection, TTS recording with phonetic-coverage analysis
 - **Time Series** &mdash; Univariate & multivariate CSV, 5 annotation types (point, range, classification, event, anomaly)
 - **Tabular** &mdash; Built-in editor with column selection and scikit-learn training
 
+Images can also be ingested from **PDF** documents (pages rasterized natively with pdfium) and
+stored as **WebP** per project.
+
 ### Integrated ML Training (19 Backends)
 
-Train models directly from the app with real-time metrics charts.
+Train models directly from the app with real-time metrics charts, a training monitor with
+suggestions ("coach"), free-text observations, and an exportable **PDF training report**.
 
 <details>
 <summary><strong>Full backend list</strong></summary>
@@ -140,7 +172,7 @@ Train models directly from the app with real-time metrics charts.
 #### Object Detection
 | Backend | Models |
 |---------|--------|
-| **YOLO** (Ultralytics) | YOLOv8, v9, v10, v11, v12 |
+| **YOLO** (Ultralytics) | YOLO26, YOLOv8&ndash;v12 |
 | **RT-DETR** (Ultralytics) | RT-DETR-l, RT-DETR-x |
 | **RF-DETR** (Roboflow) | RF-DETR-base, RF-DETR-large |
 | **MMDetection** (OpenMMLab) | 30+ architectures (Faster R-CNN, DINO, Co-DETR, etc.) |
@@ -203,14 +235,29 @@ Train models directly from the app with real-time metrics charts.
 
 Model export: PyTorch `.pt`, ONNX, TorchScript, TFLite, CoreML, TensorRT.
 
+### Inference
+
+Run trained or third-party ONNX models over a whole project:
+
+- Auto-detection of architecture and metadata (classes, input size, `nc`/`names`)
+- Batch inference with cancel, per-prediction accept/reject, conversion to annotations
+- Model archives can be dropped in directly (ZIP extraction + drag & drop import)
+- Execution providers are **opt-in** (TensorRT, CUDA, DirectML, CoreML); CPU path uses SIMD
+  preprocessing and a parallel pipeline
+
 ### P2P Collaboration
 
 Real-time collaborative annotation powered by [Iroh](https://iroh.computer/) (QUIC). No central server.
 
-- Host or join with a session code
+- Host or join with a session code (encrypted host secret)
 - Roles: LeadResearcher (full control) / Annotator / DataCurator (configurable permissions)
-- Image locking with 3-min TTL, batch assignment, CRDT sync
+- Image locking with 3-min TTL, batch assignment, live image/mark sync with author attribution
 - Peer list with online status
+
+### Network Sharing (Serve)
+
+Publish a project over the LAN as an HTTP server with a **bearer-token** protected web UI &mdash;
+collaborators annotate from a browser with no install. Optional auto-save.
 
 ### Browser Automation
 
@@ -222,9 +269,19 @@ Query LLMs without API keys through the user's browser: Kimi, Qwen, DeepSeek, Hu
 
 ### Export & Import
 
-**11 export formats:** YOLO Detection, YOLO Segmentation, COCO JSON, Pascal VOC, CSV (Detection/Classification/Keypoints/Landmarks), Folders by Class, U-Net Masks, TIX (native).
+**17 export formats:** YOLO Detection, YOLO Segmentation, COCO JSON, Pascal VOC,
+CSV (Detection / Classification / Keypoints / Landmarks), Folders by Class, U-Net Masks,
+TIX (native), rasterized preview (with and without labels), HuggingFace ASR, LJSpeech,
+CSV Audio Classification, CSV Sound Events.
 
-**8 import formats** with automatic detection: YOLO, COCO, Pascal VOC, CSV (4 variants), U-Net Masks, Folders by Class, TIX.
+**8 import formats** with automatic detection: YOLO (detection & segmentation), COCO, Pascal VOC,
+CSV (4 variants), U-Net Masks, Folders by Class, TIX. Multiple `.tix` files can be **merged**,
+homogenizing class sets.
+
+### Inspector & Filters
+
+Annotation inspector reachable from the project gallery, with debug/observation filters over marks,
+classes and gallery, per-class counters, and multi-project comparison.
 
 ### Keyboard Shortcuts
 
@@ -242,17 +299,21 @@ All shortcuts are **fully customizable** from Settings with per-context conflict
 | `P` | Polygon |
 | `K` | Keypoints |
 | `L` | Landmarks |
+| `V` | Select |
 | `H` | Pan |
 | `[` / `]` | Decrease / Increase brush size |
 | `E` | Toggle eraser |
 | `A` / `D` | Rotate image |
-| `Enter` | Confirm |
-| `Esc` | Cancel |
+| `Enter` | Confirm drawing |
+| `Esc` | Cancel drawing |
+
+SAM assist is toggled from the canvas toolbar; while active, `Tab` cycles candidates,
+`Esc` exits refine mode and the class keys accept the hovered mask.
 
 #### Navigation
 | Shortcut | Action |
 |----------|--------|
-| `Left` / `Right` | Previous / Next image |
+| `PageUp` / `PageDown` | Previous / Next sample |
 | `Ctrl++` / `Ctrl+-` | Zoom in / out |
 | `Ctrl+0` | Zoom to fit |
 
@@ -261,7 +322,8 @@ All shortcuts are **fully customizable** from Settings with per-context conflict
 |----------|--------|
 | `Ctrl+S` | Save |
 | `Ctrl+Z` / `Ctrl+Y` | Undo / Redo |
-| `Del` | Delete selection |
+| `Del` / `Backspace` | Delete selection |
+| `Esc` | Deselect |
 
 #### Quick Class Selection
 | Keys | Classes |
@@ -273,7 +335,6 @@ All shortcuts are **fully customizable** from Settings with per-context conflict
 | Shortcut | Action |
 |----------|--------|
 | `T` | New track |
-| `Left` / `Right` | Previous / Next frame |
 
 #### Time Series
 | Shortcut | Action |
@@ -284,11 +345,28 @@ All shortcuts are **fully customizable** from Settings with per-context conflict
 | `E` | Event |
 | `A` | Anomaly |
 
+#### Audio
+| Shortcut | Action |
+|----------|--------|
+| `F2` | Play / Pause |
+| `F3` / `F4` | Replay / Rewind |
+| `Left` / `Right` | Scrub |
+| `Enter` | Split |
+| `Tab` | Save & next |
+
+#### TTS Recording
+| Shortcut | Action |
+|----------|--------|
+| `Space` | Record |
+| `Enter` | Accept take |
+| `R` | Repeat |
+| `S` | Skip sentence |
+
 </details>
 
 ### Languages
 
-10 languages with lazy loading and English fallback:
+10 languages across 47 namespaces, with lazy loading and English fallback:
 
 `de` Deutsch &middot; `en` English &middot; `es` Espanol &middot; `fr` Francais &middot; `it` Italiano &middot; `ja` Japanese &middot; `ko` Korean &middot; `pt` Portugues &middot; `ru` Russian &middot; `zh` Chinese
 
@@ -304,20 +382,24 @@ All shortcuts are **fully customizable** from Settings with per-context conflict
 |   Zustand (state) . React Router 7                   |
 +-----------------------------------------------------+
 |                  Tauri 2 IPC                          |
-|             137+ registered commands                  |
+|             194 registered commands                   |
 +-----------------------------------------------------+
 |                  Backend (Rust)                       |
 |   +------------+ +-----------+ +-----------------+   |
 |   |   Store    | | Commands  | | Export/Import   |   |
-|   | (JSON+RAM) | | (16 mod)  | | (11+8 formats) |   |
+|   | (JSON+RAM) | | (24 mod)  | | (17+8 formats)  |   |
 |   +------------+ +-----------+ +-----------------+   |
 |   +------------+ +-----------+ +-----------------+   |
 |   |  Training  | | Browser   | | P2P (Iroh)      |   |
 |   | (19 backs) | | Automat.  | | QUIC mesh       |   |
 |   +------------+ +-----------+ +-----------------+   |
+|   +------------+ +-----------+ +-----------------+   |
+|   | Inference  | |    SAM    | | Serve (axum)    |   |
+|   | (ONNX/ort) | | enc/dec   | | LAN web UI      |   |
+|   +------------+ +-----------+ +-----------------+   |
 +-----------------------------------------------------+
 |               External Integrations                   |
-|   Python (micromamba) . FFmpeg . Chromium CDP         |
+|   Python (micromamba) . FFmpeg . pdfium . Chromium    |
 |   Cloud APIs . Iroh P2P network                      |
 +-----------------------------------------------------+
 ```
@@ -328,10 +410,12 @@ All data stored as JSON + raw assets on disk. No database.
 
 ```
 ~/.local/share/annotix/config.json        -> global configuration
+~/.local/share/annotix/sam_models/        -> SAM encoder/decoder ONNX (app-level)
 {projects_dir}/{uuid}/project.json        -> project (metadata + classes + annotations)
 {projects_dir}/{uuid}/images/             -> original images
 {projects_dir}/{uuid}/thumbnails/         -> generated thumbnails
 {projects_dir}/{uuid}/videos/             -> video files
+{projects_dir}/{uuid}/audio/              -> audio files
 {projects_dir}/{uuid}/models/             -> trained models
 ```
 
@@ -355,6 +439,8 @@ In-memory cache with dirty-flag tracking, atomic writes (`.tmp` + `rename`).
 | React Router | 7 | SPA routing |
 | Konva | 10 | 2D annotation canvas |
 | Chart.js | 4 | Metrics visualization |
+| jsPDF / html2canvas | 4 / 1.4 | Training report PDF |
+| TanStack Virtual | 3 | Virtualized gallery |
 | i18next | 24 | Internationalization |
 
 </details>
@@ -366,14 +452,23 @@ In-memory cache with dirty-flag tracking, atomic writes (`.tmp` + `rename`).
 |-------|---------|---------|
 | tauri | 2 | Desktop application framework |
 | serde / serde_json | 1 | JSON serialization |
-| image | 0.25 | Image processing |
-| ffmpeg-the-third | 4 | Video frame extraction |
+| image / imageproc | 0.25 | Image processing |
+| fast_image_resize | 5 | SIMD resizing |
+| rayon | 1.10 | Data parallelism |
+| geo | 0.29 | Polygon simplification |
+| webp | 0.3 | WebP encoding |
+| ort | 2.0-rc | ONNX Runtime (inference + SAM) |
+| ffmpeg-the-third | 4.1 | Video frame extraction |
+| pdfium-render | 0.8 | PDF page rasterization |
 | zip | 2 | Export/import packaging |
 | quick-xml | 0.37 | Pascal VOC XML |
 | csv | 1.3 | CSV import/export |
 | reqwest | 0.12 | HTTP client (cloud providers) |
+| jsonwebtoken | 9 | GCP service-account auth |
+| axum | 0.8 | LAN serve HTTP server |
+| chacha20poly1305 / subtle | 0.10 / 2 | Session secret encryption |
 | headless_chrome | 1.0 | Browser automation (CDP) |
-| iroh | 0.96 | P2P networking (QUIC) |
+| iroh + blobs/gossip/docs | 0.96&ndash;0.98 | P2P networking (QUIC) |
 | tokio | 1 | Async runtime |
 | blake3 | 1 | Hashing |
 
@@ -413,7 +508,8 @@ In-memory cache with dirty-flag tracking, atomic writes (`.tmp` + `rename`).
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) >= 18
+- [Node.js](https://nodejs.org/) >= 18 (CI uses Node 24)
+- [pnpm](https://pnpm.io/) (the repo ships `pnpm-lock.yaml`)
 - [Rust](https://rustup.rs/) >= 1.89
 - [Tauri 2 prerequisites](https://v2.tauri.app/start/prerequisites/) for your platform
 
@@ -422,20 +518,22 @@ In-memory cache with dirty-flag tracking, atomic writes (`.tmp` + `rename`).
 ```bash
 git clone https://github.com/Debaq/Annotix.git
 cd Annotix
-npm install
-npm run tauri:dev       # development (hot-reload)
-npm run tauri:build     # production build
+pnpm install
+pnpm tauri:dev       # development (hot-reload)
+pnpm tauri:build     # production build
 ```
 
 ### Scripts
 
 | Script | Description |
 |--------|-------------|
-| `npm run dev` | Frontend only (Vite dev server) |
-| `npm run build` | Build frontend (TypeScript check + Vite) |
-| `npm run tauri:dev` | Full dev (frontend + Rust backend) |
-| `npm run tauri:build` | Production build with installers |
-| `npm run lint` | ESLint with zero warnings policy |
+| `pnpm dev` | Frontend only (Vite dev server) |
+| `pnpm build` | Build frontend (TypeScript check + Vite) |
+| `pnpm tauri:dev` | Full dev (frontend + Rust backend) |
+| `pnpm tauri:build` | Production build with installers |
+| `pnpm lint` | ESLint (flat config) |
+
+CI runs `cargo fmt`/`clippy`, `cargo nextest` and the frontend build on every push.
 
 ---
 
@@ -443,7 +541,7 @@ npm run tauri:build     # production build
 
 ```
 annotix/
-├── src/                         # React frontend
+├── src/                         # React frontend (~46k LOC)
 │   ├── App.tsx                  # Router and providers
 │   ├── lib/
 │   │   ├── db.ts                # Type definitions (mirrors Rust structs)
@@ -452,28 +550,37 @@ annotix/
 │   ├── components/ui/           # shadcn/ui components
 │   └── features/
 │       ├── canvas/              # Annotation canvas (7 tools)
+│       ├── sam/                 # SAM assist (overlay, panel, store)
+│       ├── gallery/             # Virtualized gallery + filters
 │       ├── video/               # Video annotation
+│       ├── audio/               # Audio annotation + TTS recording
 │       ├── timeseries/          # Time series annotation
 │       ├── tabular/             # Tabular data editor
-│       ├── training/            # ML training panel
-│       ├── export/              # 11 export formats
+│       ├── classification/      # Classification workflow
+│       ├── training/            # ML training panel + monitor + PDF report
+│       ├── export/              # 17 export formats
 │       ├── import/              # 8 import formats
 │       ├── inference/           # Model inference
 │       ├── p2p/                 # P2P collaboration
+│       ├── serve/               # LAN sharing dialog
 │       ├── browser-automation/  # Chrome automation
+│       ├── setup/               # First-run setup
 │       └── settings/            # App settings
-├── src-tauri/                   # Rust backend
+├── src-tauri/                   # Rust backend (~41k LOC)
 │   └── src/
-│       ├── lib.rs               # 137+ Tauri command registrations
+│       ├── lib.rs               # 194 Tauri command registrations
 │       ├── store/               # Storage layer (state, IO, cache)
-│       ├── commands/            # 16 command modules
+│       ├── commands/            # 24 command modules
 │       ├── export/              # Export format modules
-│       ├── import/              # Import + auto-detector
-│       ├── training/            # Multi-backend ML pipeline
-│       ├── browser_automation/  # Headless Chrome
+│       ├── import/              # Import + auto-detector + merge
+│       ├── training/            # Multi-backend ML pipeline + cloud providers
+│       ├── browser_automation/  # Headless Chrome (Colab, LLM chat)
 │       ├── p2p/                 # Iroh P2P networking
-│       └── inference/           # ONNX inference
-└── public/locales/              # 10 language files
+│       ├── serve/               # axum LAN server + web UI
+│       └── inference/           # ONNX inference + SAM (encoder/decoder/AMG)
+├── docs/                        # Roadmaps and backend references
+├── wiki/                        # User documentation
+└── public/locales/              # 10 languages x 47 namespaces
 ```
 
 ---
