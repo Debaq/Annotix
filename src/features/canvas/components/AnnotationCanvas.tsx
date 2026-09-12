@@ -131,7 +131,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   const adjustmentsMapRef = useRef<Map<string, ImageAdjustmentValues>>(new Map());
   const [imageAdjustments, setImageAdjustments] = useState<ImageAdjustmentValues>({ ...DEFAULT_ADJUSTMENTS });
   const imageLayerRef = useRef<any>(null);
-  const [processedImage, setProcessedImage] = useState<HTMLImageElement | null>(null);
+  const processedImageRef = useRef<HTMLImageElement | null>(null);
   const originalImageRef = useRef<HTMLImageElement | null>(null);
 
   // Save adjustments to map when they change
@@ -297,6 +297,16 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     setMaskMaxBrushSize(maskHandler.getMaxBrushSize());
   }, [konvaImage, getActiveClassMaskBase, maskHandler]);
 
+  // Valores leídos dentro del .then() del efecto del MaskHandler. Se acceden
+  // por ref para tener el valor fresco sin que entren en sus dependencias:
+  // ese efecto solo debe dispararse al cambiar la clase o el color activos.
+  const activeToolRef = useRef(activeTool);
+  activeToolRef.current = activeTool;
+  const konvaImageRef = useRef(konvaImage);
+  konvaImageRef.current = konvaImage;
+  const initializeMaskHandlerRef = useRef(initializeMaskHandler);
+  initializeMaskHandlerRef.current = initializeMaskHandler;
+
   const addAnnotationWithMaskReplace = useCallback(async (annotation: Annotation) => {
     if (annotation.type !== 'mask') {
       await addAnnotation(annotation);
@@ -322,20 +332,20 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   useEffect(() => {
     bboxHandler.setDrawingDataUpdateCallback(setBboxDrawingData);
     bboxHandler.updateActiveClassId(activeClassId);
-  }, [activeClassId]);
+  }, [activeClassId, bboxHandler]);
 
   useEffect(() => {
     obbHandler.setDrawingDataUpdateCallback(setObbDrawingData);
     obbHandler.updateActiveClassId(activeClassId);
-  }, [activeClassId]);
+  }, [activeClassId, obbHandler]);
 
   useEffect(() => {
     polygonHandler.updateActiveClassId(activeClassId);
-  }, [activeClassId]);
+  }, [activeClassId, polygonHandler]);
 
   useEffect(() => {
     keypointsHandler.updateActiveClassId(activeClassId);
-  }, [activeClassId]);
+  }, [activeClassId, keypointsHandler]);
 
   useEffect(() => {
     keypointsHandler.setPreviewUpdateCallback(() => {
@@ -345,7 +355,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
 
   useEffect(() => {
     landmarksHandler.updateActiveClassId(activeClassId);
-  }, [activeClassId]);
+  }, [activeClassId, landmarksHandler]);
 
   // Actualizar activeClassId y classColor en el MaskHandler sin recrearlo
   // Si cambió la clase mientras el handler está activo, guardar y reinicializar
@@ -357,8 +367,8 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       maskHandler.finish().then(() => {
         maskHandler.updateActiveClassId(activeClassId);
         maskHandler.updateClassColor(classColor);
-        if (activeTool === 'mask' && konvaImage) {
-          initializeMaskHandler();
+        if (activeToolRef.current === 'mask' && konvaImageRef.current) {
+          initializeMaskHandlerRef.current();
         }
       });
     } else {
@@ -373,7 +383,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     // Registrar callbacks
     maskHandler.setMaskImageUpdateCallback(setMaskImage);
     maskHandler.setDirtyChangeCallback(setMaskDirty);
-  }, [activeClassId, classColor]);
+  }, [activeClassId, classColor, maskHandler]);
 
   useEffect(() => {
     if (selectedAnnotationIds.size === 0 || activeClassId === null) {
@@ -405,7 +415,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     keypointsHandler.updateAddAnnotationCallback(addAnnotationWithMaskReplace);
     landmarksHandler.updateAddAnnotationCallback(addAnnotationWithMaskReplace);
     maskHandler.updateAddAnnotationCallback(addAnnotationWithMaskReplace);
-  }, [addAnnotationWithMaskReplace]);
+  }, [addAnnotationWithMaskReplace, bboxHandler, obbHandler, polygonHandler, keypointsHandler, landmarksHandler, maskHandler]);
 
   // Get current handler based on active tool
   const currentHandler = useMemo(() => {
@@ -418,11 +428,13 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       case 'mask': return activeClassId !== null ? maskHandler : null;
       default: return null;
     }
-  }, [activeTool, activeClassId]);
+  }, [activeTool, activeClassId, bboxHandler, obbHandler, polygonHandler, keypointsHandler, landmarksHandler, maskHandler]);
 
   // Load image from filesystem via Tauri
+  const loadImageId = image?.id;
+  const loadProjectId = image?.projectId;
   useEffect(() => {
-    if (!image || !image.id) return;
+    if (!loadImageId || !loadProjectId) return;
 
     let cancelled = false;
 
@@ -431,8 +443,8 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       setKonvaImage(img);
       imageElementRef.current = img;
       originalImageRef.current = img;
-      setProcessedImage(null);
-      const saved = image.id ? adjustmentsMapRef.current.get(image.id) : undefined;
+      processedImageRef.current = null;
+      const saved = adjustmentsMapRef.current.get(loadImageId);
       setImageAdjustments(saved ? { ...DEFAULT_ADJUSTMENTS, ...saved } : { ...DEFAULT_ADJUSTMENTS });
 
       const tryFit = (attempt: number) => {
@@ -461,7 +473,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     };
 
     const loadViaAssetProtocol = () => {
-      imageService.getFilePath(image.projectId, image.id!).then((filePath) => {
+      imageService.getFilePath(loadProjectId, loadImageId).then((filePath) => {
         if (cancelled) return;
         const img = new window.Image();
         img.crossOrigin = 'anonymous';
@@ -476,7 +488,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     };
 
     const loadViaBytes = () => {
-      imageService.getImageData(image.projectId, image.id!).then((bytes) => {
+      imageService.getImageData(loadProjectId, loadImageId).then((bytes) => {
         if (cancelled) return;
         const blob = new Blob([bytes as unknown as BlobPart]);
         const url = URL.createObjectURL(blob);
@@ -494,7 +506,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     return () => {
       cancelled = true;
     };
-  }, [image?.id]);
+  }, [loadImageId, loadProjectId]);
 
   // Handle container resize
   useEffect(() => {
@@ -1031,7 +1043,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('blur', handleBlur);
     };
-  }, [currentHandler, project?.type, maskHandler, activeTool]);
+  }, [currentHandler, project?.type, maskHandler, activeTool, setActiveTool]);
 
   // Finish previous handler when tool changes or image changes
   useEffect(() => {
@@ -1132,7 +1144,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     prevToolRef.current = activeTool;
     prevImageIdRef.current = currentImageId;
     prevProjectIdRef.current = currentProjectId;
-  }, [activeTool, konvaImage, image?.id, project?.id]);
+  }, [activeTool, konvaImage, image?.id, project?.id, bboxHandler, obbHandler, polygonHandler, keypointsHandler, landmarksHandler, maskHandler]);
 
   // Inicializar handler SOLO cuando cambia el tool activo (no cuando cambia imagen/proyecto)
   useEffect(() => {
@@ -1147,7 +1159,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       console.log('[AnnotationCanvas] Inicializando maskHandler');
       initializeMaskHandler();
     }
-  }, [activeTool, konvaImage, initializeMaskHandler]);
+  }, [activeTool, konvaImage, initializeMaskHandler, keypointsHandler, maskHandler]);
 
   // Reset zoom
   const handleResetZoom = useCallback(() => {
@@ -1193,7 +1205,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     const canvas = imageLayerRef.current.getCanvas()?._canvas as HTMLCanvasElement | undefined;
     if (!canvas) return;
     canvas.style.filter = buildCSSFilter(imageAdjustments);
-  }, [imageAdjustments.brightness, imageAdjustments.contrast, imageAdjustments.temperature]);
+  }, [imageAdjustments]);
 
   // ─── Process CLAHE / Sharpness (pixel-level, debounced) ──────────────────
   useEffect(() => {
@@ -1201,8 +1213,8 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     const orig = originalImageRef.current;
 
     if (imageAdjustments.clahe === 0 && imageAdjustments.sharpness === 0) {
-      if (processedImage) {
-        setProcessedImage(null);
+      if (processedImageRef.current) {
+        processedImageRef.current = null;
         setKonvaImage(orig);
       }
       return;
@@ -1225,7 +1237,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
         const img = new window.Image();
         img.onload = () => {
           if (cancelled) return;
-          setProcessedImage(img);
+          processedImageRef.current = img;
           setKonvaImage(img);
         };
         img.src = dataUrl;
