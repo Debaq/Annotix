@@ -1,4 +1,5 @@
 import { Group, Line, Circle } from 'react-konva';
+import type { KonvaEventObject } from 'konva/lib/Node';
 import type { KeypointsData } from '@/lib/db';
 import { skeletonPresets } from '../../data/skeletonPresets';
 
@@ -9,7 +10,7 @@ interface KeypointsRendererProps {
   color: string;
   isSelected?: boolean;
   listening?: boolean;
-  onClick?: (e?: any) => void;
+  onClick?: (e?: KonvaEventObject<MouseEvent>) => void;
 }
 
 export function KeypointsRenderer({

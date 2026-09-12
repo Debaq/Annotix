@@ -81,7 +81,7 @@ export const ServeDialog: React.FC<Props> = ({ projectId, open, onOpenChange }) 
       const info = await invoke<ServeInfo>('start_serve', { projectIds: ids, port, autoSave });
       setStatus(info);
       if (!info.reachable) setShowFirewallHelp(true);
-    } catch (e: any) {
+    } catch (e) {
       setError(String(e));
     } finally {
       setLoading(false);
@@ -93,7 +93,7 @@ export const ServeDialog: React.FC<Props> = ({ projectId, open, onOpenChange }) 
     try {
       await invoke('stop_serve');
       setStatus(null);
-    } catch (e: any) {
+    } catch (e) {
       setError(String(e));
     } finally {
       setLoading(false);

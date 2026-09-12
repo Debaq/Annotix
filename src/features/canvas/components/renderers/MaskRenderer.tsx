@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Image as KonvaImage } from 'react-konva';
+import type { KonvaEventObject } from 'konva/lib/Node';
 import type { MaskData } from '@/lib/db';
 
 interface MaskRendererProps {
@@ -8,7 +9,7 @@ interface MaskRendererProps {
   imageOffset: { x: number; y: number };
   opacity?: number;
   listening?: boolean;
-  onClick?: (e?: any) => void;
+  onClick?: (e?: KonvaEventObject<MouseEvent>) => void;
 }
 
 export function MaskRenderer({ data, scale, imageOffset, opacity = 0.6, listening = true, onClick }: MaskRendererProps) {

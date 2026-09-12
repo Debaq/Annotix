@@ -1,4 +1,5 @@
 import { Rect } from 'react-konva';
+import type { KonvaEventObject } from 'konva/lib/Node';
 import type { BBoxData } from '@/lib/db';
 
 interface BBoxRendererProps {
@@ -10,9 +11,9 @@ interface BBoxRendererProps {
   isSelected?: boolean;
   draggable?: boolean;
   listening?: boolean;
-  onClick?: (e?: any) => void;
-  onDragEnd?: (e: any) => void;
-  onTransformEnd?: (e: any) => void;
+  onClick?: (e?: KonvaEventObject<MouseEvent>) => void;
+  onDragEnd?: (e: KonvaEventObject<DragEvent>) => void;
+  onTransformEnd?: (e: KonvaEventObject<Event>) => void;
 }
 
 export function BBoxRenderer({

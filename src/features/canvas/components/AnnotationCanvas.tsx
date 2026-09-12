@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, useReducer } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Stage, Layer, Image as KonvaImage, Rect, Transformer, Line, Circle, Group, Text } from 'react-konva';
+import type Konva from 'konva';
+import type { KonvaEventObject } from 'konva/lib/Node';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { useCurrentImage } from '../../gallery/hooks/useCurrentImage';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
@@ -91,8 +93,8 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   useImagePresence(project?.id, image?.id);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const stageRef = useRef<any>(null);
-  const trRef = useRef<any>(null);
+  const stageRef = useRef<Konva.Stage>(null);
+  const trRef = useRef<Konva.Transformer>(null);
   const imageElementRef = useRef<HTMLImageElement | null>(null);
 
   const [konvaImage, setKonvaImage] = useState<HTMLImageElement | null>(null);
@@ -130,7 +132,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   // ─── Image adjustments (persisted per image) ───────────────────────────
   const adjustmentsMapRef = useRef<Map<string, ImageAdjustmentValues>>(new Map());
   const [imageAdjustments, setImageAdjustments] = useState<ImageAdjustmentValues>({ ...DEFAULT_ADJUSTMENTS });
-  const imageLayerRef = useRef<any>(null);
+  const imageLayerRef = useRef<Konva.Layer>(null);
   const processedImageRef = useRef<HTMLImageElement | null>(null);
   const originalImageRef = useRef<HTMLImageElement | null>(null);
 
@@ -573,10 +575,10 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       const stage = stageRef.current;
       const nodes = [...selectedAnnotationIds]
         .map(id => stage.findOne('#ann-' + id))
-        .filter(Boolean);
+        .filter((node): node is Konva.Node => node !== undefined);
       if (nodes.length > 0) {
         trRef.current.nodes(nodes);
-        trRef.current.getLayer().batchDraw();
+        trRef.current.getLayer()?.batchDraw();
       } else {
         trRef.current.nodes([]);
       }
@@ -586,7 +588,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   }, [selectedAnnotationIds, annotations]);
 
   // Handle zoom with mouse wheel
-  const handleWheel = (e: any) => {
+  const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
 
     const stage = stageRef.current;
@@ -609,6 +611,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     // Zoom normal si no es mask o no hay Ctrl
     const oldScale = stageScale;
     const pointer = stage.getPointerPosition();
+    if (!pointer) return;
 
     const mousePointTo = {
       x: (pointer.x - stage.x()) / oldScale,
@@ -630,7 +633,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   };
 
   // Handle stage drag
-  const handleDragEnd = (e: any) => {
+  const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
     if (e.target === e.target.getStage()) {
       if (stageScale <= MIN_ZOOM_SCALE) {
         e.target.position({ x: 0, y: 0 });
@@ -645,7 +648,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   };
 
   // Helper to convert stage coordinates to image coordinates
-  const getImageCoordinates = useCallback((stage: any): MouseEventData | null => {
+  const getImageCoordinates = useCallback((stage: Konva.Stage): MouseEventData | null => {
     const pos = stage.getPointerPosition();
     if (!pos) return null;
 
@@ -660,7 +663,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   }, [stagePos, stageScale, imageOffset, scale]);
 
   // Middle-click: reclasificar isla de píxeles a la clase activa
-  const handleMiddleClickReclassify = useCallback(async (_e: any) => {
+  const handleMiddleClickReclassify = useCallback(async (_e: KonvaEventObject<MouseEvent>) => {
     if (!konvaImage || !stageRef.current || activeClassId === null) return;
     const coords = getImageCoordinates(stageRef.current);
     if (!coords) return;
@@ -693,7 +696,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       getImageCoordinates, replaceAnnotations, initializeMaskHandler]);
 
   // Handle mouse down for drawing
-  const handleMouseDown = (e: any) => {
+  const handleMouseDown = (e: KonvaEventObject<MouseEvent>) => {
     // Middle button → start panning
     if (e.evt.button === 1) {
       e.evt.preventDefault();
@@ -747,7 +750,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   };
 
   // Handle mouse move for drawing
-  const handleMouseMove = (e: any) => {
+  const handleMouseMove = (e: KonvaEventObject<MouseEvent>) => {
     // Middle-button pan
     if (middlePanRef.current?.active) {
       const dx = e.evt.clientX - middlePanRef.current.startX;
@@ -803,7 +806,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   };
 
   // Handle mouse up for drawing
-  const handleMouseUp = (e: any) => {
+  const handleMouseUp = (e: KonvaEventObject<MouseEvent>) => {
     // Middle-button pan end
     if (middlePanRef.current?.active) {
       const wasDrag = middlePanRef.current.moved;
@@ -827,7 +830,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   };
 
   // Handle annotation drag (si es AI, pasa a ser del usuario)
-  const handleAnnotationDragEnd = (id: string, e: any) => {
+  const handleAnnotationDragEnd = (id: string, e: KonvaEventObject<DragEvent>) => {
     const node = e.target;
     const x = (node.x() - imageOffset.x) / scale;
     const y = (node.y() - imageOffset.y) / scale;
@@ -842,7 +845,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   };
 
   // Handle annotation transform
-  const handleAnnotationTransform = (id: string, e: any) => {
+  const handleAnnotationTransform = (id: string, e: KonvaEventObject<Event>) => {
     const node = e.target;
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
@@ -864,7 +867,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   };
 
   // Handle OBB-specific transform (including rotation)
-  const handleOBBTransform = (id: string, e: any) => {
+  const handleOBBTransform = (id: string, e: KonvaEventObject<Event>) => {
     const node = e.target;
 
     const scaleX = node.scaleX();
@@ -900,7 +903,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   };
 
   // Handle OBB drag
-  const handleOBBDragEnd = (id: string, e: any) => {
+  const handleOBBDragEnd = (id: string, e: KonvaEventObject<DragEvent>) => {
     const group = e.target;
     const x = (group.x() - imageOffset.x) / scale;
     const y = (group.y() - imageOffset.y) / scale;
@@ -1475,7 +1478,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
               color: annColor,
               isSelected,
               listening: activeTool !== 'mask',
-              onClick: (e: any) => {
+              onClick: (e?: KonvaEventObject<MouseEvent>) => {
                 const shiftKey = e?.evt?.shiftKey ?? false;
                 selectAnnotation(ann.id, shiftKey);
               },
@@ -1522,7 +1525,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
                         x={btnX}
                         y={btnY}
                         listening={true}
-                        onClick={(e: any) => {
+                        onClick={(e: KonvaEventObject<MouseEvent>) => {
                           e.cancelBubble = true;
                           toggleFn(ann.id);
                         }}

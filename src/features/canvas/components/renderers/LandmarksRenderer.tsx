@@ -1,4 +1,5 @@
 import { Group, Circle } from 'react-konva';
+import type { KonvaEventObject } from 'konva/lib/Node';
 import type { LandmarksData } from '@/lib/db';
 
 interface LandmarksRendererProps {
@@ -8,7 +9,7 @@ interface LandmarksRendererProps {
   color: string;
   isSelected?: boolean;
   listening?: boolean;
-  onClick?: (e?: any) => void;
+  onClick?: (e?: KonvaEventObject<MouseEvent>) => void;
 }
 
 export function LandmarksRenderer({

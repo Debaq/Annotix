@@ -1,4 +1,5 @@
 import { Group, Line } from 'react-konva';
+import type { KonvaEventObject } from 'konva/lib/Node';
 import type { PolygonData } from '@/lib/db';
 
 interface PolygonRendererProps {
@@ -10,8 +11,8 @@ interface PolygonRendererProps {
   isSelected?: boolean;
   draggable?: boolean;
   listening?: boolean;
-  onClick?: (e?: any) => void;
-  onDragEnd?: (e: any) => void;
+  onClick?: (e?: KonvaEventObject<MouseEvent>) => void;
+  onDragEnd?: (e: KonvaEventObject<DragEvent>) => void;
 }
 
 export function PolygonRenderer({
