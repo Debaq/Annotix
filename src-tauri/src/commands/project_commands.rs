@@ -69,7 +69,8 @@ pub async fn update_project(
     classes: Option<Vec<ClassDef>>,
 ) -> Result<(), String> {
     if classes.is_some() {
-        p2p.check_permission(&id, P2pPermission::EditClasses).await?;
+        p2p.check_permission(&id, P2pPermission::EditClasses)
+            .await?;
     }
     state.update_project(
         &id,
@@ -89,13 +90,17 @@ pub async fn save_classes(
     project_id: String,
     classes: Vec<ClassDef>,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::EditClasses).await?;
+    p2p.check_permission(&project_id, P2pPermission::EditClasses)
+        .await?;
     state.save_classes(&project_id, classes)?;
     let _ = app.emit("db:projects-changed", ());
-    let _ = app.emit("db:images-changed", serde_json::json!({
-        "projectId": &project_id,
-        "action": "updated",
-    }));
+    let _ = app.emit(
+        "db:images-changed",
+        serde_json::json!({
+            "projectId": &project_id,
+            "action": "updated",
+        }),
+    );
     Ok(())
 }
 
@@ -109,10 +114,13 @@ pub async fn delete_project(
     p2p.check_permission(&id, P2pPermission::Manage).await?;
     state.delete_project(&id)?;
     let _ = app.emit("db:projects-changed", ());
-    let _ = app.emit("db:images-changed", serde_json::json!({
-        "projectId": &id,
-        "action": "deleted",
-    }));
+    let _ = app.emit(
+        "db:images-changed",
+        serde_json::json!({
+            "projectId": &id,
+            "action": "deleted",
+        }),
+    );
     Ok(())
 }
 
@@ -129,20 +137,23 @@ pub fn set_project_folder(
 }
 
 #[tauri::command]
-pub fn reveal_project_folder(
-    state: State<'_, AppState>,
-    project_id: String,
-) -> Result<(), String> {
+pub fn reveal_project_folder(state: State<'_, AppState>, project_id: String) -> Result<(), String> {
     let dir = state.project_dir(&project_id)?;
     if !dir.exists() {
         return Err("Carpeta del proyecto no existe".to_string());
     }
     #[cfg(target_os = "windows")]
-    { let _ = std::process::Command::new("explorer").arg(&dir).spawn(); }
+    {
+        let _ = std::process::Command::new("explorer").arg(&dir).spawn();
+    }
     #[cfg(target_os = "linux")]
-    { let _ = std::process::Command::new("xdg-open").arg(&dir).spawn(); }
+    {
+        let _ = std::process::Command::new("xdg-open").arg(&dir).spawn();
+    }
     #[cfg(target_os = "macos")]
-    { let _ = std::process::Command::new("open").arg(&dir).spawn(); }
+    {
+        let _ = std::process::Command::new("open").arg(&dir).spawn();
+    }
     Ok(())
 }
 
@@ -157,8 +168,8 @@ pub fn zip_project(
         return Err("Carpeta del proyecto no existe".to_string());
     }
 
-    let file = std::fs::File::create(&output_path)
-        .map_err(|e| format!("Error creando zip: {}", e))?;
+    let file =
+        std::fs::File::create(&output_path).map_err(|e| format!("Error creando zip: {}", e))?;
     let mut zip = zip::ZipWriter::new(file);
     let options = zip::write::SimpleFileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated);
@@ -169,14 +180,19 @@ pub fn zip_project(
         current: &std::path::Path,
         options: zip::write::SimpleFileOptions,
     ) -> Result<(), String> {
-        let entries = std::fs::read_dir(current)
-            .map_err(|e| format!("Error leyendo directorio: {}", e))?;
+        let entries =
+            std::fs::read_dir(current).map_err(|e| format!("Error leyendo directorio: {}", e))?;
         for entry in entries {
             let entry = entry.map_err(|e| e.to_string())?;
             let path = entry.path();
-            let rel = path.strip_prefix(base).unwrap().to_string_lossy().replace('\\', "/");
+            let rel = path
+                .strip_prefix(base)
+                .unwrap()
+                .to_string_lossy()
+                .replace('\\', "/");
             if path.is_dir() {
-                zip.add_directory(&format!("{}/", rel), options).map_err(|e| e.to_string())?;
+                zip.add_directory(&format!("{}/", rel), options)
+                    .map_err(|e| e.to_string())?;
                 add_dir_to_zip(zip, base, &path, options)?;
             } else {
                 zip.start_file(&rel, options).map_err(|e| e.to_string())?;
@@ -188,6 +204,7 @@ pub fn zip_project(
     }
 
     add_dir_to_zip(&mut zip, &dir, &dir, options)?;
-    zip.finish().map_err(|e| format!("Error finalizando zip: {}", e))?;
+    zip.finish()
+        .map_err(|e| format!("Error finalizando zip: {}", e))?;
     Ok(())
 }

@@ -1,9 +1,9 @@
+use serde_json::json;
 use std::collections::HashMap;
 use zip::ZipArchive;
-use serde_json::json;
 
-use super::{ImportData, ImageImportData, create_class, create_annotation};
-use super::yolo::{read_zip_text, read_zip_bytes, get_image_dimensions};
+use super::yolo::{get_image_dimensions, read_zip_bytes, read_zip_text};
+use super::{create_annotation, create_class, ImageImportData, ImportData};
 
 pub fn import_data(
     archive: &mut ZipArchive<std::fs::File>,
@@ -13,24 +13,33 @@ pub fn import_data(
     let data: serde_json::Value = serde_json::from_str(&content)
         .map_err(|e| format!("Error parseando annotations.json: {}", e))?;
 
-    let categories = data.get("categories")
+    let categories = data
+        .get("categories")
         .and_then(|c| c.as_array())
         .ok_or("Falta 'categories' en el formato COCO")?;
 
-    let coco_images = data.get("images")
+    let coco_images = data
+        .get("images")
         .and_then(|i| i.as_array())
         .ok_or("Falta 'images' en el formato COCO")?;
 
-    let annotations_arr = data.get("annotations")
+    let annotations_arr = data
+        .get("annotations")
         .and_then(|a| a.as_array())
         .ok_or("Falta 'annotations' en el formato COCO")?;
 
     // Create classes (COCO IDs start at 1, we remap to 0-based)
-    let classes: Vec<_> = categories.iter().map(|cat| {
-        let id = cat.get("id").and_then(|i| i.as_i64()).unwrap_or(0) - 1;
-        let name = cat.get("name").and_then(|n| n.as_str()).unwrap_or("unknown");
-        create_class(id, name, None)
-    }).collect();
+    let classes: Vec<_> = categories
+        .iter()
+        .map(|cat| {
+            let id = cat.get("id").and_then(|i| i.as_i64()).unwrap_or(0) - 1;
+            let name = cat
+                .get("name")
+                .and_then(|n| n.as_str())
+                .unwrap_or("unknown");
+            create_class(id, name, None)
+        })
+        .collect();
 
     // Group annotations by image_id
     let mut anns_by_image: HashMap<i64, Vec<&serde_json::Value>> = HashMap::new();
@@ -44,11 +53,16 @@ pub fn import_data(
 
     for coco_img in coco_images {
         let img_id = coco_img.get("id").and_then(|i| i.as_i64()).unwrap_or(0);
-        let file_name = coco_img.get("file_name").and_then(|f| f.as_str()).unwrap_or("");
+        let file_name = coco_img
+            .get("file_name")
+            .and_then(|f| f.as_str())
+            .unwrap_or("");
         let coco_w = coco_img.get("width").and_then(|w| w.as_u64()).unwrap_or(0) as u32;
         let coco_h = coco_img.get("height").and_then(|h| h.as_u64()).unwrap_or(0) as u32;
 
-        if file_name.is_empty() { continue; }
+        if file_name.is_empty() {
+            continue;
+        }
 
         let image_path = format!("images/{}", file_name);
         let image_data = match read_zip_bytes(archive, &image_path) {
@@ -63,7 +77,10 @@ pub fn import_data(
         };
 
         // Parse annotations for this image
-        let coco_anns = anns_by_image.get(&img_id).map(|v| v.as_slice()).unwrap_or(&[]);
+        let coco_anns = anns_by_image
+            .get(&img_id)
+            .map(|v| v.as_slice())
+            .unwrap_or(&[]);
         let annotations = parse_coco_annotations(coco_anns, project_type);
 
         images.push(ImageImportData {
@@ -103,10 +120,14 @@ fn parse_coco_annotations(
                     }));
                     i += 3;
                 }
-                annotations.push(create_annotation(category_id, "keypoints", json!({
-                    "points": points,
-                    "skeletonType": "coco-17"
-                })));
+                annotations.push(create_annotation(
+                    category_id,
+                    "keypoints",
+                    json!({
+                        "points": points,
+                        "skeletonType": "coco-17"
+                    }),
+                ));
                 continue;
             }
         }
@@ -124,10 +145,14 @@ fn parse_coco_annotations(
                             points.push(json!({"x": x, "y": y}));
                             i += 2;
                         }
-                        annotations.push(create_annotation(category_id, "polygon", json!({
-                            "points": points,
-                            "closed": true,
-                        })));
+                        annotations.push(create_annotation(
+                            category_id,
+                            "polygon",
+                            json!({
+                                "points": points,
+                                "closed": true,
+                            }),
+                        ));
                         continue;
                     }
                 }
@@ -141,9 +166,13 @@ fn parse_coco_annotations(
                 let y = bbox[1].as_f64().unwrap_or(0.0);
                 let w = bbox[2].as_f64().unwrap_or(0.0);
                 let h = bbox[3].as_f64().unwrap_or(0.0);
-                annotations.push(create_annotation(category_id, "bbox", json!({
-                    "x": x, "y": y, "width": w, "height": h,
-                })));
+                annotations.push(create_annotation(
+                    category_id,
+                    "bbox",
+                    json!({
+                        "x": x, "y": y, "width": w, "height": h,
+                    }),
+                ));
             }
         }
     }

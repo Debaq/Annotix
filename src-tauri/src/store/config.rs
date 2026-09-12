@@ -55,12 +55,24 @@ pub struct CloudProviderConfig {
     pub saturn_cloud: Option<SaturnCloudConfig>,
 }
 
-fn default_step_timeout_ms() -> u64 { 5000 }
-fn default_max_retries() -> u32 { 2 }
-fn default_user_action_timeout_secs() -> u64 { 300 }
-fn default_llm_response_timeout_secs() -> u64 { 120 }
-fn default_window_width() -> u32 { 1280 }
-fn default_window_height() -> u32 { 900 }
+fn default_step_timeout_ms() -> u64 {
+    5000
+}
+fn default_max_retries() -> u32 {
+    2
+}
+fn default_user_action_timeout_secs() -> u64 {
+    300
+}
+fn default_llm_response_timeout_secs() -> u64 {
+    120
+}
+fn default_window_width() -> u32 {
+    1280
+}
+fn default_window_height() -> u32 {
+    900
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -130,7 +142,9 @@ pub struct ServeConfig {
     pub project_ids: Vec<String>,
 }
 
-fn default_serve_port() -> u16 { 8090 }
+fn default_serve_port() -> u16 {
+    8090
+}
 
 impl Default for ServeConfig {
     fn default() -> Self {
@@ -185,8 +199,7 @@ impl AppConfig {
         let path = Self::config_path(data_dir);
         let content = serde_json::to_string_pretty(self)
             .map_err(|e| format!("Error serializando config: {}", e))?;
-        std::fs::write(&path, content)
-            .map_err(|e| format!("Error escribiendo config: {}", e))?;
+        std::fs::write(&path, content).map_err(|e| format!("Error escribiendo config: {}", e))?;
         Ok(())
     }
 }

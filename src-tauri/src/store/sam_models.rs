@@ -37,8 +37,7 @@ pub fn sam_models_dir(data_dir: &Path) -> PathBuf {
 
 fn ensure_dir(data_dir: &Path) -> Result<PathBuf, String> {
     let dir = sam_models_dir(data_dir);
-    std::fs::create_dir_all(&dir)
-        .map_err(|e| format!("No se pudo crear sam_models dir: {}", e))?;
+    std::fs::create_dir_all(&dir).map_err(|e| format!("No se pudo crear sam_models dir: {}", e))?;
     Ok(dir)
 }
 
@@ -51,8 +50,8 @@ fn read_index(data_dir: &Path) -> Result<SamModelIndex, String> {
     if !path.exists() {
         return Ok(SamModelIndex::default());
     }
-    let content = std::fs::read_to_string(&path)
-        .map_err(|e| format!("Error leyendo index sam: {}", e))?;
+    let content =
+        std::fs::read_to_string(&path).map_err(|e| format!("Error leyendo index sam: {}", e))?;
     serde_json::from_str(&content).map_err(|e| format!("Error parseando index sam: {}", e))
 }
 
@@ -85,7 +84,10 @@ pub fn add_model(
     kind: &str,
 ) -> Result<SamAppModel, String> {
     if kind != "encoder" && kind != "decoder" {
-        return Err(format!("kind inválido: {} (debe ser encoder o decoder)", kind));
+        return Err(format!(
+            "kind inválido: {} (debe ser encoder o decoder)",
+            kind
+        ));
     }
     let dir = ensure_dir(data_dir)?;
     let id = uuid::Uuid::new_v4().to_string();
@@ -95,8 +97,7 @@ pub fn add_model(
         .unwrap_or("onnx");
     let file_name = format!("{}.{}", id, ext);
     let dst = dir.join(&file_name);
-    std::fs::copy(src_path, &dst)
-        .map_err(|e| format!("Error copiando modelo SAM: {}", e))?;
+    std::fs::copy(src_path, &dst).map_err(|e| format!("Error copiando modelo SAM: {}", e))?;
 
     let size = std::fs::metadata(&dst).map(|m| m.len()).unwrap_or(0);
     let uploaded = chrono::Utc::now().timestamp_millis();

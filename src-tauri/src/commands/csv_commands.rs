@@ -62,8 +62,8 @@ fn delimiter_byte(delimiter: Option<&str>) -> Result<u8, String> {
 }
 
 fn check_size(file_path: &str) -> Result<(), String> {
-    let meta = std::fs::metadata(file_path)
-        .map_err(|e| format!("Error leyendo archivo CSV: {}", e))?;
+    let meta =
+        std::fs::metadata(file_path).map_err(|e| format!("Error leyendo archivo CSV: {}", e))?;
     if meta.len() > MAX_CSV_BYTES {
         return Err(format!(
             "El CSV pesa {:.1} MB y el máximo admitido es {} MB",
@@ -78,8 +78,8 @@ fn reader(
     file_path: &str,
     delimiter: u8,
 ) -> Result<csv::Reader<std::io::BufReader<std::fs::File>>, String> {
-    let file = std::fs::File::open(file_path)
-        .map_err(|e| format!("Error leyendo archivo CSV: {}", e))?;
+    let file =
+        std::fs::File::open(file_path).map_err(|e| format!("Error leyendo archivo CSV: {}", e))?;
     Ok(csv::ReaderBuilder::new()
         .delimiter(delimiter)
         .has_headers(false) // la cabecera se gestiona a mano
@@ -212,13 +212,17 @@ pub fn parse_csv(file_path: String, options: CSVParseOptions) -> Result<CSVParse
     let headers: Vec<String> = if has_header {
         first.iter().map(|h| h.trim().to_string()).collect()
     } else {
-        (0..first.len()).map(|i| format!("Column {}", i + 1)).collect()
+        (0..first.len())
+            .map(|i| format!("Column {}", i + 1))
+            .collect()
     };
 
     let column_count = headers.len();
 
     let value_columns: Vec<usize> = options.value_columns.unwrap_or_else(|| {
-        (0..column_count).filter(|&i| i != timestamp_column).collect()
+        (0..column_count)
+            .filter(|&i| i != timestamp_column)
+            .collect()
     });
 
     if value_columns.is_empty() {
@@ -304,10 +308,7 @@ pub fn parse_csv(file_path: String, options: CSVParseOptions) -> Result<CSVParse
             let raw = rec.get(col_idx).unwrap_or("").trim();
             // Hueco explícito en vez de 0.0: un cero inventado sesga cualquier
             // estadística posterior y es indistinguible de un dato real.
-            let parsed = raw
-                .parse::<f64>()
-                .ok()
-                .filter(|v| v.is_finite());
+            let parsed = raw.parse::<f64>().ok().filter(|v| v.is_finite());
             if parsed.is_none() {
                 report.missing_values += 1;
             }
@@ -336,7 +337,11 @@ pub fn parse_csv(file_path: String, options: CSVParseOptions) -> Result<CSVParse
         serde_json::to_value(&values).unwrap_or_default()
     };
 
-    let columns_result = if values.len() > 1 { Some(columns) } else { None };
+    let columns_result = if values.len() > 1 {
+        Some(columns)
+    } else {
+        None
+    };
 
     Ok(CSVParseResult {
         timestamps,

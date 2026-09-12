@@ -44,9 +44,8 @@ pub fn downscale_u8_mask(
     let dst_w = ((src_w as f32 * scale).round() as u32).max(1);
     let dst_h = ((src_h as f32 * scale).round() as u32).max(1);
 
-    let buf: ImageBuffer<Luma<u8>, Vec<u8>> =
-        ImageBuffer::from_raw(src_w, src_h, mask.to_vec())
-            .ok_or_else(|| "downscale: buffer size mismatch".to_string())?;
+    let buf: ImageBuffer<Luma<u8>, Vec<u8>> = ImageBuffer::from_raw(src_w, src_h, mask.to_vec())
+        .ok_or_else(|| "downscale: buffer size mismatch".to_string())?;
     let resized = image::imageops::resize(&buf, dst_w, dst_h, FilterType::Triangle);
     Ok((resized.into_raw(), dst_w, dst_h))
 }

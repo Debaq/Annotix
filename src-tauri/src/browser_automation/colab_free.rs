@@ -144,11 +144,7 @@ impl BrowserRunner for ColabFreeRunner {
         }
     }
 
-    fn check_user_step_completed(
-        &self,
-        step_index: usize,
-        tab: &Tab,
-    ) -> Result<bool, String> {
+    fn check_user_step_completed(&self, step_index: usize, tab: &Tab) -> Result<bool, String> {
         match step_index {
             1 => {
                 // Verificar si el usuario ya hizo login buscando el selector de login_check
@@ -184,11 +180,7 @@ impl BrowserRunner for ColabFreeRunner {
 // ─── Implementación de pasos ────────────────────────────────────────────────
 
 impl ColabFreeRunner {
-    fn step_open_colab(
-        &self,
-        tab: &Tab,
-        emitter: &dyn Fn(&str),
-    ) -> Result<bool, String> {
+    fn step_open_colab(&self, tab: &Tab, emitter: &dyn Fn(&str)) -> Result<bool, String> {
         emitter("Navegando a Google Colab...");
         tab.navigate_to("https://colab.research.google.com/")
             .map_err(|e| format!("Error navegando a Colab: {}", e))?;
@@ -197,11 +189,7 @@ impl ColabFreeRunner {
         Ok(true)
     }
 
-    fn step_create_notebook(
-        &self,
-        tab: &Tab,
-        emitter: &dyn Fn(&str),
-    ) -> Result<bool, String> {
+    fn step_create_notebook(&self, tab: &Tab, emitter: &dyn Fn(&str)) -> Result<bool, String> {
         emitter("Creando nuevo notebook...");
 
         // Intentar clic en "New notebook"
@@ -209,7 +197,8 @@ impl ColabFreeRunner {
         if let Some(selector) = self.selectors.get(&provider, "new_notebook") {
             match super::selectors::find_element_with_fallback(tab, selector) {
                 Ok(el) => {
-                    el.click().map_err(|e| format!("Error click new notebook: {}", e))?;
+                    el.click()
+                        .map_err(|e| format!("Error click new notebook: {}", e))?;
                     std::thread::sleep(Duration::from_secs(3));
                     emitter("Notebook creado.");
                     return Ok(true);
@@ -229,18 +218,15 @@ impl ColabFreeRunner {
         Ok(true)
     }
 
-    fn step_configure_gpu(
-        &self,
-        tab: &Tab,
-        emitter: &dyn Fn(&str),
-    ) -> Result<bool, String> {
+    fn step_configure_gpu(&self, tab: &Tab, emitter: &dyn Fn(&str)) -> Result<bool, String> {
         emitter("Configurando GPU T4...");
         let provider = super::BrowserProvider::ColabFree;
 
         // Abrir menú Runtime
         if let Some(selector) = self.selectors.get(&provider, "runtime_menu") {
             if let Ok(el) = super::selectors::find_element_with_fallback(tab, selector) {
-                el.click().map_err(|e| format!("Error click runtime menu: {}", e))?;
+                el.click()
+                    .map_err(|e| format!("Error click runtime menu: {}", e))?;
                 std::thread::sleep(Duration::from_millis(500));
             }
         }
@@ -248,7 +234,8 @@ impl ColabFreeRunner {
         // Click "Change runtime type"
         if let Some(selector) = self.selectors.get(&provider, "change_runtime") {
             if let Ok(el) = super::selectors::find_element_with_fallback(tab, selector) {
-                el.click().map_err(|e| format!("Error click change runtime: {}", e))?;
+                el.click()
+                    .map_err(|e| format!("Error click change runtime: {}", e))?;
                 std::thread::sleep(Duration::from_secs(1));
             }
         }
@@ -290,7 +277,8 @@ impl ColabFreeRunner {
         // Click Save/OK
         if let Some(selector) = self.selectors.get(&provider, "save_runtime") {
             if let Ok(el) = super::selectors::find_element_with_fallback(tab, selector) {
-                el.click().map_err(|e| format!("Error click save runtime: {}", e))?;
+                el.click()
+                    .map_err(|e| format!("Error click save runtime: {}", e))?;
             }
         }
 
@@ -414,11 +402,7 @@ print(f"\nANNOTIX_EVENT:" + json.dumps({
         Ok(true)
     }
 
-    fn step_run_training(
-        &self,
-        _tab: &Tab,
-        emitter: &dyn Fn(&str),
-    ) -> Result<bool, String> {
+    fn step_run_training(&self, _tab: &Tab, emitter: &dyn Fn(&str)) -> Result<bool, String> {
         emitter("Ejecutando entrenamiento...");
 
         // El training ya fue iniciado en el paso anterior al ejecutar la celda
@@ -429,11 +413,7 @@ print(f"\nANNOTIX_EVENT:" + json.dumps({
         Ok(true)
     }
 
-    fn step_monitor_progress(
-        &self,
-        tab: &Tab,
-        emitter: &dyn Fn(&str),
-    ) -> Result<bool, String> {
+    fn step_monitor_progress(&self, tab: &Tab, emitter: &dyn Fn(&str)) -> Result<bool, String> {
         emitter("Monitoreando progreso del entrenamiento...");
 
         // Polling del output de la celda buscando métricas de epoch
@@ -456,11 +436,7 @@ print(f"\nANNOTIX_EVENT:" + json.dumps({
             "#;
 
             if let Ok(result) = tab.evaluate(js, false) {
-                let output = result
-                    .value
-                    .as_ref()
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("");
+                let output = result.value.as_ref().and_then(|v| v.as_str()).unwrap_or("");
 
                 // Buscar líneas de epoch
                 if output.contains("ANNOTIX_EVENT:") {
@@ -504,11 +480,7 @@ print(f"\nANNOTIX_EVENT:" + json.dumps({
                     document.querySelector('.colab-toolbar-notice').innerText : ''
             "#;
             if let Ok(result) = tab.evaluate(disconnect_js, false) {
-                let notice = result
-                    .value
-                    .as_ref()
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("");
+                let notice = result.value.as_ref().and_then(|v| v.as_str()).unwrap_or("");
                 if notice.contains("disconnected") || notice.contains("Reconnect") {
                     return Err("Runtime desconectado. Reintenta o reconecta manualmente.".into());
                 }
@@ -518,11 +490,7 @@ print(f"\nANNOTIX_EVENT:" + json.dumps({
         Err("Timeout: el entrenamiento tardó más de 1 hora.".into())
     }
 
-    fn step_download_model(
-        &mut self,
-        tab: &Tab,
-        emitter: &dyn Fn(&str),
-    ) -> Result<bool, String> {
+    fn step_download_model(&mut self, tab: &Tab, emitter: &dyn Fn(&str)) -> Result<bool, String> {
         emitter("Descargando modelo entrenado...");
 
         // Inyectar código para descargar el modelo
@@ -634,11 +602,7 @@ else:
         Ok(())
     }
 
-    fn add_new_cell(
-        &self,
-        tab: &Tab,
-        _: &dyn Fn(&str),
-    ) -> Result<(), String> {
+    fn add_new_cell(&self, tab: &Tab, _: &dyn Fn(&str)) -> Result<(), String> {
         let provider = super::BrowserProvider::ColabFree;
         if let Some(selector) = self.selectors.get(&provider, "add_code_cell") {
             if let Ok(el) = super::selectors::find_element_with_fallback(tab, selector) {

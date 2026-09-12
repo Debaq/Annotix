@@ -1,22 +1,22 @@
-pub mod yolo;
-pub mod coco;
-pub mod pascal_voc;
-pub mod csv_export;
-pub mod unet_masks;
-pub mod folders_by_class;
-pub mod preview_rasterized;
-pub mod tix;
 pub mod audio_export;
+pub mod coco;
+pub mod csv_export;
+pub mod folders_by_class;
+pub mod pascal_voc;
+pub mod preview_rasterized;
 pub mod timeseries_export;
+pub mod tix;
+pub mod unet_masks;
+pub mod yolo;
 
-use std::io::{Write, Seek};
+use std::io::{Seek, Write};
 use std::path::Path;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
-use tauri::Emitter;
 use crate::store::project_file::{ClassDef, ImageEntry};
 use crate::store::AppState;
+use tauri::Emitter;
 
 /// Datos de anotación extraídos de serde_json::Value
 pub struct BBoxData {
@@ -81,7 +81,11 @@ pub fn parse_obb(data: &serde_json::Value) -> Option<OBBData> {
         y: data.get("y").or_else(|| data.get("cy"))?.as_f64()?,
         width: data.get("width")?.as_f64()?,
         height: data.get("height")?.as_f64()?,
-        rotation: data.get("rotation").or_else(|| data.get("angle")).and_then(|v| v.as_f64()).unwrap_or(0.0),
+        rotation: data
+            .get("rotation")
+            .or_else(|| data.get("angle"))
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0),
     })
 }
 
@@ -100,7 +104,10 @@ pub fn parse_polygon(data: &serde_json::Value) -> Option<PolygonData> {
 }
 
 pub fn parse_keypoints(data: &serde_json::Value) -> Option<KeypointsData> {
-    let points_arr = data.get("points").or_else(|| data.get("keypoints"))?.as_array()?;
+    let points_arr = data
+        .get("points")
+        .or_else(|| data.get("keypoints"))?
+        .as_array()?;
     if points_arr.is_empty() {
         return None;
     }
@@ -108,15 +115,30 @@ pub fn parse_keypoints(data: &serde_json::Value) -> Option<KeypointsData> {
     for (idx, p) in points_arr.iter().enumerate() {
         let x = p.get("x").and_then(|v| v.as_f64()).unwrap_or(0.0);
         let y = p.get("y").and_then(|v| v.as_f64()).unwrap_or(0.0);
-        let visible = p.get("visible")
-            .map(|v| v.as_bool().unwrap_or_else(|| v.as_f64().map(|n| n > 0.0).unwrap_or(false)))
+        let visible = p
+            .get("visible")
+            .map(|v| {
+                v.as_bool()
+                    .unwrap_or_else(|| v.as_f64().map(|n| n > 0.0).unwrap_or(false))
+            })
             .unwrap_or(false);
-        let name = p.get("name").and_then(|v| v.as_str()).map(|s| s.to_string())
+        let name = p
+            .get("name")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
             .unwrap_or_else(|| format!("point_{}", idx));
-        points.push(KeypointPoint { x, y, visible, name });
+        points.push(KeypointPoint {
+            x,
+            y,
+            visible,
+            name,
+        });
     }
     let instance_id = data.get("instanceId").and_then(|v| v.as_i64());
-    Some(KeypointsData { points, instance_id })
+    Some(KeypointsData {
+        points,
+        instance_id,
+    })
 }
 
 pub fn parse_landmarks(data: &serde_json::Value) -> Option<LandmarksData> {
@@ -128,7 +150,10 @@ pub fn parse_landmarks(data: &serde_json::Value) -> Option<LandmarksData> {
     for (idx, p) in points_arr.iter().enumerate() {
         let x = p.get("x").and_then(|v| v.as_f64()).unwrap_or(0.0);
         let y = p.get("y").and_then(|v| v.as_f64()).unwrap_or(0.0);
-        let name = p.get("name").and_then(|v| v.as_str()).map(|s| s.to_string())
+        let name = p
+            .get("name")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
             .unwrap_or_else(|| format!("Point {}", idx + 1));
         points.push(LandmarkPoint { x, y, name });
     }
@@ -136,18 +161,22 @@ pub fn parse_landmarks(data: &serde_json::Value) -> Option<LandmarksData> {
 }
 
 pub fn parse_mask(data: &serde_json::Value) -> Option<MaskData> {
-    let base64png = data.get("base64png")
+    let base64png = data
+        .get("base64png")
         .or_else(|| data.get("imageData"))
         .and_then(|v| v.as_str())?;
     if base64png.is_empty() {
         return None;
     }
-    Some(MaskData { base64png: base64png.to_string() })
+    Some(MaskData {
+        base64png: base64png.to_string(),
+    })
 }
 
 /// Busca nombre de clase por ID
 pub fn class_name(classes: &[ClassDef], class_id: i64) -> String {
-    classes.iter()
+    classes
+        .iter()
         .find(|c| c.id == class_id)
         .map(|c| c.name.clone())
         .unwrap_or_else(|| "unknown".to_string())
@@ -159,8 +188,8 @@ pub fn transcode_to_jpg(data: &[u8]) -> Result<Vec<u8>, String> {
     use image::codecs::jpeg::JpegEncoder;
     use image::{DynamicImage, ImageEncoder};
 
-    let img = image::load_from_memory(data)
-        .map_err(|e| format!("Error decodificando imagen: {}", e))?;
+    let img =
+        image::load_from_memory(data).map_err(|e| format!("Error decodificando imagen: {}", e))?;
 
     // Para alpha, componer sobre blanco y convertir a RGB8
     let rgb = match img {
@@ -296,33 +325,58 @@ pub fn export_dataset(
     }
 
     // ── Audio formats ──────────────────────────────────────────────────────
-    if ["huggingface-asr", "ljspeech", "csv-audio-classification", "csv-sound-events"].contains(&format) {
+    if [
+        "huggingface-asr",
+        "ljspeech",
+        "csv-audio-classification",
+        "csv-sound-events",
+    ]
+    .contains(&format)
+    {
         let audio_dir = state.project_dir(project_id)?.join("audio");
 
         if format == "csv-audio-classification" {
-            let audio_entries: Vec<_> = pf.audio.iter()
+            let audio_entries: Vec<_> = pf
+                .audio
+                .iter()
                 .filter(|a| a.class_id.is_some())
                 .cloned()
                 .collect();
             if audio_entries.is_empty() {
                 return Err("No hay audios clasificados para exportar".to_string());
             }
-            return audio_export::export_audio_classification_csv(&pf, &audio_entries, &audio_dir, file, emit_progress);
+            return audio_export::export_audio_classification_csv(
+                &pf,
+                &audio_entries,
+                &audio_dir,
+                file,
+                emit_progress,
+            );
         }
 
         if format == "csv-sound-events" {
-            let audio_entries: Vec<_> = pf.audio.iter()
+            let audio_entries: Vec<_> = pf
+                .audio
+                .iter()
                 .filter(|a| !a.events.is_empty())
                 .cloned()
                 .collect();
             if audio_entries.is_empty() {
                 return Err("No hay audios con eventos para exportar".to_string());
             }
-            return audio_export::export_sound_events_csv(&pf, &audio_entries, &audio_dir, file, emit_progress);
+            return audio_export::export_sound_events_csv(
+                &pf,
+                &audio_entries,
+                &audio_dir,
+                file,
+                emit_progress,
+            );
         }
 
         // ASR formats
-        let audio_entries: Vec<_> = pf.audio.iter()
+        let audio_entries: Vec<_> = pf
+            .audio
+            .iter()
             .filter(|a| !a.transcription.is_empty() || !a.segments.is_empty())
             .cloned()
             .collect();
@@ -330,8 +384,16 @@ pub fn export_dataset(
             return Err("No hay audios transcritos para exportar".to_string());
         }
         return match format {
-            "huggingface-asr" => audio_export::export_huggingface(&pf, &audio_entries, &audio_dir, file, emit_progress),
-            "ljspeech" => audio_export::export_ljspeech(&pf, &audio_entries, &audio_dir, file, emit_progress),
+            "huggingface-asr" => audio_export::export_huggingface(
+                &pf,
+                &audio_entries,
+                &audio_dir,
+                file,
+                emit_progress,
+            ),
+            "ljspeech" => {
+                audio_export::export_ljspeech(&pf, &audio_entries, &audio_dir, file, emit_progress)
+            }
             _ => unreachable!(),
         };
     }
@@ -344,12 +406,14 @@ pub fn export_dataset(
     }
 
     // Solo exportar imágenes anotadas, y filtrar anotaciones con classId inválido
-    let images: Vec<ImageEntry> = pf.images.iter().cloned()
+    let images: Vec<ImageEntry> = pf
+        .images
+        .iter()
+        .cloned()
         .filter(|img| !img.annotations.is_empty())
         .map(|mut img| {
-            img.annotations.retain(|ann| {
-                pf.classes.iter().any(|c| c.id == ann.class_id)
-            });
+            img.annotations
+                .retain(|ann| pf.classes.iter().any(|c| c.id == ann.class_id));
             img
         })
         .filter(|img| !img.annotations.is_empty())
@@ -371,14 +435,33 @@ pub fn export_dataset(
         "yolo-segmentation" => yolo::export(&pf, &images, &images_dir, file, true, emit_progress),
         "coco" => coco::export(&pf, &images, &images_dir, file, emit_progress),
         "pascal-voc" => pascal_voc::export(&pf, &images, &images_dir, file, emit_progress),
-        "csv-detection" => csv_export::export(&pf, &images, &images_dir, file, "detection", emit_progress),
-        "csv-classification" => csv_export::export(&pf, &images, &images_dir, file, "classification", emit_progress),
-        "csv-keypoints" => csv_export::export(&pf, &images, &images_dir, file, "keypoints", emit_progress),
-        "csv-landmarks" => csv_export::export(&pf, &images, &images_dir, file, "landmarks", emit_progress),
-        "folders-by-class" => folders_by_class::export(&pf, &images, &images_dir, file, emit_progress),
+        "csv-detection" => {
+            csv_export::export(&pf, &images, &images_dir, file, "detection", emit_progress)
+        }
+        "csv-classification" => csv_export::export(
+            &pf,
+            &images,
+            &images_dir,
+            file,
+            "classification",
+            emit_progress,
+        ),
+        "csv-keypoints" => {
+            csv_export::export(&pf, &images, &images_dir, file, "keypoints", emit_progress)
+        }
+        "csv-landmarks" => {
+            csv_export::export(&pf, &images, &images_dir, file, "landmarks", emit_progress)
+        }
+        "folders-by-class" => {
+            folders_by_class::export(&pf, &images, &images_dir, file, emit_progress)
+        }
         "unet-masks" => unet_masks::export(&pf, &images, &images_dir, file, emit_progress),
-        "preview-rasterized" => preview_rasterized::export(&pf, &images, &images_dir, file, false, emit_progress),
-        "preview-rasterized-labels" => preview_rasterized::export(&pf, &images, &images_dir, file, true, emit_progress),
+        "preview-rasterized" => {
+            preview_rasterized::export(&pf, &images, &images_dir, file, false, emit_progress)
+        }
+        "preview-rasterized-labels" => {
+            preview_rasterized::export(&pf, &images, &images_dir, file, true, emit_progress)
+        }
         _ => Err(format!("Formato no soportado: {}", format)),
     }
 }

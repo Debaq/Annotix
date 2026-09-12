@@ -56,21 +56,37 @@ impl SamState {
     /// Invalida TODO (cambio de modelo o de proyecto).
     #[allow(dead_code)]
     pub fn clear_all(&self) {
-        if let Ok(mut s) = self.sessions.lock() { *s = None; }
-        if let Ok(mut c) = self.cache.lock() { *c = None; }
-        if let Ok(mut m) = self.candidates.lock() { m.clear(); }
-        if let Ok(mut r) = self.refine.lock() { *r = None; }
+        if let Ok(mut s) = self.sessions.lock() {
+            *s = None;
+        }
+        if let Ok(mut c) = self.cache.lock() {
+            *c = None;
+        }
+        if let Ok(mut m) = self.candidates.lock() {
+            m.clear();
+        }
+        if let Ok(mut r) = self.refine.lock() {
+            *r = None;
+        }
     }
 
     /// Invalida solo cache de embedding + candidatos (cambio de imagen / reencode).
     #[allow(dead_code)]
     pub fn clear_runtime(&self) {
-        if let Ok(mut c) = self.cache.lock() { *c = None; }
-        if let Ok(mut m) = self.candidates.lock() { m.clear(); }
-        if let Ok(mut r) = self.refine.lock() { *r = None; }
+        if let Ok(mut c) = self.cache.lock() {
+            *c = None;
+        }
+        if let Ok(mut m) = self.candidates.lock() {
+            m.clear();
+        }
+        if let Ok(mut r) = self.refine.lock() {
+            *r = None;
+        }
     }
 }
 
 impl Default for SamState {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }

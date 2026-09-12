@@ -45,9 +45,10 @@ impl ActiveSession {
             project_id: self.project_id.clone(),
             project_name: self.project_name.clone(),
             share_code: self.share_code.clone(),
-            host_key: self.host_secret.as_ref().map(|s| {
-                super::ticket::encode_host_key(s, &self.share_code)
-            }),
+            host_key: self
+                .host_secret
+                .as_ref()
+                .map(|s| super::ticket::encode_host_key(s, &self.share_code)),
             role: self.role.clone(),
             rules: self.rules.clone(),
             my_node_id: self.my_node_id.clone(),
@@ -112,7 +113,11 @@ impl P2pState {
 
     /// Verifica si la acción está permitida según rol + reglas de sesión.
     /// Si no hay sesión activa para el proyecto (modo local), todo se permite.
-    pub async fn check_permission(&self, project_id: &str, perm: P2pPermission) -> Result<(), String> {
+    pub async fn check_permission(
+        &self,
+        project_id: &str,
+        perm: P2pPermission,
+    ) -> Result<(), String> {
         let sessions = self.sessions.read().await;
         let session = match sessions.get(project_id) {
             Some(s) => s,
@@ -203,10 +208,7 @@ impl P2pState {
             .accept(iroh_docs::ALPN, docs.clone())
             .spawn();
 
-        log::info!(
-            "Nodo iroh iniciado. EndpointId: {}",
-            endpoint.id()
-        );
+        log::info!("Nodo iroh iniciado. EndpointId: {}", endpoint.id());
 
         Ok(Arc::new(IrohNode {
             endpoint,

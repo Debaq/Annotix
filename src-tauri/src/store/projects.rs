@@ -123,7 +123,9 @@ impl AppState {
                 Err(_) => continue,
             };
             let path = entry.path();
-            if !path.is_dir() { continue; }
+            if !path.is_dir() {
+                continue;
+            }
             let project_json = path.join("project.json");
             let metadata = match std::fs::metadata(&project_json) {
                 Ok(m) => m,
@@ -138,9 +140,13 @@ impl AppState {
                 } else {
                     match io::read_project_summary(&path) {
                         Ok(s) => {
-                            cache_lock.insert(project_json.clone(), super::state::CachedSummary {
-                                mtime, summary: s.clone(),
-                            });
+                            cache_lock.insert(
+                                project_json.clone(),
+                                super::state::CachedSummary {
+                                    mtime,
+                                    summary: s.clone(),
+                                },
+                            );
                             s
                         }
                         Err(e) => {
@@ -152,9 +158,13 @@ impl AppState {
             } else {
                 match io::read_project_summary(&path) {
                     Ok(s) => {
-                        cache_lock.insert(project_json.clone(), super::state::CachedSummary {
-                            mtime, summary: s.clone(),
-                        });
+                        cache_lock.insert(
+                            project_json.clone(),
+                            super::state::CachedSummary {
+                                mtime,
+                                summary: s.clone(),
+                            },
+                        );
                         s
                     }
                     Err(e) => {
@@ -184,7 +194,12 @@ impl AppState {
             });
         }
 
-        summaries.sort_by(|a, b| b.metadata.created.partial_cmp(&a.metadata.created).unwrap_or(std::cmp::Ordering::Equal));
+        summaries.sort_by(|a, b| {
+            b.metadata
+                .created
+                .partial_cmp(&a.metadata.created)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         Ok(summaries)
     }
 
@@ -194,29 +209,32 @@ impl AppState {
             return Ok(None);
         }
 
-        self.with_project(project_id, |pf| {
-            ProjectSummary {
-                id: pf.id.clone(),
-                name: pf.name.clone(),
-                project_type: pf.project_type.clone(),
-                classes: pf.classes.clone(),
-                image_count: pf.images.len(),
-                metadata: ProjectMetadata {
-                    created: pf.created,
-                    updated: pf.updated,
-                    version: format!("{}", pf.version),
-                },
-                p2p_download: pf.p2p_download.clone(),
-                has_p2p_config: pf.p2p.is_some(),
-                folder: pf.folder.clone(),
-                inference_model_count: pf.inference_models.len(),
-                image_format: pf.image_format.clone(),
-                webp_quality_preset: pf.webp_quality_preset.clone(),
-            }
-        }).map(Some)
+        self.with_project(project_id, |pf| ProjectSummary {
+            id: pf.id.clone(),
+            name: pf.name.clone(),
+            project_type: pf.project_type.clone(),
+            classes: pf.classes.clone(),
+            image_count: pf.images.len(),
+            metadata: ProjectMetadata {
+                created: pf.created,
+                updated: pf.updated,
+                version: format!("{}", pf.version),
+            },
+            p2p_download: pf.p2p_download.clone(),
+            has_p2p_config: pf.p2p.is_some(),
+            folder: pf.folder.clone(),
+            inference_model_count: pf.inference_models.len(),
+            image_format: pf.image_format.clone(),
+            webp_quality_preset: pf.webp_quality_preset.clone(),
+        })
+        .map(Some)
     }
 
-    pub fn update_project_image_format(&self, project_id: &str, format: &str) -> Result<(), String> {
+    pub fn update_project_image_format(
+        &self,
+        project_id: &str,
+        format: &str,
+    ) -> Result<(), String> {
         if format != "jpg" && format != "webp" {
             return Err(format!("Formato de imagen no soportado: {}", format));
         }
@@ -237,7 +255,11 @@ impl AppState {
         })
     }
 
-    pub fn set_project_folder(&self, project_id: &str, folder: Option<String>) -> Result<(), String> {
+    pub fn set_project_folder(
+        &self,
+        project_id: &str,
+        folder: Option<String>,
+    ) -> Result<(), String> {
         self.with_project_mut(project_id, |pf| {
             pf.folder = folder;
         })
@@ -273,13 +295,14 @@ impl AppState {
 
             // Remapear anotaciones de imágenes (descartar huérfanas)
             for img in pf.images.iter_mut() {
-                img.annotations.retain_mut(|ann| match id_map.get(&ann.class_id) {
-                    Some(&new_id) => {
-                        ann.class_id = new_id;
-                        true
-                    }
-                    None => false,
-                });
+                img.annotations
+                    .retain_mut(|ann| match id_map.get(&ann.class_id) {
+                        Some(&new_id) => {
+                            ann.class_id = new_id;
+                            true
+                        }
+                        None => false,
+                    });
                 // Predicciones no referencian project class_id directamente; se omiten.
             }
 
@@ -386,7 +409,8 @@ impl AppState {
     {
         self.load_into_cache(project_id)?;
         let cache = self.cache.lock().map_err(|e| e.to_string())?;
-        let cached = cache.get(project_id)
+        let cached = cache
+            .get(project_id)
             .ok_or_else(|| format!("Proyecto {} no encontrado en cache", project_id))?;
         Ok(f(&cached.data))
     }
@@ -399,7 +423,8 @@ impl AppState {
         self.load_into_cache(project_id)?;
         {
             let mut cache = self.cache.lock().map_err(|e| e.to_string())?;
-            let cached = cache.get_mut(project_id)
+            let cached = cache
+                .get_mut(project_id)
                 .ok_or_else(|| format!("Proyecto {} no encontrado en cache", project_id))?;
             f(&mut cached.data);
             cached.dirty = true;
@@ -418,7 +443,8 @@ impl AppState {
         let result;
         {
             let mut cache = self.cache.lock().map_err(|e| e.to_string())?;
-            let cached = cache.get_mut(project_id)
+            let cached = cache
+                .get_mut(project_id)
                 .ok_or_else(|| format!("Proyecto {} no encontrado en cache", project_id))?;
             result = f(&mut cached.data);
             cached.dirty = true;
@@ -445,7 +471,10 @@ impl AppState {
     /// Busca una imagen por ID dentro de un proyecto, retorna su ruta en disco
     pub fn get_image_file_path(&self, project_id: &str, image_id: &str) -> Result<PathBuf, String> {
         let file = self.with_project(project_id, |pf| {
-            pf.images.iter().find(|i| i.id == image_id).map(|i| i.file.clone())
+            pf.images
+                .iter()
+                .find(|i| i.id == image_id)
+                .map(|i| i.file.clone())
         })?;
         let file = file.ok_or_else(|| format!("Imagen {} no encontrada", image_id))?;
         let images_dir = self.project_dir(project_id)?.join("images");
@@ -463,7 +492,11 @@ impl AppState {
 
     /// Obtiene una imagen por su ID
     #[allow(dead_code)]
-    pub fn get_image_entry(&self, project_id: &str, image_id: &str) -> Result<Option<ImageEntry>, String> {
+    pub fn get_image_entry(
+        &self,
+        project_id: &str,
+        image_id: &str,
+    ) -> Result<Option<ImageEntry>, String> {
         self.with_project(project_id, |pf| {
             pf.images.iter().find(|i| i.id == image_id).cloned()
         })

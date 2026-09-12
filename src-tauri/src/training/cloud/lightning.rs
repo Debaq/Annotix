@@ -115,23 +115,19 @@ impl CloudRunner for LightningRunner {
         }
 
         let resp_body: serde_json::Value = resp.json().map_err(|e| e.to_string())?;
-        let studio_id = resp_body["id"]
-            .as_str()
-            .unwrap_or(&job_uuid)
-            .to_string();
+        let studio_id = resp_body["id"].as_str().unwrap_or(&job_uuid).to_string();
 
         // 2. Upload dataset to studio filesystem
-        let dataset_data = std::fs::read(dataset_path)
-            .map_err(|e| format!("Error leyendo dataset: {}", e))?;
+        let dataset_data =
+            std::fs::read(dataset_path).map_err(|e| format!("Error leyendo dataset: {}", e))?;
 
-        let form = reqwest::blocking::multipart::Form::new()
-            .part(
-                "file",
-                reqwest::blocking::multipart::Part::bytes(dataset_data)
-                    .file_name("dataset.zip")
-                    .mime_str("application/zip")
-                    .map_err(|e| format!("Error preparando upload: {}", e))?,
-            );
+        let form = reqwest::blocking::multipart::Form::new().part(
+            "file",
+            reqwest::blocking::multipart::Part::bytes(dataset_data)
+                .file_name("dataset.zip")
+                .mime_str("application/zip")
+                .map_err(|e| format!("Error preparando upload: {}", e))?,
+        );
 
         let upload_resp = self
             .client()
@@ -152,14 +148,13 @@ impl CloudRunner for LightningRunner {
 
         // 3. Generate training script and upload
         let script = self.generate_train_script(request, project_classes);
-        let script_form = reqwest::blocking::multipart::Form::new()
-            .part(
-                "file",
-                reqwest::blocking::multipart::Part::bytes(script.into_bytes())
-                    .file_name("train.py")
-                    .mime_str("text/x-python")
-                    .map_err(|e| format!("Error preparando script: {}", e))?,
-            );
+        let script_form = reqwest::blocking::multipart::Form::new().part(
+            "file",
+            reqwest::blocking::multipart::Part::bytes(script.into_bytes())
+                .file_name("train.py")
+                .mime_str("text/x-python")
+                .map_err(|e| format!("Error preparando script: {}", e))?,
+        );
 
         let script_resp = self
             .client()
@@ -185,11 +180,7 @@ impl CloudRunner for LightningRunner {
 
         let cmd_resp = self
             .client()
-            .post(format!(
-                "{}/studios/{}/command",
-                self.api_base(),
-                studio_id
-            ))
+            .post(format!("{}/studios/{}/command", self.api_base(), studio_id))
             .header("Authorization", self.auth_header())
             .json(&cmd_body)
             .send()

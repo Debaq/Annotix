@@ -53,12 +53,7 @@ pub fn process_image_filters(
 
     // Reescalar a dimensiones originales si se redimensionó
     if rgb.width() != orig_w || rgb.height() != orig_h {
-        rgb = image::imageops::resize(
-            &rgb,
-            orig_w,
-            orig_h,
-            image::imageops::FilterType::Lanczos3,
-        );
+        rgb = image::imageops::resize(&rgb, orig_w, orig_h, image::imageops::FilterType::Lanczos3);
     }
 
     // Codificar como JPEG base64 (más rápido y pequeño que PNG para previews)
@@ -159,11 +154,7 @@ fn apply_clahe(img: &mut RgbImage, clip_limit: f64, tile_grid_x: u32, tile_grid_
                 + v01 * (1.0 - ax) * ay
                 + v11 * ax * ay;
 
-            let ratio = if lum > 0 {
-                mapped / lum as f64
-            } else {
-                1.0
-            };
+            let ratio = if lum > 0 { mapped / lum as f64 } else { 1.0 };
 
             let out = img.get_pixel_mut(x, y);
             out[0] = (p[0] as f64 * ratio).round().min(255.0) as u8;
@@ -175,7 +166,12 @@ fn apply_clahe(img: &mut RgbImage, clip_limit: f64, tile_grid_x: u32, tile_grid_
 
 /// CLAHE por canal: equaliza R, G, B de forma independiente.
 /// Cambia colores (puede corregir dominantes) — útil en imágenes submarinas/médicas.
-fn apply_clahe_per_channel(img: &mut RgbImage, clip_limit: f64, tile_grid_x: u32, tile_grid_y: u32) {
+fn apply_clahe_per_channel(
+    img: &mut RgbImage,
+    clip_limit: f64,
+    tile_grid_x: u32,
+    tile_grid_y: u32,
+) {
     let (width, height) = img.dimensions();
     let tile_w = (width + tile_grid_x - 1) / tile_grid_x;
     let tile_h = (height + tile_grid_y - 1) / tile_grid_y;
@@ -521,8 +517,8 @@ fn decode_base64_png(
         .decode(b64)
         .map_err(|e| format!("Error decodificando base64: {}", e))?;
 
-    let img = image::load_from_memory(&bytes)
-        .map_err(|e| format!("Error decodificando PNG: {}", e))?;
+    let img =
+        image::load_from_memory(&bytes).map_err(|e| format!("Error decodificando PNG: {}", e))?;
 
     let rgba = img.to_rgba8();
 

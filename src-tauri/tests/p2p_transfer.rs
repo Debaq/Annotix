@@ -15,12 +15,7 @@ use iroh_docs::protocol::Docs;
 use iroh_gossip::net::Gossip;
 
 /// Crea un nodo iroh temporal para tests
-async fn create_test_node(dir: &std::path::Path) -> (
-    Endpoint,
-    Docs,
-    FsStore,
-    Router,
-) {
+async fn create_test_node(dir: &std::path::Path) -> (Endpoint, Docs, FsStore, Router) {
     let blobs_dir = dir.join("blobs");
     let docs_dir = dir.join("docs");
     std::fs::create_dir_all(&blobs_dir).unwrap();
@@ -92,7 +87,10 @@ async fn test_import_file_creates_doc_entry() {
         .await
         .expect("Error completando import");
 
-    println!("Blob importado: hash={}, size={}", outcome.hash, outcome.size);
+    println!(
+        "Blob importado: hash={}, size={}",
+        outcome.hash, outcome.size
+    );
     assert!(outcome.size > 0, "El blob debería tener tamaño > 0");
 
     // Verificar que la entrada existe en el doc
@@ -135,7 +133,10 @@ async fn test_host_to_collaborator_blob_transfer() {
         create_test_node(host_dir.path()).await;
 
     let host_doc = host_docs.create().await.expect("Error creando doc host");
-    let host_author = host_docs.author_create().await.expect("Error creando autor host");
+    let host_author = host_docs
+        .author_create()
+        .await
+        .expect("Error creando autor host");
     let host_blobs: &iroh_blobs::api::Store = &*host_blobs_store;
 
     // Escribir metadata del proyecto
@@ -179,7 +180,11 @@ async fn test_host_to_collaborator_blob_transfer() {
         .collect();
 
     let total_bytes: usize = images.iter().map(|(_, _, c)| c.len()).sum();
-    println!("Host: preparando {} imágenes ({:.1} MB total)", images.len(), total_bytes as f64 / 1_048_576.0);
+    println!(
+        "Host: preparando {} imágenes ({:.1} MB total)",
+        images.len(),
+        total_bytes as f64 / 1_048_576.0
+    );
 
     let import_start = std::time::Instant::now();
 
@@ -220,14 +225,25 @@ async fn test_host_to_collaborator_blob_transfer() {
             .await
             .expect("Error completando import");
 
-        println!("  Host: {} importado ({:.1} MB, hash={})",
-            name, outcome.size as f64 / 1_048_576.0, &outcome.hash.to_string()[..16]);
+        println!(
+            "  Host: {} importado ({:.1} MB, hash={})",
+            name,
+            outcome.size as f64 / 1_048_576.0,
+            &outcome.hash.to_string()[..16]
+        );
     }
 
-    println!("Host: {} imágenes importadas en {:?}", images.len(), import_start.elapsed());
+    println!(
+        "Host: {} imágenes importadas en {:?}",
+        images.len(),
+        import_start.elapsed()
+    );
 
     // Iniciar sync
-    host_doc.start_sync(vec![]).await.expect("Error iniciando sync");
+    host_doc
+        .start_sync(vec![])
+        .await
+        .expect("Error iniciando sync");
 
     // Generar ticket
     let ticket = host_doc
@@ -264,8 +280,16 @@ async fn test_host_to_collaborator_blob_transfer() {
             .get_one(iroh_docs::store::Query::key_exact(b"meta/project"))
             .await
         {
-            if collab_blobs.blobs().get_bytes(entry.content_hash()).await.is_ok() {
-                println!("Colaborador: meta/project sincronizado en {:?}", started.elapsed());
+            if collab_blobs
+                .blobs()
+                .get_bytes(entry.content_hash())
+                .await
+                .is_ok()
+            {
+                println!(
+                    "Colaborador: meta/project sincronizado en {:?}",
+                    started.elapsed()
+                );
                 break;
             }
         }
@@ -284,7 +308,9 @@ async fn test_host_to_collaborator_blob_transfer() {
             .get_bytes(entry.content_hash())
             .await
             .expect("Error leyendo blob");
-        String::from_utf8_lossy(&bytes).parse().expect("Error parseando EndpointId")
+        String::from_utf8_lossy(&bytes)
+            .parse()
+            .expect("Error parseando EndpointId")
     };
 
     let downloader = collab_blobs.downloader(&_collab_endpoint);
@@ -319,7 +345,9 @@ async fn test_host_to_collaborator_blob_transfer() {
             downloaded.len(),
             original_content.len(),
             "Tamaño de {} debe coincidir ({} vs {})",
-            name, downloaded.len(), original_content.len()
+            name,
+            downloaded.len(),
+            original_content.len()
         );
         assert_eq!(
             downloaded.as_ref(),
@@ -328,8 +356,11 @@ async fn test_host_to_collaborator_blob_transfer() {
             name
         );
 
-        println!("  Colaborador: {} verificado ✓ ({:.1} MB)",
-            name, downloaded.len() as f64 / 1_048_576.0);
+        println!(
+            "  Colaborador: {} verificado ✓ ({:.1} MB)",
+            name,
+            downloaded.len() as f64 / 1_048_576.0
+        );
     }
 
     let elapsed = download_start.elapsed();
@@ -358,20 +389,33 @@ async fn test_transfer_via_relay() {
         create_test_node(host_dir.path()).await;
 
     let host_doc = host_docs.create().await.expect("Error creando doc host");
-    let host_author = host_docs.author_create().await.expect("Error creando autor host");
+    let host_author = host_docs
+        .author_create()
+        .await
+        .expect("Error creando autor host");
     let host_blobs: &iroh_blobs::api::Store = &*host_blobs_store;
 
     // Metadata del proyecto
     host_doc
-        .set_bytes(host_author, b"meta/project".to_vec(),
-            serde_json::to_vec(&serde_json::json!({"name":"Relay Test","type":"od","version":1})).unwrap())
-        .await.expect("Error meta");
+        .set_bytes(
+            host_author,
+            b"meta/project".to_vec(),
+            serde_json::to_vec(&serde_json::json!({"name":"Relay Test","type":"od","version":1}))
+                .unwrap(),
+        )
+        .await
+        .expect("Error meta");
 
     // host_node_id
     let host_node_id = host_endpoint.id().to_string();
     host_doc
-        .set_bytes(host_author, b"meta/host_node_id".to_vec(), host_node_id.as_bytes().to_vec())
-        .await.expect("Error host_node_id");
+        .set_bytes(
+            host_author,
+            b"meta/host_node_id".to_vec(),
+            host_node_id.as_bytes().to_vec(),
+        )
+        .await
+        .expect("Error host_node_id");
 
     // Crear 1 imagen de 5MB
     let image_size = 5 * 1024 * 1024;
@@ -386,11 +430,22 @@ async fn test_transfer_via_relay() {
 
     let blob_key: Bytes = b"images/relay-img/blob".to_vec().into();
     let outcome = host_doc
-        .import_file(host_blobs, host_author, blob_key, &img_path, iroh_blobs::api::blobs::ImportMode::Copy)
-        .await.expect("Error import start")
-        .await.expect("Error import complete");
+        .import_file(
+            host_blobs,
+            host_author,
+            blob_key,
+            &img_path,
+            iroh_blobs::api::blobs::ImportMode::Copy,
+        )
+        .await
+        .expect("Error import start")
+        .await
+        .expect("Error import complete");
 
-    println!("Host: blob importado vía relay test ({:.1} MB)", outcome.size as f64 / 1_048_576.0);
+    println!(
+        "Host: blob importado vía relay test ({:.1} MB)",
+        outcome.size as f64 / 1_048_576.0
+    );
 
     host_doc.start_sync(vec![]).await.expect("Error sync");
 
@@ -431,8 +486,16 @@ async fn test_transfer_via_relay() {
             .get_one(iroh_docs::store::Query::key_exact(b"meta/project"))
             .await
         {
-            if collab_blobs.blobs().get_bytes(entry.content_hash()).await.is_ok() {
-                println!("Colaborador: meta/project sincronizado vía relay en {:?}", started.elapsed());
+            if collab_blobs
+                .blobs()
+                .get_bytes(entry.content_hash())
+                .await
+                .is_ok()
+            {
+                println!(
+                    "Colaborador: meta/project sincronizado vía relay en {:?}",
+                    started.elapsed()
+                );
                 break;
             }
         }
@@ -442,27 +505,48 @@ async fn test_transfer_via_relay() {
     // Descargar blob
     let blob_entry = collab_doc
         .get_one(iroh_docs::store::Query::key_exact(b"images/relay-img/blob"))
-        .await.expect("Error buscando blob")
+        .await
+        .expect("Error buscando blob")
         .expect("Blob entry debe existir vía relay");
 
     let blob_hash = blob_entry.content_hash();
 
     let host_eid: iroh::EndpointId = {
-        let e = collab_doc.get_one(iroh_docs::store::Query::key_exact(b"meta/host_node_id"))
-            .await.expect("err").expect("host_node_id");
-        let b = collab_blobs.blobs().get_bytes(e.content_hash()).await.expect("err");
+        let e = collab_doc
+            .get_one(iroh_docs::store::Query::key_exact(b"meta/host_node_id"))
+            .await
+            .expect("err")
+            .expect("host_node_id");
+        let b = collab_blobs
+            .blobs()
+            .get_bytes(e.content_hash())
+            .await
+            .expect("err");
         String::from_utf8_lossy(&b).parse().expect("parse err")
     };
 
     let downloader = collab_blobs.downloader(&_collab_endpoint);
-    downloader.download(blob_hash, vec![host_eid]).await
+    downloader
+        .download(blob_hash, vec![host_eid])
+        .await
         .expect("Error descargando blob vía relay");
 
-    let downloaded = collab_blobs.blobs().get_bytes(blob_hash).await
+    let downloaded = collab_blobs
+        .blobs()
+        .get_bytes(blob_hash)
+        .await
         .expect("Error leyendo blob");
 
-    assert_eq!(downloaded.len(), image_content.len(), "Tamaño debe coincidir");
-    assert_eq!(downloaded.as_ref(), image_content.as_slice(), "Contenido debe ser idéntico");
+    assert_eq!(
+        downloaded.len(),
+        image_content.len(),
+        "Tamaño debe coincidir"
+    );
+    assert_eq!(
+        downloaded.as_ref(),
+        image_content.as_slice(),
+        "Contenido debe ser idéntico"
+    );
 
     let elapsed = transfer_start.elapsed();
     let speed = image_size as f64 / 1_048_576.0 / elapsed.as_secs_f64();
@@ -491,7 +575,10 @@ async fn test_annotation_sync_bidirectional() {
         create_test_node(host_dir.path()).await;
 
     let host_doc = host_docs.create().await.expect("Error creando doc host");
-    let host_author = host_docs.author_create().await.expect("Error creando autor host");
+    let host_author = host_docs
+        .author_create()
+        .await
+        .expect("Error creando autor host");
     let host_blobs: &iroh_blobs::api::Store = &*host_blobs_store;
 
     // A: escribe metadata del proyecto
@@ -503,7 +590,8 @@ async fn test_annotation_sync_bidirectional() {
                 "name": "Annotation Test",
                 "type": "object_detection",
                 "version": 1,
-            })).unwrap(),
+            }))
+            .unwrap(),
         )
         .await
         .expect("Error escribiendo meta");
@@ -511,7 +599,11 @@ async fn test_annotation_sync_bidirectional() {
     // A: escribe host_node_id
     let host_node_id = host_endpoint.id().to_string();
     host_doc
-        .set_bytes(host_author, b"meta/host_node_id".to_vec(), host_node_id.as_bytes().to_vec())
+        .set_bytes(
+            host_author,
+            b"meta/host_node_id".to_vec(),
+            host_node_id.as_bytes().to_vec(),
+        )
         .await
         .expect("Error escribiendo host_node_id");
 
@@ -530,33 +622,55 @@ async fn test_annotation_sync_bidirectional() {
         "status": "pending",
     });
     host_doc
-        .set_bytes(host_author, format!("images/{}/meta", img_id).into_bytes(), serde_json::to_vec(&img_meta).unwrap())
+        .set_bytes(
+            host_author,
+            format!("images/{}/meta", img_id).into_bytes(),
+            serde_json::to_vec(&img_meta).unwrap(),
+        )
         .await
         .expect("Error escribiendo img meta");
 
     // A: anotaciones vacías iniciales
     let empty_annots: Vec<serde_json::Value> = vec![];
     host_doc
-        .set_bytes(host_author, format!("images/{}/annots", img_id).into_bytes(), serde_json::to_vec(&empty_annots).unwrap())
+        .set_bytes(
+            host_author,
+            format!("images/{}/annots", img_id).into_bytes(),
+            serde_json::to_vec(&empty_annots).unwrap(),
+        )
         .await
         .expect("Error escribiendo anotaciones vacías");
 
     // A: importar blob de imagen
     let blob_key: Bytes = format!("images/{}/blob", img_id).into_bytes().into();
     let _outcome = host_doc
-        .import_file(host_blobs, host_author, blob_key, &img_path, iroh_blobs::api::blobs::ImportMode::Copy)
-        .await.expect("Error import start")
-        .await.expect("Error import complete");
+        .import_file(
+            host_blobs,
+            host_author,
+            blob_key,
+            &img_path,
+            iroh_blobs::api::blobs::ImportMode::Copy,
+        )
+        .await
+        .expect("Error import start")
+        .await
+        .expect("Error import complete");
 
     println!("A: Imagen subida con blob ({} bytes)", image_content.len());
 
     // A: iniciar sync y suscribirse a cambios
     host_doc.start_sync(vec![]).await.expect("Error sync");
-    let mut host_events = host_doc.subscribe().await.expect("Error suscribiéndose a eventos");
+    let mut host_events = host_doc
+        .subscribe()
+        .await
+        .expect("Error suscribiéndose a eventos");
 
     // A: generar ticket
     let ticket = host_doc
-        .share(iroh_docs::api::protocol::ShareMode::Write, iroh_docs::api::protocol::AddrInfoOptions::RelayAndAddresses)
+        .share(
+            iroh_docs::api::protocol::ShareMode::Write,
+            iroh_docs::api::protocol::AddrInfoOptions::RelayAndAddresses,
+        )
         .await
         .expect("Error generando ticket");
 
@@ -567,7 +681,10 @@ async fn test_annotation_sync_bidirectional() {
         create_test_node(collab_dir.path()).await;
 
     let collab_blobs: &iroh_blobs::api::Store = &*collab_blobs_store;
-    let collab_author = collab_docs.author_create().await.expect("Error creando autor collab");
+    let collab_author = collab_docs
+        .author_create()
+        .await
+        .expect("Error creando autor collab");
 
     // B: importar doc
     let (collab_doc, _collab_events) = collab_docs
@@ -584,8 +701,16 @@ async fn test_annotation_sync_bidirectional() {
         if started.elapsed() >= max_wait {
             panic!("Timeout esperando sync de meta/project en B");
         }
-        if let Ok(Some(entry)) = collab_doc.get_one(iroh_docs::store::Query::key_exact(b"meta/project")).await {
-            if collab_blobs.blobs().get_bytes(entry.content_hash()).await.is_ok() {
+        if let Ok(Some(entry)) = collab_doc
+            .get_one(iroh_docs::store::Query::key_exact(b"meta/project"))
+            .await
+        {
+            if collab_blobs
+                .blobs()
+                .get_bytes(entry.content_hash())
+                .await
+                .is_ok()
+            {
                 println!("B: meta/project sincronizado en {:?}", started.elapsed());
                 break;
             }
@@ -595,12 +720,17 @@ async fn test_annotation_sync_bidirectional() {
 
     // B: verificar que la imagen llegó
     let img_meta_entry = collab_doc
-        .get_one(iroh_docs::store::Query::key_exact(format!("images/{}/meta", img_id).as_bytes()))
+        .get_one(iroh_docs::store::Query::key_exact(
+            format!("images/{}/meta", img_id).as_bytes(),
+        ))
         .await
         .expect("Error buscando img meta en B")
         .expect("Imagen meta DEBE existir en B después del sync");
 
-    let img_meta_bytes = collab_blobs.blobs().get_bytes(img_meta_entry.content_hash()).await
+    let img_meta_bytes = collab_blobs
+        .blobs()
+        .get_bytes(img_meta_entry.content_hash())
+        .await
         .expect("Error leyendo img meta blob");
     let img_meta_received: serde_json::Value = serde_json::from_slice(&img_meta_bytes).unwrap();
     assert_eq!(img_meta_received["id"], img_id);
@@ -608,19 +738,29 @@ async fn test_annotation_sync_bidirectional() {
 
     // B: descargar blob de la imagen
     let blob_entry = collab_doc
-        .get_one(iroh_docs::store::Query::key_exact(format!("images/{}/blob", img_id).as_bytes()))
+        .get_one(iroh_docs::store::Query::key_exact(
+            format!("images/{}/blob", img_id).as_bytes(),
+        ))
         .await
         .expect("Error buscando blob en B")
         .expect("Blob DEBE existir en B");
 
     let downloader = collab_blobs.downloader(&_collab_endpoint);
-    downloader.download(blob_entry.content_hash(), vec![host_endpoint.id()])
-        .await.expect("Error descargando blob");
+    downloader
+        .download(blob_entry.content_hash(), vec![host_endpoint.id()])
+        .await
+        .expect("Error descargando blob");
 
-    let downloaded_blob = collab_blobs.blobs().get_bytes(blob_entry.content_hash()).await
+    let downloaded_blob = collab_blobs
+        .blobs()
+        .get_bytes(blob_entry.content_hash())
+        .await
         .expect("Error leyendo blob descargado");
     assert_eq!(downloaded_blob.len(), image_content.len());
-    println!("B: Blob descargado y verificado ✓ ({} bytes)", downloaded_blob.len());
+    println!(
+        "B: Blob descargado y verificado ✓ ({} bytes)",
+        downloaded_blob.len()
+    );
 
     // B: ESCRIBE ANOTACIONES (simula sync_annotations_to_doc)
     let annotations = serde_json::json!([
@@ -644,7 +784,11 @@ async fn test_annotation_sync_bidirectional() {
 
     let annots_key = format!("images/{}/annots", img_id);
     collab_doc
-        .set_bytes(collab_author, annots_key.as_bytes().to_vec(), serde_json::to_vec(&annotations).unwrap())
+        .set_bytes(
+            collab_author,
+            annots_key.as_bytes().to_vec(),
+            serde_json::to_vec(&annotations).unwrap(),
+        )
         .await
         .expect("Error B escribiendo anotaciones al doc");
 
@@ -707,12 +851,20 @@ async fn test_annotation_sync_bidirectional() {
     assert_eq!(received_array[1]["class_name"], "cat");
 
     println!("A: Anotaciones verificadas ✓");
-    println!("  - ann-001: dog bbox [{},{}]-[{},{}]",
-        received_array[0]["points"][0][0], received_array[0]["points"][0][1],
-        received_array[0]["points"][1][0], received_array[0]["points"][1][1]);
-    println!("  - ann-002: cat bbox [{},{}]-[{},{}]",
-        received_array[1]["points"][0][0], received_array[1]["points"][0][1],
-        received_array[1]["points"][1][0], received_array[1]["points"][1][1]);
+    println!(
+        "  - ann-001: dog bbox [{},{}]-[{},{}]",
+        received_array[0]["points"][0][0],
+        received_array[0]["points"][0][1],
+        received_array[0]["points"][1][0],
+        received_array[0]["points"][1][1]
+    );
+    println!(
+        "  - ann-002: cat bbox [{},{}]-[{},{}]",
+        received_array[1]["points"][0][0],
+        received_array[1]["points"][0][1],
+        received_array[1]["points"][1][0],
+        received_array[1]["points"][1][1]
+    );
 
     println!("\n✓ Flujo completo de anotaciones bidireccional verificado:");
     println!("  A sube imagen → B recibe → B anota → A recibe anotaciones");
@@ -734,17 +886,32 @@ async fn test_download_from_multiple_peers() {
         create_test_node(host_dir.path()).await;
 
     let host_doc = host_docs.create().await.expect("Error creando doc host");
-    let host_author = host_docs.author_create().await.expect("Error creando autor host");
+    let host_author = host_docs
+        .author_create()
+        .await
+        .expect("Error creando autor host");
     let host_blobs: &iroh_blobs::api::Store = &*host_blobs_store;
 
     host_doc
-        .set_bytes(host_author, b"meta/project".to_vec(),
-            serde_json::to_vec(&serde_json::json!({"name":"Multi-peer Test","type":"od","version":1})).unwrap())
-        .await.expect("Error meta");
+        .set_bytes(
+            host_author,
+            b"meta/project".to_vec(),
+            serde_json::to_vec(
+                &serde_json::json!({"name":"Multi-peer Test","type":"od","version":1}),
+            )
+            .unwrap(),
+        )
+        .await
+        .expect("Error meta");
 
     host_doc
-        .set_bytes(host_author, b"meta/host_node_id".to_vec(), host_endpoint.id().to_string().as_bytes().to_vec())
-        .await.expect("Error host_node_id");
+        .set_bytes(
+            host_author,
+            b"meta/host_node_id".to_vec(),
+            host_endpoint.id().to_string().as_bytes().to_vec(),
+        )
+        .await
+        .expect("Error host_node_id");
 
     // Imagen de 1MB
     let image_content: Vec<u8> = (0..1024 * 1024).map(|i| (i % 251) as u8).collect();
@@ -758,17 +925,32 @@ async fn test_download_from_multiple_peers() {
 
     let blob_key: Bytes = b"images/mp-img/blob".to_vec().into();
     let outcome = host_doc
-        .import_file(host_blobs, host_author, blob_key, &img_path, iroh_blobs::api::blobs::ImportMode::Copy)
-        .await.expect("Error import start")
-        .await.expect("Error import complete");
+        .import_file(
+            host_blobs,
+            host_author,
+            blob_key,
+            &img_path,
+            iroh_blobs::api::blobs::ImportMode::Copy,
+        )
+        .await
+        .expect("Error import start")
+        .await
+        .expect("Error import complete");
 
     host_doc.start_sync(vec![]).await.expect("Error sync");
 
     let ticket = host_doc
-        .share(iroh_docs::api::protocol::ShareMode::Write, iroh_docs::api::protocol::AddrInfoOptions::RelayAndAddresses)
-        .await.expect("Error ticket");
+        .share(
+            iroh_docs::api::protocol::ShareMode::Write,
+            iroh_docs::api::protocol::AddrInfoOptions::RelayAndAddresses,
+        )
+        .await
+        .expect("Error ticket");
 
-    println!("Host: imagen subida (hash={})", &outcome.hash.to_string()[..16]);
+    println!(
+        "Host: imagen subida (hash={})",
+        &outcome.hash.to_string()[..16]
+    );
 
     // --- PEER B: se une y descarga ---
     let (peer_b_endpoint, peer_b_docs, peer_b_blobs_store, _peer_b_router) =
@@ -776,19 +958,36 @@ async fn test_download_from_multiple_peers() {
 
     let peer_b_blobs: &iroh_blobs::api::Store = &*peer_b_blobs_store;
 
-    let (peer_b_doc, _) = peer_b_docs.import_and_subscribe(ticket.clone()).await.expect("Error B import");
+    let (peer_b_doc, _) = peer_b_docs
+        .import_and_subscribe(ticket.clone())
+        .await
+        .expect("Error B import");
 
     // B: esperar sync
     let started = std::time::Instant::now();
     loop {
-        if started.elapsed() >= std::time::Duration::from_secs(30) { panic!("Timeout B sync"); }
-        if let Ok(Some(e)) = peer_b_doc.get_one(iroh_docs::store::Query::key_exact(b"images/mp-img/blob")).await {
-            if peer_b_blobs.blobs().get_bytes(e.content_hash()).await.is_ok() {
+        if started.elapsed() >= std::time::Duration::from_secs(30) {
+            panic!("Timeout B sync");
+        }
+        if let Ok(Some(e)) = peer_b_doc
+            .get_one(iroh_docs::store::Query::key_exact(b"images/mp-img/blob"))
+            .await
+        {
+            if peer_b_blobs
+                .blobs()
+                .get_bytes(e.content_hash())
+                .await
+                .is_ok()
+            {
                 break; // Ya tiene el blob localmente (metadata sync incluye hash)
             }
             // Descargar blob desde host
             let dl = peer_b_blobs.downloader(&peer_b_endpoint);
-            if dl.download(e.content_hash(), vec![host_endpoint.id()]).await.is_ok() {
+            if dl
+                .download(e.content_hash(), vec![host_endpoint.id()])
+                .await
+                .is_ok()
+            {
                 break;
             }
         }
@@ -798,8 +997,13 @@ async fn test_download_from_multiple_peers() {
     // Verificar B tiene el blob
     let b_blob_entry = peer_b_doc
         .get_one(iroh_docs::store::Query::key_exact(b"images/mp-img/blob"))
-        .await.expect("err").expect("blob en B");
-    let b_blob = peer_b_blobs.blobs().get_bytes(b_blob_entry.content_hash()).await
+        .await
+        .expect("err")
+        .expect("blob en B");
+    let b_blob = peer_b_blobs
+        .blobs()
+        .get_bytes(b_blob_entry.content_hash())
+        .await
         .expect("Error leyendo blob en B");
     assert_eq!(b_blob.len(), image_content.len());
     println!("B: imagen descargada del host ✓ ({} bytes)", b_blob.len());
@@ -808,9 +1012,14 @@ async fn test_download_from_multiple_peers() {
     let peer_b_author = peer_b_docs.author_create().await.expect("err");
     let peer_b_id = peer_b_endpoint.id().to_string();
     peer_b_doc
-        .set_bytes(peer_b_author, format!("meta/peers/{}", peer_b_id).into_bytes(),
-            serde_json::to_vec(&serde_json::json!({"display_name":"PeerB","role":"annotator"})).unwrap())
-        .await.expect("Error registrando B");
+        .set_bytes(
+            peer_b_author,
+            format!("meta/peers/{}", peer_b_id).into_bytes(),
+            serde_json::to_vec(&serde_json::json!({"display_name":"PeerB","role":"annotator"}))
+                .unwrap(),
+        )
+        .await
+        .expect("Error registrando B");
 
     println!("B: registrado como peer en el doc");
 
@@ -822,17 +1031,29 @@ async fn test_download_from_multiple_peers() {
 
     // C necesita un ticket nuevo del doc
     let ticket_c = host_doc
-        .share(iroh_docs::api::protocol::ShareMode::Write, iroh_docs::api::protocol::AddrInfoOptions::RelayAndAddresses)
-        .await.expect("Error ticket C");
+        .share(
+            iroh_docs::api::protocol::ShareMode::Write,
+            iroh_docs::api::protocol::AddrInfoOptions::RelayAndAddresses,
+        )
+        .await
+        .expect("Error ticket C");
 
-    let (peer_c_doc, _) = peer_c_docs.import_and_subscribe(ticket_c).await.expect("Error C import");
+    let (peer_c_doc, _) = peer_c_docs
+        .import_and_subscribe(ticket_c)
+        .await
+        .expect("Error C import");
 
     // C: esperar sync de blob entry
     let started = std::time::Instant::now();
     let blob_hash;
     loop {
-        if started.elapsed() >= std::time::Duration::from_secs(30) { panic!("Timeout C sync"); }
-        if let Ok(Some(e)) = peer_c_doc.get_one(iroh_docs::store::Query::key_exact(b"images/mp-img/blob")).await {
+        if started.elapsed() >= std::time::Duration::from_secs(30) {
+            panic!("Timeout C sync");
+        }
+        if let Ok(Some(e)) = peer_c_doc
+            .get_one(iroh_docs::store::Query::key_exact(b"images/mp-img/blob"))
+            .await
+        {
             blob_hash = e.content_hash();
             break;
         }
@@ -842,18 +1063,27 @@ async fn test_download_from_multiple_peers() {
 
     // C: descargar usando AMBOS peers (host + B) — esto es lo que testea el fix 3
     let multi_sources = vec![host_endpoint.id(), peer_b_endpoint.id()];
-    println!("C: descargando desde {} fuentes: host + B", multi_sources.len());
+    println!(
+        "C: descargando desde {} fuentes: host + B",
+        multi_sources.len()
+    );
 
     let dl_c = peer_c_blobs.downloader(&peer_c_endpoint);
     dl_c.download(blob_hash, multi_sources)
         .await
         .expect("Error descargando desde múltiples peers");
 
-    let c_blob = peer_c_blobs.blobs().get_bytes(blob_hash).await
+    let c_blob = peer_c_blobs
+        .blobs()
+        .get_bytes(blob_hash)
+        .await
         .expect("Error leyendo blob en C");
     assert_eq!(c_blob.len(), image_content.len());
     assert_eq!(c_blob.as_ref(), image_content.as_slice());
 
-    println!("C: imagen descargada desde múltiples peers ✓ ({} bytes)", c_blob.len());
+    println!(
+        "C: imagen descargada desde múltiples peers ✓ ({} bytes)",
+        c_blob.len()
+    );
     println!("\n✓ Descarga multi-peer verificada: C descargó usando [host, B] como fuentes");
 }

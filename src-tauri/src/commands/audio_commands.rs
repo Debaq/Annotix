@@ -3,7 +3,7 @@ use tauri::{AppHandle, Emitter, State};
 use crate::p2p::node::P2pState;
 use crate::p2p::P2pPermission;
 use crate::store::audio::AudioResponse;
-use crate::store::project_file::{AudioSegment, AudioEvent};
+use crate::store::project_file::{AudioEvent, AudioSegment};
 use crate::store::AppState;
 
 #[tauri::command]
@@ -17,7 +17,8 @@ pub async fn upload_audio(
     sample_rate: i32,
     language: Option<String>,
 ) -> Result<String, String> {
-    p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
+    p2p.check_permission(&project_id, P2pPermission::UploadData)
+        .await?;
     let lang = language.as_deref().unwrap_or("en");
     let id = state.upload_audio(&project_id, &file_path, duration_ms, sample_rate, lang)?;
     let _ = app.emit("db:audio-changed", &project_id);
@@ -52,7 +53,8 @@ pub async fn save_transcription(
     speaker_id: Option<String>,
     language: Option<String>,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate)
+        .await?;
     state.save_transcription(
         &project_id,
         &audio_id,
@@ -72,7 +74,8 @@ pub async fn delete_audio(
     project_id: String,
     id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Delete).await?;
+    p2p.check_permission(&project_id, P2pPermission::Delete)
+        .await?;
     state.delete_audio(&project_id, &id)?;
     let _ = app.emit("db:audio-changed", &project_id);
     Ok(())
@@ -110,7 +113,8 @@ pub async fn save_audio_annotation(
     class_id: Option<i64>,
     events: Option<Vec<AudioEvent>>,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate)
+        .await?;
     state.save_audio_annotation(
         &project_id,
         &audio_id,

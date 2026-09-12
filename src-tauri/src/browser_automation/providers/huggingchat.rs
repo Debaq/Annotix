@@ -1,6 +1,5 @@
 /// Particularidades de HuggingChat.
 /// HuggingChat permite seleccionar entre varios modelos open-source.
-
 use headless_chrome::Tab;
 use std::time::Duration;
 
@@ -8,8 +7,7 @@ use std::time::Duration;
 #[allow(dead_code)]
 pub fn select_model(tab: &Tab, model_name: &str) -> Result<(), String> {
     let selector = "button[data-testid='model-selector'], .model-selector";
-    if let Ok(el) =
-        tab.wait_for_element_with_custom_timeout(selector, Duration::from_millis(2000))
+    if let Ok(el) = tab.wait_for_element_with_custom_timeout(selector, Duration::from_millis(2000))
     {
         el.click()
             .map_err(|e| format!("Error abriendo selector de modelo: {}", e))?;

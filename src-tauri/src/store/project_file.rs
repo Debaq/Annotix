@@ -37,7 +37,11 @@ pub struct ProjectFile {
     pub audio: Vec<AudioEntry>,
     #[serde(default)]
     pub p2p: Option<P2pProjectConfig>,
-    #[serde(default, skip_serializing_if = "Option::is_none", rename = "p2pDownload")]
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        rename = "p2pDownload"
+    )]
     pub p2p_download: Option<P2pDownloadStatus>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub inference_models: Vec<InferenceModelEntry>,
@@ -53,8 +57,12 @@ pub struct ProjectFile {
     pub webp_quality_preset: String,
 }
 
-fn default_image_format() -> String { "jpg".to_string() }
-fn default_webp_preset() -> String { "high".to_string() }
+fn default_image_format() -> String {
+    "jpg".to_string()
+}
+fn default_webp_preset() -> String {
+    "high".to_string()
+}
 
 /// Estado de descarga P2P pendiente (imágenes por descargar)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -115,7 +123,11 @@ pub struct ImageEntry {
     pub locked_by: Option<String>,
     #[serde(default, rename = "lockExpires")]
     pub lock_expires: Option<f64>,
-    #[serde(default, skip_serializing_if = "Option::is_none", rename = "downloadStatus")]
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        rename = "downloadStatus"
+    )]
     pub download_status: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub predictions: Vec<PredictionEntry>,
@@ -136,7 +148,11 @@ pub struct AnnotationEntry {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub confidence: Option<f64>,
     /// Nombre de clase del modelo (solo para source="ai")
-    #[serde(default, skip_serializing_if = "Option::is_none", rename = "modelClassName")]
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        rename = "modelClassName"
+    )]
     pub model_class_name: Option<String>,
     /// Nombre del peer que creó la anotación (solo en sesiones P2P)
     #[serde(default, skip_serializing_if = "Option::is_none", rename = "createdBy")]

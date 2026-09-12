@@ -130,11 +130,14 @@ impl AppState {
 
         let dir = self.project_dir(project_id)?;
         let pf = io::read_project(&dir)?;
-        cache.insert(project_id.to_string(), CachedProject {
-            data: pf,
-            dir,
-            dirty: false,
-        });
+        cache.insert(
+            project_id.to_string(),
+            CachedProject {
+                data: pf,
+                dir,
+                dirty: false,
+            },
+        );
         Ok(())
     }
 
@@ -191,11 +194,14 @@ impl AppState {
     /// Inserta directamente un proyecto en cache (para proyectos recién creados)
     pub fn insert_into_cache(&self, project_id: &str, pf: ProjectFile, dir: PathBuf) {
         if let Ok(mut cache) = self.cache.lock() {
-            cache.insert(project_id.to_string(), CachedProject {
-                data: pf,
-                dir,
-                dirty: false,
-            });
+            cache.insert(
+                project_id.to_string(),
+                CachedProject {
+                    data: pf,
+                    dir,
+                    dirty: false,
+                },
+            );
         }
     }
 }

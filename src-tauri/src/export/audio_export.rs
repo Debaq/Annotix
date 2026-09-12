@@ -3,7 +3,7 @@ use std::path::Path;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
-use crate::store::project_file::{ProjectFile, AudioEntry};
+use crate::store::project_file::{AudioEntry, ProjectFile};
 
 /// Agrega archivo de audio al ZIP, leyendo los bytes desde disco.
 fn add_audio_to_zip<W: Write + std::io::Seek>(
@@ -53,7 +53,8 @@ pub fn export_huggingface<F: Fn(f64)>(
         csv.push_str(&format!("audio/{},\"{}\"\n", audio.name, escaped));
     }
 
-    zip.start_file("metadata.csv", options).map_err(|e| e.to_string())?;
+    zip.start_file("metadata.csv", options)
+        .map_err(|e| e.to_string())?;
     zip.write_all(csv.as_bytes()).map_err(|e| e.to_string())?;
 
     emit_progress(100.0);
@@ -88,10 +89,14 @@ pub fn export_ljspeech<F: Fn(f64)>(
             .file_stem()
             .map(|s| s.to_string_lossy().to_string())
             .unwrap_or_else(|| audio.name.clone());
-        csv.push_str(&format!("{}|{}|{}\n", stem, audio.transcription, audio.transcription));
+        csv.push_str(&format!(
+            "{}|{}|{}\n",
+            stem, audio.transcription, audio.transcription
+        ));
     }
 
-    zip.start_file("metadata.csv", options).map_err(|e| e.to_string())?;
+    zip.start_file("metadata.csv", options)
+        .map_err(|e| e.to_string())?;
     zip.write_all(csv.as_bytes()).map_err(|e| e.to_string())?;
 
     emit_progress(100.0);
@@ -111,7 +116,9 @@ pub fn export_audio_classification_csv<F: Fn(f64)>(
     let options = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
     let total = audio_entries.len() as f64;
 
-    let class_map: std::collections::HashMap<i64, &str> = project.classes.iter()
+    let class_map: std::collections::HashMap<i64, &str> = project
+        .classes
+        .iter()
         .map(|c| (c.id, c.name.as_str()))
         .collect();
 
@@ -122,14 +129,16 @@ pub fn export_audio_classification_csv<F: Fn(f64)>(
 
     let mut csv = "file_name,label\n".to_string();
     for audio in audio_entries {
-        let label = audio.class_id
+        let label = audio
+            .class_id
             .and_then(|cid| class_map.get(&cid).copied())
             .unwrap_or("");
         let escaped = label.replace('"', "\"\"");
         csv.push_str(&format!("audio/{},\"{}\"\n", audio.name, escaped));
     }
 
-    zip.start_file("metadata.csv", options).map_err(|e| e.to_string())?;
+    zip.start_file("metadata.csv", options)
+        .map_err(|e| e.to_string())?;
     zip.write_all(csv.as_bytes()).map_err(|e| e.to_string())?;
 
     emit_progress(100.0);
@@ -149,7 +158,9 @@ pub fn export_sound_events_csv<F: Fn(f64)>(
     let options = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
     let total = audio_entries.len() as f64;
 
-    let class_map: std::collections::HashMap<i64, &str> = project.classes.iter()
+    let class_map: std::collections::HashMap<i64, &str> = project
+        .classes
+        .iter()
         .map(|c| (c.id, c.name.as_str()))
         .collect();
 
@@ -163,11 +174,15 @@ pub fn export_sound_events_csv<F: Fn(f64)>(
         for event in &audio.events {
             let label = class_map.get(&event.class_id).copied().unwrap_or("");
             let escaped = label.replace('"', "\"\"");
-            csv.push_str(&format!("audio/{},{},{},\"{}\"\n", audio.name, event.start_ms, event.end_ms, escaped));
+            csv.push_str(&format!(
+                "audio/{},{},{},\"{}\"\n",
+                audio.name, event.start_ms, event.end_ms, escaped
+            ));
         }
     }
 
-    zip.start_file("metadata.csv", options).map_err(|e| e.to_string())?;
+    zip.start_file("metadata.csv", options)
+        .map_err(|e| e.to_string())?;
     zip.write_all(csv.as_bytes()).map_err(|e| e.to_string())?;
 
     emit_progress(100.0);

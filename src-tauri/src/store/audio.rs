@@ -1,4 +1,4 @@
-use crate::store::project_file::{AudioEntry, AudioSegment, AudioEvent, TtsSentence};
+use crate::store::project_file::{AudioEntry, AudioEvent, AudioSegment, TtsSentence};
 use crate::store::state::AppState;
 
 /// Timestamp compatible con JS Date.now()
@@ -76,14 +76,14 @@ impl AppState {
             .map_err(|e| format!("Error creando directorio audio: {}", e))?;
 
         let src = std::path::Path::new(file_path);
-        let file_name = src.file_name()
+        let file_name = src
+            .file_name()
             .ok_or("Nombre de archivo inválido")?
             .to_string_lossy();
         let unique_name = format!("{}_{}", &id[..8], file_name);
         let dest = audio_dir.join(&unique_name);
 
-        std::fs::copy(src, &dest)
-            .map_err(|e| format!("Error copiando archivo de audio: {}", e))?;
+        std::fs::copy(src, &dest).map_err(|e| format!("Error copiando archivo de audio: {}", e))?;
 
         let original_name = file_name.to_string();
 
@@ -125,10 +125,7 @@ impl AppState {
         })
     }
 
-    pub fn list_audio(
-        &self,
-        project_id: &str,
-    ) -> Result<Vec<AudioResponse>, String> {
+    pub fn list_audio(&self, project_id: &str) -> Result<Vec<AudioResponse>, String> {
         self.with_project(project_id, |pf| {
             pf.audio
                 .iter()
@@ -150,26 +147,37 @@ impl AppState {
             if let Some(a) = pf.audio.iter_mut().find(|a| a.id == audio_id) {
                 a.transcription = transcription.to_string();
                 if let Some(sid) = speaker_id {
-                    a.speaker_id = if sid.is_empty() { None } else { Some(sid.to_string()) };
+                    a.speaker_id = if sid.is_empty() {
+                        None
+                    } else {
+                        Some(sid.to_string())
+                    };
                 }
                 if let Some(lang) = language {
                     a.language = lang.to_string();
                 }
-                a.status = if transcription.is_empty() { "pending".to_string() } else { "done".to_string() };
-                a.annotated = if transcription.is_empty() { None } else { Some(now) };
+                a.status = if transcription.is_empty() {
+                    "pending".to_string()
+                } else {
+                    "done".to_string()
+                };
+                a.annotated = if transcription.is_empty() {
+                    None
+                } else {
+                    Some(now)
+                };
             }
             pf.updated = now;
         })
     }
 
-    pub fn delete_audio(
-        &self,
-        project_id: &str,
-        audio_id: &str,
-    ) -> Result<(), String> {
+    pub fn delete_audio(&self, project_id: &str, audio_id: &str) -> Result<(), String> {
         // Obtener nombre de archivo para borrar del disco
         let file_name = self.with_project(project_id, |pf| {
-            pf.audio.iter().find(|a| a.id == audio_id).map(|a| a.file.clone())
+            pf.audio
+                .iter()
+                .find(|a| a.id == audio_id)
+                .map(|a| a.file.clone())
         })?;
 
         self.with_project_mut(project_id, |pf| {
@@ -187,13 +195,12 @@ impl AppState {
         Ok(())
     }
 
-    pub fn get_audio_file_path(
-        &self,
-        project_id: &str,
-        audio_id: &str,
-    ) -> Result<String, String> {
+    pub fn get_audio_file_path(&self, project_id: &str, audio_id: &str) -> Result<String, String> {
         let file_name = self.with_project(project_id, |pf| {
-            pf.audio.iter().find(|a| a.id == audio_id).map(|a| a.file.clone())
+            pf.audio
+                .iter()
+                .find(|a| a.id == audio_id)
+                .map(|a| a.file.clone())
         })?;
 
         match file_name {
@@ -206,11 +213,7 @@ impl AppState {
         }
     }
 
-    pub fn get_audio_data(
-        &self,
-        project_id: &str,
-        audio_id: &str,
-    ) -> Result<Vec<u8>, String> {
+    pub fn get_audio_data(&self, project_id: &str, audio_id: &str) -> Result<Vec<u8>, String> {
         let path = self.get_audio_file_path(project_id, audio_id)?;
         std::fs::read(&path).map_err(|e| format!("Error leyendo audio: {}", e))
     }
@@ -270,7 +273,11 @@ impl AppState {
                     a.transcription = t.to_string();
                 }
                 if let Some(sid) = speaker_id {
-                    a.speaker_id = if sid.is_empty() { None } else { Some(sid.to_string()) };
+                    a.speaker_id = if sid.is_empty() {
+                        None
+                    } else {
+                        Some(sid.to_string())
+                    };
                 }
                 if let Some(lang) = language {
                     a.language = lang.to_string();
@@ -290,7 +297,11 @@ impl AppState {
                     || !a.segments.is_empty()
                     || a.class_id.is_some()
                     || !a.events.is_empty();
-                a.status = if has_annotation { "done".to_string() } else { "pending".to_string() };
+                a.status = if has_annotation {
+                    "done".to_string()
+                } else {
+                    "pending".to_string()
+                };
                 a.annotated = if has_annotation { Some(now) } else { None };
             }
             pf.updated = now;
@@ -299,10 +310,7 @@ impl AppState {
 
     // ─── TTS Guided Recording ──────────────────────────────────────────────
 
-    pub fn get_tts_sentences(
-        &self,
-        project_id: &str,
-    ) -> Result<Vec<TtsSentence>, String> {
+    pub fn get_tts_sentences(&self, project_id: &str) -> Result<Vec<TtsSentence>, String> {
         self.with_project(project_id, |pf| pf.tts_sentences.clone())
     }
 
@@ -360,7 +368,11 @@ impl AppState {
         // Crear AudioEntry
         let entry = AudioEntry {
             id: audio_id.clone(),
-            name: format!("tts_{}.{}", &sentence_id[..8.min(sentence_id.len())], file_ext),
+            name: format!(
+                "tts_{}.{}",
+                &sentence_id[..8.min(sentence_id.len())],
+                file_ext
+            ),
             file: file_name,
             duration_ms,
             sample_rate,

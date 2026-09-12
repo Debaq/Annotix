@@ -1,6 +1,6 @@
-use super::{CloudJobHandle, CloudJobState, CloudJobStatus, CloudRunner};
 use super::gcp_auth;
 use super::gcs;
+use super::{CloudJobHandle, CloudJobState, CloudJobStatus, CloudRunner};
 use crate::training::{CloudProvider, CloudTrainingConfig, TrainingRequest};
 
 /// Vertex AI Gemini fine-tuning runner — usa supervisedTuningSpec
@@ -13,7 +13,12 @@ pub struct VertexTuningRunner {
 
 impl VertexTuningRunner {
     pub fn new(sa_path: String, project_id: String, region: String, bucket: String) -> Self {
-        Self { sa_path, project_id, region, bucket }
+        Self {
+            sa_path,
+            project_id,
+            region,
+            bucket,
+        }
     }
 
     fn get_token(&self) -> Result<String, String> {
@@ -46,7 +51,8 @@ impl CloudRunner for VertexTuningRunner {
         // 2. Upload JSONL to GCS
         let gcs_prefix = format!("annotix-tuning/{}", job_uuid);
         let gcs_training_data = gcs::upload_file(
-            &token, &self.bucket,
+            &token,
+            &self.bucket,
             &format!("{}/training_data.jsonl", gcs_prefix),
             &jsonl_path,
         )?;
@@ -126,8 +132,14 @@ impl CloudRunner for VertexTuningRunner {
             _ => (CloudJobState::Running, Some(25.0)),
         };
 
-        let tuned_model = body["tunedModelEndpointName"].as_str().map(|s| s.to_string())
-            .or_else(|| body["tunedModel"]["endpoint"].as_str().map(|s| s.to_string()));
+        let tuned_model = body["tunedModelEndpointName"]
+            .as_str()
+            .map(|s| s.to_string())
+            .or_else(|| {
+                body["tunedModel"]["endpoint"]
+                    .as_str()
+                    .map(|s| s.to_string())
+            });
 
         Ok(CloudJobStatus {
             state,
@@ -161,18 +173,24 @@ impl CloudRunner for VertexTuningRunner {
         _output_dir: &str,
     ) -> Result<String, String> {
         // Gemini tuned models live as endpoints, not downloadable files
-        let endpoint = status.model_output_uri.as_deref()
+        let endpoint = status
+            .model_output_uri
+            .as_deref()
             .ok_or("No hay endpoint del modelo tuneado")?;
         Ok(endpoint.to_string())
     }
 }
 
 /// Convierte un dataset ZIP a formato JSONL para Gemini tuning
-fn convert_to_jsonl(_dataset_path: &str, output_path: &str, project_classes: &[String]) -> Result<(), String> {
+fn convert_to_jsonl(
+    _dataset_path: &str,
+    output_path: &str,
+    project_classes: &[String],
+) -> Result<(), String> {
     use std::io::Write;
 
-    let mut out = std::fs::File::create(output_path)
-        .map_err(|e| format!("Error creando JSONL: {}", e))?;
+    let mut out =
+        std::fs::File::create(output_path).map_err(|e| format!("Error creando JSONL: {}", e))?;
 
     // Generate simple training examples from class names
     for class in project_classes {

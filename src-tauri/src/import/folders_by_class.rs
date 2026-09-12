@@ -1,9 +1,9 @@
+use serde_json::json;
 use std::collections::BTreeSet;
 use zip::ZipArchive;
-use serde_json::json;
 
-use super::{ImportData, ImageImportData, create_class, create_annotation};
-use super::yolo::{read_zip_bytes, get_image_dimensions};
+use super::yolo::{get_image_dimensions, read_zip_bytes};
+use super::{create_annotation, create_class, ImageImportData, ImportData};
 
 pub fn import_data(archive: &mut ZipArchive<std::fs::File>) -> Result<ImportData, String> {
     let image_exts = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"];
@@ -27,7 +27,9 @@ pub fn import_data(archive: &mut ZipArchive<std::fs::File>) -> Result<ImportData
         return Err("Se necesitan al menos 2 carpetas de clase".to_string());
     }
 
-    let classes: Vec<_> = folder_names.iter().enumerate()
+    let classes: Vec<_> = folder_names
+        .iter()
+        .enumerate()
         .map(|(i, name)| create_class(i as i64, name, None))
         .collect();
 
@@ -65,9 +67,13 @@ pub fn import_data(archive: &mut ZipArchive<std::fs::File>) -> Result<ImportData
                 Err(_) => continue,
             };
 
-            let annotation = create_annotation(class_idx as i64, "classification", json!({
-                "labels": [class_idx as i64]
-            }));
+            let annotation = create_annotation(
+                class_idx as i64,
+                "classification",
+                json!({
+                    "labels": [class_idx as i64]
+                }),
+            );
 
             images.push(ImageImportData {
                 name: format!("{}/{}", folder, image_name_in_folder),

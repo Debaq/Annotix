@@ -2,9 +2,9 @@ use tauri::State;
 
 use crate::p2p::node::P2pState;
 use crate::p2p::P2pPermission;
-use crate::store::AppState;
 use crate::store::project_file::TabularDataEntry;
 use crate::store::tabular::TabularPreview;
+use crate::store::AppState;
 
 #[tauri::command]
 pub async fn upload_tabular_file(
@@ -14,7 +14,8 @@ pub async fn upload_tabular_file(
     source_path: String,
     file_name: String,
 ) -> Result<TabularDataEntry, String> {
-    p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
+    p2p.check_permission(&project_id, P2pPermission::UploadData)
+        .await?;
     state.upload_tabular_file(&project_id, &source_path, &file_name)
 }
 
@@ -26,7 +27,8 @@ pub async fn create_tabular_data(
     name: String,
     columns: Vec<String>,
 ) -> Result<TabularDataEntry, String> {
-    p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
+    p2p.check_permission(&project_id, P2pPermission::UploadData)
+        .await?;
     state.create_tabular_data(&project_id, &name, columns)
 }
 
@@ -38,7 +40,8 @@ pub async fn update_tabular_rows(
     data_id: String,
     rows: Vec<Vec<String>>,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate)
+        .await?;
     state.update_tabular_rows(&project_id, &data_id, rows)
 }
 
@@ -47,9 +50,7 @@ pub fn list_tabular_data(
     state: State<'_, AppState>,
     project_id: String,
 ) -> Result<Vec<TabularDataEntry>, String> {
-    state.with_project(&project_id, |pf| {
-        pf.tabular_data.clone()
-    })
+    state.with_project(&project_id, |pf| pf.tabular_data.clone())
 }
 
 #[tauri::command]
@@ -71,7 +72,13 @@ pub fn update_tabular_config(
     feature_columns: Vec<String>,
     task_type: Option<String>,
 ) -> Result<(), String> {
-    state.update_tabular_config(&project_id, &data_id, target_column, feature_columns, task_type)
+    state.update_tabular_config(
+        &project_id,
+        &data_id,
+        target_column,
+        feature_columns,
+        task_type,
+    )
 }
 
 #[tauri::command]
@@ -81,6 +88,7 @@ pub async fn delete_tabular_data(
     project_id: String,
     data_id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Delete).await?;
+    p2p.check_permission(&project_id, P2pPermission::Delete)
+        .await?;
     state.delete_tabular_data(&project_id, &data_id)
 }

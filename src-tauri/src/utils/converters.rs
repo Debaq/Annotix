@@ -1,5 +1,12 @@
 /// Normalize bounding box coordinates to 0-1 range
-pub fn normalize_coordinates(x: f64, y: f64, w: f64, h: f64, img_w: f64, img_h: f64) -> (f64, f64, f64, f64) {
+pub fn normalize_coordinates(
+    x: f64,
+    y: f64,
+    w: f64,
+    h: f64,
+    img_w: f64,
+    img_h: f64,
+) -> (f64, f64, f64, f64) {
     (x / img_w, y / img_h, w / img_w, h / img_h)
 }
 

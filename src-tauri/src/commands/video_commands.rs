@@ -3,8 +3,8 @@ use tauri::{AppHandle, Emitter, Manager, State};
 
 use crate::p2p::node::P2pState;
 use crate::p2p::P2pPermission;
-use crate::store::project_file::KeyframeEntry;
 use crate::store::images::ImageResponse;
+use crate::store::project_file::KeyframeEntry;
 use crate::store::videos::{bake_annotations_for_frame, TrackResponse, VideoInfo, VideoResponse};
 use crate::store::AppState;
 
@@ -64,7 +64,8 @@ pub async fn upload_video(
     file_path: String,
     fps_extraction: f64,
 ) -> Result<String, String> {
-    p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
+    p2p.check_permission(&project_id, P2pPermission::UploadData)
+        .await?;
     let fps_extraction = validate_fps(fps_extraction)?;
     let info = get_video_info(file_path.clone())?;
 
@@ -95,11 +96,14 @@ pub async fn upload_video(
         info.height,
     )?;
 
-    let _ = app.emit("db:videos-changed", serde_json::json!({
-        "projectId": &project_id,
-        "action": "added",
-        "videoIds": [&video_id],
-    }));
+    let _ = app.emit(
+        "db:videos-changed",
+        serde_json::json!({
+            "projectId": &project_id,
+            "action": "added",
+            "videoIds": [&video_id],
+        }),
+    );
     Ok(video_id)
 }
 
@@ -112,7 +116,8 @@ pub async fn extract_video_frames(
     project_id: String,
     video_id: String,
 ) -> Result<i64, String> {
-    p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
+    p2p.check_permission(&project_id, P2pPermission::UploadData)
+        .await?;
     launch_extraction(&app, &project_id, &video_id).await
 }
 
@@ -210,11 +215,14 @@ async fn launch_extraction(
             // Sin esto el video se quedaba en "extracting" y el resume del
             // arranque lo reintentaba en cada inicio, fallando igual.
             let _ = state.update_video_status(project_id, video_id, "error", 0);
-            let _ = app.emit("db:videos-changed", serde_json::json!({
-                "projectId": project_id,
-                "action": "updated",
-                "videoIds": [video_id],
-            }));
+            let _ = app.emit(
+                "db:videos-changed",
+                serde_json::json!({
+                    "projectId": project_id,
+                    "action": "updated",
+                    "videoIds": [video_id],
+                }),
+            );
             return Err(e);
         }
         Err(e) => {
@@ -224,19 +232,29 @@ async fn launch_extraction(
     };
 
     if cancelled {
-        log::info!("Extracción cancelada: proyecto={}, video={}", project_id, video_id);
+        log::info!(
+            "Extracción cancelada: proyecto={}, video={}",
+            project_id,
+            video_id
+        );
     }
 
     // Notificar al frontend
-    let _ = app.emit("db:videos-changed", serde_json::json!({
-        "projectId": project_id,
-        "action": "updated",
-        "videoIds": [video_id],
-    }));
-    let _ = app.emit("db:images-changed", serde_json::json!({
-        "projectId": project_id,
-        "action": "added",
-    }));
+    let _ = app.emit(
+        "db:videos-changed",
+        serde_json::json!({
+            "projectId": project_id,
+            "action": "updated",
+            "videoIds": [video_id],
+        }),
+    );
+    let _ = app.emit(
+        "db:images-changed",
+        serde_json::json!({
+            "projectId": project_id,
+            "action": "added",
+        }),
+    );
 
     Ok(result)
 }
@@ -350,7 +368,12 @@ pub fn resume_pending_extractions(app: AppHandle) {
                 video_id
             );
             if let Err(e) = launch_extraction(&app, &project_id, &video_id).await {
-                log::error!("Error reanudando extracción {}/{}: {}", project_id, video_id, e);
+                log::error!(
+                    "Error reanudando extracción {}/{}: {}",
+                    project_id,
+                    video_id,
+                    e
+                );
             }
         }
     });
@@ -375,11 +398,14 @@ fn do_extract_frames(
 
     // Marcar video como "extracting"
     state.update_video_status(project_id, video_id, "extracting", skip_frames)?;
-    let _ = app.emit("db:videos-changed", serde_json::json!({
-        "projectId": project_id,
-        "action": "updated",
-        "videoIds": [video_id],
-    }));
+    let _ = app.emit(
+        "db:videos-changed",
+        serde_json::json!({
+            "projectId": project_id,
+            "action": "updated",
+            "videoIds": [video_id],
+        }),
+    );
 
     // Preparar directorio de thumbnails
     let thumb_dir = state.project_thumbnails_dir(project_id)?;
@@ -388,7 +414,11 @@ fn do_extract_frames(
 
     // Formato de imagen del proyecto: "jpg" | "webp"
     let image_format = state.with_project(project_id, |pf| pf.image_format.clone())?;
-    let frame_ext = if image_format == "webp" { "webp" } else { "jpg" };
+    let frame_ext = if image_format == "webp" {
+        "webp"
+    } else {
+        "jpg"
+    };
 
     let mut ictx = ffmpeg_the_third::format::input(video_path)
         .map_err(|e| format!("Error abriendo video: {}", e))?;
@@ -442,9 +472,9 @@ fn do_extract_frames(
         .unwrap_or_else(std::time::Instant::now);
 
     let mut process_decoded = |decoder: &mut ffmpeg_the_third::decoder::Video,
-                                pending: &mut Vec<crate::store::project_file::ImageEntry>,
-                                fc: &mut i64,
-                                cancelled: &mut bool|
+                               pending: &mut Vec<crate::store::project_file::ImageEntry>,
+                               fc: &mut i64,
+                               cancelled: &mut bool|
      -> Result<(), String> {
         let mut decoded_frame = ffmpeg_the_third::frame::Video::empty();
         while decoder.receive_frame(&mut decoded_frame).is_ok() {
@@ -523,15 +553,21 @@ fn do_extract_frames(
                 let batch = std::mem::take(pending);
                 state.commit_image_entries(project_id, batch)?;
                 state.update_video_status(project_id, video_id, "extracting", *fc)?;
-                let _ = app.emit("db:images-changed", serde_json::json!({
-                    "projectId": project_id,
-                    "action": "added",
-                }));
-                let _ = app.emit("db:videos-changed", serde_json::json!({
-                    "projectId": project_id,
-                    "action": "updated",
-                    "videoIds": [video_id],
-                }));
+                let _ = app.emit(
+                    "db:images-changed",
+                    serde_json::json!({
+                        "projectId": project_id,
+                        "action": "added",
+                    }),
+                );
+                let _ = app.emit(
+                    "db:videos-changed",
+                    serde_json::json!({
+                        "projectId": project_id,
+                        "action": "updated",
+                        "videoIds": [video_id],
+                    }),
+                );
             }
 
             // Emitir progreso al frontend (throttle ~10/seg)
@@ -566,7 +602,12 @@ fn do_extract_frames(
         decoder
             .send_packet(&packet)
             .map_err(|e| format!("Error enviando paquete: {}", e))?;
-        process_decoded(&mut decoder, &mut pending_entries, &mut frame_count, &mut cancelled)?;
+        process_decoded(
+            &mut decoder,
+            &mut pending_entries,
+            &mut frame_count,
+            &mut cancelled,
+        )?;
         if cancelled {
             break;
         }
@@ -577,7 +618,12 @@ fn do_extract_frames(
         decoder
             .send_eof()
             .map_err(|e| format!("Error enviando EOF: {}", e))?;
-        process_decoded(&mut decoder, &mut pending_entries, &mut frame_count, &mut cancelled)?;
+        process_decoded(
+            &mut decoder,
+            &mut pending_entries,
+            &mut frame_count,
+            &mut cancelled,
+        )?;
     }
 
     // Flush final de entries pendientes
@@ -641,17 +687,24 @@ pub async fn delete_video(
     project_id: String,
     video_id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Delete).await?;
+    p2p.check_permission(&project_id, P2pPermission::Delete)
+        .await?;
     state.delete_video(&project_id, &video_id)?;
-    let _ = app.emit("db:videos-changed", serde_json::json!({
-        "projectId": &project_id,
-        "action": "deleted",
-        "videoIds": [&video_id],
-    }));
-    let _ = app.emit("db:images-changed", serde_json::json!({
-        "projectId": &project_id,
-        "action": "deleted",
-    }));
+    let _ = app.emit(
+        "db:videos-changed",
+        serde_json::json!({
+            "projectId": &project_id,
+            "action": "deleted",
+            "videoIds": [&video_id],
+        }),
+    );
+    let _ = app.emit(
+        "db:images-changed",
+        serde_json::json!({
+            "projectId": &project_id,
+            "action": "deleted",
+        }),
+    );
     Ok(())
 }
 
@@ -659,12 +712,7 @@ pub async fn delete_video(
 
 /// Publica los tracks de un video al doc P2P si hay sesión activa. Se llama tras
 /// cada mutación: sin esto, los tracks de un peer nunca salían de su máquina.
-async fn publish_tracks(
-    state: &AppState,
-    p2p: &P2pState,
-    project_id: &str,
-    video_id: &str,
-) {
+async fn publish_tracks(state: &AppState, p2p: &P2pState, project_id: &str, video_id: &str) {
     if p2p.get_session_info(project_id).await.is_none() {
         return;
     }
@@ -691,7 +739,8 @@ pub async fn create_track(
     class_id: i64,
     label: Option<String>,
 ) -> Result<String, String> {
-    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate)
+        .await?;
     let id = state.create_track(&project_id, &video_id, class_id, label.as_deref())?;
     publish_tracks(&state, &p2p, &project_id, &video_id).await;
     let _ = app.emit("db:tracks-changed", &video_id);
@@ -719,7 +768,8 @@ pub async fn update_track(
     label: Option<String>,
     enabled: Option<bool>,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate)
+        .await?;
     let label_update = label.map(|l| Some(l));
     state.update_track(
         &project_id,
@@ -743,7 +793,8 @@ pub async fn delete_track(
     video_id: String,
     track_id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Delete).await?;
+    p2p.check_permission(&project_id, P2pPermission::Delete)
+        .await?;
     state.delete_track(&project_id, &video_id, &track_id)?;
     publish_tracks(&state, &p2p, &project_id, &video_id).await;
     let _ = app.emit("db:tracks-changed", &video_id);
@@ -764,7 +815,8 @@ pub async fn set_keyframe(
     bbox_width: f64,
     bbox_height: f64,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate)
+        .await?;
     state.set_keyframe(
         &project_id,
         &video_id,
@@ -790,7 +842,8 @@ pub async fn delete_keyframe(
     track_id: String,
     frame_index: i64,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate)
+        .await?;
     state.delete_keyframe(&project_id, &video_id, &track_id, frame_index)?;
     publish_tracks(&state, &p2p, &project_id, &video_id).await;
     let _ = app.emit("db:tracks-changed", &video_id);
@@ -808,7 +861,8 @@ pub async fn toggle_keyframe_enabled(
     frame_index: i64,
     enabled: bool,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate)
+        .await?;
     state.toggle_keyframe_enabled(&project_id, &video_id, &track_id, frame_index, enabled)?;
     publish_tracks(&state, &p2p, &project_id, &video_id).await;
     let _ = app.emit("db:tracks-changed", &video_id);
@@ -823,7 +877,8 @@ pub async fn bake_video_tracks(
     project_id: String,
     video_id: String,
 ) -> Result<i64, String> {
-    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate)
+        .await?;
     // Leer tracks una vez
     let tracks = state.with_project(&project_id, |pf| {
         pf.videos
@@ -887,9 +942,12 @@ pub async fn bake_video_tracks(
         pf.updated = now;
     })?;
 
-    let _ = app.emit("db:images-changed", serde_json::json!({
-        "projectId": &project_id,
-        "action": "updated",
-    }));
+    let _ = app.emit(
+        "db:images-changed",
+        serde_json::json!({
+            "projectId": &project_id,
+            "action": "updated",
+        }),
+    );
     Ok(baked_count)
 }

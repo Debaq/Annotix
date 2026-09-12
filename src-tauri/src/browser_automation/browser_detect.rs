@@ -39,10 +39,19 @@ pub fn detect_browsers() -> Vec<DetectedBrowser> {
 
         // Fallback: buscar con `which` binarios que no estén en rutas fijas
         let which_candidates = [
-            ("Google Chrome", &["google-chrome-stable", "google-chrome"][..]),
-            ("Brave", &["brave", "brave-browser", "brave-browser-stable"][..]),
+            (
+                "Google Chrome",
+                &["google-chrome-stable", "google-chrome"][..],
+            ),
+            (
+                "Brave",
+                &["brave", "brave-browser", "brave-browser-stable"][..],
+            ),
             ("Chromium", &["chromium", "chromium-browser"][..]),
-            ("Microsoft Edge", &["microsoft-edge-stable", "microsoft-edge"][..]),
+            (
+                "Microsoft Edge",
+                &["microsoft-edge-stable", "microsoft-edge"][..],
+            ),
             ("Vivaldi", &["vivaldi-stable", "vivaldi"][..]),
         ];
 
@@ -76,14 +85,47 @@ pub fn detect_browsers() -> Vec<DetectedBrowser> {
         let local_app_data = std::env::var("LOCALAPPDATA").unwrap_or_default();
 
         let candidates = [
-            ("Google Chrome", format!("{}/Google/Chrome/Application/chrome.exe", program_files)),
-            ("Google Chrome", format!("{}/Google/Chrome/Application/chrome.exe", program_files_x86)),
-            ("Google Chrome", format!("{}/Google/Chrome/Application/chrome.exe", local_app_data)),
-            ("Brave", format!("{}/BraveSoftware/Brave-Browser/Application/brave.exe", program_files)),
-            ("Brave", format!("{}/BraveSoftware/Brave-Browser/Application/brave.exe", program_files_x86)),
-            ("Microsoft Edge", format!("{}/Microsoft/Edge/Application/msedge.exe", program_files)),
-            ("Microsoft Edge", format!("{}/Microsoft/Edge/Application/msedge.exe", program_files_x86)),
-            ("Vivaldi", format!("{}/Vivaldi/Application/vivaldi.exe", local_app_data)),
+            (
+                "Google Chrome",
+                format!("{}/Google/Chrome/Application/chrome.exe", program_files),
+            ),
+            (
+                "Google Chrome",
+                format!("{}/Google/Chrome/Application/chrome.exe", program_files_x86),
+            ),
+            (
+                "Google Chrome",
+                format!("{}/Google/Chrome/Application/chrome.exe", local_app_data),
+            ),
+            (
+                "Brave",
+                format!(
+                    "{}/BraveSoftware/Brave-Browser/Application/brave.exe",
+                    program_files
+                ),
+            ),
+            (
+                "Brave",
+                format!(
+                    "{}/BraveSoftware/Brave-Browser/Application/brave.exe",
+                    program_files_x86
+                ),
+            ),
+            (
+                "Microsoft Edge",
+                format!("{}/Microsoft/Edge/Application/msedge.exe", program_files),
+            ),
+            (
+                "Microsoft Edge",
+                format!(
+                    "{}/Microsoft/Edge/Application/msedge.exe",
+                    program_files_x86
+                ),
+            ),
+            (
+                "Vivaldi",
+                format!("{}/Vivaldi/Application/vivaldi.exe", local_app_data),
+            ),
         ];
 
         for (name, path) in &candidates {
@@ -100,11 +142,26 @@ pub fn detect_browsers() -> Vec<DetectedBrowser> {
     #[cfg(target_os = "macos")]
     {
         let candidates = [
-            ("Google Chrome", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
-            ("Brave", "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"),
-            ("Chromium", "/Applications/Chromium.app/Contents/MacOS/Chromium"),
-            ("Microsoft Edge", "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"),
-            ("Vivaldi", "/Applications/Vivaldi.app/Contents/MacOS/Vivaldi"),
+            (
+                "Google Chrome",
+                "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            ),
+            (
+                "Brave",
+                "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
+            ),
+            (
+                "Chromium",
+                "/Applications/Chromium.app/Contents/MacOS/Chromium",
+            ),
+            (
+                "Microsoft Edge",
+                "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+            ),
+            (
+                "Vivaldi",
+                "/Applications/Vivaldi.app/Contents/MacOS/Vivaldi",
+            ),
         ];
 
         for (name, path) in &candidates {

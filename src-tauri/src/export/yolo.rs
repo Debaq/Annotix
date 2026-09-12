@@ -3,22 +3,50 @@ use std::path::Path;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
-use crate::store::project_file::{ProjectFile, ImageEntry};
+use super::{add_image_to_zip, parse_bbox, parse_obb};
+use crate::store::project_file::{ImageEntry, ProjectFile};
 use crate::utils::converters::normalize_coordinates;
-use super::{parse_bbox, parse_obb, add_image_to_zip};
 
 /// COCO-17 skeleton keypoint names
 const COCO17_POINTS: &[&str] = &[
-    "nose", "left_eye", "right_eye", "left_ear", "right_ear",
-    "left_shoulder", "right_shoulder", "left_elbow", "right_elbow",
-    "left_wrist", "right_wrist", "left_hip", "right_hip",
-    "left_knee", "right_knee", "left_ankle", "right_ankle",
+    "nose",
+    "left_eye",
+    "right_eye",
+    "left_ear",
+    "right_ear",
+    "left_shoulder",
+    "right_shoulder",
+    "left_elbow",
+    "right_elbow",
+    "left_wrist",
+    "right_wrist",
+    "left_hip",
+    "right_hip",
+    "left_knee",
+    "right_knee",
+    "left_ankle",
+    "right_ankle",
 ];
 
 const COCO17_CONNECTIONS: &[[usize; 2]] = &[
-    [0, 1], [0, 2], [1, 3], [2, 4], [0, 5], [0, 6],
-    [5, 6], [5, 7], [7, 9], [6, 8], [8, 10],
-    [5, 11], [6, 12], [11, 12], [11, 13], [13, 15], [12, 14], [14, 16],
+    [0, 1],
+    [0, 2],
+    [1, 3],
+    [2, 4],
+    [0, 5],
+    [0, 6],
+    [5, 6],
+    [5, 7],
+    [7, 9],
+    [6, 8],
+    [8, 10],
+    [5, 11],
+    [6, 12],
+    [11, 12],
+    [11, 13],
+    [13, 15],
+    [12, 14],
+    [14, 16],
 ];
 
 pub fn export<F: Fn(f64)>(
@@ -33,14 +61,23 @@ pub fn export<F: Fn(f64)>(
     let options = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
     // classes.txt
-    let classes_content: String = project.classes.iter().map(|c| c.name.as_str()).collect::<Vec<_>>().join("\n");
-    zip.start_file("classes.txt", options).map_err(|e| e.to_string())?;
-    zip.write_all(classes_content.as_bytes()).map_err(|e| e.to_string())?;
+    let classes_content: String = project
+        .classes
+        .iter()
+        .map(|c| c.name.as_str())
+        .collect::<Vec<_>>()
+        .join("\n");
+    zip.start_file("classes.txt", options)
+        .map_err(|e| e.to_string())?;
+    zip.write_all(classes_content.as_bytes())
+        .map_err(|e| e.to_string())?;
 
     // data.yaml
     let yaml_content = generate_data_yaml(project);
-    zip.start_file("data.yaml", options).map_err(|e| e.to_string())?;
-    zip.write_all(yaml_content.as_bytes()).map_err(|e| e.to_string())?;
+    zip.start_file("data.yaml", options)
+        .map_err(|e| e.to_string())?;
+    zip.write_all(yaml_content.as_bytes())
+        .map_err(|e| e.to_string())?;
 
     let total = images.len() as f64;
 
@@ -51,7 +88,8 @@ pub fn export<F: Fn(f64)>(
         // Generate label
         let label = generate_label(image, project);
         let label_name = replace_ext(&image.name, "txt");
-        zip.start_file(format!("labels/{}", label_name), options).map_err(|e| e.to_string())?;
+        zip.start_file(format!("labels/{}", label_name), options)
+            .map_err(|e| e.to_string())?;
         zip.write_all(label.as_bytes()).map_err(|e| e.to_string())?;
 
         emit_progress(((i + 1) as f64 / total) * 100.0);
@@ -81,7 +119,10 @@ fn generate_data_yaml(project: &ProjectFile) -> String {
     if project.project_type == "keypoints" {
         lines.push(String::new());
         lines.push("# Keypoints configuration".to_string());
-        lines.push(format!("kpt_shape: [{}, 3]  # number of keypoints, number of dims (x, y, visibility)", COCO17_POINTS.len()));
+        lines.push(format!(
+            "kpt_shape: [{}, 3]  # number of keypoints, number of dims (x, y, visibility)",
+            COCO17_POINTS.len()
+        ));
         lines.push(String::new());
         lines.push("# Keypoint names".to_string());
         lines.push("keypoint_names:".to_string());
@@ -107,8 +148,12 @@ fn generate_label(image: &ImageEntry, _project: &ProjectFile) -> String {
             "bbox" => {
                 if let Some(bbox) = parse_bbox(&ann.data) {
                     let (nx, ny, nw, nh) = normalize_coordinates(
-                        bbox.x, bbox.y, bbox.width, bbox.height,
-                        image.width as f64, image.height as f64,
+                        bbox.x,
+                        bbox.y,
+                        bbox.width,
+                        bbox.height,
+                        image.width as f64,
+                        image.height as f64,
                     );
                     let x_center = nx + nw / 2.0;
                     let y_center = ny + nh / 2.0;
@@ -122,13 +167,21 @@ fn generate_label(image: &ImageEntry, _project: &ProjectFile) -> String {
                 if let Some(obb) = parse_obb(&ann.data) {
                     // Convert OBB to axis-aligned for YOLO
                     let (min_x, min_y, max_x, max_y) = crate::utils::converters::obb_to_aabbox(
-                        obb.x, obb.y, obb.width, obb.height, obb.rotation,
+                        obb.x,
+                        obb.y,
+                        obb.width,
+                        obb.height,
+                        obb.rotation,
                     );
                     let w = max_x - min_x;
                     let h = max_y - min_y;
                     let (nx, ny, nw, nh) = normalize_coordinates(
-                        min_x, min_y, w, h,
-                        image.width as f64, image.height as f64,
+                        min_x,
+                        min_y,
+                        w,
+                        h,
+                        image.width as f64,
+                        image.height as f64,
                     );
                     let x_center = nx + nw / 2.0;
                     let y_center = ny + nh / 2.0;

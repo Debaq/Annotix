@@ -185,7 +185,8 @@ fn render_preprocess_block(cfg: Option<&PreprocessConfig>) -> String {
     };
 
     if !enabled {
-        return "_PREPROCESS_ENABLED = False\n\ndef _apply_preprocess(p, d, i):\n    return p\n".to_string();
+        return "_PREPROCESS_ENABLED = False\n\ndef _apply_preprocess(p, d, i):\n    return p\n"
+            .to_string();
     }
 
     format!(

@@ -1,6 +1,6 @@
 use super::{
-    browser_session, ActiveBrowserSession, AutomationRequest,
-    BrowserRunner, SessionState, StepState,
+    browser_session, ActiveBrowserSession, AutomationRequest, BrowserRunner, SessionState,
+    StepState,
 };
 use crate::store::config::BrowserAutomationConfig;
 use std::collections::HashMap;
@@ -124,7 +124,12 @@ pub fn run_automation(
             .unwrap_or_default()
         };
 
-        emitter(&format!("Paso {}/{}: {}", step_idx + 1, step_count, step_name));
+        emitter(&format!(
+            "Paso {}/{}: {}",
+            step_idx + 1,
+            step_count,
+            step_name
+        ));
 
         // Verificar si hay CAPTCHA antes de cada paso
         if detect_captcha(&tab) {
@@ -174,28 +179,14 @@ pub fn run_automation(
             match runner.execute_step(step_idx, session_ref, &tab, &emitter) {
                 Ok(true) => {
                     // Paso completado con éxito
-                    update_current_step(
-                        &sessions,
-                        &session_id,
-                        step_idx,
-                        StepState::Completed,
-                    );
+                    update_current_step(&sessions, &session_id, step_idx, StepState::Completed);
                     emit_session_update(&app, &sessions, &session_id);
                     break;
                 }
                 Ok(false) => {
                     // Paso requiere acción del usuario (login, CAPTCHA, etc.)
-                    update_current_step(
-                        &sessions,
-                        &session_id,
-                        step_idx,
-                        StepState::WaitingUser,
-                    );
-                    update_session_state(
-                        &sessions,
-                        &session_id,
-                        SessionState::WaitingLogin,
-                    );
+                    update_current_step(&sessions, &session_id, step_idx, StepState::WaitingUser);
+                    update_session_state(&sessions, &session_id, SessionState::WaitingLogin);
                     emit_session_update(&app, &sessions, &session_id);
 
                     // Polling hasta que el usuario complete la acción
@@ -218,11 +209,7 @@ pub fn run_automation(
                                     step_idx,
                                     StepState::Completed,
                                 );
-                                update_session_state(
-                                    &sessions,
-                                    &session_id,
-                                    SessionState::Running,
-                                );
+                                update_session_state(&sessions, &session_id, SessionState::Running);
                                 emit_session_update(&app, &sessions, &session_id);
                                 break;
                             }
@@ -249,13 +236,11 @@ pub fn run_automation(
                 Err(e) => {
                     retries += 1;
                     if retries > max_retries {
-                        emitter(&format!("Error en paso {} (tras {} reintentos): {}", step_name, max_retries, e));
-                        update_current_step(
-                            &sessions,
-                            &session_id,
-                            step_idx,
-                            StepState::Failed,
-                        );
+                        emitter(&format!(
+                            "Error en paso {} (tras {} reintentos): {}",
+                            step_name, max_retries, e
+                        ));
+                        update_current_step(&sessions, &session_id, step_idx, StepState::Failed);
                         update_session_state(&sessions, &session_id, SessionState::Failed);
                         emit_session_update(&app, &sessions, &session_id);
                         let _ = app.emit(
@@ -349,8 +334,7 @@ fn update_user_instruction(
     if let Ok(mut sess) = sessions.lock() {
         if let Some(active) = sess.get_mut(session_id) {
             if step_index < active.session.steps.len() {
-                active.session.steps[step_index].user_instruction =
-                    Some(instruction.to_string());
+                active.session.steps[step_index].user_instruction = Some(instruction.to_string());
             }
         }
     }

@@ -16,7 +16,8 @@ pub async fn create_timeseries(
     data: serde_json::Value,
     annotations: Option<Vec<TsAnnotationEntry>>,
 ) -> Result<String, String> {
-    p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
+    p2p.check_permission(&project_id, P2pPermission::UploadData)
+        .await?;
     let anns = annotations.unwrap_or_default();
     let id = state.create_timeseries(&project_id, &name, data, &anns)?;
 
@@ -37,11 +38,14 @@ pub async fn create_timeseries(
         }
     }
 
-    let _ = app.emit("db:timeseries-changed", serde_json::json!({
-        "projectId": &project_id,
-        "action": "added",
-        "timeseriesIds": [&id],
-    }));
+    let _ = app.emit(
+        "db:timeseries-changed",
+        serde_json::json!({
+            "projectId": &project_id,
+            "action": "added",
+            "timeseriesIds": [&id],
+        }),
+    );
     Ok(id)
 }
 
@@ -71,7 +75,8 @@ pub async fn save_ts_annotations(
     timeseries_id: String,
     annotations: Vec<TsAnnotationEntry>,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate)
+        .await?;
     state.save_ts_annotations(&project_id, &timeseries_id, &annotations)?;
 
     if p2p.get_session_info(&project_id).await.is_some() {
@@ -87,11 +92,14 @@ pub async fn save_ts_annotations(
         }
     }
 
-    let _ = app.emit("db:timeseries-changed", serde_json::json!({
-        "projectId": &project_id,
-        "action": "updated",
-        "timeseriesIds": [&timeseries_id],
-    }));
+    let _ = app.emit(
+        "db:timeseries-changed",
+        serde_json::json!({
+            "projectId": &project_id,
+            "action": "updated",
+            "timeseriesIds": [&timeseries_id],
+        }),
+    );
     Ok(())
 }
 
@@ -103,12 +111,16 @@ pub async fn delete_timeseries(
     project_id: String,
     id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Delete).await?;
+    p2p.check_permission(&project_id, P2pPermission::Delete)
+        .await?;
     state.delete_timeseries(&project_id, &id)?;
-    let _ = app.emit("db:timeseries-changed", serde_json::json!({
-        "projectId": &project_id,
-        "action": "deleted",
-        "timeseriesIds": [&id],
-    }));
+    let _ = app.emit(
+        "db:timeseries-changed",
+        serde_json::json!({
+            "projectId": &project_id,
+            "action": "deleted",
+            "timeseriesIds": [&id],
+        }),
+    );
     Ok(())
 }

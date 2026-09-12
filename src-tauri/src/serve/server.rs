@@ -52,11 +52,17 @@ pub struct ServeState {
 
 impl ServeState {
     pub fn new() -> Self {
-        Self { inner: RwLock::new(None) }
+        Self {
+            inner: RwLock::new(None),
+        }
     }
 
     pub async fn get_auto_save(&self) -> bool {
-        self.inner.read().await.as_ref().map_or(false, |s| s.auto_save)
+        self.inner
+            .read()
+            .await
+            .as_ref()
+            .map_or(false, |s| s.auto_save)
     }
 
     pub async fn set_auto_save(&self, value: bool) {
@@ -85,21 +91,21 @@ impl ServeState {
         let router = routes::build_router(project_ids.clone(), app_handle, token.clone());
 
         // Intentar el puerto solicitado; si está ocupado, buscar uno libre
-        let listener = find_available_port(port).await
+        let listener = find_available_port(port)
+            .await
             .map_err(|e| format!("No se encontró un puerto disponible: {}", e))?;
 
-        let actual_port = listener.local_addr()
-            .map_err(|e| e.to_string())?
-            .port();
+        let actual_port = listener.local_addr().map_err(|e| e.to_string())?.port();
 
         let handle = tokio::spawn(async move {
-            let server = axum::serve(listener, router)
-                .with_graceful_shutdown(async move {
-                    let mut rx = shutdown_rx;
-                    while !*rx.borrow() {
-                        if rx.changed().await.is_err() { break; }
+            let server = axum::serve(listener, router).with_graceful_shutdown(async move {
+                let mut rx = shutdown_rx;
+                while !*rx.borrow() {
+                    if rx.changed().await.is_err() {
+                        break;
                     }
-                });
+                }
+            });
             let _ = server.await;
         });
 
@@ -138,10 +144,7 @@ impl ServeState {
         let session = self.inner.write().await.take();
         if let Some(session) = session {
             let _ = session.shutdown_tx.send(true);
-            let _ = tokio::time::timeout(
-                std::time::Duration::from_secs(5),
-                session.handle,
-            ).await;
+            let _ = tokio::time::timeout(std::time::Duration::from_secs(5), session.handle).await;
             log::info!("Servidor de anotación detenido");
         }
         Ok(())
@@ -189,14 +192,19 @@ async fn find_available_port(preferred: u16) -> Result<tokio::net::TcpListener, 
 
 async fn self_check_tcp(ips: &[String], port: u16) -> bool {
     for ip in ips {
-        if ip == "127.0.0.1" { continue; }
+        if ip == "127.0.0.1" {
+            continue;
+        }
         let addr: SocketAddr = match format!("{}:{}", ip, port).parse() {
-            Ok(a) => a, Err(_) => continue,
+            Ok(a) => a,
+            Err(_) => continue,
         };
         match tokio::time::timeout(
             std::time::Duration::from_secs(2),
             tokio::net::TcpStream::connect(addr),
-        ).await {
+        )
+        .await
+        {
             Ok(Ok(_)) => return true,
             _ => return false,
         }
@@ -208,16 +216,24 @@ async fn self_check_tcp(ips: &[String], port: u16) -> bool {
 
 fn get_firewall_help(port: u16) -> String {
     #[cfg(target_os = "linux")]
-    { get_firewall_help_linux(port) }
+    {
+        get_firewall_help_linux(port)
+    }
 
     #[cfg(target_os = "windows")]
-    { get_firewall_help_windows(port) }
+    {
+        get_firewall_help_windows(port)
+    }
 
     #[cfg(target_os = "macos")]
-    { get_firewall_help_macos(port) }
+    {
+        get_firewall_help_macos(port)
+    }
 
     #[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
-    { format!("Si los dispositivos no pueden conectarse, verifica que el puerto {} no esté bloqueado por el firewall.", port) }
+    {
+        format!("Si los dispositivos no pueden conectarse, verifica que el puerto {} no esté bloqueado por el firewall.", port)
+    }
 }
 
 #[cfg(target_os = "linux")]
@@ -247,7 +263,10 @@ fn get_firewall_help_linux(port: u16) -> String {
 #[cfg(target_os = "linux")]
 fn detect_active_firewall_linux() -> Option<String> {
     for name in &["firewalld", "ufw", "nftables", "iptables"] {
-        if let Ok(output) = std::process::Command::new("systemctl").args(["is-active", name]).output() {
+        if let Ok(output) = std::process::Command::new("systemctl")
+            .args(["is-active", name])
+            .output()
+        {
             if String::from_utf8_lossy(&output.stdout).trim() == "active" {
                 return Some(name.to_string());
             }
@@ -287,10 +306,14 @@ fn get_local_ips() -> Vec<String> {
         if socket.connect("8.8.8.8:80").is_ok() {
             if let Ok(addr) = socket.local_addr() {
                 let ip = addr.ip().to_string();
-                if ip != "0.0.0.0" { ips.push(ip); }
+                if ip != "0.0.0.0" {
+                    ips.push(ip);
+                }
             }
         }
     }
-    if ips.is_empty() { ips.push("127.0.0.1".to_string()); }
+    if ips.is_empty() {
+        ips.push("127.0.0.1".to_string());
+    }
     ips
 }

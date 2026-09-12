@@ -55,7 +55,8 @@ pub fn get_access_token(sa_json_path: &str) -> Result<String, String> {
         return Err(format!("Error OAuth2 ({}): {}", status, body));
     }
 
-    let body: serde_json::Value = resp.json()
+    let body: serde_json::Value = resp
+        .json()
         .map_err(|e| format!("Error parseando respuesta OAuth2: {}", e))?;
 
     body["access_token"]

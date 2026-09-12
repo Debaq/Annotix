@@ -18,8 +18,8 @@ pub const PIXEL_STD: [f32; 3] = [58.395, 57.12, 57.375];
 /// - `resized_w`, `resized_h` — dimensiones útiles tras resize (max = 1024)
 #[allow(clippy::type_complexity)]
 pub fn preprocess_image(bytes: &[u8]) -> Result<(Vec<f32>, u32, u32, u32, u32), String> {
-    let img = image::load_from_memory(bytes)
-        .map_err(|e| format!("Error decodificando imagen: {e}"))?;
+    let img =
+        image::load_from_memory(bytes).map_err(|e| format!("Error decodificando imagen: {e}"))?;
     let (orig_w, orig_h) = img.dimensions();
 
     let long = orig_w.max(orig_h) as f32;

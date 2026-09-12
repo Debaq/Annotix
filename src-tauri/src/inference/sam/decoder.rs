@@ -146,7 +146,8 @@ pub fn run_decoder(
         }
     }
 
-    let masks = masks_data.ok_or_else(|| "decoder: no se encontró output 4D (masks)".to_string())?;
+    let masks =
+        masks_data.ok_or_else(|| "decoder: no se encontró output 4D (masks)".to_string())?;
     let shape = mask_shape.ok_or_else(|| "decoder: shape inválida".to_string())?;
     let scores = scores.ok_or_else(|| "decoder: no se encontró output scores".to_string())?;
 

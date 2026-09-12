@@ -1,9 +1,9 @@
-use tauri::{Emitter, State};
+use crate::import::merge::{AnalyzeResult, CanonicalClass, ClassMapping};
+use crate::import::{DetectionResult, ImportResult};
 use crate::p2p::node::P2pState;
 use crate::p2p::P2pPermission;
 use crate::store::AppState;
-use crate::import::{DetectionResult, ImportResult};
-use crate::import::merge::{AnalyzeResult, CanonicalClass, ClassMapping};
+use tauri::{Emitter, State};
 
 #[tauri::command]
 pub fn detect_import_format(file_path: String) -> Result<DetectionResult, String> {
@@ -47,5 +47,12 @@ pub async fn merge_tix_projects(
     let emit_progress = |p: f64| {
         let _ = app.emit("merge:progress", p);
     };
-    crate::import::merge::merge(&state, paths, canonical_classes, mappings, project_name, emit_progress)
+    crate::import::merge::merge(
+        &state,
+        paths,
+        canonical_classes,
+        mappings,
+        project_name,
+        emit_progress,
+    )
 }

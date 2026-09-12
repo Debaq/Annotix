@@ -1,7 +1,6 @@
 /// Particularidades de Qwen Chat.
 /// El flujo genérico de LlmChatRunner debería funcionar para Qwen.
 /// Este archivo queda reservado para extensiones futuras.
-
 use headless_chrome::Tab;
 use std::time::Duration;
 

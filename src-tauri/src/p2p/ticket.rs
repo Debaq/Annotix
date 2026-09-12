@@ -36,9 +36,9 @@ pub fn decode_share_code(code: &str) -> Result<DocTicket, String> {
 
     let b32: String = stripped.chars().filter(|c| *c != '-').collect();
     let bytes = base32_decode(&b32)?;
-    let ticket_str = String::from_utf8(bytes)
-        .map_err(|e| format!("Código inválido: {}", e))?;
-    ticket_str.parse::<DocTicket>()
+    let ticket_str = String::from_utf8(bytes).map_err(|e| format!("Código inválido: {}", e))?;
+    ticket_str
+        .parse::<DocTicket>()
         .map_err(|e| format!("Ticket inválido: {}", e))
 }
 
@@ -51,7 +51,12 @@ pub fn encode_host_key(host_secret: &str, share_code: &str) -> String {
         .chunks(4)
         .map(|c| std::str::from_utf8(c).unwrap_or(""))
         .collect();
-    format!("{}-{}-ZZZZ-{}", HOST_PREFIX, share_part, secret_chunks.join("-"))
+    format!(
+        "{}-{}-ZZZZ-{}",
+        HOST_PREFIX,
+        share_part,
+        secret_chunks.join("-")
+    )
 }
 
 /// Decodifica una host key y extrae (DocTicket, host_secret)
@@ -71,16 +76,17 @@ pub fn decode_host_key(code: &str) -> Result<(DocTicket, String), String> {
     // Decodificar ticket
     let ticket_b32: String = parts[0].chars().filter(|c| *c != '-').collect();
     let ticket_bytes = base32_decode(&ticket_b32)?;
-    let ticket_str = String::from_utf8(ticket_bytes)
-        .map_err(|e| format!("Ticket inválido: {}", e))?;
-    let ticket = ticket_str.parse::<DocTicket>()
+    let ticket_str =
+        String::from_utf8(ticket_bytes).map_err(|e| format!("Ticket inválido: {}", e))?;
+    let ticket = ticket_str
+        .parse::<DocTicket>()
         .map_err(|e| format!("Ticket inválido: {}", e))?;
 
     // Decodificar secret
     let secret_b32: String = parts[1].chars().filter(|c| *c != '-').collect();
     let secret_bytes = base32_decode(&secret_b32)?;
-    let host_secret = String::from_utf8(secret_bytes)
-        .map_err(|e| format!("Secret inválido: {}", e))?;
+    let host_secret =
+        String::from_utf8(secret_bytes).map_err(|e| format!("Secret inválido: {}", e))?;
 
     Ok((ticket, host_secret))
 }
@@ -141,7 +147,9 @@ mod tests {
     fn base32_alphabet_is_rfc4648() {
         // Alfabeto RFC 4648 sin padding: letras mayúsculas + dígitos 2-7
         let enc = base32_encode(b"\x00\x00\x00\x00\x00");
-        assert!(enc.chars().all(|c| c.is_ascii_uppercase() || ('2'..='7').contains(&c)));
+        assert!(enc
+            .chars()
+            .all(|c| c.is_ascii_uppercase() || ('2'..='7').contains(&c)));
     }
 }
 

@@ -95,8 +95,7 @@ pub fn upload_directory(
 #[allow(dead_code)]
 fn walkdir(dir: &Path) -> Result<Vec<std::path::PathBuf>, String> {
     let mut files = Vec::new();
-    let entries = std::fs::read_dir(dir)
-        .map_err(|e| format!("Error leyendo directorio: {}", e))?;
+    let entries = std::fs::read_dir(dir).map_err(|e| format!("Error leyendo directorio: {}", e))?;
 
     for entry in entries {
         let entry = entry.map_err(|e| e.to_string())?;
@@ -111,8 +110,7 @@ fn walkdir(dir: &Path) -> Result<Vec<std::path::PathBuf>, String> {
 }
 
 fn urlencoded(s: &str) -> String {
-    s.replace('/', "%2F")
-        .replace(' ', "%20")
+    s.replace('/', "%2F").replace(' ', "%20")
 }
 
 fn mime_from_path(path: &str) -> &'static str {

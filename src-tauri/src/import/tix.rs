@@ -1,9 +1,11 @@
-use zip::ZipArchive;
 use serde_json::json;
+use zip::ZipArchive;
 
-use super::{ImportData, ImageImportData, ImportResult, ImportStats, create_class, create_annotation};
-use super::yolo::{read_zip_text, read_zip_bytes, get_image_dimensions};
-use crate::store::{AppState, io as store_io};
+use super::yolo::{get_image_dimensions, read_zip_bytes, read_zip_text};
+use super::{
+    create_annotation, create_class, ImageImportData, ImportData, ImportResult, ImportStats,
+};
+use crate::store::{io as store_io, AppState};
 
 /// Restaura un .tix completo (con `project.json` en raíz) extrayendo todos los
 /// archivos al directorio de proyectos como un proyecto nuevo. Preserva videos,
@@ -22,7 +24,8 @@ pub fn restore_full_project<F: Fn(&str, f64, usize, usize)>(
 
     let total = archive.len();
     for i in 0..total {
-        let mut entry = archive.by_index(i)
+        let mut entry = archive
+            .by_index(i)
             .map_err(|e| format!("Error leyendo entrada ZIP: {}", e))?;
         let rel = match entry.enclosed_name() {
             Some(p) => p.to_path_buf(),
@@ -54,8 +57,10 @@ pub fn restore_full_project<F: Fn(&str, f64, usize, usize)>(
         let _ = std::fs::remove_dir_all(&dest_dir);
         return Err("project.json no encontrado en .tix".to_string());
     }
-    let mut pf = store_io::read_project(&dest_dir)
-        .map_err(|e| { let _ = std::fs::remove_dir_all(&dest_dir); e })?;
+    let mut pf = store_io::read_project(&dest_dir).map_err(|e| {
+        let _ = std::fs::remove_dir_all(&dest_dir);
+        e
+    })?;
 
     let now = js_timestamp();
     pf.id = new_id.clone();
@@ -67,10 +72,9 @@ pub fn restore_full_project<F: Fn(&str, f64, usize, usize)>(
 
     let images_count = pf.images.len();
     let classes_count = pf.classes.len();
-    let annotations_count: usize = pf.images.iter()
-        .map(|i| i.annotations.len())
-        .sum::<usize>()
-        + pf.videos.iter()
+    let annotations_count: usize = pf.images.iter().map(|i| i.annotations.len()).sum::<usize>()
+        + pf.videos
+            .iter()
             .map(|v| v.tracks.iter().map(|t| t.keyframes.len()).sum::<usize>())
             .sum::<usize>();
 
@@ -91,7 +95,10 @@ pub fn restore_full_project<F: Fn(&str, f64, usize, usize)>(
 
 fn js_timestamp() -> f64 {
     use std::time::{SystemTime, UNIX_EPOCH};
-    SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as f64).unwrap_or(0.0)
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as f64)
+        .unwrap_or(0.0)
 }
 
 pub fn import_data(
@@ -103,26 +110,35 @@ pub fn import_data(
         .map_err(|e| format!("Error parseando annotations.json: {}", e))?;
 
     // Extract classes
-    let project_classes = data.get("project")
+    let project_classes = data
+        .get("project")
         .and_then(|p| p.get("classes"))
         .and_then(|c| c.as_array());
 
     let mut classes: Vec<_> = if let Some(cls_arr) = project_classes {
-        cls_arr.iter().enumerate().map(|(i, c)| {
-            let id = c.get("id").and_then(|v| v.as_i64()).unwrap_or(i as i64);
-            let name = c.get("name").and_then(|v| v.as_str()).unwrap_or("unknown");
-            let color = c.get("color").and_then(|v| v.as_str());
-            let description = c.get("description").and_then(|v| v.as_str()).map(|s| s.to_string());
-            let mut cls = create_class(id, name, color);
-            cls.description = description;
-            cls
-        }).collect()
+        cls_arr
+            .iter()
+            .enumerate()
+            .map(|(i, c)| {
+                let id = c.get("id").and_then(|v| v.as_i64()).unwrap_or(i as i64);
+                let name = c.get("name").and_then(|v| v.as_str()).unwrap_or("unknown");
+                let color = c.get("color").and_then(|v| v.as_str());
+                let description = c
+                    .get("description")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+                let mut cls = create_class(id, name, color);
+                cls.description = description;
+                cls
+            })
+            .collect()
     } else {
         vec![create_class(0, "Default", Some("#FF0000"))]
     };
 
     // Extract images
-    let image_entries = data.get("images")
+    let image_entries = data
+        .get("images")
         .and_then(|i| i.as_array())
         .cloned()
         .unwrap_or_default();
@@ -131,7 +147,9 @@ pub fn import_data(
 
     for entry in &image_entries {
         let name = entry.get("name").and_then(|n| n.as_str()).unwrap_or("");
-        if name.is_empty() { continue; }
+        if name.is_empty() {
+            continue;
+        }
 
         // El archivo en disco puede tener prefijo uuid (campo `file`). Fallback a `name` para tix antiguos.
         let file_on_disk = entry.get("file").and_then(|f| f.as_str()).unwrap_or(name);
@@ -143,8 +161,12 @@ pub fn import_data(
                     // Último recurso: buscar en zip cualquier archivo images/* que termine con `_{name}` o `/{name}`
                     let suffix_under = format!("_{}", name);
                     let suffix_slash = format!("/{}", name);
-                    let found = archive.file_names()
-                        .find(|n| n.starts_with("images/") && (n.ends_with(&suffix_under) || n.ends_with(&suffix_slash)))
+                    let found = archive
+                        .file_names()
+                        .find(|n| {
+                            n.starts_with("images/")
+                                && (n.ends_with(&suffix_under) || n.ends_with(&suffix_slash))
+                        })
                         .map(|s| s.to_string());
                     match found {
                         Some(zip_path) => match read_zip_bytes(archive, &zip_path) {
@@ -167,7 +189,8 @@ pub fn import_data(
         };
 
         // Parse annotations
-        let annotations_raw = entry.get("annotations")
+        let annotations_raw = entry
+            .get("annotations")
             .and_then(|a| a.as_array())
             .cloned()
             .unwrap_or_default();
@@ -195,15 +218,23 @@ pub fn import_data(
     Ok(ImportData { classes, images })
 }
 
-fn parse_tix_annotation(ann: &serde_json::Value) -> Option<crate::store::project_file::AnnotationEntry> {
+fn parse_tix_annotation(
+    ann: &serde_json::Value,
+) -> Option<crate::store::project_file::AnnotationEntry> {
     let ann_type = ann.get("type").and_then(|t| t.as_str())?;
     let normalized_type = normalize_type(ann_type);
 
     // Get class ID
-    let class_id = ann.get("class").or_else(|| ann.get("classId"))
+    let class_id = ann
+        .get("class")
+        .or_else(|| ann.get("classId"))
         .and_then(|v| {
-            if let Some(n) = v.as_i64() { return Some(n); }
-            if let Some(s) = v.as_str() { return s.parse::<i64>().ok(); }
+            if let Some(n) = v.as_i64() {
+                return Some(n);
+            }
+            if let Some(s) = v.as_str() {
+                return s.parse::<i64>().ok();
+            }
             None
         })?;
 
@@ -219,8 +250,12 @@ fn normalize_type(t: &str) -> String {
         "polygon" => "polygon".to_string(),
         "keypoint" | "keypoints" => "keypoints".to_string(),
         "landmark" | "landmarks" => "landmarks".to_string(),
-        "obb" | "orientedbbox" | "oriented-bbox" | "rotatedbbox" | "rotated-bbox" => "obb".to_string(),
-        "multi-label-classification" | "multilabel" | "multilabelclassification" => "classification".to_string(),
+        "obb" | "orientedbbox" | "oriented-bbox" | "rotatedbbox" | "rotated-bbox" => {
+            "obb".to_string()
+        }
+        "multi-label-classification" | "multilabel" | "multilabelclassification" => {
+            "classification".to_string()
+        }
         "classification" => "classification".to_string(),
         other => other.to_string(),
     }

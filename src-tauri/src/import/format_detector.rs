@@ -71,7 +71,9 @@ fn has_file(files: &[String], name: &str) -> bool {
     let target = name.to_lowercase();
     files.iter().any(|f| {
         let f = f.to_lowercase();
-        (f == target) || (f.ends_with(&format!("/{}", target)) && !f[..f.len() - target.len() - 1].contains('/'))
+        (f == target)
+            || (f.ends_with(&format!("/{}", target))
+                && !f[..f.len() - target.len() - 1].contains('/'))
     })
 }
 
@@ -94,12 +96,20 @@ fn read_file_text(archive: &mut ZipArchive<std::fs::File>, name: &str) -> Option
     None
 }
 
-fn detect_yolo(archive: &mut ZipArchive<std::fs::File>, files: &[String]) -> Option<DetectionResult> {
+fn detect_yolo(
+    archive: &mut ZipArchive<std::fs::File>,
+    files: &[String],
+) -> Option<DetectionResult> {
     let content = read_file_text(archive, "classes.txt")?;
-    let class_count = content.trim().lines().filter(|l| !l.trim().is_empty()).count();
+    let class_count = content
+        .trim()
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .count();
 
     // Check if segmentation by looking at a label file
-    let txt_files: Vec<&String> = files.iter()
+    let txt_files: Vec<&String> = files
+        .iter()
         .filter(|f| f.starts_with("labels/") && f.ends_with(".txt"))
         .collect();
 
@@ -111,8 +121,16 @@ fn detect_yolo(archive: &mut ZipArchive<std::fs::File>, files: &[String]) -> Opt
     let is_segmentation = detect_segmentation_format(&label_content);
 
     Some(DetectionResult {
-        format: if is_segmentation { "yolo-segmentation".to_string() } else { "yolo-detection".to_string() },
-        project_type: if is_segmentation { "polygon".to_string() } else { "bbox".to_string() },
+        format: if is_segmentation {
+            "yolo-segmentation".to_string()
+        } else {
+            "yolo-detection".to_string()
+        },
+        project_type: if is_segmentation {
+            "polygon".to_string()
+        } else {
+            "bbox".to_string()
+        },
         confidence: 0.95,
         class_count: Some(class_count),
     })
@@ -127,7 +145,11 @@ fn detect_coco(archive: &mut ZipArchive<std::fs::File>) -> Option<DetectionResul
     let categories = data.get("categories")?.as_array()?;
 
     let has_segmentation = annotations.iter().any(|a| a.get("segmentation").is_some());
-    let project_type = if has_segmentation { "instance-segmentation" } else { "bbox" };
+    let project_type = if has_segmentation {
+        "instance-segmentation"
+    } else {
+        "bbox"
+    };
 
     Some(DetectionResult {
         format: "coco".to_string(),
@@ -142,11 +164,13 @@ fn detect_tix_full(archive: &mut ZipArchive<std::fs::File>) -> Option<DetectionR
     let data: serde_json::Value = serde_json::from_str(&content).ok()?;
     // Marcador mínimo de proyecto Annotix
     data.get("id")?.as_str()?;
-    let project_type = data.get("type")
+    let project_type = data
+        .get("type")
         .and_then(|t| t.as_str())
         .map(|t| normalize_project_type(t))
         .unwrap_or_else(|| "bbox".to_string());
-    let class_count = data.get("classes")
+    let class_count = data
+        .get("classes")
         .and_then(|c| c.as_array())
         .map(|c| c.len());
     Some(DetectionResult {
@@ -172,13 +196,15 @@ fn detect_tix(archive: &mut ZipArchive<std::fs::File>) -> Option<DetectionResult
         return None; // This is COCO, not TIX
     }
 
-    let project_type = data.get("project")
+    let project_type = data
+        .get("project")
         .and_then(|p| p.get("type"))
         .and_then(|t| t.as_str())
         .map(|t| normalize_project_type(t))
         .unwrap_or_else(|| "bbox".to_string());
 
-    let class_count = data.get("project")
+    let class_count = data
+        .get("project")
         .and_then(|p| p.get("classes"))
         .and_then(|c| c.as_array())
         .map(|c| c.len());
@@ -192,7 +218,8 @@ fn detect_tix(archive: &mut ZipArchive<std::fs::File>) -> Option<DetectionResult
 }
 
 fn detect_pascal_voc(files: &[String]) -> Option<DetectionResult> {
-    let xml_files: Vec<&String> = files.iter()
+    let xml_files: Vec<&String> = files
+        .iter()
         .filter(|f| f.starts_with("annotations/") && f.ends_with(".xml"))
         .collect();
 
@@ -208,12 +235,15 @@ fn detect_pascal_voc(files: &[String]) -> Option<DetectionResult> {
     })
 }
 
-fn detect_csv(archive: &mut ZipArchive<std::fs::File>, _files: &[String]) -> Option<DetectionResult> {
+fn detect_csv(
+    archive: &mut ZipArchive<std::fs::File>,
+    _files: &[String],
+) -> Option<DetectionResult> {
     let content = read_file_text(archive, "annotations.csv")?;
     let first_line = content.lines().next()?.to_lowercase();
 
-    let class_count = read_file_text(archive, "classes.csv")
-        .map(|c| c.trim().lines().count().saturating_sub(1));
+    let class_count =
+        read_file_text(archive, "classes.csv").map(|c| c.trim().lines().count().saturating_sub(1));
 
     if first_line.contains("xmin") || first_line.contains("xmax") {
         return Some(DetectionResult {
@@ -255,10 +285,13 @@ fn detect_csv(archive: &mut ZipArchive<std::fs::File>, _files: &[String]) -> Opt
 }
 
 fn detect_unet(files: &[String]) -> Option<DetectionResult> {
-    let mask_files: Vec<&String> = files.iter()
+    let mask_files: Vec<&String> = files
+        .iter()
         .filter(|f| {
-            f.starts_with("masks/") &&
-            [".png", ".jpg", ".jpeg", ".bmp", ".webp"].iter().any(|ext| f.ends_with(ext))
+            f.starts_with("masks/")
+                && [".png", ".jpg", ".jpeg", ".bmp", ".webp"]
+                    .iter()
+                    .any(|ext| f.ends_with(ext))
         })
         .collect();
 
@@ -317,7 +350,9 @@ fn normalize_project_type(t: &str) -> String {
     match t.to_lowercase().as_str() {
         "detection" => "bbox".to_string(),
         "segmentation" => "mask".to_string(),
-        "instanceseg" | "instancesegmentation" | "instance-segmentation" => "instance-segmentation".to_string(),
+        "instanceseg" | "instancesegmentation" | "instance-segmentation" => {
+            "instance-segmentation".to_string()
+        }
         "multilabel" | "multi-label-classification" => "multi-label-classification".to_string(),
         "keypoint" => "keypoints".to_string(),
         "landmark" => "landmarks".to_string(),

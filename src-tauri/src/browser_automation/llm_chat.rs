@@ -108,19 +108,14 @@ impl BrowserRunner for LlmChatRunner {
         }
     }
 
-    fn check_user_step_completed(
-        &self,
-        step_index: usize,
-        tab: &Tab,
-    ) -> Result<bool, String> {
+    fn check_user_step_completed(&self, step_index: usize, tab: &Tab) -> Result<bool, String> {
         match step_index {
             1 => {
                 // Verificar login: buscar el selector de login_check
                 if let Some(check) = self.selectors.get_login_check(&self.provider) {
-                    match tab.wait_for_element_with_custom_timeout(
-                        check,
-                        Duration::from_millis(1000),
-                    ) {
+                    match tab
+                        .wait_for_element_with_custom_timeout(check, Duration::from_millis(1000))
+                    {
                         Ok(_) => Ok(true),
                         Err(_) => Ok(false),
                     }
@@ -141,11 +136,7 @@ impl BrowserRunner for LlmChatRunner {
 // ─── Implementación de pasos ────────────────────────────────────────────────
 
 impl LlmChatRunner {
-    fn step_open_llm(
-        &self,
-        tab: &Tab,
-        emitter: &dyn Fn(&str),
-    ) -> Result<bool, String> {
+    fn step_open_llm(&self, tab: &Tab, emitter: &dyn Fn(&str)) -> Result<bool, String> {
         let url = self
             .selectors
             .get_url(&self.provider)
@@ -165,11 +156,7 @@ impl LlmChatRunner {
         Ok(true)
     }
 
-    fn step_new_conversation(
-        &self,
-        tab: &Tab,
-        emitter: &dyn Fn(&str),
-    ) -> Result<bool, String> {
+    fn step_new_conversation(&self, tab: &Tab, emitter: &dyn Fn(&str)) -> Result<bool, String> {
         emitter("Creando nueva conversación...");
 
         if let Some(selector) = self.selectors.get(&self.provider, "new_chat") {
@@ -182,7 +169,9 @@ impl LlmChatRunner {
                     return Ok(true);
                 }
                 Err(_) => {
-                    emitter("No se encontró botón de nueva conversación. Continuando con la actual.");
+                    emitter(
+                        "No se encontró botón de nueva conversación. Continuando con la actual.",
+                    );
                 }
             }
         }
@@ -212,7 +201,10 @@ impl LlmChatRunner {
         let prompt = "Hello, I'm using Annotix for ML dataset annotation. Can you help me?";
 
         // Escribir el prompt usando JavaScript para manejar textareas React
-        let escaped_prompt = prompt.replace('\\', "\\\\").replace('\'', "\\'").replace('\n', "\\n");
+        let escaped_prompt = prompt
+            .replace('\\', "\\\\")
+            .replace('\'', "\\'")
+            .replace('\n', "\\n");
         let js = format!(
             r#"
             (function() {{
@@ -239,8 +231,7 @@ impl LlmChatRunner {
         if let Some(send_selector) = self.selectors.get(&self.provider, "send_button") {
             match super::selectors::find_element_with_fallback(tab, send_selector) {
                 Ok(el) => {
-                    el.click()
-                        .map_err(|e| format!("Error click send: {}", e))?;
+                    el.click().map_err(|e| format!("Error click send: {}", e))?;
                 }
                 Err(_) => {
                     // Fallback: enviar con Enter
@@ -262,11 +253,7 @@ impl LlmChatRunner {
         Ok(true)
     }
 
-    fn step_wait_response(
-        &self,
-        tab: &Tab,
-        emitter: &dyn Fn(&str),
-    ) -> Result<bool, String> {
+    fn step_wait_response(&self, tab: &Tab, emitter: &dyn Fn(&str)) -> Result<bool, String> {
         emitter("Esperando respuesta del LLM...");
 
         let typing_selector = self.selectors.get(&self.provider, "typing_indicator");
@@ -282,10 +269,9 @@ impl LlmChatRunner {
             elapsed += 2;
 
             if let Some(selector) = typing_selector {
-                match tab.wait_for_element_with_custom_timeout(
-                    &selector.css,
-                    Duration::from_millis(500),
-                ) {
+                match tab
+                    .wait_for_element_with_custom_timeout(&selector.css, Duration::from_millis(500))
+                {
                     Ok(_) => {
                         // Todavía generando
                         if elapsed % 10 == 0 {
@@ -313,11 +299,7 @@ impl LlmChatRunner {
         Err("Timeout esperando respuesta del LLM.".into())
     }
 
-    fn step_extract_response(
-        &mut self,
-        tab: &Tab,
-        emitter: &dyn Fn(&str),
-    ) -> Result<bool, String> {
+    fn step_extract_response(&mut self, tab: &Tab, emitter: &dyn Fn(&str)) -> Result<bool, String> {
         emitter("Extrayendo respuesta...");
 
         let last_message = self.selectors.get(&self.provider, "last_message");
@@ -335,7 +317,11 @@ impl LlmChatRunner {
                 }})()
                 "#,
                 selector.css.replace('\'', "\\'"),
-                selector.fallback.as_deref().unwrap_or("").replace('\'', "\\'")
+                selector
+                    .fallback
+                    .as_deref()
+                    .unwrap_or("")
+                    .replace('\'', "\\'")
             );
 
             tab.evaluate(&js, false)

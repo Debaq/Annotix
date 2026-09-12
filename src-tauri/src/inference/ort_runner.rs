@@ -8,8 +8,8 @@
 //!
 //! Tasks soportadas: detect, segment (→polygon), obb, pose, classify
 
-use ort::session::Session;
 use ort::session::builder::{GraphOptimizationLevel, SessionBuilder};
+use ort::session::Session;
 use ort::value::Tensor;
 
 // ─── Session Builder Config ─────────────────────────────────────────────────
@@ -130,17 +130,22 @@ pub enum OutputFormat {
 
 impl OutputFormat {
     pub fn from_hint(hint: &str) -> Option<Self> {
-        match hint.to_lowercase().replace('-', "").replace('_', "").as_str() {
-            "yolov8" | "v8" | "yolov9" | "v9" | "yolov11" | "v11" | "yolov12" | "v12"
-            | "yolo8" | "yolo9" | "yolo11" | "yolo12" => Some(Self::YoloV8),
-            "yolov5" | "v5" | "yolov6" | "v6" | "yolov7" | "v7"
-            | "yolo5" | "yolo6" | "yolo7" => Some(Self::YoloV5),
+        match hint
+            .to_lowercase()
+            .replace('-', "")
+            .replace('_', "")
+            .as_str()
+        {
+            "yolov8" | "v8" | "yolov9" | "v9" | "yolov11" | "v11" | "yolov12" | "v12" | "yolo8"
+            | "yolo9" | "yolo11" | "yolo12" => Some(Self::YoloV8),
+            "yolov5" | "v5" | "yolov6" | "v6" | "yolov7" | "v7" | "yolo5" | "yolo6" | "yolo7" => {
+                Some(Self::YoloV5)
+            }
             // YOLOv10 y YOLO26 end-to-end comparten formato [N, 300, 6]
-            "yolov10" | "v10" | "yolo10"
-            | "yolov26" | "v26" | "yolo26" => Some(Self::YoloV10),
+            "yolov10" | "v10" | "yolo10" | "yolov26" | "v26" | "yolo26" => Some(Self::YoloV10),
             // Multi-output: SSD, EfficientDet, Faster R-CNN, etc.
-            "ssd" | "efficientdet" | "fasterrcnn" | "rcnn"
-            | "retinanet" | "multioutput" | "multi" | "tfod" | "detr" => Some(Self::MultiOutput),
+            "ssd" | "efficientdet" | "fasterrcnn" | "rcnn" | "retinanet" | "multioutput"
+            | "multi" | "tfod" | "detr" => Some(Self::MultiOutput),
             "classification" | "classify" | "cls" => Some(Self::Classification),
             _ => None,
         }
@@ -192,11 +197,15 @@ pub fn inspect_onnx(model_path: &str) -> Result<OnnxInspection, String> {
     });
 
     // Output shape del primer output
-    let output_shape: Vec<i64> = session.outputs().first().and_then(|out| {
-        let shape = out.dtype().tensor_shape()?;
-        let dims: &[i64] = shape;
-        Some(dims.to_vec())
-    }).unwrap_or_default();
+    let output_shape: Vec<i64> = session
+        .outputs()
+        .first()
+        .and_then(|out| {
+            let shape = out.dtype().tensor_shape()?;
+            let dims: &[i64] = shape;
+            Some(dims.to_vec())
+        })
+        .unwrap_or_default();
 
     let (nc_inferred, format_hint) = infer_nc_from_shape(&output_shape);
 
@@ -219,7 +228,9 @@ pub struct OnnxInspection {
 /// o el formato Python de ultralytics `{0: 'a', 1: 'b'}`.
 fn parse_names_metadata(raw: &str) -> Option<Vec<String>> {
     let trimmed = raw.trim();
-    if trimmed.is_empty() { return None; }
+    if trimmed.is_empty() {
+        return None;
+    }
 
     // Intento JSON directo
     if let Ok(val) = serde_json::from_str::<serde_json::Value>(trimmed) {
@@ -237,11 +248,14 @@ fn parse_names_metadata(raw: &str) -> Option<Vec<String>> {
 
 fn json_value_to_names(val: &serde_json::Value) -> Option<Vec<String>> {
     match val {
-        serde_json::Value::Array(arr) => {
-            Some(arr.iter().map(|v| v.as_str().unwrap_or("").to_string()).collect())
-        }
+        serde_json::Value::Array(arr) => Some(
+            arr.iter()
+                .map(|v| v.as_str().unwrap_or("").to_string())
+                .collect(),
+        ),
         serde_json::Value::Object(obj) => {
-            let mut pairs: Vec<(usize, String)> = obj.iter()
+            let mut pairs: Vec<(usize, String)> = obj
+                .iter()
                 .filter_map(|(k, v)| {
                     let idx = k.parse::<usize>().ok()?;
                     let name = v.as_str()?.to_string();
@@ -249,7 +263,11 @@ fn json_value_to_names(val: &serde_json::Value) -> Option<Vec<String>> {
                 })
                 .collect();
             pairs.sort_by_key(|(i, _)| *i);
-            if pairs.is_empty() { None } else { Some(pairs.into_iter().map(|(_, n)| n).collect()) }
+            if pairs.is_empty() {
+                None
+            } else {
+                Some(pairs.into_iter().map(|(_, n)| n).collect())
+            }
         }
         _ => None,
     }
@@ -300,8 +318,8 @@ fn infer_nc_from_shape(shape: &[i64]) -> (Option<usize>, Option<String>) {
 /// Preprocesa una imagen a tensor CHW f32 [3*size*size] listo para ORT.
 /// Pensado para ejecutarse en thread productor (overlap con session.run).
 pub fn preprocess_image(image_path: &str, input_size: u32) -> Result<Vec<f32>, String> {
-    let img = image::open(image_path)
-        .map_err(|e| format!("Error abriendo imagen {image_path}: {e}"))?;
+    let img =
+        image::open(image_path).map_err(|e| format!("Error abriendo imagen {image_path}: {e}"))?;
     let isz = input_size as usize;
     let plane = isz * isz;
     let rgb_buf = fast_resize_to_rgb8(&img, input_size)?;
@@ -361,7 +379,11 @@ pub fn run_inference_prepared(
     log::info!(
         "[ORT] {} output(s): {}",
         all_outputs.len(),
-        all_outputs.iter().map(|(n, d, _)| format!("{}={:?}", n, d)).collect::<Vec<_>>().join(", ")
+        all_outputs
+            .iter()
+            .map(|(n, d, _)| format!("{}={:?}", n, d))
+            .collect::<Vec<_>>()
+            .join(", ")
     );
 
     // ── Determinar formato ──────────────────────────────────────────────────
@@ -377,7 +399,12 @@ pub fn run_inference_prepared(
         detect_output_format_full(&all_outputs, num_classes)?
     };
 
-    log::info!("[ORT] format={}, task={}, classes_config={}", format.label(), task, num_classes);
+    log::info!(
+        "[ORT] format={}, task={}, classes_config={}",
+        format.label(),
+        task,
+        num_classes
+    );
 
     let dims0 = &all_outputs[0].1;
     let data0 = &all_outputs[0].2;
@@ -397,18 +424,22 @@ pub fn run_inference_prepared(
 
     let detections = match format {
         OutputFormat::YoloV8 => parse_yolov8(
-            data0, dims0, conf_threshold, iou_threshold, input_size,
-            num_classes, task, proto_owned.as_ref(),
+            data0,
+            dims0,
+            conf_threshold,
+            iou_threshold,
+            input_size,
+            num_classes,
+            task,
+            proto_owned.as_ref(),
         )?,
-        OutputFormat::YoloV5 => parse_yolov5(
-            data0, dims0, conf_threshold, iou_threshold, input_size,
-        )?,
-        OutputFormat::YoloV10 => parse_yolov10(
-            data0, dims0, conf_threshold, input_size,
-        )?,
-        OutputFormat::MultiOutput => parse_multi_output(
-            &all_outputs, conf_threshold, iou_threshold, input_size,
-        )?,
+        OutputFormat::YoloV5 => {
+            parse_yolov5(data0, dims0, conf_threshold, iou_threshold, input_size)?
+        }
+        OutputFormat::YoloV10 => parse_yolov10(data0, dims0, conf_threshold, input_size)?,
+        OutputFormat::MultiOutput => {
+            parse_multi_output(&all_outputs, conf_threshold, iou_threshold, input_size)?
+        }
         OutputFormat::Classification => unreachable!(),
     };
 
@@ -429,12 +460,12 @@ fn detect_output_format_full(
     // Patrón TF Object Detection API: boxes[1,N,4], scores[1,N], classes[1,N], num_det[1]
     // Patrón ONNX Model Zoo: boxes[1,N,4], scores[1,N,C] o similar
     if num_outputs >= 3 {
-        let has_boxes = all_outputs.iter().any(|(_, d, _)| {
-            (d.len() == 3 && d[2] == 4) || (d.len() == 2 && d[1] == 4)
-        });
-        let has_scores = all_outputs.iter().any(|(_, d, _)| {
-            d.len() == 2 || (d.len() == 3 && d[2] != 4)
-        });
+        let has_boxes = all_outputs
+            .iter()
+            .any(|(_, d, _)| (d.len() == 3 && d[2] == 4) || (d.len() == 2 && d[1] == 4));
+        let has_scores = all_outputs
+            .iter()
+            .any(|(_, d, _)| d.len() == 2 || (d.len() == 3 && d[2] != 4));
         if has_boxes && has_scores {
             log::info!(
                 "[ORT] {} outputs con boxes+scores separados → MultiOutput",
@@ -454,7 +485,8 @@ fn detect_output_format_full(
         _ => Err(format!(
             "Dimensiones no soportadas: {}D {:?}. Esperado 2D (clasificación) o 3D (detección). \
              Intenta especificar el formato manualmente.",
-            dims0.len(), dims0
+            dims0.len(),
+            dims0
         )),
     }
 }
@@ -473,17 +505,29 @@ fn detect_3d_format(dim1: usize, dim2: usize, num_classes: usize) -> Result<Outp
 
         // YOLOv8 transpuesto: [_, features, anchors] donde features < anchors
         if dim1 == v8_detect && dim1 < dim2 {
-            log::info!("[ORT] [_, {}, {}] match exacto → YOLOv8+ transpuesto", dim1, dim2);
+            log::info!(
+                "[ORT] [_, {}, {}] match exacto → YOLOv8+ transpuesto",
+                dim1,
+                dim2
+            );
             return Ok(OutputFormat::YoloV8);
         }
         // YOLOv8 con extras (obb=+1, seg=+32, pose=+K*3)
         if dim1 > v8_detect && dim1 < dim2 {
-            log::info!("[ORT] [_, {}, {}] → YOLOv8+ transpuesto (con extras: obb/seg/pose)", dim1, dim2);
+            log::info!(
+                "[ORT] [_, {}, {}] → YOLOv8+ transpuesto (con extras: obb/seg/pose)",
+                dim1,
+                dim2
+            );
             return Ok(OutputFormat::YoloV8);
         }
         // YOLOv5: [_, anchors, 5+C]
         if dim2 == v5_detect && dim1 > dim2 {
-            log::info!("[ORT] [_, {}, {}] match exacto → YOLOv5 (con objectness)", dim1, dim2);
+            log::info!(
+                "[ORT] [_, {}, {}] match exacto → YOLOv5 (con objectness)",
+                dim1,
+                dim2
+            );
             return Ok(OutputFormat::YoloV5);
         }
         // YOLOv8 no transpuesto: [_, anchors, 4+C]
@@ -493,19 +537,31 @@ fn detect_3d_format(dim1: usize, dim2: usize, num_classes: usize) -> Result<Outp
         }
         // YOLOv8 no transpuesto con extras
         if dim2 > v8_detect && dim1 > dim2 {
-            log::info!("[ORT] [_, {}, {}] → YOLOv8+ no transpuesto (con extras)", dim1, dim2);
+            log::info!(
+                "[ORT] [_, {}, {}] → YOLOv8+ no transpuesto (con extras)",
+                dim1,
+                dim2
+            );
             return Ok(OutputFormat::YoloV8);
         }
     }
 
     // Sin num_classes: heurísticas por forma
     if dim1 < dim2 && dim1 >= 5 {
-        log::info!("[ORT] [_, {}, {}] (features < anchors) → asumiendo YOLOv8+", dim1, dim2);
+        log::info!(
+            "[ORT] [_, {}, {}] (features < anchors) → asumiendo YOLOv8+",
+            dim1,
+            dim2
+        );
         return Ok(OutputFormat::YoloV8);
     }
     if dim1 > dim2 && dim2 >= 5 {
         // Podría ser v5 o v8 no transpuesto; v8 es más común
-        log::info!("[ORT] [_, {}, {}] (anchors > features) → asumiendo YOLOv8+ (no transpuesto)", dim1, dim2);
+        log::info!(
+            "[ORT] [_, {}, {}] (anchors > features) → asumiendo YOLOv8+ (no transpuesto)",
+            dim1,
+            dim2
+        );
         return Ok(OutputFormat::YoloV8);
     }
     if dim1 == 1 {
@@ -547,13 +603,17 @@ fn parse_yolov8(
     }
 
     // Determinar num_classes según task
-    let (num_classes, extra_offset, extra_count) = resolve_v8_layout(
-        det_len, num_classes_config, task,
-    )?;
+    let (num_classes, extra_offset, extra_count) =
+        resolve_v8_layout(det_len, num_classes_config, task)?;
 
     log::info!(
         "[ORT/YOLOv8] task={}, transposed={}, anchors={}, features={}, classes={}, extra={}",
-        task, transposed, num_anchors, det_len, num_classes, extra_count
+        task,
+        transposed,
+        num_anchors,
+        det_len,
+        num_classes,
+        extra_count
     );
 
     // Sigmoid detection
@@ -567,11 +627,16 @@ fn parse_yolov8(
 
     for i in 0..num_anchors {
         let val = |col: usize| -> f32 {
-            if transposed { data[col * stride + i] } else { data[i * stride + col] }
+            if transposed {
+                data[col * stride + i]
+            } else {
+                data[i * stride + col]
+            }
         };
 
         // Mejor clase
-        let (best_cls, mut best_score) = find_best_class(data, i, 4, num_classes, stride, transposed);
+        let (best_cls, mut best_score) =
+            find_best_class(data, i, 4, num_classes, stride, transposed);
         if needs_sigmoid {
             best_score = sigmoid(best_score);
         }
@@ -619,13 +684,10 @@ fn parse_yolov8(
             }
             "segment" if extra_count == 32 => {
                 if let Some((proto_dims, proto_data)) = proto {
-                    let coeffs: Vec<f32> = (0..32)
-                        .map(|k| val(extra_offset as usize + k))
-                        .collect();
-                    let polygon = compute_mask_polygon(
-                        &coeffs, proto_dims, proto_data,
-                        cx, cy, w, h, isz,
-                    );
+                    let coeffs: Vec<f32> =
+                        (0..32).map(|k| val(extra_offset as usize + k)).collect();
+                    let polygon =
+                        compute_mask_polygon(&coeffs, proto_dims, proto_data, cx, cy, w, h, isz);
                     if let Some(pts) = polygon {
                         det.polygon = Some(pts);
                     }
@@ -652,10 +714,10 @@ fn resolve_v8_layout(
 ) -> Result<(usize, usize, usize), String> {
     // Mínimo de slots no-clase según task
     let min_non_class: usize = match task {
-        "obb" => 5,        // 4 bbox + 1 angle
-        "segment" => 36,   // 4 bbox + 32 mask
-        "pose" => 4,       // 4 bbox (extra = K*3 además de clases)
-        _ => 4,            // detect/classify: 4 bbox
+        "obb" => 5,      // 4 bbox + 1 angle
+        "segment" => 36, // 4 bbox + 32 mask
+        "pose" => 4,     // 4 bbox (extra = K*3 además de clases)
+        _ => 4,          // detect/classify: 4 bbox
     };
 
     if num_classes_config > 0 {
@@ -666,7 +728,9 @@ fn resolve_v8_layout(
         log::warn!(
             "[ORT/YOLOv8] num_classes_config={} no cabe en features={} (task={}). \
              Ignorando config, infiriendo desde shape.",
-            num_classes_config, det_len, task
+            num_classes_config,
+            det_len,
+            task
         );
     }
 
@@ -694,7 +758,10 @@ fn resolve_v8_layout(
         "segment" => {
             // features = 4 + C + 32(mask_coeffs)
             if det_len < 37 {
-                return Err(format!("Segment: features={} < 37 mínimo (4+C+32)", det_len));
+                return Err(format!(
+                    "Segment: features={} < 37 mínimo (4+C+32)",
+                    det_len
+                ));
             }
             let nc = det_len - 36;
             Ok((nc, 4 + nc, 32))
@@ -707,7 +774,8 @@ fn resolve_v8_layout(
                 return Err(format!(
                     "Pose: features={} no es compatible con 4+1+K*3 (sobrante={}). \
                      Proporciona el número de clases en la configuración.",
-                    det_len, extra % 3
+                    det_len,
+                    extra % 3
                 ));
             }
             Ok((nc, 5, extra))
@@ -735,7 +803,10 @@ fn parse_yolov5(
     } else if dim2 >= 6 {
         (dim1, dim2, false)
     } else {
-        return Err(format!("YOLOv5: shape [_, {}, {}] necesita >=6 features", dim1, dim2));
+        return Err(format!(
+            "YOLOv5: shape [_, {}, {}] necesita >=6 features",
+            dim1, dim2
+        ));
     };
 
     let num_classes = det_len - 5; // 4 coords + 1 objectness
@@ -744,7 +815,10 @@ fn parse_yolov5(
 
     log::info!(
         "[ORT/YOLOv5] transposed={}, anchors={}, features={}, classes={}",
-        transposed, num_anchors, det_len, num_classes
+        transposed,
+        num_anchors,
+        det_len,
+        num_classes
     );
 
     let needs_sigmoid = sample_needs_sigmoid(data, num_anchors, 4, 1, stride, transposed);
@@ -756,7 +830,11 @@ fn parse_yolov5(
 
     for i in 0..num_anchors {
         let val = |col: usize| -> f32 {
-            if transposed { data[col * stride + i] } else { data[i * stride + col] }
+            if transposed {
+                data[col * stride + i]
+            } else {
+                data[i * stride + col]
+            }
         };
 
         let mut obj_score = val(4) as f64;
@@ -767,7 +845,8 @@ fn parse_yolov5(
             continue;
         }
 
-        let (best_cls, mut best_cls_score) = find_best_class(data, i, 5, num_classes, stride, transposed);
+        let (best_cls, mut best_cls_score) =
+            find_best_class(data, i, 5, num_classes, stride, transposed);
         if needs_sigmoid {
             best_cls_score = sigmoid(best_cls_score);
         }
@@ -873,9 +952,20 @@ fn parse_classification(
 
     let scores: Vec<f64> = if needs_softmax {
         log::info!("[ORT/Cls] Aplicando softmax a {} clases", num_classes);
-        let max_val = data.iter().take(num_classes).cloned().fold(f32::NEG_INFINITY, f32::max);
-        let exp_sum: f64 = data.iter().take(num_classes).map(|&v| ((v - max_val) as f64).exp()).sum();
-        data.iter().take(num_classes).map(|&v| ((v - max_val) as f64).exp() / exp_sum).collect()
+        let max_val = data
+            .iter()
+            .take(num_classes)
+            .cloned()
+            .fold(f32::NEG_INFINITY, f32::max);
+        let exp_sum: f64 = data
+            .iter()
+            .take(num_classes)
+            .map(|&v| ((v - max_val) as f64).exp())
+            .sum();
+        data.iter()
+            .take(num_classes)
+            .map(|&v| ((v - max_val) as f64).exp() / exp_sum)
+            .collect()
     } else {
         data.iter().take(num_classes).map(|&v| v as f64).collect()
     };
@@ -884,7 +974,10 @@ fn parse_classification(
         .iter()
         .enumerate()
         .filter(|(_, &s)| s >= conf_threshold)
-        .map(|(i, &s)| Classification { class_id: i, confidence: s })
+        .map(|(i, &s)| Classification {
+            class_id: i,
+            confidence: s,
+        })
         .collect();
 
     results.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap());
@@ -988,11 +1081,11 @@ fn parse_multi_output(
         }
     }
 
-    let (box_data, box_dims) = boxes_data
-        .ok_or("MultiOutput: no se encontró tensor de boxes (dim con último eje = 4)")?;
+    let (box_data, box_dims) =
+        boxes_data.ok_or("MultiOutput: no se encontró tensor de boxes (dim con último eje = 4)")?;
 
-    let (score_data, score_dims) = scores_data
-        .ok_or("MultiOutput: no se encontró tensor de scores")?;
+    let (score_data, score_dims) =
+        scores_data.ok_or("MultiOutput: no se encontró tensor de scores")?;
 
     // Determinar número de detecciones
     let num_detections = if let Some(nd) = num_det_data {
@@ -1002,16 +1095,19 @@ fn parse_multi_output(
     };
 
     // Determinar si scores son per-class [N, C] o per-detection [N]
-    let scores_per_class = score_dims.last().map(|&d| d > 1).unwrap_or(false)
-        && score_dims.len() >= 2;
+    let scores_per_class =
+        score_dims.last().map(|&d| d > 1).unwrap_or(false) && score_dims.len() >= 2;
 
     let isz = input_size as f64;
     let mut detections = Vec::new();
 
     log::info!(
         "[ORT/MultiOutput] boxes={:?}, scores={:?}, labels={}, num_det={}, per_class={}",
-        box_dims, score_dims,
-        labels_data.is_some(), num_detections, scores_per_class
+        box_dims,
+        score_dims,
+        labels_data.is_some(),
+        num_detections,
+        scores_per_class
     );
 
     for i in 0..num_detections {
@@ -1077,8 +1173,13 @@ fn parse_multi_output(
         detections.push(Detection {
             class_id,
             confidence,
-            x, y, width: w, height: h,
-            angle: None, keypoints: None, polygon: None,
+            x,
+            y,
+            width: w,
+            height: h,
+            angle: None,
+            keypoints: None,
+            polygon: None,
         });
     }
 
@@ -1100,7 +1201,10 @@ fn compute_mask_polygon(
     coeffs: &[f32],
     proto_dims: &[usize],
     proto_data: &[f32],
-    cx: f64, cy: f64, bw: f64, bh: f64,
+    cx: f64,
+    cy: f64,
+    bw: f64,
+    bh: f64,
     input_size: f64,
 ) -> Option<Vec<(f64, f64)>> {
     // proto_dims: [1, 32, mask_h, mask_w]
@@ -1190,11 +1294,21 @@ fn trace_contour(mask: &[bool], width: usize, height: usize) -> Vec<(usize, usiz
 
     // 8 direcciones: 0=E, 1=SE, 2=S, 3=SW, 4=W, 5=NW, 6=N, 7=NE
     const DIRS: [(i32, i32); 8] = [
-        (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1),
+        (1, 0),
+        (1, 1),
+        (0, 1),
+        (-1, 1),
+        (-1, 0),
+        (-1, -1),
+        (0, -1),
+        (1, -1),
     ];
 
     let is_set = |x: i32, y: i32| -> bool {
-        x >= 0 && y >= 0 && (x as usize) < width && (y as usize) < height
+        x >= 0
+            && y >= 0
+            && (x as usize) < width
+            && (y as usize) < height
             && mask[y as usize * width + x as usize]
     };
 
@@ -1279,14 +1393,22 @@ fn point_line_distance(p: (f64, f64), a: (f64, f64), b: (f64, f64)) -> f64 {
 // ─── Common Utilities ───────────────────────────────────────────────────────
 
 fn find_best_class(
-    data: &[f32], det_idx: usize, class_offset: usize, num_classes: usize,
-    stride: usize, transposed: bool,
+    data: &[f32],
+    det_idx: usize,
+    class_offset: usize,
+    num_classes: usize,
+    stride: usize,
+    transposed: bool,
 ) -> (usize, f64) {
     let mut best_cls = 0;
     let mut best_score = f64::NEG_INFINITY;
     for c in 0..num_classes {
         let col = class_offset + c;
-        let idx = if transposed { col * stride + det_idx } else { det_idx * stride + col };
+        let idx = if transposed {
+            col * stride + det_idx
+        } else {
+            det_idx * stride + col
+        };
         if idx >= data.len() {
             break;
         }
@@ -1300,14 +1422,22 @@ fn find_best_class(
 }
 
 fn sample_needs_sigmoid(
-    data: &[f32], num_det: usize, offset: usize, count: usize,
-    stride: usize, transposed: bool,
+    data: &[f32],
+    num_det: usize,
+    offset: usize,
+    count: usize,
+    stride: usize,
+    transposed: bool,
 ) -> bool {
     let n = num_det.min(100);
     for i in 0..n {
         for c in 0..count {
             let col = offset + c;
-            let idx = if transposed { col * stride + i } else { i * stride + col };
+            let idx = if transposed {
+                col * stride + i
+            } else {
+                i * stride + col
+            };
             if idx >= data.len() {
                 return false;
             }
@@ -1347,5 +1477,9 @@ fn compute_iou(a: &Detection, b: &Detection) -> f64 {
     let area_a = a.width * a.height;
     let area_b = b.width * b.height;
     let union = area_a + area_b - inter;
-    if union > 0.0 { inter / union } else { 0.0 }
+    if union > 0.0 {
+        inter / union
+    } else {
+        0.0
+    }
 }

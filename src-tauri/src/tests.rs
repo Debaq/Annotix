@@ -24,9 +24,7 @@ use zip::ZipArchive;
 use crate::export;
 use crate::import;
 use crate::store::io as store_io;
-use crate::store::project_file::{
-    AnnotationEntry, ClassDef, ImageEntry, ProjectFile,
-};
+use crate::store::project_file::{AnnotationEntry, ClassDef, ImageEntry, ProjectFile};
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -121,8 +119,18 @@ fn image_entry(name: &str, file: &str, w: u32, h: u32, anns: Vec<AnnotationEntry
 
 fn default_classes() -> Vec<ClassDef> {
     vec![
-        ClassDef { id: 0, name: "cat".into(), color: "#ff0000".into(), description: None },
-        ClassDef { id: 1, name: "dog".into(), color: "#00ff00".into(), description: Some("puppy".into()) },
+        ClassDef {
+            id: 0,
+            name: "cat".into(),
+            color: "#ff0000".into(),
+            description: None,
+        },
+        ClassDef {
+            id: 1,
+            name: "dog".into(),
+            color: "#00ff00".into(),
+            description: Some("puppy".into()),
+        },
     ]
 }
 
@@ -350,7 +358,11 @@ fn yolo_detection_roundtrip_preserves_bboxes() {
     assert_eq!(total_anns, 3);
 
     // Verificar que los bboxes están aproximadamente en la ubicación original
-    let img1 = data.images.iter().find(|i| i.name == "img1.png").expect("img1");
+    let img1 = data
+        .images
+        .iter()
+        .find(|i| i.name == "img1.png")
+        .expect("img1");
     assert_eq!(img1.annotations.len(), 1);
     let ann = &img1.annotations[0];
     assert_eq!(ann.class_id, 0);
@@ -374,7 +386,7 @@ fn yolo_detection_label_format_is_cx_cy_w_h_normalized() {
     let parts: Vec<&str> = txt.trim().split_whitespace().collect();
     assert_eq!(parts.len(), 5);
     assert_eq!(parts[0], "0"); // class_id
-    // xc normalizado: (10 + 50/2) / 200 = 35/200 = 0.175
+                               // xc normalizado: (10 + 50/2) / 200 = 35/200 = 0.175
     let xc: f64 = parts[1].parse().unwrap();
     assert!((xc - 0.175).abs() < 1e-4, "xc was {}", xc);
 }
@@ -488,8 +500,7 @@ fn detect_format_recognizes_coco() {
 // ════════════════════════════════════════════════════════════════════════════
 
 use crate::p2p::{
-    ApprovalStatus, LockMode, PeerRole, SessionRules, SessionStatus,
-    protocol::GossipMessage,
+    protocol::GossipMessage, ApprovalStatus, LockMode, PeerRole, SessionRules, SessionStatus,
 };
 
 // ─── PeerRole: permisos ─────────────────────────────────────────────────────
@@ -604,14 +615,20 @@ fn session_rules_deserialize_without_require_data_approval() {
 
 #[test]
 fn session_status_serde_lowercase() {
-    assert_eq!(serde_json::to_string(&SessionStatus::Connected).unwrap(), "\"connected\"");
+    assert_eq!(
+        serde_json::to_string(&SessionStatus::Connected).unwrap(),
+        "\"connected\""
+    );
     let s: SessionStatus = serde_json::from_str("\"syncing\"").unwrap();
     assert_eq!(s, SessionStatus::Syncing);
 }
 
 #[test]
 fn approval_status_serde_lowercase() {
-    assert_eq!(serde_json::to_string(&ApprovalStatus::Pending).unwrap(), "\"pending\"");
+    assert_eq!(
+        serde_json::to_string(&ApprovalStatus::Pending).unwrap(),
+        "\"pending\""
+    );
     let s: ApprovalStatus = serde_json::from_str("\"rejected\"").unwrap();
     assert_eq!(s, ApprovalStatus::Rejected);
 }
@@ -627,7 +644,10 @@ fn gossip_message_peer_joined_roundtrip() {
     let bytes = m.to_bytes().expect("ser");
     let back = GossipMessage::from_bytes(&bytes).expect("deser");
     match back {
-        GossipMessage::PeerJoined { node_id, display_name } => {
+        GossipMessage::PeerJoined {
+            node_id,
+            display_name,
+        } => {
             assert_eq!(node_id, "node-1");
             assert_eq!(display_name, "Alice");
         }
@@ -717,39 +737,80 @@ use crate::inference::ort_runner::OutputFormat;
 fn output_format_from_hint_yolov8_family() {
     let aliases = ["yolov8", "v8", "yolo8", "yolov9", "v11", "yolov12"];
     for a in aliases {
-        assert_eq!(OutputFormat::from_hint(a), Some(OutputFormat::YoloV8), "alias {}", a);
+        assert_eq!(
+            OutputFormat::from_hint(a),
+            Some(OutputFormat::YoloV8),
+            "alias {}",
+            a
+        );
     }
 }
 
 #[test]
 fn output_format_from_hint_yolov5_family() {
-    assert_eq!(OutputFormat::from_hint("yolov5"), Some(OutputFormat::YoloV5));
-    assert_eq!(OutputFormat::from_hint("yolov7"), Some(OutputFormat::YoloV5));
+    assert_eq!(
+        OutputFormat::from_hint("yolov5"),
+        Some(OutputFormat::YoloV5)
+    );
+    assert_eq!(
+        OutputFormat::from_hint("yolov7"),
+        Some(OutputFormat::YoloV5)
+    );
 }
 
 #[test]
 fn output_format_from_hint_yolov10_family() {
-    assert_eq!(OutputFormat::from_hint("yolov10"), Some(OutputFormat::YoloV10));
-    assert_eq!(OutputFormat::from_hint("yolo26"), Some(OutputFormat::YoloV10));
+    assert_eq!(
+        OutputFormat::from_hint("yolov10"),
+        Some(OutputFormat::YoloV10)
+    );
+    assert_eq!(
+        OutputFormat::from_hint("yolo26"),
+        Some(OutputFormat::YoloV10)
+    );
 }
 
 #[test]
 fn output_format_from_hint_normalizes_separators() {
-    assert_eq!(OutputFormat::from_hint("YOLO-V8"), Some(OutputFormat::YoloV8));
-    assert_eq!(OutputFormat::from_hint("Yolo_V5"), Some(OutputFormat::YoloV5));
+    assert_eq!(
+        OutputFormat::from_hint("YOLO-V8"),
+        Some(OutputFormat::YoloV8)
+    );
+    assert_eq!(
+        OutputFormat::from_hint("Yolo_V5"),
+        Some(OutputFormat::YoloV5)
+    );
 }
 
 #[test]
 fn output_format_from_hint_multi_output_aliases() {
-    for a in ["ssd", "efficientdet", "fasterrcnn", "rcnn", "retinanet", "detr"] {
-        assert_eq!(OutputFormat::from_hint(a), Some(OutputFormat::MultiOutput), "alias {}", a);
+    for a in [
+        "ssd",
+        "efficientdet",
+        "fasterrcnn",
+        "rcnn",
+        "retinanet",
+        "detr",
+    ] {
+        assert_eq!(
+            OutputFormat::from_hint(a),
+            Some(OutputFormat::MultiOutput),
+            "alias {}",
+            a
+        );
     }
 }
 
 #[test]
 fn output_format_from_hint_classification() {
-    assert_eq!(OutputFormat::from_hint("classification"), Some(OutputFormat::Classification));
-    assert_eq!(OutputFormat::from_hint("cls"), Some(OutputFormat::Classification));
+    assert_eq!(
+        OutputFormat::from_hint("classification"),
+        Some(OutputFormat::Classification)
+    );
+    assert_eq!(
+        OutputFormat::from_hint("cls"),
+        Some(OutputFormat::Classification)
+    );
 }
 
 #[test]
@@ -861,14 +922,32 @@ fn training_prepare_dataset_is_deterministic_per_project_id() {
     let (pf, imgs_dir) = build_detection_fixture();
 
     let out1 = tempfile::tempdir().unwrap();
-    dataset::prepare_dataset(imgs_dir.path(), &pf, &pf.images, out1.path(), 0.5, 0.0, "detect").unwrap();
+    dataset::prepare_dataset(
+        imgs_dir.path(),
+        &pf,
+        &pf.images,
+        out1.path(),
+        0.5,
+        0.0,
+        "detect",
+    )
+    .unwrap();
     let files1: Vec<_> = std::fs::read_dir(out1.path().join("images/train"))
         .unwrap()
         .map(|e| e.unwrap().file_name().to_string_lossy().to_string())
         .collect();
 
     let out2 = tempfile::tempdir().unwrap();
-    dataset::prepare_dataset(imgs_dir.path(), &pf, &pf.images, out2.path(), 0.5, 0.0, "detect").unwrap();
+    dataset::prepare_dataset(
+        imgs_dir.path(),
+        &pf,
+        &pf.images,
+        out2.path(),
+        0.5,
+        0.0,
+        "detect",
+    )
+    .unwrap();
     let files2: Vec<_> = std::fs::read_dir(out2.path().join("images/train"))
         .unwrap()
         .map(|e| e.unwrap().file_name().to_string_lossy().to_string())
@@ -887,14 +966,30 @@ fn training_prepare_dataset_is_deterministic_per_project_id() {
 fn select_trainable_images_drops_unannotated() {
     let classes = default_classes();
     let images = vec![
-        image_entry("a.png", "a.png", 100, 100, vec![bbox_ann(0, 1.0, 1.0, 10.0, 10.0)]),
+        image_entry(
+            "a.png",
+            "a.png",
+            100,
+            100,
+            vec![bbox_ann(0, 1.0, 1.0, 10.0, 10.0)],
+        ),
         image_entry("sin_anotar.png", "sin_anotar.png", 100, 100, vec![]),
-        image_entry("b.png", "b.png", 100, 100, vec![bbox_ann(1, 2.0, 2.0, 10.0, 10.0)]),
+        image_entry(
+            "b.png",
+            "b.png",
+            100,
+            100,
+            vec![bbox_ann(1, 2.0, 2.0, 10.0, 10.0)],
+        ),
     ];
 
     let kept = dataset::select_trainable_images(images, &classes);
 
-    assert_eq!(kept.len(), 2, "la imagen sin anotaciones no debe entrar al dataset");
+    assert_eq!(
+        kept.len(),
+        2,
+        "la imagen sin anotaciones no debe entrar al dataset"
+    );
     let names: Vec<_> = kept.iter().map(|i| i.name.as_str()).collect();
     assert!(!names.contains(&"sin_anotar.png"));
 }
@@ -904,14 +999,23 @@ fn select_trainable_images_drops_orphan_annotations_and_then_image() {
     let classes = default_classes(); // ids 0 y 1
     let images = vec![
         // Solo tiene una anotación de una clase borrada → queda vacía → se descarta
-        image_entry("huerfana.png", "huerfana.png", 100, 100, vec![bbox_ann(99, 1.0, 1.0, 5.0, 5.0)]),
+        image_entry(
+            "huerfana.png",
+            "huerfana.png",
+            100,
+            100,
+            vec![bbox_ann(99, 1.0, 1.0, 5.0, 5.0)],
+        ),
         // Mezcla: conserva la válida y sobrevive
         image_entry(
             "mixta.png",
             "mixta.png",
             100,
             100,
-            vec![bbox_ann(99, 1.0, 1.0, 5.0, 5.0), bbox_ann(0, 2.0, 2.0, 5.0, 5.0)],
+            vec![
+                bbox_ann(99, 1.0, 1.0, 5.0, 5.0),
+                bbox_ann(0, 2.0, 2.0, 5.0, 5.0),
+            ],
         ),
     ];
 
@@ -919,14 +1023,24 @@ fn select_trainable_images_drops_orphan_annotations_and_then_image() {
 
     assert_eq!(kept.len(), 1);
     assert_eq!(kept[0].name, "mixta.png");
-    assert_eq!(kept[0].annotations.len(), 1, "la anotación huérfana debe quedar fuera");
+    assert_eq!(
+        kept[0].annotations.len(),
+        1,
+        "la anotación huérfana debe quedar fuera"
+    );
     assert_eq!(kept[0].annotations[0].class_id, 0);
 }
 
 #[test]
 fn select_trainable_images_keeps_annotated_video_frames() {
     let classes = default_classes();
-    let mut frame = image_entry("f_000001.jpg", "f_000001.jpg", 100, 100, vec![bbox_ann(0, 1.0, 1.0, 10.0, 10.0)]);
+    let mut frame = image_entry(
+        "f_000001.jpg",
+        "f_000001.jpg",
+        100,
+        100,
+        vec![bbox_ann(0, 1.0, 1.0, 10.0, 10.0)],
+    );
     frame.video_id = Some("vid-1".into());
     frame.frame_index = Some(1);
 
@@ -953,12 +1067,40 @@ fn select_trainable_images_empty_when_nothing_annotated() {
 #[test]
 fn backend_uses_images_only_for_vision_backends() {
     use crate::training::TrainingBackend as B;
-    for b in [B::Yolo, B::RtDetr, B::RfDetr, B::MmDetection, B::Smp, B::HfSegmentation,
-              B::MmSegmentation, B::Detectron2, B::MmPose, B::MmRotate, B::Timm, B::HfClassification] {
-        assert!(dataset::backend_uses_images(&b), "{:?} entrena sobre imágenes", b);
+    for b in [
+        B::Yolo,
+        B::RtDetr,
+        B::RfDetr,
+        B::MmDetection,
+        B::Smp,
+        B::HfSegmentation,
+        B::MmSegmentation,
+        B::Detectron2,
+        B::MmPose,
+        B::MmRotate,
+        B::Timm,
+        B::HfClassification,
+    ] {
+        assert!(
+            dataset::backend_uses_images(&b),
+            "{:?} entrena sobre imágenes",
+            b
+        );
     }
-    for b in [B::Tsai, B::PytorchForecasting, B::Pyod, B::Tslearn, B::Pypots, B::Stumpy, B::Sklearn] {
-        assert!(!dataset::backend_uses_images(&b), "{:?} lee su propio CSV", b);
+    for b in [
+        B::Tsai,
+        B::PytorchForecasting,
+        B::Pyod,
+        B::Tslearn,
+        B::Pypots,
+        B::Stumpy,
+        B::Sklearn,
+    ] {
+        assert!(
+            !dataset::backend_uses_images(&b),
+            "{:?} lee su propio CSV",
+            b
+        );
     }
 }
 
@@ -995,13 +1137,20 @@ fn obb_to_aabbox_45_degrees_expands_bbox() {
     // Cuadrado 10×10 rotado 45° → bbox circunscrito de lado ≈ 10·√2 ≈ 14.14
     let (min_x, _, max_x, _) = obb_to_aabbox(0.0, 0.0, 10.0, 10.0, 45.0);
     let side = max_x - min_x;
-    assert!((side - (10.0_f64 * 2.0_f64.sqrt())).abs() < 1e-6, "side = {}", side);
+    assert!(
+        (side - (10.0_f64 * 2.0_f64.sqrt())).abs() < 1e-6,
+        "side = {}",
+        side
+    );
 }
 
 #[test]
 fn escape_xml_replaces_all_specials() {
     let s = escape_xml("<tag attr=\"v\" val='x' a&b>");
-    assert_eq!(s, "&lt;tag attr=&quot;v&quot; val=&apos;x&apos; a&amp;b&gt;");
+    assert_eq!(
+        s,
+        "&lt;tag attr=&quot;v&quot; val=&apos;x&apos; a&amp;b&gt;"
+    );
 }
 
 #[test]
@@ -1051,7 +1200,9 @@ fn polygon_area_is_orientation_independent() {
 
 // ─── Tests: interpolación de tracks de video ────────────────────────────────
 
-use crate::store::project_file::{KeyframeEntry, TimeSeriesEntry, TrackEntry, TsAnnotationEntry, VideoEntry};
+use crate::store::project_file::{
+    KeyframeEntry, TimeSeriesEntry, TrackEntry, TsAnnotationEntry, VideoEntry,
+};
 use crate::store::videos::{interpolate_bbox, pct_bbox_to_px};
 
 fn kf(frame_index: i64, x: f64, y: f64, w: f64, h: f64) -> KeyframeEntry {
@@ -1089,7 +1240,13 @@ fn video_with_track(video_id: &str, class_id: i64, keyframes: Vec<KeyframeEntry>
     }
 }
 
-fn video_frame(video_id: &str, frame_index: i64, w: u32, h: u32, anns: Vec<AnnotationEntry>) -> ImageEntry {
+fn video_frame(
+    video_id: &str,
+    frame_index: i64,
+    w: u32,
+    h: u32,
+    anns: Vec<AnnotationEntry>,
+) -> ImageEntry {
     let mut e = image_entry(
         &format!("frame_{:06}.jpg", frame_index),
         &format!("frame_{:06}.jpg", frame_index),
@@ -1104,7 +1261,10 @@ fn video_frame(video_id: &str, frame_index: i64, w: u32, h: u32, anns: Vec<Annot
 
 #[test]
 fn interpolate_bbox_returns_exact_keyframe() {
-    let kfs = vec![kf(0, 10.0, 20.0, 30.0, 40.0), kf(10, 50.0, 60.0, 30.0, 40.0)];
+    let kfs = vec![
+        kf(0, 10.0, 20.0, 30.0, 40.0),
+        kf(10, 50.0, 60.0, 30.0, 40.0),
+    ];
     let (x, y, w, h, enabled) = interpolate_bbox(&kfs, 0).expect("keyframe exacto");
     assert_eq!((x, y, w, h), (10.0, 20.0, 30.0, 40.0));
     assert!(enabled);
@@ -1158,10 +1318,14 @@ fn migration_v1_rescales_baked_bboxes_to_pixels() {
     let tmp = tempfile::tempdir().unwrap();
     let mut project = make_project("video", "bbox", default_classes());
     project.version = 1;
-    project.videos = vec![video_with_track("vid-1", 0, vec![
-        kf(0, 10.0, 20.0, 30.0, 40.0),
-        kf(10, 10.0, 20.0, 30.0, 40.0),
-    ])];
+    project.videos = vec![video_with_track(
+        "vid-1",
+        0,
+        vec![
+            kf(0, 10.0, 20.0, 30.0, 40.0),
+            kf(10, 10.0, 20.0, 30.0, 40.0),
+        ],
+    )];
 
     // Fotograma con la caja tal como la escribía el bake antiguo: en porcentaje.
     let baked = bbox_ann(0, 10.0, 20.0, 30.0, 40.0);
@@ -1172,18 +1336,30 @@ fn migration_v1_rescales_baked_bboxes_to_pixels() {
     store_io::write_project(tmp.path(), &project).unwrap();
     let migrated = store_io::read_project(tmp.path()).unwrap();
 
-    assert_eq!(migrated.version, crate::store::project_file::CURRENT_VERSION);
+    assert_eq!(
+        migrated.version,
+        crate::store::project_file::CURRENT_VERSION
+    );
 
     let anns = &migrated.images[0].annotations;
-    let track_ann = anns.iter().find(|a| a.track_id.is_some()).expect("la caja del track");
+    let track_ann = anns
+        .iter()
+        .find(|a| a.track_id.is_some())
+        .expect("la caja del track");
     assert_eq!(track_ann.source, "track");
     assert_eq!(track_ann.data["x"].as_f64().unwrap(), 100.0); // 10% de 1000
     assert_eq!(track_ann.data["y"].as_f64().unwrap(), 100.0); // 20% de 500
     assert_eq!(track_ann.data["width"].as_f64().unwrap(), 300.0);
     assert_eq!(track_ann.data["height"].as_f64().unwrap(), 200.0);
 
-    let untouched = anns.iter().find(|a| a.class_id == 1).expect("la anotación manual");
-    assert!(untouched.track_id.is_none(), "lo anotado a mano no se marca como track");
+    let untouched = anns
+        .iter()
+        .find(|a| a.class_id == 1)
+        .expect("la anotación manual");
+    assert!(
+        untouched.track_id.is_none(),
+        "lo anotado a mano no se marca como track"
+    );
     assert_eq!(untouched.data["x"].as_f64().unwrap(), 500.0);
 }
 
@@ -1192,7 +1368,13 @@ fn migration_v1_leaves_projects_without_videos_alone() {
     let tmp = tempfile::tempdir().unwrap();
     let mut project = make_project("imagenes", "bbox", default_classes());
     project.version = 1;
-    project.images = vec![image_entry("a.png", "a.png", 100, 100, vec![bbox_ann(0, 1.0, 2.0, 3.0, 4.0)])];
+    project.images = vec![image_entry(
+        "a.png",
+        "a.png",
+        100,
+        100,
+        vec![bbox_ann(0, 1.0, 2.0, 3.0, 4.0)],
+    )];
 
     store_io::write_project(tmp.path(), &project).unwrap();
     let migrated = store_io::read_project(tmp.path()).unwrap();
@@ -1231,7 +1413,10 @@ fn migration_v2_moves_timeseries_data_to_files() {
     store_io::write_project(tmp.path(), &project).unwrap();
     let migrated = store_io::read_project(tmp.path()).unwrap();
 
-    assert_eq!(migrated.version, crate::store::project_file::CURRENT_VERSION);
+    assert_eq!(
+        migrated.version,
+        crate::store::project_file::CURRENT_VERSION
+    );
     let ts = &migrated.timeseries[0];
     assert!(ts.data.is_none(), "los datos salen de project.json");
     assert_eq!(ts.point_count, 4);
@@ -1286,7 +1471,10 @@ fn parse_csv_text(text: &str, has_header: bool) -> crate::commands::csv_commands
 #[test]
 fn parse_csv_accepts_iso_dates() {
     let result = parse_csv_text("fecha,valor\n2026-01-15,1.5\n2026-01-16,2.5\n", true);
-    assert_eq!(result.row_count, 2, "un CSV con fechas no debe quedarse vacío");
+    assert_eq!(
+        result.row_count, 2,
+        "un CSV con fechas no debe quedarse vacío"
+    );
     assert_eq!(result.report.timestamp_format, "datetime");
     // 2026-01-15T00:00:00Z en milisegundos
     assert_eq!(result.timestamps[0], 1_768_435_200_000.0);
@@ -1311,7 +1499,10 @@ fn parse_csv_keeps_numeric_timestamps() {
 fn parse_csv_respects_quoted_fields() {
     // Una coma dentro de un campo entre comillas no añade una columna
     let result = parse_csv_text("t,ciudad,v\n0,\"Madrid, ES\",1\n1,\"Lima, PE\",2\n", true);
-    assert_eq!(result.row_count, 2, "las filas con comillas no se descartan");
+    assert_eq!(
+        result.row_count, 2,
+        "las filas con comillas no se descartan"
+    );
     assert_eq!(result.column_count, 3);
     assert_eq!(result.report.skipped_malformed, 0);
 }
@@ -1322,7 +1513,10 @@ fn parse_csv_reports_missing_values_as_gaps() {
     assert_eq!(result.row_count, 4);
     assert_eq!(result.report.missing_values, 2);
     let values = result.values.as_array().expect("array de valores");
-    assert!(values[1].is_null(), "una celda vacía es un hueco, no un cero");
+    assert!(
+        values[1].is_null(),
+        "una celda vacía es un hueco, no un cero"
+    );
     assert!(values[2].is_null());
     assert_eq!(values[3].as_f64().unwrap(), 4.0);
 }
@@ -1395,11 +1589,14 @@ fn timeseries_csv_export_labels_points_and_keeps_gaps() {
 
     let out = tmp.path().join("export.zip");
     let file = fs::File::create(&out).unwrap();
-    export::timeseries_export::export(&project, tmp.path(), file, "timeseries-csv", |_| {}).unwrap();
+    export::timeseries_export::export(&project, tmp.path(), file, "timeseries-csv", |_| {})
+        .unwrap();
 
     let mut zip = ZipArchive::new(fs::File::open(&out).unwrap()).unwrap();
     let names: Vec<String> = zip.file_names().map(|s| s.to_string()).collect();
-    assert!(names.iter().any(|n| n.ends_with(".csv") && n.starts_with("series/")));
+    assert!(names
+        .iter()
+        .any(|n| n.ends_with(".csv") && n.starts_with("series/")));
     assert!(names.contains(&"annotations.csv".to_string()));
     assert!(names.contains(&"classes.csv".to_string()));
 
@@ -1411,13 +1608,19 @@ fn timeseries_csv_export_labels_points_and_keeps_gaps() {
     let mut csv = String::new();
     {
         use std::io::Read;
-        zip.by_name(&series_name).unwrap().read_to_string(&mut csv).unwrap();
+        zip.by_name(&series_name)
+            .unwrap()
+            .read_to_string(&mut csv)
+            .unwrap();
     }
 
     let lines: Vec<&str> = csv.lines().collect();
     assert_eq!(lines[0], "timestamp,value,label");
     assert_eq!(lines[1], "0,10,");
-    assert_eq!(lines[2], "1,,cat", "el hueco queda vacío y el punto va etiquetado");
+    assert_eq!(
+        lines[2], "1,,cat",
+        "el hueco queda vacío y el punto va etiquetado"
+    );
     assert_eq!(lines[3], "2,30,cat");
     assert_eq!(lines[4], "3,40,");
 }
@@ -1428,8 +1631,9 @@ fn timeseries_export_rejects_project_without_series() {
     let project = make_project("vacio", "timeseries-classification", default_classes());
     let out = tmp.path().join("export.zip");
     let file = fs::File::create(&out).unwrap();
-    let err = export::timeseries_export::export(&project, tmp.path(), file, "timeseries-csv", |_| {})
-        .unwrap_err();
+    let err =
+        export::timeseries_export::export(&project, tmp.path(), file, "timeseries-csv", |_| {})
+            .unwrap_err();
     assert!(err.contains("No hay series temporales"));
 }
 
@@ -1459,7 +1663,10 @@ fn bake_converts_keyframe_percent_to_frame_pixels() {
 #[test]
 fn bake_marks_annotations_as_track_source() {
     let anns = bake_annotations_for_frame(&track_kfs_fixture(), 5, 1000, 1000);
-    assert_eq!(anns[0].source, "track", "lo interpolado no es una etiqueta humana");
+    assert_eq!(
+        anns[0].source, "track",
+        "lo interpolado no es una etiqueta humana"
+    );
     assert_eq!(anns[0].track_id.as_deref(), Some("track-1"));
     assert_eq!(anns[0].annotation_type, "bbox");
 }
@@ -1513,6 +1720,9 @@ fn baked_bbox_normalizes_to_the_same_fraction_as_the_keyframe() {
     );
     assert!((nx - 0.0).abs() < 1e-9);
     assert!((ny - 0.0).abs() < 1e-9);
-    assert!((nw - 0.5).abs() < 1e-9, "50% del ancho → 0.5 normalizado, no 0.026");
+    assert!(
+        (nw - 0.5).abs() < 1e-9,
+        "50% del ancho → 0.5 normalizado, no 0.026"
+    );
     assert!((nh - 0.5).abs() < 1e-9);
 }

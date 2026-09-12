@@ -142,8 +142,7 @@ pub fn list_installed_packages() -> Result<Vec<InstalledPackage>, String> {
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let packages: Vec<serde_json::Value> =
-        serde_json::from_str(stdout.trim()).unwrap_or_default();
+    let packages: Vec<serde_json::Value> = serde_json::from_str(stdout.trim()).unwrap_or_default();
 
     Ok(packages
         .into_iter()
@@ -163,18 +162,21 @@ pub async fn update_packages(
     packages: Vec<String>,
 ) -> Result<(), String> {
     let pkgs_ref: Vec<&str> = packages.iter().map(|s| s.as_str()).collect();
-    
+
     let app_clone = app.clone();
-    python_env::install_packages(&pkgs_ref, Some(|msg: &str, progress: f64, log: Option<String>| {
-        let _ = app_clone.emit(
-            "settings:package-update-progress",
-            serde_json::json!({
-                "message": msg,
-                "progress": progress,
-                "log": log,
-            }),
-        );
-    }))?;
+    python_env::install_packages(
+        &pkgs_ref,
+        Some(|msg: &str, progress: f64, log: Option<String>| {
+            let _ = app_clone.emit(
+                "settings:package-update-progress",
+                serde_json::json!({
+                    "message": msg,
+                    "progress": progress,
+                    "log": log,
+                }),
+            );
+        }),
+    )?;
 
     let _ = app.emit(
         "settings:package-update-progress",
@@ -216,11 +218,30 @@ pub async fn install_pytorch(
     emit("Desinstalando PyTorch existente...", 10.0, None);
 
     let mut cmd_un = Command::new(&python);
-    cmd_un.args(["-m", "pip", "uninstall", "-y", "torch", "torchvision", "torchaudio"]);
+    cmd_un.args([
+        "-m",
+        "pip",
+        "uninstall",
+        "-y",
+        "torch",
+        "torchvision",
+        "torchaudio",
+    ]);
     let _ = python_env::run_with_feedback(cmd_un, "Desinstalando", 10.0, 20.0, &emit);
 
     // Paso 2: Instalar según variante
-    emit(&format!("Instalando PyTorch ({})...", if cuda_version == "cpu" { "CPU".to_string() } else { format!("CUDA {}", cuda_version) }), 30.0, None);
+    emit(
+        &format!(
+            "Instalando PyTorch ({})...",
+            if cuda_version == "cpu" {
+                "CPU".to_string()
+            } else {
+                format!("CUDA {}", cuda_version)
+            }
+        ),
+        30.0,
+        None,
+    );
 
     let mut cmd_in = Command::new(&python);
     cmd_in.args(["-m", "pip", "install", "torch", "torchvision", "torchaudio"]);
@@ -273,7 +294,11 @@ pub async fn install_onnx(
 
     emit("Instalando ONNX toolkit...", 5.0, None);
 
-    let runtime_pkg = if with_gpu { "onnxruntime-gpu" } else { "onnxruntime" };
+    let runtime_pkg = if with_gpu {
+        "onnxruntime-gpu"
+    } else {
+        "onnxruntime"
+    };
     let packages = vec!["onnx", runtime_pkg, "skl2onnx", "onnxmltools"];
 
     let total = packages.len();
@@ -297,8 +322,7 @@ pub async fn install_onnx(
 pub fn remove_venv(cache: State<'_, TrainingEnvCache>) -> Result<(), String> {
     let venv = python_env::venv_dir()?;
     if venv.exists() {
-        std::fs::remove_dir_all(&venv)
-            .map_err(|e| format!("Error eliminando venv: {}", e))?;
+        std::fs::remove_dir_all(&venv).map_err(|e| format!("Error eliminando venv: {}", e))?;
     }
     cache.invalidate();
     Ok(())
@@ -308,7 +332,10 @@ pub fn remove_venv(cache: State<'_, TrainingEnvCache>) -> Result<(), String> {
 pub fn detect_system_gpu() -> Result<SystemGpuInfo, String> {
     // Intentar ejecutar nvidia-smi
     let output = Command::new("nvidia-smi")
-        .args(["--query-gpu=driver_version", "--format=csv,noheader,nounits"])
+        .args([
+            "--query-gpu=driver_version",
+            "--format=csv,noheader,nounits",
+        ])
         .output();
 
     match output {
@@ -395,7 +422,11 @@ pub fn get_log_dir_info(app: AppHandle) -> Result<LogDirInfo, String> {
                 .map(|d| d.as_millis() as i64)
                 .unwrap_or(0);
             files.push(LogFileEntry {
-                name: p.file_name().unwrap_or_default().to_string_lossy().to_string(),
+                name: p
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string(),
                 bytes,
                 modified_ms,
             });

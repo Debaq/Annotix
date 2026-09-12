@@ -1,7 +1,7 @@
-use tauri::State;
 use crate::p2p::node::P2pState;
 use crate::p2p::P2pPermission;
 use crate::store::AppState;
+use tauri::State;
 
 #[tauri::command]
 pub async fn export_dataset(
@@ -13,7 +13,8 @@ pub async fn export_dataset(
     p2p: State<'_, P2pState>,
     app: tauri::AppHandle,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Export).await?;
+    p2p.check_permission(&project_id, P2pPermission::Export)
+        .await?;
     crate::export::export_dataset(
         &state,
         &project_id,

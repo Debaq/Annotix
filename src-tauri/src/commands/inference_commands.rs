@@ -66,15 +66,22 @@ pub fn update_model_config(
     class_names: Option<Vec<String>>,
     metadata_patch: Option<serde_json::Value>,
 ) -> Result<(), String> {
-    state.update_model_config(&project_id, &model_id, class_mapping, input_size, task, output_format, class_names, metadata_patch)
+    state.update_model_config(
+        &project_id,
+        &model_id,
+        class_mapping,
+        input_size,
+        task,
+        output_format,
+        class_names,
+        metadata_patch,
+    )
 }
 
 // ─── Detección de metadatos ──────────────────────────────────────────────────
 
 #[tauri::command]
-pub fn detect_model_metadata(
-    model_path: String,
-) -> Result<serde_json::Value, String> {
+pub fn detect_model_metadata(model_path: String) -> Result<serde_json::Value, String> {
     // Para .onnx: inspección nativa con ort (metadata + shape). Si arroja algo útil,
     // retornar sin invocar Python.
     let is_onnx = model_path.to_lowercase().ends_with(".onnx");
@@ -88,7 +95,9 @@ pub fn detect_model_metadata(
             if !names.is_empty() {
                 log::info!(
                     "[ORT] Inspección nativa: {} clases, input_size={:?}, format={:?}",
-                    names.len(), insp.input_size, insp.output_format
+                    names.len(),
+                    insp.input_size,
+                    insp.output_format
                 );
                 return Ok(serde_json::json!({
                     "task": "detect",
@@ -108,8 +117,8 @@ pub fn detect_model_metadata(
     let script = crate::inference::scripts::generate_detect_metadata_script(&model_path);
 
     // Escribir script temporal
-    let tmp_dir = tempfile::tempdir()
-        .map_err(|e| format!("Error creando directorio temporal: {}", e))?;
+    let tmp_dir =
+        tempfile::tempdir().map_err(|e| format!("Error creando directorio temporal: {}", e))?;
     let script_path = tmp_dir.path().join("detect_meta.py");
     std::fs::write(&script_path, &script)
         .map_err(|e| format!("Error escribiendo script: {}", e))?;
@@ -148,10 +157,10 @@ pub struct ExtractedModel {
 /// directorio temporal y devuelve la ruta del archivo extraído.
 #[tauri::command]
 pub fn extract_model_archive(archive_path: String) -> Result<ExtractedModel, String> {
-    let file = std::fs::File::open(&archive_path)
-        .map_err(|e| format!("Error abriendo archivo: {}", e))?;
-    let mut archive = zip::ZipArchive::new(file)
-        .map_err(|e| format!("Error leyendo zip: {}", e))?;
+    let file =
+        std::fs::File::open(&archive_path).map_err(|e| format!("Error abriendo archivo: {}", e))?;
+    let mut archive =
+        zip::ZipArchive::new(file).map_err(|e| format!("Error leyendo zip: {}", e))?;
 
     let mut onnx_idx: Option<(usize, String)> = None;
     let mut pt_idx: Option<(usize, String)> = None;
@@ -206,21 +215,16 @@ pub fn extract_model_archive(archive_path: String) -> Result<ExtractedModel, Str
 
 /// Parsea nombres de clases desde archivos .txt, .yaml o .json
 #[tauri::command]
-pub fn parse_class_names(
-    file_path: String,
-    format: String,
-) -> Result<Vec<String>, String> {
-    let content = std::fs::read_to_string(&file_path)
-        .map_err(|e| format!("Error leyendo archivo: {}", e))?;
+pub fn parse_class_names(file_path: String, format: String) -> Result<Vec<String>, String> {
+    let content =
+        std::fs::read_to_string(&file_path).map_err(|e| format!("Error leyendo archivo: {}", e))?;
 
     match format.as_str() {
-        "txt" => {
-            Ok(content
-                .lines()
-                .map(|l| l.trim().to_string())
-                .filter(|l| !l.is_empty())
-                .collect())
-        }
+        "txt" => Ok(content
+            .lines()
+            .map(|l| l.trim().to_string())
+            .filter(|l| !l.is_empty())
+            .collect()),
         "json" => {
             // Extraer nombres de clases del JSON rico
             let parsed = parse_model_config_json_internal(&content)?;
@@ -235,9 +239,7 @@ pub fn parse_class_names(
                 if trimmed.starts_with("names:") {
                     let after = trimmed.strip_prefix("names:").unwrap().trim();
                     if after.starts_with('[') {
-                        let inner = after
-                            .trim_start_matches('[')
-                            .trim_end_matches(']');
+                        let inner = after.trim_start_matches('[').trim_end_matches(']');
                         for name in inner.split(',') {
                             let clean = name.trim().trim_matches('\'').trim_matches('"');
                             if !clean.is_empty() {
@@ -293,11 +295,12 @@ pub struct ModelConfigResult {
 
 /// Parsea internamente el JSON de configuración de modelo
 fn parse_model_config_json_internal(content: &str) -> Result<ModelConfigResult, String> {
-    let json: serde_json::Value = serde_json::from_str(content)
-        .map_err(|e| format!("Error parseando JSON: {}", e))?;
+    let json: serde_json::Value =
+        serde_json::from_str(content).map_err(|e| format!("Error parseando JSON: {}", e))?;
 
     // Extraer clases
-    let classes = json.get("classes")
+    let classes = json
+        .get("classes")
         .and_then(|c| c.as_array())
         .ok_or("El JSON no contiene un array 'classes'")?;
 
@@ -307,23 +310,27 @@ fn parse_model_config_json_internal(content: &str) -> Result<ModelConfigResult, 
     let mut categories = std::collections::HashMap::new();
 
     for cls in classes {
-        let tech_name = cls.get("technical_name")
+        let tech_name = cls
+            .get("technical_name")
             .and_then(|n| n.as_str())
             .unwrap_or("unknown")
             .to_string();
 
         // Intentar display_name_es, luego display_name_en, luego technical_name
-        let display = cls.get("display_name_es")
+        let display = cls
+            .get("display_name_es")
             .or_else(|| cls.get("display_name_en"))
             .and_then(|n| n.as_str())
             .unwrap_or(&tech_name)
             .to_string();
 
-        let index = cls.get("index")
+        let index = cls
+            .get("index")
             .and_then(|i| i.as_u64())
             .unwrap_or(class_names.len() as u64) as usize;
 
-        let detected = cls.get("currently_detected")
+        let detected = cls
+            .get("currently_detected")
             .and_then(|d| d.as_bool())
             .unwrap_or(true);
 
@@ -340,26 +347,36 @@ fn parse_model_config_json_internal(content: &str) -> Result<ModelConfigResult, 
     }
 
     // Extraer colores
-    let colors: std::collections::HashMap<String, String> = json.get("color_palette")
+    let colors: std::collections::HashMap<String, String> = json
+        .get("color_palette")
         .and_then(|p| serde_json::from_value(p.clone()).ok())
         .unwrap_or_default();
 
     // Extraer task desde model_info.type
-    let task = json.get("model_info")
+    let task = json
+        .get("model_info")
         .and_then(|mi| mi.get("type"))
         .and_then(|t| t.as_str())
         .map(|t| {
             let lower = t.to_lowercase();
-            if lower.contains("detect") { "detect".to_string() }
-            else if lower.contains("segment") { "segment".to_string() }
-            else if lower.contains("classif") { "classify".to_string() }
-            else if lower.contains("pose") { "pose".to_string() }
-            else if lower.contains("obb") { "obb".to_string() }
-            else { "detect".to_string() }
+            if lower.contains("detect") {
+                "detect".to_string()
+            } else if lower.contains("segment") {
+                "segment".to_string()
+            } else if lower.contains("classif") {
+                "classify".to_string()
+            } else if lower.contains("pose") {
+                "pose".to_string()
+            } else if lower.contains("obb") {
+                "obb".to_string()
+            } else {
+                "detect".to_string()
+            }
         });
 
     // Extraer input_size desde model_info.input_size
-    let input_size = json.get("model_info")
+    let input_size = json
+        .get("model_info")
         .and_then(|mi| mi.get("input_size"))
         .and_then(|is| {
             if let Some(arr) = is.as_array() {
@@ -370,7 +387,8 @@ fn parse_model_config_json_internal(content: &str) -> Result<ModelConfigResult, 
         });
 
     // Extraer output_format desde model_info.output_format
-    let output_format = json.get("model_info")
+    let output_format = json
+        .get("model_info")
         .and_then(|mi| mi.get("output_format"))
         .and_then(|f| f.as_str())
         .map(|s| s.to_string());
@@ -390,11 +408,9 @@ fn parse_model_config_json_internal(content: &str) -> Result<ModelConfigResult, 
 
 /// Parsea un JSON de configuración de modelo y devuelve toda la metadata rica
 #[tauri::command]
-pub fn parse_model_config(
-    file_path: String,
-) -> Result<ModelConfigResult, String> {
-    let content = std::fs::read_to_string(&file_path)
-        .map_err(|e| format!("Error leyendo archivo: {}", e))?;
+pub fn parse_model_config(file_path: String) -> Result<ModelConfigResult, String> {
+    let content =
+        std::fs::read_to_string(&file_path).map_err(|e| format!("Error leyendo archivo: {}", e))?;
     parse_model_config_json_internal(&content)
 }
 
@@ -431,14 +447,7 @@ pub fn run_single_inference(
     image_id: String,
     config: InferenceConfig,
 ) -> Result<String, String> {
-    inference_mgr.start_inference(
-        &state,
-        &app,
-        &project_id,
-        &model_id,
-        &[image_id],
-        config,
-    )
+    inference_mgr.start_inference(&state, &app, &project_id, &model_id, &[image_id], config)
 }
 
 // ─── Gestión de predicciones ─────────────────────────────────────────────────

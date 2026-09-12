@@ -39,8 +39,7 @@ fn load_or_create_key(data_dir: &Path) -> Result<[u8; 32], String> {
     let _ = std::fs::create_dir_all(data_dir);
     let mut key = [0u8; 32];
     rand::thread_rng().fill_bytes(&mut key);
-    std::fs::write(&path, key)
-        .map_err(|e| format!("Error escribiendo clave P2P: {}", e))?;
+    std::fs::write(&path, key).map_err(|e| format!("Error escribiendo clave P2P: {}", e))?;
     set_owner_only(&path);
     Ok(key)
 }
@@ -60,7 +59,10 @@ pub fn encrypt(data_dir: &Path, plaintext: &str) -> String {
     let key = match load_or_create_key(data_dir) {
         Ok(k) => k,
         Err(e) => {
-            log::warn!("No se pudo cargar clave P2P, guardando secreto sin cifrar: {}", e);
+            log::warn!(
+                "No se pudo cargar clave P2P, guardando secreto sin cifrar: {}",
+                e
+            );
             return plaintext.to_string();
         }
     };
@@ -74,7 +76,11 @@ pub fn encrypt(data_dir: &Path, plaintext: &str) -> String {
             let mut blob = Vec::with_capacity(NONCE_LEN + ciphertext.len());
             blob.extend_from_slice(&nonce_bytes);
             blob.extend_from_slice(&ciphertext);
-            format!("{}{}", ENC_PREFIX, base64::engine::general_purpose::STANDARD.encode(&blob))
+            format!(
+                "{}{}",
+                ENC_PREFIX,
+                base64::engine::general_purpose::STANDARD.encode(&blob)
+            )
         }
         Err(e) => {
             log::warn!("Error cifrando secreto P2P, guardando sin cifrar: {}", e);
@@ -137,7 +143,8 @@ mod tests {
 
     #[test]
     fn decrypt_passes_through_legacy_plaintext() {
-        let dir = std::env::temp_dir().join(format!("annotix_crypto_legacy_{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("annotix_crypto_legacy_{}", std::process::id()));
         let _ = std::fs::create_dir_all(&dir);
         let legacy = "plain_secret_sin_prefijo";
         assert_eq!(decrypt(&dir, legacy), legacy);

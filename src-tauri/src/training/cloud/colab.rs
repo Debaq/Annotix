@@ -1,6 +1,6 @@
-use super::{CloudJobHandle, CloudJobState, CloudJobStatus, CloudRunner};
 use super::gcp_auth;
 use super::gcs;
+use super::{CloudJobHandle, CloudJobState, CloudJobStatus, CloudRunner};
 use crate::training::{CloudProvider, CloudTrainingConfig, TrainingRequest};
 
 /// Colab Enterprise runner — usa la API de Vertex AI notebookExecutionJobs
@@ -13,7 +13,12 @@ pub struct ColabEnterpriseRunner {
 
 impl ColabEnterpriseRunner {
     pub fn new(sa_path: String, project_id: String, region: String, bucket: String) -> Self {
-        Self { sa_path, project_id, region, bucket }
+        Self {
+            sa_path,
+            project_id,
+            region,
+            bucket,
+        }
     }
 
     fn get_token(&self) -> Result<String, String> {
@@ -27,8 +32,14 @@ impl ColabEnterpriseRunner {
         )
     }
 
-    fn generate_notebook(&self, request: &TrainingRequest, gcs_dataset: &str, project_classes: &[String]) -> serde_json::Value {
-        let classes_str = project_classes.iter()
+    fn generate_notebook(
+        &self,
+        request: &TrainingRequest,
+        gcs_dataset: &str,
+        project_classes: &[String],
+    ) -> serde_json::Value {
+        let classes_str = project_classes
+            .iter()
             .map(|c| format!("'{}'", c))
             .collect::<Vec<_>>()
             .join(", ");
@@ -96,7 +107,8 @@ impl CloudRunner for ColabEnterpriseRunner {
         // 1. Upload dataset to GCS
         let gcs_prefix = format!("annotix-training/{}/dataset", job_uuid);
         let gcs_dataset = gcs::upload_file(
-            &token, &self.bucket,
+            &token,
+            &self.bucket,
             &format!("{}/dataset.zip", gcs_prefix),
             dataset_path,
         )?;
@@ -104,11 +116,15 @@ impl CloudRunner for ColabEnterpriseRunner {
         // 2. Generate and upload notebook
         let notebook = self.generate_notebook(request, &gcs_dataset, project_classes);
         let notebook_path = format!("/tmp/annotix_colab_{}.ipynb", job_uuid);
-        std::fs::write(&notebook_path, serde_json::to_string_pretty(&notebook).unwrap())
-            .map_err(|e| format!("Error escribiendo notebook: {}", e))?;
+        std::fs::write(
+            &notebook_path,
+            serde_json::to_string_pretty(&notebook).unwrap(),
+        )
+        .map_err(|e| format!("Error escribiendo notebook: {}", e))?;
 
         let gcs_notebook = gcs::upload_file(
-            &token, &self.bucket,
+            &token,
+            &self.bucket,
             &format!("{}/training.ipynb", gcs_prefix),
             &notebook_path,
         )?;
@@ -117,7 +133,10 @@ impl CloudRunner for ColabEnterpriseRunner {
 
         // 3. Create notebook execution job
         let _machine_type = config.machine_type.as_deref().unwrap_or("n1-standard-4");
-        let _accelerator_type = config.accelerator_type.as_deref().unwrap_or("NVIDIA_TESLA_T4");
+        let _accelerator_type = config
+            .accelerator_type
+            .as_deref()
+            .unwrap_or("NVIDIA_TESLA_T4");
         let _accelerator_count = config.accelerator_count.unwrap_or(1);
 
         let execution_spec = serde_json::json!({
@@ -222,7 +241,9 @@ impl CloudRunner for ColabEnterpriseRunner {
         status: &CloudJobStatus,
         output_dir: &str,
     ) -> Result<String, String> {
-        let model_uri = status.model_output_uri.as_deref()
+        let model_uri = status
+            .model_output_uri
+            .as_deref()
             .ok_or("No hay URI del modelo en el resultado")?;
 
         let token = self.get_token()?;

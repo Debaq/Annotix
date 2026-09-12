@@ -13,13 +13,21 @@ fn ms_to_secs(ms: i64) -> String {
 fn probe_duration_ms(path: &str) -> Result<i64, String> {
     let output = std::process::Command::new("ffprobe")
         .args([
-            "-v", "error",
-            "-show_entries", "format=duration",
-            "-of", "default=noprint_wrappers=1:nokey=1",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
             path,
         ])
         .output()
-        .map_err(|e| format!("Error ejecutando ffprobe: {}. Verifica que FFmpeg esté instalado.", e))?;
+        .map_err(|e| {
+            format!(
+                "Error ejecutando ffprobe: {}. Verifica que FFmpeg esté instalado.",
+                e
+            )
+        })?;
 
     if !output.status.success() {
         return Err(format!(
@@ -29,19 +37,21 @@ fn probe_duration_ms(path: &str) -> Result<i64, String> {
     }
 
     let s = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    let secs: f64 = s
-        .parse()
-        .map_err(|_| format!("Duración inválida: {}", s))?;
+    let secs: f64 = s.parse().map_err(|_| format!("Duración inválida: {}", s))?;
     Ok((secs * 1000.0) as i64)
 }
 
 fn probe_sample_rate(path: &str) -> i32 {
     let output = std::process::Command::new("ffprobe")
         .args([
-            "-v", "error",
-            "-select_streams", "a:0",
-            "-show_entries", "stream=sample_rate",
-            "-of", "default=noprint_wrappers=1:nokey=1",
+            "-v",
+            "error",
+            "-select_streams",
+            "a:0",
+            "-show_entries",
+            "stream=sample_rate",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
             path,
         ])
         .output();
@@ -353,10 +363,8 @@ pub async fn audio_split(
     let dur_b = probe_duration_ms(&path_b.to_string_lossy())?;
     let sr_b = probe_sample_rate(&path_b.to_string_lossy());
 
-    let new_id_a =
-        state.add_audio_from_file(&project_id, &filename_a, &name_a, dur_a, sr_a)?;
-    let new_id_b =
-        state.add_audio_from_file(&project_id, &filename_b, &name_b, dur_b, sr_b)?;
+    let new_id_a = state.add_audio_from_file(&project_id, &filename_a, &name_a, dur_a, sr_a)?;
+    let new_id_b = state.add_audio_from_file(&project_id, &filename_b, &name_b, dur_b, sr_b)?;
 
     let _ = app.emit(
         "audio:edit-progress",

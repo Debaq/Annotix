@@ -63,18 +63,13 @@ pub fn link_tts_upload(
 }
 
 #[tauri::command]
-pub fn get_llm_config(
-    state: State<'_, AppState>,
-) -> Result<Option<LlmConfig>, String> {
+pub fn get_llm_config(state: State<'_, AppState>) -> Result<Option<LlmConfig>, String> {
     let config = state.config.lock().map_err(|e| e.to_string())?;
     Ok(config.llm.clone())
 }
 
 #[tauri::command]
-pub fn save_llm_config(
-    state: State<'_, AppState>,
-    llm_config: LlmConfig,
-) -> Result<(), String> {
+pub fn save_llm_config(state: State<'_, AppState>, llm_config: LlmConfig) -> Result<(), String> {
     let mut config = state.config.lock().map_err(|e| e.to_string())?;
     config.llm = Some(llm_config);
     config.save(&state.data_dir)?;
@@ -95,7 +90,10 @@ pub async fn generate_tts_with_llm(
         config.llm.clone().ok_or("LLM no configurado")?
     };
 
-    let api_key = llm_config.api_key.as_deref().ok_or("API key no configurada")?;
+    let api_key = llm_config
+        .api_key
+        .as_deref()
+        .ok_or("API key no configurada")?;
     let provider = llm_config.provider.as_deref().unwrap_or("openai");
 
     let length_hint = match length.as_str() {
@@ -129,7 +127,10 @@ pub async fn generate_tts_with_llm(
         }
         _ => {
             // OpenAI o compatible
-            let base = llm_config.base_url.as_deref().unwrap_or("https://api.openai.com/v1");
+            let base = llm_config
+                .base_url
+                .as_deref()
+                .unwrap_or("https://api.openai.com/v1");
             let url = format!("{}/chat/completions", base);
             let body = serde_json::json!({
                 "model": "gpt-4o-mini",
@@ -155,7 +156,10 @@ pub async fn generate_tts_with_llm(
         req = req.header("Authorization", format!("Bearer {}", api_key));
     }
 
-    let resp = req.send().await.map_err(|e| format!("Error llamando LLM: {}", e))?;
+    let resp = req
+        .send()
+        .await
+        .map_err(|e| format!("Error llamando LLM: {}", e))?;
 
     if !resp.status().is_success() {
         let status = resp.status();
@@ -163,14 +167,22 @@ pub async fn generate_tts_with_llm(
         return Err(format!("LLM respondió con error {}: {}", status, body));
     }
 
-    let json: serde_json::Value = resp.json().await
+    let json: serde_json::Value = resp
+        .json()
+        .await
         .map_err(|e| format!("Error parseando respuesta LLM: {}", e))?;
 
     // Extraer texto según el proveedor
     let text = if provider == "anthropic" {
-        json["content"][0]["text"].as_str().unwrap_or("").to_string()
+        json["content"][0]["text"]
+            .as_str()
+            .unwrap_or("")
+            .to_string()
     } else {
-        json["choices"][0]["message"]["content"].as_str().unwrap_or("").to_string()
+        json["choices"][0]["message"]["content"]
+            .as_str()
+            .unwrap_or("")
+            .to_string()
     };
 
     let sentences: Vec<String> = text
@@ -223,7 +235,11 @@ fn lang_to_espeak_voice(lang: &str) -> String {
         "romanian" | "română" => "ro",
         "catalan" | "català" => "ca",
         other => {
-            if other.len() <= 3 { other } else { "en" }
+            if other.len() <= 3 {
+                other
+            } else {
+                "en"
+            }
         }
     };
     code.to_string()
@@ -237,7 +253,9 @@ pub async fn analyze_phonetic_coverage(
     let voice = lang_to_espeak_voice(&language);
 
     // Verificar si espeak-ng está instalado
-    let check = std::process::Command::new("espeak-ng").arg("--version").output();
+    let check = std::process::Command::new("espeak-ng")
+        .arg("--version")
+        .output();
     if check.is_err() {
         return Ok(PhoneticAnalysis {
             available: false,
@@ -286,7 +304,8 @@ pub async fn analyze_phonetic_coverage(
     }
 
     let found: Vec<String> = all_found.iter().cloned().collect();
-    let missing: Vec<String> = inventory.iter()
+    let missing: Vec<String> = inventory
+        .iter()
         .filter(|p| !all_found.contains(*p))
         .cloned()
         .collect();
@@ -305,13 +324,17 @@ fn extract_phonemes(ipa_text: &str) -> Vec<String> {
 
     for line in ipa_text.lines() {
         let clean = line.trim();
-        if clean.is_empty() { continue; }
+        if clean.is_empty() {
+            continue;
+        }
 
         // espeak-ng separa fonemas con espacios y sílabas con puntos/acentos
         for word in clean.split_whitespace() {
             // Eliminar marcadores prosódicos
             let word = word.replace(['ˈ', 'ˌ', '.', '|', '‖', ','], "");
-            if word.is_empty() { continue; }
+            if word.is_empty() {
+                continue;
+            }
 
             // Separar caracteres IPA individuales
             // Los fonemas multi-char (como tʃ, dʒ) se manejan buscando combinaciones
@@ -320,11 +343,11 @@ fn extract_phonemes(ipa_text: &str) -> Vec<String> {
             while i < chars.len() {
                 // Intentar combinaciones de 2 chars primero (africadas, etc)
                 if i + 1 < chars.len() {
-                    let pair = format!("{}{}", chars[i], chars[i+1]);
+                    let pair = format!("{}{}", chars[i], chars[i + 1]);
                     if is_ipa_phoneme(&pair) {
                         // Verificar si hay un tercer char (ej: tʃʰ)
                         if i + 2 < chars.len() {
-                            let triple = format!("{}{}{}", chars[i], chars[i+1], chars[i+2]);
+                            let triple = format!("{}{}{}", chars[i], chars[i + 1], chars[i + 2]);
                             if is_ipa_phoneme(&triple) {
                                 phonemes.insert(triple);
                                 i += 3;
@@ -341,13 +364,13 @@ fn extract_phonemes(ipa_text: &str) -> Vec<String> {
                 // Solo fonemas IPA reales, no espacios ni puntuación
                 if is_ipa_char(ch) {
                     // Verificar si es vocal larga (ej: iː, uː)
-                    if i + 1 < chars.len() && chars[i+1] == 'ː' {
+                    if i + 1 < chars.len() && chars[i + 1] == 'ː' {
                         phonemes.insert(format!("{}ː", ch));
                         i += 2;
                         continue;
                     }
                     // Verificar nasalización (ej: ɑ̃)
-                    if i + 1 < chars.len() && chars[i+1] == '\u{0303}' {
+                    if i + 1 < chars.len() && chars[i + 1] == '\u{0303}' {
                         phonemes.insert(format!("{}\u{0303}", ch));
                         i += 2;
                         continue;
@@ -372,14 +395,56 @@ fn is_ipa_char(c: char) -> bool {
 }
 
 fn is_ipa_phoneme(s: &str) -> bool {
-    matches!(s,
-        "tʃ" | "dʒ" | "ts" | "dz" | "tɕ" | "dʑ" | "tʂ" | "dʐ" |
-        "pf" | "kx" | "bv" | "ɡɣ" |
-        "pʰ" | "tʰ" | "kʰ" | "tɕʰ" | "tsʰ" | "tʂʰ" |
-        "ai" | "ei" | "au" | "ou" | "ao" | "oi" | "eu" |
-        "aɪ" | "eɪ" | "aʊ" | "oʊ" | "ɔɪ" |
-        "an" | "en" | "ɑ̃" | "ɛ̃" | "ɔ̃" | "œ̃" |
-        "pʲ" | "bʲ" | "tʲ" | "dʲ" | "kʲ" | "gʲ" | "fʲ" | "vʲ" |
-        "sʲ" | "zʲ" | "mʲ" | "nʲ" | "lʲ" | "rʲ"
+    matches!(
+        s,
+        "tʃ" | "dʒ"
+            | "ts"
+            | "dz"
+            | "tɕ"
+            | "dʑ"
+            | "tʂ"
+            | "dʐ"
+            | "pf"
+            | "kx"
+            | "bv"
+            | "ɡɣ"
+            | "pʰ"
+            | "tʰ"
+            | "kʰ"
+            | "tɕʰ"
+            | "tsʰ"
+            | "tʂʰ"
+            | "ai"
+            | "ei"
+            | "au"
+            | "ou"
+            | "ao"
+            | "oi"
+            | "eu"
+            | "aɪ"
+            | "eɪ"
+            | "aʊ"
+            | "oʊ"
+            | "ɔɪ"
+            | "an"
+            | "en"
+            | "ɑ̃"
+            | "ɛ̃"
+            | "ɔ̃"
+            | "œ̃"
+            | "pʲ"
+            | "bʲ"
+            | "tʲ"
+            | "dʲ"
+            | "kʲ"
+            | "gʲ"
+            | "fʲ"
+            | "vʲ"
+            | "sʲ"
+            | "zʲ"
+            | "mʲ"
+            | "nʲ"
+            | "lʲ"
+            | "rʲ"
     )
 }

@@ -53,12 +53,11 @@ impl AppState {
         let dest = models_dir.join(&dest_name);
 
         // Copiar archivo
-        std::fs::copy(&source, &dest)
-            .map_err(|e| format!("Error copiando modelo: {}", e))?;
+        std::fs::copy(&source, &dest).map_err(|e| format!("Error copiando modelo: {}", e))?;
 
         // Calcular hash con blake3 (ya disponible en deps)
-        let file_bytes = std::fs::read(&dest)
-            .map_err(|e| format!("Error leyendo modelo para hash: {}", e))?;
+        let file_bytes =
+            std::fs::read(&dest).map_err(|e| format!("Error leyendo modelo para hash: {}", e))?;
         let hash = blake3::hash(&file_bytes);
         let model_hash = hash.to_hex().to_string();
 
@@ -118,11 +117,7 @@ impl AppState {
     }
 
     /// Elimina un modelo de inferencia
-    pub fn delete_inference_model(
-        &self,
-        project_id: &str,
-        model_id: &str,
-    ) -> Result<(), String> {
+    pub fn delete_inference_model(&self, project_id: &str, model_id: &str) -> Result<(), String> {
         // Obtener nombre de archivo antes de eliminar
         let file = self.with_project(project_id, |pf| {
             pf.inference_models
@@ -322,11 +317,7 @@ impl AppState {
     }
 
     /// Obtiene la ruta absoluta del archivo de modelo
-    pub fn get_model_file_path(
-        &self,
-        project_id: &str,
-        model_id: &str,
-    ) -> Result<String, String> {
+    pub fn get_model_file_path(&self, project_id: &str, model_id: &str) -> Result<String, String> {
         let models_dir = self.project_models_dir(project_id)?;
         let file = self.with_project(project_id, |pf| {
             pf.inference_models
@@ -346,8 +337,10 @@ impl AppState {
 fn infer_annotation_type(data: &serde_json::Value) -> String {
     if data.get("points").is_some() {
         "polygon".to_string()
-    } else if data.get("x").is_some() && data.get("y").is_some()
-        && data.get("width").is_some() && data.get("height").is_some()
+    } else if data.get("x").is_some()
+        && data.get("y").is_some()
+        && data.get("width").is_some()
+        && data.get("height").is_some()
     {
         "bbox".to_string()
     } else if data.get("angle").is_some() {

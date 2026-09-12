@@ -1,10 +1,10 @@
 pub mod browser_detect;
 pub mod browser_session;
-pub mod selectors;
-pub mod step_engine;
 pub mod colab_free;
 pub mod llm_chat;
 pub mod providers;
+pub mod selectors;
+pub mod step_engine;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

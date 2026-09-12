@@ -107,8 +107,20 @@ fn build_yolo_backend(task: &str) -> BackendInfo {
             family: "yolo".into(),
             description: "Latest YOLO architecture with improved accuracy".into(),
             params_count: None,
-            tasks: vec!["detect".into(), "segment".into(), "classify".into(), "pose".into(), "obb".into()],
-            sizes: Some(vec!["n".into(), "s".into(), "m".into(), "l".into(), "x".into()]),
+            tasks: vec![
+                "detect".into(),
+                "segment".into(),
+                "classify".into(),
+                "pose".into(),
+                "obb".into(),
+            ],
+            sizes: Some(vec![
+                "n".into(),
+                "s".into(),
+                "m".into(),
+                "l".into(),
+                "x".into(),
+            ]),
             recommended: true,
         },
         BackendModelInfo {
@@ -118,7 +130,13 @@ fn build_yolo_backend(task: &str) -> BackendInfo {
             description: "Attention-based YOLO architecture".into(),
             params_count: None,
             tasks: vec!["detect".into(), "segment".into(), "classify".into()],
-            sizes: Some(vec!["n".into(), "s".into(), "m".into(), "l".into(), "x".into()]),
+            sizes: Some(vec![
+                "n".into(),
+                "s".into(),
+                "m".into(),
+                "l".into(),
+                "x".into(),
+            ]),
             recommended: false,
         },
         BackendModelInfo {
@@ -127,8 +145,20 @@ fn build_yolo_backend(task: &str) -> BackendInfo {
             family: "yolo".into(),
             description: "Robust and battle-tested YOLO model".into(),
             params_count: None,
-            tasks: vec!["detect".into(), "segment".into(), "classify".into(), "pose".into(), "obb".into()],
-            sizes: Some(vec!["n".into(), "s".into(), "m".into(), "l".into(), "x".into()]),
+            tasks: vec![
+                "detect".into(),
+                "segment".into(),
+                "classify".into(),
+                "pose".into(),
+                "obb".into(),
+            ],
+            sizes: Some(vec![
+                "n".into(),
+                "s".into(),
+                "m".into(),
+                "l".into(),
+                "x".into(),
+            ]),
             recommended: false,
         },
         BackendModelInfo {
@@ -138,7 +168,13 @@ fn build_yolo_backend(task: &str) -> BackendInfo {
             description: "NMS-free YOLO for real-time detection".into(),
             params_count: None,
             tasks: vec!["detect".into()],
-            sizes: Some(vec!["n".into(), "s".into(), "m".into(), "l".into(), "x".into()]),
+            sizes: Some(vec![
+                "n".into(),
+                "s".into(),
+                "m".into(),
+                "l".into(),
+                "x".into(),
+            ]),
             recommended: false,
         },
         BackendModelInfo {
@@ -148,7 +184,13 @@ fn build_yolo_backend(task: &str) -> BackendInfo {
             description: "Programmable gradient information architecture".into(),
             params_count: None,
             tasks: vec!["detect".into(), "segment".into()],
-            sizes: Some(vec!["t".into(), "s".into(), "m".into(), "c".into(), "e".into()]),
+            sizes: Some(vec![
+                "t".into(),
+                "s".into(),
+                "m".into(),
+                "c".into(),
+                "e".into(),
+            ]),
             recommended: false,
         },
         BackendModelInfo {
@@ -157,8 +199,20 @@ fn build_yolo_backend(task: &str) -> BackendInfo {
             family: "yolo".into(),
             description: "Widely adopted YOLO version".into(),
             params_count: None,
-            tasks: vec!["detect".into(), "segment".into(), "classify".into(), "pose".into(), "obb".into()],
-            sizes: Some(vec!["n".into(), "s".into(), "m".into(), "l".into(), "x".into()]),
+            tasks: vec![
+                "detect".into(),
+                "segment".into(),
+                "classify".into(),
+                "pose".into(),
+                "obb".into(),
+            ],
+            sizes: Some(vec![
+                "n".into(),
+                "s".into(),
+                "m".into(),
+                "l".into(),
+                "x".into(),
+            ]),
             recommended: false,
         },
         BackendModelInfo {
@@ -168,7 +222,13 @@ fn build_yolo_backend(task: &str) -> BackendInfo {
             description: "Classic YOLO with anchor-free head".into(),
             params_count: None,
             tasks: vec!["detect".into(), "segment".into(), "classify".into()],
-            sizes: Some(vec!["n".into(), "s".into(), "m".into(), "l".into(), "x".into()]),
+            sizes: Some(vec![
+                "n".into(),
+                "s".into(),
+                "m".into(),
+                "l".into(),
+                "x".into(),
+            ]),
             recommended: false,
         },
     ];
@@ -182,7 +242,13 @@ fn build_yolo_backend(task: &str) -> BackendInfo {
         id: "yolo".into(),
         name: "YOLO".into(),
         description: "Ultralytics YOLO family — fast, accurate, versatile".into(),
-        supported_tasks: vec!["detect".into(), "segment".into(), "classify".into(), "pose".into(), "obb".into()],
+        supported_tasks: vec![
+            "detect".into(),
+            "segment".into(),
+            "classify".into(),
+            "pose".into(),
+            "obb".into(),
+        ],
         models,
         dataset_format: DatasetFormat::YoloTxt,
         pip_packages: vec!["ultralytics".into()],
@@ -451,7 +517,12 @@ fn build_mmdet_backend() -> BackendInfo {
         supported_tasks: vec!["detect".into()],
         models,
         dataset_format: DatasetFormat::CocoJson,
-        pip_packages: vec!["openmim".into(), "mmengine".into(), "mmcv".into(), "mmdet".into()],
+        pip_packages: vec![
+            "openmim".into(),
+            "mmengine".into(),
+            "mmcv".into(),
+            "mmdet".into(),
+        ],
     }
 }
 
@@ -584,11 +655,17 @@ fn build_smp_backend() -> BackendInfo {
     BackendInfo {
         id: "smp".into(),
         name: "SMP".into(),
-        description: "Segmentation Models PyTorch — multiple architectures with pretrained encoders".into(),
+        description:
+            "Segmentation Models PyTorch — multiple architectures with pretrained encoders".into(),
         supported_tasks: vec!["segment".into()],
         models,
         dataset_format: DatasetFormat::MaskPng,
-        pip_packages: vec!["segmentation-models-pytorch".into(), "torch".into(), "torchvision".into(), "albumentations".into()],
+        pip_packages: vec![
+            "segmentation-models-pytorch".into(),
+            "torch".into(),
+            "torchvision".into(),
+            "albumentations".into(),
+        ],
     }
 }
 
@@ -722,11 +799,18 @@ fn build_hf_seg_backend() -> BackendInfo {
     BackendInfo {
         id: "hf_segmentation".into(),
         name: "HuggingFace Seg".into(),
-        description: "HuggingFace Transformers — pretrained SegFormer, Mask2Former, DPT and more".into(),
+        description: "HuggingFace Transformers — pretrained SegFormer, Mask2Former, DPT and more"
+            .into(),
         supported_tasks: vec!["segment".into()],
         models,
         dataset_format: DatasetFormat::MaskPng,
-        pip_packages: vec!["transformers".into(), "datasets".into(), "evaluate".into(), "torch".into(), "torchvision".into()],
+        pip_packages: vec![
+            "transformers".into(),
+            "datasets".into(),
+            "evaluate".into(),
+            "torch".into(),
+            "torchvision".into(),
+        ],
     }
 }
 
@@ -1054,7 +1138,12 @@ fn build_mmseg_backend() -> BackendInfo {
         supported_tasks: vec!["segment".into()],
         models,
         dataset_format: DatasetFormat::MaskPng,
-        pip_packages: vec!["openmim".into(), "mmengine".into(), "mmcv".into(), "mmsegmentation".into()],
+        pip_packages: vec![
+            "openmim".into(),
+            "mmengine".into(),
+            "mmcv".into(),
+            "mmsegmentation".into(),
+        ],
     }
 }
 
@@ -1117,7 +1206,8 @@ fn build_detectron2_backend() -> BackendInfo {
     BackendInfo {
         id: "detectron2".into(),
         name: "Detectron2".into(),
-        description: "Facebook AI instance segmentation — Mask R-CNN, Mask2Former, PointRend".into(),
+        description: "Facebook AI instance segmentation — Mask R-CNN, Mask2Former, PointRend"
+            .into(),
         supported_tasks: vec!["instance_segment".into()],
         models,
         dataset_format: DatasetFormat::CocoInstanceJson,
@@ -1184,11 +1274,17 @@ fn build_mmdet_instance_backend() -> BackendInfo {
     BackendInfo {
         id: "mmdetection".into(),
         name: "MMDetection".into(),
-        description: "OpenMMLab instance segmentation — Mask R-CNN, SOLOv2, Mask2Former, HTC".into(),
+        description: "OpenMMLab instance segmentation — Mask R-CNN, SOLOv2, Mask2Former, HTC"
+            .into(),
         supported_tasks: vec!["instance_segment".into()],
         models,
         dataset_format: DatasetFormat::CocoInstanceJson,
-        pip_packages: vec!["openmim".into(), "mmengine".into(), "mmcv".into(), "mmdet".into()],
+        pip_packages: vec![
+            "openmim".into(),
+            "mmengine".into(),
+            "mmcv".into(),
+            "mmdet".into(),
+        ],
     }
 }
 
@@ -1305,7 +1401,13 @@ fn build_mmpose_backend() -> BackendInfo {
         supported_tasks: vec!["pose".into(), "landmarks".into()],
         models,
         dataset_format: DatasetFormat::CocoKeypointsJson,
-        pip_packages: vec!["openmim".into(), "mmengine".into(), "mmcv".into(), "mmpose".into(), "mmdet".into()],
+        pip_packages: vec![
+            "openmim".into(),
+            "mmengine".into(),
+            "mmcv".into(),
+            "mmpose".into(),
+            "mmdet".into(),
+        ],
     }
 }
 
@@ -1372,7 +1474,12 @@ fn build_mmrotate_backend() -> BackendInfo {
         supported_tasks: vec!["obb".into()],
         models,
         dataset_format: DatasetFormat::DotaTxt,
-        pip_packages: vec!["openmim".into(), "mmengine".into(), "mmcv".into(), "mmrotate".into()],
+        pip_packages: vec![
+            "openmim".into(),
+            "mmengine".into(),
+            "mmcv".into(),
+            "mmrotate".into(),
+        ],
     }
 }
 
@@ -1576,11 +1683,18 @@ fn build_hf_classification_backend(task: &str) -> BackendInfo {
     BackendInfo {
         id: "hf_classification".into(),
         name: "HuggingFace Cls".into(),
-        description: "HuggingFace Transformers — ViT, ConvNeXt, Swin, DeiT, BEiT for classification".into(),
+        description:
+            "HuggingFace Transformers — ViT, ConvNeXt, Swin, DeiT, BEiT for classification".into(),
         supported_tasks: vec!["classify".into(), "multi_classify".into()],
         models: filtered,
         dataset_format: ds_fmt,
-        pip_packages: vec!["transformers".into(), "datasets".into(), "evaluate".into(), "torch".into(), "torchvision".into()],
+        pip_packages: vec![
+            "transformers".into(),
+            "datasets".into(),
+            "evaluate".into(),
+            "torch".into(),
+            "torchvision".into(),
+        ],
     }
 }
 
@@ -1588,8 +1702,12 @@ fn build_hf_classification_backend(task: &str) -> BackendInfo {
 
 fn build_tsai_backend(task: &str) -> BackendInfo {
     let all_tasks = vec![
-        "ts_classify".to_string(), "ts_forecast".to_string(), "ts_regress".to_string(),
-        "ts_anomaly".to_string(), "ts_segment".to_string(), "ts_event".to_string(),
+        "ts_classify".to_string(),
+        "ts_forecast".to_string(),
+        "ts_regress".to_string(),
+        "ts_anomaly".to_string(),
+        "ts_segment".to_string(),
+        "ts_event".to_string(),
     ];
 
     let models = vec![
@@ -1723,10 +1841,15 @@ fn build_tsai_backend(task: &str) -> BackendInfo {
     BackendInfo {
         id: "tsai".into(),
         name: "tsai".into(),
-        description: "Time series AI library — InceptionTime, PatchTST, ROCKET, LSTM and more".into(),
+        description: "Time series AI library — InceptionTime, PatchTST, ROCKET, LSTM and more"
+            .into(),
         supported_tasks: vec![
-            "ts_classify".into(), "ts_forecast".into(), "ts_regress".into(),
-            "ts_anomaly".into(), "ts_segment".into(), "ts_event".into(),
+            "ts_classify".into(),
+            "ts_forecast".into(),
+            "ts_regress".into(),
+            "ts_anomaly".into(),
+            "ts_segment".into(),
+            "ts_event".into(),
         ],
         models: filtered,
         dataset_format: DatasetFormat::TimeSeriesCsv,
@@ -1740,7 +1863,8 @@ fn build_pytorch_forecasting_backend() -> BackendInfo {
             id: "tft".into(),
             name: "TFT".into(),
             family: "tft".into(),
-            description: "Temporal Fusion Transformer — interpretable multi-horizon forecasting".into(),
+            description: "Temporal Fusion Transformer — interpretable multi-horizon forecasting"
+                .into(),
             params_count: Some("5M".into()),
             tasks: vec!["ts_forecast".into()],
             sizes: None,
@@ -1785,7 +1909,11 @@ fn build_pytorch_forecasting_backend() -> BackendInfo {
         supported_tasks: vec!["ts_forecast".into()],
         models,
         dataset_format: DatasetFormat::TimeSeriesCsv,
-        pip_packages: vec!["pytorch-forecasting".into(), "pytorch-lightning".into(), "torch".into()],
+        pip_packages: vec![
+            "pytorch-forecasting".into(),
+            "pytorch-lightning".into(),
+            "torch".into(),
+        ],
     }
 }
 
@@ -1846,7 +1974,8 @@ fn build_pyod_backend() -> BackendInfo {
     BackendInfo {
         id: "pyod".into(),
         name: "PyOD".into(),
-        description: "Python Outlier Detection — AutoEncoder, VAE, ECOD, Isolation Forest, LOF".into(),
+        description: "Python Outlier Detection — AutoEncoder, VAE, ECOD, Isolation Forest, LOF"
+            .into(),
         supported_tasks: vec!["ts_anomaly".into()],
         models,
         dataset_format: DatasetFormat::TimeSeriesCsv,
@@ -1981,7 +2110,8 @@ fn build_stumpy_backend() -> BackendInfo {
     BackendInfo {
         id: "stumpy".into(),
         name: "STUMPY".into(),
-        description: "Matrix Profile — motif discovery, discord detection, pattern recognition".into(),
+        description: "Matrix Profile — motif discovery, discord detection, pattern recognition"
+            .into(),
         supported_tasks: vec!["ts_pattern".into()],
         models,
         dataset_format: DatasetFormat::TimeSeriesCsv,
@@ -1996,7 +2126,8 @@ fn build_sklearn_backend() -> BackendInfo {
             id: "random_forest_classifier".into(),
             name: "Random Forest Classifier".into(),
             family: "ensemble".into(),
-            description: "Robust ensemble of decision trees — great default for classification".into(),
+            description: "Robust ensemble of decision trees — great default for classification"
+                .into(),
             params_count: None,
             tasks: vec!["tabular".into()],
             sizes: None,
@@ -2202,6 +2333,13 @@ fn build_sklearn_backend() -> BackendInfo {
         supported_tasks: vec!["tabular".into()],
         models,
         dataset_format: DatasetFormat::TabularCsv,
-        pip_packages: vec!["scikit-learn".into(), "xgboost".into(), "lightgbm".into(), "pandas".into(), "skl2onnx".into(), "onnxmltools".into()],
+        pip_packages: vec![
+            "scikit-learn".into(),
+            "xgboost".into(),
+            "lightgbm".into(),
+            "pandas".into(),
+            "skl2onnx".into(),
+            "onnxmltools".into(),
+        ],
     }
 }

@@ -114,9 +114,9 @@ r#"# {title}
             "cell_type": "markdown",
             "metadata": {},
             "source": md_lines(
-"## HuggingFace Hub authentication\n\n\
-Set `HF_TOKEN` as an environment variable, or paste your token when `login()` prompts you. \
-If `HF_DATASET_REPO` is set, the dataset is pulled from the Hub instead of the local zip.\n"
+        "## HuggingFace Hub authentication\n\n\
+        Set `HF_TOKEN` as an environment variable, or paste your token when `login()` prompts you. \
+        If `HF_DATASET_REPO` is set, the dataset is pulled from the Hub instead of the local zip.\n"
             )
         }));
         cells.push(json!({
@@ -133,9 +133,9 @@ If `HF_DATASET_REPO` is set, the dataset is pulled from the Hub instead of the l
         "cell_type": "markdown",
         "metadata": {},
         "source": md_lines(
-"## Hardware auto-tune\n\n\
-Detects GPU/CPU, picks sensible `batch`, `workers` and `amp` values and injects them into \
-training on the fly — **no need to edit `train.py`**.\n"
+    "## Hardware auto-tune\n\n\
+    Detects GPU/CPU, picks sensible `batch`, `workers` and `amp` values and injects them into \
+    training on the fly — **no need to edit `train.py`**.\n"
         )
     }));
 
@@ -258,7 +258,7 @@ fn usage_section(platform: Platform, zip: &str) -> String {
 fn bootstrap_cell(platform: Platform, zip: &str) -> String {
     match platform {
         Platform::Colab => format!(
-r#"# Annotix bootstrap — Colab
+            r#"# Annotix bootstrap — Colab
 import os, zipfile, sys
 
 def _annotix_bootstrap(expected_zip="{zip}"):
@@ -284,9 +284,10 @@ def _annotix_bootstrap(expected_zip="{zip}"):
         raise FileNotFoundError(f"{{expected_zip}} not found and dataset/ does not exist")
 
 _annotix_bootstrap()
-"#),
+"#
+        ),
         Platform::Kaggle => format!(
-r#"# Annotix bootstrap — Kaggle
+            r#"# Annotix bootstrap — Kaggle
 # Looks for the .zip package (or already-extracted folder) inside /kaggle/input/
 import os, zipfile, glob, shutil
 
@@ -315,9 +316,10 @@ if not os.path.isdir("dataset"):
 else:
     print("[annotix] dataset/ already present")
 print("[annotix] cwd:", os.getcwd())
-"#),
+"#
+        ),
         Platform::HuggingFace => format!(
-r#"# Annotix bootstrap — HuggingFace / local
+            r#"# Annotix bootstrap — HuggingFace / local
 # If HF_DATASET_REPO is set, pulls the dataset from the Hub.
 # Otherwise expects {zip} next to the notebook.
 import os, zipfile
@@ -339,9 +341,10 @@ else:
     raise FileNotFoundError(
         "No dataset/, no HF_DATASET_REPO, and no {zip} next to the notebook."
     )
-"#),
+"#
+        ),
         Platform::Generic => format!(
-r#"# Annotix bootstrap — local / generic
+            r#"# Annotix bootstrap — local / generic
 import os, zipfile
 from pathlib import Path
 
@@ -365,7 +368,8 @@ required = [HERE / "dataset" / "data.yaml"]
 missing = [p for p in required if not p.exists()]
 if missing:
     print(f"[annotix] warning: missing paths {{missing}} — check the package")
-"#),
+"#
+        ),
     }
 }
 
@@ -404,18 +408,23 @@ fn results_cell(platform: Platform, backend: &str, project_name: &str, model_id:
         _ => ".",
     };
     let download_block = match platform {
-        Platform::Colab => r#"
+        Platform::Colab => {
+            r#"
 try:
     from google.colab import files  # type: ignore
     files.download(full_zip)
     files.download(weights_zip)
 except Exception as _e:
     print(f"[annotix] auto-download skipped: {_e}")
-"#,
-        Platform::Kaggle => r#"
+"#
+        }
+        Platform::Kaggle => {
+            r#"
 print("\n📥 Download the zips from the Notebook 'Output' panel after the session ends.")
-"#,
-        Platform::HuggingFace => r#"
+"#
+        }
+        Platform::HuggingFace => {
+            r#"
 import os as _os
 HF_MODEL_REPO = _os.environ.get("HF_MODEL_REPO", "").strip()
 if HF_MODEL_REPO:
@@ -429,7 +438,8 @@ if HF_MODEL_REPO:
         print(f"[annotix] HF upload failed: {_e}")
 else:
     print("\n[annotix] HF_MODEL_REPO not set — release zips remain local.")
-"#,
+"#
+        }
         Platform::Generic => "",
     };
 
@@ -759,7 +769,11 @@ fn sanitize_for_path(s: &str) -> String {
             out.push('_');
         }
     }
-    if out.is_empty() { "annotix_project".to_string() } else { out }
+    if out.is_empty() {
+        "annotix_project".to_string()
+    } else {
+        out
+    }
 }
 
 /// Genera la celda de auto-tune: detecta GPU/CPU, elige batch/workers/amp
@@ -768,7 +782,8 @@ fn sanitize_for_path(s: &str) -> String {
 /// tener que editar el `train.py` generado.
 fn build_autotune_cell(backend: &str) -> String {
     let patch_block = match backend {
-        "YOLO" | "RT-DETR" => r#"
+        "YOLO" | "RT-DETR" => {
+            r#"
 # Monkey-patch ultralytics para aplicar overrides sin tocar train.py
 try:
     from ultralytics import YOLO as _AnnotixYOLO
@@ -797,15 +812,18 @@ try:
     _AnnotixRTDETR.train = _annotix_rtdetr_train
 except Exception:
     pass
-"#,
-        _ => r#"
+"#
+        }
+        _ => {
+            r#"
 # For this backend overrides are exposed via env vars
 # (ANNOTIX_DEVICE / ANNOTIX_BATCH / ANNOTIX_WORKERS / ANNOTIX_AMP).
-"#,
+"#
+        }
     };
 
     format!(
-r#"# Annotix · hardware auto-tune
+        r#"# Annotix · hardware auto-tune
 import os, multiprocessing
 
 try:
@@ -880,7 +898,9 @@ fn split_script_blocks(script: &str) -> Vec<String> {
     let mut current = String::new();
 
     for line in script.lines() {
-        if (line.starts_with("def ") || line.starts_with("class ") || line.starts_with("if __name__"))
+        if (line.starts_with("def ")
+            || line.starts_with("class ")
+            || line.starts_with("if __name__"))
             && !current.trim().is_empty()
         {
             blocks.push(current.trim().to_string());

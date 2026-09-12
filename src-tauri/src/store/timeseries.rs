@@ -75,14 +75,11 @@ pub fn describe_data(data: &serde_json::Value) -> (usize, usize, Option<Vec<Stri
         None => 1,
     };
 
-    let columns = data
-        .get("columns")
-        .and_then(|c| c.as_array())
-        .map(|a| {
-            a.iter()
-                .map(|v| v.as_str().unwrap_or("").to_string())
-                .collect()
-        });
+    let columns = data.get("columns").and_then(|c| c.as_array()).map(|a| {
+        a.iter()
+            .map(|v| v.as_str().unwrap_or("").to_string())
+            .collect()
+    });
 
     (point_count, series_count, columns)
 }
@@ -94,7 +91,9 @@ impl AppState {
     }
 
     fn timeseries_data_path(&self, project_id: &str, ts_id: &str) -> Result<PathBuf, String> {
-        Ok(self.project_timeseries_dir(project_id)?.join(format!("{}.json", ts_id)))
+        Ok(self
+            .project_timeseries_dir(project_id)?
+            .join(format!("{}.json", ts_id)))
     }
 
     /// Escribe los datos de una serie a su archivo (atómico: .tmp + rename).
@@ -129,8 +128,8 @@ impl AppState {
         if !path.exists() {
             return Ok(None);
         }
-        let content = std::fs::read(&path)
-            .map_err(|e| format!("Error leyendo datos de serie: {}", e))?;
+        let content =
+            std::fs::read(&path).map_err(|e| format!("Error leyendo datos de serie: {}", e))?;
         let data = serde_json::from_slice(&content)
             .map_err(|e| format!("Error parseando datos de serie: {}", e))?;
         Ok(Some(data))
@@ -151,7 +150,11 @@ impl AppState {
     ) -> Result<String, String> {
         let now = js_timestamp();
         let id = uuid::Uuid::new_v4().to_string();
-        let status = if annotations.is_empty() { "pending" } else { "annotated" };
+        let status = if annotations.is_empty() {
+            "pending"
+        } else {
+            "annotated"
+        };
         let (point_count, series_count, columns) = describe_data(&data);
 
         // Los datos van a disco antes de registrarse en project.json: si la
@@ -167,7 +170,11 @@ impl AppState {
             columns,
             annotations: annotations.to_vec(),
             uploaded: now,
-            annotated: if annotations.is_empty() { None } else { Some(now) },
+            annotated: if annotations.is_empty() {
+                None
+            } else {
+                Some(now)
+            },
             status: status.to_string(),
         };
 
@@ -201,10 +208,7 @@ impl AppState {
     }
 
     /// Listado sin datos: la galería solo necesita nombre, estado y tamaño.
-    pub fn list_timeseries(
-        &self,
-        project_id: &str,
-    ) -> Result<Vec<TimeSeriesResponse>, String> {
+    pub fn list_timeseries(&self, project_id: &str) -> Result<Vec<TimeSeriesResponse>, String> {
         self.with_project(project_id, |pf| {
             pf.timeseries
                 .iter()
@@ -229,7 +233,11 @@ impl AppState {
                     } else {
                         "annotated".to_string()
                     };
-                    ts.annotated = if annotations.is_empty() { None } else { Some(now) };
+                    ts.annotated = if annotations.is_empty() {
+                        None
+                    } else {
+                        Some(now)
+                    };
                     true
                 }
                 None => false,
@@ -245,11 +253,7 @@ impl AppState {
         }
     }
 
-    pub fn delete_timeseries(
-        &self,
-        project_id: &str,
-        ts_id: &str,
-    ) -> Result<(), String> {
+    pub fn delete_timeseries(&self, project_id: &str, ts_id: &str) -> Result<(), String> {
         let found = self.with_project_mut_ret(project_id, |pf| {
             let before = pf.timeseries.len();
             pf.timeseries.retain(|ts| ts.id != ts_id);

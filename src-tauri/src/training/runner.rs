@@ -7,12 +7,15 @@ use std::time::Instant;
 
 use tauri::{AppHandle, Emitter, Manager};
 
-use crate::store::AppState;
-use crate::store::project_file::ImageEntry;
-use super::{TrainingConfig, TrainingRequest, TrainingProgressEvent, TrainingResult, ExportedModel, TrainingEpochMetrics};
-use super::python_env;
 use super::dataset;
+use super::python_env;
 use super::scripts;
+use super::{
+    ExportedModel, TrainingConfig, TrainingEpochMetrics, TrainingProgressEvent, TrainingRequest,
+    TrainingResult,
+};
+use crate::store::project_file::ImageEntry;
+use crate::store::AppState;
 
 pub struct TrainingProcessManager {
     processes: Arc<Mutex<HashMap<String, Child>>>,
@@ -47,9 +50,7 @@ impl TrainingProcessManager {
         let mut pf = state.read_project_file(project_id)?;
 
         // Preparar directorio del dataset (dentro del proyecto)
-        let dataset_dir = project_dir
-            .join("training")
-            .join(format!("job_{}", job_id));
+        let dataset_dir = project_dir.join("training").join(format!("job_{}", job_id));
         std::fs::create_dir_all(&dataset_dir)
             .map_err(|e| format!("Error creando directorio de training: {}", e))?;
 
@@ -84,13 +85,20 @@ impl TrainingProcessManager {
 
         log::info!(
             "Training {}: {} de {} imágenes tienen anotaciones y entran al dataset",
-            job_id_owned, images.len(), total_images
+            job_id_owned,
+            images.len(),
+            total_images
         );
 
         // Preparar dataset en disco
         let data_yaml_path = dataset::prepare_dataset(
-            &images_dir, &pf, &images, &dataset_dir,
-            config.val_split, config.test_split, &config.task,
+            &images_dir,
+            &pf,
+            &images,
+            &dataset_dir,
+            config.val_split,
+            config.test_split,
+            &config.task,
         )?;
 
         // Generar script
@@ -117,7 +125,8 @@ impl TrainingProcessManager {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
         super::hide_console_window(&mut cmd);
-        let mut child = cmd.spawn()
+        let mut child = cmd
+            .spawn()
             .map_err(|e| format!("Error iniciando entrenamiento: {}", e))?;
 
         let stdout = child.stdout.take();
@@ -165,9 +174,7 @@ impl TrainingProcessManager {
         // aquí: si la preparación de dataset/scripts falla, el job no debe quedar
         // marcado "training" zombie.
 
-        let dataset_dir = project_dir
-            .join("training")
-            .join(format!("job_{}", job_id));
+        let dataset_dir = project_dir.join("training").join(format!("job_{}", job_id));
         std::fs::create_dir_all(&dataset_dir)
             .map_err(|e| format!("Error creando directorio de training: {}", e))?;
 
@@ -232,7 +239,9 @@ impl TrainingProcessManager {
         if uses_images {
             log::info!(
                 "Training {}: {} de {} imágenes tienen anotaciones y entran al dataset",
-                job_id_owned, images.len(), total_images
+                job_id_owned,
+                images.len(),
+                total_images
             );
         }
 
@@ -241,14 +250,21 @@ impl TrainingProcessManager {
             dataset_dir.to_string_lossy().replace('\\', "/")
         } else {
             dataset::prepare_dataset_for_backend(
-                &images_dir, &pf, &images, &dataset_dir,
-                request.val_split, request.test_split, &request.task, &request.backend,
+                &images_dir,
+                &pf,
+                &images,
+                &dataset_dir,
+                request.val_split,
+                request.test_split,
+                &request.task,
+                &request.backend,
             )?
         };
 
         // Generate scripts
         let num_classes = pf.classes.len();
-        let script_files = scripts::generate_train_script_for_backend(&request, &dataset_path, num_classes);
+        let script_files =
+            scripts::generate_train_script_for_backend(&request, &dataset_path, num_classes);
 
         // Write all generated files
         for (filename, content) in &script_files {
@@ -276,7 +292,8 @@ impl TrainingProcessManager {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
         super::hide_console_window(&mut cmd);
-        let mut child = cmd.spawn()
+        let mut child = cmd
+            .spawn()
             .map_err(|e| format!("Error iniciando entrenamiento: {}", e))?;
 
         let stdout = child.stdout.take();
@@ -315,19 +332,23 @@ impl TrainingProcessManager {
 
         let project_dir = state.project_dir(project_id)?;
         let pf = state.read_project_file(project_id)?;
-        let job = pf.training_jobs.iter().find(|j| j.id == job_id)
+        let job = pf
+            .training_jobs
+            .iter()
+            .find(|j| j.id == job_id)
             .ok_or("Job no encontrado")?;
 
         // Ubicar last.pt
-        let result_dir = job.result_dir.as_ref()
+        let result_dir = job
+            .result_dir
+            .as_ref()
             .ok_or("Job sin result_dir. No se puede reanudar (requiere run previo).")?;
         let last_pt = PathBuf::from(result_dir).join("weights").join("last.pt");
         if !last_pt.exists() {
             return Err(format!("No existe last.pt en {:?}", last_pt));
         }
 
-        let dataset_dir = job.dataset_dir.as_ref()
-            .ok_or("Job sin dataset_dir")?;
+        let dataset_dir = job.dataset_dir.as_ref().ok_or("Job sin dataset_dir")?;
         let dataset_dir = PathBuf::from(dataset_dir);
 
         // Generar script de resume en el dataset_dir
@@ -361,7 +382,8 @@ impl TrainingProcessManager {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
         super::hide_console_window(&mut cmd);
-        let mut child = cmd.spawn()
+        let mut child = cmd
+            .spawn()
             .map_err(|e| format!("Error reanudando entrenamiento: {}", e))?;
 
         let stdout = child.stdout.take();
@@ -387,7 +409,9 @@ impl TrainingProcessManager {
     pub fn cancel_training(&self, job_id: &str) -> Result<(), String> {
         let mut procs = self.processes.lock().map_err(|e| e.to_string())?;
         if let Some(mut child) = procs.remove(job_id) {
-            child.kill().map_err(|e| format!("Error cancelando proceso: {}", e))?;
+            child
+                .kill()
+                .map_err(|e| format!("Error cancelando proceso: {}", e))?;
             Ok(())
         } else {
             Err("No se encontró proceso de entrenamiento activo".to_string())
@@ -415,20 +439,28 @@ fn strip_ansi(s: &str) -> String {
             Some('[') => {
                 chars.next();
                 while let Some(nc) = chars.next() {
-                    if ('@'..='~').contains(&nc) { break; }
+                    if ('@'..='~').contains(&nc) {
+                        break;
+                    }
                 }
             }
             Some(']') => {
                 chars.next();
                 while let Some(nc) = chars.next() {
-                    if nc == '\x07' { break; }
+                    if nc == '\x07' {
+                        break;
+                    }
                     if nc == '\x1b' {
-                        if let Some(&'\\') = chars.peek() { chars.next(); }
+                        if let Some(&'\\') = chars.peek() {
+                            chars.next();
+                        }
                         break;
                     }
                 }
             }
-            Some(_) => { chars.next(); }
+            Some(_) => {
+                chars.next();
+            }
             None => {}
         }
     }
@@ -476,10 +508,13 @@ fn emit_log_throttled(app: &AppHandle, job_id: &str, message: String) {
             let batch: Vec<String> = std::mem::take(&mut entry.pending);
             entry.last_emit = Some(now);
             let combined = batch.join("\n");
-            let _ = app.emit("training:log", serde_json::json!({
-                "jobId": job_id,
-                "message": combined,
-            }));
+            let _ = app.emit(
+                "training:log",
+                serde_json::json!({
+                    "jobId": job_id,
+                    "message": combined,
+                }),
+            );
         }
     });
 }
@@ -534,10 +569,13 @@ pub fn flush_log_throttle(app: &AppHandle, job_id: &str) {
             if !entry.pending.is_empty() {
                 let batch: Vec<String> = std::mem::take(&mut entry.pending);
                 let combined = batch.join("\n");
-                let _ = app.emit("training:log", serde_json::json!({
-                    "jobId": job_id,
-                    "message": combined,
-                }));
+                let _ = app.emit(
+                    "training:log",
+                    serde_json::json!({
+                        "jobId": job_id,
+                        "message": combined,
+                    }),
+                );
             }
             map.remove(job_id);
         }
@@ -564,19 +602,38 @@ fn hydrate_history_from_results_csv(result_dir: &PathBuf) -> Option<Vec<serde_js
     let mut out: Vec<serde_json::Value> = Vec::new();
     for line in lines {
         let parts: Vec<&str> = line.split(',').map(|s| s.trim()).collect();
-        if parts.len() <= i_epoch { continue; }
-        let epoch: u64 = match parts[i_epoch].parse() { Ok(v) => v, Err(_) => continue };
+        if parts.len() <= i_epoch {
+            continue;
+        }
+        let epoch: u64 = match parts[i_epoch].parse() {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
         let get = |i: Option<usize>| -> Option<f64> {
             i.and_then(|i| parts.get(i)).and_then(|s| s.parse().ok())
         };
         let mut m = serde_json::Map::new();
-        if let Some(v) = get(i_p) { m.insert("precision".into(), v.into()); }
-        if let Some(v) = get(i_r) { m.insert("recall".into(), v.into()); }
-        if let Some(v) = get(i_m50) { m.insert("mAP50".into(), v.into()); }
-        if let Some(v) = get(i_m5095) { m.insert("mAP50_95".into(), v.into()); }
-        if let Some(v) = get(i_box) { m.insert("boxLoss".into(), v.into()); }
-        if let Some(v) = get(i_cls) { m.insert("clsLoss".into(), v.into()); }
-        if let Some(v) = get(i_dfl) { m.insert("dflLoss".into(), v.into()); }
+        if let Some(v) = get(i_p) {
+            m.insert("precision".into(), v.into());
+        }
+        if let Some(v) = get(i_r) {
+            m.insert("recall".into(), v.into());
+        }
+        if let Some(v) = get(i_m50) {
+            m.insert("mAP50".into(), v.into());
+        }
+        if let Some(v) = get(i_m5095) {
+            m.insert("mAP50_95".into(), v.into());
+        }
+        if let Some(v) = get(i_box) {
+            m.insert("boxLoss".into(), v.into());
+        }
+        if let Some(v) = get(i_cls) {
+            m.insert("clsLoss".into(), v.into());
+        }
+        if let Some(v) = get(i_dfl) {
+            m.insert("dflLoss".into(), v.into());
+        }
         out.push(serde_json::json!({
             "epoch": epoch,
             "metrics": serde_json::Value::Object(m),
@@ -584,17 +641,27 @@ fn hydrate_history_from_results_csv(result_dir: &PathBuf) -> Option<Vec<serde_js
             "fromCsv": true,
         }));
     }
-    if out.is_empty() { None } else { Some(out) }
+    if out.is_empty() {
+        None
+    } else {
+        Some(out)
+    }
 }
 
 /// Devuelve `true` solo si el evento era `completed` (el job ya quedó marcado
 /// como completado y no requiere fallback al cerrar el proceso).
-fn handle_event(app: &AppHandle, job_id: &str, event: &serde_json::Value, project_dir: &PathBuf) -> bool {
+fn handle_event(
+    app: &AppHandle,
+    job_id: &str,
+    event: &serde_json::Value,
+    project_dir: &PathBuf,
+) -> bool {
     let event_type = event["type"].as_str().unwrap_or("");
 
     match event_type {
         "epoch" => {
-            let project_id = project_dir.file_name()
+            let project_id = project_dir
+                .file_name()
                 .and_then(|s| s.to_str())
                 .map(|s| s.to_string());
             let progress_event = TrainingProgressEvent {
@@ -662,10 +729,13 @@ fn handle_event(app: &AppHandle, job_id: &str, event: &serde_json::Value, projec
             // Asegurar que el último batch de logs del entrenamiento llegue al frontend.
             flush_log_throttle(app, job_id);
 
-            let _ = app.emit("training:completed", serde_json::json!({
-                "jobId": job_id,
-                "result": &result,
-            }));
+            let _ = app.emit(
+                "training:completed",
+                serde_json::json!({
+                    "jobId": job_id,
+                    "result": &result,
+                }),
+            );
 
             // Actualizar project.json
             let best = result.best_model_path.clone();
@@ -712,10 +782,13 @@ fn finalize_completed_fallback(app: &AppHandle, project_dir: &PathBuf, job_id: &
         }
         job.updated_at = js_timestamp();
     });
-    let _ = app.emit("training:completed", serde_json::json!({
-        "jobId": job_id,
-        "result": serde_json::Value::Null,
-    }));
+    let _ = app.emit(
+        "training:completed",
+        serde_json::json!({
+            "jobId": job_id,
+            "result": serde_json::Value::Null,
+        }),
+    );
 }
 
 fn parse_metrics(v: &serde_json::Value) -> Option<TrainingEpochMetrics> {
@@ -821,15 +894,15 @@ fn spawn_monitor_thread(
                         finalize_completed_fallback(&app, &project_dir, &job_id);
                     }
                 } else {
-                    let error_msg = stderr_buf
-                        .lock()
-                        .map(|b| b.join("\n"))
-                        .unwrap_or_default();
+                    let error_msg = stderr_buf.lock().map(|b| b.join("\n")).unwrap_or_default();
                     flush_log_throttle(&app, &job_id);
-                    let _ = app.emit("training:error", serde_json::json!({
-                        "jobId": &job_id,
-                        "error": error_msg,
-                    }));
+                    let _ = app.emit(
+                        "training:error",
+                        serde_json::json!({
+                            "jobId": &job_id,
+                            "error": error_msg,
+                        }),
+                    );
                     update_job_in_project(&app, &project_dir, &job_id, |job| {
                         job.status = "failed".to_string();
                         job.updated_at = js_timestamp();

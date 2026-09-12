@@ -4,9 +4,11 @@ use std::path::Path;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
-use crate::store::project_file::{ProjectFile, ImageEntry, AnnotationEntry};
+use super::{
+    add_image_to_zip, class_name, parse_bbox, parse_keypoints, parse_landmarks, parse_obb,
+};
+use crate::store::project_file::{AnnotationEntry, ImageEntry, ProjectFile};
 use crate::utils::converters::obb_to_aabbox;
-use super::{parse_bbox, parse_obb, parse_landmarks, parse_keypoints, class_name, add_image_to_zip};
 
 pub fn export<F: Fn(f64)>(
     project: &ProjectFile,
@@ -33,16 +35,20 @@ pub fn export<F: Fn(f64)>(
         _ => return Err(format!("Formato CSV no soportado: {}", format)),
     };
 
-    zip.start_file("annotations.csv", options).map_err(|e| e.to_string())?;
-    zip.write_all(csv_content.as_bytes()).map_err(|e| e.to_string())?;
+    zip.start_file("annotations.csv", options)
+        .map_err(|e| e.to_string())?;
+    zip.write_all(csv_content.as_bytes())
+        .map_err(|e| e.to_string())?;
 
     // classes.csv
     let mut classes_csv = "id,name\n".to_string();
     for cls in &project.classes {
         classes_csv.push_str(&format!("{},{}\n", cls.id, cls.name));
     }
-    zip.start_file("classes.csv", options).map_err(|e| e.to_string())?;
-    zip.write_all(classes_csv.as_bytes()).map_err(|e| e.to_string())?;
+    zip.start_file("classes.csv", options)
+        .map_err(|e| e.to_string())?;
+    zip.write_all(classes_csv.as_bytes())
+        .map_err(|e| e.to_string())?;
 
     emit_progress(100.0);
     zip.finish().map_err(|e| e.to_string())?;
@@ -53,21 +59,31 @@ fn generate_detection_csv(images: &[ImageEntry], project: &ProjectFile) -> Strin
     let mut rows = vec!["filename,width,height,class,xmin,ymin,xmax,ymax".to_string()];
 
     for image in images {
-        let bbox_anns: Vec<&AnnotationEntry> = image.annotations.iter()
+        let bbox_anns: Vec<&AnnotationEntry> = image
+            .annotations
+            .iter()
             .filter(|a| a.annotation_type == "bbox" || a.annotation_type == "obb")
             .collect();
 
         if bbox_anns.is_empty() {
-            rows.push(format!("{},{},{},,,,,", image.name, image.width, image.height));
+            rows.push(format!(
+                "{},{},{},,,,,",
+                image.name, image.width, image.height
+            ));
         } else {
             for ann in bbox_anns {
                 let name = class_name(&project.classes, ann.class_id);
                 if let Some((xmin, ymin, xmax, ymax)) = get_bbox_coords(ann) {
                     rows.push(format!(
                         "{},{},{},{},{},{},{},{}",
-                        image.name, image.width, image.height, name,
-                        xmin.round() as i64, ymin.round() as i64,
-                        xmax.round() as i64, ymax.round() as i64
+                        image.name,
+                        image.width,
+                        image.height,
+                        name,
+                        xmin.round() as i64,
+                        ymin.round() as i64,
+                        xmax.round() as i64,
+                        ymax.round() as i64
                     ));
                 }
             }
@@ -95,7 +111,12 @@ fn generate_landmarks_csv(images: &[ImageEntry], project: &ProjectFile) -> Strin
     let sorted_names: Vec<String> = landmark_names.into_iter().collect();
 
     // Header
-    let mut header = vec!["filename".to_string(), "width".to_string(), "height".to_string(), "class".to_string()];
+    let mut header = vec![
+        "filename".to_string(),
+        "width".to_string(),
+        "height".to_string(),
+        "class".to_string(),
+    ];
     for name in &sorted_names {
         header.push(format!("{}_x", name));
         header.push(format!("{}_y", name));
@@ -104,7 +125,9 @@ fn generate_landmarks_csv(images: &[ImageEntry], project: &ProjectFile) -> Strin
 
     // Data
     for image in images {
-        let landmark_anns: Vec<&AnnotationEntry> = image.annotations.iter()
+        let landmark_anns: Vec<&AnnotationEntry> = image
+            .annotations
+            .iter()
             .filter(|a| a.annotation_type == "landmarks")
             .collect();
 
@@ -174,8 +197,11 @@ fn generate_keypoints_csv(images: &[ImageEntry], project: &ProjectFile) -> Strin
 
     // Header
     let mut header = vec![
-        "filename".to_string(), "width".to_string(), "height".to_string(),
-        "class".to_string(), "instance_id".to_string(),
+        "filename".to_string(),
+        "width".to_string(),
+        "height".to_string(),
+        "class".to_string(),
+        "instance_id".to_string(),
     ];
     for name in &sorted_names {
         header.push(format!("{}_x", name));
@@ -186,7 +212,9 @@ fn generate_keypoints_csv(images: &[ImageEntry], project: &ProjectFile) -> Strin
 
     // Data
     for image in images {
-        let kp_anns: Vec<&AnnotationEntry> = image.annotations.iter()
+        let kp_anns: Vec<&AnnotationEntry> = image
+            .annotations
+            .iter()
             .filter(|a| a.annotation_type == "keypoints")
             .collect();
 
@@ -246,18 +274,25 @@ fn generate_classification_csv(images: &[ImageEntry], project: &ProjectFile) -> 
     let mut rows = vec!["filename,class".to_string()];
 
     for image in images {
-        let class_anns: Vec<&AnnotationEntry> = image.annotations.iter()
-            .filter(|a| a.annotation_type == "classification" || a.annotation_type == "multi-label-classification")
+        let class_anns: Vec<&AnnotationEntry> = image
+            .annotations
+            .iter()
+            .filter(|a| {
+                a.annotation_type == "classification"
+                    || a.annotation_type == "multi-label-classification"
+            })
             .collect();
 
         if !class_anns.is_empty() {
-            let class_names: Vec<String> = class_anns.iter()
+            let class_names: Vec<String> = class_anns
+                .iter()
                 .map(|a| class_name(&project.classes, a.class_id))
                 .filter(|n| n != "unknown")
                 .collect::<Vec<_>>();
             // Deduplicate while preserving order
             let mut seen = HashSet::new();
-            let unique: Vec<&str> = class_names.iter()
+            let unique: Vec<&str> = class_names
+                .iter()
                 .filter(|n| seen.insert(n.as_str()))
                 .map(|s| s.as_str())
                 .collect();
@@ -281,7 +316,13 @@ fn get_bbox_coords(ann: &AnnotationEntry) -> Option<(f64, f64, f64, f64)> {
         }
         "obb" => {
             let obb = parse_obb(&ann.data)?;
-            Some(obb_to_aabbox(obb.x, obb.y, obb.width, obb.height, obb.rotation))
+            Some(obb_to_aabbox(
+                obb.x,
+                obb.y,
+                obb.width,
+                obb.height,
+                obb.rotation,
+            ))
         }
         _ => None,
     }

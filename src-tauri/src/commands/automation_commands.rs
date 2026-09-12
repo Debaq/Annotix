@@ -1,9 +1,9 @@
 use crate::browser_automation::{
-    AutomationRequest, AutomationSession, BrowserAutomationManager, DetectedBrowser,
-    browser_detect, browser_session,
+    browser_detect, browser_session, AutomationRequest, AutomationSession,
+    BrowserAutomationManager, DetectedBrowser,
 };
-use crate::store::AppState;
 use crate::store::config::BrowserAutomationConfig;
+use crate::store::AppState;
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
@@ -127,7 +127,9 @@ pub fn list_provider_selectors() -> Result<Vec<ProviderSelectorSummary>, String>
     for (key, filename) in &files {
         let path = dir.join(filename);
         if let Ok(contents) = std::fs::read_to_string(&path) {
-            if let Ok(config) = toml::from_str::<crate::browser_automation::selectors::ProviderConfig>(&contents) {
+            if let Ok(config) =
+                toml::from_str::<crate::browser_automation::selectors::ProviderConfig>(&contents)
+            {
                 result.push(ProviderSelectorSummary {
                     key: key.to_string(),
                     name: config.name,
@@ -146,8 +148,7 @@ pub fn get_provider_selectors(provider: String) -> Result<String, String> {
     let dir = get_selectors_dir();
     let filename = format!("{}.toml", provider);
     let path = dir.join(&filename);
-    std::fs::read_to_string(&path)
-        .map_err(|e| format!("Error leyendo {}: {}", filename, e))
+    std::fs::read_to_string(&path).map_err(|e| format!("Error leyendo {}: {}", filename, e))
 }
 
 #[tauri::command]
@@ -159,6 +160,5 @@ pub fn save_provider_selectors(provider: String, content: String) -> Result<(), 
     let dir = get_selectors_dir();
     let filename = format!("{}.toml", provider);
     let path = dir.join(&filename);
-    std::fs::write(&path, &content)
-        .map_err(|e| format!("Error escribiendo {}: {}", filename, e))
+    std::fs::write(&path, &content).map_err(|e| format!("Error escribiendo {}: {}", filename, e))
 }

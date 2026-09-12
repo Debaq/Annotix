@@ -66,16 +66,20 @@ pub struct ProjectSummaryRaw {
     pub webp_quality_preset: String,
 }
 
-fn default_image_format() -> String { "jpg".to_string() }
-fn default_webp_preset() -> String { "high".to_string() }
+fn default_image_format() -> String {
+    "jpg".to_string()
+}
+fn default_webp_preset() -> String {
+    "high".to_string()
+}
 
 pub fn read_project_summary(dir: &Path) -> Result<ProjectSummaryRaw, String> {
     let path = dir.join("project.json");
     if !path.exists() {
         return Err(format!("project.json no encontrado en {:?}", dir));
     }
-    let file = std::fs::File::open(&path)
-        .map_err(|e| format!("Error abriendo project.json: {}", e))?;
+    let file =
+        std::fs::File::open(&path).map_err(|e| format!("Error abriendo project.json: {}", e))?;
     let reader = std::io::BufReader::new(file);
     let summary: ProjectSummaryRaw = serde_json::from_reader(reader)
         .map_err(|e| format!("Error parseando summary project.json: {}", e))?;
@@ -87,8 +91,8 @@ pub fn read_project(dir: &Path) -> Result<ProjectFile, String> {
     if !path.exists() {
         return Err(format!("project.json no encontrado en {:?}", dir));
     }
-    let content = std::fs::read_to_string(&path)
-        .map_err(|e| format!("Error leyendo project.json: {}", e))?;
+    let content =
+        std::fs::read_to_string(&path).map_err(|e| format!("Error leyendo project.json: {}", e))?;
     let mut project: ProjectFile = serde_json::from_str(&content)
         .map_err(|e| format!("Error parseando project.json: {}", e))?;
 
@@ -141,8 +145,12 @@ fn migrate_v1_baked_bboxes_to_pixels(project: &mut ProjectFile) -> bool {
     }
 
     // (video_id, track_id, class_id, keyframes ordenados)
-    let mut track_kfs: Vec<(String, String, i64, Vec<crate::store::project_file::KeyframeEntry>)> =
-        Vec::new();
+    let mut track_kfs: Vec<(
+        String,
+        String,
+        i64,
+        Vec<crate::store::project_file::KeyframeEntry>,
+    )> = Vec::new();
     for video in &project.videos {
         for track in &video.tracks {
             if !track.enabled || track.keyframes.is_empty() {
@@ -224,7 +232,11 @@ fn migrate_v2_timeseries_data_to_files(project: &mut ProjectFile, dir: &Path) {
 
     let ts_dir = dir.join("timeseries");
     if let Err(e) = std::fs::create_dir_all(&ts_dir) {
-        log::warn!("No se pudo crear el directorio de series de {}: {}", project.id, e);
+        log::warn!(
+            "No se pudo crear el directorio de series de {}: {}",
+            project.id,
+            e
+        );
         return;
     }
 
@@ -244,7 +256,11 @@ fn migrate_v2_timeseries_data_to_files(project: &mut ProjectFile, dir: &Path) {
         match serde_json::to_vec(&data) {
             Ok(bytes) => {
                 if let Err(e) = std::fs::write(&path, bytes) {
-                    log::warn!("No se pudieron escribir los datos de la serie {}: {}", ts.id, e);
+                    log::warn!(
+                        "No se pudieron escribir los datos de la serie {}: {}",
+                        ts.id,
+                        e
+                    );
                     // Devolver el dato al entry: mejor un project.json grande que
                     // una serie que apunta a un archivo inexistente.
                     ts.data = Some(data);
@@ -253,7 +269,11 @@ fn migrate_v2_timeseries_data_to_files(project: &mut ProjectFile, dir: &Path) {
                 moved += 1;
             }
             Err(e) => {
-                log::warn!("No se pudieron serializar los datos de la serie {}: {}", ts.id, e);
+                log::warn!(
+                    "No se pudieron serializar los datos de la serie {}: {}",
+                    ts.id,
+                    e
+                );
                 ts.data = Some(data);
             }
         }

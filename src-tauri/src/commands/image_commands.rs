@@ -14,7 +14,8 @@ pub async fn upload_images(
     project_id: String,
     file_paths: Vec<String>,
 ) -> Result<Vec<String>, String> {
-    p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
+    p2p.check_permission(&project_id, P2pPermission::UploadData)
+        .await?;
     let _ = state;
     let app_cb = app.clone();
     let pid = project_id.clone();
@@ -30,27 +31,37 @@ pub async fn upload_images(
                 .checked_sub(std::time::Duration::from_secs(1))
                 .unwrap_or_else(std::time::Instant::now),
         );
-        state.upload_images_with_progress(&project_id_clone, &file_paths_clone, move |current, total, name| {
-            let mut le = last_emit.lock().unwrap();
-            let is_edge = current == 1 || current == total;
-            if is_edge || le.elapsed() >= std::time::Duration::from_millis(100) {
-                let _ = app_cb.emit("upload:progress", serde_json::json!({
-                    "projectId": pid,
-                    "current": current,
-                    "total": total,
-                    "fileName": name,
-                }));
-                *le = std::time::Instant::now();
-            }
-        })
+        state.upload_images_with_progress(
+            &project_id_clone,
+            &file_paths_clone,
+            move |current, total, name| {
+                let mut le = last_emit.lock().unwrap();
+                let is_edge = current == 1 || current == total;
+                if is_edge || le.elapsed() >= std::time::Duration::from_millis(100) {
+                    let _ = app_cb.emit(
+                        "upload:progress",
+                        serde_json::json!({
+                            "projectId": pid,
+                            "current": current,
+                            "total": total,
+                            "fileName": name,
+                        }),
+                    );
+                    *le = std::time::Instant::now();
+                }
+            },
+        )
     })
     .await
     .map_err(|e| format!("Join error: {}", e))??;
-    let _ = app.emit("db:images-changed", serde_json::json!({
-        "projectId": &project_id,
-        "action": "added",
-        "imageIds": &ids,
-    }));
+    let _ = app.emit(
+        "db:images-changed",
+        serde_json::json!({
+            "projectId": &project_id,
+            "action": "added",
+            "imageIds": &ids,
+        }),
+    );
 
     // Sincronizar imágenes nuevas al doc P2P si hay sesión activa
     let has_session = p2p.get_session_info(&project_id).await.is_some();
@@ -58,15 +69,33 @@ pub async fn upload_images(
         for image_id in &ids {
             let img_info = state.with_project(&project_id, |pf| {
                 pf.images.iter().find(|i| &i.id == image_id).map(|i| {
-                    (i.name.clone(), i.file.clone(), i.width, i.height, i.status.clone(), i.annotations.clone())
+                    (
+                        i.name.clone(),
+                        i.file.clone(),
+                        i.width,
+                        i.height,
+                        i.status.clone(),
+                        i.annotations.clone(),
+                    )
                 })
             })?;
             if let Some((name, file, width, height, status, annots)) = img_info {
                 let images_dir = state.project_images_dir(&project_id)?;
                 let image_path = images_dir.join(&file);
                 if let Err(e) = crate::p2p::sync::sync_new_image_to_doc(
-                    &p2p, &project_id, image_id, &name, &file, width, height, &status, &annots, &image_path,
-                ).await {
+                    &p2p,
+                    &project_id,
+                    image_id,
+                    &name,
+                    &file,
+                    width,
+                    height,
+                    &status,
+                    &annots,
+                    &image_path,
+                )
+                .await
+                {
                     log::warn!("Error sincronizando imagen {} al P2P: {}", image_id, e);
                 }
             }
@@ -86,7 +115,8 @@ pub async fn upload_image_bytes(
     data: Vec<u8>,
     annotations: Vec<AnnotationEntry>,
 ) -> Result<String, String> {
-    p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
+    p2p.check_permission(&project_id, P2pPermission::UploadData)
+        .await?;
     let _ = state;
     let app_for_state = app.clone();
     let pid = project_id.clone();
@@ -98,26 +128,47 @@ pub async fn upload_image_bytes(
     })
     .await
     .map_err(|e| format!("Join error: {}", e))??;
-    let _ = app.emit("db:images-changed", serde_json::json!({
-        "projectId": &project_id,
-        "action": "added",
-        "imageIds": [&id],
-    }));
+    let _ = app.emit(
+        "db:images-changed",
+        serde_json::json!({
+            "projectId": &project_id,
+            "action": "added",
+            "imageIds": [&id],
+        }),
+    );
 
     // Sincronizar imagen al doc P2P si hay sesión activa
     let has_session = p2p.get_session_info(&project_id).await.is_some();
     if has_session {
         let img_info = state.with_project(&project_id, |pf| {
             pf.images.iter().find(|i| i.id == id).map(|i| {
-                (i.name.clone(), i.file.clone(), i.width, i.height, i.status.clone(), i.annotations.clone())
+                (
+                    i.name.clone(),
+                    i.file.clone(),
+                    i.width,
+                    i.height,
+                    i.status.clone(),
+                    i.annotations.clone(),
+                )
             })
         })?;
         if let Some((name, file, width, height, status, annots)) = img_info {
             let images_dir = state.project_images_dir(&project_id)?;
             let image_path = images_dir.join(&file);
             if let Err(e) = crate::p2p::sync::sync_new_image_to_doc(
-                &p2p, &project_id, &id, &name, &file, width, height, &status, &annots, &image_path,
-            ).await {
+                &p2p,
+                &project_id,
+                &id,
+                &name,
+                &file,
+                width,
+                height,
+                &status,
+                &annots,
+                &image_path,
+            )
+            .await
+            {
                 log::warn!("Error sincronizando imagen {} al P2P: {}", id, e);
             }
         }
@@ -172,7 +223,8 @@ pub async fn save_annotations(
     image_id: String,
     mut annotations: Vec<AnnotationEntry>,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate)
+        .await?;
 
     // En sesión P2P, sellar autor en las marcas nuevas (las que aún no tienen).
     // Permite mostrar quién creó cada anotación; se conserva al sincronizar/editar.
@@ -187,18 +239,22 @@ pub async fn save_annotations(
     }
 
     state.save_annotations(&project_id, &image_id, &annotations)?;
-    let _ = app.emit("db:images-changed", serde_json::json!({
-        "projectId": &project_id,
-        "action": "updated",
-        "imageIds": [&image_id],
-    }));
+    let _ = app.emit(
+        "db:images-changed",
+        serde_json::json!({
+            "projectId": &project_id,
+            "action": "updated",
+            "imageIds": [&image_id],
+        }),
+    );
 
     // Sincronizar anotaciones al doc P2P si hay sesión activa
     let has_session = p2p.get_session_info(&project_id).await.is_some();
     if has_session {
-        if let Err(e) = crate::p2p::sync::sync_annotations_to_doc(
-            &p2p, &project_id, &image_id, &annotations,
-        ).await {
+        if let Err(e) =
+            crate::p2p::sync::sync_annotations_to_doc(&p2p, &project_id, &image_id, &annotations)
+                .await
+        {
             log::warn!("Error sincronizando anotaciones al P2P: {}", e);
         }
     }
@@ -215,10 +271,13 @@ pub fn convert_project_images(
 ) -> Result<ConversionReport, String> {
     let report = state.convert_project_images(&project_id, &target_format)?;
     let _ = app.emit("db:projects-changed", ());
-    let _ = app.emit("db:images-changed", serde_json::json!({
-        "projectId": &project_id,
-        "action": "updated",
-    }));
+    let _ = app.emit(
+        "db:images-changed",
+        serde_json::json!({
+            "projectId": &project_id,
+            "action": "updated",
+        }),
+    );
     Ok(report)
 }
 
@@ -230,12 +289,16 @@ pub async fn delete_image(
     project_id: String,
     id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Delete).await?;
+    p2p.check_permission(&project_id, P2pPermission::Delete)
+        .await?;
     state.delete_image(&project_id, &id)?;
-    let _ = app.emit("db:images-changed", serde_json::json!({
-        "projectId": &project_id,
-        "action": "deleted",
-        "imageIds": [&id],
-    }));
+    let _ = app.emit(
+        "db:images-changed",
+        serde_json::json!({
+            "projectId": &project_id,
+            "action": "deleted",
+            "imageIds": [&id],
+        }),
+    );
     Ok(())
 }

@@ -47,10 +47,7 @@ pub async fn check_for_updates() -> Result<UpdateInfo, String> {
         .unwrap_or("https://github.com/Debaq/Annotix/releases")
         .to_string();
 
-    let release_notes = body["body"]
-        .as_str()
-        .unwrap_or("")
-        .to_string();
+    let release_notes = body["body"].as_str().unwrap_or("").to_string();
 
     let update_available = version_is_newer(current, latest);
 
@@ -65,11 +62,7 @@ pub async fn check_for_updates() -> Result<UpdateInfo, String> {
 
 /// Compara dos versiones semánticas, retorna true si `latest` > `current`
 fn version_is_newer(current: &str, latest: &str) -> bool {
-    let parse = |v: &str| -> Vec<u64> {
-        v.split('.')
-            .filter_map(|p| p.parse().ok())
-            .collect()
-    };
+    let parse = |v: &str| -> Vec<u64> { v.split('.').filter_map(|p| p.parse().ok()).collect() };
     let c = parse(current);
     let l = parse(latest);
     for i in 0..3 {

@@ -19,7 +19,8 @@ pub fn export_model(model_path: &str, format: &str) -> Result<String, String> {
     let mut cmd = Command::new(&python);
     cmd.args(["-c", &script]);
     super::hide_console_window(&mut cmd);
-    let output = cmd.output()
+    let output = cmd
+        .output()
         .map_err(|e| format!("Error ejecutando export: {}", e))?;
 
     if !output.status.success() {

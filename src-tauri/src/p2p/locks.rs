@@ -23,9 +23,13 @@ impl P2pState {
         let node_guard = self.node.read().await;
         let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
         let sessions = self.sessions.read().await;
-        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
+        let session = sessions
+            .get(project_id)
+            .ok_or("No hay sesión P2P activa para este proyecto")?;
 
-        let doc = node.docs.open(session.namespace_id)
+        let doc = node
+            .docs
+            .open(session.namespace_id)
             .await
             .map_err(|e| format!("Error abriendo doc: {}", e))?
             .ok_or("Documento no encontrado")?;
@@ -43,7 +47,8 @@ impl P2pState {
             let hash = entry.content_hash();
             if let Ok(content) = blobs.blobs().get_bytes(hash).await {
                 if let Ok(lock_info) = serde_json::from_slice::<ImageLockInfo>(&content) {
-                    if lock_info.expires_at > now_ms() && lock_info.locked_by != session.my_node_id {
+                    if lock_info.expires_at > now_ms() && lock_info.locked_by != session.my_node_id
+                    {
                         return Ok(false); // Lock activo de otro peer
                     }
                 }
@@ -75,9 +80,13 @@ impl P2pState {
         let node_guard = self.node.read().await;
         let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
         let sessions = self.sessions.read().await;
-        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
+        let session = sessions
+            .get(project_id)
+            .ok_or("No hay sesión P2P activa para este proyecto")?;
 
-        let doc = node.docs.open(session.namespace_id)
+        let doc = node
+            .docs
+            .open(session.namespace_id)
             .await
             .map_err(|e| format!("Error abriendo doc: {}", e))?
             .ok_or("Documento no encontrado")?;
@@ -93,13 +102,21 @@ impl P2pState {
     }
 
     /// Lee el estado de lock de una imagen
-    pub async fn get_image_lock(&self, project_id: &str, image_id: &str) -> Result<Option<ImageLockInfo>, String> {
+    pub async fn get_image_lock(
+        &self,
+        project_id: &str,
+        image_id: &str,
+    ) -> Result<Option<ImageLockInfo>, String> {
         let node_guard = self.node.read().await;
         let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
         let sessions = self.sessions.read().await;
-        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
+        let session = sessions
+            .get(project_id)
+            .ok_or("No hay sesión P2P activa para este proyecto")?;
 
-        let doc = node.docs.open(session.namespace_id)
+        let doc = node
+            .docs
+            .open(session.namespace_id)
             .await
             .map_err(|e| format!("Error abriendo doc: {}", e))?
             .ok_or("Documento no encontrado")?;
@@ -115,7 +132,9 @@ impl P2pState {
         match entry {
             Some(entry) => {
                 let hash = entry.content_hash();
-                let content = blobs.blobs().get_bytes(hash)
+                let content = blobs
+                    .blobs()
+                    .get_bytes(hash)
                     .await
                     .map_err(|e| format!("Error leyendo contenido: {}", e))?;
                 let lock_info: ImageLockInfo = serde_json::from_slice(&content)
@@ -141,19 +160,25 @@ impl P2pState {
         let node_guard = self.node.read().await;
         let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
         let sessions = self.sessions.read().await;
-        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
+        let session = sessions
+            .get(project_id)
+            .ok_or("No hay sesión P2P activa para este proyecto")?;
 
         if !session.role.can_manage() {
             return Err("Solo el host puede asignar lotes".to_string());
         }
 
-        let doc = node.docs.open(session.namespace_id)
+        let doc = node
+            .docs
+            .open(session.namespace_id)
             .await
             .map_err(|e| format!("Error abriendo doc: {}", e))?
             .ok_or("Documento no encontrado")?;
 
         let batch_id = uuid::Uuid::new_v4().to_string();
-        let assigned_to_name = session.peers.get(assign_to_node_id)
+        let assigned_to_name = session
+            .peers
+            .get(assign_to_node_id)
             .map(|p| p.display_name.clone())
             .unwrap_or_else(|| assign_to_node_id.to_string());
 
@@ -165,8 +190,8 @@ impl P2pState {
             created_at: now_ms(),
         };
 
-        let batch_json = serde_json::to_vec(&batch)
-            .map_err(|e| format!("Error serializando batch: {}", e))?;
+        let batch_json =
+            serde_json::to_vec(&batch).map_err(|e| format!("Error serializando batch: {}", e))?;
 
         let key = format!("batches/{}", batch_id);
         doc.set_bytes(session.author_id, key.into_bytes(), batch_json)

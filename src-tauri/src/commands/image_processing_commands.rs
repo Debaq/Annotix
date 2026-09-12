@@ -1,5 +1,5 @@
-use tauri::{AppHandle, Manager};
 use crate::store::AppState;
+use tauri::{AppHandle, Manager};
 
 pub const THUMBNAIL_MAX_SIZE: u32 = 256;
 
@@ -77,11 +77,11 @@ pub fn generate_thumbnail_internal(
     }
 
     let original_path = state.get_image_file_path(project_id, image_id)?;
-    let img = image::open(&original_path)
-        .map_err(|e| format!("Error abriendo imagen: {}", e))?;
+    let img = image::open(&original_path).map_err(|e| format!("Error abriendo imagen: {}", e))?;
 
     let thumb = img.thumbnail(max_size, max_size);
-    thumb.save(&thumb_path)
+    thumb
+        .save(&thumb_path)
         .map_err(|e| format!("Error guardando thumbnail: {}", e))?;
 
     Ok(thumb_path.to_string_lossy().to_string())

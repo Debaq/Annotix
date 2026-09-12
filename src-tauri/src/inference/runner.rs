@@ -6,10 +6,10 @@ use std::sync::{Arc, Mutex};
 
 use tauri::{AppHandle, Emitter};
 
-use crate::store::AppState;
-use crate::store::project_file::AnnotationEntry;
-use super::{InferenceConfig, InferenceProgressEvent};
 use super::scripts;
+use super::{InferenceConfig, InferenceProgressEvent};
+use crate::store::project_file::AnnotationEntry;
+use crate::store::AppState;
 
 /// Gestor de procesos de inferencia activos
 pub struct InferenceProcessManager {
@@ -77,7 +77,8 @@ impl InferenceProcessManager {
         // Obtener rutas de imágenes
         let images_dir = state.project_images_dir(project_id)?;
         let image_paths: Vec<(String, String)> = state.with_project(project_id, |pf| {
-            let index: std::collections::HashMap<&str, &str> = pf.images
+            let index: std::collections::HashMap<&str, &str> = pf
+                .images
                 .iter()
                 .map(|i| (i.id.as_str(), i.file.as_str()))
                 .collect();
@@ -100,15 +101,26 @@ impl InferenceProcessManager {
 
         match model_info.format.as_str() {
             "onnx" => self.start_onnx_native(
-                app, &job_id, &model_path, &model_info.class_names,
-                &image_paths, &config,
-                model_id, project_id,
+                app,
+                &job_id,
+                &model_path,
+                &model_info.class_names,
+                &image_paths,
+                &config,
+                model_id,
+                project_id,
                 &model_info.task,
                 model_info.output_format.as_deref(),
             ),
             "pt" => self.start_python_inference(
-                state, app, &job_id, &model_path, &model_info,
-                &image_paths, &config, project_id,
+                state,
+                app,
+                &job_id,
+                &model_path,
+                &model_info,
+                &image_paths,
+                &config,
+                project_id,
             ),
             _ => Err(format!("Formato no soportado: {}", model_info.format)),
         }?;
@@ -165,7 +177,13 @@ impl InferenceProcessManager {
 
             // Pipeline: thread productor preprocesa imagen N+1 mientras el consumidor
             // corre session.run sobre N. Canal bounded=2 evita acumulación.
-            type PreprocItem = (usize, String, String, Option<(u32, u32)>, Result<Vec<f32>, String>);
+            type PreprocItem = (
+                usize,
+                String,
+                String,
+                Option<(u32, u32)>,
+                Result<Vec<f32>, String>,
+            );
             let (tx, rx) = std::sync::mpsc::sync_channel::<PreprocItem>(2);
             let producer_cancel = cancel.clone();
             let producer_paths = image_paths_owned.clone();
@@ -176,7 +194,10 @@ impl InferenceProcessManager {
                     }
                     let dims = image::image_dimensions(image_path).ok();
                     let data = super::ort_runner::preprocess_image(image_path, input_size);
-                    if tx.send((idx, image_id.clone(), image_path.clone(), dims, data)).is_err() {
+                    if tx
+                        .send((idx, image_id.clone(), image_path.clone(), dims, data))
+                        .is_err()
+                    {
                         break;
                     }
                 }
@@ -218,18 +239,23 @@ impl InferenceProcessManager {
                         let ai_annotations = match result {
                             super::ort_runner::InferenceResult::Detections(detections) => {
                                 detections_to_annotations(
-                                    &detections, &class_names_owned,
-                                    &app_clone, &project_id_owned,
-                                    &model_id_owned, img_dims,
-                                )
-                            }
-                            super::ort_runner::InferenceResult::Classifications(classifications) => {
-                                classifications_to_annotations(
-                                    &classifications, &class_names_owned,
-                                    &app_clone, &project_id_owned,
+                                    &detections,
+                                    &class_names_owned,
+                                    &app_clone,
+                                    &project_id_owned,
                                     &model_id_owned,
+                                    img_dims,
                                 )
                             }
+                            super::ort_runner::InferenceResult::Classifications(
+                                classifications,
+                            ) => classifications_to_annotations(
+                                &classifications,
+                                &class_names_owned,
+                                &app_clone,
+                                &project_id_owned,
+                                &model_id_owned,
+                            ),
                         };
 
                         let ann_count = ai_annotations.len();
@@ -237,14 +263,14 @@ impl InferenceProcessManager {
 
                         log::info!(
                             "[ONNX Inference] image={} annotations={} time={:.0}ms",
-                            image_id, ann_count, elapsed
+                            image_id,
+                            ann_count,
+                            elapsed
                         );
 
                         pending.push((image_id.clone(), ai_annotations));
                         if pending.len() >= FLUSH_EVERY {
-                            flush_ai_annotations_batch(
-                                &app_clone, &project_id_owned, &mut pending,
-                            );
+                            flush_ai_annotations_batch(&app_clone, &project_id_owned, &mut pending);
                         }
 
                         let _ = app_clone.emit(
@@ -285,9 +311,7 @@ impl InferenceProcessManager {
 
             // Flush final del batch pendiente.
             if !pending.is_empty() {
-                flush_ai_annotations_batch(
-                    &app_clone, &project_id_owned, &mut pending,
-                );
+                flush_ai_annotations_batch(&app_clone, &project_id_owned, &mut pending);
             }
 
             let _ = app_clone.emit(
@@ -388,8 +412,7 @@ impl InferenceProcessManager {
                     if !success {
                         if let Some(stderr) = stderr {
                             let reader = BufReader::new(stderr);
-                            let lines: Vec<String> =
-                                reader.lines().map_while(Result::ok).collect();
+                            let lines: Vec<String> = reader.lines().map_while(Result::ok).collect();
                             let _ = app_clone.emit(
                                 "inference:error",
                                 serde_json::json!({
@@ -469,11 +492,15 @@ fn handle_python_event(
                             let project_class_id = {
                                 use tauri::Manager;
                                 let state = app.state::<AppState>();
-                                state.with_project(project_id, |pf| {
-                                    pf.classes.iter()
-                                        .find(|c| c.name.eq_ignore_ascii_case(&class_name))
-                                        .map(|c| c.id)
-                                }).ok().flatten()
+                                state
+                                    .with_project(project_id, |pf| {
+                                        pf.classes
+                                            .iter()
+                                            .find(|c| c.name.eq_ignore_ascii_case(&class_name))
+                                            .map(|c| c.id)
+                                    })
+                                    .ok()
+                                    .flatten()
                             };
 
                             let class_id = project_class_id?;
@@ -558,70 +585,90 @@ fn resolve_project_class(
     let state = app.state::<AppState>();
 
     // Intento rápido read-only: 1, 2, 3.
-    let fast = state.with_project(project_id, |pf| {
-        let model = pf.inference_models.iter().find(|m| m.id == model_id);
+    let fast = state
+        .with_project(project_id, |pf| {
+            let model = pf.inference_models.iter().find(|m| m.id == model_id);
 
-        if let Some(model) = model {
-            if let Some(mapping) = model.class_mapping.iter().find(|m| m.model_class_id == model_class_id) {
-                if let Some(ref pid) = mapping.project_class_id {
-                    if let Ok(id) = pid.parse::<i64>() {
-                        if pf.classes.iter().any(|c| c.id == id) {
-                            return Some(id);
+            if let Some(model) = model {
+                if let Some(mapping) = model
+                    .class_mapping
+                    .iter()
+                    .find(|m| m.model_class_id == model_class_id)
+                {
+                    if let Some(ref pid) = mapping.project_class_id {
+                        if let Ok(id) = pid.parse::<i64>() {
+                            if pf.classes.iter().any(|c| c.id == id) {
+                                return Some(id);
+                            }
                         }
                     }
                 }
             }
-        }
 
-        if !model_class_name.is_empty() {
-            if let Some(cls) = pf.classes.iter().find(|c| c.name.eq_ignore_ascii_case(model_class_name)) {
-                return Some(cls.id);
+            if !model_class_name.is_empty() {
+                if let Some(cls) = pf
+                    .classes
+                    .iter()
+                    .find(|c| c.name.eq_ignore_ascii_case(model_class_name))
+                {
+                    return Some(cls.id);
+                }
             }
-        }
 
-        let model_single = model.map(|m| m.class_names.len() == 1).unwrap_or(false);
-        if model_single && pf.classes.len() == 1 {
-            return Some(pf.classes[0].id);
-        }
+            let model_single = model.map(|m| m.class_names.len() == 1).unwrap_or(false);
+            if model_single && pf.classes.len() == 1 {
+                return Some(pf.classes[0].id);
+            }
 
-        None
-    }).ok().flatten();
+            None
+        })
+        .ok()
+        .flatten();
 
     if let Some(id) = fast {
         return Some(id);
     }
 
     // Fallback: auto-crear clase en proyecto + persistir mapping en modelo.
-    state.with_project_mut_ret(project_id, |pf| {
-        // Re-check por carrera (otro frame puede haberla creado)
-        if !model_class_name.is_empty() {
-            if let Some(cls) = pf.classes.iter().find(|c| c.name.eq_ignore_ascii_case(model_class_name)) {
-                let id = cls.id;
-                persist_mapping(pf, model_id, model_class_id, model_class_name, id);
-                return id;
+    state
+        .with_project_mut_ret(project_id, |pf| {
+            // Re-check por carrera (otro frame puede haberla creado)
+            if !model_class_name.is_empty() {
+                if let Some(cls) = pf
+                    .classes
+                    .iter()
+                    .find(|c| c.name.eq_ignore_ascii_case(model_class_name))
+                {
+                    let id = cls.id;
+                    persist_mapping(pf, model_id, model_class_id, model_class_name, id);
+                    return id;
+                }
             }
-        }
 
-        let name = if model_class_name.is_empty() {
-            format!("class_{}", model_class_id)
-        } else {
-            model_class_name.to_string()
-        };
-        let new_id = pf.classes.len() as i64;
-        let color = crate::import::generate_color(new_id as usize);
-        pf.classes.push(crate::store::project_file::ClassDef {
-            id: new_id,
-            name: name.clone(),
-            color,
-            description: Some(format!("Auto-creada desde modelo {}", model_id)),
-        });
-        persist_mapping(pf, model_id, model_class_id, &name, new_id);
-        log::info!(
-            "[Inference] Auto-creada clase '{}' (id={}) desde modelo {} (model_class_id={})",
-            name, new_id, model_id, model_class_id
-        );
-        new_id
-    }).ok()
+            let name = if model_class_name.is_empty() {
+                format!("class_{}", model_class_id)
+            } else {
+                model_class_name.to_string()
+            };
+            let new_id = pf.classes.len() as i64;
+            let color = crate::import::generate_color(new_id as usize);
+            pf.classes.push(crate::store::project_file::ClassDef {
+                id: new_id,
+                name: name.clone(),
+                color,
+                description: Some(format!("Auto-creada desde modelo {}", model_id)),
+            });
+            persist_mapping(pf, model_id, model_class_id, &name, new_id);
+            log::info!(
+                "[Inference] Auto-creada clase '{}' (id={}) desde modelo {} (model_class_id={})",
+                name,
+                new_id,
+                model_id,
+                model_class_id
+            );
+            new_id
+        })
+        .ok()
 }
 
 fn persist_mapping(
@@ -641,7 +688,11 @@ fn persist_mapping(
         }
         let pid_str = project_class_id.to_string();
         let resolved_name = m.class_names[model_class_id].clone();
-        if let Some(existing) = m.class_mapping.iter_mut().find(|x| x.model_class_id == model_class_id) {
+        if let Some(existing) = m
+            .class_mapping
+            .iter_mut()
+            .find(|x| x.model_class_id == model_class_id)
+        {
             existing.model_class_name = resolved_name;
             existing.project_class_id = Some(pid_str);
         } else {
@@ -680,18 +731,17 @@ fn detections_to_annotations(
                 .cloned()
                 .unwrap_or_else(|| det.class_id.to_string());
 
-            let class_id = match resolve_project_class(
-                app, project_id, &class_name, det.class_id, model_id,
-            ) {
-                Some(id) => {
-                    mapped += 1;
-                    id
-                }
-                None => {
-                    unmapped += 1;
-                    return None;
-                }
-            };
+            let class_id =
+                match resolve_project_class(app, project_id, &class_name, det.class_id, model_id) {
+                    Some(id) => {
+                        mapped += 1;
+                        id
+                    }
+                    None => {
+                        unmapped += 1;
+                        return None;
+                    }
+                };
 
             // Denormalizar coordenadas a píxeles absolutos
             let px = det.x * img_w;
@@ -722,11 +772,13 @@ fn detections_to_annotations(
                 annotation_type = "keypoints".to_string();
                 let kpts: Vec<serde_json::Value> = keypoints
                     .iter()
-                    .map(|kp| serde_json::json!({
-                        "x": kp.x * img_w,
-                        "y": kp.y * img_h,
-                        "confidence": kp.confidence,
-                    }))
+                    .map(|kp| {
+                        serde_json::json!({
+                            "x": kp.x * img_w,
+                            "y": kp.y * img_h,
+                            "confidence": kp.confidence,
+                        })
+                    })
                     .collect();
                 data["keypoints"] = serde_json::Value::Array(kpts);
             } else {
@@ -750,10 +802,14 @@ fn detections_to_annotations(
     if unmapped > 0 {
         log::warn!(
             "[Inference] {} detecciones mapeadas, {} descartadas (error al auto-crear clase)",
-            mapped, unmapped
+            mapped,
+            unmapped
         );
     } else {
-        log::info!("[Inference] {} detecciones mapeadas a clases del proyecto", mapped);
+        log::info!(
+            "[Inference] {} detecciones mapeadas a clases del proyecto",
+            mapped
+        );
     }
 
     result
@@ -777,9 +833,7 @@ fn classifications_to_annotations(
         .cloned()
         .unwrap_or_else(|| top.class_id.to_string());
 
-    let class_id = resolve_project_class(
-        app, project_id, &class_name, top.class_id, model_id,
-    );
+    let class_id = resolve_project_class(app, project_id, &class_name, top.class_id, model_id);
 
     match class_id {
         Some(id) => vec![AnnotationEntry {
@@ -834,10 +888,13 @@ fn flush_ai_annotations_batch(
             }
         }
     });
-    let _ = app.emit("db:images-changed", serde_json::json!({
-        "projectId": project_id,
-        "action": "updated",
-    }));
+    let _ = app.emit(
+        "db:images-changed",
+        serde_json::json!({
+            "projectId": project_id,
+            "action": "updated",
+        }),
+    );
 }
 
 /// Borra anotaciones AI previas de la imagen y agrega las nuevas
@@ -862,8 +919,11 @@ fn save_ai_annotations(
         }
     });
     // Notificar al frontend que las anotaciones cambiaron
-    let _ = app.emit("db:images-changed", serde_json::json!({
-        "projectId": project_id,
-        "action": "updated",
-    }));
+    let _ = app.emit(
+        "db:images-changed",
+        serde_json::json!({
+            "projectId": project_id,
+            "action": "updated",
+        }),
+    );
 }

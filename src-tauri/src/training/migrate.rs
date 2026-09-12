@@ -11,7 +11,10 @@ pub fn migrate_legacy_training_dirs(state: &AppState) {
     let projects = match state.list_projects() {
         Ok(list) => list,
         Err(e) => {
-            log::warn!("migrate_legacy_training_dirs: no se pudo listar proyectos: {}", e);
+            log::warn!(
+                "migrate_legacy_training_dirs: no se pudo listar proyectos: {}",
+                e
+            );
             return;
         }
     };
@@ -72,7 +75,9 @@ pub fn migrate_legacy_training_dirs(state: &AppState) {
             if new_dir.exists() {
                 log::warn!(
                     "Destino ya existe, omitiendo move ({}): {:?} → {:?}",
-                    job_id, old_dir, new_dir
+                    job_id,
+                    old_dir,
+                    new_dir
                 );
                 continue;
             }
@@ -97,10 +102,12 @@ pub fn migrate_legacy_training_dirs(state: &AppState) {
         // Actualizar project.json con nuevas rutas (prefix replace)
         let remaps_str: Vec<(String, String)> = remaps
             .iter()
-            .map(|(_, o, n)| (
-                o.to_string_lossy().to_string(),
-                n.to_string_lossy().to_string(),
-            ))
+            .map(|(_, o, n)| {
+                (
+                    o.to_string_lossy().to_string(),
+                    n.to_string_lossy().to_string(),
+                )
+            })
             .collect();
 
         let _ = state.with_project_mut(&project_id, |pf| {
@@ -123,7 +130,8 @@ pub fn migrate_legacy_training_dirs(state: &AppState) {
     if moved > 0 || rewired > 0 {
         log::info!(
             "Migración training legacy: {} carpetas movidas, {} rutas reescritas",
-            moved, rewired
+            moved,
+            rewired
         );
     }
 
@@ -197,7 +205,9 @@ fn recover_stale_weights(state: &AppState, legacy_root: &Path) {
                         _ => best_src = Some((w, mt)),
                     }
                 }
-                let Some((legacy_w, legacy_mtime)) = best_src else { continue; };
+                let Some((legacy_w, legacy_mtime)) = best_src else {
+                    continue;
+                };
                 let new_w = new_train.join("weights").join(fname);
                 let new_mtime = std::fs::metadata(&new_w).and_then(|m| m.modified()).ok();
                 let should_copy = match new_mtime {
@@ -213,7 +223,12 @@ fn recover_stale_weights(state: &AppState, legacy_root: &Path) {
                 match std::fs::copy(&legacy_w, &new_w) {
                     Ok(_) => {
                         recovered += 1;
-                        log::info!("Recuperado {} desde legacy: {:?} → {:?}", fname, legacy_w, new_w);
+                        log::info!(
+                            "Recuperado {} desde legacy: {:?} → {:?}",
+                            fname,
+                            legacy_w,
+                            new_w
+                        );
                     }
                     Err(e) => log::warn!("Falló copy {:?} → {:?}: {}", legacy_w, new_w, e),
                 }
@@ -223,7 +238,10 @@ fn recover_stale_weights(state: &AppState, legacy_root: &Path) {
         }
     }
     if recovered > 0 {
-        log::info!("Recuperación de pesos legacy: {} archivos copiados", recovered);
+        log::info!(
+            "Recuperación de pesos legacy: {} archivos copiados",
+            recovered
+        );
     }
 }
 
@@ -365,9 +383,15 @@ fn rewrite_paths_in_job(
         }
         false
     };
-    if apply(&mut job.dataset_dir) { changes += 1; }
-    if apply(&mut job.result_dir) { changes += 1; }
-    if apply(&mut job.best_model_path) { changes += 1; }
+    if apply(&mut job.dataset_dir) {
+        changes += 1;
+    }
+    if apply(&mut job.result_dir) {
+        changes += 1;
+    }
+    if apply(&mut job.best_model_path) {
+        changes += 1;
+    }
     changes
 }
 

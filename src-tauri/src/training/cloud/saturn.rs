@@ -121,10 +121,7 @@ impl CloudRunner for SaturnCloudRunner {
         }
 
         let resp_body: serde_json::Value = resp.json().map_err(|e| e.to_string())?;
-        let server_id = resp_body["id"]
-            .as_str()
-            .unwrap_or(&job_uuid)
-            .to_string();
+        let server_id = resp_body["id"].as_str().unwrap_or(&job_uuid).to_string();
 
         // 2. Start the server
         let start_resp = self
@@ -144,8 +141,8 @@ impl CloudRunner for SaturnCloudRunner {
         }
 
         // 3. Upload dataset
-        let dataset_data = std::fs::read(dataset_path)
-            .map_err(|e| format!("Error leyendo dataset: {}", e))?;
+        let dataset_data =
+            std::fs::read(dataset_path).map_err(|e| format!("Error leyendo dataset: {}", e))?;
 
         let form = reqwest::blocking::multipart::Form::new().part(
             "file",
@@ -232,11 +229,7 @@ impl CloudRunner for SaturnCloudRunner {
     }
 
     fn poll_status(&self, handle: &CloudJobHandle) -> Result<CloudJobStatus, String> {
-        let url = format!(
-            "{}/jupyter_servers/{}",
-            self.api_base(),
-            handle.job_id
-        );
+        let url = format!("{}/jupyter_servers/{}", self.api_base(), handle.job_id);
 
         let resp = self
             .client()
@@ -274,11 +267,7 @@ impl CloudRunner for SaturnCloudRunner {
     }
 
     fn cancel_job(&self, handle: &CloudJobHandle) -> Result<(), String> {
-        let url = format!(
-            "{}/jupyter_servers/{}/stop",
-            self.api_base(),
-            handle.job_id
-        );
+        let url = format!("{}/jupyter_servers/{}/stop", self.api_base(), handle.job_id);
 
         let resp = self
             .client()

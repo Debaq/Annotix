@@ -2,15 +2,17 @@ use tauri::{AppHandle, Emitter, State};
 
 use crate::p2p::node::P2pState;
 use crate::p2p::P2pPermission;
-use crate::store::AppState;
-use crate::store::config::{CloudProviderConfig, GcpConfig, KaggleConfig, LightningAiConfig, HuggingFaceConfig, SaturnCloudConfig};
+use crate::store::config::{
+    CloudProviderConfig, GcpConfig, HuggingFaceConfig, KaggleConfig, LightningAiConfig,
+    SaturnCloudConfig,
+};
 use crate::store::project_file::TrainingJobEntry;
-use crate::training::runner::TrainingProcessManager;
+use crate::store::AppState;
 use crate::training::cloud::CloudTrainingManager;
+use crate::training::runner::TrainingProcessManager;
 use crate::training::{
-    GpuInfo, TrainingConfig, TrainingEnvCache, TrainingEnvInfo,
-    TrainingPreset, YoloModelInfo, BackendInfo, TrainingRequest,
-    TrainingBackend, ExecutionMode,
+    BackendInfo, ExecutionMode, GpuInfo, TrainingBackend, TrainingConfig, TrainingEnvCache,
+    TrainingEnvInfo, TrainingPreset, TrainingRequest, YoloModelInfo,
 };
 
 #[tauri::command]
@@ -46,8 +48,12 @@ pub async fn setup_python_env(
     if !mm.is_installed() {
         let app_clone = app.clone();
         mm.download(move |msg, p| {
-            let _ = app_clone.emit("training:env-setup-progress", serde_json::json!({ "message": msg, "progress": p }));
-        }).await?;
+            let _ = app_clone.emit(
+                "training:env-setup-progress",
+                serde_json::json!({ "message": msg, "progress": p }),
+            );
+        })
+        .await?;
     }
 
     // 2. Crear entorno con versión elegida
@@ -229,7 +235,8 @@ pub async fn start_training(
     project_id: String,
     config: TrainingConfig,
 ) -> Result<String, String> {
-    p2p.check_permission(&project_id, P2pPermission::Manage).await?;
+    p2p.check_permission(&project_id, P2pPermission::Manage)
+        .await?;
     let config_json = serde_json::to_value(&config).map_err(|e| e.to_string())?;
     let now = js_timestamp();
     let job_id = uuid::Uuid::new_v4().to_string();
@@ -273,7 +280,8 @@ pub async fn cancel_training(
     project_id: String,
     job_id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Manage).await?;
+    p2p.check_permission(&project_id, P2pPermission::Manage)
+        .await?;
     manager.cancel_training(&job_id)?;
 
     state.with_project_mut(&project_id, |pf| {
@@ -284,10 +292,7 @@ pub async fn cancel_training(
         pf.updated = js_timestamp();
     })?;
 
-    let _ = app.emit(
-        "training:cancelled",
-        serde_json::json!({ "jobId": job_id }),
-    );
+    let _ = app.emit("training:cancelled", serde_json::json!({ "jobId": job_id }));
     Ok(())
 }
 
@@ -300,7 +305,8 @@ pub async fn resume_training(
     project_id: String,
     job_id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Manage).await?;
+    p2p.check_permission(&project_id, P2pPermission::Manage)
+        .await?;
     manager.resume_training(&state, &app, &project_id, &job_id)?;
     Ok(())
 }
@@ -322,44 +328,57 @@ pub fn list_training_jobs(
     project_id: String,
 ) -> Result<Vec<serde_json::Value>, String> {
     state.with_project(&project_id, |pf| {
-        pf.training_jobs.iter().map(|job| {
-            let (has_best, has_last, best_path, last_path) = match &job.result_dir {
-                Some(rd) => {
-                    let weights = std::path::Path::new(rd).join("weights");
-                    let best = weights.join("best.pt");
-                    let last = weights.join("last.pt");
-                    let best_on_disk = best.exists();
-                    let best_from_job = job.best_model_path.as_ref()
-                        .map(|p| std::path::Path::new(p).exists()).unwrap_or(false);
-                    let has_best = best_on_disk || best_from_job;
-                    let has_last = last.exists();
-                    let best_str = if best_on_disk {
-                        Some(best.to_string_lossy().to_string())
-                    } else {
-                        job.best_model_path.clone()
-                    };
-                    let last_str = if has_last { Some(last.to_string_lossy().to_string()) } else { None };
-                    (has_best, has_last, best_str, last_str)
+        pf.training_jobs
+            .iter()
+            .map(|job| {
+                let (has_best, has_last, best_path, last_path) = match &job.result_dir {
+                    Some(rd) => {
+                        let weights = std::path::Path::new(rd).join("weights");
+                        let best = weights.join("best.pt");
+                        let last = weights.join("last.pt");
+                        let best_on_disk = best.exists();
+                        let best_from_job = job
+                            .best_model_path
+                            .as_ref()
+                            .map(|p| std::path::Path::new(p).exists())
+                            .unwrap_or(false);
+                        let has_best = best_on_disk || best_from_job;
+                        let has_last = last.exists();
+                        let best_str = if best_on_disk {
+                            Some(best.to_string_lossy().to_string())
+                        } else {
+                            job.best_model_path.clone()
+                        };
+                        let last_str = if has_last {
+                            Some(last.to_string_lossy().to_string())
+                        } else {
+                            None
+                        };
+                        (has_best, has_last, best_str, last_str)
+                    }
+                    None => {
+                        let has_best = job
+                            .best_model_path
+                            .as_ref()
+                            .map(|p| std::path::Path::new(p).exists())
+                            .unwrap_or(false);
+                        (has_best, false, job.best_model_path.clone(), None)
+                    }
+                };
+                let mut v = serde_json::to_value(job).unwrap_or(serde_json::Value::Null);
+                if let Some(obj) = v.as_object_mut() {
+                    obj.insert("hasBest".into(), serde_json::Value::Bool(has_best));
+                    obj.insert("hasLast".into(), serde_json::Value::Bool(has_last));
+                    if let Some(p) = best_path {
+                        obj.insert("bestModelPath".into(), serde_json::Value::String(p));
+                    }
+                    if let Some(p) = last_path {
+                        obj.insert("lastModelPath".into(), serde_json::Value::String(p));
+                    }
                 }
-                None => {
-                    let has_best = job.best_model_path.as_ref()
-                        .map(|p| std::path::Path::new(p).exists()).unwrap_or(false);
-                    (has_best, false, job.best_model_path.clone(), None)
-                }
-            };
-            let mut v = serde_json::to_value(job).unwrap_or(serde_json::Value::Null);
-            if let Some(obj) = v.as_object_mut() {
-                obj.insert("hasBest".into(), serde_json::Value::Bool(has_best));
-                obj.insert("hasLast".into(), serde_json::Value::Bool(has_last));
-                if let Some(p) = best_path {
-                    obj.insert("bestModelPath".into(), serde_json::Value::String(p));
-                }
-                if let Some(p) = last_path {
-                    obj.insert("lastModelPath".into(), serde_json::Value::String(p));
-                }
-            }
-            v
-        }).collect()
+                v
+            })
+            .collect()
     })
 }
 
@@ -371,7 +390,8 @@ pub async fn delete_training_job(
     project_id: String,
     job_id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Delete).await?;
+    p2p.check_permission(&project_id, P2pPermission::Delete)
+        .await?;
     // Cancelar si está corriendo
     if manager.is_running(&job_id) {
         let _ = manager.cancel_training(&job_id);
@@ -379,7 +399,8 @@ pub async fn delete_training_job(
 
     // Obtener dataset_dir antes de eliminar
     let dataset_dir: Option<String> = state.with_project(&project_id, |pf| {
-        pf.training_jobs.iter()
+        pf.training_jobs
+            .iter()
             .find(|j| j.id == job_id)
             .and_then(|j| j.dataset_dir.clone())
     })?;
@@ -402,10 +423,7 @@ pub async fn delete_training_job(
 }
 
 #[tauri::command]
-pub fn export_trained_model(
-    model_path: String,
-    format: String,
-) -> Result<String, String> {
+pub fn export_trained_model(model_path: String, format: String) -> Result<String, String> {
     crate::training::model_export::export_model(&model_path, &format)
 }
 
@@ -420,14 +438,15 @@ pub fn download_trained_model(src_path: String, dest_path: String) -> Result<(),
         std::fs::create_dir_all(parent)
             .map_err(|e| format!("No se pudo crear carpeta destino: {}", e))?;
     }
-    std::fs::copy(src, dest)
-        .map_err(|e| format!("Error copiando modelo: {}", e))?;
+    std::fs::copy(src, dest).map_err(|e| format!("Error copiando modelo: {}", e))?;
     Ok(())
 }
 
 #[tauri::command]
 pub fn get_available_backends(project_type: String) -> Result<Vec<BackendInfo>, String> {
-    Ok(crate::training::backends::get_available_backends(&project_type))
+    Ok(crate::training::backends::get_available_backends(
+        &project_type,
+    ))
 }
 
 /// Cuenta imágenes con al menos 1 anotación. Usa el cache en memoria del
@@ -439,11 +458,19 @@ pub fn get_available_backends(project_type: String) -> Result<Vec<BackendInfo>, 
 /// (anotaciones no huérfanas y no vacías) para que el visualizador de split de
 /// la UI muestre la partición que el runner va a aplicar. Los frames de video
 /// se cuentan: tras el bake son imágenes anotadas como cualquier otra.
-pub fn count_annotated_images(state: State<'_, AppState>, project_id: String) -> Result<usize, String> {
+pub fn count_annotated_images(
+    state: State<'_, AppState>,
+    project_id: String,
+) -> Result<usize, String> {
     state.with_project(&project_id, |pf| {
         let class_ids: std::collections::HashSet<i64> = pf.classes.iter().map(|c| c.id).collect();
-        pf.images.iter()
-            .filter(|i| i.annotations.iter().any(|a| class_ids.contains(&a.class_id)))
+        pf.images
+            .iter()
+            .filter(|i| {
+                i.annotations
+                    .iter()
+                    .any(|a| class_ids.contains(&a.class_id))
+            })
             .count()
     })
 }
@@ -458,21 +485,56 @@ pub fn install_backend_packages(
 
     // 1. Detectar hardware para decidir qué versión de Torch instalar
     let (env_info, _gpu_info) = crate::training::python_env::check_env_full()?;
-    
+
     let packages: Vec<String> = match backend.as_str() {
         "yolo" | "rt_detr" => vec!["ultralytics".to_string()],
         "rf_detr" => vec!["rfdetr".to_string()],
-        "mmdetection" => vec!["openmim".to_string(), "mmengine".to_string(), "mmcv".to_string(), "mmdet".to_string()],
-        "smp" => vec!["segmentation-models-pytorch".to_string(), "albumentations".to_string()],
-        "hf_segmentation" => vec!["transformers".to_string(), "datasets".to_string(), "evaluate".to_string()],
-        "mmsegmentation" => vec!["openmim".to_string(), "mmengine".to_string(), "mmcv".to_string(), "mmsegmentation".to_string()],
+        "mmdetection" => vec![
+            "openmim".to_string(),
+            "mmengine".to_string(),
+            "mmcv".to_string(),
+            "mmdet".to_string(),
+        ],
+        "smp" => vec![
+            "segmentation-models-pytorch".to_string(),
+            "albumentations".to_string(),
+        ],
+        "hf_segmentation" => vec![
+            "transformers".to_string(),
+            "datasets".to_string(),
+            "evaluate".to_string(),
+        ],
+        "mmsegmentation" => vec![
+            "openmim".to_string(),
+            "mmengine".to_string(),
+            "mmcv".to_string(),
+            "mmsegmentation".to_string(),
+        ],
         "detectron2" => vec!["detectron2".to_string()],
-        "mmpose" => vec!["openmim".to_string(), "mmengine".to_string(), "mmcv".to_string(), "mmpose".to_string(), "mmdet".to_string()],
-        "mmrotate" => vec!["openmim".to_string(), "mmengine".to_string(), "mmcv".to_string(), "mmrotate".to_string()],
+        "mmpose" => vec![
+            "openmim".to_string(),
+            "mmengine".to_string(),
+            "mmcv".to_string(),
+            "mmpose".to_string(),
+            "mmdet".to_string(),
+        ],
+        "mmrotate" => vec![
+            "openmim".to_string(),
+            "mmengine".to_string(),
+            "mmcv".to_string(),
+            "mmrotate".to_string(),
+        ],
         "timm" => vec!["timm".to_string()],
-        "hf_classification" => vec!["transformers".to_string(), "datasets".to_string(), "evaluate".to_string()],
+        "hf_classification" => vec![
+            "transformers".to_string(),
+            "datasets".to_string(),
+            "evaluate".to_string(),
+        ],
         "tsai" => vec!["tsai".to_string()],
-        "pytorch_forecasting" => vec!["pytorch-forecasting".to_string(), "pytorch-lightning".to_string()],
+        "pytorch_forecasting" => vec![
+            "pytorch-forecasting".to_string(),
+            "pytorch-lightning".to_string(),
+        ],
         "pyod" => vec!["pyod".to_string()],
         "tslearn" => vec!["tslearn".to_string(), "scikit-learn".to_string()],
         "pypots" => vec!["pypots".to_string()],
@@ -486,7 +548,10 @@ pub fn install_backend_packages(
     if needs_torch && env_info.torch_version.is_none() {
         let app_clone = app.clone();
         let emit = move |msg: &str, p: f64, log: Option<String>| {
-            let _ = app_clone.emit("training:env-setup-progress", serde_json::json!({ "message": msg, "progress": p, "log": log }));
+            let _ = app_clone.emit(
+                "training:env-setup-progress",
+                serde_json::json!({ "message": msg, "progress": p, "log": log }),
+            );
         };
 
         emit("Preparando instalación de PyTorch...", 5.0, None);
@@ -499,31 +564,52 @@ pub fn install_backend_packages(
         let has_nvidia = detect_nvidia_hardware();
 
         if has_nvidia {
-            emit("GPU NVIDIA detectada, usando CUDA", 10.0, Some("Hardware: NVIDIA CUDA".to_string()));
+            emit(
+                "GPU NVIDIA detectada, usando CUDA",
+                10.0,
+                Some("Hardware: NVIDIA CUDA".to_string()),
+            );
             cmd.args(["--index-url", "https://download.pytorch.org/whl/cu121"]);
         } else if cfg!(target_os = "macos") {
-            emit("macOS detectado, usando optimización Metal (MPS)", 10.0, Some("Hardware: Apple Silicon/Metal".to_string()));
+            emit(
+                "macOS detectado, usando optimización Metal (MPS)",
+                10.0,
+                Some("Hardware: Apple Silicon/Metal".to_string()),
+            );
         } else {
-            emit("No se detectó GPU compatible, usando versión CPU", 10.0, Some("Hardware: CPU Only".to_string()));
+            emit(
+                "No se detectó GPU compatible, usando versión CPU",
+                10.0,
+                Some("Hardware: CPU Only".to_string()),
+            );
             cmd.args(["--index-url", "https://download.pytorch.org/whl/cpu"]);
         }
 
-        crate::training::python_env::run_with_feedback(cmd, "Instalando PyTorch", 10.0, 40.0, &emit)?;
+        crate::training::python_env::run_with_feedback(
+            cmd,
+            "Instalando PyTorch",
+            10.0,
+            40.0,
+            &emit,
+        )?;
     }
 
     // 3. Instalar el resto de paquetes
     let pkgs_ref: Vec<&str> = packages.iter().map(|s| s.as_str()).collect();
     let app_clone = app.clone();
-    crate::training::python_env::install_packages(&pkgs_ref, Some(|msg: &str, progress: f64, log: Option<String>| {
-        let _ = app_clone.emit(
-            "training:env-setup-progress",
-            serde_json::json!({
-                "message": msg,
-                "progress": progress,
-                "log": log,
-            }),
-        );
-    }))?;
+    crate::training::python_env::install_packages(
+        &pkgs_ref,
+        Some(|msg: &str, progress: f64, log: Option<String>| {
+            let _ = app_clone.emit(
+                "training:env-setup-progress",
+                serde_json::json!({
+                    "message": msg,
+                    "progress": progress,
+                    "log": log,
+                }),
+            );
+        }),
+    )?;
 
     Ok(())
 }
@@ -547,7 +633,8 @@ pub async fn start_training_v2(
     project_id: String,
     request: TrainingRequest,
 ) -> Result<String, String> {
-    p2p.check_permission(&project_id, P2pPermission::Manage).await?;
+    p2p.check_permission(&project_id, P2pPermission::Manage)
+        .await?;
     // For download-package mode, delegate to package generation
     if request.execution_mode == ExecutionMode::DownloadPackage {
         return Err("Usa generate_training_package para modo descarga".to_string());
@@ -555,7 +642,9 @@ pub async fn start_training_v2(
 
     // For cloud mode, delegate to CloudTrainingManager
     if request.execution_mode == ExecutionMode::Cloud {
-        let cloud_config = request.cloud_config.as_ref()
+        let cloud_config = request
+            .cloud_config
+            .as_ref()
             .ok_or("Falta cloudConfig para modo cloud")?;
 
         let config_json = serde_json::to_value(&request).map_err(|e| e.to_string())?;
@@ -597,9 +686,8 @@ pub async fn start_training_v2(
         let dataset_zip_str = dataset_zip.to_string_lossy().to_string();
 
         // Mismo criterio que el runner local: solo imágenes anotadas.
-        let images = crate::training::dataset::select_trainable_images(
-            pf.images.clone(), &pf.classes,
-        );
+        let images =
+            crate::training::dataset::select_trainable_images(pf.images.clone(), &pf.classes);
         if images.is_empty() {
             return Err(format!(
                 "Ninguna de las {} imágenes del proyecto tiene anotaciones. \
@@ -609,13 +697,23 @@ pub async fn start_training_v2(
         }
 
         crate::training::package::generate_training_package(
-            &images_dir, &pf, &images, &request, &dataset_zip_str,
+            &images_dir,
+            &pf,
+            &images,
+            &request,
+            &dataset_zip_str,
         )?;
 
         // Start cloud training
         cloud_manager.start_cloud_training(
-            &app, &state, &project_id, &job_id,
-            &request, cloud_config, &dataset_zip_str, &classes,
+            &app,
+            &state,
+            &project_id,
+            &job_id,
+            &request,
+            cloud_config,
+            &dataset_zip_str,
+            &classes,
         )?;
 
         return Ok(job_id);
@@ -708,7 +806,11 @@ pub fn generate_training_package(
     }
 
     crate::training::package::generate_training_package(
-        &images_dir, &pf, &images, &request, &output_path,
+        &images_dir,
+        &pf,
+        &images,
+        &request,
+        &output_path,
     )
 }
 
@@ -719,47 +821,92 @@ fn convert_request_to_yolo_config(req: &TrainingRequest) -> TrainingConfig {
     TrainingConfig {
         yolo_version: req.model_id.clone(),
         task: req.task.clone(),
-        model_size: bp.get("modelSize").and_then(|v| v.as_str()).unwrap_or("n").to_string(),
+        model_size: bp
+            .get("modelSize")
+            .and_then(|v| v.as_str())
+            .unwrap_or("n")
+            .to_string(),
         epochs: req.epochs,
         batch_size: req.batch_size,
         imgsz: req.image_size,
         device: req.device.clone(),
-        optimizer: bp.get("optimizer").and_then(|v| v.as_str()).unwrap_or("auto").to_string(),
+        optimizer: bp
+            .get("optimizer")
+            .and_then(|v| v.as_str())
+            .unwrap_or("auto")
+            .to_string(),
         lr0: req.lr,
         lrf: bp.get("lrf").and_then(|v| v.as_f64()).unwrap_or(0.01),
         patience: req.patience,
         val_split: req.val_split,
         test_split: req.test_split,
         workers: req.workers,
-        augmentation: serde_json::from_value(
-            bp.get("augmentation").cloned().unwrap_or_default()
-        ).unwrap_or_else(|_| crate::training::AugmentationConfig {
-            mosaic: 1.0, mixup: 0.0, hsv_h: 0.015, hsv_s: 0.7, hsv_v: 0.4,
-            flipud: 0.0, fliplr: 0.5, degrees: 0.0, scale: 0.5, shear: 0.0,
-            perspective: 0.0, copy_paste: 0.0, erasing: 0.4, translate: 0.1,
-        }),
+        augmentation: serde_json::from_value(bp.get("augmentation").cloned().unwrap_or_default())
+            .unwrap_or_else(|_| crate::training::AugmentationConfig {
+                mosaic: 1.0,
+                mixup: 0.0,
+                hsv_h: 0.015,
+                hsv_s: 0.7,
+                hsv_v: 0.4,
+                flipud: 0.0,
+                fliplr: 0.5,
+                degrees: 0.0,
+                scale: 0.5,
+                shear: 0.0,
+                perspective: 0.0,
+                copy_paste: 0.0,
+                erasing: 0.4,
+                translate: 0.1,
+            }),
         export_formats: req.export_formats.clone(),
         resume: req.resume,
         cos_lr: bp.get("cos_lr").and_then(|v| v.as_bool()).unwrap_or(false),
-        warmup_epochs: bp.get("warmup_epochs").and_then(|v| v.as_f64()).unwrap_or(3.0),
-        warmup_momentum: bp.get("warmup_momentum").and_then(|v| v.as_f64()).unwrap_or(0.8),
-        warmup_bias_lr: bp.get("warmup_bias_lr").and_then(|v| v.as_f64()).unwrap_or(0.1),
+        warmup_epochs: bp
+            .get("warmup_epochs")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(3.0),
+        warmup_momentum: bp
+            .get("warmup_momentum")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.8),
+        warmup_bias_lr: bp
+            .get("warmup_bias_lr")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.1),
         momentum: bp.get("momentum").and_then(|v| v.as_f64()).unwrap_or(0.937),
-        weight_decay: bp.get("weight_decay").and_then(|v| v.as_f64()).unwrap_or(0.0005),
+        weight_decay: bp
+            .get("weight_decay")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0005),
         nbs: bp.get("nbs").and_then(|v| v.as_u64()).unwrap_or(64) as u32,
         box_weight: bp.get("box").and_then(|v| v.as_f64()).unwrap_or(7.5),
         cls: bp.get("cls").and_then(|v| v.as_f64()).unwrap_or(0.5),
         dfl: bp.get("dfl").and_then(|v| v.as_f64()).unwrap_or(1.5),
-        close_mosaic: bp.get("close_mosaic").and_then(|v| v.as_u64()).unwrap_or(10) as u32,
+        close_mosaic: bp
+            .get("close_mosaic")
+            .and_then(|v| v.as_u64())
+            .unwrap_or(10) as u32,
         max_det: bp.get("max_det").and_then(|v| v.as_u64()).unwrap_or(300) as u32,
-        multi_scale: bp.get("multi_scale").and_then(|v| v.as_f64()).unwrap_or(0.0),
+        multi_scale: bp
+            .get("multi_scale")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0),
         rect: bp.get("rect").and_then(|v| v.as_bool()).unwrap_or(false),
         cache: serde_json::from_value(
-            bp.get("cache").cloned().unwrap_or(serde_json::Value::Bool(false))
-        ).unwrap_or(crate::training::CacheOption::Bool(false)),
+            bp.get("cache")
+                .cloned()
+                .unwrap_or(serde_json::Value::Bool(false)),
+        )
+        .unwrap_or(crate::training::CacheOption::Bool(false)),
         amp: req.amp,
-        single_cls: bp.get("single_cls").and_then(|v| v.as_bool()).unwrap_or(false),
-        pretrained: bp.get("pretrained").and_then(|v| v.as_bool()).unwrap_or(true),
+        single_cls: bp
+            .get("single_cls")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false),
+        pretrained: bp
+            .get("pretrained")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(true),
         freeze: bp.get("freeze").and_then(|v| v.as_u64()).map(|v| v as u32),
         base_model_path: req.base_model_path.clone(),
     }
@@ -834,33 +981,41 @@ pub fn validate_cloud_credentials(
     std::thread::spawn(move || -> Result<(), String> {
         match provider_owned.as_str() {
             "gcp" => {
-                let gcp = config.cloud_providers.gcp
-                    .ok_or("GCP no configurado")?;
-                let sa_path = gcp.service_account_path
+                let gcp = config.cloud_providers.gcp.ok_or("GCP no configurado")?;
+                let sa_path = gcp
+                    .service_account_path
                     .ok_or("Falta Service Account JSON path")?;
                 crate::training::cloud::gcp_auth::validate_credentials(&sa_path)
             }
             "kaggle" => {
-                let kaggle = config.cloud_providers.kaggle
+                let kaggle = config
+                    .cloud_providers
+                    .kaggle
                     .ok_or("Kaggle no configurado")?;
                 let username = kaggle.username.unwrap_or_default();
                 let api_key = kaggle.api_key.ok_or("Falta API key")?;
                 crate::training::cloud::kaggle::validate_credentials(&username, &api_key)
             }
             "lightning_ai" => {
-                let lai = config.cloud_providers.lightning_ai
+                let lai = config
+                    .cloud_providers
+                    .lightning_ai
                     .ok_or("Lightning AI no configurado")?;
                 let api_key = lai.api_key.ok_or("Falta API key")?;
                 crate::training::cloud::lightning::validate_credentials(&api_key)
             }
             "huggingface" => {
-                let hf = config.cloud_providers.huggingface
+                let hf = config
+                    .cloud_providers
+                    .huggingface
                     .ok_or("Hugging Face no configurado")?;
                 let token = hf.token.ok_or("Falta token")?;
                 crate::training::cloud::huggingface::validate_credentials(&token)
             }
             "saturn_cloud" => {
-                let sc = config.cloud_providers.saturn_cloud
+                let sc = config
+                    .cloud_providers
+                    .saturn_cloud
                     .ok_or("Saturn Cloud no configurado")?;
                 let api_token = sc.api_token.ok_or("Falta API token")?;
                 crate::training::cloud::saturn::validate_credentials(&api_token)
@@ -880,11 +1035,15 @@ pub fn download_cloud_model(
     output_path: String,
 ) -> Result<String, String> {
     let pf = state.read_project_file(&project_id)?;
-    let job = pf.training_jobs.iter()
+    let job = pf
+        .training_jobs
+        .iter()
         .find(|j| j.id == job_id)
         .ok_or("Job no encontrado")?;
 
-    let download_url = job.model_download_url.as_deref()
+    let download_url = job
+        .model_download_url
+        .as_deref()
         .ok_or("No hay URL de descarga del modelo")?;
 
     let config = state.get_app_config()?;
@@ -900,15 +1059,14 @@ pub fn download_cloud_model(
             Ok(download_url.to_string())
         }
         "vertex_ai_custom" | "colab_enterprise" | "vertex_ai_gemini_tuning" => {
-            let gcp = config.cloud_providers.gcp
-                .ok_or("GCP no configurado")?;
-            let sa_path = gcp.service_account_path
+            let gcp = config.cloud_providers.gcp.ok_or("GCP no configurado")?;
+            let sa_path = gcp
+                .service_account_path
                 .ok_or("Falta Service Account path")?;
             let token = crate::training::cloud::gcp_auth::get_access_token(&sa_path)?;
 
             if let Some(uri) = download_url.strip_prefix("gs://") {
-                let (bucket, object) = uri.split_once('/')
-                    .ok_or("URI GCS inválida")?;
+                let (bucket, object) = uri.split_once('/').ok_or("URI GCS inválida")?;
                 crate::training::cloud::gcs::download_file(&token, bucket, object, &output_path)
             } else {
                 Ok(download_url.to_string())

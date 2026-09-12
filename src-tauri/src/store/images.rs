@@ -17,12 +17,36 @@ struct WebpParams {
 
 fn webp_params_for_preset(preset: &str) -> WebpParams {
     match preset {
-        "lossless" => WebpParams { lossless: true,  quality: 100.0, method: 4 },
-        "max"      => WebpParams { lossless: false, quality: 95.0,  method: 4 },
-        "high"     => WebpParams { lossless: false, quality: 90.0,  method: 4 },
-        "balanced" => WebpParams { lossless: false, quality: 82.0,  method: 2 },
-        "fast"     => WebpParams { lossless: false, quality: 75.0,  method: 0 },
-        _          => WebpParams { lossless: false, quality: 90.0,  method: 4 },
+        "lossless" => WebpParams {
+            lossless: true,
+            quality: 100.0,
+            method: 4,
+        },
+        "max" => WebpParams {
+            lossless: false,
+            quality: 95.0,
+            method: 4,
+        },
+        "high" => WebpParams {
+            lossless: false,
+            quality: 90.0,
+            method: 4,
+        },
+        "balanced" => WebpParams {
+            lossless: false,
+            quality: 82.0,
+            method: 2,
+        },
+        "fast" => WebpParams {
+            lossless: false,
+            quality: 75.0,
+            method: 0,
+        },
+        _ => WebpParams {
+            lossless: false,
+            quality: 90.0,
+            method: 4,
+        },
     }
 }
 
@@ -56,7 +80,8 @@ pub fn encode_image_with_preset(
                 config.lossless = 0;
                 config.quality = p.quality;
                 config.method = p.method;
-                encoder.encode_advanced(&config)
+                encoder
+                    .encode_advanced(&config)
                     .map_err(|e| format!("Error WebP encode_advanced: {:?}", e))?
             };
             Ok(data.to_vec())
@@ -76,7 +101,11 @@ pub fn encode_image_with_preset(
 
 /// Reemplaza la extensión de un nombre de archivo por la correspondiente al formato.
 pub fn filename_with_format(file_name: &str, target_format: &str) -> String {
-    let ext = if target_format == "webp" { "webp" } else { "jpg" };
+    let ext = if target_format == "webp" {
+        "webp"
+    } else {
+        "jpg"
+    };
     let stem = Path::new(file_name)
         .file_stem()
         .map(|s| s.to_string_lossy().to_string())
@@ -184,8 +213,7 @@ impl AppState {
         let unique_name = format!("{}_{}", id, safe_file);
         let dest = images_dir.join(&unique_name);
 
-        std::fs::write(&dest, data)
-            .map_err(|e| format!("Error escribiendo imagen: {}", e))?;
+        std::fs::write(&dest, data).map_err(|e| format!("Error escribiendo imagen: {}", e))?;
 
         let now = js_timestamp();
 
@@ -267,11 +295,13 @@ impl AppState {
                     .and_then(|e| e.to_str())
                     .unwrap_or("")
                     .to_lowercase();
-                let source_matches_target = source_ext == target_format
-                    || (target_format == "jpg" && source_ext == "jpeg");
+                let source_matches_target =
+                    source_ext == target_format || (target_format == "jpg" && source_ext == "jpeg");
 
                 let safe_file = sanitize_filename(&file_name);
-                let (unique_name, width, height) = if target_format == "webp" && !source_matches_target {
+                let (unique_name, width, height) = if target_format == "webp"
+                    && !source_matches_target
+                {
                     let img = image::open(&source)
                         .map_err(|e| format!("Error decodificando imagen {}: {}", file_name, e))?;
                     let w = img.width();
@@ -359,8 +389,8 @@ impl AppState {
             .and_then(|e| e.to_str())
             .unwrap_or("")
             .to_lowercase();
-        let source_matches_target = source_ext == target_format
-            || (target_format == "jpg" && source_ext == "jpeg");
+        let source_matches_target =
+            source_ext == target_format || (target_format == "jpg" && source_ext == "jpeg");
 
         let safe_file = sanitize_filename(file_name);
         let (unique_name, width, height) = if target_format == "webp" && !source_matches_target {
@@ -378,13 +408,16 @@ impl AppState {
         } else {
             let unique = format!("{}_{}", id, safe_file);
             let dest = images_dir.join(&unique);
-            std::fs::write(&dest, data)
-                .map_err(|e| format!("Error escribiendo imagen: {}", e))?;
+            std::fs::write(&dest, data).map_err(|e| format!("Error escribiendo imagen: {}", e))?;
             let (w, h) = get_image_dimensions(&dest)?;
             (unique, w, h)
         };
         let now = js_timestamp();
-        let status = if annotations.is_empty() { "pending" } else { "annotated" };
+        let status = if annotations.is_empty() {
+            "pending"
+        } else {
+            "annotated"
+        };
 
         let entry = ImageEntry {
             id: id.clone(),
@@ -393,7 +426,11 @@ impl AppState {
             width,
             height,
             uploaded: now,
-            annotated: if annotations.is_empty() { None } else { Some(now) },
+            annotated: if annotations.is_empty() {
+                None
+            } else {
+                Some(now)
+            },
             status: status.to_string(),
             annotations: annotations.to_vec(),
             video_id: video_id.map(|s| s.to_string()),
@@ -412,9 +449,14 @@ impl AppState {
         Ok(id)
     }
 
-    pub fn store_get_image(&self, project_id: &str, image_id: &str) -> Result<Option<ImageResponse>, String> {
+    pub fn store_get_image(
+        &self,
+        project_id: &str,
+        image_id: &str,
+    ) -> Result<Option<ImageResponse>, String> {
         self.with_project(project_id, |pf| {
-            pf.images.iter()
+            pf.images
+                .iter()
                 .find(|i| i.id == image_id)
                 .map(|i| entry_to_response(i, &pf.id))
         })
@@ -422,15 +464,22 @@ impl AppState {
 
     pub fn list_images(&self, project_id: &str) -> Result<Vec<ImageResponse>, String> {
         self.with_project(project_id, |pf| {
-            pf.images.iter()
+            pf.images
+                .iter()
                 .map(|i| entry_to_response(i, &pf.id))
                 .collect()
         })
     }
 
-    pub fn list_frames_by_video(&self, project_id: &str, video_id: &str) -> Result<Vec<ImageResponse>, String> {
+    pub fn list_frames_by_video(
+        &self,
+        project_id: &str,
+        video_id: &str,
+    ) -> Result<Vec<ImageResponse>, String> {
         self.with_project(project_id, |pf| {
-            let mut frames: Vec<ImageResponse> = pf.images.iter()
+            let mut frames: Vec<ImageResponse> = pf
+                .images
+                .iter()
                 .filter(|i| i.video_id.as_deref() == Some(video_id))
                 .map(|i| entry_to_response(i, &pf.id))
                 .collect();
@@ -449,8 +498,16 @@ impl AppState {
         self.with_project_mut(project_id, |pf| {
             if let Some(img) = pf.images.iter_mut().find(|i| i.id == image_id) {
                 img.annotations = annotations.to_vec();
-                img.status = if annotations.is_empty() { "pending".to_string() } else { "annotated".to_string() };
-                img.annotated = if annotations.is_empty() { None } else { Some(now) };
+                img.status = if annotations.is_empty() {
+                    "pending".to_string()
+                } else {
+                    "annotated".to_string()
+                };
+                img.annotated = if annotations.is_empty() {
+                    None
+                } else {
+                    Some(now)
+                };
             }
             pf.updated = now;
         })
@@ -459,7 +516,10 @@ impl AppState {
     pub fn delete_image(&self, project_id: &str, image_id: &str) -> Result<(), String> {
         // Obtener el archivo antes de eliminar
         let file = self.with_project(project_id, |pf| {
-            pf.images.iter().find(|i| i.id == image_id).map(|i| i.file.clone())
+            pf.images
+                .iter()
+                .find(|i| i.id == image_id)
+                .map(|i| i.file.clone())
         })?;
 
         // Eliminar de project.json
@@ -504,7 +564,11 @@ impl AppState {
         if target_format != "jpg" && target_format != "webp" {
             return Err(format!("Formato no soportado: {}", target_format));
         }
-        let target_ext_lower = if target_format == "webp" { "webp" } else { "jpg" };
+        let target_ext_lower = if target_format == "webp" {
+            "webp"
+        } else {
+            "jpg"
+        };
 
         use rayon::prelude::*;
 
@@ -514,10 +578,15 @@ impl AppState {
             .map_err(|e| format!("Error creando thumbnails dir: {}", e))?;
 
         // Snapshot de imágenes y preset para iterar sin tener el lock
-        let (entries, webp_preset): (Vec<(String, String)>, String) = self.with_project(project_id, |pf| {
-            let e = pf.images.iter().map(|i| (i.id.clone(), i.file.clone())).collect();
-            (e, pf.webp_quality_preset.clone())
-        })?;
+        let (entries, webp_preset): (Vec<(String, String)>, String) =
+            self.with_project(project_id, |pf| {
+                let e = pf
+                    .images
+                    .iter()
+                    .map(|i| (i.id.clone(), i.file.clone()))
+                    .collect();
+                (e, pf.webp_quality_preset.clone())
+            })?;
 
         enum ConvertOutcome {
             Converted(String, String), // (image_id, new_file_name)
@@ -526,47 +595,60 @@ impl AppState {
         }
 
         // Procesar en paralelo
-        let outcomes: Vec<ConvertOutcome> = entries.par_iter().map(|(image_id, file_name)| {
-            let current_path = images_dir.join(file_name);
-            let current_ext = Path::new(file_name)
-                .extension()
-                .and_then(|e| e.to_str())
-                .unwrap_or("")
-                .to_lowercase();
+        let outcomes: Vec<ConvertOutcome> = entries
+            .par_iter()
+            .map(|(image_id, file_name)| {
+                let current_path = images_dir.join(file_name);
+                let current_ext = Path::new(file_name)
+                    .extension()
+                    .and_then(|e| e.to_str())
+                    .unwrap_or("")
+                    .to_lowercase();
 
-            if current_ext == target_ext_lower {
-                return ConvertOutcome::Skipped;
-            }
+                if current_ext == target_ext_lower {
+                    return ConvertOutcome::Skipped;
+                }
 
-            let img = match image::open(&current_path) {
-                Ok(i) => i,
-                Err(e) => return ConvertOutcome::Failed(format!("{}: decode fail ({})", file_name, e)),
-            };
+                let img = match image::open(&current_path) {
+                    Ok(i) => i,
+                    Err(e) => {
+                        return ConvertOutcome::Failed(format!(
+                            "{}: decode fail ({})",
+                            file_name, e
+                        ))
+                    }
+                };
 
-            let new_file_name = filename_with_format(file_name, target_format);
-            let new_path = images_dir.join(&new_file_name);
+                let new_file_name = filename_with_format(file_name, target_format);
+                let new_path = images_dir.join(&new_file_name);
 
-            if new_path == current_path {
-                return ConvertOutcome::Skipped;
-            }
+                if new_path == current_path {
+                    return ConvertOutcome::Skipped;
+                }
 
-            let encoded = match encode_image_with_preset(&img, target_format, &webp_preset) {
-                Ok(b) => b,
-                Err(e) => return ConvertOutcome::Failed(format!("{}: encode fail ({})", file_name, e)),
-            };
+                let encoded = match encode_image_with_preset(&img, target_format, &webp_preset) {
+                    Ok(b) => b,
+                    Err(e) => {
+                        return ConvertOutcome::Failed(format!(
+                            "{}: encode fail ({})",
+                            file_name, e
+                        ))
+                    }
+                };
 
-            if let Err(e) = std::fs::write(&new_path, &encoded) {
-                return ConvertOutcome::Failed(format!("{}: write fail ({})", file_name, e));
-            }
+                if let Err(e) = std::fs::write(&new_path, &encoded) {
+                    return ConvertOutcome::Failed(format!("{}: write fail ({})", file_name, e));
+                }
 
-            let _ = std::fs::remove_file(&current_path);
+                let _ = std::fs::remove_file(&current_path);
 
-            let thumb = img.thumbnail(256, 256);
-            let thumb_path = thumbs_dir.join(format!("{}.jpg", image_id));
-            let _ = thumb.save(&thumb_path);
+                let thumb = img.thumbnail(256, 256);
+                let thumb_path = thumbs_dir.join(format!("{}.jpg", image_id));
+                let _ = thumb.save(&thumb_path);
 
-            ConvertOutcome::Converted(image_id.clone(), new_file_name)
-        }).collect();
+                ConvertOutcome::Converted(image_id.clone(), new_file_name)
+            })
+            .collect();
 
         let mut converted = 0usize;
         let mut skipped = 0usize;
@@ -574,7 +656,10 @@ impl AppState {
         let mut new_files: Vec<(String, String)> = Vec::new();
         for o in outcomes {
             match o {
-                ConvertOutcome::Converted(id, name) => { converted += 1; new_files.push((id, name)); }
+                ConvertOutcome::Converted(id, name) => {
+                    converted += 1;
+                    new_files.push((id, name));
+                }
                 ConvertOutcome::Skipped => skipped += 1,
                 ConvertOutcome::Failed(msg) => failed.push(msg),
             }
@@ -591,6 +676,10 @@ impl AppState {
             pf.updated = js_timestamp();
         })?;
 
-        Ok(ConversionReport { converted, skipped, failed })
+        Ok(ConversionReport {
+            converted,
+            skipped,
+            failed,
+        })
     }
 }

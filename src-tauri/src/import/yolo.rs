@@ -1,8 +1,8 @@
+use serde_json::json;
 use std::io::Read;
 use zip::ZipArchive;
-use serde_json::json;
 
-use super::{ImportData, ImageImportData, create_class, create_annotation};
+use super::{create_annotation, create_class, ImageImportData, ImportData};
 
 pub fn import_data(
     archive: &mut ZipArchive<std::fs::File>,
@@ -11,11 +11,15 @@ pub fn import_data(
 ) -> Result<ImportData, String> {
     // Read classes.txt
     let classes_content = read_zip_text(archive, "classes.txt")?;
-    let class_names: Vec<&str> = classes_content.trim().lines()
+    let class_names: Vec<&str> = classes_content
+        .trim()
+        .lines()
         .filter(|l| !l.trim().is_empty())
         .collect();
 
-    let classes = class_names.iter().enumerate()
+    let classes = class_names
+        .iter()
+        .enumerate()
         .map(|(i, name)| create_class(i as i64, name.trim(), None))
         .collect();
 
@@ -29,7 +33,9 @@ pub fn import_data(
 
     for image_path in &image_files {
         let image_name = image_path.rsplit('/').next().unwrap_or(image_path);
-        if image_name.is_empty() { continue; }
+        if image_name.is_empty() {
+            continue;
+        }
 
         // Read image data
         let image_data = match read_zip_bytes(archive, image_path) {
@@ -72,7 +78,9 @@ fn parse_label_file(
 
     for line in content.trim().lines() {
         let parts: Vec<&str> = line.trim().split_whitespace().collect();
-        if parts.len() < 5 { continue; }
+        if parts.len() < 5 {
+            continue;
+        }
 
         let class_id: i64 = match parts[0].parse() {
             Ok(id) => id,
@@ -90,10 +98,14 @@ fn parse_label_file(
                 i += 2;
             }
             if points.len() >= 3 {
-                annotations.push(create_annotation(class_id, "polygon", json!({
-                    "points": points,
-                    "closed": true,
-                })));
+                annotations.push(create_annotation(
+                    class_id,
+                    "polygon",
+                    json!({
+                        "points": points,
+                        "closed": true,
+                    }),
+                ));
             }
         } else {
             // BBox format: class_id x_center y_center width height (normalized)
@@ -105,12 +117,16 @@ fn parse_label_file(
             ) {
                 let x = ((xc - bw / 2.0) * w).max(0.0);
                 let y = ((yc - bh / 2.0) * h).max(0.0);
-                annotations.push(create_annotation(class_id, "bbox", json!({
-                    "x": x,
-                    "y": y,
-                    "width": bw * w,
-                    "height": bh * h,
-                })));
+                annotations.push(create_annotation(
+                    class_id,
+                    "bbox",
+                    json!({
+                        "x": x,
+                        "y": y,
+                        "width": bw * w,
+                        "height": bh * h,
+                    }),
+                ));
             }
         }
     }
@@ -120,19 +136,26 @@ fn parse_label_file(
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-pub fn read_zip_text(archive: &mut ZipArchive<std::fs::File>, name: &str) -> Result<String, String> {
+pub fn read_zip_text(
+    archive: &mut ZipArchive<std::fs::File>,
+    name: &str,
+) -> Result<String, String> {
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
         if file.name().eq_ignore_ascii_case(name) || file.name() == name {
             let mut content = String::new();
-            file.read_to_string(&mut content).map_err(|e| e.to_string())?;
+            file.read_to_string(&mut content)
+                .map_err(|e| e.to_string())?;
             return Ok(content);
         }
     }
     Err(format!("Archivo no encontrado: {}", name))
 }
 
-pub fn read_zip_bytes(archive: &mut ZipArchive<std::fs::File>, name: &str) -> Result<Vec<u8>, String> {
+pub fn read_zip_bytes(
+    archive: &mut ZipArchive<std::fs::File>,
+    name: &str,
+) -> Result<Vec<u8>, String> {
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
         if file.name() == name || file.name().eq_ignore_ascii_case(name) {

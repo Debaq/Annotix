@@ -3,9 +3,9 @@ use std::path::Path;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
-use crate::store::project_file::{ProjectFile, ImageEntry, AnnotationEntry};
+use super::{add_image_to_zip, class_name, parse_bbox, parse_obb};
+use crate::store::project_file::{AnnotationEntry, ImageEntry, ProjectFile};
 use crate::utils::converters::{escape_xml, obb_to_aabbox};
-use super::{parse_bbox, parse_obb, class_name, add_image_to_zip};
 
 pub fn export<F: Fn(f64)>(
     project: &ProjectFile,
@@ -25,7 +25,8 @@ pub fn export<F: Fn(f64)>(
         // Generate XML
         let xml = generate_xml(image, project);
         let xml_name = replace_ext(&image.name, "xml");
-        zip.start_file(format!("Annotations/{}", xml_name), options).map_err(|e| e.to_string())?;
+        zip.start_file(format!("Annotations/{}", xml_name), options)
+            .map_err(|e| e.to_string())?;
         zip.write_all(xml.as_bytes()).map_err(|e| e.to_string())?;
 
         emit_progress(((i + 1) as f64 / total) * 100.0);
@@ -41,7 +42,10 @@ fn generate_xml(image: &ImageEntry, project: &ProjectFile) -> String {
     lines.push("<?xml version=\"1.0\" encoding=\"UTF-8\"?>".to_string());
     lines.push("<annotation>".to_string());
     lines.push(format!("\t<folder>{}</folder>", escape_xml(&project.name)));
-    lines.push(format!("\t<filename>{}</filename>", escape_xml(&image.name)));
+    lines.push(format!(
+        "\t<filename>{}</filename>",
+        escape_xml(&image.name)
+    ));
     lines.push("\t<source>".to_string());
     lines.push("\t\t<database>Annotix</database>".to_string());
     lines.push("\t\t<annotation>Annotix Dataset</annotation>".to_string());
@@ -53,7 +57,9 @@ fn generate_xml(image: &ImageEntry, project: &ProjectFile) -> String {
     lines.push("\t</size>".to_string());
     lines.push("\t<segmented>0</segmented>".to_string());
 
-    let bbox_annotations: Vec<&AnnotationEntry> = image.annotations.iter()
+    let bbox_annotations: Vec<&AnnotationEntry> = image
+        .annotations
+        .iter()
         .filter(|a| a.annotation_type == "bbox" || a.annotation_type == "obb")
         .collect();
 
@@ -87,7 +93,13 @@ fn get_bbox(ann: &AnnotationEntry) -> Option<(f64, f64, f64, f64)> {
         }
         "obb" => {
             let obb = parse_obb(&ann.data)?;
-            Some(obb_to_aabbox(obb.x, obb.y, obb.width, obb.height, obb.rotation))
+            Some(obb_to_aabbox(
+                obb.x,
+                obb.y,
+                obb.width,
+                obb.height,
+                obb.rotation,
+            ))
         }
         _ => None,
     }

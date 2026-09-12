@@ -49,9 +49,15 @@ pub struct PreprocessConfig {
     pub fundus_crop: bool,
 }
 
-fn default_clip_limit() -> f64 { 2.0 }
-fn default_tile_grid() -> u32 { 8 }
-fn default_channel() -> String { "l_lab".to_string() }
+fn default_clip_limit() -> f64 {
+    2.0
+}
+fn default_tile_grid() -> u32 {
+    8
+}
+fn default_channel() -> String {
+    "l_lab".to_string()
+}
 
 /// Evento de progreso de inferencia
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -74,4 +80,3 @@ pub fn infer_annotation_type(data: &serde_json::Value) -> String {
         "bbox".to_string()
     }
 }
-

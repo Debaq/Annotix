@@ -23,9 +23,22 @@ use super::state::AppState;
 
 /// Subcarpetas internas de un proyecto: nunca son proyectos en sí mismas.
 const SKIP_DIRS: &[&str] = &[
-    "images", "thumbnails", "videos", "models", "timeseries", "audio",
-    "tabular", "datasets", "dataset", "runs", "training", "exports", "frames",
-    "node_modules", "venv", "__pycache__",
+    "images",
+    "thumbnails",
+    "videos",
+    "models",
+    "timeseries",
+    "audio",
+    "tabular",
+    "datasets",
+    "dataset",
+    "runs",
+    "training",
+    "exports",
+    "frames",
+    "node_modules",
+    "venv",
+    "__pycache__",
 ];
 
 const IMAGE_EXTS: &[&str] = &["jpg", "jpeg", "png", "webp", "bmp", "tif", "tiff"];
@@ -99,7 +112,9 @@ pub struct RestoreReport {
 // ─── Escaneo ────────────────────────────────────────────────────────────────
 
 fn count_files_with_exts(dir: &Path, exts: Option<&[&str]>) -> usize {
-    let Ok(entries) = std::fs::read_dir(dir) else { return 0 };
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return 0;
+    };
     entries
         .filter_map(|e| e.ok())
         .filter(|e| e.path().is_file())
@@ -126,22 +141,64 @@ fn classify(dir: &Path, root: &Path, depth: usize) -> Option<ScannedProject> {
         match io::read_project_summary(dir) {
             Ok(s) => {
                 let status = if s.id == dir_name { "ok" } else { "idMismatch" };
-                (Some(s.id), s.name, s.project_type, s.images.0, status.to_string())
+                (
+                    Some(s.id),
+                    s.name,
+                    s.project_type,
+                    s.images.0,
+                    status.to_string(),
+                )
             }
             Err(_) if tmp_json.exists() => match read_summary_from_tmp(&tmp_json) {
-                Some(s) => (Some(s.id), s.name, s.project_type, s.images.0, "recoverable".to_string()),
-                None => (None, dir_name.clone(), "detection".to_string(), 0, "corrupt".to_string()),
+                Some(s) => (
+                    Some(s.id),
+                    s.name,
+                    s.project_type,
+                    s.images.0,
+                    "recoverable".to_string(),
+                ),
+                None => (
+                    None,
+                    dir_name.clone(),
+                    "detection".to_string(),
+                    0,
+                    "corrupt".to_string(),
+                ),
             },
-            Err(_) => (None, dir_name.clone(), "detection".to_string(), 0, "corrupt".to_string()),
+            Err(_) => (
+                None,
+                dir_name.clone(),
+                "detection".to_string(),
+                0,
+                "corrupt".to_string(),
+            ),
         }
     } else if tmp_json.exists() {
         match read_summary_from_tmp(&tmp_json) {
-            Some(s) => (Some(s.id), s.name, s.project_type, s.images.0, "recoverable".to_string()),
-            None if image_files > 0 => (None, dir_name.clone(), "detection".to_string(), 0, "orphan".to_string()),
+            Some(s) => (
+                Some(s.id),
+                s.name,
+                s.project_type,
+                s.images.0,
+                "recoverable".to_string(),
+            ),
+            None if image_files > 0 => (
+                None,
+                dir_name.clone(),
+                "detection".to_string(),
+                0,
+                "orphan".to_string(),
+            ),
             None => return None,
         }
     } else if image_files > 0 || video_files > 0 {
-        (None, dir_name.clone(), "detection".to_string(), 0, "orphan".to_string())
+        (
+            None,
+            dir_name.clone(),
+            "detection".to_string(),
+            0,
+            "orphan".to_string(),
+        )
     } else {
         return None;
     };
@@ -184,7 +241,9 @@ fn walk(dir: &Path, root: &Path, depth: usize, out: &mut Vec<ScannedProject>) {
         }
     }
 
-    let Ok(entries) = std::fs::read_dir(dir) else { return };
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
     for entry in entries.filter_map(|e| e.ok()) {
         let path = entry.path();
         if !path.is_dir() {
@@ -252,7 +311,11 @@ fn rebuild_project_file(dir: &Path, id: &str) -> Result<ProjectFile, String> {
         files.sort();
 
         for path in files {
-            let file_name = path.file_name().unwrap_or_default().to_string_lossy().to_string();
+            let file_name = path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string();
             let Ok((width, height)) = image::image_dimensions(&path) else {
                 log::warn!("Imagen ilegible al reconstruir {:?}: {}", dir, file_name);
                 continue;
@@ -262,7 +325,12 @@ fn rebuild_project_file(dir: &Path, id: &str) -> Result<ProjectFile, String> {
             // prefijo reusamos el id original para no romper referencias.
             let (img_id, display_name) = split_uuid_prefix(&file_name);
 
-            if path.extension().and_then(|x| x.to_str()).map(|x| x.to_lowercase()) == Some("webp".to_string()) {
+            if path
+                .extension()
+                .and_then(|x| x.to_str())
+                .map(|x| x.to_lowercase())
+                == Some("webp".to_string())
+            {
                 webp += 1;
             } else {
                 other += 1;
@@ -307,7 +375,11 @@ fn rebuild_project_file(dir: &Path, id: &str) -> Result<ProjectFile, String> {
         inference_models: vec![],
         folder: None,
         tts_sentences: vec![],
-        image_format: if webp > other { "webp".to_string() } else { "jpg".to_string() },
+        image_format: if webp > other {
+            "webp".to_string()
+        } else {
+            "jpg".to_string()
+        },
         webp_quality_preset: "high".to_string(),
     })
 }
@@ -379,7 +451,11 @@ fn restore_one(root: &Path, dir: &Path) -> Result<(String, Option<String>, Vec<S
                 // JSON ilegible: respaldarlo y reconstruir desde los archivos.
                 let backup = current.join("project.json.corrupt");
                 let _ = std::fs::rename(&project_json, &backup);
-                log::warn!("project.json corrupto en {:?} ({}), reconstruyendo", current, e);
+                log::warn!(
+                    "project.json corrupto en {:?} ({}), reconstruyendo",
+                    current,
+                    e
+                );
                 actions.push("rebuilt".to_string());
                 rebuild_project_file(&current, &dir_name)?
             }
@@ -409,7 +485,11 @@ fn restore_one(root: &Path, dir: &Path) -> Result<(String, Option<String>, Vec<S
 impl AppState {
     /// Repara y deja visibles los proyectos indicados (rutas absolutas dentro
     /// de `root`). `root` puede no ser todavía el `projects_dir` configurado.
-    pub fn restore_workspace(&self, root: &Path, paths: &[String]) -> Result<RestoreReport, String> {
+    pub fn restore_workspace(
+        &self,
+        root: &Path,
+        paths: &[String],
+    ) -> Result<RestoreReport, String> {
         let root = root
             .canonicalize()
             .map_err(|e| format!("Carpeta de trabajo inválida: {}", e))?;
@@ -455,7 +535,11 @@ impl AppState {
         // Los caches quedaron obsoletos tras mover carpetas o cambiar ids.
         self.clear_caches();
 
-        Ok(RestoreReport { restored, failed, outcomes })
+        Ok(RestoreReport {
+            restored,
+            failed,
+            outcomes,
+        })
     }
 }
 
@@ -473,7 +557,8 @@ mod tests {
     }
 
     fn tmp_root(tag: &str) -> PathBuf {
-        let root = std::env::temp_dir().join(format!("annotix_rec_{}_{}", tag, uuid::Uuid::new_v4()));
+        let root =
+            std::env::temp_dir().join(format!("annotix_rec_{}_{}", tag, uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&root).unwrap();
         root
     }
@@ -488,7 +573,14 @@ mod tests {
         std::fs::write(root.join("ddd/images/foo.jpg"), b"x").unwrap();
 
         let report = scan_workspace(&root).unwrap();
-        let by_name = |n: &str| report.projects.iter().find(|p| p.name == n).unwrap().clone();
+        let by_name = |n: &str| {
+            report
+                .projects
+                .iter()
+                .find(|p| p.name == n)
+                .unwrap()
+                .clone()
+        };
 
         assert_eq!(report.projects.len(), 4);
         assert!(by_name("Bien").already_ok);
@@ -511,7 +603,11 @@ mod tests {
         // Escritura atómica interrumpida: solo queda el .tmp
         let interrupted = root.join("eee");
         write_pf(&interrupted, "eee", "Interrumpido");
-        std::fs::rename(interrupted.join("project.json"), interrupted.join("project.json.tmp")).unwrap();
+        std::fs::rename(
+            interrupted.join("project.json"),
+            interrupted.join("project.json.tmp"),
+        )
+        .unwrap();
 
         let paths: Vec<String> = scan_workspace(&root)
             .unwrap()
@@ -541,7 +637,8 @@ mod tests {
 
         let img = image::RgbImage::new(7, 5);
         let id = uuid::Uuid::new_v4().to_string();
-        img.save(dir.join("images").join(format!("{}_foto.png", id))).unwrap();
+        img.save(dir.join("images").join(format!("{}_foto.png", id)))
+            .unwrap();
 
         let canon = root.canonicalize().unwrap();
         restore_one(&canon, &dir).unwrap();

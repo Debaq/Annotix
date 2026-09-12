@@ -1,6 +1,6 @@
-use super::{CloudJobHandle, CloudJobState, CloudJobStatus, CloudRunner};
 use super::gcp_auth;
 use super::gcs;
+use super::{CloudJobHandle, CloudJobState, CloudJobStatus, CloudRunner};
 use crate::training::{CloudProvider, CloudTrainingConfig, TrainingRequest};
 
 pub struct VertexCustomRunner {
@@ -12,7 +12,12 @@ pub struct VertexCustomRunner {
 
 impl VertexCustomRunner {
     pub fn new(sa_path: String, project_id: String, region: String, bucket: String) -> Self {
-        Self { sa_path, project_id, region, bucket }
+        Self {
+            sa_path,
+            project_id,
+            region,
+            bucket,
+        }
     }
 
     fn get_token(&self) -> Result<String, String> {
@@ -26,8 +31,14 @@ impl VertexCustomRunner {
         )
     }
 
-    fn generate_train_script(&self, request: &TrainingRequest, gcs_dataset: &str, project_classes: &[String]) -> String {
-        let classes_str = project_classes.iter()
+    fn generate_train_script(
+        &self,
+        request: &TrainingRequest,
+        gcs_dataset: &str,
+        project_classes: &[String],
+    ) -> String {
+        let classes_str = project_classes
+            .iter()
             .map(|c| format!("'{}'", c))
             .collect::<Vec<_>>()
             .join(", ");
@@ -84,7 +95,12 @@ impl CloudRunner for VertexCustomRunner {
 
         // 1. Upload dataset to GCS
         let gcs_prefix = format!("annotix-training/{}/dataset", job_uuid);
-        let gcs_dataset = gcs::upload_file(&token, &self.bucket, &format!("{}/dataset.zip", gcs_prefix), dataset_path)?;
+        let gcs_dataset = gcs::upload_file(
+            &token,
+            &self.bucket,
+            &format!("{}/dataset.zip", gcs_prefix),
+            dataset_path,
+        )?;
 
         // 2. Generate and upload training script
         let script = self.generate_train_script(request, &gcs_dataset, project_classes);
@@ -92,14 +108,18 @@ impl CloudRunner for VertexCustomRunner {
         std::fs::write(&script_path, &script)
             .map_err(|e| format!("Error escribiendo script: {}", e))?;
         let _gcs_script = gcs::upload_file(
-            &token, &self.bucket,
+            &token,
+            &self.bucket,
             &format!("{}/train.py", gcs_prefix),
             &script_path,
         )?;
 
         // 3. Create Vertex AI Custom Job
         let machine_type = config.machine_type.as_deref().unwrap_or("n1-standard-4");
-        let accelerator_type = config.accelerator_type.as_deref().unwrap_or("NVIDIA_TESLA_T4");
+        let accelerator_type = config
+            .accelerator_type
+            .as_deref()
+            .unwrap_or("NVIDIA_TESLA_T4");
         let accelerator_count = config.accelerator_count.unwrap_or(1);
 
         let job_spec = serde_json::json!({
@@ -220,7 +240,9 @@ impl CloudRunner for VertexCustomRunner {
         status: &CloudJobStatus,
         output_dir: &str,
     ) -> Result<String, String> {
-        let model_uri = status.model_output_uri.as_deref()
+        let model_uri = status
+            .model_output_uri
+            .as_deref()
             .ok_or("No hay URI del modelo en el resultado")?;
 
         let token = self.get_token()?;

@@ -1,16 +1,16 @@
-pub mod format_detector;
-pub mod yolo;
 pub mod coco;
-pub mod pascal_voc;
 pub mod csv_import;
-pub mod unet_masks;
 pub mod folders_by_class;
-pub mod tix;
+pub mod format_detector;
 pub mod merge;
+pub mod pascal_voc;
+pub mod tix;
+pub mod unet_masks;
+pub mod yolo;
 
-use serde::{Deserialize, Serialize};
-use crate::store::project_file::{ClassDef, AnnotationEntry};
+use crate::store::project_file::{AnnotationEntry, ClassDef};
 use crate::store::AppState;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -54,8 +54,8 @@ pub struct ImageImportData {
 
 /// Colores por defecto para clases
 const DEFAULT_COLORS: &[&str] = &[
-    "#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8",
-    "#F7DC6F", "#BB8FCE", "#85C1E2", "#F8B88B", "#82E0AA",
+    "#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8", "#F7DC6F", "#BB8FCE", "#85C1E2",
+    "#F8B88B", "#82E0AA",
 ];
 
 pub fn generate_color(index: usize) -> String {
@@ -66,12 +66,18 @@ pub fn create_class(id: i64, name: &str, color: Option<&str>) -> ClassDef {
     ClassDef {
         id,
         name: name.to_string(),
-        color: color.map(|c| c.to_string()).unwrap_or_else(|| generate_color(id as usize)),
+        color: color
+            .map(|c| c.to_string())
+            .unwrap_or_else(|| generate_color(id as usize)),
         description: None,
     }
 }
 
-pub fn create_annotation(class_id: i64, ann_type: &str, data: serde_json::Value) -> AnnotationEntry {
+pub fn create_annotation(
+    class_id: i64,
+    ann_type: &str,
+    data: serde_json::Value,
+) -> AnnotationEntry {
     AnnotationEntry {
         id: uuid::Uuid::new_v4().to_string(),
         annotation_type: ann_type.to_string(),
@@ -87,10 +93,10 @@ pub fn create_annotation(class_id: i64, ann_type: &str, data: serde_json::Value)
 
 /// Detectar formato de un archivo ZIP.
 pub fn detect_format(file_path: &str) -> Result<DetectionResult, String> {
-    let file = std::fs::File::open(file_path)
-        .map_err(|e| format!("Error abriendo archivo: {}", e))?;
-    let mut archive = zip::ZipArchive::new(file)
-        .map_err(|e| format!("Error leyendo ZIP: {}", e))?;
+    let file =
+        std::fs::File::open(file_path).map_err(|e| format!("Error abriendo archivo: {}", e))?;
+    let mut archive =
+        zip::ZipArchive::new(file).map_err(|e| format!("Error leyendo ZIP: {}", e))?;
 
     format_detector::detect(&mut archive)
 }
@@ -122,10 +128,10 @@ pub fn import_dataset(
 
     // Abrir ZIP
     emit_phase("parsing", 15.0, 0, 0);
-    let file = std::fs::File::open(file_path)
-        .map_err(|e| format!("Error abriendo archivo: {}", e))?;
-    let mut archive = zip::ZipArchive::new(file)
-        .map_err(|e| format!("Error leyendo ZIP: {}", e))?;
+    let file =
+        std::fs::File::open(file_path).map_err(|e| format!("Error abriendo archivo: {}", e))?;
+    let mut archive =
+        zip::ZipArchive::new(file).map_err(|e| format!("Error leyendo ZIP: {}", e))?;
 
     // TIX nativo (con project.json): restauración completa preservando
     // videos/tracks/audio/timeseries/training_jobs.
@@ -135,9 +141,14 @@ pub fn import_dataset(
             .any(|n| n.eq_ignore_ascii_case("project.json"));
         if has_project_json {
             emit_phase("saving", 50.0, 0, 0);
-            let result = tix::restore_full_project(state, &mut archive, project_name, |phase, pct, cur, tot| {
-                emit_phase(phase, pct, cur, tot);
-            })?;
+            let result = tix::restore_full_project(
+                state,
+                &mut archive,
+                project_name,
+                |phase, pct, cur, tot| {
+                    emit_phase(phase, pct, cur, tot);
+                },
+            )?;
             return Ok(result);
         }
     }

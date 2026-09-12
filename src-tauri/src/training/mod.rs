@@ -3,25 +3,63 @@ use serde_json::Value as JsonValue;
 
 // ─── Training Config ────────────────────────────────────────────────────────
 
-fn default_cos_lr() -> bool { false }
-fn default_warmup_epochs() -> f64 { 3.0 }
-fn default_warmup_momentum() -> f64 { 0.8 }
-fn default_warmup_bias_lr() -> f64 { 0.1 }
-fn default_momentum() -> f64 { 0.937 }
-fn default_weight_decay() -> f64 { 0.0005 }
-fn default_nbs() -> u32 { 64 }
-fn default_box_weight() -> f64 { 7.5 }
-fn default_cls_weight() -> f64 { 0.5 }
-fn default_dfl_weight() -> f64 { 1.5 }
-fn default_close_mosaic() -> u32 { 10 }
-fn default_max_det() -> u32 { 300 }
-fn default_multi_scale() -> f64 { 0.0 }
-fn default_rect() -> bool { false }
-fn default_cache() -> CacheOption { CacheOption::Bool(false) }
-fn default_amp() -> bool { true }
-fn default_single_cls() -> bool { false }
-fn default_pretrained() -> bool { true }
-fn default_translate() -> f64 { 0.1 }
+fn default_cos_lr() -> bool {
+    false
+}
+fn default_warmup_epochs() -> f64 {
+    3.0
+}
+fn default_warmup_momentum() -> f64 {
+    0.8
+}
+fn default_warmup_bias_lr() -> f64 {
+    0.1
+}
+fn default_momentum() -> f64 {
+    0.937
+}
+fn default_weight_decay() -> f64 {
+    0.0005
+}
+fn default_nbs() -> u32 {
+    64
+}
+fn default_box_weight() -> f64 {
+    7.5
+}
+fn default_cls_weight() -> f64 {
+    0.5
+}
+fn default_dfl_weight() -> f64 {
+    1.5
+}
+fn default_close_mosaic() -> u32 {
+    10
+}
+fn default_max_det() -> u32 {
+    300
+}
+fn default_multi_scale() -> f64 {
+    0.0
+}
+fn default_rect() -> bool {
+    false
+}
+fn default_cache() -> CacheOption {
+    CacheOption::Bool(false)
+}
+fn default_amp() -> bool {
+    true
+}
+fn default_single_cls() -> bool {
+    false
+}
+fn default_pretrained() -> bool {
+    true
+}
+fn default_translate() -> f64 {
+    0.1
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainingConfig {
@@ -149,7 +187,10 @@ pub struct PythonEnvStatus {
     pub mmdet_version: Option<String>,
     #[serde(rename = "smpVersion", skip_serializing_if = "Option::is_none")]
     pub smp_version: Option<String>,
-    #[serde(rename = "hfTransformersVersion", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "hfTransformersVersion",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub hf_transformers_version: Option<String>,
     #[serde(rename = "mmsegVersion", skip_serializing_if = "Option::is_none")]
     pub mmseg_version: Option<String>,
@@ -163,7 +204,10 @@ pub struct PythonEnvStatus {
     pub timm_version: Option<String>,
     #[serde(rename = "tsaiVersion", skip_serializing_if = "Option::is_none")]
     pub tsai_version: Option<String>,
-    #[serde(rename = "pytorchForecastingVersion", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "pytorchForecastingVersion",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub pytorch_forecasting_version: Option<String>,
     #[serde(rename = "pyodVersion", skip_serializing_if = "Option::is_none")]
     pub pyod_version: Option<String>,
@@ -463,18 +507,18 @@ pub struct BackendModelInfo {
     pub recommended: bool,
 }
 
-pub mod python_env;
-pub mod micromamba;
-pub mod gpu;
-pub mod dataset;
-pub mod scripts;
-pub mod runner;
-pub mod model_export;
 pub mod backends;
-pub mod package;
-pub mod notebook;
 pub mod cloud;
+pub mod dataset;
+pub mod gpu;
+pub mod micromamba;
 pub mod migrate;
+pub mod model_export;
+pub mod notebook;
+pub mod package;
+pub mod python_env;
+pub mod runner;
+pub mod scripts;
 
 /// En Windows, configura CREATE_NO_WINDOW para evitar que aparezca una ventana de consola.
 #[cfg(windows)]

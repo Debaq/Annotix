@@ -51,8 +51,7 @@ fn self_install_to_local_bin() -> Option<std::path::PathBuf> {
     let src_meta = fs::metadata(&exe).ok();
     let dst_meta = fs::metadata(&target_bin).ok();
     let should_copy = match (src_meta.as_ref(), dst_meta.as_ref()) {
-        (Some(s), Some(d)) => s.len() != d.len()
-            || s.modified().ok() > d.modified().ok(),
+        (Some(s), Some(d)) => s.len() != d.len() || s.modified().ok() > d.modified().ok(),
         (Some(_), None) => true,
         _ => false,
     };
@@ -74,7 +73,8 @@ fn self_install_to_local_bin() -> Option<std::path::PathBuf> {
         let need = fs::metadata(&dst_lib)
             .ok()
             .map(|d| {
-                fs::metadata(&src_lib).ok()
+                fs::metadata(&src_lib)
+                    .ok()
                     .map(|s| s.len() != d.len() || s.modified().ok() > d.modified().ok())
                     .unwrap_or(false)
             })
@@ -91,7 +91,9 @@ fn self_install_to_local_bin() -> Option<std::path::PathBuf> {
 fn install_desktop_entry(installed_exec: Option<std::path::PathBuf>) {
     use std::fs;
 
-    let Some(base) = directories::BaseDirs::new() else { return; };
+    let Some(base) = directories::BaseDirs::new() else {
+        return;
+    };
     let data_home = base.data_local_dir();
     let apps_dir = data_home.join("applications");
     let icons_dir = data_home.join("icons/hicolor/512x512/apps");
@@ -139,19 +141,21 @@ fn install_desktop_entry(installed_exec: Option<std::path::PathBuf>) {
                 .arg(&apps_dir)
                 .status();
             let _ = std::process::Command::new("gtk-update-icon-cache")
-                .arg("-f").arg("-t").arg(data_home.join("icons/hicolor"))
+                .arg("-f")
+                .arg("-t")
+                .arg(data_home.join("icons/hicolor"))
                 .status();
         }
     }
 }
 
-use store::AppState;
-use training::runner::TrainingProcessManager;
-use training::cloud::CloudTrainingManager;
-use training::TrainingEnvCache;
+use browser_automation::BrowserAutomationManager;
 use inference::runner::InferenceProcessManager;
 use inference::sam::state::SamState;
-use browser_automation::BrowserAutomationManager;
+use store::AppState;
+use training::cloud::CloudTrainingManager;
+use training::runner::TrainingProcessManager;
+use training::TrainingEnvCache;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -188,7 +192,9 @@ pub fn run() {
                     .level(log::LevelFilter::Info)
                     .targets([
                         tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Stdout),
-                        tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::LogDir { file_name: None }),
+                        tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::LogDir {
+                            file_name: None,
+                        }),
                     ])
                     .max_file_size(10_000_000)
                     .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepAll)
@@ -199,14 +205,18 @@ pub fn run() {
                 // Permitir acceso al micrófono en WebKitGTK (Linux)
                 #[cfg(target_os = "linux")]
                 {
-                    _window.with_webview(|wv| {
-                        use webkit2gtk::{WebViewExt, PermissionRequestExt};
-                        let wv = wv.inner();
-                        wv.connect_permission_request(|_wv, req: &webkit2gtk::PermissionRequest| {
-                            req.allow();
-                            true
-                        });
-                    }).ok();
+                    _window
+                        .with_webview(|wv| {
+                            use webkit2gtk::{PermissionRequestExt, WebViewExt};
+                            let wv = wv.inner();
+                            wv.connect_permission_request(
+                                |_wv, req: &webkit2gtk::PermissionRequest| {
+                                    req.allow();
+                                    true
+                                },
+                            );
+                        })
+                        .ok();
                 }
             }
 
@@ -217,7 +227,8 @@ pub fn run() {
                 let app_handle = app.handle().clone();
                 std::thread::spawn(move || {
                     let state = app_handle.state::<store::AppState>();
-                    let already_done = state.get_app_config()
+                    let already_done = state
+                        .get_app_config()
                         .map(|c| c.training_migration_v1_done)
                         .unwrap_or(false);
                     if already_done {
@@ -241,7 +252,10 @@ pub fn run() {
 
             // Reanudar sesión P2P si hay proyecto con p2p activa (respetando config)
             {
-                let config = app.state::<store::AppState>().get_app_config().unwrap_or_default();
+                let config = app
+                    .state::<store::AppState>()
+                    .get_app_config()
+                    .unwrap_or_default();
                 if !config.p2p_disabled {
                     // Precalentar el nodo y, aparte, reanudar sesión si la había.
                     warmup_p2p_node(app.handle().clone());
@@ -538,7 +552,10 @@ fn resume_p2p_session(app: tauri::AppHandle) {
         log::info!("Reanudando sesión P2P para proyecto: {}", project_id);
 
         let p2p = app.state::<p2p::node::P2pState>();
-        match p2p.resume_session(&app_state, &app, &project_id, config).await {
+        match p2p
+            .resume_session(&app_state, &app, &project_id, config)
+            .await
+        {
             Ok(info) => {
                 log::info!(
                     "Sesión P2P restaurada: {} (share_code: {})",
@@ -588,7 +605,10 @@ fn auto_start_serve(app: tauri::AppHandle) {
         let port = config.serve.port;
         let auto_save = config.serve.auto_save;
 
-        match serve_state.start(app.clone(), project_ids, port, auto_save).await {
+        match serve_state
+            .start(app.clone(), project_ids, port, auto_save)
+            .await
+        {
             Ok(info) => {
                 log::info!("Auto-serve: servidor iniciado en {:?}", info.urls);
             }

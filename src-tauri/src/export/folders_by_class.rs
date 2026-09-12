@@ -1,12 +1,12 @@
 use std::collections::{HashMap, HashSet};
-use std::io::{Write, Seek};
+use std::io::{Seek, Write};
 use std::path::Path;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
-use crate::store::project_file::{ProjectFile, ImageEntry};
-use crate::utils::converters::sanitize_folder_name;
 use super::class_name;
+use crate::store::project_file::{ImageEntry, ProjectFile};
+use crate::utils::converters::sanitize_folder_name;
 
 pub fn export<F: Fn(f64)>(
     project: &ProjectFile,
@@ -16,7 +16,8 @@ pub fn export<F: Fn(f64)>(
     emit_progress: F,
 ) -> Result<(), String> {
     let mut zip = ZipWriter::new(file);
-    let options_deflated = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+    let options_deflated =
+        SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
     let total = images.len() as f64;
 
     for (i, image) in images.iter().enumerate() {
@@ -45,8 +46,10 @@ pub fn export<F: Fn(f64)>(
 
     // README.txt
     let readme = generate_readme(project, images);
-    zip.start_file("README.txt", options_deflated).map_err(|e| e.to_string())?;
-    zip.write_all(readme.as_bytes()).map_err(|e| e.to_string())?;
+    zip.start_file("README.txt", options_deflated)
+        .map_err(|e| e.to_string())?;
+    zip.write_all(readme.as_bytes())
+        .map_err(|e| e.to_string())?;
 
     zip.finish().map_err(|e| e.to_string())?;
     Ok(())
@@ -147,7 +150,10 @@ fn generate_readme(project: &ProjectFile, images: &[ImageEntry]) -> String {
         } else {
             0.0
         };
-        lines.push(format!("{}: {} images ({:.1}%)", cls.name, count, percentage));
+        lines.push(format!(
+            "{}: {} images ({:.1}%)",
+            cls.name, count, percentage
+        ));
     }
 
     lines.push(String::new());

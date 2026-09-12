@@ -1,7 +1,7 @@
+use crate::training::PythonEnvStatus;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
-use crate::training::PythonEnvStatus;
 
 /// Ejecuta un comando y emite progreso y logs detallados (para la consola de la UI)
 pub fn run_with_feedback<F: Fn(&str, f64, Option<String>)>(
@@ -15,11 +15,13 @@ pub fn run_with_feedback<F: Fn(&str, f64, Option<String>)>(
     cmd.stdout(Stdio::piped());
     cmd.stderr(Stdio::piped());
 
-    let mut child = cmd.spawn().map_err(|e| format!("Fallo al iniciar comando: {}", e))?;
-    
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("Fallo al iniciar comando: {}", e))?;
+
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take().unwrap();
-    
+
     let reader_out = BufReader::new(stdout);
     let reader_err = BufReader::new(stderr);
 
@@ -49,7 +51,9 @@ pub fn run_with_feedback<F: Fn(&str, f64, Option<String>)>(
         emit_feedback(base_msg, p, Some(line));
     }
 
-    let status = child.wait().map_err(|e| format!("Error esperando comando: {}", e))?;
+    let status = child
+        .wait()
+        .map_err(|e| format!("Error esperando comando: {}", e))?;
     if !status.success() {
         return Err(format!("El comando falló con estado {}", status));
     }
@@ -80,7 +84,13 @@ pub fn find_system_python() -> Option<String> {
     let candidates = if cfg!(target_os = "windows") {
         vec!["python", "python3"]
     } else {
-        vec!["python3", "python3.12", "python3.11", "python3.10", "python"]
+        vec![
+            "python3",
+            "python3.12",
+            "python3.11",
+            "python3.10",
+            "python",
+        ]
     };
 
     for candidate in candidates {
@@ -262,7 +272,8 @@ print(json.dumps(result))
     let mut cmd = Command::new(&python);
     cmd.args(["-c", check_script]);
     super::hide_console_window(&mut cmd);
-    let output = cmd.output()
+    let output = cmd
+        .output()
         .map_err(|e| format!("Error ejecutando python: {}", e))?;
 
     if !output.status.success() {
@@ -293,8 +304,7 @@ print(json.dumps(result))
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let info: serde_json::Value = serde_json::from_str(stdout.trim())
-        .unwrap_or_default();
+    let info: serde_json::Value = serde_json::from_str(stdout.trim()).unwrap_or_default();
 
     let ultralytics_version = info["ultralytics"].as_str().map(|s| s.to_string());
     let torch_version = info["torch"].as_str().map(|s| s.to_string());
@@ -370,7 +380,10 @@ print(json.dumps(result))
 }
 
 /// Instala paquetes extra en el venv existente con feedback opcional
-pub fn install_packages<F: Fn(&str, f64, Option<String>)>(packages: &[&str], emit_feedback: Option<F>) -> Result<(), String> {
+pub fn install_packages<F: Fn(&str, f64, Option<String>)>(
+    packages: &[&str],
+    emit_feedback: Option<F>,
+) -> Result<(), String> {
     let python = venv_python()?;
     if !python.exists() {
         return Err("Entorno Python no configurado".to_string());
@@ -380,8 +393,13 @@ pub fn install_packages<F: Fn(&str, f64, Option<String>)>(packages: &[&str], emi
     for (i, pkg) in packages.iter().enumerate() {
         let mut cmd = Command::new(&python);
         // For OpenMMLab packages we use mim install
-        if *pkg == "mmcv" || *pkg == "mmdet" || *pkg == "mmengine" || *pkg == "mmsegmentation"
-           || *pkg == "mmpose" || *pkg == "mmrotate" {
+        if *pkg == "mmcv"
+            || *pkg == "mmdet"
+            || *pkg == "mmengine"
+            || *pkg == "mmsegmentation"
+            || *pkg == "mmpose"
+            || *pkg == "mmrotate"
+        {
             cmd = Command::new(&python);
             cmd.args(["-m", "mim", "install", *pkg]);
         } else {
@@ -396,7 +414,8 @@ pub fn install_packages<F: Fn(&str, f64, Option<String>)>(packages: &[&str], emi
             run_with_feedback(cmd, &msg, base_p, span, emit)?;
         } else {
             super::hide_console_window(&mut cmd);
-            let output = cmd.output()
+            let output = cmd
+                .output()
                 .map_err(|e| format!("Error instalando {}: {}", pkg, e))?;
 
             if !output.status.success() {
@@ -441,7 +460,7 @@ pub fn is_package_installed(name: &str) -> bool {
 /// Crea el virtualenv base usando Micromamba (permite elegir versión de Python)
 pub fn setup_env_base<F: Fn(&str, f64, Option<String>)>(
     python_version: &str,
-    emit_feedback: F
+    emit_feedback: F,
 ) -> Result<(), String> {
     let mm = super::micromamba::Micromamba::new()?;
     let venv = venv_dir()?;
@@ -451,7 +470,11 @@ pub fn setup_env_base<F: Fn(&str, f64, Option<String>)>(
         let _ = std::fs::remove_dir_all(&venv);
     }
 
-    emit_feedback(&format!("Iniciando creación de entorno Python {}...", python_version), 5.0, None);
+    emit_feedback(
+        &format!("Iniciando creación de entorno Python {}...", python_version),
+        5.0,
+        None,
+    );
 
     mm.create_env(&venv, python_version, &emit_feedback)?;
 
@@ -460,11 +483,25 @@ pub fn setup_env_base<F: Fn(&str, f64, Option<String>)>(
 
     // Upgrade base tools inside the new env
     let mut cmd = Command::new(&python);
-    cmd.args(["-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel", "packaging"]);
-    run_with_feedback(cmd, "Configurando herramientas base", 85.0, 10.0, &emit_feedback)?;
+    cmd.args([
+        "-m",
+        "pip",
+        "install",
+        "--upgrade",
+        "pip",
+        "setuptools",
+        "wheel",
+        "packaging",
+    ]);
+    run_with_feedback(
+        cmd,
+        "Configurando herramientas base",
+        85.0,
+        10.0,
+        &emit_feedback,
+    )?;
 
     emit_feedback("Entorno base listo", 100.0, None);
 
     Ok(())
 }
-

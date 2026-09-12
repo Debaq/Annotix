@@ -8,9 +8,6 @@
 
 use tauri::{AppHandle, Emitter, State};
 
-use crate::inference::sam::{
-    AmgConfig, MaskTarget, SamEncodeInfo, SamMask, SamPrediction, SamPrompts,
-};
 use crate::inference::sam::amg::{refilter_by_overlap, run_amg};
 use crate::inference::sam::conversion::mask_to_annotation;
 use crate::inference::sam::decoder::{load_decoder, run_decoder};
@@ -20,6 +17,9 @@ use crate::inference::sam::postprocess::{
 };
 use crate::inference::sam::preprocess::{preprocess_image, transform_points};
 use crate::inference::sam::state::{SamEmbeddingCache, SamSessions, SamState};
+use crate::inference::sam::{
+    AmgConfig, MaskTarget, SamEncodeInfo, SamMask, SamPrediction, SamPrompts,
+};
 use crate::store::sam_models;
 use crate::store::AppState;
 
@@ -128,10 +128,7 @@ pub fn sam_encode_image(
 ///
 /// Requiere `sam_encode_image` previo (usa el embedding cacheado).
 #[tauri::command]
-pub fn sam_predict(
-    sam: State<'_, SamState>,
-    prompts: SamPrompts,
-) -> Result<SamPrediction, String> {
+pub fn sam_predict(sam: State<'_, SamState>, prompts: SamPrompts) -> Result<SamPrediction, String> {
     // 1. Tomar embedding + sizes del cache.
     let (embedding, orig_size, input_size) = {
         let cache = sam.cache.lock().map_err(|e| e.to_string())?;
@@ -198,7 +195,11 @@ pub fn sam_predict(
         ));
     }
 
-    let count = if prompts.multimask_output { m.min(3) } else { 1 };
+    let count = if prompts.multimask_output {
+        m.min(3)
+    } else {
+        1
+    };
     let mut masks_lowres: Vec<Vec<u8>> = Vec::with_capacity(count);
     let mut scores_out: Vec<f32> = Vec::with_capacity(count);
     let mut lowres_size = (w as u32, h as u32);
@@ -367,19 +368,22 @@ pub fn sam_accept_refine(
 ) -> Result<serde_json::Value, String> {
     let prediction = {
         let mut r = sam.refine.lock().map_err(|e| e.to_string())?;
-        r.take()
-            .ok_or_else(|| "sam_accept_refine: sin predicción previa (llamar sam_predict)".to_string())?
+        r.take().ok_or_else(|| {
+            "sam_accept_refine: sin predicción previa (llamar sam_predict)".to_string()
+        })?
     };
 
     let idx = active_multimask_idx as usize;
     let lowres = prediction
         .masks_lowres
         .get(idx)
-        .ok_or_else(|| format!(
-            "sam_accept_refine: idx {} fuera de rango (len={})",
-            idx,
-            prediction.masks_lowres.len()
-        ))?
+        .ok_or_else(|| {
+            format!(
+                "sam_accept_refine: idx {} fuera de rango (len={})",
+                idx,
+                prediction.masks_lowres.len()
+            )
+        })?
         .clone();
 
     let bin = upscale_and_threshold(&lowres, prediction.lowres_size, prediction.orig_size)?;

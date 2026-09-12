@@ -1,6 +1,5 @@
 /// Particularidades de Kimi: requiere seleccionar modelo antes de chatear.
 /// Si el LlmChatRunner genérico no funciona para Kimi, se puede extender aquí.
-
 use headless_chrome::Tab;
 use std::time::Duration;
 
@@ -9,8 +8,7 @@ use std::time::Duration;
 pub fn select_model(tab: &Tab, model_name: &str) -> Result<(), String> {
     // Intentar abrir el selector de modelo
     let selector = ".model-selector, button[data-testid='model-select']";
-    if let Ok(el) =
-        tab.wait_for_element_with_custom_timeout(selector, Duration::from_millis(2000))
+    if let Ok(el) = tab.wait_for_element_with_custom_timeout(selector, Duration::from_millis(2000))
     {
         el.click()
             .map_err(|e| format!("Error abriendo selector de modelo: {}", e))?;

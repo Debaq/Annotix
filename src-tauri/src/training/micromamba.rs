@@ -1,7 +1,7 @@
-use std::path::PathBuf;
-use std::process::Command;
 use std::fs;
 use std::io::Write;
+use std::path::PathBuf;
+use std::process::Command;
 
 pub struct Micromamba {
     bin_path: PathBuf,
@@ -32,12 +32,22 @@ impl Micromamba {
 
         // 2. Fallback: micromamba descargado por nosotros
         let bin_dir = data_dir.join("bin");
-        if !bin_dir.exists() { fs::create_dir_all(&bin_dir).map_err(|e| e.to_string())?; }
+        if !bin_dir.exists() {
+            fs::create_dir_all(&bin_dir).map_err(|e| e.to_string())?;
+        }
 
-        let bin_name = if cfg!(target_os = "windows") { "micromamba.exe" } else { "micromamba" };
+        let bin_name = if cfg!(target_os = "windows") {
+            "micromamba.exe"
+        } else {
+            "micromamba"
+        };
         let bin_path = bin_dir.join(bin_name);
 
-        Ok(Self { bin_path, root_prefix, system: false })
+        Ok(Self {
+            bin_path,
+            root_prefix,
+            system: false,
+        })
     }
 
     pub fn is_installed(&self) -> bool {
@@ -54,20 +64,38 @@ impl Micromamba {
 
         emit_progress("Descargando Micromamba...", 10.0);
 
-        let arch = if cfg!(target_arch = "x86_64") { "64" } else { "arm64" };
-        let os = if cfg!(target_os = "windows") { "win" }
-                 else if cfg!(target_os = "macos") { "osx" }
-                 else { "linux" };
+        let arch = if cfg!(target_arch = "x86_64") {
+            "64"
+        } else {
+            "arm64"
+        };
+        let os = if cfg!(target_os = "windows") {
+            "win"
+        } else if cfg!(target_os = "macos") {
+            "osx"
+        } else {
+            "linux"
+        };
 
-        let url = format!("https://micro.mamba.pm/api/micromamba/{}-{}/latest", os, arch);
+        let url = format!(
+            "https://micro.mamba.pm/api/micromamba/{}-{}/latest",
+            os, arch
+        );
 
-        let response = reqwest::get(&url).await.map_err(|e| format!("Fallo al descargar: {}", e))?;
-        let bytes = response.bytes().await.map_err(|e| format!("Error de red: {}", e))?;
+        let response = reqwest::get(&url)
+            .await
+            .map_err(|e| format!("Fallo al descargar: {}", e))?;
+        let bytes = response
+            .bytes()
+            .await
+            .map_err(|e| format!("Error de red: {}", e))?;
 
         emit_progress("Extrayendo binario...", 60.0);
 
         // La API devuelve un .tar.bz2 — hay que extraer bin/micromamba del tarball
-        let bin_dir = self.bin_path.parent()
+        let bin_dir = self
+            .bin_path
+            .parent()
             .ok_or("No se pudo determinar directorio del binario")?;
         let tarball_path = bin_dir.join("micromamba.tar.bz2");
 
@@ -81,7 +109,13 @@ impl Micromamba {
         #[cfg(unix)]
         {
             let output = Command::new("tar")
-                .args(["xjf", &tarball_path.to_string_lossy(), "-C", &bin_dir.to_string_lossy(), "bin/micromamba"])
+                .args([
+                    "xjf",
+                    &tarball_path.to_string_lossy(),
+                    "-C",
+                    &bin_dir.to_string_lossy(),
+                    "bin/micromamba",
+                ])
                 .output()
                 .map_err(|e| format!("Error ejecutando tar: {}", e))?;
 
@@ -101,7 +135,9 @@ impl Micromamba {
             }
 
             use std::os::unix::fs::PermissionsExt;
-            let mut perms = fs::metadata(&self.bin_path).map_err(|e| e.to_string())?.permissions();
+            let mut perms = fs::metadata(&self.bin_path)
+                .map_err(|e| e.to_string())?
+                .permissions();
             perms.set_mode(0o755);
             fs::set_permissions(&self.bin_path, perms).map_err(|e| e.to_string())?;
         }
@@ -109,7 +145,13 @@ impl Micromamba {
         #[cfg(windows)]
         {
             let output = Command::new("tar")
-                .args(["xjf", &tarball_path.to_string_lossy(), "-C", &bin_dir.to_string_lossy(), "Library/bin/micromamba.exe"])
+                .args([
+                    "xjf",
+                    &tarball_path.to_string_lossy(),
+                    "-C",
+                    &bin_dir.to_string_lossy(),
+                    "Library/bin/micromamba.exe",
+                ])
                 .output()
                 .map_err(|e| format!("Error ejecutando tar: {}", e))?;
 
@@ -138,16 +180,19 @@ impl Micromamba {
         &self,
         env_path: &PathBuf,
         python_version: &str,
-        emit_feedback: &F
+        emit_feedback: &F,
     ) -> Result<(), String> {
         let mut cmd = Command::new(&self.bin_path);
 
         cmd.args([
             "create",
             "-y",
-            "-c", "conda-forge",
-            "-p", &env_path.to_string_lossy(),
-            "-r", &self.root_prefix.to_string_lossy(),
+            "-c",
+            "conda-forge",
+            "-p",
+            &env_path.to_string_lossy(),
+            "-r",
+            &self.root_prefix.to_string_lossy(),
             &format!("python={}", python_version),
             "pip",
         ]);
@@ -155,7 +200,9 @@ impl Micromamba {
         crate::training::python_env::run_with_feedback(
             cmd,
             &format!("Creando entorno (Python {})", python_version),
-            10.0, 80.0, emit_feedback
+            10.0,
+            80.0,
+            emit_feedback,
         )
     }
 }
@@ -163,7 +210,11 @@ impl Micromamba {
 /// Busca micromamba en el sistema — primero en PATH, luego en rutas comunes.
 /// No usa conda/mamba/anaconda: conda falla en Windows, mamba no está probado.
 fn find_system_micromamba() -> Option<String> {
-    let ext = if cfg!(target_os = "windows") { ".exe" } else { "" };
+    let ext = if cfg!(target_os = "windows") {
+        ".exe"
+    } else {
+        ""
+    };
 
     // 1. Buscar micromamba en PATH
     let cmd_name = format!("micromamba{}", ext);

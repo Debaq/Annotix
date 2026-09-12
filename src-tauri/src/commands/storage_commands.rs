@@ -80,7 +80,14 @@ fn fs_available_space(path: &std::path::Path) -> u64 {
         };
 
         if let Ok(output) = std::process::Command::new("wmic")
-            .args(["logicaldisk", "where", &format!("DeviceID='{}'", drive_letter), "get", "FreeSpace", "/value"])
+            .args([
+                "logicaldisk",
+                "where",
+                &format!("DeviceID='{}'", drive_letter),
+                "get",
+                "FreeSpace",
+                "/value",
+            ])
             .output()
         {
             let stdout = String::from_utf8_lossy(&output.stdout);

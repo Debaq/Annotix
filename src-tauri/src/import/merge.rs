@@ -56,7 +56,10 @@ pub struct ClassMapping {
     pub target_canonical_index: i64,
 }
 
-pub fn analyze(paths: Vec<String>, app: Option<&tauri::AppHandle>) -> Result<AnalyzeResult, String> {
+pub fn analyze(
+    paths: Vec<String>,
+    app: Option<&tauri::AppHandle>,
+) -> Result<AnalyzeResult, String> {
     use tauri::Emitter;
     if paths.is_empty() {
         return Err("No se proporcionaron archivos .tix".into());
@@ -82,10 +85,10 @@ pub fn analyze(paths: Vec<String>, app: Option<&tauri::AppHandle>) -> Result<Ana
                 }),
             );
         }
-        let file = std::fs::File::open(path)
-            .map_err(|e| format!("Error abriendo {}: {}", path, e))?;
-        let mut archive = ZipArchive::new(file)
-            .map_err(|e| format!("Error leyendo ZIP {}: {}", path, e))?;
+        let file =
+            std::fs::File::open(path).map_err(|e| format!("Error abriendo {}: {}", path, e))?;
+        let mut archive =
+            ZipArchive::new(file).map_err(|e| format!("Error leyendo ZIP {}: {}", path, e))?;
 
         let content = super::yolo::read_zip_text(&mut archive, "annotations.json")
             .map_err(|e| format!("{}: {}", path, e))?;
@@ -264,7 +267,10 @@ pub fn merge<F: Fn(f64)>(
     use std::collections::HashMap;
     let mut map_idx: HashMap<(usize, i64), i64> = HashMap::new();
     for m in &mappings {
-        map_idx.insert((m.project_index, m.source_class_id), m.target_canonical_index);
+        map_idx.insert(
+            (m.project_index, m.source_class_id),
+            m.target_canonical_index,
+        );
     }
 
     // Crear ClassDef canónicos
@@ -290,10 +296,10 @@ pub fn merge<F: Fn(f64)>(
     let mut dropped_annotations = 0usize;
 
     for (proj_idx, path) in paths.iter().enumerate() {
-        let file = std::fs::File::open(path)
-            .map_err(|e| format!("Error abriendo {}: {}", path, e))?;
-        let mut archive = ZipArchive::new(file)
-            .map_err(|e| format!("Error leyendo ZIP {}: {}", path, e))?;
+        let file =
+            std::fs::File::open(path).map_err(|e| format!("Error abriendo {}: {}", path, e))?;
+        let mut archive =
+            ZipArchive::new(file).map_err(|e| format!("Error leyendo ZIP {}: {}", path, e))?;
 
         let import_data = super::tix::import_data(&mut archive, &project_type)?;
         let n_imgs = import_data.images.len().max(1) as f64;

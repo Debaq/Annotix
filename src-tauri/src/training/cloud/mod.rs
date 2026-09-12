@@ -1,12 +1,12 @@
+pub mod colab;
 pub mod gcp_auth;
 pub mod gcs;
-pub mod colab;
-pub mod vertex_custom;
-pub mod vertex_tuning;
+pub mod huggingface;
 pub mod kaggle;
 pub mod lightning;
-pub mod huggingface;
 pub mod saturn;
+pub mod vertex_custom;
+pub mod vertex_tuning;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -14,8 +14,8 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter};
 
-use crate::store::AppState;
 use crate::store::io;
+use crate::store::AppState;
 use crate::training::{CloudProvider, CloudTrainingConfig, TrainingRequest};
 
 // ─── Cloud Job Status ────────────────────────────────────────────────────────
@@ -136,22 +136,28 @@ impl CloudTrainingManager {
         })?;
 
         // Emit initial status
-        let _ = app.emit("training:cloud:status", serde_json::json!({
-            "jobId": training_job_id,
-            "provider": provider_str,
-            "cloudJobId": cloud_job_id,
-            "cloudJobUrl": job_url,
-            "state": "queued",
-        }));
+        let _ = app.emit(
+            "training:cloud:status",
+            serde_json::json!({
+                "jobId": training_job_id,
+                "provider": provider_str,
+                "cloudJobId": cloud_job_id,
+                "cloudJobUrl": job_url,
+                "state": "queued",
+            }),
+        );
 
         // Register active job
         {
             let mut jobs = self.active_jobs.lock().map_err(|e| e.to_string())?;
-            jobs.insert(training_job_id.to_string(), ActiveCloudJob {
-                project_dir: project_dir.clone(),
-                training_job_id: training_job_id.to_string(),
-                cancelled: false,
-            });
+            jobs.insert(
+                training_job_id.to_string(),
+                ActiveCloudJob {
+                    project_dir: project_dir.clone(),
+                    training_job_id: training_job_id.to_string(),
+                    cancelled: false,
+                },
+            );
         }
 
         // Start polling in background
@@ -178,7 +184,8 @@ impl CloudTrainingManager {
     #[allow(dead_code)]
     pub fn is_cloud_job(&self, training_job_id: &str) -> bool {
         let jobs = self.active_jobs.lock().ok();
-        jobs.map(|j| j.contains_key(training_job_id)).unwrap_or(false)
+        jobs.map(|j| j.contains_key(training_job_id))
+            .unwrap_or(false)
     }
 
     fn get_runner(
@@ -190,80 +197,84 @@ impl CloudTrainingManager {
 
         match provider {
             CloudProvider::Kaggle => {
-                let kaggle_cfg = config.cloud_providers.kaggle
+                let kaggle_cfg = config
+                    .cloud_providers
+                    .kaggle
                     .ok_or("Kaggle no configurado. Ve a Settings > Cloud Providers")?;
-                let username = kaggle_cfg.username
-                    .ok_or("Falta username de Kaggle")?;
-                let api_key = kaggle_cfg.api_key
-                    .ok_or("Falta API key de Kaggle")?;
+                let username = kaggle_cfg.username.ok_or("Falta username de Kaggle")?;
+                let api_key = kaggle_cfg.api_key.ok_or("Falta API key de Kaggle")?;
                 Ok(Box::new(kaggle::KaggleRunner::new(username, api_key)))
             }
             CloudProvider::VertexAiCustom => {
-                let gcp_cfg = config.cloud_providers.gcp
+                let gcp_cfg = config
+                    .cloud_providers
+                    .gcp
                     .ok_or("GCP no configurado. Ve a Settings > Cloud Providers")?;
-                let sa_path = gcp_cfg.service_account_path
+                let sa_path = gcp_cfg
+                    .service_account_path
                     .ok_or("Falta Service Account JSON path")?;
-                let project_id = gcp_cfg.project_id
-                    .ok_or("Falta GCP Project ID")?;
-                let region = gcp_cfg.region
-                    .unwrap_or_else(|| "us-central1".to_string());
-                let bucket = gcp_cfg.gcs_bucket
-                    .ok_or("Falta GCS Bucket")?;
+                let project_id = gcp_cfg.project_id.ok_or("Falta GCP Project ID")?;
+                let region = gcp_cfg.region.unwrap_or_else(|| "us-central1".to_string());
+                let bucket = gcp_cfg.gcs_bucket.ok_or("Falta GCS Bucket")?;
                 Ok(Box::new(vertex_custom::VertexCustomRunner::new(
                     sa_path, project_id, region, bucket,
                 )))
             }
             CloudProvider::ColabEnterprise => {
-                let gcp_cfg = config.cloud_providers.gcp
+                let gcp_cfg = config
+                    .cloud_providers
+                    .gcp
                     .ok_or("GCP no configurado. Ve a Settings > Cloud Providers")?;
-                let sa_path = gcp_cfg.service_account_path
+                let sa_path = gcp_cfg
+                    .service_account_path
                     .ok_or("Falta Service Account JSON path")?;
-                let project_id = gcp_cfg.project_id
-                    .ok_or("Falta GCP Project ID")?;
-                let region = gcp_cfg.region
-                    .unwrap_or_else(|| "us-central1".to_string());
-                let bucket = gcp_cfg.gcs_bucket
-                    .ok_or("Falta GCS Bucket")?;
+                let project_id = gcp_cfg.project_id.ok_or("Falta GCP Project ID")?;
+                let region = gcp_cfg.region.unwrap_or_else(|| "us-central1".to_string());
+                let bucket = gcp_cfg.gcs_bucket.ok_or("Falta GCS Bucket")?;
                 Ok(Box::new(colab::ColabEnterpriseRunner::new(
                     sa_path, project_id, region, bucket,
                 )))
             }
             CloudProvider::VertexAiGeminiTuning => {
-                let gcp_cfg = config.cloud_providers.gcp
+                let gcp_cfg = config
+                    .cloud_providers
+                    .gcp
                     .ok_or("GCP no configurado. Ve a Settings > Cloud Providers")?;
-                let sa_path = gcp_cfg.service_account_path
+                let sa_path = gcp_cfg
+                    .service_account_path
                     .ok_or("Falta Service Account JSON path")?;
-                let project_id = gcp_cfg.project_id
-                    .ok_or("Falta GCP Project ID")?;
-                let region = gcp_cfg.region
-                    .unwrap_or_else(|| "us-central1".to_string());
-                let bucket = gcp_cfg.gcs_bucket
-                    .ok_or("Falta GCS Bucket")?;
+                let project_id = gcp_cfg.project_id.ok_or("Falta GCP Project ID")?;
+                let region = gcp_cfg.region.unwrap_or_else(|| "us-central1".to_string());
+                let bucket = gcp_cfg.gcs_bucket.ok_or("Falta GCS Bucket")?;
                 Ok(Box::new(vertex_tuning::VertexTuningRunner::new(
                     sa_path, project_id, region, bucket,
                 )))
             }
             CloudProvider::LightningAi => {
-                let lai_cfg = config.cloud_providers.lightning_ai
+                let lai_cfg = config
+                    .cloud_providers
+                    .lightning_ai
                     .ok_or("Lightning AI no configurado. Ve a Settings > Cloud Providers")?;
-                let api_key = lai_cfg.api_key
-                    .ok_or("Falta API key de Lightning AI")?;
+                let api_key = lai_cfg.api_key.ok_or("Falta API key de Lightning AI")?;
                 Ok(Box::new(lightning::LightningRunner::new(api_key)))
             }
             CloudProvider::HuggingFace => {
-                let hf_cfg = config.cloud_providers.huggingface
+                let hf_cfg = config
+                    .cloud_providers
+                    .huggingface
                     .ok_or("Hugging Face no configurado. Ve a Settings > Cloud Providers")?;
-                let token = hf_cfg.token
-                    .ok_or("Falta token de Hugging Face")?;
-                let username = hf_cfg.username
-                    .ok_or("Falta username de Hugging Face")?;
-                Ok(Box::new(huggingface::HuggingFaceRunner::new(token, username)))
+                let token = hf_cfg.token.ok_or("Falta token de Hugging Face")?;
+                let username = hf_cfg.username.ok_or("Falta username de Hugging Face")?;
+                Ok(Box::new(huggingface::HuggingFaceRunner::new(
+                    token, username,
+                )))
             }
             CloudProvider::SaturnCloud => {
-                let sc_cfg = config.cloud_providers.saturn_cloud
+                let sc_cfg = config
+                    .cloud_providers
+                    .saturn_cloud
                     .ok_or("Saturn Cloud no configurado. Ve a Settings > Cloud Providers")?;
-                let api_token = sc_cfg.api_token
-                    .ok_or("Falta API token de Saturn Cloud")?;
+                let api_token = sc_cfg.api_token.ok_or("Falta API token de Saturn Cloud")?;
                 Ok(Box::new(saturn::SaturnCloudRunner::new(api_token)))
             }
         }
@@ -295,9 +306,12 @@ impl CloudTrainingManager {
                             if active.cancelled {
                                 let _ = runner.cancel_job(&handle);
                                 update_job_status(&project_dir, &training_job_id, "cancelled");
-                                let _ = app.emit("training:cancelled", serde_json::json!({
-                                    "jobId": training_job_id,
-                                }));
+                                let _ = app.emit(
+                                    "training:cancelled",
+                                    serde_json::json!({
+                                        "jobId": training_job_id,
+                                    }),
+                                );
                                 break;
                             }
                         } else {
@@ -312,26 +326,34 @@ impl CloudTrainingManager {
                         let ev_type = ev["type"].as_str().unwrap_or("");
                         if ev_type == "epoch" {
                             let epoch = ev["epoch"].as_u64().unwrap_or(0);
-                            if epoch == 0 || !seen_epochs.insert(epoch) { continue; }
+                            if epoch == 0 || !seen_epochs.insert(epoch) {
+                                continue;
+                            }
                             let total_epochs = ev["totalEpochs"].as_u64().unwrap_or(0);
                             let progress = ev["progress"].as_f64().unwrap_or(0.0);
                             let metrics = ev["metrics"].clone();
 
-                            let _ = app.emit("training:progress", serde_json::json!({
-                                "jobId": training_job_id,
-                                "epoch": epoch,
-                                "totalEpochs": total_epochs,
-                                "progress": progress,
-                                "metrics": metrics,
-                                "phase": "training",
-                            }));
+                            let _ = app.emit(
+                                "training:progress",
+                                serde_json::json!({
+                                    "jobId": training_job_id,
+                                    "epoch": epoch,
+                                    "totalEpochs": total_epochs,
+                                    "progress": progress,
+                                    "metrics": metrics,
+                                    "phase": "training",
+                                }),
+                            );
 
                             let entry = serde_json::json!({
                                 "epoch": epoch,
                                 "metrics": metrics,
                                 "ts": 0.0,
                             });
-                            if let Some(pos) = last_metrics_history.iter().position(|e| e["epoch"].as_u64() == Some(epoch)) {
+                            if let Some(pos) = last_metrics_history
+                                .iter()
+                                .position(|e| e["epoch"].as_u64() == Some(epoch))
+                            {
                                 last_metrics_history[pos] = entry;
                             } else {
                                 last_metrics_history.push(entry);
@@ -339,7 +361,11 @@ impl CloudTrainingManager {
 
                             let history_clone = last_metrics_history.clone();
                             if let Ok(mut pf) = io::read_project(&project_dir) {
-                                if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == training_job_id) {
+                                if let Some(job) = pf
+                                    .training_jobs
+                                    .iter_mut()
+                                    .find(|j| j.id == training_job_id)
+                                {
                                     job.progress = progress;
                                     job.metrics_history = history_clone;
                                 }
@@ -347,10 +373,13 @@ impl CloudTrainingManager {
                             }
                         } else if ev_type == "log" {
                             if let Some(msg) = ev["message"].as_str() {
-                                let _ = app.emit("training:log", serde_json::json!({
-                                    "jobId": training_job_id,
-                                    "message": msg,
-                                }));
+                                let _ = app.emit(
+                                    "training:log",
+                                    serde_json::json!({
+                                        "jobId": training_job_id,
+                                        "message": msg,
+                                    }),
+                                );
                             }
                         }
                     }
@@ -367,42 +396,58 @@ impl CloudTrainingManager {
                             CloudJobState::Cancelled => "cancelled",
                         };
 
-                        let _ = app.emit("training:cloud:status", serde_json::json!({
-                            "jobId": training_job_id,
-                            "state": state_str,
-                            "message": status.message,
-                            "progressPercent": status.progress_percent,
-                        }));
+                        let _ = app.emit(
+                            "training:cloud:status",
+                            serde_json::json!({
+                                "jobId": training_job_id,
+                                "state": state_str,
+                                "message": status.message,
+                                "progressPercent": status.progress_percent,
+                            }),
+                        );
 
                         // Update progress in project file
                         let progress = status.progress_percent.unwrap_or(0.0);
                         update_job_progress(&project_dir, &training_job_id, state_str, progress);
 
-                        let _ = app.emit("training:progress", serde_json::json!({
-                            "jobId": training_job_id,
-                            "epoch": 0,
-                            "totalEpochs": 0,
-                            "progress": progress,
-                            "metrics": null,
-                            "phase": state_str,
-                        }));
+                        let _ = app.emit(
+                            "training:progress",
+                            serde_json::json!({
+                                "jobId": training_job_id,
+                                "epoch": 0,
+                                "totalEpochs": 0,
+                                "progress": progress,
+                                "metrics": null,
+                                "phase": state_str,
+                            }),
+                        );
 
                         match status.state {
                             CloudJobState::Succeeded => {
-                                if let Ok(model_path) = runner.download_model(&handle, &status, "/tmp") {
-                                    update_job_model(&project_dir, &training_job_id, &model_path, status.model_output_uri.as_deref());
+                                if let Ok(model_path) =
+                                    runner.download_model(&handle, &status, "/tmp")
+                                {
+                                    update_job_model(
+                                        &project_dir,
+                                        &training_job_id,
+                                        &model_path,
+                                        status.model_output_uri.as_deref(),
+                                    );
                                 }
 
-                                let _ = app.emit("training:completed", serde_json::json!({
-                                    "jobId": training_job_id,
-                                    "result": {
-                                        "bestModelPath": null,
-                                        "lastModelPath": null,
-                                        "resultsDir": null,
-                                        "finalMetrics": null,
-                                        "exportedModels": [],
-                                    },
-                                }));
+                                let _ = app.emit(
+                                    "training:completed",
+                                    serde_json::json!({
+                                        "jobId": training_job_id,
+                                        "result": {
+                                            "bestModelPath": null,
+                                            "lastModelPath": null,
+                                            "resultsDir": null,
+                                            "finalMetrics": null,
+                                            "exportedModels": [],
+                                        },
+                                    }),
+                                );
                                 break;
                             }
                             CloudJobState::Failed => {
@@ -413,9 +458,12 @@ impl CloudTrainingManager {
                                 break;
                             }
                             CloudJobState::Cancelled => {
-                                let _ = app.emit("training:cancelled", serde_json::json!({
-                                    "jobId": training_job_id,
-                                }));
+                                let _ = app.emit(
+                                    "training:cancelled",
+                                    serde_json::json!({
+                                        "jobId": training_job_id,
+                                    }),
+                                );
                                 break;
                             }
                             _ => {}
@@ -456,7 +504,12 @@ fn update_job_progress(project_dir: &PathBuf, job_id: &str, status: &str, progre
     }
 }
 
-fn update_job_model(project_dir: &PathBuf, job_id: &str, model_path: &str, download_url: Option<&str>) {
+fn update_job_model(
+    project_dir: &PathBuf,
+    job_id: &str,
+    model_path: &str,
+    download_url: Option<&str>,
+) {
     if let Ok(mut pf) = io::read_project(project_dir) {
         if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id) {
             job.best_model_path = Some(model_path.to_string());

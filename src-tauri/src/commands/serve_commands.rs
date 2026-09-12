@@ -1,7 +1,7 @@
 use tauri::{AppHandle, State};
 
-use crate::serve::ServeState;
 use crate::serve::server::ServeInfo;
+use crate::serve::ServeState;
 
 #[tauri::command]
 pub async fn start_serve(
@@ -17,24 +17,17 @@ pub async fn start_serve(
 }
 
 #[tauri::command]
-pub async fn stop_serve(
-    serve: State<'_, ServeState>,
-) -> Result<(), String> {
+pub async fn stop_serve(serve: State<'_, ServeState>) -> Result<(), String> {
     serve.stop().await
 }
 
 #[tauri::command]
-pub async fn get_serve_status(
-    serve: State<'_, ServeState>,
-) -> Result<Option<ServeInfo>, String> {
+pub async fn get_serve_status(serve: State<'_, ServeState>) -> Result<Option<ServeInfo>, String> {
     Ok(serve.status().await)
 }
 
 #[tauri::command]
-pub async fn set_serve_auto_save(
-    serve: State<'_, ServeState>,
-    value: bool,
-) -> Result<(), String> {
+pub async fn set_serve_auto_save(serve: State<'_, ServeState>, value: bool) -> Result<(), String> {
     serve.set_auto_save(value).await;
     Ok(())
 }

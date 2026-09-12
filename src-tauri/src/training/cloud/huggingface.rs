@@ -77,8 +77,8 @@ impl HuggingFaceRunner {
         }
 
         // Upload dataset zip via the upload API
-        let data = std::fs::read(dataset_path)
-            .map_err(|e| format!("Error leyendo dataset: {}", e))?;
+        let data =
+            std::fs::read(dataset_path).map_err(|e| format!("Error leyendo dataset: {}", e))?;
 
         let upload_url = format!(
             "https://huggingface.co/api/datasets/{}/upload/main/dataset.zip",
@@ -190,7 +190,8 @@ impl CloudRunner for HuggingFaceRunner {
         let dataset_repo = self.upload_dataset_to_repo(&repo_name, dataset_path)?;
 
         // 3. Generate training script
-        let script = self.generate_train_script(request, &dataset_repo, &model_repo, project_classes);
+        let script =
+            self.generate_train_script(request, &dataset_repo, &model_repo, project_classes);
 
         // 4. Upload training script to model repo
         let script_form = reqwest::blocking::multipart::Form::new().part(
@@ -258,10 +259,7 @@ impl CloudRunner for HuggingFaceRunner {
     }
 
     fn poll_status(&self, handle: &CloudJobHandle) -> Result<CloudJobStatus, String> {
-        let url = format!(
-            "https://huggingface.co/api/spaces/{}",
-            handle.job_id
-        );
+        let url = format!("https://huggingface.co/api/spaces/{}", handle.job_id);
 
         let resp = self
             .client()
@@ -301,10 +299,7 @@ impl CloudRunner for HuggingFaceRunner {
     }
 
     fn cancel_job(&self, handle: &CloudJobHandle) -> Result<(), String> {
-        let url = format!(
-            "https://huggingface.co/api/spaces/{}",
-            handle.job_id
-        );
+        let url = format!("https://huggingface.co/api/spaces/{}", handle.job_id);
 
         let resp = self
             .client()

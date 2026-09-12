@@ -44,15 +44,27 @@ fn mask_bounds(mask: &GrayImage) -> Option<(u32, u32, u32, u32)> {
         for (x, &v) in row.iter().enumerate() {
             if v >= 128 {
                 let x = x as u32;
-                if x < min_x { min_x = x; }
-                if x > max_x { max_x = x; }
-                if y < min_y { min_y = y; }
-                if y > max_y { max_y = y; }
+                if x < min_x {
+                    min_x = x;
+                }
+                if x > max_x {
+                    max_x = x;
+                }
+                if y < min_y {
+                    min_y = y;
+                }
+                if y > max_y {
+                    max_y = y;
+                }
                 found = true;
             }
         }
     }
-    if !found { None } else { Some((min_x, min_y, max_x, max_y)) }
+    if !found {
+        None
+    } else {
+        Some((min_x, min_y, max_x, max_y))
+    }
 }
 
 fn mask_to_bbox(mask: &GrayImage) -> Result<serde_json::Value, String> {
@@ -125,11 +137,7 @@ fn mask_to_obb(mask: &GrayImage) -> Result<serde_json::Value, String> {
             .collect::<Vec<_>>(),
     );
     let hull = mp.convex_hull();
-    let hull_coords: Vec<(f64, f64)> = hull
-        .exterior()
-        .coords()
-        .map(|c| (c.x, c.y))
-        .collect();
+    let hull_coords: Vec<(f64, f64)> = hull.exterior().coords().map(|c| (c.x, c.y)).collect();
     if hull_coords.len() < 4 {
         // Hull degenerado: fallback a bbox axis-aligned.
         let (x0, y0, x1, y1) = mask_bounds(mask).ok_or_else(|| "obb: máscara vacía".to_string())?;
@@ -187,10 +195,18 @@ fn min_area_rect(hull: &[(f64, f64)]) -> (f64, f64, f64, f64, f64) {
         for &(px, py) in hull {
             let pu = px * ux + py * uy;
             let pv = px * vx + py * vy;
-            if pu < min_u { min_u = pu; }
-            if pu > max_u { max_u = pu; }
-            if pv < min_v { min_v = pv; }
-            if pv > max_v { max_v = pv; }
+            if pu < min_u {
+                min_u = pu;
+            }
+            if pu > max_u {
+                max_u = pu;
+            }
+            if pv < min_v {
+                min_v = pv;
+            }
+            if pv > max_v {
+                max_v = pv;
+            }
         }
         let w = max_u - min_u;
         let h = max_v - min_v;

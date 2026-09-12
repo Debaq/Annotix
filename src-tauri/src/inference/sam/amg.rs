@@ -38,8 +38,8 @@ struct Candidate {
 pub fn run_amg(
     sessions: &Mutex<Option<SamSessions>>,
     embedding: &[f32],
-    orig_size: (u32, u32),    // (w, h) originales
-    input_size: (u32, u32),   // (w, h) tras resize 1024 (para transform_points)
+    orig_size: (u32, u32),  // (w, h) originales
+    input_size: (u32, u32), // (w, h) tras resize 1024 (para transform_points)
     image_id: &str,
     config: &AmgConfig,
     existing_bboxes: &[[f32; 4]],
@@ -85,7 +85,9 @@ pub fn run_amg(
 
         let run = {
             let mut guard = sessions.lock().map_err(|e| e.to_string())?;
-            let s = guard.as_mut().ok_or_else(|| "SAM: sessions vacío".to_string())?;
+            let s = guard
+                .as_mut()
+                .ok_or_else(|| "SAM: sessions vacío".to_string())?;
             run_decoder(
                 &mut s.decoder,
                 embedding,
@@ -205,7 +207,11 @@ pub fn run_amg(
     });
 
     // Orden descendente por score (best multimask).
-    candidates.sort_by(|a, b| b.best_score.partial_cmp(&a.best_score).unwrap_or(std::cmp::Ordering::Equal));
+    candidates.sort_by(|a, b| {
+        b.best_score
+            .partial_cmp(&a.best_score)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
     let mut kept_bboxes: Vec<[f32; 4]> = Vec::new();
     let mut kept: Vec<Candidate> = Vec::new();

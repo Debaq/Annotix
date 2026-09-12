@@ -24,7 +24,9 @@ fn read_series_data(project_dir: &Path, ts: &TimeSeriesEntry) -> Option<serde_js
     if let Some(data) = &ts.data {
         return Some(data.clone());
     }
-    let path = project_dir.join("timeseries").join(format!("{}.json", ts.id));
+    let path = project_dir
+        .join("timeseries")
+        .join(format!("{}.json", ts.id));
     let content = std::fs::read(path).ok()?;
     serde_json::from_slice(&content).ok()
 }
@@ -248,7 +250,10 @@ pub fn export<W: Write + Seek, F: Fn(f64)>(
 
     for (idx, ts) in project.timeseries.iter().enumerate() {
         let Some(data) = read_series_data(project_dir, ts) else {
-            log::warn!("Serie {} sin datos legibles, se omite de la exportación", ts.id);
+            log::warn!(
+                "Serie {} sin datos legibles, se omite de la exportación",
+                ts.id
+            );
             continue;
         };
 

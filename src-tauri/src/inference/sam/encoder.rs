@@ -58,7 +58,10 @@ pub fn run_encoder(session: &mut Session, input_chw: Vec<f32>) -> Result<Vec<f32
         // CHW: [3, H, W]
         [3, _, _] => (vec![3i64, side, side], input_chw),
         // HWC: [H, W, 3]
-        [_, _, 3] => (vec![side, side, 3i64], chw_to_hwc(&input_chw, side as usize)),
+        [_, _, 3] => (
+            vec![side, side, 3i64],
+            chw_to_hwc(&input_chw, side as usize),
+        ),
         // NHWC: [1, H, W, 3]
         [_, _, _, 3] => (
             vec![1i64, side, side, 3i64],

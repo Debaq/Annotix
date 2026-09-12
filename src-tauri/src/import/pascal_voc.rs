@@ -1,9 +1,9 @@
+use serde_json::json;
 use std::collections::HashMap;
 use zip::ZipArchive;
-use serde_json::json;
 
-use super::{ImportData, ImageImportData, create_class, create_annotation};
-use super::yolo::{read_zip_text, read_zip_bytes, list_files_in_folder, get_image_dimensions};
+use super::yolo::{get_image_dimensions, list_files_in_folder, read_zip_bytes, read_zip_text};
+use super::{create_annotation, create_class, ImageImportData, ImportData};
 
 pub fn import_data(archive: &mut ZipArchive<std::fs::File>) -> Result<ImportData, String> {
     let image_files = list_files_in_folder(archive, "images");
@@ -26,7 +26,9 @@ pub fn import_data(archive: &mut ZipArchive<std::fs::File>) -> Result<ImportData
 
     for image_path in &image_files {
         let image_name = image_path.rsplit('/').next().unwrap_or(image_path);
-        if image_name.is_empty() { continue; }
+        if image_name.is_empty() {
+            continue;
+        }
 
         let image_data = match read_zip_bytes(archive, image_path) {
             Ok(d) => d,
@@ -54,7 +56,8 @@ pub fn import_data(archive: &mut ZipArchive<std::fs::File>) -> Result<ImportData
     }
 
     // Build class definitions
-    let mut classes: Vec<_> = class_map.iter()
+    let mut classes: Vec<_> = class_map
+        .iter()
         .map(|(name, &id)| create_class(id, name, None))
         .collect();
     classes.sort_by_key(|c| c.id);
@@ -72,7 +75,9 @@ fn parse_voc_xml(
     // Simple XML parsing without full DOM
     for obj_match in split_xml_elements(xml_content, "object") {
         let name = extract_xml_value(&obj_match, "name").unwrap_or_default();
-        if name.is_empty() { continue; }
+        if name.is_empty() {
+            continue;
+        }
 
         // Get or create class
         let class_id = if let Some(&id) = class_map.get(&name) {
@@ -86,17 +91,29 @@ fn parse_voc_xml(
 
         // Parse bndbox
         if let Some(bndbox) = extract_xml_block(&obj_match, "bndbox") {
-            let xmin = extract_xml_value(&bndbox, "xmin").and_then(|v| v.parse::<f64>().ok()).unwrap_or(0.0);
-            let ymin = extract_xml_value(&bndbox, "ymin").and_then(|v| v.parse::<f64>().ok()).unwrap_or(0.0);
-            let xmax = extract_xml_value(&bndbox, "xmax").and_then(|v| v.parse::<f64>().ok()).unwrap_or(0.0);
-            let ymax = extract_xml_value(&bndbox, "ymax").and_then(|v| v.parse::<f64>().ok()).unwrap_or(0.0);
+            let xmin = extract_xml_value(&bndbox, "xmin")
+                .and_then(|v| v.parse::<f64>().ok())
+                .unwrap_or(0.0);
+            let ymin = extract_xml_value(&bndbox, "ymin")
+                .and_then(|v| v.parse::<f64>().ok())
+                .unwrap_or(0.0);
+            let xmax = extract_xml_value(&bndbox, "xmax")
+                .and_then(|v| v.parse::<f64>().ok())
+                .unwrap_or(0.0);
+            let ymax = extract_xml_value(&bndbox, "ymax")
+                .and_then(|v| v.parse::<f64>().ok())
+                .unwrap_or(0.0);
 
-            annotations.push(create_annotation(class_id, "bbox", json!({
-                "x": xmin,
-                "y": ymin,
-                "width": xmax - xmin,
-                "height": ymax - ymin,
-            })));
+            annotations.push(create_annotation(
+                class_id,
+                "bbox",
+                json!({
+                    "x": xmin,
+                    "y": ymin,
+                    "width": xmax - xmin,
+                    "height": ymax - ymin,
+                }),
+            ));
         }
     }
 

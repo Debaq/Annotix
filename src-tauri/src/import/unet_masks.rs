@@ -1,9 +1,9 @@
-use zip::ZipArchive;
-use serde_json::json;
 use base64::Engine;
+use serde_json::json;
+use zip::ZipArchive;
 
-use super::{ImportData, ImageImportData, create_class, create_annotation};
-use super::yolo::{read_zip_bytes, list_files_in_folder, get_image_dimensions};
+use super::yolo::{get_image_dimensions, list_files_in_folder, read_zip_bytes};
+use super::{create_annotation, create_class, ImageImportData, ImportData};
 
 pub fn import_data(archive: &mut ZipArchive<std::fs::File>) -> Result<ImportData, String> {
     let image_files = list_files_in_folder(archive, "images");
@@ -35,7 +35,9 @@ pub fn import_data(archive: &mut ZipArchive<std::fs::File>) -> Result<ImportData
 
     for image_path in &image_files {
         let image_name = image_path.rsplit('/').next().unwrap_or("");
-        if image_name.is_empty() { continue; }
+        if image_name.is_empty() {
+            continue;
+        }
 
         let image_data = match read_zip_bytes(archive, image_path) {
             Ok(d) => d,
@@ -55,10 +57,14 @@ pub fn import_data(archive: &mut ZipArchive<std::fs::File>) -> Result<ImportData
                 let b64 = engine.encode(&mask_data);
                 let data_uri = format!("data:image/png;base64,{}", b64);
 
-                annotations.push(create_annotation(1, "mask", json!({
-                    "base64png": data_uri,
-                    "instanceId": 1,
-                })));
+                annotations.push(create_annotation(
+                    1,
+                    "mask",
+                    json!({
+                        "base64png": data_uri,
+                        "instanceId": 1,
+                    }),
+                ));
             }
         }
 

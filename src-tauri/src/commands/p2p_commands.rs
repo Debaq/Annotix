@@ -2,7 +2,10 @@ use tauri::{Manager, State};
 
 use crate::p2p::node::P2pState;
 use crate::p2p::P2pPermission;
-use crate::p2p::{sync, BatchInfo, ImageLockInfo, P2pSessionInfo, PeerInfo, PeerRole, PeerWorkStats, PendingApproval, SessionRules, WorkDistribution};
+use crate::p2p::{
+    sync, BatchInfo, ImageLockInfo, P2pSessionInfo, PeerInfo, PeerRole, PeerWorkStats,
+    PendingApproval, SessionRules, WorkDistribution,
+};
 use crate::store::project_file::AnnotationEntry;
 use crate::store::state::AppState;
 
@@ -15,7 +18,8 @@ pub async fn p2p_create_session(
     display_name: String,
     rules: SessionRules,
 ) -> Result<P2pSessionInfo, String> {
-    p2p.create_session(&app_state, &app_handle, &project_id, &display_name, rules).await
+    p2p.create_session(&app_state, &app_handle, &project_id, &display_name, rules)
+        .await
 }
 
 #[tauri::command]
@@ -26,7 +30,8 @@ pub async fn p2p_join_session(
     share_code: String,
     display_name: String,
 ) -> Result<P2pSessionInfo, String> {
-    p2p.join_session(&app_state, &app_handle, &share_code, &display_name).await
+    p2p.join_session(&app_state, &app_handle, &share_code, &display_name)
+        .await
 }
 
 #[tauri::command]
@@ -53,11 +58,12 @@ pub async fn p2p_resume_session(
     app_handle: tauri::AppHandle,
     project_id: String,
 ) -> Result<P2pSessionInfo, String> {
-    let config = app_state.with_project(&project_id, |pf| {
-        pf.p2p.clone()
-    })?.ok_or("El proyecto no tiene configuración P2P guardada")?;
+    let config = app_state
+        .with_project(&project_id, |pf| pf.p2p.clone())?
+        .ok_or("El proyecto no tiene configuración P2P guardada")?;
 
-    p2p.resume_session(&app_state, &app_handle, &project_id, config).await
+    p2p.resume_session(&app_state, &app_handle, &project_id, config)
+        .await
 }
 
 #[tauri::command]
@@ -69,9 +75,7 @@ pub async fn p2p_get_session_info(
 }
 
 #[tauri::command]
-pub async fn p2p_get_all_sessions(
-    p2p: State<'_, P2pState>,
-) -> Result<Vec<P2pSessionInfo>, String> {
+pub async fn p2p_get_all_sessions(p2p: State<'_, P2pState>) -> Result<Vec<P2pSessionInfo>, String> {
     Ok(p2p.get_all_sessions().await)
 }
 
@@ -109,7 +113,8 @@ pub async fn p2p_assign_batch(
     image_ids: Vec<String>,
     assign_to: String,
 ) -> Result<BatchInfo, String> {
-    p2p.check_permission(&project_id, P2pPermission::Manage).await?;
+    p2p.check_permission(&project_id, P2pPermission::Manage)
+        .await?;
     p2p.assign_batch(&project_id, image_ids, &assign_to).await
 }
 
@@ -120,7 +125,8 @@ pub async fn p2p_sync_annotations(
     image_id: String,
     annotations: Vec<AnnotationEntry>,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
+    p2p.check_permission(&project_id, P2pPermission::Annotate)
+        .await?;
     crate::p2p::sync::sync_annotations_to_doc(&p2p, &project_id, &image_id, &annotations).await
 }
 
@@ -156,9 +162,7 @@ pub async fn p2p_resume_download(
     project_id: String,
 ) -> Result<(), String> {
     // Verificar que hay imágenes pendientes
-    let has_pending = app_state.with_project(&project_id, |pf| {
-        pf.p2p_download.is_some()
-    })?;
+    let has_pending = app_state.with_project(&project_id, |pf| pf.p2p_download.is_some())?;
 
     if !has_pending {
         return Ok(());
@@ -169,7 +173,9 @@ pub async fn p2p_resume_download(
     tokio::spawn(async move {
         let p2p = app_handle_bg.state::<P2pState>();
         let state = app_handle_bg.state::<AppState>();
-        if let Err(e) = sync::download_project_images(&p2p, &state, &project_id_bg, &app_handle_bg).await {
+        if let Err(e) =
+            sync::download_project_images(&p2p, &state, &project_id_bg, &app_handle_bg).await
+        {
             log::warn!("Error en p2p_resume_download: {}", e);
         }
     });
@@ -194,7 +200,8 @@ pub async fn p2p_adjust_assignment(
     item_type: String,
     target_node_id: String,
 ) -> Result<WorkDistribution, String> {
-    p2p.adjust_assignment(&project_id, item_ids, item_type, target_node_id).await
+    p2p.adjust_assignment(&project_id, item_ids, item_type, target_node_id)
+        .await
 }
 
 #[tauri::command]
@@ -240,7 +247,8 @@ pub async fn p2p_approve_data(
     project_id: String,
     item_id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Manage).await?;
+    p2p.check_permission(&project_id, P2pPermission::Manage)
+        .await?;
     sync::approve_data(&p2p, &project_id, &item_id).await
 }
 
@@ -250,7 +258,8 @@ pub async fn p2p_reject_data(
     project_id: String,
     item_id: String,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Manage).await?;
+    p2p.check_permission(&project_id, P2pPermission::Manage)
+        .await?;
     sync::reject_data(&p2p, &project_id, &item_id).await
 }
 

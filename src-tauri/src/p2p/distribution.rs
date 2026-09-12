@@ -4,7 +4,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::store::state::AppState;
 
 use super::node::P2pState;
-use super::{WorkAssignment, WorkDistribution, PeerWorkStats};
+use super::{PeerWorkStats, WorkAssignment, WorkDistribution};
 
 fn now_ms() -> f64 {
     SystemTime::now()
@@ -25,7 +25,9 @@ impl P2pState {
         let node_guard = self.node.read().await;
         let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
         let sessions = self.sessions.read().await;
-        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
+        let session = sessions
+            .get(project_id)
+            .ok_or("No hay sesión P2P activa para este proyecto")?;
 
         if !session.role.can_manage() {
             return Err("Solo el host puede distribuir trabajo".to_string());
@@ -36,7 +38,9 @@ impl P2pState {
         // Recoger IDs de videos e imágenes sueltas del proyecto
         let (video_ids, standalone_image_ids) = app_state.with_project(sess_project_id, |pf| {
             let vids: Vec<String> = pf.videos.iter().map(|v| v.id.clone()).collect();
-            let imgs: Vec<String> = pf.images.iter()
+            let imgs: Vec<String> = pf
+                .images
+                .iter()
                 .filter(|i| i.video_id.is_none())
                 .map(|i| i.id.clone())
                 .collect();
@@ -44,9 +48,8 @@ impl P2pState {
         })?;
 
         // Recoger peers (incluido el host)
-        let mut peer_list: Vec<(String, String)> = vec![
-            (session.my_node_id.clone(), session.my_display_name.clone())
-        ];
+        let mut peer_list: Vec<(String, String)> =
+            vec![(session.my_node_id.clone(), session.my_display_name.clone())];
         for p in session.peers.values() {
             if !peer_list.iter().any(|(id, _)| id == &p.node_id) {
                 peer_list.push((p.node_id.clone(), p.display_name.clone()));
@@ -58,7 +61,9 @@ impl P2pState {
         }
 
         // Leer distribución existente para detectar items ya asignados
-        let existing = self.read_distribution_inner(node, session.namespace_id).await;
+        let existing = self
+            .read_distribution_inner(node, session.namespace_id)
+            .await;
         let mut already_assigned_videos: HashSet<String> = HashSet::new();
         let mut already_assigned_images: HashSet<String> = HashSet::new();
         let prev_version = if let Some(ref dist) = existing {
@@ -76,10 +81,12 @@ impl P2pState {
         };
 
         // Items nuevos (no asignados en distribución previa)
-        let new_videos: Vec<String> = video_ids.into_iter()
+        let new_videos: Vec<String> = video_ids
+            .into_iter()
             .filter(|v| !already_assigned_videos.contains(v))
             .collect();
-        let new_images: Vec<String> = standalone_image_ids.into_iter()
+        let new_images: Vec<String> = standalone_image_ids
+            .into_iter()
             .filter(|i| !already_assigned_images.contains(i))
             .collect();
 
@@ -126,15 +133,16 @@ impl P2pState {
             kept
         } else {
             // Distribución desde cero
-            let mut assignments: Vec<WorkAssignment> = peer_list.iter().map(|(nid, dname)| {
-                WorkAssignment {
+            let mut assignments: Vec<WorkAssignment> = peer_list
+                .iter()
+                .map(|(nid, dname)| WorkAssignment {
                     node_id: nid.clone(),
                     display_name: dname.clone(),
                     video_ids: vec![],
                     image_ids: vec![],
                     updated_at: now_ms(),
-                }
-            }).collect();
+                })
+                .collect();
 
             round_robin_assign(&mut assignments, &new_videos, &new_images);
             assignments
@@ -154,7 +162,9 @@ impl P2pState {
         };
 
         // Escribir al iroh-doc
-        let doc = node.docs.open(session.namespace_id)
+        let doc = node
+            .docs
+            .open(session.namespace_id)
             .await
             .map_err(|e| format!("Error abriendo doc: {}", e))?
             .ok_or("Documento no encontrado")?;
@@ -166,7 +176,11 @@ impl P2pState {
             .await
             .map_err(|e| format!("Error escribiendo distribución: {}", e))?;
 
-        log::info!("Trabajo distribuido v{}: {} assignments", distribution.version, distribution.assignments.len());
+        log::info!(
+            "Trabajo distribuido v{}: {} assignments",
+            distribution.version,
+            distribution.assignments.len()
+        );
 
         Ok(distribution)
     }
@@ -182,13 +196,16 @@ impl P2pState {
         let node_guard = self.node.read().await;
         let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
         let sessions = self.sessions.read().await;
-        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
+        let session = sessions
+            .get(project_id)
+            .ok_or("No hay sesión P2P activa para este proyecto")?;
 
         if !session.role.can_manage() {
             return Err("Solo el host puede ajustar asignaciones".to_string());
         }
 
-        let mut dist = self.read_distribution_inner(node, session.namespace_id)
+        let mut dist = self
+            .read_distribution_inner(node, session.namespace_id)
             .await
             .ok_or("No hay distribución activa")?;
 
@@ -204,7 +221,11 @@ impl P2pState {
         }
 
         // Agregar items al target
-        if let Some(target) = dist.assignments.iter_mut().find(|a| a.node_id == target_node_id) {
+        if let Some(target) = dist
+            .assignments
+            .iter_mut()
+            .find(|a| a.node_id == target_node_id)
+        {
             if item_type == "video" {
                 target.video_ids.extend(item_set);
             } else {
@@ -219,7 +240,9 @@ impl P2pState {
         dist.created_at = now_ms();
 
         // Escribir al doc
-        let doc = node.docs.open(session.namespace_id)
+        let doc = node
+            .docs
+            .open(session.namespace_id)
             .await
             .map_err(|e| format!("Error abriendo doc: {}", e))?
             .ok_or("Documento no encontrado")?;
@@ -235,12 +258,19 @@ impl P2pState {
     }
 
     /// Lee la distribución actual del iroh-doc. Cualquier peer puede llamarla.
-    pub async fn read_distribution(&self, project_id: &str) -> Result<Option<WorkDistribution>, String> {
+    pub async fn read_distribution(
+        &self,
+        project_id: &str,
+    ) -> Result<Option<WorkDistribution>, String> {
         let node_guard = self.node.read().await;
         let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
         let sessions = self.sessions.read().await;
-        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
-        Ok(self.read_distribution_inner(node, session.namespace_id).await)
+        let session = sessions
+            .get(project_id)
+            .ok_or("No hay sesión P2P activa para este proyecto")?;
+        Ok(self
+            .read_distribution_inner(node, session.namespace_id)
+            .await)
     }
 
     /// Lee distribución desde el doc (helper interno)
@@ -271,75 +301,89 @@ impl P2pState {
         let node_guard = self.node.read().await;
         let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
         let sessions = self.sessions.read().await;
-        let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
+        let session = sessions
+            .get(project_id)
+            .ok_or("No hay sesión P2P activa para este proyecto")?;
 
-        let dist = self.read_distribution_inner(node, session.namespace_id)
+        let dist = self
+            .read_distribution_inner(node, session.namespace_id)
             .await
             .ok_or("No hay distribución activa")?;
 
         let sess_project_id = &session.project_id;
 
         // Construir sets de imágenes/videos completados
-        let (annotated_images, completed_videos) = app_state.with_project(sess_project_id, |pf| {
-            // Imágenes sueltas con >=1 anotación
-            let ann_imgs: HashSet<String> = pf.images.iter()
-                .filter(|i| i.video_id.is_none() && !i.annotations.is_empty())
-                .map(|i| i.id.clone())
-                .collect();
+        let (annotated_images, completed_videos) =
+            app_state.with_project(sess_project_id, |pf| {
+                // Imágenes sueltas con >=1 anotación
+                let ann_imgs: HashSet<String> = pf
+                    .images
+                    .iter()
+                    .filter(|i| i.video_id.is_none() && !i.annotations.is_empty())
+                    .map(|i| i.id.clone())
+                    .collect();
 
-            // Videos donde TODOS sus frames tienen anotaciones
-            let comp_vids: HashSet<String> = pf.videos.iter()
-                .filter(|v| {
-                    let frames: Vec<&_> = pf.images.iter()
-                        .filter(|i| i.video_id.as_deref() == Some(&v.id))
-                        .collect();
-                    !frames.is_empty() && frames.iter().all(|f| !f.annotations.is_empty())
-                })
-                .map(|v| v.id.clone())
-                .collect();
+                // Videos donde TODOS sus frames tienen anotaciones
+                let comp_vids: HashSet<String> = pf
+                    .videos
+                    .iter()
+                    .filter(|v| {
+                        let frames: Vec<&_> = pf
+                            .images
+                            .iter()
+                            .filter(|i| i.video_id.as_deref() == Some(&v.id))
+                            .collect();
+                        !frames.is_empty() && frames.iter().all(|f| !f.annotations.is_empty())
+                    })
+                    .map(|v| v.id.clone())
+                    .collect();
 
-            (ann_imgs, comp_vids)
-        })?;
+                (ann_imgs, comp_vids)
+            })?;
 
-        let stats: Vec<PeerWorkStats> = dist.assignments.iter().map(|a| {
-            let videos_assigned = a.video_ids.len();
-            let videos_completed = a.video_ids.iter()
-                .filter(|vid| completed_videos.contains(*vid))
-                .count();
-            let images_assigned = a.image_ids.len();
-            let images_completed = a.image_ids.iter()
-                .filter(|iid| annotated_images.contains(*iid))
-                .count();
+        let stats: Vec<PeerWorkStats> = dist
+            .assignments
+            .iter()
+            .map(|a| {
+                let videos_assigned = a.video_ids.len();
+                let videos_completed = a
+                    .video_ids
+                    .iter()
+                    .filter(|vid| completed_videos.contains(*vid))
+                    .count();
+                let images_assigned = a.image_ids.len();
+                let images_completed = a
+                    .image_ids
+                    .iter()
+                    .filter(|iid| annotated_images.contains(*iid))
+                    .count();
 
-            let total = videos_assigned + images_assigned;
-            let done = videos_completed + images_completed;
-            let progress = if total > 0 {
-                (done as f64 / total as f64) * 100.0
-            } else {
-                0.0
-            };
+                let total = videos_assigned + images_assigned;
+                let done = videos_completed + images_completed;
+                let progress = if total > 0 {
+                    (done as f64 / total as f64) * 100.0
+                } else {
+                    0.0
+                };
 
-            PeerWorkStats {
-                node_id: a.node_id.clone(),
-                display_name: a.display_name.clone(),
-                videos_assigned,
-                videos_completed,
-                images_assigned,
-                images_completed,
-                progress_percent: (progress * 10.0).round() / 10.0,
-            }
-        }).collect();
+                PeerWorkStats {
+                    node_id: a.node_id.clone(),
+                    display_name: a.display_name.clone(),
+                    videos_assigned,
+                    videos_completed,
+                    images_assigned,
+                    images_completed,
+                    progress_percent: (progress * 10.0).round() / 10.0,
+                }
+            })
+            .collect();
 
         Ok(stats)
     }
 }
 
 /// Asigna items en round-robin a los assignments existentes.
-fn round_robin_assign(
-    assignments: &mut [WorkAssignment],
-    videos: &[String],
-    images: &[String],
-) {
+fn round_robin_assign(assignments: &mut [WorkAssignment], videos: &[String], images: &[String]) {
     if assignments.is_empty() {
         return;
     }

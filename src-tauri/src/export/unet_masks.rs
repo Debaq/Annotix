@@ -1,11 +1,11 @@
-use std::io::{Write, Cursor};
+use image::{GrayImage, Luma};
+use std::io::{Cursor, Write};
 use std::path::Path;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
-use image::{GrayImage, Luma};
 
-use crate::store::project_file::{ProjectFile, ImageEntry};
-use super::{parse_mask, parse_polygon, add_image_to_zip};
+use super::{add_image_to_zip, parse_mask, parse_polygon};
+use crate::store::project_file::{ImageEntry, ProjectFile};
 
 pub fn export<F: Fn(f64)>(
     project: &ProjectFile,
@@ -25,7 +25,8 @@ pub fn export<F: Fn(f64)>(
         // Generate mask
         if let Some(mask_png) = generate_mask(image_rec, project)? {
             let mask_name = replace_ext(&image_rec.name, "png");
-            zip.start_file(format!("masks/{}", mask_name), options).map_err(|e| e.to_string())?;
+            zip.start_file(format!("masks/{}", mask_name), options)
+                .map_err(|e| e.to_string())?;
             zip.write_all(&mask_png).map_err(|e| e.to_string())?;
         }
 
@@ -38,8 +39,10 @@ pub fn export<F: Fn(f64)>(
         let value = get_scaled_value(cls.id, project.classes.len());
         classes_content.push_str(&format!("{}: {}\n", value, cls.name));
     }
-    zip.start_file("classes.txt", options).map_err(|e| e.to_string())?;
-    zip.write_all(classes_content.as_bytes()).map_err(|e| e.to_string())?;
+    zip.start_file("classes.txt", options)
+        .map_err(|e| e.to_string())?;
+    zip.write_all(classes_content.as_bytes())
+        .map_err(|e| e.to_string())?;
 
     zip.finish().map_err(|e| e.to_string())?;
     Ok(())
@@ -80,7 +83,8 @@ fn generate_mask(image: &ImageEntry, project: &ProjectFile) -> Result<Option<Vec
 
     // Encode to PNG
     let mut buf = Cursor::new(Vec::new());
-    mask_img.write_to(&mut buf, image::ImageFormat::Png)
+    mask_img
+        .write_to(&mut buf, image::ImageFormat::Png)
         .map_err(|e| format!("Error codificando mask PNG: {}", e))?;
 
     Ok(Some(buf.into_inner()))
@@ -124,7 +128,11 @@ fn draw_polygon_on_mask(target: &mut GrayImage, points: &[(f64, f64)], class_val
 
     // Scanline fill algorithm
     let min_y = points.iter().map(|p| p.1).fold(f64::MAX, f64::min).max(0.0) as u32;
-    let max_y = points.iter().map(|p| p.1).fold(f64::MIN, f64::max).min(h - 1.0) as u32;
+    let max_y = points
+        .iter()
+        .map(|p| p.1)
+        .fold(f64::MIN, f64::max)
+        .min(h - 1.0) as u32;
 
     for y in min_y..=max_y {
         let yf = y as f64 + 0.5;
@@ -169,7 +177,9 @@ fn decode_base64_png(data: &str) -> Result<Vec<u8>, String> {
         data
     };
 
-    engine.decode(b64_str).map_err(|e| format!("Error decodificando base64: {}", e))
+    engine
+        .decode(b64_str)
+        .map_err(|e| format!("Error decodificando base64: {}", e))
 }
 
 fn get_class_value(class_id: i64, project: &ProjectFile) -> u8 {

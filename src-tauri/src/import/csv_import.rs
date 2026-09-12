@@ -1,9 +1,9 @@
+use serde_json::json;
 use std::collections::HashMap;
 use zip::ZipArchive;
-use serde_json::json;
 
-use super::{ImportData, ImageImportData, create_class, create_annotation};
-use super::yolo::{read_zip_text, read_zip_bytes, list_files_in_folder, get_image_dimensions};
+use super::yolo::{get_image_dimensions, list_files_in_folder, read_zip_bytes, read_zip_text};
+use super::{create_annotation, create_class, ImageImportData, ImportData};
 
 pub fn import_data(
     archive: &mut ZipArchive<std::fs::File>,
@@ -15,7 +15,9 @@ pub fn import_data(
 
     let mut classes = Vec::new();
     for (i, line) in class_lines.iter().enumerate() {
-        if i == 0 { continue; } // Skip header
+        if i == 0 {
+            continue;
+        } // Skip header
         let parts: Vec<&str> = line.splitn(2, ',').collect();
         if parts.len() >= 2 {
             classes.push(create_class(classes.len() as i64, parts[1].trim(), None));
@@ -32,7 +34,10 @@ pub fn import_data(
         return Err("No hay anotaciones en annotations.csv".to_string());
     }
 
-    let header: Vec<String> = annot_lines[0].split(',').map(|s| s.trim().to_string()).collect();
+    let header: Vec<String> = annot_lines[0]
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .collect();
 
     // Map image files
     let image_files = list_files_in_folder(archive, "images");
@@ -48,10 +53,14 @@ pub fn import_data(
 
     for i in 1..annot_lines.len() {
         let line = annot_lines[i].trim();
-        if line.is_empty() { continue; }
+        if line.is_empty() {
+            continue;
+        }
 
         let values: Vec<&str> = line.split(',').collect();
-        if values.is_empty() { continue; }
+        if values.is_empty() {
+            continue;
+        }
 
         let image_name = values[0].trim();
         let image_path = match image_map.get(image_name) {
@@ -69,13 +78,16 @@ pub fn import_data(
                 Ok(dims) => dims,
                 Err(_) => continue,
             };
-            images_map.insert(image_name.to_string(), ImageImportData {
-                name: image_name.to_string(),
-                data: image_data,
-                width,
-                height,
-                annotations: Vec::new(),
-            });
+            images_map.insert(
+                image_name.to_string(),
+                ImageImportData {
+                    name: image_name.to_string(),
+                    data: image_data,
+                    width,
+                    height,
+                    annotations: Vec::new(),
+                },
+            );
         }
 
         // Parse annotation based on type
@@ -114,19 +126,27 @@ fn parse_annotation(
             let xmax: f64 = values.get(xmax_idx)?.trim().parse().ok()?;
             let ymax: f64 = values.get(ymax_idx)?.trim().parse().ok()?;
 
-            Some(create_annotation(class_id, "bbox", json!({
-                "x": xmin, "y": ymin,
-                "width": xmax - xmin, "height": ymax - ymin,
-            })))
+            Some(create_annotation(
+                class_id,
+                "bbox",
+                json!({
+                    "x": xmin, "y": ymin,
+                    "width": xmax - xmin, "height": ymax - ymin,
+                }),
+            ))
         }
         "classification" => {
             let class_idx = find_col(header, &["class", "label"])?;
             let class_name = values.get(class_idx)?.trim();
             let class_id = classes.iter().find(|c| c.name == class_name)?.id;
 
-            Some(create_annotation(class_id, "classification", json!({
-                "labels": [class_id]
-            })))
+            Some(create_annotation(
+                class_id,
+                "classification",
+                json!({
+                    "labels": [class_id]
+                }),
+            ))
         }
         _ => None, // keypoints y landmarks son formatos complejos, se manejan con el CSV parser básico
     }

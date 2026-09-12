@@ -1,7 +1,11 @@
-use super::{TrainingConfig, TrainingRequest, TrainingBackend};
+use super::{TrainingBackend, TrainingConfig, TrainingRequest};
 
 fn py_bool(val: bool) -> &'static str {
-    if val { "True" } else { "False" }
+    if val {
+        "True"
+    } else {
+        "False"
+    }
 }
 
 /// Genera el script train.py que se ejecutará en el virtualenv
@@ -471,9 +475,18 @@ pub fn generate_rtdetr_script(req: &TrainingRequest, data_yaml_path: &str) -> St
     };
     let device = format_device(&req.device);
     let lrf = bp.get("lrf").and_then(|v| v.as_f64()).unwrap_or(0.01);
-    let optimizer = bp.get("optimizer").and_then(|v| v.as_str()).unwrap_or("AdamW");
-    let warmup_epochs = bp.get("warmup_epochs").and_then(|v| v.as_f64()).unwrap_or(3.0);
-    let weight_decay = bp.get("weight_decay").and_then(|v| v.as_f64()).unwrap_or(0.0001);
+    let optimizer = bp
+        .get("optimizer")
+        .and_then(|v| v.as_str())
+        .unwrap_or("AdamW");
+    let warmup_epochs = bp
+        .get("warmup_epochs")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(3.0);
+    let weight_decay = bp
+        .get("weight_decay")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0001);
     let freeze_line = match bp.get("freeze").and_then(|v| v.as_u64()) {
         Some(n) if n > 0 => format!("        \"freeze\": {},", n),
         _ => "        # freeze: disabled".to_string(),
@@ -605,11 +618,23 @@ pub fn generate_rfdetr_script(req: &TrainingRequest, dataset_dir: &str) -> Strin
     let bp = &req.backend_params;
     let model_class = &req.model_id; // e.g. "RFDETRBase"
     let resolution = bp.get("resolution").and_then(|v| v.as_u64()).unwrap_or(560);
-    let lr_encoder = bp.get("lr_encoder").and_then(|v| v.as_f64()).unwrap_or(1e-5);
-    let grad_accum = bp.get("grad_accum_steps").and_then(|v| v.as_u64()).unwrap_or(4);
+    let lr_encoder = bp
+        .get("lr_encoder")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(1e-5);
+    let grad_accum = bp
+        .get("grad_accum_steps")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(4);
     let use_ema = bp.get("use_ema").and_then(|v| v.as_bool()).unwrap_or(true);
-    let weight_decay = bp.get("weight_decay").and_then(|v| v.as_f64()).unwrap_or(0.0001);
-    let gradient_checkpointing = bp.get("gradient_checkpointing").and_then(|v| v.as_bool()).unwrap_or(false);
+    let weight_decay = bp
+        .get("weight_decay")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0001);
+    let gradient_checkpointing = bp
+        .get("gradient_checkpointing")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
 
     format!(
         r#"#!/usr/bin/env python3
@@ -705,14 +730,30 @@ if __name__ == "__main__":
 
 // ─── MMDetection Script + Config ─────────────────────────────────────────────
 
-pub fn generate_mmdet_config(req: &TrainingRequest, dataset_dir: &str, num_classes: usize) -> String {
+pub fn generate_mmdet_config(
+    req: &TrainingRequest,
+    dataset_dir: &str,
+    num_classes: usize,
+) -> String {
     let bp = &req.backend_params;
     let model_id = &req.model_id;
-    let optimizer_type = bp.get("optimizer_type").and_then(|v| v.as_str()).unwrap_or("SGD");
+    let optimizer_type = bp
+        .get("optimizer_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("SGD");
     let momentum = bp.get("momentum").and_then(|v| v.as_f64()).unwrap_or(0.9);
-    let weight_decay = bp.get("weight_decay").and_then(|v| v.as_f64()).unwrap_or(0.0001);
-    let warmup_iters = bp.get("warmup_iters").and_then(|v| v.as_u64()).unwrap_or(500);
-    let checkpoint_interval = bp.get("checkpoint_interval").and_then(|v| v.as_u64()).unwrap_or(1);
+    let weight_decay = bp
+        .get("weight_decay")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0001);
+    let warmup_iters = bp
+        .get("warmup_iters")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(500);
+    let checkpoint_interval = bp
+        .get("checkpoint_interval")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(1);
 
     let dataset_dir_escaped = dataset_dir.replace('\\', "/");
 
@@ -899,26 +940,53 @@ pub fn generate_train_script_for_backend(
             let config = super::TrainingConfig {
                 yolo_version: req.model_id.clone(),
                 task: req.task.clone(),
-                model_size: req.backend_params.get("modelSize")
-                    .and_then(|v| v.as_str()).unwrap_or("n").to_string(),
+                model_size: req
+                    .backend_params
+                    .get("modelSize")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("n")
+                    .to_string(),
                 epochs: req.epochs,
                 batch_size: req.batch_size,
                 imgsz: req.image_size,
                 device: req.device.clone(),
-                optimizer: req.backend_params.get("optimizer")
-                    .and_then(|v| v.as_str()).unwrap_or("auto").to_string(),
+                optimizer: req
+                    .backend_params
+                    .get("optimizer")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("auto")
+                    .to_string(),
                 lr0: req.lr,
-                lrf: req.backend_params.get("lrf").and_then(|v| v.as_f64()).unwrap_or(0.01),
+                lrf: req
+                    .backend_params
+                    .get("lrf")
+                    .and_then(|v| v.as_f64())
+                    .unwrap_or(0.01),
                 patience: req.patience,
                 val_split: req.val_split,
                 test_split: req.test_split,
                 workers: req.workers,
                 augmentation: serde_json::from_value(
-                    req.backend_params.get("augmentation").cloned().unwrap_or_default()
-                ).unwrap_or_else(|_| super::AugmentationConfig {
-                    mosaic: 1.0, mixup: 0.0, hsv_h: 0.015, hsv_s: 0.7, hsv_v: 0.4,
-                    flipud: 0.0, fliplr: 0.5, degrees: 0.0, scale: 0.5, shear: 0.0,
-                    perspective: 0.0, copy_paste: 0.0, erasing: 0.4, translate: 0.1,
+                    req.backend_params
+                        .get("augmentation")
+                        .cloned()
+                        .unwrap_or_default(),
+                )
+                .unwrap_or_else(|_| super::AugmentationConfig {
+                    mosaic: 1.0,
+                    mixup: 0.0,
+                    hsv_h: 0.015,
+                    hsv_s: 0.7,
+                    hsv_v: 0.4,
+                    flipud: 0.0,
+                    fliplr: 0.5,
+                    degrees: 0.0,
+                    scale: 0.5,
+                    shear: 0.0,
+                    perspective: 0.0,
+                    copy_paste: 0.0,
+                    erasing: 0.4,
+                    translate: 0.1,
                 }),
                 export_formats: req.export_formats.clone(),
                 resume: req.resume,
@@ -943,13 +1011,22 @@ pub fn generate_train_script_for_backend(
                 freeze: None,
                 base_model_path: req.base_model_path.clone(),
             };
-            vec![("train.py".to_string(), generate_train_script(&config, dataset_path))]
+            vec![(
+                "train.py".to_string(),
+                generate_train_script(&config, dataset_path),
+            )]
         }
         TrainingBackend::RtDetr => {
-            vec![("train.py".to_string(), generate_rtdetr_script(req, dataset_path))]
+            vec![(
+                "train.py".to_string(),
+                generate_rtdetr_script(req, dataset_path),
+            )]
         }
         TrainingBackend::RfDetr => {
-            vec![("train.py".to_string(), generate_rfdetr_script(req, dataset_path))]
+            vec![(
+                "train.py".to_string(),
+                generate_rfdetr_script(req, dataset_path),
+            )]
         }
         TrainingBackend::MmDetection => {
             let config_content = generate_mmdet_config(req, dataset_path, num_classes);
@@ -961,10 +1038,16 @@ pub fn generate_train_script_for_backend(
             ]
         }
         TrainingBackend::Smp => {
-            vec![("train.py".to_string(), generate_smp_script(req, dataset_path, num_classes))]
+            vec![(
+                "train.py".to_string(),
+                generate_smp_script(req, dataset_path, num_classes),
+            )]
         }
         TrainingBackend::HfSegmentation => {
-            vec![("train.py".to_string(), generate_hf_seg_script(req, dataset_path, num_classes))]
+            vec![(
+                "train.py".to_string(),
+                generate_hf_seg_script(req, dataset_path, num_classes),
+            )]
         }
         TrainingBackend::MmSegmentation => {
             let config_content = generate_mmseg_config(req, dataset_path, num_classes);
@@ -976,7 +1059,10 @@ pub fn generate_train_script_for_backend(
             ]
         }
         TrainingBackend::Detectron2 => {
-            vec![("train.py".to_string(), generate_detectron2_script(req, dataset_path, num_classes))]
+            vec![(
+                "train.py".to_string(),
+                generate_detectron2_script(req, dataset_path, num_classes),
+            )]
         }
         TrainingBackend::MmPose => {
             let config_content = generate_mmpose_config(req, dataset_path, num_classes);
@@ -997,31 +1083,58 @@ pub fn generate_train_script_for_backend(
             ]
         }
         TrainingBackend::Timm => {
-            vec![("train.py".to_string(), generate_timm_script(req, dataset_path, num_classes))]
+            vec![(
+                "train.py".to_string(),
+                generate_timm_script(req, dataset_path, num_classes),
+            )]
         }
         TrainingBackend::HfClassification => {
-            vec![("train.py".to_string(), generate_hf_classification_script(req, dataset_path, num_classes))]
+            vec![(
+                "train.py".to_string(),
+                generate_hf_classification_script(req, dataset_path, num_classes),
+            )]
         }
         TrainingBackend::Tsai => {
-            vec![("train.py".to_string(), generate_tsai_script(req, dataset_path))]
+            vec![(
+                "train.py".to_string(),
+                generate_tsai_script(req, dataset_path),
+            )]
         }
         TrainingBackend::PytorchForecasting => {
-            vec![("train.py".to_string(), generate_pytorch_forecasting_script(req, dataset_path))]
+            vec![(
+                "train.py".to_string(),
+                generate_pytorch_forecasting_script(req, dataset_path),
+            )]
         }
         TrainingBackend::Pyod => {
-            vec![("train.py".to_string(), generate_pyod_script(req, dataset_path))]
+            vec![(
+                "train.py".to_string(),
+                generate_pyod_script(req, dataset_path),
+            )]
         }
         TrainingBackend::Tslearn => {
-            vec![("train.py".to_string(), generate_tslearn_script(req, dataset_path))]
+            vec![(
+                "train.py".to_string(),
+                generate_tslearn_script(req, dataset_path),
+            )]
         }
         TrainingBackend::Pypots => {
-            vec![("train.py".to_string(), generate_pypots_script(req, dataset_path))]
+            vec![(
+                "train.py".to_string(),
+                generate_pypots_script(req, dataset_path),
+            )]
         }
         TrainingBackend::Stumpy => {
-            vec![("train.py".to_string(), generate_stumpy_script(req, dataset_path))]
+            vec![(
+                "train.py".to_string(),
+                generate_stumpy_script(req, dataset_path),
+            )]
         }
         TrainingBackend::Sklearn => {
-            vec![("train.py".to_string(), generate_sklearn_script(req, dataset_path))]
+            vec![(
+                "train.py".to_string(),
+                generate_sklearn_script(req, dataset_path),
+            )]
         }
     }
 }
@@ -1031,22 +1144,79 @@ pub fn get_requirements_for_backend(backend: &TrainingBackend) -> Vec<&'static s
     match backend {
         TrainingBackend::Yolo | TrainingBackend::RtDetr => vec!["ultralytics"],
         TrainingBackend::RfDetr => vec!["rfdetr", "torch", "torchvision"],
-        TrainingBackend::MmDetection => vec!["openmim", "mmengine", "mmcv", "mmdet", "torch", "torchvision"],
-        TrainingBackend::Smp => vec!["segmentation-models-pytorch", "torch", "torchvision", "albumentations"],
-        TrainingBackend::HfSegmentation => vec!["transformers", "datasets", "evaluate", "torch", "torchvision"],
-        TrainingBackend::MmSegmentation => vec!["openmim", "mmengine", "mmcv", "mmsegmentation", "torch", "torchvision"],
+        TrainingBackend::MmDetection => vec![
+            "openmim",
+            "mmengine",
+            "mmcv",
+            "mmdet",
+            "torch",
+            "torchvision",
+        ],
+        TrainingBackend::Smp => vec![
+            "segmentation-models-pytorch",
+            "torch",
+            "torchvision",
+            "albumentations",
+        ],
+        TrainingBackend::HfSegmentation => vec![
+            "transformers",
+            "datasets",
+            "evaluate",
+            "torch",
+            "torchvision",
+        ],
+        TrainingBackend::MmSegmentation => vec![
+            "openmim",
+            "mmengine",
+            "mmcv",
+            "mmsegmentation",
+            "torch",
+            "torchvision",
+        ],
         TrainingBackend::Detectron2 => vec!["detectron2", "torch", "torchvision", "opencv-python"],
-        TrainingBackend::MmPose => vec!["openmim", "mmengine", "mmcv", "mmpose", "mmdet", "torch", "torchvision"],
-        TrainingBackend::MmRotate => vec!["openmim", "mmengine", "mmcv", "mmrotate", "mmdet", "torch", "torchvision"],
+        TrainingBackend::MmPose => vec![
+            "openmim",
+            "mmengine",
+            "mmcv",
+            "mmpose",
+            "mmdet",
+            "torch",
+            "torchvision",
+        ],
+        TrainingBackend::MmRotate => vec![
+            "openmim",
+            "mmengine",
+            "mmcv",
+            "mmrotate",
+            "mmdet",
+            "torch",
+            "torchvision",
+        ],
         TrainingBackend::Timm => vec!["timm", "torch", "torchvision"],
-        TrainingBackend::HfClassification => vec!["transformers", "datasets", "evaluate", "torch", "torchvision", "scikit-learn"],
+        TrainingBackend::HfClassification => vec![
+            "transformers",
+            "datasets",
+            "evaluate",
+            "torch",
+            "torchvision",
+            "scikit-learn",
+        ],
         TrainingBackend::Tsai => vec!["tsai", "torch", "fastai"],
-        TrainingBackend::PytorchForecasting => vec!["pytorch-forecasting", "pytorch-lightning", "torch"],
+        TrainingBackend::PytorchForecasting => {
+            vec!["pytorch-forecasting", "pytorch-lightning", "torch"]
+        }
         TrainingBackend::Pyod => vec!["pyod", "torch", "numpy", "scikit-learn"],
         TrainingBackend::Tslearn => vec!["tslearn", "numpy", "scikit-learn"],
         TrainingBackend::Pypots => vec!["pypots", "torch", "numpy"],
         TrainingBackend::Stumpy => vec!["stumpy", "numpy"],
-        TrainingBackend::Sklearn => vec!["scikit-learn", "xgboost", "lightgbm", "pandas", "skl2onnx", "onnxmltools"],
+        TrainingBackend::Sklearn => vec![
+            "scikit-learn",
+            "xgboost",
+            "lightgbm",
+            "pandas",
+            "skl2onnx",
+            "onnxmltools",
+        ],
     }
 }
 
@@ -1057,12 +1227,28 @@ pub fn generate_smp_script(req: &TrainingRequest, dataset_dir: &str, num_classes
     let model_id = &req.model_id; // e.g. "Unet-resnet34"
     let parts: Vec<&str> = model_id.splitn(2, '-').collect();
     let arch = parts.first().unwrap_or(&"Unet");
-    let encoder = if parts.len() > 1 { parts[1] } else { "resnet34" };
+    let encoder = if parts.len() > 1 {
+        parts[1]
+    } else {
+        "resnet34"
+    };
 
-    let loss_type = bp.get("loss_type").and_then(|v| v.as_str()).unwrap_or("dice+ce");
-    let scheduler = bp.get("scheduler").and_then(|v| v.as_str()).unwrap_or("cosine");
-    let encoder_depth = bp.get("encoder_depth").and_then(|v| v.as_u64()).unwrap_or(5);
-    let freeze_encoder = bp.get("freeze_encoder").and_then(|v| v.as_bool()).unwrap_or(false);
+    let loss_type = bp
+        .get("loss_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("dice+ce");
+    let scheduler = bp
+        .get("scheduler")
+        .and_then(|v| v.as_str())
+        .unwrap_or("cosine");
+    let encoder_depth = bp
+        .get("encoder_depth")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(5);
+    let freeze_encoder = bp
+        .get("freeze_encoder")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
     let device = format_device(&req.device);
 
     let dataset_dir_escaped = dataset_dir.replace('\\', "/");
@@ -1307,13 +1493,29 @@ if __name__ == "__main__":
 
 // ─── HuggingFace Segmentation Script ─────────────────────────────────────────
 
-pub fn generate_hf_seg_script(req: &TrainingRequest, dataset_dir: &str, num_classes: usize) -> String {
+pub fn generate_hf_seg_script(
+    req: &TrainingRequest,
+    dataset_dir: &str,
+    num_classes: usize,
+) -> String {
     let bp = &req.backend_params;
     let model_checkpoint = &req.model_id; // e.g. "nvidia/mit-b0"
-    let do_reduce_labels = bp.get("do_reduce_labels").and_then(|v| v.as_bool()).unwrap_or(false);
-    let warmup_ratio = bp.get("warmup_ratio").and_then(|v| v.as_f64()).unwrap_or(0.05);
-    let weight_decay = bp.get("weight_decay").and_then(|v| v.as_f64()).unwrap_or(0.01);
-    let lr_scheduler_type = bp.get("lr_scheduler_type").and_then(|v| v.as_str()).unwrap_or("cosine");
+    let do_reduce_labels = bp
+        .get("do_reduce_labels")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+    let warmup_ratio = bp
+        .get("warmup_ratio")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.05);
+    let weight_decay = bp
+        .get("weight_decay")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.01);
+    let lr_scheduler_type = bp
+        .get("lr_scheduler_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("cosine");
 
     let dataset_dir_escaped = dataset_dir.replace('\\', "/");
 
@@ -1547,15 +1749,34 @@ if __name__ == "__main__":
 
 // ─── MMSegmentation Config + Script ──────────────────────────────────────────
 
-pub fn generate_mmseg_config(req: &TrainingRequest, dataset_dir: &str, num_classes: usize) -> String {
+pub fn generate_mmseg_config(
+    req: &TrainingRequest,
+    dataset_dir: &str,
+    num_classes: usize,
+) -> String {
     let bp = &req.backend_params;
     let model_id = &req.model_id;
-    let optimizer_type = bp.get("optimizer_type").and_then(|v| v.as_str()).unwrap_or("AdamW");
-    let weight_decay = bp.get("weight_decay").and_then(|v| v.as_f64()).unwrap_or(0.01);
-    let warmup_iters = bp.get("warmup_iters").and_then(|v| v.as_u64()).unwrap_or(500);
-    let checkpoint_interval = bp.get("checkpoint_interval").and_then(|v| v.as_u64()).unwrap_or(1);
+    let optimizer_type = bp
+        .get("optimizer_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("AdamW");
+    let weight_decay = bp
+        .get("weight_decay")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.01);
+    let warmup_iters = bp
+        .get("warmup_iters")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(500);
+    let checkpoint_interval = bp
+        .get("checkpoint_interval")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(1);
     let crop_size = bp.get("crop_size").and_then(|v| v.as_u64()).unwrap_or(512);
-    let lr_schedule = bp.get("lr_schedule").and_then(|v| v.as_str()).unwrap_or("poly");
+    let lr_schedule = bp
+        .get("lr_schedule")
+        .and_then(|v| v.as_str())
+        .unwrap_or("poly");
 
     let dataset_dir_escaped = dataset_dir.replace('\\', "/");
     let num_classes_with_bg = num_classes + 1;
@@ -1755,13 +1976,25 @@ if __name__ == "__main__":
 
 // ─── Detectron2 Script ────────────────────────────────────────────────────────
 
-pub fn generate_detectron2_script(req: &TrainingRequest, dataset_dir: &str, num_classes: usize) -> String {
+pub fn generate_detectron2_script(
+    req: &TrainingRequest,
+    dataset_dir: &str,
+    num_classes: usize,
+) -> String {
     let bp = &req.backend_params;
     let model_id = &req.model_id; // e.g. "faster_rcnn_R_50_FPN_3x"
-    let config_file = bp.get("config_file").and_then(|v| v.as_str())
+    let config_file = bp
+        .get("config_file")
+        .and_then(|v| v.as_str())
         .unwrap_or("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml");
-    let roi_heads_score_thresh = bp.get("score_thresh").and_then(|v| v.as_f64()).unwrap_or(0.5);
-    let warmup_iters = bp.get("warmup_iters").and_then(|v| v.as_u64()).unwrap_or(500);
+    let roi_heads_score_thresh = bp
+        .get("score_thresh")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.5);
+    let warmup_iters = bp
+        .get("warmup_iters")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(500);
     let device = format_device(&req.device);
 
     let dataset_dir_escaped = dataset_dir.replace('\\', "/");
@@ -1884,13 +2117,29 @@ if __name__ == "__main__":
 
 // ─── MMPose Config + Script ──────────────────────────────────────────────────
 
-pub fn generate_mmpose_config(req: &TrainingRequest, dataset_dir: &str, num_classes: usize) -> String {
+pub fn generate_mmpose_config(
+    req: &TrainingRequest,
+    dataset_dir: &str,
+    num_classes: usize,
+) -> String {
     let bp = &req.backend_params;
     let model_id = &req.model_id;
-    let optimizer_type = bp.get("optimizer_type").and_then(|v| v.as_str()).unwrap_or("AdamW");
-    let weight_decay = bp.get("weight_decay").and_then(|v| v.as_f64()).unwrap_or(0.01);
-    let warmup_iters = bp.get("warmup_iters").and_then(|v| v.as_u64()).unwrap_or(500);
-    let num_keypoints = bp.get("num_keypoints").and_then(|v| v.as_u64()).unwrap_or(17);
+    let optimizer_type = bp
+        .get("optimizer_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("AdamW");
+    let weight_decay = bp
+        .get("weight_decay")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.01);
+    let warmup_iters = bp
+        .get("warmup_iters")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(500);
+    let num_keypoints = bp
+        .get("num_keypoints")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(17);
     let input_size = bp.get("input_size").and_then(|v| v.as_u64()).unwrap_or(256);
 
     let dataset_dir_escaped = dataset_dir.replace('\\', "/");
@@ -2077,13 +2326,29 @@ if __name__ == "__main__":
 
 // ─── MMRotate Config + Script ────────────────────────────────────────────────
 
-pub fn generate_mmrotate_config(req: &TrainingRequest, dataset_dir: &str, num_classes: usize) -> String {
+pub fn generate_mmrotate_config(
+    req: &TrainingRequest,
+    dataset_dir: &str,
+    num_classes: usize,
+) -> String {
     let bp = &req.backend_params;
     let model_id = &req.model_id;
-    let optimizer_type = bp.get("optimizer_type").and_then(|v| v.as_str()).unwrap_or("AdamW");
-    let weight_decay = bp.get("weight_decay").and_then(|v| v.as_f64()).unwrap_or(0.01);
-    let warmup_iters = bp.get("warmup_iters").and_then(|v| v.as_u64()).unwrap_or(500);
-    let angle_version = bp.get("angle_version").and_then(|v| v.as_str()).unwrap_or("le90");
+    let optimizer_type = bp
+        .get("optimizer_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("AdamW");
+    let weight_decay = bp
+        .get("weight_decay")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.01);
+    let warmup_iters = bp
+        .get("warmup_iters")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(500);
+    let angle_version = bp
+        .get("angle_version")
+        .and_then(|v| v.as_str())
+        .unwrap_or("le90");
 
     let dataset_dir_escaped = dataset_dir.replace('\\', "/");
 
@@ -2264,12 +2529,25 @@ if __name__ == "__main__":
 
 // ─── timm Script ─────────────────────────────────────────────────────────────
 
-pub fn generate_timm_script(req: &TrainingRequest, dataset_dir: &str, num_classes: usize) -> String {
+pub fn generate_timm_script(
+    req: &TrainingRequest,
+    dataset_dir: &str,
+    num_classes: usize,
+) -> String {
     let bp = &req.backend_params;
     let model_id = &req.model_id; // e.g. "resnet50", "efficientnet_b0"
-    let pretrained = bp.get("pretrained").and_then(|v| v.as_bool()).unwrap_or(true);
-    let scheduler = bp.get("scheduler").and_then(|v| v.as_str()).unwrap_or("cosine");
-    let weight_decay = bp.get("weight_decay").and_then(|v| v.as_f64()).unwrap_or(0.01);
+    let pretrained = bp
+        .get("pretrained")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(true);
+    let scheduler = bp
+        .get("scheduler")
+        .and_then(|v| v.as_str())
+        .unwrap_or("cosine");
+    let weight_decay = bp
+        .get("weight_decay")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.01);
     let drop_rate = bp.get("drop_rate").and_then(|v| v.as_f64()).unwrap_or(0.0);
     let device = format_device(&req.device);
 
@@ -2497,12 +2775,25 @@ if __name__ == "__main__":
 
 // ─── HuggingFace Classification Script ───────────────────────────────────────
 
-pub fn generate_hf_classification_script(req: &TrainingRequest, dataset_dir: &str, num_classes: usize) -> String {
+pub fn generate_hf_classification_script(
+    req: &TrainingRequest,
+    dataset_dir: &str,
+    num_classes: usize,
+) -> String {
     let bp = &req.backend_params;
     let model_checkpoint = &req.model_id; // e.g. "google/vit-base-patch16-224"
-    let warmup_ratio = bp.get("warmup_ratio").and_then(|v| v.as_f64()).unwrap_or(0.05);
-    let weight_decay = bp.get("weight_decay").and_then(|v| v.as_f64()).unwrap_or(0.01);
-    let lr_scheduler_type = bp.get("lr_scheduler_type").and_then(|v| v.as_str()).unwrap_or("cosine");
+    let warmup_ratio = bp
+        .get("warmup_ratio")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.05);
+    let weight_decay = bp
+        .get("weight_decay")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.01);
+    let lr_scheduler_type = bp
+        .get("lr_scheduler_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("cosine");
 
     let dataset_dir_escaped = dataset_dir.replace('\\', "/");
 
@@ -2720,8 +3011,14 @@ if __name__ == "__main__":
 pub fn generate_tsai_script(req: &TrainingRequest, dataset_dir: &str) -> String {
     let bp = &req.backend_params;
     let model_id = &req.model_id; // e.g. "InceptionTime", "TST", "LSTM"
-    let task_type = bp.get("task_type").and_then(|v| v.as_str()).unwrap_or("classification");
-    let _window_size = bp.get("window_size").and_then(|v| v.as_u64()).unwrap_or(100);
+    let task_type = bp
+        .get("task_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("classification");
+    let _window_size = bp
+        .get("window_size")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(100);
     let _stride = bp.get("stride").and_then(|v| v.as_u64()).unwrap_or(1);
 
     let dataset_dir_escaped = dataset_dir.replace('\\', "/");
@@ -2844,11 +3141,23 @@ if __name__ == "__main__":
 pub fn generate_pytorch_forecasting_script(req: &TrainingRequest, dataset_dir: &str) -> String {
     let bp = &req.backend_params;
     let model_id = &req.model_id; // e.g. "TemporalFusionTransformer", "NBeats", "DeepAR"
-    let max_prediction_length = bp.get("max_prediction_length").and_then(|v| v.as_u64()).unwrap_or(24);
-    let max_encoder_length = bp.get("max_encoder_length").and_then(|v| v.as_u64()).unwrap_or(96);
+    let max_prediction_length = bp
+        .get("max_prediction_length")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(24);
+    let max_encoder_length = bp
+        .get("max_encoder_length")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(96);
     let hidden_size = bp.get("hidden_size").and_then(|v| v.as_u64()).unwrap_or(64);
-    let attention_head_size = bp.get("attention_head_size").and_then(|v| v.as_u64()).unwrap_or(4);
-    let gradient_clip_val = bp.get("gradient_clip_val").and_then(|v| v.as_f64()).unwrap_or(0.1);
+    let attention_head_size = bp
+        .get("attention_head_size")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(4);
+    let gradient_clip_val = bp
+        .get("gradient_clip_val")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.1);
 
     let dataset_dir_escaped = dataset_dir.replace('\\', "/");
 
@@ -3014,8 +3323,14 @@ if __name__ == "__main__":
 pub fn generate_pyod_script(req: &TrainingRequest, dataset_dir: &str) -> String {
     let bp = &req.backend_params;
     let model_id = &req.model_id; // e.g. "AutoEncoder", "VAE", "ECOD", "IForest", "LOF"
-    let contamination = bp.get("contamination").and_then(|v| v.as_f64()).unwrap_or(0.1);
-    let hidden_neurons = bp.get("hidden_neurons").and_then(|v| v.as_str()).unwrap_or("[64,32,32,64]");
+    let contamination = bp
+        .get("contamination")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.1);
+    let hidden_neurons = bp
+        .get("hidden_neurons")
+        .and_then(|v| v.as_str())
+        .unwrap_or("[64,32,32,64]");
 
     let dataset_dir_escaped = dataset_dir.replace('\\', "/");
 
@@ -3477,8 +3792,14 @@ pub fn generate_stumpy_script(req: &TrainingRequest, dataset_dir: &str) -> Strin
     let bp = &req.backend_params;
     let model_id = &req.model_id; // e.g. "STUMP", "STUMPED", "GPU_STUMP", "MSTUMP"
     let window_size = bp.get("window_size").and_then(|v| v.as_u64()).unwrap_or(50);
-    let normalize = bp.get("normalize").and_then(|v| v.as_bool()).unwrap_or(true);
-    let threshold_percentile = bp.get("threshold_percentile").and_then(|v| v.as_f64()).unwrap_or(95.0);
+    let normalize = bp
+        .get("normalize")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(true);
+    let threshold_percentile = bp
+        .get("threshold_percentile")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(95.0);
 
     let dataset_dir_escaped = dataset_dir.replace('\\', "/");
 
@@ -3648,13 +3969,26 @@ pub fn generate_sklearn_script(req: &TrainingRequest, dataset_dir: &str) -> Stri
     let val_split = req.val_split;
     let dataset_dir_escaped = dataset_dir.replace('\\', "/");
 
-    let n_estimators = bp.get("n_estimators").and_then(|v| v.as_u64()).unwrap_or(100);
-    let max_depth = bp.get("max_depth").and_then(|v| v.as_u64()).map(|v| format!("{}", v)).unwrap_or("None".into());
+    let n_estimators = bp
+        .get("n_estimators")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(100);
+    let max_depth = bp
+        .get("max_depth")
+        .and_then(|v| v.as_u64())
+        .map(|v| format!("{}", v))
+        .unwrap_or("None".into());
     let n_neighbors = bp.get("n_neighbors").and_then(|v| v.as_u64()).unwrap_or(5);
     let c_param = bp.get("C").and_then(|v| v.as_f64()).unwrap_or(1.0);
     let alpha = bp.get("alpha").and_then(|v| v.as_f64()).unwrap_or(1.0);
-    let target_column = bp.get("target_column").and_then(|v| v.as_str()).unwrap_or("");
-    let feature_columns_json = bp.get("feature_columns").map(|v| v.to_string()).unwrap_or("[]".into());
+    let target_column = bp
+        .get("target_column")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let feature_columns_json = bp
+        .get("feature_columns")
+        .map(|v| v.to_string())
+        .unwrap_or("[]".into());
     let task_type_override = bp.get("task_type").and_then(|v| v.as_str()).unwrap_or("");
 
     format!(

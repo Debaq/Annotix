@@ -1,7 +1,7 @@
 use std::process::Command;
 
-use super::{GpuDevice, GpuInfo};
 use super::python_env;
+use super::{GpuDevice, GpuInfo};
 
 /// Detecta GPUs disponibles usando Python + torch
 pub fn detect_gpu() -> Result<GpuInfo, String> {
@@ -43,7 +43,8 @@ print(json.dumps(result))
     let mut cmd = Command::new(&python);
     cmd.args(["-c", script]);
     super::hide_console_window(&mut cmd);
-    let output = cmd.output()
+    let output = cmd
+        .output()
         .map_err(|e| format!("Error detectando GPU: {}", e))?;
 
     if !output.status.success() {
@@ -56,8 +57,7 @@ print(json.dumps(result))
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let info: serde_json::Value = serde_json::from_str(stdout.trim())
-        .unwrap_or_default();
+    let info: serde_json::Value = serde_json::from_str(stdout.trim()).unwrap_or_default();
 
     let cuda_available = info["cuda_available"].as_bool().unwrap_or(false);
     let cuda_version = info["cuda_version"].as_str().map(|s| s.to_string());

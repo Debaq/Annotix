@@ -1,20 +1,19 @@
 use axum::{
-    Router,
     extract::{Path, Request, State},
-    http::{StatusCode, header},
+    http::{header, StatusCode},
     middleware::{self, Next},
     response::{Html, IntoResponse, Response},
     routing::{get, post},
-    Json,
+    Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use subtle::ConstantTimeEq;
 use tauri::{Emitter, Manager};
 
-use crate::store::AppState;
-use crate::store::project_file::AnnotationEntry;
-use crate::serve::ServeState;
 use super::web_ui;
+use crate::serve::ServeState;
+use crate::store::project_file::AnnotationEntry;
+use crate::store::AppState;
 
 // ─── Estado compartido ──────────────────────────────────────────────────────
 
@@ -47,18 +46,40 @@ pub fn build_router(
     app_handle: tauri::AppHandle,
     token: String,
 ) -> Router {
-    let state = AppServeState { app_handle, project_ids, token };
+    let state = AppServeState {
+        app_handle,
+        project_ids,
+        token,
+    };
 
     let protected = Router::new()
         .route("/api/projects", get(list_projects))
         .route("/api/projects/{project_id}", get(get_project_info))
         .route("/api/projects/{project_id}/images", get(list_images))
-        .route("/api/projects/{project_id}/images/{image_id}", get(get_image))
-        .route("/api/projects/{project_id}/images/{image_id}/file", get(get_image_file))
-        .route("/api/projects/{project_id}/images/{image_id}/thumbnail", get(get_image_thumbnail))
-        .route("/api/projects/{project_id}/images/{image_id}/annotations", get(get_annotations))
-        .route("/api/projects/{project_id}/images/{image_id}/annotations", post(save_annotations))
-        .layer(middleware::from_fn_with_state(state.clone(), auth_middleware));
+        .route(
+            "/api/projects/{project_id}/images/{image_id}",
+            get(get_image),
+        )
+        .route(
+            "/api/projects/{project_id}/images/{image_id}/file",
+            get(get_image_file),
+        )
+        .route(
+            "/api/projects/{project_id}/images/{image_id}/thumbnail",
+            get(get_image_thumbnail),
+        )
+        .route(
+            "/api/projects/{project_id}/images/{image_id}/annotations",
+            get(get_annotations),
+        )
+        .route(
+            "/api/projects/{project_id}/images/{image_id}/annotations",
+            post(save_annotations),
+        )
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware,
+        ));
 
     Router::new()
         .route("/", get(serve_index))
@@ -121,7 +142,11 @@ fn urlencoding_decode(s: &str) -> String {
                 continue;
             }
         }
-        if bytes[i] == b'+' { out.push(' '); } else { out.push(bytes[i] as char); }
+        if bytes[i] == b'+' {
+            out.push(' ');
+        } else {
+            out.push(bytes[i] as char);
+        }
         i += 1;
     }
     out
@@ -160,14 +185,12 @@ async fn list_projects(
 
     let mut items = Vec::new();
     for pid in &state.project_ids {
-        if let Ok(item) = app.with_project(pid, |pf| {
-            ProjectListItem {
-                id: pf.id.clone(),
-                name: pf.name.clone(),
-                project_type: pf.project_type.clone(),
-                image_count: pf.images.len(),
-                auto_save,
-            }
+        if let Ok(item) = app.with_project(pid, |pf| ProjectListItem {
+            id: pf.id.clone(),
+            name: pf.name.clone(),
+            project_type: pf.project_type.clone(),
+            image_count: pf.images.len(),
+            auto_save,
         }) {
             items.push(item);
         }
@@ -206,18 +229,25 @@ async fn get_project_info(
     let serve_state = state.app_handle.state::<ServeState>();
     let auto_save = serve_state.get_auto_save().await;
 
-    let info = state.app_state().with_project(&project_id, |pf| {
-        ProjectInfo {
+    let info = state
+        .app_state()
+        .with_project(&project_id, |pf| ProjectInfo {
             id: pf.id.clone(),
             name: pf.name.clone(),
             project_type: pf.project_type.clone(),
-            classes: pf.classes.iter().map(|c| ClassInfo {
-                id: c.id, name: c.name.clone(), color: c.color.clone(),
-            }).collect(),
+            classes: pf
+                .classes
+                .iter()
+                .map(|c| ClassInfo {
+                    id: c.id,
+                    name: c.name.clone(),
+                    color: c.color.clone(),
+                })
+                .collect(),
             image_count: pf.images.len(),
             auto_save,
-        }
-    }).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+        })
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
 
     Ok(Json(info))
 }
@@ -240,14 +270,22 @@ async fn list_images(
     Path(project_id): Path<String>,
 ) -> Result<Json<Vec<ImageSummary>>, (StatusCode, String)> {
     state.check_project(&project_id)?;
-    let images = state.app_state().with_project(&project_id, |pf| {
-        pf.images.iter().map(|i| ImageSummary {
-            id: i.id.clone(), name: i.name.clone(),
-            width: i.width, height: i.height,
-            status: i.status.clone(),
-            annotation_count: i.annotations.len(),
-        }).collect::<Vec<_>>()
-    }).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+    let images = state
+        .app_state()
+        .with_project(&project_id, |pf| {
+            pf.images
+                .iter()
+                .map(|i| ImageSummary {
+                    id: i.id.clone(),
+                    name: i.name.clone(),
+                    width: i.width,
+                    height: i.height,
+                    status: i.status.clone(),
+                    annotation_count: i.annotations.len(),
+                })
+                .collect::<Vec<_>>()
+        })
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
 
     Ok(Json(images))
 }
@@ -259,7 +297,9 @@ async fn get_image(
     Path((project_id, image_id)): Path<(String, String)>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     state.check_project(&project_id)?;
-    let img = state.app_state().store_get_image(&project_id, &image_id)
+    let img = state
+        .app_state()
+        .store_get_image(&project_id, &image_id)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?
         .ok_or_else(|| (StatusCode::NOT_FOUND, "Imagen no encontrada".to_string()))?;
     Ok(Json(img))
@@ -272,15 +312,24 @@ async fn get_image_file(
     Path((project_id, image_id)): Path<(String, String)>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     state.check_project(&project_id)?;
-    let path = state.app_state().get_image_file_path(&project_id, &image_id)
+    let path = state
+        .app_state()
+        .get_image_file_path(&project_id, &image_id)
         .map_err(|e| (StatusCode::NOT_FOUND, e))?;
-    let bytes = tokio::fs::read(&path).await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Error leyendo imagen: {}", e)))?;
+    let bytes = tokio::fs::read(&path).await.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Error leyendo imagen: {}", e),
+        )
+    })?;
     let mime = mime_from_path(&path);
-    Ok(([
-        (header::CONTENT_TYPE, mime),
-        (header::CACHE_CONTROL, "public, max-age=3600".to_string()),
-    ], bytes))
+    Ok((
+        [
+            (header::CONTENT_TYPE, mime),
+            (header::CACHE_CONTROL, "public, max-age=3600".to_string()),
+        ],
+        bytes,
+    ))
 }
 
 // ─── GET /api/projects/{project_id}/images/{image_id}/thumbnail ─────────────
@@ -290,28 +339,42 @@ async fn get_image_thumbnail(
     Path((project_id, image_id)): Path<(String, String)>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     state.check_project(&project_id)?;
-    let project_dir = state.app_state().project_dir(&project_id)
+    let project_dir = state
+        .app_state()
+        .project_dir(&project_id)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
-    let thumb_path = project_dir.join("thumbnails").join(format!("{}.jpg", image_id));
+    let thumb_path = project_dir
+        .join("thumbnails")
+        .join(format!("{}.jpg", image_id));
 
     if thumb_path.exists() {
-        let bytes = tokio::fs::read(&thumb_path).await
+        let bytes = tokio::fs::read(&thumb_path)
+            .await
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-        return Ok(([
-            (header::CONTENT_TYPE, "image/jpeg".to_string()),
-            (header::CACHE_CONTROL, "public, max-age=3600".to_string()),
-        ], bytes));
+        return Ok((
+            [
+                (header::CONTENT_TYPE, "image/jpeg".to_string()),
+                (header::CACHE_CONTROL, "public, max-age=3600".to_string()),
+            ],
+            bytes,
+        ));
     }
 
     // Fallback: imagen completa
-    let path = state.app_state().get_image_file_path(&project_id, &image_id)
+    let path = state
+        .app_state()
+        .get_image_file_path(&project_id, &image_id)
         .map_err(|e| (StatusCode::NOT_FOUND, e))?;
-    let bytes = tokio::fs::read(&path).await
+    let bytes = tokio::fs::read(&path)
+        .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    Ok(([
-        (header::CONTENT_TYPE, mime_from_path(&path)),
-        (header::CACHE_CONTROL, "public, max-age=3600".to_string()),
-    ], bytes))
+    Ok((
+        [
+            (header::CONTENT_TYPE, mime_from_path(&path)),
+            (header::CACHE_CONTROL, "public, max-age=3600".to_string()),
+        ],
+        bytes,
+    ))
 }
 
 // ─── GET /api/projects/{project_id}/images/{image_id}/annotations ───────────
@@ -321,12 +384,16 @@ async fn get_annotations(
     Path((project_id, image_id)): Path<(String, String)>,
 ) -> Result<Json<Vec<AnnotationEntry>>, (StatusCode, String)> {
     state.check_project(&project_id)?;
-    let annotations = state.app_state().with_project(&project_id, |pf| {
-        pf.images.iter()
-            .find(|i| i.id == image_id)
-            .map(|i| i.annotations.clone())
-            .unwrap_or_default()
-    }).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+    let annotations = state
+        .app_state()
+        .with_project(&project_id, |pf| {
+            pf.images
+                .iter()
+                .find(|i| i.id == image_id)
+                .map(|i| i.annotations.clone())
+                .unwrap_or_default()
+        })
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
     Ok(Json(annotations))
 }
 
@@ -343,23 +410,36 @@ async fn save_annotations(
     body: String,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     state.check_project(&project_id)?;
-    let parsed: SaveAnnotationsRequest = serde_json::from_str(&body)
-        .map_err(|e| {
-            log::error!("Error deserializando annotations: {} — body: {}", e, &body[..body.len().min(500)]);
-            (StatusCode::BAD_REQUEST, format!("JSON inválido: {}", e))
-        })?;
+    let parsed: SaveAnnotationsRequest = serde_json::from_str(&body).map_err(|e| {
+        log::error!(
+            "Error deserializando annotations: {} — body: {}",
+            e,
+            &body[..body.len().min(500)]
+        );
+        (StatusCode::BAD_REQUEST, format!("JSON inválido: {}", e))
+    })?;
 
     let count = parsed.annotations.len();
-    log::info!("Guardando {} anotaciones en proyecto {} imagen {}", count, project_id, image_id);
+    log::info!(
+        "Guardando {} anotaciones en proyecto {} imagen {}",
+        count,
+        project_id,
+        image_id
+    );
 
-    state.app_state().save_annotations(&project_id, &image_id, &parsed.annotations)
+    state
+        .app_state()
+        .save_annotations(&project_id, &image_id, &parsed.annotations)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
 
-    match state.app_handle.emit("db:images-changed", serde_json::json!({
-        "projectId": &project_id,
-        "action": "updated",
-        "imageIds": [&image_id],
-    })) {
+    match state.app_handle.emit(
+        "db:images-changed",
+        serde_json::json!({
+            "projectId": &project_id,
+            "action": "updated",
+            "imageIds": [&image_id],
+        }),
+    ) {
         Ok(_) => log::info!("Evento db:images-changed emitido para {}", project_id),
         Err(e) => log::error!("Error emitiendo evento: {}", e),
     }
@@ -370,7 +450,12 @@ async fn save_annotations(
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 fn mime_from_path(path: &std::path::Path) -> String {
-    match path.extension().and_then(|e| e.to_str()).map(|e| e.to_lowercase()).as_deref() {
+    match path
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.to_lowercase())
+        .as_deref()
+    {
         Some("jpg") | Some("jpeg") => "image/jpeg".to_string(),
         Some("png") => "image/png".to_string(),
         Some("webp") => "image/webp".to_string(),
