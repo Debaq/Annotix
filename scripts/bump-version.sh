@@ -71,6 +71,16 @@ if [ -f "$ROOT/src-tauri/tauri.conf.json" ]; then
   echo "  ✓ src-tauri/tauri.conf.json"
 fi
 
+# 4. src-tauri/Cargo.lock (entrada de la propia crate; si no, queda atrás hasta
+#    el siguiente cargo build y el lock commiteado miente).
+if [ -f "$ROOT/src-tauri/Cargo.lock" ]; then
+  sed -i "/^name = \"annotix\"$/{n;s/^version = \".*\"/version = \"$CURRENT\"/}" "$ROOT/src-tauri/Cargo.lock"
+  echo "  ✓ src-tauri/Cargo.lock"
+fi
+
+# --- Verificar que quedó todo igual ---
+node "$ROOT/scripts/check-version-sync.mjs"
+
 echo ""
 echo "Versión $CURRENT sincronizada en todos los archivos."
 echo "Para hacer release: git add -A && git commit -m 'chore: bump version to $CURRENT' && git tag v$CURRENT && git push --tags"

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { Routes, Route, useParams, useNavigate, Navigate } from 'react-router-dom';
 import { invoke } from '@tauri-apps/api/core';
 import { AppLayout } from './features/core/components/AppLayout';
@@ -19,6 +19,7 @@ import { SettingsPage } from './features/settings/components/SettingsPage';
 import { SetupScreen } from './features/setup/SetupScreen';
 import { useUIStore } from './features/core/store/uiStore';
 import { useKeyboardShortcuts } from './features/core/hooks/useKeyboardShortcuts';
+import { useUpdateCheck } from './features/core/hooks/useUpdateCheck';
 import { useCurrentProject } from './features/projects/hooks/useCurrentProject';
 import { useAnnotations } from './features/canvas/hooks/useAnnotations';
 import { Button } from './components/ui/button';
@@ -563,35 +564,30 @@ function App() {
       .catch(() => setSetupComplete(false));
   }, []);
 
-  // Check for updates on startup
+  // Aviso de actualización al arrancar. Comparte el chequeo (y el caché) con el
+  // banner de AppLayout: una sola consulta y los mismos números en ambos sitios.
+  const { info: updateInfo } = useUpdateCheck();
+  const toastedVersion = useRef<string | null>(null);
   useEffect(() => {
     if (setupComplete !== true) return;
-    invoke<{
-      updateAvailable: boolean;
-      currentVersion: string;
-      latestVersion: string;
-      releaseUrl: string;
-    }>('check_for_updates')
-      .then((info) => {
-        if (info.updateAvailable) {
-          toast({
-            title: t('app.update.available', { version: info.latestVersion }),
-            description: (
-              <a
-                href={info.releaseUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline text-[var(--annotix-primary)] hover:opacity-80"
-              >
-                {t('app.update.download')}
-              </a>
-            ),
-            duration: 15000,
-          });
-        }
-      })
-      .catch(() => { /* silently ignore network errors */ });
-  }, [setupComplete, t]);
+    if (!updateInfo?.updateAvailable) return;
+    if (toastedVersion.current === updateInfo.latestVersion) return;
+    toastedVersion.current = updateInfo.latestVersion;
+    toast({
+      title: t('app.update.available', { version: updateInfo.latestVersion }),
+      description: (
+        <a
+          href={updateInfo.releaseUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline text-[var(--annotix-primary)] hover:opacity-80"
+        >
+          {t('app.update.download')}
+        </a>
+      ),
+      duration: 15000,
+    });
+  }, [setupComplete, t, updateInfo]);
 
   // Handle annotation creation events from tools
   useEffect(() => {

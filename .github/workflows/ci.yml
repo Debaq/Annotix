@@ -88,6 +88,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check version sync
+        run: node scripts/check-version-sync.mjs
+
       - name: Generate dummy build info
         run: |
           printf '// CI stub\nexport const BUILD_NUMBER = 0;\nexport const BUILD_CODE = "ci";\nexport const BUILD_DATE = "";\nexport const BUILD_COMMIT = "%s";\n' "${{ github.sha }}" > src/lib/buildInfo.ts

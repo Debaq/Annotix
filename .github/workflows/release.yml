@@ -40,6 +40,9 @@ jobs:
           node-version: 20
           cache: pnpm
 
+      - name: Check version sync
+        run: node scripts/check-version-sync.mjs
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
@@ -140,6 +143,9 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
+
+      - name: Check version sync
+        run: node scripts/check-version-sync.mjs
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
