@@ -57,9 +57,8 @@ pub fn restore_full_project<F: Fn(&str, f64, usize, usize)>(
         let _ = std::fs::remove_dir_all(&dest_dir);
         return Err("project.json no encontrado en .tix".to_string());
     }
-    let mut pf = store_io::read_project(&dest_dir).map_err(|e| {
+    let mut pf = store_io::read_project(&dest_dir).inspect_err(|_e| {
         let _ = std::fs::remove_dir_all(&dest_dir);
-        e
     })?;
 
     let now = js_timestamp();

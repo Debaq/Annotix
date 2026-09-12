@@ -743,8 +743,8 @@ fn generate_segmentation_mask(
     image: &ImageEntry,
     project: &ProjectFile,
 ) -> Result<Vec<u8>, String> {
-    let w = image.width as u32;
-    let h = image.height as u32;
+    let w = image.width;
+    let h = image.height;
     let mut mask_img = GrayImage::from_pixel(w, h, Luma([0u8]));
 
     for ann in &image.annotations {

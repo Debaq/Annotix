@@ -972,7 +972,7 @@ pub fn generate_train_script_for_backend(
                         .cloned()
                         .unwrap_or_default(),
                 )
-                .unwrap_or_else(|_| super::AugmentationConfig {
+                .unwrap_or(super::AugmentationConfig {
                     mosaic: 1.0,
                     mixup: 0.0,
                     hsv_h: 0.015,

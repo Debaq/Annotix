@@ -191,7 +191,7 @@ pub fn zip_project(
                 .to_string_lossy()
                 .replace('\\', "/");
             if path.is_dir() {
-                zip.add_directory(&format!("{}/", rel), options)
+                zip.add_directory(format!("{}/", rel), options)
                     .map_err(|e| e.to_string())?;
                 add_dir_to_zip(zip, base, &path, options)?;
             } else {

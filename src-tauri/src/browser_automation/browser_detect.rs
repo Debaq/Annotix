@@ -193,7 +193,7 @@ fn get_version_linux(path: &str) -> Option<String> {
             let out = String::from_utf8_lossy(&o.stdout);
             // Extraer versión numérica del output
             out.split_whitespace()
-                .find(|s| s.chars().next().map_or(false, |c| c.is_ascii_digit()))
+                .find(|s| s.chars().next().is_some_and(|c| c.is_ascii_digit()))
                 .map(|s| s.to_string())
         })
 }

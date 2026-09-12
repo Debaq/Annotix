@@ -1,6 +1,6 @@
 use std::fs;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 pub struct Micromamba {
@@ -178,7 +178,7 @@ impl Micromamba {
 
     pub fn create_env<F: Fn(&str, f64, Option<String>)>(
         &self,
-        env_path: &PathBuf,
+        env_path: &Path,
         python_version: &str,
         emit_feedback: &F,
     ) -> Result<(), String> {

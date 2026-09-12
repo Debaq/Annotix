@@ -197,7 +197,7 @@ fn add_dir_to_zip(
         let name = relative.to_string_lossy().replace('\\', "/");
 
         if path.is_dir() {
-            zip.add_directory(&format!("{}/", name), options)
+            zip.add_directory(format!("{}/", name), options)
                 .map_err(|e| format!("Error adding dir to zip: {}", e))?;
             add_dir_to_zip(zip, base, &path, options)?;
         } else {

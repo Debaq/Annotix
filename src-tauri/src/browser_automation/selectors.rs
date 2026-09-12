@@ -111,16 +111,14 @@ pub fn find_element_with_fallback<'a>(
     let timeout = std::time::Duration::from_millis(entry.wait_timeout_ms);
 
     // Intentar selector principal
-    match tab.wait_for_element_with_custom_timeout(&entry.css, timeout) {
-        Ok(el) => return Ok(el),
-        Err(_) => {}
+    if let Ok(el) = tab.wait_for_element_with_custom_timeout(&entry.css, timeout) {
+        return Ok(el);
     }
 
     // Intentar fallback
     if let Some(ref fallback) = entry.fallback {
-        match tab.wait_for_element_with_custom_timeout(fallback, timeout) {
-            Ok(el) => return Ok(el),
-            Err(_) => {}
+        if let Ok(el) = tab.wait_for_element_with_custom_timeout(fallback, timeout) {
+            return Ok(el);
         }
     }
 

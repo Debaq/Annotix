@@ -842,7 +842,7 @@ fn convert_request_to_yolo_config(req: &TrainingRequest) -> TrainingConfig {
         test_split: req.test_split,
         workers: req.workers,
         augmentation: serde_json::from_value(bp.get("augmentation").cloned().unwrap_or_default())
-            .unwrap_or_else(|_| crate::training::AugmentationConfig {
+            .unwrap_or(crate::training::AugmentationConfig {
                 mosaic: 1.0,
                 mixup: 0.0,
                 hsv_h: 0.015,

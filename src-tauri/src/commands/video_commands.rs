@@ -770,7 +770,7 @@ pub async fn update_track(
 ) -> Result<(), String> {
     p2p.check_permission(&project_id, P2pPermission::Annotate)
         .await?;
-    let label_update = label.map(|l| Some(l));
+    let label_update = label.map(Some);
     state.update_track(
         &project_id,
         &video_id,

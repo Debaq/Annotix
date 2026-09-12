@@ -51,8 +51,8 @@ pub fn import_data(
     // Process annotation rows
     let mut images_map: HashMap<String, ImageImportData> = HashMap::new();
 
-    for i in 1..annot_lines.len() {
-        let line = annot_lines[i].trim();
+    for raw_line in annot_lines.iter().skip(1) {
+        let line = raw_line.trim();
         if line.is_empty() {
             continue;
         }

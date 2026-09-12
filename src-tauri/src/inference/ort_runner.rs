@@ -18,6 +18,7 @@ use ort::value::Tensor;
 /// según las features de compilación (cuda/tensorrt/directml/coreml). CPU
 /// siempre se agrega como fallback — si un EP GPU no está disponible en runtime,
 /// ORT cae automáticamente a CPU.
+#[allow(clippy::vec_init_then_push)]
 pub fn configure_builder(mut builder: SessionBuilder) -> Result<SessionBuilder, String> {
     builder = builder
         .with_optimization_level(GraphOptimizationLevel::Level3)
@@ -25,6 +26,7 @@ pub fn configure_builder(mut builder: SessionBuilder) -> Result<SessionBuilder, 
         .with_intra_threads(num_cpus::get())
         .map_err(|e| format!("Error set intra_threads: {e}"))?;
 
+    // Los push están detrás de cfg(feature), así que vec![] no aplica aquí.
     #[allow(unused_mut)]
     let mut eps: Vec<ort::execution_providers::ExecutionProviderDispatch> = Vec::new();
     #[cfg(feature = "tensorrt")]
@@ -130,12 +132,7 @@ pub enum OutputFormat {
 
 impl OutputFormat {
     pub fn from_hint(hint: &str) -> Option<Self> {
-        match hint
-            .to_lowercase()
-            .replace('-', "")
-            .replace('_', "")
-            .as_str()
-        {
+        match hint.to_lowercase().replace(['-', '_'], "").as_str() {
             "yolov8" | "v8" | "yolov9" | "v9" | "yolov11" | "v11" | "yolov12" | "v12" | "yolo8"
             | "yolo9" | "yolo11" | "yolo12" => Some(Self::YoloV8),
             "yolov5" | "v5" | "yolov6" | "v6" | "yolov7" | "v7" | "yolo5" | "yolo6" | "yolo7" => {
@@ -276,7 +273,7 @@ fn json_value_to_names(val: &serde_json::Value) -> Option<Vec<String>> {
 /// Infiere num_classes del shape del output primero. Retorna (nc, format_hint).
 fn infer_nc_from_shape(shape: &[i64]) -> (Option<usize>, Option<String>) {
     // Solo dims concretas (>0) son útiles
-    let dims: Vec<i64> = shape.iter().copied().collect();
+    let dims: Vec<i64> = shape.to_vec();
     match dims.len() {
         2 => {
             // Clasificación [N, C]
@@ -290,7 +287,7 @@ fn infer_nc_from_shape(shape: &[i64]) -> (Option<usize>, Option<String>) {
             let b = dims[2];
             if a > 0 && b > 0 {
                 // YOLOv10: [_, max_det, 6]
-                if b == 6 && a >= 10 && a <= 2000 {
+                if b == 6 && (10..=2000).contains(&a) {
                     return (None, Some("yolov10".to_string()));
                 }
                 if a < b && a >= 5 {
@@ -311,10 +308,6 @@ fn infer_nc_from_shape(shape: &[i64]) -> (Option<usize>, Option<String>) {
 
 // ─── Main Entry Point ───────────────────────────────────────────────────────
 
-/// Ejecuta inferencia sobre una imagen
-///
-/// - `task`: "detect", "segment", "obb", "pose", "classify"
-/// - `format_hint`: override de formato ("yolov5", "yolov8", "yolov10", "classification")
 /// Preprocesa una imagen a tensor CHW f32 [3*size*size] listo para ORT.
 /// Pensado para ejecutarse en thread productor (overlap con session.run).
 pub fn preprocess_image(image_path: &str, input_size: u32) -> Result<Vec<f32>, String> {
@@ -493,7 +486,7 @@ fn detect_output_format_full(
 
 fn detect_3d_format(dim1: usize, dim2: usize, num_classes: usize) -> Result<OutputFormat, String> {
     // YOLOv10: [batch, max_det, 6] end-to-end
-    if dim2 == 6 && dim1 >= 10 && dim1 <= 2000 {
+    if dim2 == 6 && (10..=2000).contains(&dim1) {
         log::info!("[ORT] [_, {}, 6] → YOLOv10 end-to-end", dim1);
         return Ok(OutputFormat::YoloV10);
     }
@@ -664,16 +657,16 @@ fn parse_yolov8(
         // Extras según task
         match task {
             "obb" if extra_count >= 1 => {
-                let angle = val(extra_offset as usize) as f64;
+                let angle = val(extra_offset) as f64;
                 det.angle = Some(angle);
             }
             "pose" if extra_count >= 3 => {
                 let num_kpts = extra_count / 3;
                 let mut kpts = Vec::with_capacity(num_kpts);
                 for k in 0..num_kpts {
-                    let kx = val(extra_offset as usize + k * 3) as f64 / isz;
-                    let ky = val(extra_offset as usize + k * 3 + 1) as f64 / isz;
-                    let kc = val(extra_offset as usize + k * 3 + 2) as f64;
+                    let kx = val(extra_offset + k * 3) as f64 / isz;
+                    let ky = val(extra_offset + k * 3 + 1) as f64 / isz;
+                    let kc = val(extra_offset + k * 3 + 2) as f64;
                     kpts.push(Keypoint {
                         x: kx.clamp(0.0, 1.0),
                         y: ky.clamp(0.0, 1.0),
@@ -684,8 +677,7 @@ fn parse_yolov8(
             }
             "segment" if extra_count == 32 => {
                 if let Some((proto_dims, proto_data)) = proto {
-                    let coeffs: Vec<f32> =
-                        (0..32).map(|k| val(extra_offset as usize + k)).collect();
+                    let coeffs: Vec<f32> = (0..32).map(|k| val(extra_offset + k)).collect();
                     let polygon =
                         compute_mask_polygon(&coeffs, proto_dims, proto_data, cx, cy, w, h, isz);
                     if let Some(pts) = polygon {
@@ -770,7 +762,7 @@ fn resolve_v8_layout(
             // features = 4 + C + K*3, default C=1 (person)
             let nc = 1;
             let extra = det_len - 4 - nc;
-            if extra % 3 != 0 {
+            if !extra.is_multiple_of(3) {
                 return Err(format!(
                     "Pose: features={} no es compatible con 4+1+K*3 (sobrante={}). \
                      Proporciona el número de clases en la configuración.",
@@ -948,7 +940,10 @@ fn parse_classification(
         _ => return Err(format!("Clasificación: shape inesperada {:?}", dims)),
     };
 
-    let needs_softmax = data.iter().take(num_classes).any(|&v| v < 0.0 || v > 1.05);
+    let needs_softmax = data
+        .iter()
+        .take(num_classes)
+        .any(|&v| !(0.0..=1.05).contains(&v));
 
     let scores: Vec<f64> = if needs_softmax {
         log::info!("[ORT/Cls] Aplicando softmax a {} clases", num_classes);
@@ -1018,13 +1013,12 @@ fn parse_multi_output(
         let name_lower = name.to_lowercase();
 
         // Boxes: tiene 4 en última dimensión
-        if (name_lower.contains("box") || name_lower.contains("bbox"))
-            || (boxes_data.is_none() && dims.last() == Some(&4))
+        if ((name_lower.contains("box") || name_lower.contains("bbox"))
+            || (boxes_data.is_none() && dims.last() == Some(&4)))
+            && boxes_data.is_none()
         {
-            if boxes_data.is_none() {
-                boxes_data = Some((data, dims));
-                continue;
-            }
+            boxes_data = Some((data, dims));
+            continue;
         }
 
         // Scores: contiene "score" o "conf" en el nombre
@@ -1161,8 +1155,8 @@ fn parse_multi_output(
             (
                 (x1 / isz).max(0.0),
                 (y1 / isz).max(0.0),
-                ((x2 - x1) / isz).min(1.0).max(0.0),
-                ((y2 - y1) / isz).min(1.0).max(0.0),
+                ((x2 - x1) / isz).clamp(0.0, 1.0),
+                ((y2 - y1) / isz).clamp(0.0, 1.0),
             )
         };
 
@@ -1442,7 +1436,7 @@ fn sample_needs_sigmoid(
                 return false;
             }
             let v = data[idx];
-            if v > 1.0 || v < 0.0 {
+            if !(0.0..=1.0).contains(&v) {
                 return true;
             }
         }

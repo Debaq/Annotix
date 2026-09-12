@@ -299,7 +299,7 @@ pub async fn install_onnx(
     } else {
         "onnxruntime"
     };
-    let packages = vec!["onnx", runtime_pkg, "skl2onnx", "onnxmltools"];
+    let packages = ["onnx", runtime_pkg, "skl2onnx", "onnxmltools"];
 
     let total = packages.len();
     for (i, pkg) in packages.iter().enumerate() {

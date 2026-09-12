@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
@@ -438,7 +438,7 @@ fn strip_ansi(s: &str) -> String {
         match chars.peek().copied() {
             Some('[') => {
                 chars.next();
-                while let Some(nc) = chars.next() {
+                for nc in chars.by_ref() {
                     if ('@'..='~').contains(&nc) {
                         break;
                     }
@@ -526,7 +526,7 @@ fn process_log_line(
     job_id: &str,
     line: &str,
     logs: &mut Vec<String>,
-    project_dir: &PathBuf,
+    project_dir: &Path,
 ) -> bool {
     if let Some(json_str) = line.strip_prefix("ANNOTIX_EVENT:") {
         if let Ok(event) = serde_json::from_str::<serde_json::Value>(json_str) {
@@ -551,7 +551,7 @@ fn process_log_line(
 const MAX_PERSISTED_LOG_LINES: usize = 2000;
 
 /// Persiste un tail acotado de los logs en project.json.
-fn persist_logs_tail(app: &AppHandle, project_dir: &PathBuf, job_id: &str, logs: &[String]) {
+fn persist_logs_tail(app: &AppHandle, project_dir: &Path, job_id: &str, logs: &[String]) {
     let start = logs.len().saturating_sub(MAX_PERSISTED_LOG_LINES);
     let tail: Vec<String> = logs[start..].to_vec();
     update_job_in_project(app, project_dir, job_id, |job| {
@@ -584,7 +584,7 @@ pub fn flush_log_throttle(app: &AppHandle, job_id: &str) {
 
 /// Lee `results.csv` de ultralytics y reconstruye `metrics_history`.
 /// Devuelve `None` si no hay csv o no se puede parsear.
-fn hydrate_history_from_results_csv(result_dir: &PathBuf) -> Option<Vec<serde_json::Value>> {
+fn hydrate_history_from_results_csv(result_dir: &Path) -> Option<Vec<serde_json::Value>> {
     let csv_path = result_dir.join("results.csv");
     let content = std::fs::read_to_string(&csv_path).ok()?;
     let mut lines = content.lines();
@@ -654,7 +654,7 @@ fn handle_event(
     app: &AppHandle,
     job_id: &str,
     event: &serde_json::Value,
-    project_dir: &PathBuf,
+    project_dir: &Path,
 ) -> bool {
     let event_type = event["type"].as_str().unwrap_or("");
 
@@ -763,7 +763,7 @@ fn handle_event(
 /// evento `completed` (evento perdido / JSON malformado / script terminó sin
 /// emitirlo). Sin esto el job queda "training" zombie y al reiniciar se marca
 /// "failed" pese a haber entrenado bien. Marca completed y localiza best.pt.
-fn finalize_completed_fallback(app: &AppHandle, project_dir: &PathBuf, job_id: &str) {
+fn finalize_completed_fallback(app: &AppHandle, project_dir: &Path, job_id: &str) {
     flush_log_throttle(app, job_id);
     update_job_in_project(app, project_dir, job_id, |job| {
         // Solo si sigue en "training" (no pisar cancelled/failed).
@@ -920,7 +920,7 @@ fn spawn_monitor_thread(
 /// Rutea por el cache de `AppState` (`with_project_mut`) en vez de escribir a
 /// disco directo, para no dejar el cache en memoria stale (lost-update entre
 /// thread y comandos). `project_dir` se usa solo para derivar el `project_id`.
-fn update_job_in_project<F>(app: &AppHandle, project_dir: &PathBuf, job_id: &str, f: F)
+fn update_job_in_project<F>(app: &AppHandle, project_dir: &Path, job_id: &str, f: F)
 where
     F: FnOnce(&mut crate::store::project_file::TrainingJobEntry),
 {

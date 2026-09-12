@@ -116,6 +116,27 @@ fn base32_encode(data: &[u8]) -> String {
     result
 }
 
+fn base32_decode(input: &str) -> Result<Vec<u8>, String> {
+    let mut result = Vec::new();
+    let mut bits = 0u32;
+    let mut n_bits = 0;
+
+    for c in input.chars() {
+        let val = match c {
+            'A'..='Z' => c as u32 - 'A' as u32,
+            '2'..='7' => c as u32 - '2' as u32 + 26,
+            _ => return Err(format!("Carácter inválido en base32: {}", c)),
+        };
+        bits = (bits << 5) | val;
+        n_bits += 5;
+        if n_bits >= 8 {
+            n_bits -= 8;
+            result.push((bits >> n_bits) as u8);
+        }
+    }
+    Ok(result)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -151,25 +172,4 @@ mod tests {
             .chars()
             .all(|c| c.is_ascii_uppercase() || ('2'..='7').contains(&c)));
     }
-}
-
-fn base32_decode(input: &str) -> Result<Vec<u8>, String> {
-    let mut result = Vec::new();
-    let mut bits = 0u32;
-    let mut n_bits = 0;
-
-    for c in input.chars() {
-        let val = match c {
-            'A'..='Z' => c as u32 - 'A' as u32,
-            '2'..='7' => c as u32 - '2' as u32 + 26,
-            _ => return Err(format!("Carácter inválido en base32: {}", c)),
-        };
-        bits = (bits << 5) | val;
-        n_bits += 5;
-        if n_bits >= 8 {
-            n_bits -= 8;
-            result.push((bits >> n_bits) as u8);
-        }
-    }
-    Ok(result)
 }

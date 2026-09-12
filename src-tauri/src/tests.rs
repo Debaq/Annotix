@@ -10,8 +10,6 @@
 //! No depende de Tauri ni de `AppState`: las tests operan sobre los módulos internos
 //! que reciben `std::fs::File` / `ZipArchive<File>` directamente, usando `tempfile::TempDir`.
 
-#![cfg(test)]
-
 use std::fs;
 use std::io::Cursor;
 use std::path::{Path, PathBuf};
@@ -383,7 +381,7 @@ fn yolo_detection_label_format_is_cx_cy_w_h_normalized() {
 
     let mut archive = open_zip(&zip_path);
     let txt = import::yolo::read_zip_text(&mut archive, "labels/img1.txt").expect("read txt");
-    let parts: Vec<&str> = txt.trim().split_whitespace().collect();
+    let parts: Vec<&str> = txt.split_whitespace().collect();
     assert_eq!(parts.len(), 5);
     assert_eq!(parts[0], "0"); // class_id
                                // xc normalizado: (10 + 50/2) / 200 = 35/200 = 0.175

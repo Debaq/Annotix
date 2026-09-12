@@ -35,7 +35,7 @@ impl P2pState {
             .ok_or("Documento no encontrado")?;
 
         let lock_key = format!("images/{}/lock", image_id);
-        let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
+        let blobs: &iroh_blobs::api::Store = &node.blobs_store;
 
         // Verificar si ya existe un lock no expirado
         let existing = doc
@@ -122,7 +122,7 @@ impl P2pState {
             .ok_or("Documento no encontrado")?;
 
         let lock_key = format!("images/{}/lock", image_id);
-        let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
+        let blobs: &iroh_blobs::api::Store = &node.blobs_store;
 
         let entry = doc
             .get_exact(session.author_id, lock_key.as_bytes(), false)

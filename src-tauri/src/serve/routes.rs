@@ -118,9 +118,8 @@ fn extract_token(req: &Request) -> Option<String> {
     }
     let q = req.uri().query()?;
     for pair in q.split('&') {
-        let mut it = pair.splitn(2, '=');
-        let k = it.next()?;
-        let v = it.next()?;
+        let (k, v) = pair.split_once('=')?;
+
         if k == "token" {
             return Some(urlencoding_decode(v));
         }

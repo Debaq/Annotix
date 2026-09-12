@@ -62,7 +62,7 @@ impl ServeState {
             .read()
             .await
             .as_ref()
-            .map_or(false, |s| s.auto_save)
+            .is_some_and(|s| s.auto_save)
     }
 
     pub async fn set_auto_save(&self, value: bool) {

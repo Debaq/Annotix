@@ -117,7 +117,7 @@ fn detect_yolo(
         return None;
     }
 
-    let label_content = read_file_text(archive, &txt_files[0])?;
+    let label_content = read_file_text(archive, txt_files[0])?;
     let is_segmentation = detect_segmentation_format(&label_content);
 
     Some(DetectionResult {
@@ -167,7 +167,7 @@ fn detect_tix_full(archive: &mut ZipArchive<std::fs::File>) -> Option<DetectionR
     let project_type = data
         .get("type")
         .and_then(|t| t.as_str())
-        .map(|t| normalize_project_type(t))
+        .map(normalize_project_type)
         .unwrap_or_else(|| "bbox".to_string());
     let class_count = data
         .get("classes")
@@ -200,7 +200,7 @@ fn detect_tix(archive: &mut ZipArchive<std::fs::File>) -> Option<DetectionResult
         .get("project")
         .and_then(|p| p.get("type"))
         .and_then(|t| t.as_str())
-        .map(|t| normalize_project_type(t))
+        .map(normalize_project_type)
         .unwrap_or_else(|| "bbox".to_string());
 
     let class_count = data
@@ -335,10 +335,10 @@ fn detect_folders_by_class(files: &[String]) -> Option<DetectionResult> {
 
 fn detect_segmentation_format(content: &str) -> bool {
     for line in content.trim().lines() {
-        let parts: Vec<&str> = line.trim().split_whitespace().collect();
+        let parts: Vec<&str> = line.split_whitespace().collect();
         if parts.len() > 5 {
             let coord_count = parts.len() - 1;
-            if coord_count % 2 == 0 && coord_count >= 6 {
+            if coord_count.is_multiple_of(2) && coord_count >= 6 {
                 return true;
             }
         }

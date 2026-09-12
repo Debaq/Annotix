@@ -157,7 +157,7 @@ pub fn run_amg(
             if areas[k] < config.min_mask_region_area {
                 continue;
             }
-            if best.map_or(true, |(_, s)| scores_arr[k] > s) {
+            if best.is_none_or(|(_, s)| scores_arr[k] > s) {
                 best = Some((k, scores_arr[k]));
             }
         }

@@ -69,7 +69,7 @@ async fn test_import_file_creates_doc_entry() {
     std::fs::write(&test_file, &test_data_extended).unwrap();
 
     let blob_key: Bytes = b"images/test-id/blob".to_vec().into();
-    let blobs: &iroh_blobs::api::Store = &*blobs_store;
+    let blobs: &iroh_blobs::api::Store = &blobs_store;
 
     // CRITICAL: El doble-await
     // Primer .await resuelve Result<ImportFileProgress>
@@ -137,7 +137,7 @@ async fn test_host_to_collaborator_blob_transfer() {
         .author_create()
         .await
         .expect("Error creando autor host");
-    let host_blobs: &iroh_blobs::api::Store = &*host_blobs_store;
+    let host_blobs: &iroh_blobs::api::Store = &host_blobs_store;
 
     // Escribir metadata del proyecto
     host_doc
@@ -260,7 +260,7 @@ async fn test_host_to_collaborator_blob_transfer() {
     let (_collab_endpoint, collab_docs, collab_blobs_store, _collab_router) =
         create_test_node(collab_dir.path()).await;
 
-    let collab_blobs: &iroh_blobs::api::Store = &*collab_blobs_store;
+    let collab_blobs: &iroh_blobs::api::Store = &collab_blobs_store;
 
     let (collab_doc, _events) = collab_docs
         .import_and_subscribe(ticket)
@@ -393,7 +393,7 @@ async fn test_transfer_via_relay() {
         .author_create()
         .await
         .expect("Error creando autor host");
-    let host_blobs: &iroh_blobs::api::Store = &*host_blobs_store;
+    let host_blobs: &iroh_blobs::api::Store = &host_blobs_store;
 
     // Metadata del proyecto
     host_doc
@@ -464,7 +464,7 @@ async fn test_transfer_via_relay() {
     let (_collab_endpoint, collab_docs, collab_blobs_store, _collab_router) =
         create_test_node(collab_dir.path()).await;
 
-    let collab_blobs: &iroh_blobs::api::Store = &*collab_blobs_store;
+    let collab_blobs: &iroh_blobs::api::Store = &collab_blobs_store;
 
     let transfer_start = std::time::Instant::now();
 
@@ -579,7 +579,7 @@ async fn test_annotation_sync_bidirectional() {
         .author_create()
         .await
         .expect("Error creando autor host");
-    let host_blobs: &iroh_blobs::api::Store = &*host_blobs_store;
+    let host_blobs: &iroh_blobs::api::Store = &host_blobs_store;
 
     // A: escribe metadata del proyecto
     host_doc
@@ -680,7 +680,7 @@ async fn test_annotation_sync_bidirectional() {
     let (_collab_endpoint, collab_docs, collab_blobs_store, _collab_router) =
         create_test_node(collab_dir.path()).await;
 
-    let collab_blobs: &iroh_blobs::api::Store = &*collab_blobs_store;
+    let collab_blobs: &iroh_blobs::api::Store = &collab_blobs_store;
     let collab_author = collab_docs
         .author_create()
         .await
@@ -798,7 +798,7 @@ async fn test_annotation_sync_bidirectional() {
     println!("A: Esperando anotaciones de B via subscribe...");
 
     let recv_start = std::time::Instant::now();
-    let mut received_annotations: Option<serde_json::Value> = None;
+    let received_annotations: Option<serde_json::Value>;
 
     loop {
         if recv_start.elapsed() >= std::time::Duration::from_secs(30) {
@@ -890,7 +890,7 @@ async fn test_download_from_multiple_peers() {
         .author_create()
         .await
         .expect("Error creando autor host");
-    let host_blobs: &iroh_blobs::api::Store = &*host_blobs_store;
+    let host_blobs: &iroh_blobs::api::Store = &host_blobs_store;
 
     host_doc
         .set_bytes(
@@ -956,7 +956,7 @@ async fn test_download_from_multiple_peers() {
     let (peer_b_endpoint, peer_b_docs, peer_b_blobs_store, _peer_b_router) =
         create_test_node(peer_b_dir.path()).await;
 
-    let peer_b_blobs: &iroh_blobs::api::Store = &*peer_b_blobs_store;
+    let peer_b_blobs: &iroh_blobs::api::Store = &peer_b_blobs_store;
 
     let (peer_b_doc, _) = peer_b_docs
         .import_and_subscribe(ticket.clone())
@@ -1027,7 +1027,7 @@ async fn test_download_from_multiple_peers() {
     let (peer_c_endpoint, peer_c_docs, peer_c_blobs_store, _peer_c_router) =
         create_test_node(peer_c_dir.path()).await;
 
-    let peer_c_blobs: &iroh_blobs::api::Store = &*peer_c_blobs_store;
+    let peer_c_blobs: &iroh_blobs::api::Store = &peer_c_blobs_store;
 
     // C necesita un ticket nuevo del doc
     let ticket_c = host_doc

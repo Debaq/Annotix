@@ -43,6 +43,8 @@ impl VertexCustomRunner {
             .collect::<Vec<_>>()
             .join(", ");
 
+        let gcs_results = format!("gs://{}/results/{}", self.bucket, uuid::Uuid::new_v4());
+
         format!(
             r#"#!/usr/bin/env python3
 import subprocess, os
@@ -77,7 +79,7 @@ subprocess.run(["gsutil", "-m", "cp", "-r", "/tmp/results/", "{gcs_results}/"], 
             image_size = request.image_size,
             lr = request.lr,
             patience = request.patience,
-            gcs_results = format!("gs://{}/results/{}", self.bucket, uuid::Uuid::new_v4()),
+            gcs_results = gcs_results,
         )
     }
 }

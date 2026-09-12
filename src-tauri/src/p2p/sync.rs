@@ -91,7 +91,7 @@ pub async fn verify_host_secret(
         _ => return false,
     };
 
-    let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
+    let blobs: &iroh_blobs::api::Store = &node.blobs_store;
 
     let entry = match doc
         .get_one(iroh_docs::store::Query::key_exact(b"meta/host_secret_hash"))
@@ -122,7 +122,7 @@ pub async fn read_rules_from_doc(
         .map_err(|e| format!("Error abriendo doc: {}", e))?
         .ok_or("Documento no encontrado")?;
 
-    let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
+    let blobs: &iroh_blobs::api::Store = &node.blobs_store;
 
     let entry = doc
         .get_one(iroh_docs::store::Query::key_exact(b"meta/rules"))
@@ -438,7 +438,7 @@ pub async fn doc_to_project_metadata(
         .map_err(|e| format!("Error abriendo doc: {}", e))?
         .ok_or("Documento no encontrado")?;
 
-    let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
+    let blobs: &iroh_blobs::api::Store = &node.blobs_store;
 
     // Leer meta/project
     let meta_entry = doc
@@ -764,7 +764,7 @@ pub async fn download_project_images(
         .map_err(|e| format!("Error abriendo doc: {}", e))?
         .ok_or("Documento no encontrado")?;
 
-    let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
+    let blobs: &iroh_blobs::api::Store = &node.blobs_store;
 
     // Recopilar endpoints de todos los peers conocidos para descarga
     let mut peer_endpoints: Vec<iroh::EndpointId> = Vec::new();
@@ -1054,7 +1054,7 @@ async fn update_approval_status(
         .map_err(|e| format!("Error abriendo doc: {}", e))?
         .ok_or("Documento no encontrado")?;
 
-    let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
+    let blobs: &iroh_blobs::api::Store = &node.blobs_store;
     let key = format!("approval/{}", item_id);
 
     let entry = doc
@@ -1098,7 +1098,7 @@ pub async fn list_pending_approvals(
         .map_err(|e| format!("Error abriendo doc: {}", e))?
         .ok_or("Documento no encontrado")?;
 
-    let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
+    let blobs: &iroh_blobs::api::Store = &node.blobs_store;
 
     let entries = doc
         .get_many(iroh_docs::store::Query::key_prefix(b"approval/"))
@@ -1241,7 +1241,7 @@ async fn download_single_image(
         _ => return,
     };
 
-    let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
+    let blobs: &iroh_blobs::api::Store = &node.blobs_store;
     let blob_key = format!("images/{}/blob", image_id);
 
     // Recopilar endpoints de todos los peers conocidos para descarga
@@ -1538,7 +1538,7 @@ pub async fn emit_existing_peers(
         _ => return,
     };
 
-    let blobs: &iroh_blobs::api::Store = &*blobs_store;
+    let blobs: &iroh_blobs::api::Store = blobs_store;
     let peer_entries = match doc
         .get_many(iroh_docs::store::Query::key_prefix(b"meta/peers/"))
         .await
@@ -1602,7 +1602,7 @@ pub fn start_doc_watcher(
         };
 
         use futures_lite::StreamExt;
-        let blobs: &iroh_blobs::api::Store = &*blobs_store;
+        let blobs: &iroh_blobs::api::Store = &blobs_store;
 
         tokio::pin!(events);
         while let Some(event) = events.next().await {
@@ -1626,7 +1626,7 @@ pub fn start_doc_watcher(
                             let ah = app_handle.clone();
                             let bs = blobs_store.clone();
                             tokio::spawn(async move {
-                                let blobs: &iroh_blobs::api::Store = &*bs;
+                                let blobs: &iroh_blobs::api::Store = &bs;
                                 let mut content_opt = None;
                                 for attempt in 0..10u32 {
                                     if attempt > 0 {
@@ -1927,7 +1927,7 @@ pub fn start_doc_watcher(
                             let ah = app_handle.clone();
                             let bs = blobs_store.clone();
                             tokio::spawn(async move {
-                                let blobs: &iroh_blobs::api::Store = &*bs;
+                                let blobs: &iroh_blobs::api::Store = &bs;
                                 let mut content_opt = None;
                                 for attempt in 0..5u32 {
                                     if attempt > 0 {

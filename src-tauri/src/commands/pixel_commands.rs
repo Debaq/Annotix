@@ -69,8 +69,8 @@ pub fn process_image_filters(
 /// CLAHE: Contrast Limited Adaptive Histogram Equalization
 fn apply_clahe(img: &mut RgbImage, clip_limit: f64, tile_grid_x: u32, tile_grid_y: u32) {
     let (width, height) = img.dimensions();
-    let tile_w = (width + tile_grid_x - 1) / tile_grid_x;
-    let tile_h = (height + tile_grid_y - 1) / tile_grid_y;
+    let tile_w = width.div_ceil(tile_grid_x);
+    let tile_h = height.div_ceil(tile_grid_y);
 
     // Paso 1: construir LUTs por tile
     let mut luts = Vec::with_capacity((tile_grid_y * tile_grid_x) as usize);
@@ -173,8 +173,8 @@ fn apply_clahe_per_channel(
     tile_grid_y: u32,
 ) {
     let (width, height) = img.dimensions();
-    let tile_w = (width + tile_grid_x - 1) / tile_grid_x;
-    let tile_h = (height + tile_grid_y - 1) / tile_grid_y;
+    let tile_w = width.div_ceil(tile_grid_x);
+    let tile_h = height.div_ceil(tile_grid_y);
     let n_tiles = (tile_grid_y * tile_grid_x) as usize;
 
     // LUTs por canal: [tile_idx][channel][bin]
@@ -572,13 +572,9 @@ pub fn compute_audio_peaks(samples: Vec<f32>, num_peaks: u32) -> Result<Vec<f32>
     for i in 0..num_peaks {
         let start = i * samples_per_peak;
         let end = (start + samples_per_peak).min(samples.len());
-        let mut max: f32 = 0.0;
-        for j in start..end {
-            let abs = samples[j].abs();
-            if abs > max {
-                max = abs;
-            }
-        }
+        let max = samples[start..end]
+            .iter()
+            .fold(0.0f32, |acc, s| acc.max(s.abs()));
         peaks.push(max);
     }
 

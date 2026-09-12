@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct GcpConfig {
@@ -179,11 +179,11 @@ pub struct AppConfig {
 }
 
 impl AppConfig {
-    pub fn config_path(data_dir: &PathBuf) -> PathBuf {
+    pub fn config_path(data_dir: &Path) -> PathBuf {
         data_dir.join("config.json")
     }
 
-    pub fn load(data_dir: &PathBuf) -> Self {
+    pub fn load(data_dir: &Path) -> Self {
         let path = Self::config_path(data_dir);
         if path.exists() {
             match std::fs::read_to_string(&path) {
@@ -195,7 +195,7 @@ impl AppConfig {
         }
     }
 
-    pub fn save(&self, data_dir: &PathBuf) -> Result<(), String> {
+    pub fn save(&self, data_dir: &Path) -> Result<(), String> {
         let path = Self::config_path(data_dir);
         let content = serde_json::to_string_pretty(self)
             .map_err(|e| format!("Error serializando config: {}", e))?;

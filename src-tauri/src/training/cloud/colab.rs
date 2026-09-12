@@ -44,6 +44,8 @@ impl ColabEnterpriseRunner {
             .collect::<Vec<_>>()
             .join(", ");
 
+        let gcs_results = format!("gs://{}/results/{}", self.bucket, uuid::Uuid::new_v4());
+
         let code = format!(
             r#"!pip install ultralytics -q
 !gsutil -m cp -r {gcs_dataset}/* /tmp/dataset/
@@ -70,7 +72,7 @@ results = model.train(
             image_size = request.image_size,
             lr = request.lr,
             patience = request.patience,
-            gcs_results = format!("gs://{}/results/{}", self.bucket, uuid::Uuid::new_v4()),
+            gcs_results = gcs_results,
         );
 
         serde_json::json!({

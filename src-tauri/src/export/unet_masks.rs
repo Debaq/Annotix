@@ -49,8 +49,8 @@ pub fn export<F: Fn(f64)>(
 }
 
 fn generate_mask(image: &ImageEntry, project: &ProjectFile) -> Result<Option<Vec<u8>>, String> {
-    let w = image.width as u32;
-    let h = image.height as u32;
+    let w = image.width;
+    let h = image.height;
 
     // Create grayscale mask (background = 0)
     let mut mask_img = GrayImage::from_pixel(w, h, Luma([0u8]));

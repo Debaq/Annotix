@@ -214,7 +214,7 @@ impl P2pState {
         );
 
         // Esperar a que se sincronice meta/project (polling con timeout de 30s)
-        let blobs_ref: &iroh_blobs::api::Store = &*node.blobs_store;
+        let blobs_ref: &iroh_blobs::api::Store = &node.blobs_store;
         let poll_interval = std::time::Duration::from_millis(500);
         let max_wait = std::time::Duration::from_secs(30);
         let started = std::time::Instant::now();
@@ -222,23 +222,20 @@ impl P2pState {
             if started.elapsed() >= max_wait {
                 return Err("Timeout: no se pudieron sincronizar los metadatos del proyecto. Verifica que el host esté en línea.".to_string());
             }
-            match doc
+            if let Ok(Some(entry)) = doc
                 .get_one(iroh_docs::store::Query::key_exact(b"meta/project"))
                 .await
             {
-                Ok(Some(entry)) => {
-                    // Verificar que podemos leer el contenido
-                    if blobs_ref
-                        .blobs()
-                        .get_bytes(entry.content_hash())
-                        .await
-                        .is_ok()
-                    {
-                        log::info!("meta/project sincronizado en {:?}", started.elapsed());
-                        break;
-                    }
+                // Verificar que podemos leer el contenido
+                if blobs_ref
+                    .blobs()
+                    .get_bytes(entry.content_hash())
+                    .await
+                    .is_ok()
+                {
+                    log::info!("meta/project sincronizado en {:?}", started.elapsed());
+                    break;
                 }
-                _ => {}
             }
             tokio::time::sleep(poll_interval).await;
         }
@@ -875,7 +872,7 @@ impl P2pState {
             .map_err(|e| format!("Error abriendo doc: {}", e))?
             .ok_or("Documento no encontrado")?;
 
-        let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
+        let blobs: &iroh_blobs::api::Store = &node.blobs_store;
         let my_node_id = &session.my_node_id;
 
         let peer_entries = doc
@@ -995,7 +992,7 @@ impl P2pState {
             .map_err(|e| format!("Error abriendo doc: {}", e))?
             .ok_or("Documento no encontrado")?;
 
-        let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
+        let blobs: &iroh_blobs::api::Store = &node.blobs_store;
 
         // Leer peer info existente
         let peer_key = format!("meta/peers/{}", node_id);

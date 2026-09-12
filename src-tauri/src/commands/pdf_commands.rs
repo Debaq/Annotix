@@ -83,7 +83,7 @@ pub async fn extract_pdf_pages(
     pdf_path: String,
     dpi: Option<u32>,
 ) -> Result<Vec<String>, String> {
-    let dpi = dpi.unwrap_or(200).max(50).min(600);
+    let dpi = dpi.unwrap_or(200).clamp(50, 600);
 
     if !Path::new(&pdf_path).exists() {
         return Err(format!("Archivo no encontrado: {}", pdf_path));

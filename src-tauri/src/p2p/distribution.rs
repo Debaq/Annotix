@@ -92,10 +92,9 @@ impl P2pState {
 
         // Si no hay distribución previa, crear desde cero
         // Si hay previa, mantener assignments existentes y agregar nuevos items
-        let mut assignments: Vec<WorkAssignment> = if existing.is_some() {
+        let mut assignments: Vec<WorkAssignment> = if let Some(prev) = &existing {
             // Preservar assignments existentes, filtrando peers que ya no están
             let active_ids: HashSet<&String> = peer_list.iter().map(|(id, _)| id).collect();
-            let prev = existing.as_ref().unwrap();
             let mut kept: Vec<WorkAssignment> = Vec::new();
             let mut orphan_videos: Vec<String> = Vec::new();
             let mut orphan_images: Vec<String> = Vec::new();
@@ -280,7 +279,7 @@ impl P2pState {
         namespace_id: iroh_docs::NamespaceId,
     ) -> Option<WorkDistribution> {
         let doc = node.docs.open(namespace_id).await.ok()??;
-        let blobs: &iroh_blobs::api::Store = &*node.blobs_store;
+        let blobs: &iroh_blobs::api::Store = &node.blobs_store;
 
         let entry = doc
             .get_one(iroh_docs::store::Query::key_exact(b"work/distribution"))

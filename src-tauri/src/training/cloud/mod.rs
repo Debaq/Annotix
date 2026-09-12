@@ -10,7 +10,7 @@ pub mod vertex_tuning;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter};
 
@@ -485,7 +485,7 @@ impl CloudTrainingManager {
 
 // ─── Helpers para actualizar project.json desde threads ──────────────────────
 
-fn update_job_status(project_dir: &PathBuf, job_id: &str, status: &str) {
+fn update_job_status(project_dir: &Path, job_id: &str, status: &str) {
     if let Ok(mut pf) = io::read_project(project_dir) {
         if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id) {
             job.status = status.to_string();
@@ -494,7 +494,7 @@ fn update_job_status(project_dir: &PathBuf, job_id: &str, status: &str) {
     }
 }
 
-fn update_job_progress(project_dir: &PathBuf, job_id: &str, status: &str, progress: f64) {
+fn update_job_progress(project_dir: &Path, job_id: &str, status: &str, progress: f64) {
     if let Ok(mut pf) = io::read_project(project_dir) {
         if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id) {
             job.status = status.to_string();
@@ -505,7 +505,7 @@ fn update_job_progress(project_dir: &PathBuf, job_id: &str, status: &str, progre
 }
 
 fn update_job_model(
-    project_dir: &PathBuf,
+    project_dir: &Path,
     job_id: &str,
     model_path: &str,
     download_url: Option<&str>,

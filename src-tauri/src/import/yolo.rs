@@ -77,7 +77,7 @@ fn parse_label_file(
     let h = img_height as f64;
 
     for line in content.trim().lines() {
-        let parts: Vec<&str> = line.trim().split_whitespace().collect();
+        let parts: Vec<&str> = line.split_whitespace().collect();
         if parts.len() < 5 {
             continue;
         }

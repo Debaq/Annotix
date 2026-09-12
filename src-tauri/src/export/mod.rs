@@ -409,8 +409,8 @@ pub fn export_dataset(
     let images: Vec<ImageEntry> = pf
         .images
         .iter()
+        .filter(|&img| !img.annotations.is_empty())
         .cloned()
-        .filter(|img| !img.annotations.is_empty())
         .map(|mut img| {
             img.annotations
                 .retain(|ann| pf.classes.iter().any(|c| c.id == ann.class_id));
