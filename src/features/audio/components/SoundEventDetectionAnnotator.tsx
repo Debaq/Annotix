@@ -41,6 +41,7 @@ export function SoundEventDetectionAnnotator({
 }: Props) {
   const { t } = useTranslation('audio');
   const player = useAudioPlayer({ projectId, audioId: audio.id });
+  const { togglePlay } = player;
   const keyPlayPause = useShortcutKey('audio-play-pause');
   const keySave = useShortcutKey('save');
 
@@ -49,12 +50,19 @@ export function SoundEventDetectionAnnotator({
   const [saving, setSaving] = useState(false);
 
   // Load from audio entry
+  const loadedAudioIdRef = useRef<string | null>(null);
   useEffect(() => {
+    const id = audio.id ?? null;
+    if (loadedAudioIdRef.current === id) return;
+    loadedAudioIdRef.current = id;
     setEvents(audio.events?.length ? [...audio.events] : []);
-    if (classes.length > 0 && !classes.find((c) => c.id === selectedClassId)) {
-      setSelectedClassId(classes[0].id);
-    }
-  }, [audio.id]);
+  }, [audio]);
+
+  // Revalidar la clase seleccionada si desaparece de la lista
+  useEffect(() => {
+    if (classes.length === 0) return;
+    setSelectedClassId((prev) => (classes.some((c) => c.id === prev) ? prev : classes[0].id));
+  }, [classes]);
 
   const getClassColor = useCallback((classId: number) => {
     return classes.find((c) => c.id === classId)?.color || '#6366f1';
@@ -92,15 +100,17 @@ export function SoundEventDetectionAnnotator({
   }, [audio.id, projectId, events, onSaved]);
 
   // Auto-guardar cuando cambian los eventos
+  const handleSaveRef = useRef(handleSave);
+  handleSaveRef.current = handleSave;
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!audio.id || events.length === 0) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
-      handleSave();
+      handleSaveRef.current();
     }, 1000);
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
-  }, [events]);
+  }, [events, audio.id]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -110,7 +120,7 @@ export function SoundEventDetectionAnnotator({
 
       if (matchesShortcut(e, 'audio-play-pause')) {
         e.preventDefault();
-        player.togglePlay();
+        togglePlay();
       }
       if (matchesShortcut(e, 'save')) {
         e.preventDefault();
@@ -126,7 +136,7 @@ export function SoundEventDetectionAnnotator({
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [player.togglePlay, handleSave, classes]);
+  }, [togglePlay, handleSave, classes]);
 
   const waveformRegions = events.map((ev) => ({
     id: ev.id,

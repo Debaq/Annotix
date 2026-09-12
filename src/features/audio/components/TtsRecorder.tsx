@@ -45,6 +45,10 @@ export function TtsRecorder({ projectId, sentences, onSentencesChange, stats }: 
     setError(msg);
     console.error('[TtsRecorder]', msg);
   });
+  const {
+    state: recState, devices, selectedDeviceId, setSelectedDeviceId,
+    refreshDevices, start, stop, reset,
+  } = recorder;
 
   const findNextPending = useCallback((fromIdx: number = 0) => {
     for (let i = fromIdx; i < sentences.length; i++) {
@@ -69,12 +73,17 @@ export function TtsRecorder({ projectId, sentences, onSentencesChange, stats }: 
   const [loadingSaved, setLoadingSaved] = useState(false);
 
   const current = sentences[currentIndex];
-  const hasNewRecording = recorder.state.audioBlob !== null;
-  const previewUrl = recorder.state.audioUrl || savedAudioUrl;
-  const canPlay = previewUrl !== null && !recorder.state.isRecording;
+  const currentId = current?.id;
+  const currentStatus = current?.status;
+  const currentAudioId = current?.audioId;
+  const hasNewRecording = recState.audioBlob !== null;
+  const previewUrl = recState.audioUrl || savedAudioUrl;
+  const canPlay = previewUrl !== null && !recState.isRecording;
 
   // Detectar micrófonos al montar
-  useEffect(() => { recorder.refreshDevices(); }, []);
+  const refreshDevicesRef = useRef(refreshDevices);
+  refreshDevicesRef.current = refreshDevices;
+  useEffect(() => { refreshDevicesRef.current(); }, []);
 
   // Cargar audio guardado cuando navegamos a una oración ya grabada
   useEffect(() => {
@@ -85,14 +94,14 @@ export function TtsRecorder({ projectId, sentences, onSentencesChange, stats }: 
     });
     setIsPlaying(false);
 
-    if (!current || current.status !== 'recorded' || !current.audioId) return;
+    if (!currentId || currentStatus !== 'recorded' || !currentAudioId) return;
 
     let cancelled = false;
     setLoadingSaved(true);
     // Cargar datos y nombre del archivo para inferir mime type
     Promise.all([
-      audioService.getAudioData(projectId, current.audioId!),
-      audioService.getById(projectId, current.audioId!),
+      audioService.getAudioData(projectId, currentAudioId),
+      audioService.getById(projectId, currentAudioId),
     ]).then(([bytes, audioEntry]) => {
       if (cancelled) return;
       // Inferir mime del nombre de archivo
@@ -111,56 +120,64 @@ export function TtsRecorder({ projectId, sentences, onSentencesChange, stats }: 
     });
 
     return () => { cancelled = true; };
-  }, [currentIndex, current?.id, current?.status, current?.audioId, projectId]);
+  }, [currentIndex, currentId, currentStatus, currentAudioId, projectId]);
 
   // ── Auto-save: cuando el recorder produce un blob, guardar y avanzar ─
   const autoSaveRef = useRef(false);
+
+  const saveRecording = useCallback(async (blob: Blob) => {
+    if (!current || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const base64 = await blobToBase64(blob);
+      const durationMs = Math.round(recState.duration * 1000);
+      const mime = recState.mimeType;
+      const ext = mime.includes('ogg') ? 'ogg'
+        : mime.includes('mp4') ? 'mp4'
+        : mime.includes('webm') ? 'webm'
+        : 'ogg';
+
+      await ttsService.saveRecording(projectId, current.id, base64, ext, durationMs, 48000);
+      reset();
+      await onSentencesChange();
+
+      const next = findNextPending(currentIndex + 1);
+      if (next >= 0) setCurrentIndex(next);
+    } catch (err) {
+      setError(`Save failed: ${err}`);
+      console.error('Failed to save recording:', err);
+    } finally {
+      setSaving(false);
+    }
+  }, [current, saving, projectId, recState.duration, recState.mimeType, reset, onSentencesChange, findNextPending, currentIndex]);
+
+  // El guardado depende de casi todo el estado del componente, pero el efecto
+  // solo debe dispararse cuando el recorder entrega un blob nuevo: se toma la
+  // versión más reciente por ref en lugar de ampliar sus dependencias.
+  const saveRecordingRef = useRef(saveRecording);
+  saveRecordingRef.current = saveRecording;
+
   useEffect(() => {
-    if (!recorder.state.audioBlob || recorder.state.isRecording || !autoSaveRef.current) return;
+    if (!recState.audioBlob || recState.isRecording || !autoSaveRef.current) return;
     autoSaveRef.current = false;
-    // Guardar automáticamente
-    (async () => {
-      if (!current || saving) return;
-      setSaving(true);
-      setError(null);
-      try {
-        const base64 = await blobToBase64(recorder.state.audioBlob!);
-        const durationMs = Math.round(recorder.state.duration * 1000);
-        const mime = recorder.state.mimeType;
-        const ext = mime.includes('ogg') ? 'ogg'
-          : mime.includes('mp4') ? 'mp4'
-          : mime.includes('webm') ? 'webm'
-          : 'ogg';
-
-        await ttsService.saveRecording(projectId, current.id, base64, ext, durationMs, 48000);
-        recorder.reset();
-        await onSentencesChange();
-
-        const next = findNextPending(currentIndex + 1);
-        if (next >= 0) setCurrentIndex(next);
-      } catch (err) {
-        setError(`Save failed: ${err}`);
-        console.error('Failed to save recording:', err);
-      } finally {
-        setSaving(false);
-      }
-    })();
-  }, [recorder.state.audioBlob, recorder.state.isRecording]);
+    saveRecordingRef.current(recState.audioBlob);
+  }, [recState.audioBlob, recState.isRecording]);
 
   // ── Recording ──────────────────────────────────────────────────────────
   const handleToggleRecord = useCallback(async () => {
     setError(null);
-    if (recorder.state.isRecording) {
+    if (recState.isRecording) {
       autoSaveRef.current = true;
-      recorder.stop();
+      stop();
     } else {
       setSavedAudioUrl(prev => {
         if (prev) URL.revokeObjectURL(prev);
         return null;
       });
-      await recorder.start();
+      await start();
     }
-  }, [recorder]);
+  }, [recState.isRecording, start, stop]);
 
   // ── Upload file ────────────────────────────────────────────────────────
   const handleUploadFile = useCallback(async () => {
@@ -184,12 +201,12 @@ export function TtsRecorder({ projectId, sentences, onSentencesChange, stats }: 
 
   // ── Repeat ─────────────────────────────────────────────────────────────
   const handleRepeat = useCallback(() => {
-    recorder.reset();
+    reset();
     setSavedAudioUrl(prev => {
       if (prev) URL.revokeObjectURL(prev);
       return null;
     });
-  }, [recorder]);
+  }, [reset]);
 
   // ── Skip ───────────────────────────────────────────────────────────────
   const handleSkip = useCallback(async () => {
@@ -199,7 +216,7 @@ export function TtsRecorder({ projectId, sentences, onSentencesChange, stats }: 
         s.id === current.id ? { ...s, status: 'skipped' as const } : s
       );
       await ttsService.saveSentences(projectId, updated);
-      recorder.reset();
+      reset();
       await onSentencesChange();
 
       const next = findNextPending(currentIndex + 1);
@@ -207,15 +224,15 @@ export function TtsRecorder({ projectId, sentences, onSentencesChange, stats }: 
     } catch (err) {
       setError(`Skip failed: ${err}`);
     }
-  }, [current, sentences, projectId, recorder, onSentencesChange, findNextPending, currentIndex]);
+  }, [current, sentences, projectId, reset, onSentencesChange, findNextPending, currentIndex]);
 
   // ── Navigation ─────────────────────────────────────────────────────────
   const navigateTo = useCallback((idx: number) => {
     setCurrentIndex(idx);
-    recorder.reset();
+    reset();
     setIsPlaying(false);
     setError(null);
-  }, [recorder]);
+  }, [reset]);
 
   // ── Preview playback ──────────────────────────────────────────────────
   const togglePreview = useCallback(() => {
@@ -237,7 +254,7 @@ export function TtsRecorder({ projectId, sentences, onSentencesChange, stats }: 
 
       if (matchesShortcut(e, 'tts-record')) {
         e.preventDefault();
-        if (canPlay && !hasNewRecording && !recorder.state.isRecording) {
+        if (canPlay && !hasNewRecording && !recState.isRecording) {
           togglePreview();
         } else {
           handleToggleRecord();
@@ -252,7 +269,7 @@ export function TtsRecorder({ projectId, sentences, onSentencesChange, stats }: 
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [handleToggleRecord, handleRepeat, handleSkip, hasNewRecording, togglePreview, canPlay, recorder.state.isRecording]);
+  }, [handleToggleRecord, handleRepeat, handleSkip, hasNewRecording, togglePreview, canPlay, recState.isRecording]);
 
   if (!current) {
     return (
@@ -267,7 +284,7 @@ export function TtsRecorder({ projectId, sentences, onSentencesChange, stats }: 
     );
   }
 
-  const isRecordedSentence = current.status === 'recorded' && !hasNewRecording && !recorder.state.isRecording;
+  const isRecordedSentence = current.status === 'recorded' && !hasNewRecording && !recState.isRecording;
 
   return (
     <div className="flex flex-col items-center justify-center h-full p-8 max-w-3xl mx-auto">
@@ -303,37 +320,37 @@ export function TtsRecorder({ projectId, sentences, onSentencesChange, stats }: 
       </div>
 
       {/* VU Meter */}
-      {recorder.state.isRecording && (
+      {recState.isRecording && (
         <div className="w-full mb-6 space-y-2">
           <div className="flex items-center gap-3">
             <Volume2 size={16} className="text-[var(--annotix-gray)] flex-shrink-0" />
             <div className="flex-1 h-4 bg-[var(--annotix-gray-light)] rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-75 ${
-                  recorder.state.isClipping ? 'bg-red-500' : recorder.state.vuLevel > 0.6 ? 'bg-amber-500' : 'bg-green-500'
+                  recState.isClipping ? 'bg-red-500' : recState.vuLevel > 0.6 ? 'bg-amber-500' : 'bg-green-500'
                 }`}
-                style={{ width: `${recorder.state.vuLevel * 100}%` }}
+                style={{ width: `${recState.vuLevel * 100}%` }}
               />
             </div>
             <span className="text-xs tabular-nums text-[var(--annotix-gray)] w-12 text-right">
-              {(recorder.state.vuLevel * 100).toFixed(0)}%
+              {(recState.vuLevel * 100).toFixed(0)}%
             </span>
           </div>
           <div className="flex items-center justify-center gap-4">
-            {recorder.state.isClipping && (
+            {recState.isClipping && (
               <span className="flex items-center gap-1 text-xs font-medium text-red-600 animate-pulse">
                 <AlertTriangle size={14} />
                 {t('tts.clipping')}
               </span>
             )}
-            {recorder.state.isNoisy && (
+            {recState.isNoisy && (
               <span className="flex items-center gap-1 text-xs font-medium text-amber-600">
                 <AlertTriangle size={14} />
                 {t('tts.noiseWarning')}
               </span>
             )}
             <span className="text-xs tabular-nums text-[var(--annotix-gray)]">
-              {t('tts.timeRecorded')}: {formatDuration(recorder.state.duration)}
+              {t('tts.timeRecorded')}: {formatDuration(recState.duration)}
             </span>
           </div>
         </div>
@@ -366,22 +383,22 @@ export function TtsRecorder({ projectId, sentences, onSentencesChange, stats }: 
       )}
 
       {/* Mic selector */}
-      {!recorder.state.isRecording && (
+      {!recState.isRecording && (
         <div className="mb-4 flex items-center gap-2">
           <Mic size={14} className="text-[var(--annotix-gray)] flex-shrink-0" />
-          {recorder.devices.length > 0 ? (
+          {devices.length > 0 ? (
             <select
-              value={recorder.selectedDeviceId || ''}
-              onChange={e => recorder.setSelectedDeviceId(e.target.value)}
+              value={selectedDeviceId || ''}
+              onChange={e => setSelectedDeviceId(e.target.value)}
               className="px-2 py-1.5 text-xs rounded border border-[var(--annotix-border)] bg-[var(--annotix-white)] max-w-[350px]"
             >
-              {recorder.devices.map(d => (
+              {devices.map(d => (
                 <option key={d.deviceId} value={d.deviceId}>{d.label}</option>
               ))}
             </select>
           ) : (
             <button
-              onClick={() => recorder.refreshDevices()}
+              onClick={() => refreshDevices()}
               className="px-2 py-1.5 text-xs rounded border border-[var(--annotix-border)] bg-[var(--annotix-white)] text-[var(--annotix-gray)] hover:border-[var(--annotix-primary)] transition-colors"
             >
               Detect microphones...
@@ -395,12 +412,12 @@ export function TtsRecorder({ projectId, sentences, onSentencesChange, stats }: 
         <button
           onClick={handleToggleRecord}
           className={`w-20 h-20 rounded-full flex items-center justify-center transition-all shadow-lg ${
-            recorder.state.isRecording
+            recState.isRecording
               ? 'bg-red-500 hover:bg-red-600 animate-pulse'
               : 'bg-[var(--annotix-primary)] hover:opacity-90'
           } text-white`}
         >
-          {recorder.state.isRecording ? <Square size={32} /> : <Mic size={32} />}
+          {recState.isRecording ? <Square size={32} /> : <Mic size={32} />}
         </button>
       </div>
 

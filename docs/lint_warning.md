@@ -1,7 +1,8 @@
 # Warnings pendientes de lint
 
 Estado tras la pasada de limpieza (commits `0c92c09`, `6c0c1bd`, `8c2fb94`)
-y el saneo de `exhaustive-deps` en `AnnotationCanvas.tsx`.
+y el saneo de `exhaustive-deps` en `AnnotationCanvas.tsx` y los anotadores
+de audio.
 
 | Verificador | Errores | Warnings | Nota |
 |---|---|---|---|
@@ -9,7 +10,7 @@ y el saneo de `exhaustive-deps` en `AnnotationCanvas.tsx`.
 | `cargo check --all-targets` | 0 | — | limpio |
 | `cargo fmt --check` | 0 | — | limpio |
 | `cargo test --lib` | 0 | — | 114 passed |
-| `eslint` | 0 | **105** | techo `--max-warnings 130` |
+| `eslint` | 0 | **95** | techo `--max-warnings 130` |
 | `cargo clippy --all-targets` | 0 | **30** | todos `too_many_arguments` |
 
 ---
@@ -96,7 +97,7 @@ requieren mirar el flujo completo antes de tocar la firma.
 | Regla | Count | Severidad |
 |---|---|---|
 | `@typescript-eslint/no-explicit-any` | 68 | Baja — tipado laxo en límites de I/O y eventos |
-| `react-hooks/exhaustive-deps` | 37 | **Media-alta** — riesgo real de stale closures |
+| `react-hooks/exhaustive-deps` | 27 | **Media-alta** — riesgo real de stale closures |
 
 Ver `docs/roadmap-lint-cleanup.md` para el plan por fases; este documento
 solo refleja el conteo actual.
@@ -108,15 +109,15 @@ solo refleja el conteo actual.
 | `src/features/canvas/components/AnnotationCanvas.tsx` | 18 | 0 |
 | `src/features/inference/components/InferencePanel.tsx` | 4 | 1 |
 | `src/utils/translationUtils.ts` | 4 | 0 |
-| `src/features/audio/components/SpeechRecognitionAnnotator.tsx` | 4 | 4 |
 | `src/features/training/components/TrainingPanel.tsx` | 3 | 3 |
-| `src/features/audio/components/TtsRecorder.tsx` | 3 | 3 |
-| `src/features/audio/components/SoundEventDetectionAnnotator.tsx` | 3 | 3 |
 | `src/features/sam/components/SamOverlay.tsx` | 3 | 0 |
 | `src/features/projects/components/ProjectCard.tsx` | 3 | 0 |
 | `src/features/inference/components/ModelUploader.tsx` | 3 | 0 |
 | `src/features/canvas/handlers/{OBB,BBox}Handler.ts` | 3+3 | 0 |
 | `src/features/canvas/components/renderers/{OBB,BBox}Renderer.tsx` | 3+3 | 0 |
+
+Los 27 `exhaustive-deps` que quedan están repartidos en 20 archivos, casi
+todos con 1 o 2. El único con 3 es `TrainingPanel.tsx`.
 
 ### `AnnotationCanvas.tsx` — hecho
 
@@ -142,14 +143,36 @@ quedaba ahí eran cuatro patrones distintos, no uno:
 Moraleja para los archivos que quedan: el autofix es correcto solo en el
 primer patrón. En los otros tres, agregar la dependencia introduce el bug.
 
+### Anotadores de audio — hecho
+
+Los 10 `exhaustive-deps` de `SpeechRecognitionAnnotator`,
+`SoundEventDetectionAnnotator` y `TtsRecorder` están cerrados. Tres causas:
+
+- **`useAudioPlayer` / `useMicRecorder` devuelven un objeto literal nuevo en
+  cada render**, aunque sus campos (`togglePlay`, `seek`, `stop`) sean
+  `useCallback` estables. Listar `player` o `recorder` como dependencia
+  recrearía el hook en cada render; desestructurar los campos lo resuelve.
+- **Efectos de carga (`audio` → estado local).** Dependían de `audio.id` pero
+  leían `audio.segments` / `audio.events`. Meter el objeto entero pisaría las
+  ediciones locales sin guardar en cada refresco del store; se usa un ref con
+  el último id cargado y se sale temprano si no cambió.
+- **Auto-guardado con debounce.** `handleSave` cambia en cada edición y
+  `onSaved` / `onSentencesChange` vienen del padre sin `useCallback`:
+  añadirlos a las deps reinicia el timer en cada render y el guardado nunca
+  llega a dispararse. Se toma `handleSave` por ref.
+
+De paso se corrigió el guard "no auto-guardar al cargar" de
+`SpeechRecognitionAnnotator`, que comparaba `segments === audio.segments`
+cuando el load hace una copia — nunca era cierto, así que guardaba una vez de
+más en cada cambio de audio. Ahora es un flag explícito.
+
 ### Prioridad sugerida
 
-1. **`exhaustive-deps` en los anotadores de audio (10)** — `SpeechRecognitionAnnotator`,
-   `SoundEventDetectionAnnotator`, `TtsRecorder`; archivos chicos, mismo patrón.
-2. **`exhaustive-deps` en `TrainingPanel.tsx` (3)** e `InferencePanel.tsx` (1).
-3. **`no-explicit-any` (68)** — mecánico, sin riesgo. Empezar por
+1. **`exhaustive-deps` en `TrainingPanel.tsx` (3)**, `AudioClassificationAnnotator.tsx` (2),
+   `useAnnotations.ts` (2), `useInferenceModels.ts` (2), `useP2pSession.ts` (2),
+   `useTauriPathDrop.ts` (2); el resto son sueltos.
+2. **`no-explicit-any` (68)** — mecánico, sin riesgo. Empezar por
    `translationUtils.ts` y los handlers/renderers de canvas, que son tipos
    internos y no límites de I/O.
 
-Con (1) y (2) cerrados quedan ~91 warnings; ahí se puede bajar el techo de
-`--max-warnings 130` a 100.
+El techo de `--max-warnings` se puede bajar ya de 130 a 100.

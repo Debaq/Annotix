@@ -45,6 +45,10 @@ export function SpeechRecognitionAnnotator({
 }: Props) {
   const { t } = useTranslation('audio');
   const player = useAudioPlayer({ projectId, audioId: audio.id });
+  const {
+    audioRef, audioBuffer, blobUrl, isPlaying, currentTime, duration,
+    playbackRate, togglePlay, seek, setPlaybackRate,
+  } = player;
   const { activeClassId } = useUIStore();
   const keyPlayPause = useShortcutKey('audio-play-pause');
   const keyReplay = useShortcutKey('audio-replay');
@@ -63,6 +67,8 @@ export function SpeechRecognitionAnnotator({
   }, [classes]);
 
   const [segments, setSegments] = useState<AudioSegment[]>([]);
+  const segmentsRef = useRef(segments);
+  segmentsRef.current = segments;
   const [speakerId, setSpeakerId] = useState('');
   const [language, setLanguage] = useState('en');
   const [saving, setSaving] = useState(false);
@@ -73,14 +79,20 @@ export function SpeechRecognitionAnnotator({
   const pendingFocusIdRef = useRef<string | null>(null);
 
   // ── Load data ──────────────────────────────────────────────────────────
+  const loadedAudioIdRef = useRef<string | null>(null);
+  const skipAutoSaveRef = useRef(true);
   useEffect(() => {
+    const id = audio.id ?? null;
+    if (loadedAudioIdRef.current === id) return;
+    loadedAudioIdRef.current = id;
     setSegments(audio.segments?.length ? [...audio.segments] : []);
     setSpeakerId(audio.speakerId || '');
     setLanguage(audio.language || 'en');
     setActiveSegmentId(null);
     liveSegmentIdRef.current = null;
     pendingFocusIdRef.current = null;
-  }, [audio.id]);
+    skipAutoSaveRef.current = true;
+  }, [audio]);
 
   // ── Focus new segment after render ─────────────────────────────────────
   useEffect(() => {
@@ -98,9 +110,9 @@ export function SpeechRecognitionAnnotator({
 
   // ── Live segment growth + active highlight ─────────────────────────────
   useEffect(() => {
-    const ms = Math.round(player.currentTime * 1000);
+    const ms = Math.round(currentTime * 1000);
 
-    if (liveSegmentIdRef.current && player.isPlaying) {
+    if (liveSegmentIdRef.current && isPlaying) {
       setSegments((prev) =>
         prev.map((s) =>
           s.id === liveSegmentIdRef.current ? { ...s, endMs: ms } : s
@@ -111,7 +123,7 @@ export function SpeechRecognitionAnnotator({
     }
 
     // Finalize live segment on pause
-    if (liveSegmentIdRef.current && !player.isPlaying) {
+    if (liveSegmentIdRef.current && !isPlaying) {
       const liveId = liveSegmentIdRef.current;
       liveSegmentIdRef.current = null;
       // Focus its input so user can type the text
@@ -119,11 +131,12 @@ export function SpeechRecognitionAnnotator({
       setSegments((prev) => [...prev]); // trigger focus effect
     }
 
-    if (segments.length > 0) {
-      const active = segments.find((s) => ms >= s.startMs && ms <= s.endMs);
+    const current = segmentsRef.current;
+    if (current.length > 0) {
+      const active = current.find((s) => ms >= s.startMs && ms <= s.endMs);
       if (active) setActiveSegmentId(active.id);
     }
-  }, [player.currentTime, player.isPlaying]);
+  }, [currentTime, isPlaying]);
 
   // ── Waveform regions from segments ─────────────────────────────────────
   const waveformRegions = useMemo(() =>
@@ -148,19 +161,19 @@ export function SpeechRecognitionAnnotator({
   }, []);
 
   const addSegment = useCallback(() => {
-    const ms = Math.round(player.currentTime * 1000);
+    const ms = Math.round(currentTime * 1000);
     const newId = crypto.randomUUID();
     const newSeg: AudioSegment = {
       id: newId,
       startMs: ms,
-      endMs: Math.min(ms + 3000, Math.round(player.duration * 1000)),
+      endMs: Math.min(ms + 3000, Math.round(duration * 1000)),
       text: '',
       speakerId: activeClassId ?? undefined,
     };
     setSegments((prev) => [...prev, newSeg].sort((a, b) => a.startMs - b.startMs));
     setActiveSegmentId(newId);
     pendingFocusIdRef.current = newId;
-  }, [player.currentTime, player.duration, activeClassId]);
+  }, [currentTime, duration, activeClassId]);
 
   const updateSegment = useCallback((id: string, field: keyof AudioSegment, value: string | number) => {
     setSegments((prev) =>
@@ -184,18 +197,18 @@ export function SpeechRecognitionAnnotator({
         const neighbor = next[focusIdx];
         setActiveSegmentId(neighbor.id);
         pendingFocusIdRef.current = neighbor.id;
-        player.seek(neighbor.startMs / 1000);
+        seek(neighbor.startMs / 1000);
       } else {
         setActiveSegmentId(null);
       }
 
       return next;
     });
-  }, [player]);
+  }, [seek]);
 
   // ── Split / Enter ──────────────────────────────────────────────────────
   const splitAndStartLive = useCallback(() => {
-    const ms = Math.round(player.currentTime * 1000);
+    const ms = Math.round(currentTime * 1000);
 
     // Finalize live segment if active
     if (liveSegmentIdRef.current) {
@@ -225,18 +238,18 @@ export function SpeechRecognitionAnnotator({
 
     if (autoplay) {
       liveSegmentIdRef.current = newId;
-      if (!player.isPlaying) player.togglePlay();
+      if (!isPlaying) togglePlay();
     }
-  }, [player.currentTime, player.isPlaying, player.togglePlay, activeSegmentId, autoplay]);
+  }, [currentTime, isPlaying, togglePlay, activeSegmentId, autoplay]);
 
   // ── Replay active segment from start ───────────────────────────────────
   const replaySegment = useCallback(() => {
     if (!activeSegmentId) return;
     const seg = segments.find((s) => s.id === activeSegmentId);
     if (!seg) return;
-    player.seek(seg.startMs / 1000);
-    if (!player.isPlaying) player.togglePlay();
-  }, [activeSegmentId, segments, player]);
+    seek(seg.startMs / 1000);
+    if (!isPlaying) togglePlay();
+  }, [activeSegmentId, segments, seek, isPlaying, togglePlay]);
 
   // ── Save ───────────────────────────────────────────────────────────────
   const handleSave = useCallback(async () => {
@@ -260,16 +273,22 @@ export function SpeechRecognitionAnnotator({
 
   // Auto-guardar con debounce cuando cambian los datos
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleSaveRef = useRef(handleSave);
+  handleSaveRef.current = handleSave;
   useEffect(() => {
     if (!audio.id) return;
-    // No auto-guardar en el mount inicial
-    if (segments === audio.segments || segments.length === 0) return;
+    // No auto-guardar en la carga inicial del audio
+    if (skipAutoSaveRef.current) {
+      skipAutoSaveRef.current = false;
+      return;
+    }
+    if (segments.length === 0) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
-      handleSave();
+      handleSaveRef.current();
     }, 1500);
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
-  }, [segments, speakerId, language]);
+  }, [segments, speakerId, language, audio.id]);
 
   const handleSaveAndNext = useCallback(async () => {
     // Cancelar auto-save pendiente antes de guardar+avanzar
@@ -287,7 +306,7 @@ export function SpeechRecognitionAnnotator({
       // Play/pause (global)
       if (matchesShortcut(e, 'audio-play-pause')) {
         e.preventDefault();
-        player.togglePlay();
+        togglePlay();
         return;
       }
       // Replay active segment from start (global)
@@ -299,7 +318,7 @@ export function SpeechRecognitionAnnotator({
       // Rewind 2s (global)
       if (matchesShortcut(e, 'audio-rewind')) {
         e.preventDefault();
-        player.seek(Math.max(0, player.currentTime - 2));
+        seek(Math.max(0, currentTime - 2));
         return;
       }
       // Arrow keys for scrubbing (only from segment inputs)
@@ -312,13 +331,13 @@ export function SpeechRecognitionAnnotator({
         if (e.code === 'ArrowLeft' && (atStart || isEmpty)) {
           e.preventDefault();
           const step = e.shiftKey ? SCRUB_FINE : SCRUB_STEP;
-          player.seek(Math.max(0, player.currentTime - step));
+          seek(Math.max(0, currentTime - step));
           return;
         }
         if (e.code === 'ArrowRight' && (atEnd || isEmpty)) {
           e.preventDefault();
           const step = e.shiftKey ? SCRUB_FINE : SCRUB_STEP;
-          player.seek(Math.min(player.duration, player.currentTime + step));
+          seek(Math.min(duration, currentTime + step));
           return;
         }
       }
@@ -353,7 +372,7 @@ export function SpeechRecognitionAnnotator({
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [player, replaySegment, splitAndStartLive, deleteSegment, handleSave, handleSaveAndNext]);
+  }, [togglePlay, seek, currentTime, duration, replaySegment, splitAndStartLive, deleteSegment, handleSave, handleSaveAndNext]);
 
   // ── Format helpers ─────────────────────────────────────────────────────
   const formatMs = (ms: number) => {
@@ -373,15 +392,15 @@ export function SpeechRecognitionAnnotator({
   // ── Render ─────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full bg-[var(--annotix-light)]">
-      <audio ref={player.audioRef} src={player.blobUrl} preload="auto" />
+      <audio ref={audioRef} src={blobUrl} preload="auto" />
 
       {/* TOP: Player */}
       <div className="px-6 py-4 bg-[var(--annotix-white)] border-b border-[var(--annotix-border)]">
         <Waveform
-          audioBuffer={player.audioBuffer}
-          currentTime={player.currentTime}
-          duration={player.duration}
-          onSeek={player.seek}
+          audioBuffer={audioBuffer}
+          currentTime={currentTime}
+          duration={duration}
+          onSeek={seek}
           regions={waveformRegions}
           height={100}
           editSelection={editSelection}
@@ -391,19 +410,19 @@ export function SpeechRecognitionAnnotator({
         />
         <div className="flex items-center gap-3 mt-3">
           <button
-            onClick={player.togglePlay}
+            onClick={togglePlay}
             className="flex items-center justify-center w-10 h-10 rounded-full bg-[var(--annotix-primary)] text-white hover:opacity-90 transition-opacity"
           >
-            {player.isPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
+            {isPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
           </button>
 
           <div className="flex items-center gap-1">
             {SPEED_OPTIONS.map((rate) => (
               <button
                 key={rate}
-                onClick={() => player.setPlaybackRate(rate)}
+                onClick={() => setPlaybackRate(rate)}
                 className={`px-2 py-0.5 text-xs rounded font-medium transition-colors ${
-                  player.playbackRate === rate
+                  playbackRate === rate
                     ? 'bg-[var(--annotix-primary)] text-white'
                     : 'bg-[var(--annotix-gray-light)] text-[var(--annotix-gray)] hover:bg-[var(--annotix-border)]'
                 }`}
@@ -414,7 +433,7 @@ export function SpeechRecognitionAnnotator({
           </div>
 
           <span className="text-sm tabular-nums text-[var(--annotix-dark)]">
-            {formatTime(player.currentTime)} / {formatTime(player.duration)}
+            {formatTime(currentTime)} / {formatTime(duration)}
           </span>
 
           <button
@@ -467,7 +486,7 @@ export function SpeechRecognitionAnnotator({
             return (
               <div
                 key={seg.id}
-                onClick={() => { player.seek(seg.startMs / 1000); focusSegment(seg.id); }}
+                onClick={() => { seek(seg.startMs / 1000); focusSegment(seg.id); }}
                 className={`flex items-center gap-2 px-2 py-1 rounded border cursor-pointer transition-all ${
                   isLive
                     ? 'border-red-400 bg-red-50 dark:bg-red-950/20'
