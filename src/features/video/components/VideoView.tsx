@@ -30,8 +30,8 @@ export function VideoView() {
   } = useUIStore();
   const { project } = useCurrentProject();
   const { video } = useCurrentVideo();
-  const { currentFrameIndex, totalFrames } = useVideoNavigation();
-  const { tracks, createTrack, deleteTrack, updateTrack, removeKeyframe, bake } = useVideoTracks();
+  const { currentFrameIndex, totalFrames, positionByFrameIndex, goPrev, goNext } = useVideoNavigation();
+  const { tracks, createTrack, deleteTrack, updateTrack, bake } = useVideoTracks();
   const { byClass: globalByClass } = useClassCounts();
 
   const localByClass = useMemo(() => {
@@ -46,31 +46,40 @@ export function VideoView() {
 
   const { interpolatedBBoxes } = useInterpolation(isBboxProject ? tracks : [], currentFrameIndex);
 
-  // Contar frames cubiertos por tracks (candidatos a bake)
+  // Fotogramas que la consolidación va a tocar. Cuenta fotogramas que existen
+  // de verdad —sus `frameIndex` reales—, no un rango de enteros: si la
+  // secuencia tiene huecos, el rango los contaría y el número mentiría.
   const bakeableCount = useMemo(() => {
     const enabledTracks = tracks.filter(t => t.enabled && t.keyframes.length > 0);
     if (enabledTracks.length === 0 || totalFrames === 0) return 0;
 
-    const covered = new Set<number>();
-    for (const track of enabledTracks) {
+    const ranges = enabledTracks.map(track => {
       const indices = track.keyframes.map(kf => kf.frameIndex);
-      const min = Math.max(0, Math.min(...indices));
-      const max = Math.min(totalFrames - 1, Math.max(...indices));
-      for (let i = min; i <= max; i++) covered.add(i);
+      return { min: Math.min(...indices), max: Math.max(...indices) };
+    });
+
+    let covered = 0;
+    for (const frameIndex of positionByFrameIndex.keys()) {
+      if (ranges.some(r => frameIndex >= r.min && frameIndex <= r.max)) covered++;
     }
-    return covered.size;
-  }, [tracks, totalFrames]);
+    return covered;
+  }, [tracks, totalFrames, positionByFrameIndex]);
 
   const [isBaking, setIsBaking] = useState(false);
   const [bakeResult, setBakeResult] = useState<number | null>(null);
+  const [bakeError, setBakeError] = useState<string | null>(null);
 
   const handleBake = useCallback(async () => {
     setIsBaking(true);
     setBakeResult(null);
+    setBakeError(null);
     try {
       const count = await bake();
       setBakeResult(count);
       setTimeout(() => setBakeResult(null), 3000);
+    } catch (error) {
+      console.error('Error consolidando tracks:', error);
+      setBakeError(String(error));
     } finally {
       setIsBaking(false);
     }
@@ -97,7 +106,7 @@ export function VideoView() {
       // Don't handle if typing in input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-      const { currentFrameIndex, setCurrentFrameIndex, currentVideoId, activeClassId } = useUIStore.getState();
+      const { currentVideoId, activeClassId } = useUIStore.getState();
       if (!currentVideoId) return;
 
       const key = e.key.toLowerCase();
@@ -127,12 +136,12 @@ export function VideoView() {
       // Video navigation
       if (matchesShortcut(e, 'prev-sample')) {
         e.preventDefault();
-        if (currentFrameIndex > 0) setCurrentFrameIndex(currentFrameIndex - 1);
+        goPrev();
         return;
       }
       if (matchesShortcut(e, 'next-sample')) {
         e.preventDefault();
-        if (currentFrameIndex < totalFrames - 1) setCurrentFrameIndex(currentFrameIndex + 1);
+        goNext();
         return;
       }
 
@@ -145,23 +154,14 @@ export function VideoView() {
           }
           return;
         }
-
-        // Delete keyframe
-        if (matchesShortcut(e, 'delete')) {
-          for (const track of tracks) {
-            const hasKf = track.keyframes.some(kf => kf.frameIndex === currentFrameIndex);
-            if (hasKf && track.id) {
-              removeKeyframe(track.id, currentFrameIndex);
-              break;
-            }
-          }
-        }
+        // El borrado lo maneja VideoAnnotationCanvas, que es quien conoce la
+        // caja seleccionada. Aquí no hay forma de saber cuál es.
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [totalFrames, tracks, createTrack, removeKeyframe, project, setActiveClassId, isBboxProject]);
+  }, [goPrev, goNext, createTrack, project, setActiveClassId, isBboxProject]);
 
   if (!project || !video) {
     return (
@@ -273,6 +273,12 @@ export function VideoView() {
                   <p className="text-xs text-center text-green-600">
                     <i className="fas fa-check mr-1"></i>
                     {t('video.bakeDone')} ({bakeResult} frames)
+                  </p>
+                )}
+                {bakeError !== null && (
+                  <p className="text-xs text-center text-red-600 break-words">
+                    <i className="fas fa-triangle-exclamation mr-1"></i>
+                    {t('video.bakeError')}: {bakeError}
                   </p>
                 )}
               </div>

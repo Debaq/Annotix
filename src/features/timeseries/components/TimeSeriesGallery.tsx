@@ -84,9 +84,9 @@ export function TimeSeriesGallery() {
                     <div>
                       <div className="font-medium">{ts.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        {ts.data.timestamps.length} {t('timeseries.dataPoints')}
-                        {Array.isArray(ts.data.values[0]) &&
-                          ` • ${(ts.data.values as number[][]).length} ${t('timeseries.series')}`}
+                        {ts.pointCount} {t('timeseries.dataPoints')}
+                        {ts.seriesCount > 1 &&
+                          ` • ${ts.seriesCount} ${t('timeseries.series')}`}
                       </div>
                     </div>
                   </div>

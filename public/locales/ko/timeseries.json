@@ -35,6 +35,22 @@
     "point": "그래프를 클릭하여 주석 포인트를 표시합니다",
     "range": "클릭하여 시작점을 설정한 다음 다시 클릭하여 끝점을 설정합니다",
     "event": "그래프를 클릭하여 이벤트를 표시합니다",
-    "anomaly": "그래프를 클릭하여 이상을 표시합니다"
+    "anomaly": "그래프를 클릭하여 이상을 표시합니다",
+    "classification": "시계열 전체를 설명하는 클래스를 선택하세요"
+  },
+  "loadingData": "시계열 데이터를 불러오는 중…",
+  "seriesClass": "시계열 클래스",
+  "selectClass": "분류 없음",
+  "invalidCsv": "잘못된 CSV: {{error}}",
+  "report": {
+    "rows": "{{count}}행을 가져왔습니다",
+    "badTimestamp": "{{count}}행 폐기: 타임스탬프를 해석할 수 없음",
+    "malformed": "{{count}}행 폐기: 열 수가 헤더와 다름",
+    "missing": "비어 있거나 숫자가 아닌 값 {{count}}개를 결측으로 가져왔습니다",
+    "format": {
+      "numeric": "숫자 시간",
+      "datetime": "날짜를 밀리초로 변환",
+      "rowIndex": "시간 열 없음: 행 번호 사용"
+    }
   }
 }

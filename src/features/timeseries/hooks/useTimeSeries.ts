@@ -1,57 +1,39 @@
-import { useState, useEffect } from 'react';
-import { TimeSeries } from '@/lib/db';
+import { useCallback } from 'react';
+import { TimeSeries, TimeSeriesAnnotation, TimeSeriesData } from '@/lib/db';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { timeseriesService } from '../services/timeseriesService';
+import { useTauriQuery } from '@/hooks/useTauriQuery';
 
 export function useTimeSeries() {
   const { project } = useCurrentProject();
-  const [timeseries, setTimeseries] = useState<TimeSeries[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  const load = async () => {
-    if (!project?.id) {
-      setTimeseries([]);
-      return;
-    }
+  // Escucha `db:timeseries-changed`, que el backend ya emitía y nadie usaba:
+  // sin esto la galería no reflejaba lo que cambiaba otra ventana o un peer.
+  const { data, isLoading: loading, reload: load } = useTauriQuery(
+    async () => {
+      if (!project?.id) return [];
+      return timeseriesService.getByProjectId(project.id);
+    },
+    [project?.id],
+    ['db:timeseries-changed']
+  );
 
-    setLoading(true);
-    try {
-      const data = await timeseriesService.getByProjectId(project.id);
-      setTimeseries(data);
-    } catch (error) {
-      console.error('Failed to load time series:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const timeseries = (data || []) as TimeSeries[];
 
-  useEffect(() => {
-    load();
+  const addTimeSeries = useCallback(async (
+    name: string,
+    seriesData: TimeSeriesData,
+    annotations: TimeSeriesAnnotation[] = []
+  ) => {
+    if (!project?.id) return;
+    // El evento `db:timeseries-changed` dispara la recarga; no hace falta pedirla.
+    return timeseriesService.create(project.id, name, seriesData, annotations);
   }, [project?.id]);
 
-  const addTimeSeries = async (ts: Omit<TimeSeries, 'id'>) => {
+  const deleteTimeSeries = useCallback(async (id: string) => {
     if (!project?.id) return;
-
-    try {
-      const id = await timeseriesService.create(ts);
-      await load(); // Reload to get the new time series
-      return id;
-    } catch (error) {
-      console.error('Failed to add time series:', error);
-      throw error;
-    }
-  };
-
-  const deleteTimeSeries = async (id: string) => {
-    if (!project?.id) return;
-    try {
-      await timeseriesService.delete(project.id, id);
-      await load();
-    } catch (error) {
-      console.error('Failed to delete time series:', error);
-      throw error;
-    }
-  };
+    await timeseriesService.delete(project.id, id);
+  }, [project?.id]);
 
   const getStats = () => {
     const total = timeseries.length;

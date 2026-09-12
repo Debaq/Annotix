@@ -202,6 +202,9 @@
     "ttsSkip": {
       "name": "Satz überspringen",
       "description": "Zum nächsten Satz springen"
+    },
+    "tsToolClassification": {
+      "name": "Werkzeug Serienklassifikation"
     }
   }
 }

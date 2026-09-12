@@ -1,38 +1,23 @@
-import { useState, useEffect } from 'react';
 import { TimeSeries } from '@/lib/db';
 import { useUIStore } from '../../core/store/uiStore';
 import { timeseriesService } from '../services/timeseriesService';
+import { useTauriQuery } from '@/hooks/useTauriQuery';
 
 export function useCurrentTimeSeries() {
   const { currentTimeSeriesId, currentProjectId } = useUIStore();
-  const [timeseries, setTimeseries] = useState<TimeSeries | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  const load = async () => {
-    if (!currentTimeSeriesId || !currentProjectId) {
-      setTimeseries(null);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const data = await timeseriesService.getById(currentProjectId, currentTimeSeriesId);
-      setTimeseries(data || null);
-    } catch (error) {
-      console.error('Failed to load current time series:', error);
-      setTimeseries(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    load();
-  }, [currentTimeSeriesId, currentProjectId]);
+  const { data, isLoading: loading, reload } = useTauriQuery(
+    async () => {
+      if (!currentTimeSeriesId || !currentProjectId) return null;
+      return (await timeseriesService.getById(currentProjectId, currentTimeSeriesId)) ?? null;
+    },
+    [currentTimeSeriesId, currentProjectId],
+    ['db:timeseries-changed']
+  );
 
   return {
-    timeseries,
+    timeseries: (data ?? null) as TimeSeries | null,
     loading,
-    reload: load,
+    reload,
   };
 }

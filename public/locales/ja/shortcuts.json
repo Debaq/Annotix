@@ -202,6 +202,9 @@
     "ttsSkip": {
       "name": "文をスキップ",
       "description": "次の文にスキップ"
+    },
+    "tsToolClassification": {
+      "name": "系列分類ツール"
     }
   }
 }

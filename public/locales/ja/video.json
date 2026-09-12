@@ -26,5 +26,11 @@
   "bake": "トラックをフレームに適用",
   "bakeDesc": "トラック補間をフレームごとのアノテーションとして書き込みます",
   "baking": "適用中...",
-  "bakeDone": "トラック適用完了"
+  "bakeDone": "トラック適用完了",
+  "bakeError": "焼き込みに失敗しました",
+  "cancelExtraction": "フレーム抽出を中止",
+  "cancelling": "中止しています…",
+  "extractionCancelled": "抽出を中止しました（{{count}} フレーム抽出済み）",
+  "resumeExtraction": "抽出を再開",
+  "extractionFailed": "抽出に失敗しました。クリックで再試行します。"
 }

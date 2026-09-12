@@ -1,5 +1,16 @@
 use serde::{Deserialize, Serialize};
 
+/// Versión del formato de `project.json`.
+///
+/// - 1: formato inicial.
+/// - 2: las anotaciones producidas por la consolidación de tracks de video se
+///   guardan en píxeles (antes se escribían en porcentaje 0-100, la unidad en
+///   la que viven los keyframes) y llevan `trackId` + `source: "track"`.
+///   La migración vive en `io::migrate_project`.
+/// - 3: los datos de las series temporales se guardan en
+///   `timeseries/{id}.json` en vez de dentro de `project.json`.
+pub const CURRENT_VERSION: u32 = 3;
+
 // ─── ProjectFile: todo el contenido de project.json ─────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -130,6 +141,11 @@ pub struct AnnotationEntry {
     /// Nombre del peer que creó la anotación (solo en sesiones P2P)
     #[serde(default, skip_serializing_if = "Option::is_none", rename = "createdBy")]
     pub created_by: Option<String>,
+    /// Track de video del que salió la anotación (solo para source="track").
+    /// Permite reconsolidar reemplazando solo lo interpolado y conservando lo
+    /// anotado a mano o por inferencia sobre el mismo fotograma.
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "trackId")]
+    pub track_id: Option<String>,
 }
 
 fn default_source() -> String {
@@ -138,16 +154,36 @@ fn default_source() -> String {
 
 // ─── TimeSeries ─────────────────────────────────────────────────────────────
 
+/// Metadatos de una serie temporal. Los datos (los arrays de marcas de tiempo y
+/// valores) viven en `timeseries/{id}.json` dentro del proyecto, no aquí: una
+/// serie de medio millón de puntos dentro de `project.json` obliga a
+/// reserializar el archivo entero cada vez que se coloca una anotación.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeSeriesEntry {
     pub id: String,
     pub name: String,
-    pub data: serde_json::Value,
+    /// Solo presente en proyectos anteriores a la versión 3 del formato; la
+    /// migración la vacía al escribir los datos a su archivo.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub data: Option<serde_json::Value>,
+    /// Número de puntos de la serie, para poder listarla sin abrir sus datos.
+    #[serde(default, rename = "pointCount")]
+    pub point_count: usize,
+    /// Número de variables (1 = univariante).
+    #[serde(default = "default_series_count", rename = "seriesCount")]
+    pub series_count: usize,
+    /// Nombres de las columnas de valor (multivariante).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub columns: Option<Vec<String>>,
     #[serde(default)]
     pub annotations: Vec<TsAnnotationEntry>,
     pub uploaded: f64,
     pub annotated: Option<f64>,
     pub status: String,
+}
+
+fn default_series_count() -> usize {
+    1
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

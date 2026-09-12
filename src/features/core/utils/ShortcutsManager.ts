@@ -316,6 +316,15 @@ class ShortcutsManager {
         enabled: true,
         editable: true,
       },
+      {
+        id: 'ts-tool-classification',
+        nameKey: 'shortcuts.items.tsToolClassification.name',
+        key: 'C',
+        category: 'tools',
+        context: 'timeseries',
+        enabled: true,
+        editable: true,
+      },
 
       // Audio
       {

@@ -24,6 +24,10 @@ export function VideoCard({ video }: VideoCardProps) {
   const isSelected = currentVideoId === video.id;
   const isReady = video.status === 'ready';
   const isExtracting = video.status === 'extracting';
+  const isFailed = video.status === 'error';
+  // Una extracción cancelada deja el video en `pending` con los fotogramas ya
+  // extraídos; una fallida, en `error`. Los dos casos se reanudan desde aquí.
+  const canResume = video.status === 'pending' || isFailed;
   const canOpen = isReady || isExtracting;
   const vidId = video.id || '';
   const assignee = projectId ? useP2pStore.getState().getItemAssignee(projectId, vidId, 'video') : null;
@@ -64,6 +68,21 @@ export function VideoCard({ video }: VideoCardProps) {
   const handleSelect = () => {
     if (projectId && video.id) {
       navigate(`/projects/${projectId}/videos/${video.id}`);
+    }
+  };
+
+  const [isResuming, setIsResuming] = useState(false);
+
+  const handleResume = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!projectId || !video.id || isResuming) return;
+    setIsResuming(true);
+    try {
+      await videoService.extractFrames(projectId, video.id);
+    } catch (error) {
+      console.error('Error reanudando la extracción:', error);
+    } finally {
+      setIsResuming(false);
     }
   };
 
@@ -122,6 +141,13 @@ export function VideoCard({ video }: VideoCardProps) {
             >
               <i className="fas fa-spinner fa-spin mr-0.5"></i>{video.totalFrames}f
             </div>
+          ) : isFailed ? (
+            <div
+              className="px-1.5 py-0.5 rounded text-[9px] font-bold text-white bg-red-600"
+              title={t('video.extractionFailed')}
+            >
+              <i className="fas fa-triangle-exclamation"></i>
+            </div>
           ) : (
             <div
               className="px-1.5 py-0.5 rounded text-[9px] font-bold text-white"
@@ -131,6 +157,19 @@ export function VideoCard({ video }: VideoCardProps) {
             </div>
           )}
         </div>
+
+        {/* Reanudar extracción: cancelada (pending) o fallida (error) */}
+        {canResume && (
+          <button
+            onClick={handleResume}
+            disabled={isResuming}
+            className="absolute inset-x-2 bottom-6 h-6 rounded bg-black/70 text-white text-[10px] font-medium hover:bg-black/85 transition-colors flex items-center justify-center gap-1 disabled:opacity-60"
+            title={t('video.resumeExtraction')}
+          >
+            <i className={cn('fas', isResuming ? 'fa-spinner fa-spin' : 'fa-play')}></i>
+            {isResuming ? t('video.extracting') : t('video.resumeExtraction')}
+          </button>
+        )}
 
         {/* Badge: frames marcados (top-left) */}
         {isReady && markedFrames > 0 && (

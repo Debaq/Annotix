@@ -3,9 +3,9 @@ use tauri::{AppHandle, Emitter, Manager, State};
 
 use crate::p2p::node::P2pState;
 use crate::p2p::P2pPermission;
-use crate::store::project_file::{AnnotationEntry, KeyframeEntry};
+use crate::store::project_file::KeyframeEntry;
 use crate::store::images::ImageResponse;
-use crate::store::videos::{TrackResponse, VideoInfo, VideoResponse};
+use crate::store::videos::{bake_annotations_for_frame, TrackResponse, VideoInfo, VideoResponse};
 use crate::store::AppState;
 
 // ─── get_video_info: usa ffmpeg-next en lugar de ffprobe ─────────────────────
@@ -65,6 +65,7 @@ pub async fn upload_video(
     fps_extraction: f64,
 ) -> Result<String, String> {
     p2p.check_permission(&project_id, P2pPermission::UploadData).await?;
+    let fps_extraction = validate_fps(fps_extraction)?;
     let info = get_video_info(file_path.clone())?;
 
     let source = std::path::PathBuf::from(&file_path);
@@ -115,6 +116,32 @@ pub async fn extract_video_frames(
     launch_extraction(&app, &project_id, &video_id).await
 }
 
+/// Pide cancelar la extracción en curso de un video. La extracción se detiene en
+/// el siguiente fotograma, conserva lo ya extraído y deja el video en `pending`,
+/// desde donde se puede reanudar.
+#[tauri::command]
+pub fn cancel_video_extraction(
+    state: State<'_, AppState>,
+    video_id: String,
+) -> Result<bool, String> {
+    state.cancel_extraction(&video_id)
+}
+
+/// Fps de extracción admisibles. Sin tope, un valor enorme extrae todos los
+/// fotogramas del video; con cero, `pts_interval` se satura y extrae uno solo.
+const MIN_FPS_EXTRACTION: f64 = 0.01;
+const MAX_FPS_EXTRACTION: f64 = 240.0;
+
+fn validate_fps(fps: f64) -> Result<f64, String> {
+    if !fps.is_finite() || !(MIN_FPS_EXTRACTION..=MAX_FPS_EXTRACTION).contains(&fps) {
+        return Err(format!(
+            "Fps de extracción fuera de rango ({}): debe estar entre {} y {}",
+            fps, MIN_FPS_EXTRACTION, MAX_FPS_EXTRACTION
+        ));
+    }
+    Ok(fps)
+}
+
 /// Lanza la extracción (o reanudación) de frames de un video.
 /// Se usa tanto desde el command como desde el resume al iniciar la app.
 async fn launch_extraction(
@@ -130,7 +157,7 @@ async fn launch_extraction(
     let videos_dir = state.project_videos_dir(project_id)?;
     let video_path_str = videos_dir.join(&video.file).to_string_lossy().to_string();
 
-    let fps_extraction = video.fps_extraction;
+    let fps_extraction = validate_fps(video.fps_extraction)?;
     let duration_ms = video.duration_ms;
 
     let estimated_total = if duration_ms > 0 {
@@ -147,11 +174,22 @@ async fn launch_extraction(
             .count() as i64
     })?;
 
+    // Fotogramas escritos a disco que nunca llegaron a project.json (un corte a
+    // mitad de lote los deja huérfanos). Se limpian antes de volver a contar.
+    cleanup_orphan_frames(&state, project_id, video_id);
+
+    if !state.begin_extraction(video_id)? {
+        return Err(format!(
+            "Ya hay una extracción en curso para el video {}",
+            video_id
+        ));
+    }
+
     let app_bg = app.clone();
     let pid = project_id.to_string();
     let vid = video_id.to_string();
 
-    let result = tauri::async_runtime::spawn_blocking(move || {
+    let joined = tauri::async_runtime::spawn_blocking(move || {
         do_extract_frames(
             &app_bg,
             &pid,
@@ -162,8 +200,32 @@ async fn launch_extraction(
             existing_frames,
         )
     })
-    .await
-    .map_err(|e| format!("Error en thread de extracción: {}", e))??;
+    .await;
+
+    state.end_extraction(video_id);
+
+    let (result, cancelled) = match joined {
+        Ok(Ok(outcome)) => outcome,
+        Ok(Err(e)) => {
+            // Sin esto el video se quedaba en "extracting" y el resume del
+            // arranque lo reintentaba en cada inicio, fallando igual.
+            let _ = state.update_video_status(project_id, video_id, "error", 0);
+            let _ = app.emit("db:videos-changed", serde_json::json!({
+                "projectId": project_id,
+                "action": "updated",
+                "videoIds": [video_id],
+            }));
+            return Err(e);
+        }
+        Err(e) => {
+            let _ = state.update_video_status(project_id, video_id, "error", 0);
+            return Err(format!("Error en thread de extracción: {}", e));
+        }
+    };
+
+    if cancelled {
+        log::info!("Extracción cancelada: proyecto={}, video={}", project_id, video_id);
+    }
 
     // Notificar al frontend
     let _ = app.emit("db:videos-changed", serde_json::json!({
@@ -177,6 +239,66 @@ async fn launch_extraction(
     }));
 
     Ok(result)
+}
+
+/// Borra los fotogramas de un video que están en disco pero no en project.json,
+/// y los thumbnails que no corresponden a ninguna imagen del proyecto.
+fn cleanup_orphan_frames(state: &AppState, project_id: &str, video_id: &str) {
+    let Ok(images_dir) = state.project_images_dir(project_id) else {
+        return;
+    };
+    let Ok(thumbs_dir) = state.project_thumbnails_dir(project_id) else {
+        return;
+    };
+
+    let known = state.with_project(project_id, |pf| {
+        let files: std::collections::HashSet<String> =
+            pf.images.iter().map(|i| i.file.clone()).collect();
+        let ids: std::collections::HashSet<String> =
+            pf.images.iter().map(|i| i.id.clone()).collect();
+        (files, ids)
+    });
+
+    let Ok((known_files, known_ids)) = known else {
+        return;
+    };
+
+    // Los fotogramas se nombran "{uuid}_{video_id}_frame_{n}.{ext}", así que se
+    // pueden identificar los de este video sin consultar project.json.
+    let marker = format!("_{}_frame_", video_id);
+    let mut removed = 0usize;
+
+    if let Ok(entries) = std::fs::read_dir(&images_dir) {
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().to_string();
+            if !name.contains(&marker) || known_files.contains(&name) {
+                continue;
+            }
+            if std::fs::remove_file(entry.path()).is_ok() {
+                removed += 1;
+            }
+        }
+    }
+
+    if let Ok(entries) = std::fs::read_dir(&thumbs_dir) {
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().to_string();
+            let stem = name.rsplit_once('.').map(|(s, _)| s).unwrap_or(&name);
+            if known_ids.contains(stem) {
+                continue;
+            }
+            let _ = std::fs::remove_file(entry.path());
+        }
+    }
+
+    if removed > 0 {
+        log::info!(
+            "Limpiados {} fotogramas huérfanos de {}/{}",
+            removed,
+            project_id,
+            video_id
+        );
+    }
 }
 
 /// Busca videos con status "extracting" en todos los proyectos y reanuda su extracción.
@@ -239,6 +361,7 @@ const BATCH_FLUSH_SIZE: usize = 50;
 
 /// Trabajo pesado de extracción — corre en un thread separado.
 /// `skip_frames`: cantidad de frames ya extraídos (para resume).
+/// Devuelve `(fotogramas extraídos, cancelada)`.
 fn do_extract_frames(
     app: &AppHandle,
     project_id: &str,
@@ -247,7 +370,7 @@ fn do_extract_frames(
     fps_extraction: f64,
     estimated_total: i64,
     skip_frames: i64,
-) -> Result<i64, String> {
+) -> Result<(i64, bool), String> {
     let state = app.state::<AppState>();
 
     // Marcar video como "extracting"
@@ -310,6 +433,7 @@ fn do_extract_frames(
     let pts_interval = (pts_per_second / fps_extraction) as i64;
 
     let mut frame_count: i64 = 0; // cuenta global (incluye skipped)
+    let mut cancelled = false;
     let mut next_pts: i64 = 0;
     let mut pending_entries: Vec<crate::store::project_file::ImageEntry> = Vec::new();
     // Throttle de progreso: max ~10 eventos/seg para no saturar IPC ni UI.
@@ -319,10 +443,15 @@ fn do_extract_frames(
 
     let mut process_decoded = |decoder: &mut ffmpeg_the_third::decoder::Video,
                                 pending: &mut Vec<crate::store::project_file::ImageEntry>,
-                                fc: &mut i64|
+                                fc: &mut i64,
+                                cancelled: &mut bool|
      -> Result<(), String> {
         let mut decoded_frame = ffmpeg_the_third::frame::Video::empty();
         while decoder.receive_frame(&mut decoded_frame).is_ok() {
+            if *cancelled || state.is_extraction_cancelled(video_id) {
+                *cancelled = true;
+                return Ok(());
+            }
             let pts = decoded_frame.pts().unwrap_or(0);
 
             if pts < next_pts {
@@ -437,35 +566,43 @@ fn do_extract_frames(
         decoder
             .send_packet(&packet)
             .map_err(|e| format!("Error enviando paquete: {}", e))?;
-        process_decoded(&mut decoder, &mut pending_entries, &mut frame_count)?;
+        process_decoded(&mut decoder, &mut pending_entries, &mut frame_count, &mut cancelled)?;
+        if cancelled {
+            break;
+        }
     }
 
-    // Flush decoder
-    decoder
-        .send_eof()
-        .map_err(|e| format!("Error enviando EOF: {}", e))?;
-    process_decoded(&mut decoder, &mut pending_entries, &mut frame_count)?;
+    if !cancelled {
+        // Flush decoder
+        decoder
+            .send_eof()
+            .map_err(|e| format!("Error enviando EOF: {}", e))?;
+        process_decoded(&mut decoder, &mut pending_entries, &mut frame_count, &mut cancelled)?;
+    }
 
     // Flush final de entries pendientes
     if !pending_entries.is_empty() {
         state.commit_image_entries(project_id, pending_entries)?;
     }
 
-    // Actualizar estado del video
-    state.update_video_status(project_id, video_id, "ready", frame_count)?;
+    // Una extracción cancelada deja el video en "pending": lo ya extraído se
+    // conserva y el siguiente intento reanuda desde ahí.
+    let status = if cancelled { "pending" } else { "ready" };
+    state.update_video_status(project_id, video_id, status, frame_count)?;
 
-    // Asegurar evento final con 100% (último estado real, sobrescribe throttling)
+    // Asegurar evento final con el estado real (sobrescribe el throttling)
     let _ = app.emit(
         "video:extraction-progress",
         serde_json::json!({
             "videoId": video_id,
-            "progress": 100,
+            "progress": if cancelled { -1 } else { 100 },
             "current": frame_count,
             "total": estimated_total.max(frame_count),
+            "cancelled": cancelled,
         }),
     );
 
-    Ok(frame_count)
+    Ok((frame_count, cancelled))
 }
 
 // ─── CRUD Commands ───────────────────────────────────────────────────────────
@@ -520,6 +657,30 @@ pub async fn delete_video(
 
 // ─── Track Commands ──────────────────────────────────────────────────────────
 
+/// Publica los tracks de un video al doc P2P si hay sesión activa. Se llama tras
+/// cada mutación: sin esto, los tracks de un peer nunca salían de su máquina.
+async fn publish_tracks(
+    state: &AppState,
+    p2p: &P2pState,
+    project_id: &str,
+    video_id: &str,
+) {
+    if p2p.get_session_info(project_id).await.is_none() {
+        return;
+    }
+    let tracks = state.with_project(project_id, |pf| {
+        pf.videos
+            .iter()
+            .find(|v| v.id == video_id)
+            .map(|v| v.tracks.clone())
+            .unwrap_or_default()
+    });
+    let Ok(tracks) = tracks else { return };
+    if let Err(e) = crate::p2p::sync::sync_tracks_to_doc(p2p, project_id, video_id, &tracks).await {
+        log::warn!("Error sincronizando tracks al P2P: {}", e);
+    }
+}
+
 #[tauri::command]
 pub async fn create_track(
     state: State<'_, AppState>,
@@ -527,13 +688,12 @@ pub async fn create_track(
     app: AppHandle,
     project_id: String,
     video_id: String,
-    track_uuid: String,
     class_id: i64,
     label: Option<String>,
 ) -> Result<String, String> {
     p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
-    let id =
-        state.create_track(&project_id, &video_id, &track_uuid, class_id, label.as_deref())?;
+    let id = state.create_track(&project_id, &video_id, class_id, label.as_deref())?;
+    publish_tracks(&state, &p2p, &project_id, &video_id).await;
     let _ = app.emit("db:tracks-changed", &video_id);
     Ok(id)
 }
@@ -569,6 +729,7 @@ pub async fn update_track(
         label_update,
         enabled,
     )?;
+    publish_tracks(&state, &p2p, &project_id, &video_id).await;
     let _ = app.emit("db:tracks-changed", &video_id);
     Ok(())
 }
@@ -584,6 +745,7 @@ pub async fn delete_track(
 ) -> Result<(), String> {
     p2p.check_permission(&project_id, P2pPermission::Delete).await?;
     state.delete_track(&project_id, &video_id, &track_id)?;
+    publish_tracks(&state, &p2p, &project_id, &video_id).await;
     let _ = app.emit("db:tracks-changed", &video_id);
     Ok(())
 }
@@ -601,9 +763,9 @@ pub async fn set_keyframe(
     bbox_y: f64,
     bbox_width: f64,
     bbox_height: f64,
-) -> Result<String, String> {
+) -> Result<(), String> {
     p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
-    let id = state.set_keyframe(
+    state.set_keyframe(
         &project_id,
         &video_id,
         &track_id,
@@ -613,8 +775,9 @@ pub async fn set_keyframe(
         bbox_width,
         bbox_height,
     )?;
+    publish_tracks(&state, &p2p, &project_id, &video_id).await;
     let _ = app.emit("db:tracks-changed", &video_id);
-    Ok(id)
+    Ok(())
 }
 
 #[tauri::command]
@@ -629,6 +792,7 @@ pub async fn delete_keyframe(
 ) -> Result<(), String> {
     p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
     state.delete_keyframe(&project_id, &video_id, &track_id, frame_index)?;
+    publish_tracks(&state, &p2p, &project_id, &video_id).await;
     let _ = app.emit("db:tracks-changed", &video_id);
     Ok(())
 }
@@ -646,6 +810,7 @@ pub async fn toggle_keyframe_enabled(
 ) -> Result<(), String> {
     p2p.check_permission(&project_id, P2pPermission::Annotate).await?;
     state.toggle_keyframe_enabled(&project_id, &video_id, &track_id, frame_index, enabled)?;
+    publish_tracks(&state, &p2p, &project_id, &video_id).await;
     let _ = app.emit("db:tracks-changed", &video_id);
     Ok(())
 }
@@ -665,23 +830,22 @@ pub async fn bake_video_tracks(
             .iter()
             .find(|v| v.id == video_id)
             .map(|v| v.tracks.clone())
-            .unwrap_or_default()
     })?;
 
-    if tracks.is_empty() {
-        return Ok(0);
-    }
+    let tracks = tracks.ok_or_else(|| format!("Video no encontrado: {}", video_id))?;
 
-    // Precomputar keyframe entries por track habilitado
-    let track_kfs: Vec<(i64, Vec<KeyframeEntry>)> = tracks
+    // Precomputar keyframes por track habilitado, ordenados por fotograma.
+    // El orden lo garantiza `set_keyframe`, pero un project.json importado o
+    // editado a mano puede llegar desordenado y la interpolación lo asume.
+    let track_kfs: Vec<(String, i64, Vec<KeyframeEntry>)> = tracks
         .iter()
         .filter(|t| t.enabled && !t.keyframes.is_empty())
-        .map(|t| (t.class_id, t.keyframes.clone()))
+        .map(|t| {
+            let mut kfs = t.keyframes.clone();
+            kfs.sort_by_key(|k| k.frame_index);
+            (t.id.clone(), t.class_id, kfs)
+        })
         .collect();
-
-    if track_kfs.is_empty() {
-        return Ok(0);
-    }
 
     let now = crate::store::images::js_timestamp_pub();
     let mut baked_count: i64 = 0;
@@ -695,33 +859,27 @@ pub async fn bake_video_tracks(
             let frame_index = img.frame_index.unwrap_or(0);
 
             // Calcular nuevas anotaciones de tracks para este frame
-            let mut new_annotations: Vec<AnnotationEntry> = Vec::new();
-            for (class_id, kfs) in &track_kfs {
-                if let Some((x, y, w, h, enabled)) = interpolate_bbox(kfs, frame_index) {
-                    if !enabled {
-                        continue;
-                    }
-                    new_annotations.push(AnnotationEntry {
-                        id: uuid::Uuid::new_v4().to_string(),
-                        annotation_type: "bbox".to_string(),
-                        class_id: *class_id,
-                        data: serde_json::json!({
-                            "x": x, "y": y, "width": w, "height": h,
-                        }),
-                        source: "user".to_string(),
-                        confidence: None,
-                        model_class_name: None,
-                        created_by: None,
-                    });
-                }
-            }
+            let new_annotations =
+                bake_annotations_for_frame(&track_kfs, frame_index, img.width, img.height);
+
+            // Quitar solo lo que puso un bake anterior. Lo anotado a mano o por
+            // inferencia sobre el fotograma se conserva.
+            let had_previous = img.annotations.iter().any(|a| a.track_id.is_some());
+            img.annotations.retain(|a| a.track_id.is_none());
 
             if new_annotations.is_empty() {
+                if had_previous {
+                    // El track desapareció o el fotograma quedó fuera de su rango:
+                    // el fotograma puede haberse quedado sin ninguna anotación.
+                    if img.annotations.is_empty() {
+                        img.status = "pending".to_string();
+                        img.annotated = None;
+                    }
+                }
                 continue;
             }
 
-            // Reemplazar anotaciones del frame (video frames solo tienen anotaciones de bake)
-            img.annotations = new_annotations;
+            img.annotations.extend(new_annotations);
             img.status = "annotated".to_string();
             img.annotated = Some(now);
             baked_count += 1;
@@ -734,42 +892,4 @@ pub async fn bake_video_tracks(
         "action": "updated",
     }));
     Ok(baked_count)
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/// Retorna (x, y, width, height, enabled) interpolando entre keyframes
-fn interpolate_bbox(
-    keyframes: &[KeyframeEntry],
-    frame_index: i64,
-) -> Option<(f64, f64, f64, f64, bool)> {
-    if keyframes.is_empty() {
-        return None;
-    }
-
-    if let Some(kf) = keyframes.iter().find(|k| k.frame_index == frame_index) {
-        return Some((kf.bbox_x, kf.bbox_y, kf.bbox_width, kf.bbox_height, kf.enabled));
-    }
-
-    let prev = keyframes
-        .iter()
-        .filter(|k| k.frame_index < frame_index)
-        .last();
-    let next = keyframes.iter().find(|k| k.frame_index > frame_index);
-
-    match (prev, next) {
-        (Some(p), Some(n)) => {
-            if !p.enabled || !n.enabled {
-                return Some((0.0, 0.0, 0.0, 0.0, false));
-            }
-            let t = (frame_index - p.frame_index) as f64
-                / (n.frame_index - p.frame_index) as f64;
-            let x = p.bbox_x + (n.bbox_x - p.bbox_x) * t;
-            let y = p.bbox_y + (n.bbox_y - p.bbox_y) * t;
-            let w = p.bbox_width + (n.bbox_width - p.bbox_width) * t;
-            let h = p.bbox_height + (n.bbox_height - p.bbox_height) * t;
-            Some((x, y, w, h, true))
-        }
-        _ => None,
-    }
 }

@@ -6,18 +6,27 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Upload, FileText, Check } from 'lucide-react';
+import { Upload, FileText, Check, AlertTriangle } from 'lucide-react';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useTimeSeries } from '../hooks/useTimeSeries';
 import { pickCsvFile } from '@/lib/nativeDialogs';
 
+interface CSVParseReport {
+  skippedMalformed: number;
+  skippedBadTimestamp: number;
+  missingValues: number;
+  /** 'numeric' | 'datetime' | 'rowIndex' */
+  timestampFormat: string;
+}
+
 interface CSVParseResult {
   timestamps: number[];
-  values: number[] | number[][];
+  values: (number | null)[] | (number | null)[][];
   columns?: string[];
   headers: string[];
   rowCount: number;
   columnCount: number;
+  report: CSVParseReport;
 }
 
 interface CSVValidation {
@@ -27,10 +36,15 @@ interface CSVValidation {
   columnCount: number;
 }
 
+/** Quita la extensión .csv solo del final del nombre. */
+function stripCsvExtension(name: string): string {
+  return name.replace(/\.csv$/i, '');
+}
+
 export function CSVImporter() {
   const { t } = useTranslation();
   const { project } = useCurrentProject();
-  const { addTimeSeries, reload } = useTimeSeries();
+  const { addTimeSeries } = useTimeSeries();
 
   const [filePath, setFilePath] = useState<string | null>(null);
   const [fileName, setFileName] = useState('');
@@ -38,6 +52,8 @@ export function CSVImporter() {
   const [timestampColumn, setTimestampColumn] = useState(0);
   const [importing, setImporting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [report, setReport] = useState<(CSVParseReport & { rowCount: number }) | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSelectFile = async () => {
     const path = await pickCsvFile();
@@ -45,6 +61,8 @@ export function CSVImporter() {
       setFilePath(path);
       setFileName(path.split('/').pop() || path.split('\\').pop() || path);
       setSuccess(false);
+      setError(null);
+      setReport(null);
     }
   };
 
@@ -52,13 +70,15 @@ export function CSVImporter() {
     if (!filePath || !project?.id) return;
 
     setImporting(true);
+    setError(null);
+    setReport(null);
     try {
       // Validate CSV via Rust
       const validation = await invoke<CSVValidation>('validate_csv', {
         filePath,
       });
       if (!validation.valid) {
-        alert(`Invalid CSV: ${validation.error}`);
+        setError(t('timeseries.invalidCsv', { error: validation.error }));
         setImporting(false);
         return;
       }
@@ -72,29 +92,21 @@ export function CSVImporter() {
         },
       });
 
-      // Create time series
-      await addTimeSeries({
-        projectId: project.id,
-        name: fileName.replace('.csv', ''),
-        data: {
-          timestamps: result.timestamps,
-          values: result.values,
-          columns: result.columns,
-        },
-        annotations: [],
-        metadata: {
-          uploaded: Date.now(),
-          status: 'pending',
-        },
+      await addTimeSeries(stripCsvExtension(fileName), {
+        timestamps: result.timestamps,
+        values: result.values,
+        columns: result.columns,
       });
 
       setSuccess(true);
+      setReport({ ...result.report, rowCount: result.rowCount });
       setFilePath(null);
       setFileName('');
-      await reload();
-    } catch (error) {
-      console.error('Failed to import CSV:', error);
-      alert(`Failed to import CSV: ${error}`);
+    } catch (err) {
+      console.error('Failed to import CSV:', err);
+      // `alert()` bloquea el webview y deja la aplicación sin responder al
+      // resto de eventos; el error se muestra dentro del propio importador.
+      setError(String(err));
     } finally {
       setImporting(false);
     }
@@ -117,9 +129,35 @@ export function CSVImporter() {
         </div>
 
         {success && (
-          <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg text-green-900 dark:text-green-100">
-            <Check className="w-4 h-4" />
-            <span className="text-sm">{t('timeseries.importSuccess')}</span>
+          <div className="space-y-1 p-3 bg-green-50 dark:bg-green-950 rounded-lg text-green-900 dark:text-green-100">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4" />
+              <span className="text-sm">{t('timeseries.importSuccess')}</span>
+            </div>
+            {report && (
+              <ul className="text-xs space-y-0.5 pl-6 list-disc">
+                <li>
+                  {t('timeseries.report.rows', { count: report.rowCount })} ·{' '}
+                  {t(`timeseries.report.format.${report.timestampFormat}`)}
+                </li>
+                {report.skippedBadTimestamp > 0 && (
+                  <li>{t('timeseries.report.badTimestamp', { count: report.skippedBadTimestamp })}</li>
+                )}
+                {report.skippedMalformed > 0 && (
+                  <li>{t('timeseries.report.malformed', { count: report.skippedMalformed })}</li>
+                )}
+                {report.missingValues > 0 && (
+                  <li>{t('timeseries.report.missing', { count: report.missingValues })}</li>
+                )}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-950 rounded-lg text-red-900 dark:text-red-100">
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+            <span className="text-sm break-words">{error}</span>
           </div>
         )}
 

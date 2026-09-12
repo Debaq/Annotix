@@ -26,5 +26,11 @@
   "bake": "Aplicar faixas aos quadros",
   "bakeDesc": "Escreve as interpolações de faixa como anotações em cada quadro",
   "baking": "Aplicando...",
-  "bakeDone": "Faixas aplicadas"
+  "bakeDone": "Faixas aplicadas",
+  "bakeError": "Falha ao consolidar",
+  "cancelExtraction": "Cancelar extração",
+  "cancelling": "Cancelando…",
+  "extractionCancelled": "Extração cancelada ({{count}} quadros extraídos)",
+  "resumeExtraction": "Retomar extração",
+  "extractionFailed": "A extração falhou. Clique para tentar novamente."
 }

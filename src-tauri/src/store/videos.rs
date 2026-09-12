@@ -73,6 +73,114 @@ pub struct VideoInfo {
     pub height: i64,
 }
 
+// ─── Interpolación ───────────────────────────────────────────────────────────
+
+/// Anotaciones que producen los tracks sobre un fotograma concreto.
+///
+/// Los keyframes viven en porcentaje 0-100 del fotograma y una `AnnotationEntry`
+/// de tipo bbox está en píxeles: sin la conversión, el dataset sale con todas
+/// las cajas colapsadas contra la esquina superior izquierda (factor ancho/100).
+///
+/// `track_kfs` son ternas (track_id, class_id, keyframes ordenados) de los
+/// tracks habilitados.
+pub fn bake_annotations_for_frame(
+    track_kfs: &[(String, i64, Vec<KeyframeEntry>)],
+    frame_index: i64,
+    img_width: u32,
+    img_height: u32,
+) -> Vec<crate::store::project_file::AnnotationEntry> {
+    let mut out = Vec::new();
+
+    for (track_id, class_id, kfs) in track_kfs {
+        let Some((x_pct, y_pct, w_pct, h_pct, enabled)) = interpolate_bbox(kfs, frame_index) else {
+            continue;
+        };
+        if !enabled {
+            continue;
+        }
+
+        let (x, y, w, h) = pct_bbox_to_px(
+            x_pct,
+            y_pct,
+            w_pct,
+            h_pct,
+            img_width as f64,
+            img_height as f64,
+        );
+
+        out.push(crate::store::project_file::AnnotationEntry {
+            id: uuid::Uuid::new_v4().to_string(),
+            annotation_type: "bbox".to_string(),
+            class_id: *class_id,
+            data: serde_json::json!({
+                "x": x, "y": y, "width": w, "height": h,
+            }),
+            source: "track".to_string(),
+            confidence: None,
+            model_class_name: None,
+            created_by: None,
+            track_id: Some(track_id.clone()),
+        });
+    }
+
+    out
+}
+
+/// Convierte una caja en porcentaje 0-100 del fotograma a píxeles.
+pub fn pct_bbox_to_px(
+    x_pct: f64,
+    y_pct: f64,
+    w_pct: f64,
+    h_pct: f64,
+    img_w: f64,
+    img_h: f64,
+) -> (f64, f64, f64, f64) {
+    (
+        x_pct / 100.0 * img_w,
+        y_pct / 100.0 * img_h,
+        w_pct / 100.0 * img_w,
+        h_pct / 100.0 * img_h,
+    )
+}
+
+/// Retorna (x, y, width, height, enabled) interpolando entre keyframes, en la
+/// misma unidad en la que estén los keyframes (porcentaje 0-100).
+///
+/// No extrapola: fuera del intervalo `[primer keyframe, último keyframe]` de un
+/// track no hay caja. El editor sigue el mismo criterio (`interpolation.ts`).
+/// `keyframes` debe venir ordenado por `frame_index`.
+pub fn interpolate_bbox(
+    keyframes: &[KeyframeEntry],
+    frame_index: i64,
+) -> Option<(f64, f64, f64, f64, bool)> {
+    if keyframes.is_empty() {
+        return None;
+    }
+
+    if let Some(kf) = keyframes.iter().find(|k| k.frame_index == frame_index) {
+        return Some((kf.bbox_x, kf.bbox_y, kf.bbox_width, kf.bbox_height, kf.enabled));
+    }
+
+    let prev = keyframes.iter().rfind(|k| k.frame_index < frame_index);
+    let next = keyframes.iter().find(|k| k.frame_index > frame_index);
+
+    match (prev, next) {
+        (Some(p), Some(n)) => {
+            if !p.enabled || !n.enabled {
+                return Some((0.0, 0.0, 0.0, 0.0, false));
+            }
+            let t = (frame_index - p.frame_index) as f64
+                / (n.frame_index - p.frame_index) as f64;
+            let x = p.bbox_x + (n.bbox_x - p.bbox_x) * t;
+            let y = p.bbox_y + (n.bbox_y - p.bbox_y) * t;
+            let w = p.bbox_width + (n.bbox_width - p.bbox_width) * t;
+            let h = p.bbox_height + (n.bbox_height - p.bbox_height) * t;
+            Some((x, y, w, h, true))
+        }
+        _ => None,
+    }
+}
+
 // ─── Conversores ─────────────────────────────────────────────────────────────
 
 fn keyframe_to_response(kf: &KeyframeEntry) -> KeyframeResponse {
@@ -113,6 +221,60 @@ fn video_to_response(video: &VideoEntry, project_id: &str) -> VideoResponse {
         uploaded: video.uploaded,
         status: video.status.clone(),
         tracks: video.tracks.iter().map(|t| track_to_response(t, &video.id)).collect(),
+    }
+}
+
+// ─── Errores ─────────────────────────────────────────────────────────────────
+//
+// Los mutadores devolvían Ok(()) cuando el video o el track no existía: la
+// escritura se reportaba como aplicada y no lo estaba. Cualquier carrera con un
+// borrado, o un id viejo tras recargar, quedaba invisible.
+
+fn video_not_found(video_id: &str) -> String {
+    format!("Video no encontrado: {}", video_id)
+}
+
+fn track_not_found(track_id: &str) -> String {
+    format!("Track no encontrado: {}", track_id)
+}
+
+fn keyframe_not_found(frame_index: i64) -> String {
+    format!("Keyframe no encontrado en el fotograma {}", frame_index)
+}
+
+/// Resultado de buscar un track dentro de un video.
+enum TrackLookup {
+    Found,
+    NoVideo,
+    NoTrack,
+}
+
+impl TrackLookup {
+    fn resolve(self, video_id: &str, track_id: &str) -> Result<(), String> {
+        match self {
+            TrackLookup::Found => Ok(()),
+            TrackLookup::NoVideo => Err(video_not_found(video_id)),
+            TrackLookup::NoTrack => Err(track_not_found(track_id)),
+        }
+    }
+}
+
+/// Aplica `f` sobre un track y dice si lo encontró.
+fn with_track(
+    pf: &mut crate::store::project_file::ProjectFile,
+    video_id: &str,
+    track_id: &str,
+    f: impl FnOnce(&mut TrackEntry),
+) -> TrackLookup {
+    match pf.videos.iter_mut().find(|v| v.id == video_id) {
+        Some(v) => match v.tracks.iter_mut().find(|t| t.id == track_id) {
+            Some(t) => {
+                f(t);
+                TrackLookup::Found
+            }
+            None => TrackLookup::NoTrack,
+        },
+        None => TrackLookup::NoVideo,
     }
 }
 
@@ -192,13 +354,19 @@ impl AppState {
         total_frames: i64,
     ) -> Result<(), String> {
         let now = js_timestamp();
-        self.with_project_mut(project_id, |pf| {
-            if let Some(v) = pf.videos.iter_mut().find(|v| v.id == video_id) {
-                v.status = status.to_string();
-                v.total_frames = total_frames;
-            }
+        let found = self.with_project_mut_ret(project_id, |pf| {
+            let found = match pf.videos.iter_mut().find(|v| v.id == video_id) {
+                Some(v) => {
+                    v.status = status.to_string();
+                    v.total_frames = total_frames;
+                    true
+                }
+                None => false,
+            };
             pf.updated = now;
-        })
+            found
+        })?;
+        if found { Ok(()) } else { Err(video_not_found(video_id)) }
     }
 
     pub fn delete_video(
@@ -253,7 +421,6 @@ impl AppState {
         &self,
         project_id: &str,
         video_id: &str,
-        _track_uuid: &str,
         class_id: i64,
         label: Option<&str>,
     ) -> Result<String, String> {
@@ -268,12 +435,21 @@ impl AppState {
             keyframes: vec![],
         };
 
-        self.with_project_mut(project_id, |pf| {
-            if let Some(v) = pf.videos.iter_mut().find(|v| v.id == video_id) {
-                v.tracks.push(entry);
-            }
+        let found = self.with_project_mut_ret(project_id, |pf| {
+            let found = match pf.videos.iter_mut().find(|v| v.id == video_id) {
+                Some(v) => {
+                    v.tracks.push(entry);
+                    true
+                }
+                None => false,
+            };
             pf.updated = now;
+            found
         })?;
+
+        if !found {
+            return Err(video_not_found(video_id));
+        }
 
         Ok(id)
     }
@@ -302,22 +478,22 @@ impl AppState {
         enabled: Option<bool>,
     ) -> Result<(), String> {
         let now = js_timestamp();
-        self.with_project_mut(project_id, |pf| {
-            if let Some(v) = pf.videos.iter_mut().find(|v| v.id == video_id) {
-                if let Some(t) = v.tracks.iter_mut().find(|t| t.id == track_id) {
-                    if let Some(cid) = class_id {
-                        t.class_id = cid;
-                    }
-                    if let Some(lbl) = label {
-                        t.label = lbl;
-                    }
-                    if let Some(en) = enabled {
-                        t.enabled = en;
-                    }
+        let found = self.with_project_mut_ret(project_id, |pf| {
+            let found = with_track(pf, video_id, track_id, |t| {
+                if let Some(cid) = class_id {
+                    t.class_id = cid;
                 }
-            }
+                if let Some(lbl) = label {
+                    t.label = lbl;
+                }
+                if let Some(en) = enabled {
+                    t.enabled = en;
+                }
+            });
             pf.updated = now;
-        })
+            found
+        })?;
+        found.resolve(video_id, track_id)
     }
 
     pub fn delete_track(
@@ -327,16 +503,31 @@ impl AppState {
         track_id: &str,
     ) -> Result<(), String> {
         let now = js_timestamp();
-        self.with_project_mut(project_id, |pf| {
-            if let Some(v) = pf.videos.iter_mut().find(|v| v.id == video_id) {
-                v.tracks.retain(|t| t.id != track_id);
-            }
+        let found = self.with_project_mut_ret(project_id, |pf| {
+            let found = match pf.videos.iter_mut().find(|v| v.id == video_id) {
+                Some(v) => {
+                    let before = v.tracks.len();
+                    v.tracks.retain(|t| t.id != track_id);
+                    if v.tracks.len() == before {
+                        TrackLookup::NoTrack
+                    } else {
+                        TrackLookup::Found
+                    }
+                }
+                None => TrackLookup::NoVideo,
+            };
             pf.updated = now;
-        })
+            found
+        })?;
+        found.resolve(video_id, track_id)
     }
 
     // ─── Keyframes ────────────────────────────────────────────────────────────
 
+    /// Crea o reemplaza el keyframe de un track en un fotograma.
+    ///
+    /// La caja va en porcentaje 0-100 del fotograma, que es la unidad en la que
+    /// vive un keyframe. La conversión a píxeles ocurre al consolidar.
     pub fn set_keyframe(
         &self,
         project_id: &str,
@@ -347,39 +538,48 @@ impl AppState {
         bbox_y: f64,
         bbox_width: f64,
         bbox_height: f64,
-    ) -> Result<String, String> {
-        let now = js_timestamp();
-        let kf_id = uuid::Uuid::new_v4().to_string();
-
-        self.with_project_mut(project_id, |pf| {
-            if let Some(v) = pf.videos.iter_mut().find(|v| v.id == video_id) {
-                if let Some(t) = v.tracks.iter_mut().find(|t| t.id == track_id) {
-                    // Upsert: reemplazar si ya existe para ese frame_index
-                    if let Some(existing) = t.keyframes.iter_mut().find(|k| k.frame_index == frame_index) {
-                        existing.bbox_x = bbox_x;
-                        existing.bbox_y = bbox_y;
-                        existing.bbox_width = bbox_width;
-                        existing.bbox_height = bbox_height;
-                        existing.is_keyframe = true;
-                    } else {
-                        t.keyframes.push(KeyframeEntry {
-                            frame_index,
-                            bbox_x,
-                            bbox_y,
-                            bbox_width,
-                            bbox_height,
-                            is_keyframe: true,
-                            enabled: true,
-                        });
-                        // Mantener orden por frame_index
-                        t.keyframes.sort_by_key(|k| k.frame_index);
-                    }
-                }
+    ) -> Result<(), String> {
+        for (name, v) in [
+            ("x", bbox_x),
+            ("y", bbox_y),
+            ("width", bbox_width),
+            ("height", bbox_height),
+        ] {
+            if !v.is_finite() {
+                return Err(format!("Coordenada de keyframe inválida ({}): {}", name, v));
             }
+        }
+
+        let now = js_timestamp();
+
+        let found = self.with_project_mut_ret(project_id, |pf| {
+            let found = with_track(pf, video_id, track_id, |t| {
+                // Upsert: reemplazar si ya existe para ese frame_index
+                if let Some(existing) = t.keyframes.iter_mut().find(|k| k.frame_index == frame_index) {
+                    existing.bbox_x = bbox_x;
+                    existing.bbox_y = bbox_y;
+                    existing.bbox_width = bbox_width;
+                    existing.bbox_height = bbox_height;
+                    existing.is_keyframe = true;
+                } else {
+                    t.keyframes.push(KeyframeEntry {
+                        frame_index,
+                        bbox_x,
+                        bbox_y,
+                        bbox_width,
+                        bbox_height,
+                        is_keyframe: true,
+                        enabled: true,
+                    });
+                    // Mantener orden por frame_index
+                    t.keyframes.sort_by_key(|k| k.frame_index);
+                }
+            });
             pf.updated = now;
+            found
         })?;
 
-        Ok(kf_id)
+        found.resolve(video_id, track_id)
     }
 
     pub fn delete_keyframe(
@@ -390,14 +590,19 @@ impl AppState {
         frame_index: i64,
     ) -> Result<(), String> {
         let now = js_timestamp();
-        self.with_project_mut(project_id, |pf| {
-            if let Some(v) = pf.videos.iter_mut().find(|v| v.id == video_id) {
-                if let Some(t) = v.tracks.iter_mut().find(|t| t.id == track_id) {
-                    t.keyframes.retain(|k| k.frame_index != frame_index);
-                }
-            }
+        let mut removed = false;
+        let found = self.with_project_mut_ret(project_id, |pf| {
+            let found = with_track(pf, video_id, track_id, |t| {
+                let before = t.keyframes.len();
+                t.keyframes.retain(|k| k.frame_index != frame_index);
+                removed = t.keyframes.len() != before;
+            });
             pf.updated = now;
-        })
+            found
+        })?;
+
+        found.resolve(video_id, track_id)?;
+        if removed { Ok(()) } else { Err(keyframe_not_found(frame_index)) }
     }
 
     pub fn toggle_keyframe_enabled(
@@ -409,15 +614,19 @@ impl AppState {
         enabled: bool,
     ) -> Result<(), String> {
         let now = js_timestamp();
-        self.with_project_mut(project_id, |pf| {
-            if let Some(v) = pf.videos.iter_mut().find(|v| v.id == video_id) {
-                if let Some(t) = v.tracks.iter_mut().find(|t| t.id == track_id) {
-                    if let Some(kf) = t.keyframes.iter_mut().find(|k| k.frame_index == frame_index) {
-                        kf.enabled = enabled;
-                    }
+        let mut toggled = false;
+        let found = self.with_project_mut_ret(project_id, |pf| {
+            let found = with_track(pf, video_id, track_id, |t| {
+                if let Some(kf) = t.keyframes.iter_mut().find(|k| k.frame_index == frame_index) {
+                    kf.enabled = enabled;
+                    toggled = true;
                 }
-            }
+            });
             pf.updated = now;
-        })
+            found
+        })?;
+
+        found.resolve(video_id, track_id)?;
+        if toggled { Ok(()) } else { Err(keyframe_not_found(frame_index)) }
     }
 }

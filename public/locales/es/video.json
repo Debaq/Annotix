@@ -26,5 +26,11 @@
   "bake": "Aplicar tracks a frames",
   "bakeDesc": "Escribe las interpolaciones de tracks como anotaciones en cada frame",
   "baking": "Aplicando...",
-  "bakeDone": "Tracks aplicados"
+  "bakeDone": "Tracks aplicados",
+  "bakeError": "Error al consolidar",
+  "cancelExtraction": "Cancelar extracción",
+  "cancelling": "Cancelando…",
+  "extractionCancelled": "Extracción cancelada ({{count}} fotogramas extraídos)",
+  "resumeExtraction": "Reanudar extracción",
+  "extractionFailed": "La extracción falló. Pulsa para reintentar."
 }

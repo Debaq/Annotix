@@ -1,12 +1,18 @@
 // src/features/timeseries/hooks/useTSAnnotations.ts
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { TimeSeriesAnnotation, TimeSeriesAnnotationData } from '@/lib/db';
 import { useUIStore } from '../../core/store/uiStore';
 import { timeseriesService } from '../services/timeseriesService';
 
-export type TSAnnotationTool = 'point' | 'range' | 'event' | 'anomaly' | 'select';
+export type TSAnnotationTool =
+  | 'point'
+  | 'range'
+  | 'event'
+  | 'anomaly'
+  | 'classification'
+  | 'select';
 
 interface UseTSAnnotationsProps {
   timeseriesId: string | null;
@@ -19,6 +25,7 @@ export function useTSAnnotations({ timeseriesId }: UseTSAnnotationsProps) {
   const [activeTool, setActiveTool] = useState<TSAnnotationTool>('select');
   const [isDrawing, setIsDrawing] = useState(false);
   const [tempAnnotation, setTempAnnotation] = useState<Partial<TimeSeriesAnnotation> | null>(null);
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   // Load annotations when timeseries changes
   useEffect(() => {
@@ -38,6 +45,36 @@ export function useTSAnnotations({ timeseriesId }: UseTSAnnotationsProps) {
   }, [timeseriesId, currentProjectId]);
 
   /**
+   * Aplica una transformación sobre la lista de anotaciones y la persiste.
+   *
+   * Todas las mutaciones pasan por aquí y calculan la lista nueva a partir del
+   * estado más reciente (`setAnnotations(prev => …)`), no del capturado en el
+   * closure: dos anotaciones creadas antes de que la primera terminara de
+   * guardarse partían del mismo array y la segunda escritura pisaba la primera.
+   */
+  const mutate = useCallback(
+    async (transform: (prev: TimeSeriesAnnotation[]) => TimeSeriesAnnotation[]) => {
+      if (!timeseriesId || !currentProjectId) return null;
+
+      let next: TimeSeriesAnnotation[] = [];
+      setAnnotations((prev) => {
+        next = transform(prev);
+        return next;
+      });
+
+      // La cola serializa las escrituras: el backend reemplaza la lista
+      // completa, así que dos guardados en vuelo se sobrescribirían.
+      const run = async () => {
+        await timeseriesService.saveAnnotations(currentProjectId, timeseriesId, next);
+      };
+      saveQueueRef.current = saveQueueRef.current.then(run, run);
+      await saveQueueRef.current;
+      return next;
+    },
+    [timeseriesId, currentProjectId]
+  );
+
+  /**
    * Add a new annotation
    */
   const addAnnotation = useCallback(
@@ -55,15 +92,17 @@ export function useTSAnnotations({ timeseriesId }: UseTSAnnotationsProps) {
         data,
       };
 
-      const updatedAnnotations = [...annotations, newAnnotation];
-      setAnnotations(updatedAnnotations);
-
-      // Save to database
-      await timeseriesService.saveAnnotations(currentProjectId, timeseriesId, updatedAnnotations);
+      // Una serie solo puede tener una clasificación global: la nueva reemplaza
+      // la anterior en vez de acumularse.
+      await mutate((prev) =>
+        type === 'classification'
+          ? [...prev.filter((a) => a.type !== 'classification'), newAnnotation]
+          : [...prev, newAnnotation]
+      );
 
       return newAnnotation;
     },
-    [timeseriesId, currentProjectId, annotations]
+    [timeseriesId, currentProjectId, mutate]
   );
 
   /**
@@ -71,22 +110,13 @@ export function useTSAnnotations({ timeseriesId }: UseTSAnnotationsProps) {
    */
   const updateAnnotation = useCallback(
     async (annotationId: string, data: Partial<TimeSeriesAnnotationData>) => {
-      if (!timeseriesId || !currentProjectId) return;
-
-      const updatedAnnotations = annotations.map((ann) => {
-        if (ann.id === annotationId) {
-          return {
-            ...ann,
-            data: { ...ann.data, ...data },
-          };
-        }
-        return ann;
-      });
-
-      setAnnotations(updatedAnnotations);
-      await timeseriesService.saveAnnotations(currentProjectId, timeseriesId, updatedAnnotations);
+      await mutate((prev) =>
+        prev.map((ann) =>
+          ann.id === annotationId ? { ...ann, data: { ...ann.data, ...data } } : ann
+        )
+      );
     },
-    [timeseriesId, currentProjectId, annotations]
+    [mutate]
   );
 
   /**
@@ -94,30 +124,19 @@ export function useTSAnnotations({ timeseriesId }: UseTSAnnotationsProps) {
    */
   const deleteAnnotation = useCallback(
     async (annotationId: string) => {
-      if (!timeseriesId || !currentProjectId) return;
-
-      const updatedAnnotations = annotations.filter((ann) => ann.id !== annotationId);
-      setAnnotations(updatedAnnotations);
-
-      await timeseriesService.saveAnnotations(currentProjectId, timeseriesId, updatedAnnotations);
-
-      if (selectedAnnotationId === annotationId) {
-        setSelectedAnnotationId(null);
-      }
+      await mutate((prev) => prev.filter((ann) => ann.id !== annotationId));
+      setSelectedAnnotationId((current) => (current === annotationId ? null : current));
     },
-    [timeseriesId, currentProjectId, annotations, selectedAnnotationId]
+    [mutate]
   );
 
   /**
    * Delete all annotations
    */
   const clearAnnotations = useCallback(async () => {
-    if (!timeseriesId || !currentProjectId) return;
-
-    setAnnotations([]);
-    await timeseriesService.saveAnnotations(currentProjectId, timeseriesId, []);
+    await mutate(() => []);
     setSelectedAnnotationId(null);
-  }, [timeseriesId, currentProjectId]);
+  }, [mutate]);
 
   /**
    * Start drawing a new annotation
@@ -156,12 +175,29 @@ export function useTSAnnotations({ timeseriesId }: UseTSAnnotationsProps) {
           data: {
             timestamp,
             score: 1.0,
+            value,
           },
         });
       }
     },
     [activeTool]
   );
+
+  /**
+   * Etiqueta la serie completa con una clase. Es la anotación que pide
+   * `timeseries-classification`, que hasta ahora existía como tipo en el modelo
+   * de datos y no tenía ninguna forma de crearse desde la interfaz.
+   */
+  const setSeriesClassification = useCallback(
+    async (classId: number) => {
+      await addAnnotation('classification', { classId }, classId);
+    },
+    [addAnnotation]
+  );
+
+  /** Clasificación global actual de la serie, si tiene. */
+  const seriesClassification =
+    annotations.find((ann) => ann.type === 'classification') ?? null;
 
   /**
    * Update drawing (for range annotations)
@@ -249,5 +285,7 @@ export function useTSAnnotations({ timeseriesId }: UseTSAnnotationsProps) {
     cancelDrawing,
     selectAnnotation,
     getAnnotationsByType,
+    setSeriesClassification,
+    seriesClassification,
   };
 }

@@ -11,7 +11,17 @@ interface VideoTimelineProps {
 
 export function VideoTimeline({ tracks, classes }: VideoTimelineProps) {
   const { t } = useTranslation();
-  const { currentFrameIndex, totalFrames, goToFrame, goPrev, goNext, canPrev, canNext } = useVideoNavigation();
+  const {
+    currentFrameIndex,
+    position,
+    totalFrames,
+    goToPosition,
+    positionByFrameIndex,
+    goPrev,
+    goNext,
+    canPrev,
+    canNext,
+  } = useVideoNavigation();
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
@@ -51,10 +61,10 @@ export function VideoTimeline({ tracks, classes }: VideoTimelineProps) {
 
   // Stop playing when reaching end
   useEffect(() => {
-    if (isPlaying && currentFrameIndex >= totalFrames - 1) {
+    if (isPlaying && position >= totalFrames - 1) {
       setIsPlaying(false);
     }
-  }, [isPlaying, currentFrameIndex, totalFrames]);
+  }, [isPlaying, position, totalFrames]);
 
   // Scrubber drag
   const handleTrackClick = useCallback((e: React.MouseEvent) => {
@@ -62,9 +72,8 @@ export function VideoTimeline({ tracks, classes }: VideoTimelineProps) {
     const rect = trackRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const ratio = Math.max(0, Math.min(1, x / rect.width));
-    const frame = Math.round(ratio * (totalFrames - 1));
-    goToFrame(frame);
-  }, [totalFrames, goToFrame]);
+    goToPosition(Math.round(ratio * (totalFrames - 1)));
+  }, [totalFrames, goToPosition]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     setIsDragging(true);
@@ -79,8 +88,7 @@ export function VideoTimeline({ tracks, classes }: VideoTimelineProps) {
       const rect = trackRef.current.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const ratio = Math.max(0, Math.min(1, x / rect.width));
-      const frame = Math.round(ratio * (totalFrames - 1));
-      goToFrame(frame);
+      goToPosition(Math.round(ratio * (totalFrames - 1)));
     };
 
     const handleUp = () => setIsDragging(false);
@@ -91,21 +99,23 @@ export function VideoTimeline({ tracks, classes }: VideoTimelineProps) {
       window.removeEventListener('mousemove', handleMove);
       window.removeEventListener('mouseup', handleUp);
     };
-  }, [isDragging, totalFrames, goToFrame]);
+  }, [isDragging, totalFrames, goToPosition]);
 
-  // Get keyframe positions for indicators
+  // Rombos de keyframe. Los keyframes guardan el `frameIndex` real, así que hay
+  // que traducirlo a posición para colocarlos sobre la barra.
   const keyframeIndicators = tracks.flatMap(track => {
     const classColor = classes.find(c => c.id === track.classId)?.color || '#888';
     return track.keyframes
       .filter(kf => kf.isKeyframe)
       .map(kf => ({
-        frameIndex: kf.frameIndex,
+        position: positionByFrameIndex.get(kf.frameIndex),
         color: classColor,
-      }));
+      }))
+      .filter((kf): kf is { position: number; color: string } => kf.position !== undefined);
   });
 
   const scrubberPosition = totalFrames > 1
-    ? (currentFrameIndex / (totalFrames - 1)) * 100
+    ? (position / (totalFrames - 1)) * 100
     : 0;
 
   return (
@@ -149,7 +159,10 @@ export function VideoTimeline({ tracks, classes }: VideoTimelineProps) {
 
         {/* Frame counter */}
         <div className="text-xs font-mono tabular-nums">
-          {t('video.frame', 'Frame')} {currentFrameIndex + 1} / {totalFrames}
+          {t('video.frame', 'Frame')} {position + 1} / {totalFrames}
+          {currentFrameIndex !== position && (
+            <span className="ml-1 opacity-60">(#{currentFrameIndex})</span>
+          )}
         </div>
       </div>
 
@@ -161,7 +174,7 @@ export function VideoTimeline({ tracks, classes }: VideoTimelineProps) {
       >
         {/* Keyframe indicators */}
         {keyframeIndicators.map((kf, i) => {
-          const pos = totalFrames > 1 ? (kf.frameIndex / (totalFrames - 1)) * 100 : 0;
+          const pos = totalFrames > 1 ? (kf.position / (totalFrames - 1)) * 100 : 0;
           return (
             <div
               key={i}

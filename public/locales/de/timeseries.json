@@ -35,6 +35,22 @@
     "point": "Klicke auf das Diagramm, um einen Annotationspunkt zu markieren",
     "range": "Klicke, um den Startpunkt festzulegen, dann klicke erneut für den Endpunkt",
     "event": "Klicke auf das Diagramm, um ein Ereignis zu markieren",
-    "anomaly": "Klicke auf das Diagramm, um eine Anomalie zu markieren"
+    "anomaly": "Klicke auf das Diagramm, um eine Anomalie zu markieren",
+    "classification": "Wähle die Klasse, die die gesamte Serie beschreibt"
+  },
+  "loadingData": "Seriendaten werden geladen…",
+  "seriesClass": "Klasse der Serie",
+  "selectClass": "Nicht klassifiziert",
+  "invalidCsv": "Ungültige CSV: {{error}}",
+  "report": {
+    "rows": "{{count}} Zeilen importiert",
+    "badTimestamp": "{{count}} Zeilen verworfen: Zeitstempel nicht lesbar",
+    "malformed": "{{count}} Zeilen verworfen: Spaltenanzahl weicht von der Kopfzeile ab",
+    "missing": "{{count}} leere oder nicht numerische Werte, als Lücken importiert",
+    "format": {
+      "numeric": "numerische Zeit",
+      "datetime": "Datumsangaben in Millisekunden umgerechnet",
+      "rowIndex": "keine Zeitspalte: Zeilennummer wird verwendet"
+    }
   }
 }

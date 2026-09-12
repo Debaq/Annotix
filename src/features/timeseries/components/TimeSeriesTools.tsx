@@ -10,10 +10,13 @@ import {
   MoveHorizontal,
   Zap,
   AlertTriangle,
+  Tag,
   Trash2
 } from 'lucide-react';
 import { TSAnnotationTool } from '../hooks/useTSAnnotations';
 import { useShortcutKey } from '@/features/core/hooks/useShortcutKey';
+import type { ClassDefinition, ProjectType } from '@/lib/db';
+import { getTimeSeriesTools } from '../utils/tsToolsConfig';
 
 // Mapeo de herramienta TS a shortcut ID
 const TS_TOOL_SHORTCUT_MAP: Record<string, string> = {
@@ -22,6 +25,7 @@ const TS_TOOL_SHORTCUT_MAP: Record<string, string> = {
   range: 'ts-tool-range',
   event: 'ts-tool-event',
   anomaly: 'ts-tool-anomaly',
+  classification: 'ts-tool-classification',
 };
 
 function TSToolShortcutLabel({ toolId }: { toolId: string }) {
@@ -35,43 +39,47 @@ interface TimeSeriesToolsProps {
   onToolChange: (tool: TSAnnotationTool) => void;
   onClearAnnotations: () => void;
   annotationCount: number;
+  projectType: ProjectType;
+  classes: ClassDefinition[];
+  /** Clase asignada a la serie completa, si el proyecto la usa */
+  seriesClassId: number | null;
+  onSetSeriesClass: (classId: number) => void;
 }
+
+const TOOL_ICONS: Record<TSAnnotationTool, typeof MousePointer2> = {
+  select: MousePointer2,
+  point: MapPin,
+  range: MoveHorizontal,
+  event: Zap,
+  anomaly: AlertTriangle,
+  classification: Tag,
+};
 
 export function TimeSeriesTools({
   activeTool,
   onToolChange,
   onClearAnnotations,
   annotationCount,
+  projectType,
+  classes,
+  seriesClassId,
+  onSetSeriesClass,
 }: TimeSeriesToolsProps) {
   const { t } = useTranslation();
 
-  const tools = [
-    {
-      id: 'select' as TSAnnotationTool,
-      icon: MousePointer2,
-      label: t('timeseries.tools.select'),
-    },
-    {
-      id: 'point' as TSAnnotationTool,
-      icon: MapPin,
-      label: t('timeseries.tools.point'),
-    },
-    {
-      id: 'range' as TSAnnotationTool,
-      icon: MoveHorizontal,
-      label: t('timeseries.tools.range'),
-    },
-    {
-      id: 'event' as TSAnnotationTool,
-      icon: Zap,
-      label: t('timeseries.tools.event'),
-    },
-    {
-      id: 'anomaly' as TSAnnotationTool,
-      icon: AlertTriangle,
-      label: t('timeseries.tools.anomaly'),
-    },
-  ];
+  // Cada tipo de proyecto ofrece solo las herramientas que le sirven, igual que
+  // los proyectos de imagen. Antes se ofrecían las cinco para los nueve tipos,
+  // incluidos los que no tienen nada que hacer con un rango o una anomalía.
+  const availableTools = getTimeSeriesTools(projectType);
+  const showClassification = availableTools.includes('classification');
+
+  const tools = availableTools
+    .filter((id) => id !== 'classification')
+    .map((id) => ({
+      id,
+      icon: TOOL_ICONS[id],
+      label: t(`timeseries.tools.${id}`),
+    }));
 
   return (
     <div className="flex items-center gap-2 p-2 bg-background border-b">
@@ -103,6 +111,34 @@ export function TimeSeriesTools({
             );
           })}
         </div>
+
+        {/* Clasificación de la serie completa */}
+        {showClassification && classes.length > 0 && (
+          <>
+            <Separator orientation="vertical" className="h-6" />
+            <div className="flex items-center gap-2">
+              <Tag className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                {t('timeseries.seriesClass')}
+              </span>
+              <select
+                className="h-8 rounded border border-input bg-background px-2 text-sm"
+                value={seriesClassId ?? ''}
+                onChange={(e) => {
+                  if (e.target.value === '') return;
+                  onSetSeriesClass(Number(e.target.value));
+                }}
+              >
+                <option value="">{t('timeseries.selectClass')}</option>
+                {classes.map((cls) => (
+                  <option key={cls.id} value={cls.id}>
+                    {cls.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        )}
 
         <Separator orientation="vertical" className="h-6" />
 

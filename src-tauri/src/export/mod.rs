@@ -7,6 +7,7 @@ pub mod folders_by_class;
 pub mod preview_rasterized;
 pub mod tix;
 pub mod audio_export;
+pub mod timeseries_export;
 
 use std::io::{Write, Seek};
 use std::path::Path;
@@ -286,6 +287,12 @@ pub fn export_dataset(
         let _ = state.flush_project(project_id);
         let project_dir = state.project_dir(project_id)?;
         return tix::export(&pf, &project_dir, file, emit_progress);
+    }
+
+    // ── Time series formats ────────────────────────────────────────────────
+    if ["timeseries-csv", "timeseries-json"].contains(&format) {
+        let project_dir = state.project_dir(project_id)?;
+        return timeseries_export::export(&pf, &project_dir, file, format, emit_progress);
     }
 
     // ── Audio formats ──────────────────────────────────────────────────────

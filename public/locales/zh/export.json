@@ -318,7 +318,11 @@
     "csvAudioClassification": "音频分类 CSV",
     "csvAudioClassificationDesc": "包含file_name和label列的音频分类CSV",
     "csvSoundEvents": "声音事件 CSV",
-    "csvSoundEventsDesc": "包含file_name、start_ms、end_ms和label列的声音事件检测CSV"
+    "csvSoundEventsDesc": "包含file_name、start_ms、end_ms和label列的声音事件检测CSV",
+    "timeseriesCsv": "时间序列 CSV",
+    "timeseriesCsvDesc": "每条序列一个 CSV，含逐点标签列，另附 annotations.csv 与 classes.csv",
+    "timeseriesJson": "时间序列 JSON",
+    "timeseriesJsonDesc": "每条序列一个 JSON，数据与标注放在一起"
   },
   "notAvailable": "此项目类型不支持导出",
   "preparing": "准备导出...",

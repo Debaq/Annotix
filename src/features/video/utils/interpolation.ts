@@ -16,7 +16,6 @@ export function interpolateBBoxesForFrame(
     const bbox = interpolateTrackAtFrame(track.keyframes, frameIndex);
     if (bbox) {
       results.push({
-        trackUuid: track.trackUuid,
         trackId: track.id!,
         classId: track.classId,
         bbox: {
@@ -62,40 +61,23 @@ function interpolateTrackAtFrame(
     };
   }
 
-  // Find surrounding keyframes
+  // Find surrounding keyframes. `keyframes` llega ordenado por frameIndex, pero
+  // un proyecto importado puede no estarlo y la búsqueda lo asume.
   let prev: VideoKeyframe | null = null;
   let next: VideoKeyframe | null = null;
 
   for (const kf of keyframes) {
     if (kf.frameIndex < frameIndex) {
-      prev = kf;
-    } else if (kf.frameIndex > frameIndex && !next) {
-      next = kf;
-      break;
+      if (!prev || kf.frameIndex > prev.frameIndex) prev = kf;
+    } else if (kf.frameIndex > frameIndex) {
+      if (!next || kf.frameIndex < next.frameIndex) next = kf;
     }
   }
 
-  // If only one side exists, extend (hold) the nearest keyframe
-  if (!prev && next) {
-    return {
-      x: next.bboxX,
-      y: next.bboxY,
-      width: next.bboxWidth,
-      height: next.bboxHeight,
-      isKeyframe: false,
-      enabled: next.enabled,
-    };
-  }
-  if (prev && !next) {
-    return {
-      x: prev.bboxX,
-      y: prev.bboxY,
-      width: prev.bboxWidth,
-      height: prev.bboxHeight,
-      isKeyframe: false,
-      enabled: prev.enabled,
-    };
-  }
+  // Sin extrapolación: fuera del intervalo [primer keyframe, último keyframe]
+  // no hay caja. Es el mismo criterio que aplica la consolidación
+  // (`interpolate_bbox` en store/videos.rs); cuando no coincidían, el editor
+  // mostraba cajas que nunca llegaban al dataset.
   if (!prev || !next) return null;
 
   // Linear interpolation (siempre calcular coords reales, marcar disabled si corresponde)

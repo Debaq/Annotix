@@ -72,7 +72,7 @@ impl AppState {
 
         let now = js_timestamp();
         let project = ProjectFile {
-            version: 1,
+            version: crate::store::project_file::CURRENT_VERSION,
             id: id.clone(),
             name: name.to_string(),
             project_type: project_type.to_string(),
@@ -320,6 +320,13 @@ impl AppState {
                     },
                     None => true,
                 });
+                // Si el remapeo se llevó todas las anotaciones, la serie vuelve a
+                // estar pendiente: dejarla como "annotated" descuadra el recuento
+                // de la galería.
+                if ts.annotations.is_empty() {
+                    ts.status = "pending".to_string();
+                    ts.annotated = None;
+                }
             }
 
             // Remapear mapeos de modelos de inferencia (projectClassId se almacena como string)
@@ -403,7 +410,6 @@ impl AppState {
     }
 
     /// Lee, modifica project.json en cache, retorna valor, y escribe a disco
-    #[allow(dead_code)]
     pub fn with_project_mut_ret<F, R>(&self, project_id: &str, f: F) -> Result<R, String>
     where
         F: FnOnce(&mut ProjectFile) -> R,

@@ -26,5 +26,11 @@
   "bake": "将轨道应用到帧",
   "bakeDesc": "将轨道插值作为注释写入每帧",
   "baking": "应用中...",
-  "bakeDone": "轨道已应用"
+  "bakeDone": "轨道已应用",
+  "bakeError": "合成失败",
+  "cancelExtraction": "取消抽帧",
+  "cancelling": "正在取消…",
+  "extractionCancelled": "抽帧已取消（已提取 {{count}} 帧）",
+  "resumeExtraction": "继续抽帧",
+  "extractionFailed": "抽帧失败，点击重试。"
 }

@@ -17,7 +17,9 @@ export type ExportFormat =
   | 'huggingface-asr'
   | 'ljspeech'
   | 'csv-audio-classification'
-  | 'csv-sound-events';
+  | 'csv-sound-events'
+  | 'timeseries-csv'
+  | 'timeseries-json';
 
 export interface FormatInfo {
   id: ExportFormat;
@@ -26,6 +28,16 @@ export interface FormatInfo {
 }
 
 export const FORMAT_INFO: Record<ExportFormat, FormatInfo> = {
+  'timeseries-csv': {
+    id: 'timeseries-csv',
+    labelKey: 'export.formats.timeseriesCsv',
+    descriptionKey: 'export.formats.timeseriesCsvDesc',
+  },
+  'timeseries-json': {
+    id: 'timeseries-json',
+    labelKey: 'export.formats.timeseriesJson',
+    descriptionKey: 'export.formats.timeseriesJsonDesc',
+  },
   'yolo-detection': {
     id: 'yolo-detection',
     labelKey: 'export.formats.yoloDetection',
@@ -161,7 +173,8 @@ export function getValidFormats(projectType: ProjectType | undefined): ExportFor
     case 'tabular':
       return [];
 
-    // Time series projects (no image export applicable)
+    // Time series projects: un CSV por serie con etiqueta por punto, o un JSON
+    // por serie con datos y anotaciones juntos.
     case 'timeseries-classification':
     case 'timeseries-forecasting':
     case 'anomaly-detection':
@@ -171,7 +184,7 @@ export function getValidFormats(projectType: ProjectType | undefined): ExportFor
     case 'timeseries-regression':
     case 'clustering':
     case 'imputation':
-      return [];
+      return ['timeseries-csv', 'timeseries-json', 'tix'];
 
     default:
       return ['yolo-detection'];

@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { listen } from '@tauri-apps/api/event';
 import { useUIStore } from '../../core/store/uiStore';
@@ -30,6 +30,15 @@ export function VideoUploader({ trigger }: VideoUploaderProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressText, setProgressText] = useState('');
+  const [extractingVideoId, setExtractingVideoId] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  // `isCancelling` se lee dentro de un async: el state capturado en el closure
+  // sería el de antes de pulsar Cancelar.
+  const isCancellingRef = useRef(false);
+  useEffect(() => {
+    isCancellingRef.current = isCancelling;
+  }, [isCancelling]);
 
   const estimatedFrames = useMemo(() => {
     if (!videoInfo || !videoInfo.durationMs || fps <= 0) return 0;
@@ -59,42 +68,70 @@ export function VideoUploader({ trigger }: VideoUploaderProps) {
 
     setShowFpsDialog(false);
     setIsProcessing(true);
+    setIsCancelling(false);
     setProgress(0);
     setProgressText(t('video.uploading'));
 
+    // El listener se suelta en el finally: si la extracción lanzaba, antes
+    // quedaba vivo hasta recargar la aplicación.
+    let unlisten: (() => void) | null = null;
+
     try {
       const videoId = await videoService.upload(currentProjectId, selectedPath, fps);
-
+      setExtractingVideoId(videoId);
       setProgressText(t('video.extracting'));
 
-      const unlisten = await listen<{ progress: number; current: number; total: number }>(
-        'video:extraction-progress',
-        (event) => {
-          setProgress(event.payload.progress);
-          setProgressText(
-            t('video.extractingFrame', {
-              current: event.payload.current,
-              total: event.payload.total,
-            })
-          );
-        }
-      );
+      unlisten = await listen<{
+        videoId: string;
+        progress: number;
+        current: number;
+        total: number;
+        cancelled?: boolean;
+      }>('video:extraction-progress', (event) => {
+        if (event.payload.videoId !== videoId) return;
+        if (event.payload.cancelled) return;
+        setProgress(event.payload.progress);
+        setProgressText(
+          t('video.extractingFrame', {
+            current: event.payload.current,
+            total: event.payload.total,
+          })
+        );
+      });
 
-      await videoService.extractFrames(currentProjectId, videoId);
-      unlisten();
+      const extracted = await videoService.extractFrames(currentProjectId, videoId);
 
-      setProgress(100);
-      setProgressText(t('video.done'));
+      if (isCancellingRef.current) {
+        setProgressText(t('video.extractionCancelled', { count: extracted }));
+      } else {
+        setProgress(100);
+        setProgressText(t('video.done'));
+      }
     } catch (error) {
       console.error('Error procesando video:', error);
       setProgressText(`Error: ${error}`);
     } finally {
+      unlisten?.();
+      setExtractingVideoId(null);
       setTimeout(() => {
         setIsProcessing(false);
+        setIsCancelling(false);
         setProgress(0);
         setProgressText('');
         setVideoInfo(null);
       }, 1500);
+    }
+  };
+
+  const handleCancelExtraction = async () => {
+    if (!extractingVideoId) return;
+    setIsCancelling(true);
+    setProgressText(t('video.cancelling'));
+    try {
+      await videoService.cancelExtraction(extractingVideoId);
+    } catch (error) {
+      console.error('Error cancelando extracción:', error);
+      setIsCancelling(false);
     }
   };
 
@@ -203,6 +240,18 @@ export function VideoUploader({ trigger }: VideoUploaderProps) {
           <p className="text-xs text-muted-foreground mt-1.5">
             {progressText}
           </p>
+          {extractingVideoId && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full mt-2"
+              onClick={handleCancelExtraction}
+              disabled={isCancelling}
+            >
+              <i className="fas fa-stop mr-2"></i>
+              {isCancelling ? t('video.cancelling') : t('video.cancelExtraction')}
+            </Button>
+          )}
         </div>
       )}
     </>

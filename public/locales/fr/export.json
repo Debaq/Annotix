@@ -318,7 +318,11 @@
     "csvAudioClassification": "Classification Audio CSV",
     "csvAudioClassificationDesc": "CSV avec colonnes file_name et label pour la classification audio",
     "csvSoundEvents": "Evenements Sonores CSV",
-    "csvSoundEventsDesc": "CSV avec colonnes file_name, start_ms, end_ms et label pour la detection d'evenements"
+    "csvSoundEventsDesc": "CSV avec colonnes file_name, start_ms, end_ms et label pour la detection d'evenements",
+    "timeseriesCsv": "CSV de séries temporelles",
+    "timeseriesCsvDesc": "Un CSV par série avec une colonne label par point, plus annotations.csv et classes.csv",
+    "timeseriesJson": "JSON de séries temporelles",
+    "timeseriesJsonDesc": "Un JSON par série avec les données et les annotations ensemble"
   },
   "notAvailable": "Exportation non disponible pour ce type de projet",
   "preparing": "Préparation de l'exportation...",

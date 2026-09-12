@@ -24,7 +24,8 @@ export function useVideoAnnotationBridge(
   imageWidth: number,
   imageHeight: number,
 ) {
-  const { createTrack, setKeyframe, removeKeyframe, toggleKeyframe } = useVideoTracks();
+  const { tracks, createTrack, deleteTrack, setKeyframe, removeKeyframe, toggleKeyframe } =
+    useVideoTracks();
   const { activeClassId } = useUIStore();
 
   // Estado local para drag/resize fluido antes de persistir
@@ -64,14 +65,19 @@ export function useVideoAnnotationBridge(
     [imageWidth, imageHeight],
   );
 
-  // Conversión píxeles → porcentajes
+  // Conversión píxeles → porcentajes.
+  // Devuelve null sin dimensiones de imagen: dividir por cero persistiría
+  // Infinity/NaN en el keyframe, que serde ni siquiera puede serializar.
   const pxToPct = useCallback(
-    (px: BBoxData) => ({
-      x: (px.x / imageWidth) * 100,
-      y: (px.y / imageHeight) * 100,
-      width: (px.width / imageWidth) * 100,
-      height: (px.height / imageHeight) * 100,
-    }),
+    (px: BBoxData) => {
+      if (!imageWidth || !imageHeight) return null;
+      return {
+        x: (px.x / imageWidth) * 100,
+        y: (px.y / imageHeight) * 100,
+        width: (px.width / imageWidth) * 100,
+        height: (px.height / imageHeight) * 100,
+      };
+    },
     [imageWidth, imageHeight],
   );
 
@@ -119,13 +125,12 @@ export function useVideoAnnotationBridge(
     const classId = annotation.classId ?? activeClassId;
     if (classId === null || classId === undefined) return;
 
+    const pct = pxToPct(annotation.data as BBoxData);
+    if (!pct) return;
+
     const trackId = await createTrack(classId);
     if (!trackId) return;
 
-    const data = annotation.data as BBoxData;
-    const pct = pxToPct(data);
-
-    await new Promise(r => setTimeout(r, 50));
     await setKeyframe(trackId, frameIndex, pct.x, pct.y, pct.width, pct.height);
   }, [activeClassId, createTrack, setKeyframe, frameIndex, pxToPct]);
 
@@ -149,6 +154,7 @@ export function useVideoAnnotationBridge(
       : data as BBoxData;
 
     const pct = pxToPct(merged);
+    if (!pct) return;
     await setKeyframe(trackId, frameIndex, pct.x, pct.y, pct.width, pct.height);
   }, [annotations, setKeyframe, frameIndex, pxToPct]);
 
@@ -159,11 +165,31 @@ export function useVideoAnnotationBridge(
     setLocalOverrides(prev => ({ ...prev, [id]: { ...prev[id], ...data } }));
   }, []);
 
-  // Borrar keyframe del frame actual
+  // Borrar la caja del fotograma actual.
+  //
+  // Antes esto solo llamaba a removeKeyframe: sobre una caja interpolada no
+  // había nada que quitar, el backend devolvía éxito y la caja seguía en
+  // pantalla. Ahora cada caso hace lo que el usuario ve:
+  //  - keyframe y es el único del track → se borra el track entero
+  //  - keyframe con más hermanos        → se borra ese keyframe
+  //  - caja interpolada                 → se deshabilita en este fotograma
   const deleteAnnotation = useCallback(async (id: string) => {
     if (!id.startsWith(VKF_PREFIX)) return;
     const trackId = id.slice(VKF_PREFIX.length);
-    await removeKeyframe(trackId, frameIndex);
+    const bbox = interpolatedBBoxes.find(b => b.trackId === trackId);
+
+    if (bbox?.isKeyframe) {
+      const track = tracks.find(t => t.id === trackId);
+      if (track && track.keyframes.length <= 1) {
+        await deleteTrack(trackId);
+      } else {
+        await removeKeyframe(trackId, frameIndex);
+      }
+    } else if (bbox) {
+      await setKeyframe(trackId, frameIndex, bbox.bbox.x, bbox.bbox.y, bbox.bbox.width, bbox.bbox.height);
+      await toggleKeyframe(trackId, frameIndex, false);
+    }
+
     if (selectedAnnotationIds.has(id)) {
       setSelectedAnnotationIds(prev => {
         const next = new Set(prev);
@@ -171,7 +197,16 @@ export function useVideoAnnotationBridge(
         return next;
       });
     }
-  }, [removeKeyframe, frameIndex, selectedAnnotationIds]);
+  }, [
+    interpolatedBBoxes,
+    tracks,
+    deleteTrack,
+    removeKeyframe,
+    setKeyframe,
+    toggleKeyframe,
+    frameIndex,
+    selectedAnnotationIds,
+  ]);
 
   // Toggle habilitado/deshabilitado en este frame
   const onToggleAnnotation = useCallback(async (id: string) => {
@@ -183,7 +218,6 @@ export function useVideoAnnotationBridge(
     // Si no hay keyframe en este frame, crear uno primero
     if (!bbox.isKeyframe) {
       await setKeyframe(trackId, frameIndex, bbox.bbox.x, bbox.bbox.y, bbox.bbox.width, bbox.bbox.height);
-      await new Promise(r => setTimeout(r, 50));
     }
 
     await toggleKeyframe(trackId, frameIndex, !bbox.enabled);

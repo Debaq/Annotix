@@ -318,7 +318,11 @@
     "csvAudioClassification": "音声分類 CSV",
     "csvAudioClassificationDesc": "音声分類用のfile_nameとlabel列を含むCSV",
     "csvSoundEvents": "サウンドイベント CSV",
-    "csvSoundEventsDesc": "サウンドイベント検出用のfile_name、start_ms、end_ms、label列を含むCSV"
+    "csvSoundEventsDesc": "サウンドイベント検出用のfile_name、start_ms、end_ms、label列を含むCSV",
+    "timeseriesCsv": "時系列 CSV",
+    "timeseriesCsvDesc": "系列ごとに 1 つの CSV（点ごとのラベル列付き）と annotations.csv・classes.csv",
+    "timeseriesJson": "時系列 JSON",
+    "timeseriesJsonDesc": "系列ごとに 1 つの JSON。データと注釈をまとめて出力"
   },
   "notAvailable": "このプロジェクトタイプではエクスポートを利用できません",
   "preparing": "エクスポートを準備中...",

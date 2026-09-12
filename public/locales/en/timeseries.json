@@ -35,6 +35,22 @@
     "point": "Click on the chart to mark a point annotation",
     "range": "Click to set start point, then click again to set end point",
     "event": "Click on the chart to mark an event",
-    "anomaly": "Click on the chart to mark an anomaly"
+    "anomaly": "Click on the chart to mark an anomaly",
+    "classification": "Pick the class that describes the whole series"
+  },
+  "loadingData": "Loading series data…",
+  "seriesClass": "Series class",
+  "selectClass": "Unclassified",
+  "invalidCsv": "Invalid CSV: {{error}}",
+  "report": {
+    "rows": "{{count}} rows imported",
+    "badTimestamp": "{{count}} rows dropped: unreadable timestamp",
+    "malformed": "{{count}} rows dropped: column count differs from the header",
+    "missing": "{{count}} empty or non-numeric values, imported as gaps",
+    "format": {
+      "numeric": "numeric time",
+      "datetime": "dates converted to milliseconds",
+      "rowIndex": "no time column: row number used instead"
+    }
   }
 }

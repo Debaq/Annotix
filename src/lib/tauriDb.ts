@@ -47,7 +47,11 @@ export interface TauriTimeSeriesRecord {
   id?: string;
   projectId: string;
   name: string;
+  /** null en el listado: los datos solo viajan al abrir una serie concreta */
   data: unknown;
+  pointCount: number;
+  seriesCount: number;
+  columns?: string[] | null;
   annotations: TimeSeriesAnnotation[];
   metadata: {
     uploaded: number;
@@ -202,9 +206,10 @@ export async function deleteImage(projectId: string, id: string): Promise<void> 
 export async function createTimeseries(
   projectId: string,
   name: string,
-  data: unknown
+  data: unknown,
+  annotations: TimeSeriesAnnotation[] = []
 ): Promise<string> {
-  return invoke<string>('create_timeseries', { projectId, name, data });
+  return invoke<string>('create_timeseries', { projectId, name, data, annotations });
 }
 
 export async function getTimeseries(
@@ -277,14 +282,18 @@ export async function deleteVideo(projectId: string, videoId: string): Promise<v
   return invoke('delete_video', { projectId, videoId });
 }
 
+/** Pide cancelar la extracción en curso. Devuelve false si no había ninguna. */
+export async function cancelVideoExtraction(videoId: string): Promise<boolean> {
+  return invoke<boolean>('cancel_video_extraction', { videoId });
+}
+
 export async function createTrack(
   projectId: string,
   videoId: string,
-  trackUuid: string,
   classId: number,
   label?: string
 ): Promise<string> {
-  return invoke<string>('create_track', { projectId, videoId, trackUuid, classId, label });
+  return invoke<string>('create_track', { projectId, videoId, classId, label });
 }
 
 export async function listTracksByVideo(projectId: string, videoId: string): Promise<VideoTrack[]> {
@@ -313,8 +322,8 @@ export async function setKeyframe(
   bboxY: number,
   bboxWidth: number,
   bboxHeight: number
-): Promise<string> {
-  return invoke<string>('set_keyframe', {
+): Promise<void> {
+  return invoke('set_keyframe', {
     projectId, trackId, videoId, frameIndex, bboxX, bboxY, bboxWidth, bboxHeight,
   });
 }

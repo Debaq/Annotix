@@ -26,5 +26,11 @@
   "bake": "Appliquer les pistes aux images",
   "bakeDesc": "Écrit les interpolations de piste comme annotations sur chaque image",
   "baking": "Application...",
-  "bakeDone": "Pistes appliquées"
+  "bakeDone": "Pistes appliquées",
+  "bakeError": "Échec de la consolidation",
+  "cancelExtraction": "Annuler l'extraction",
+  "cancelling": "Annulation…",
+  "extractionCancelled": "Extraction annulée ({{count}} images extraites)",
+  "resumeExtraction": "Reprendre l'extraction",
+  "extractionFailed": "L'extraction a échoué. Cliquez pour réessayer."
 }

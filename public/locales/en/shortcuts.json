@@ -202,6 +202,9 @@
     "ttsSkip": {
       "name": "Skip sentence",
       "description": "Skip to the next sentence"
+    },
+    "tsToolClassification": {
+      "name": "Series classification tool"
     }
   }
 }

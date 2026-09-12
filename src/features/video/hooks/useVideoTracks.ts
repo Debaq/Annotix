@@ -18,9 +18,7 @@ export function useVideoTracks() {
 
   const createTrack = useCallback(async (classId: number, label?: string): Promise<string | undefined> => {
     if (!currentVideoId || !currentProjectId) return undefined;
-    const trackUuid = crypto.randomUUID();
-    const backendId = await videoService.createTrack(currentProjectId, currentVideoId, trackUuid, classId, label);
-    return backendId;
+    return videoService.createTrack(currentProjectId, currentVideoId, classId, label);
   }, [currentVideoId, currentProjectId]);
 
   const deleteTrack = useCallback(async (trackId: string) => {

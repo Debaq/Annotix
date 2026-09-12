@@ -54,6 +54,7 @@ fn bbox_ann(class_id: i64, x: f64, y: f64, w: f64, h: f64) -> AnnotationEntry {
         confidence: None,
         model_class_name: None,
         created_by: None,
+        track_id: None,
     }
 }
 
@@ -69,6 +70,7 @@ fn polygon_ann(class_id: i64, pts: &[(f64, f64)]) -> AnnotationEntry {
         confidence: None,
         model_class_name: None,
         created_by: None,
+        track_id: None,
     }
 }
 
@@ -1047,3 +1049,470 @@ fn polygon_area_is_orientation_independent() {
     assert!((polygon_area(&cw) - polygon_area(&ccw)).abs() < 1e-9);
 }
 
+// ─── Tests: interpolación de tracks de video ────────────────────────────────
+
+use crate::store::project_file::{KeyframeEntry, TimeSeriesEntry, TrackEntry, TsAnnotationEntry, VideoEntry};
+use crate::store::videos::{interpolate_bbox, pct_bbox_to_px};
+
+fn kf(frame_index: i64, x: f64, y: f64, w: f64, h: f64) -> KeyframeEntry {
+    KeyframeEntry {
+        frame_index,
+        bbox_x: x,
+        bbox_y: y,
+        bbox_width: w,
+        bbox_height: h,
+        is_keyframe: true,
+        enabled: true,
+    }
+}
+
+fn video_with_track(video_id: &str, class_id: i64, keyframes: Vec<KeyframeEntry>) -> VideoEntry {
+    VideoEntry {
+        id: video_id.into(),
+        name: "v.mp4".into(),
+        file: "v.mp4".into(),
+        fps_extraction: 5.0,
+        fps_original: Some(30.0),
+        total_frames: 100,
+        duration_ms: 20_000,
+        width: 1920,
+        height: 1080,
+        uploaded: 0.0,
+        status: "ready".into(),
+        tracks: vec![TrackEntry {
+            id: format!("track-{}", video_id),
+            class_id,
+            label: None,
+            enabled: true,
+            keyframes,
+        }],
+    }
+}
+
+fn video_frame(video_id: &str, frame_index: i64, w: u32, h: u32, anns: Vec<AnnotationEntry>) -> ImageEntry {
+    let mut e = image_entry(
+        &format!("frame_{:06}.jpg", frame_index),
+        &format!("frame_{:06}.jpg", frame_index),
+        w,
+        h,
+        anns,
+    );
+    e.video_id = Some(video_id.into());
+    e.frame_index = Some(frame_index);
+    e
+}
+
+#[test]
+fn interpolate_bbox_returns_exact_keyframe() {
+    let kfs = vec![kf(0, 10.0, 20.0, 30.0, 40.0), kf(10, 50.0, 60.0, 30.0, 40.0)];
+    let (x, y, w, h, enabled) = interpolate_bbox(&kfs, 0).expect("keyframe exacto");
+    assert_eq!((x, y, w, h), (10.0, 20.0, 30.0, 40.0));
+    assert!(enabled);
+}
+
+#[test]
+fn interpolate_bbox_is_linear_between_keyframes() {
+    let kfs = vec![kf(0, 0.0, 0.0, 10.0, 10.0), kf(10, 100.0, 50.0, 20.0, 30.0)];
+    let (x, y, w, h, _) = interpolate_bbox(&kfs, 5).expect("punto medio");
+    assert!((x - 50.0).abs() < 1e-9);
+    assert!((y - 25.0).abs() < 1e-9);
+    assert!((w - 15.0).abs() < 1e-9);
+    assert!((h - 20.0).abs() < 1e-9);
+}
+
+#[test]
+fn interpolate_bbox_does_not_extrapolate() {
+    let kfs = vec![kf(10, 0.0, 0.0, 10.0, 10.0), kf(20, 10.0, 10.0, 10.0, 10.0)];
+    assert!(
+        interpolate_bbox(&kfs, 5).is_none(),
+        "antes del primer keyframe no hay caja"
+    );
+    assert!(
+        interpolate_bbox(&kfs, 25).is_none(),
+        "después del último keyframe no hay caja"
+    );
+}
+
+#[test]
+fn interpolate_bbox_disabled_extreme_disables_span() {
+    let mut kfs = vec![kf(0, 0.0, 0.0, 10.0, 10.0), kf(10, 10.0, 10.0, 10.0, 10.0)];
+    kfs[1].enabled = false;
+    let (_, _, _, _, enabled) = interpolate_bbox(&kfs, 5).expect("devuelve caja marcada");
+    assert!(!enabled);
+}
+
+#[test]
+fn pct_bbox_to_px_scales_by_frame_size() {
+    // Una caja que cubre la mitad del fotograma en un 1920x1080
+    let (x, y, w, h) = pct_bbox_to_px(25.0, 25.0, 50.0, 50.0, 1920.0, 1080.0);
+    assert!((x - 480.0).abs() < 1e-9);
+    assert!((y - 270.0).abs() < 1e-9);
+    assert!((w - 960.0).abs() < 1e-9);
+    assert!((h - 540.0).abs() < 1e-9);
+}
+
+// ─── Tests: migración v1 → v2 (cajas consolidadas en porcentaje) ────────────
+
+#[test]
+fn migration_v1_rescales_baked_bboxes_to_pixels() {
+    let tmp = tempfile::tempdir().unwrap();
+    let mut project = make_project("video", "bbox", default_classes());
+    project.version = 1;
+    project.videos = vec![video_with_track("vid-1", 0, vec![
+        kf(0, 10.0, 20.0, 30.0, 40.0),
+        kf(10, 10.0, 20.0, 30.0, 40.0),
+    ])];
+
+    // Fotograma con la caja tal como la escribía el bake antiguo: en porcentaje.
+    let baked = bbox_ann(0, 10.0, 20.0, 30.0, 40.0);
+    // Y una anotación hecha a mano, en píxeles, que no debe tocarse.
+    let manual = bbox_ann(1, 500.0, 400.0, 100.0, 80.0);
+    project.images = vec![video_frame("vid-1", 5, 1000, 500, vec![baked, manual])];
+
+    store_io::write_project(tmp.path(), &project).unwrap();
+    let migrated = store_io::read_project(tmp.path()).unwrap();
+
+    assert_eq!(migrated.version, crate::store::project_file::CURRENT_VERSION);
+
+    let anns = &migrated.images[0].annotations;
+    let track_ann = anns.iter().find(|a| a.track_id.is_some()).expect("la caja del track");
+    assert_eq!(track_ann.source, "track");
+    assert_eq!(track_ann.data["x"].as_f64().unwrap(), 100.0); // 10% de 1000
+    assert_eq!(track_ann.data["y"].as_f64().unwrap(), 100.0); // 20% de 500
+    assert_eq!(track_ann.data["width"].as_f64().unwrap(), 300.0);
+    assert_eq!(track_ann.data["height"].as_f64().unwrap(), 200.0);
+
+    let untouched = anns.iter().find(|a| a.class_id == 1).expect("la anotación manual");
+    assert!(untouched.track_id.is_none(), "lo anotado a mano no se marca como track");
+    assert_eq!(untouched.data["x"].as_f64().unwrap(), 500.0);
+}
+
+#[test]
+fn migration_v1_leaves_projects_without_videos_alone() {
+    let tmp = tempfile::tempdir().unwrap();
+    let mut project = make_project("imagenes", "bbox", default_classes());
+    project.version = 1;
+    project.images = vec![image_entry("a.png", "a.png", 100, 100, vec![bbox_ann(0, 1.0, 2.0, 3.0, 4.0)])];
+
+    store_io::write_project(tmp.path(), &project).unwrap();
+    let migrated = store_io::read_project(tmp.path()).unwrap();
+
+    let ann = &migrated.images[0].annotations[0];
+    assert_eq!(ann.data["x"].as_f64().unwrap(), 1.0);
+    assert!(ann.track_id.is_none());
+}
+
+// ─── Tests: migración v2 → v3 (datos de series a archivos) ──────────────────
+
+fn ts_entry_with_inline_data(id: &str, points: usize) -> TimeSeriesEntry {
+    let timestamps: Vec<f64> = (0..points).map(|i| i as f64).collect();
+    let values: Vec<f64> = (0..points).map(|i| (i * 2) as f64).collect();
+    TimeSeriesEntry {
+        id: id.into(),
+        name: format!("serie-{}", id),
+        data: Some(json!({ "timestamps": timestamps, "values": values })),
+        point_count: 0,
+        series_count: 1,
+        columns: None,
+        annotations: vec![],
+        uploaded: 0.0,
+        annotated: None,
+        status: "pending".into(),
+    }
+}
+
+#[test]
+fn migration_v2_moves_timeseries_data_to_files() {
+    let tmp = tempfile::tempdir().unwrap();
+    let mut project = make_project("series", "timeseries-classification", default_classes());
+    project.version = 2;
+    project.timeseries = vec![ts_entry_with_inline_data("ts-1", 4)];
+
+    store_io::write_project(tmp.path(), &project).unwrap();
+    let migrated = store_io::read_project(tmp.path()).unwrap();
+
+    assert_eq!(migrated.version, crate::store::project_file::CURRENT_VERSION);
+    let ts = &migrated.timeseries[0];
+    assert!(ts.data.is_none(), "los datos salen de project.json");
+    assert_eq!(ts.point_count, 4);
+    assert_eq!(ts.series_count, 1);
+
+    let data_path = tmp.path().join("timeseries").join("ts-1.json");
+    assert!(data_path.exists(), "los datos quedan en su propio archivo");
+    let on_disk: serde_json::Value =
+        serde_json::from_slice(&fs::read(&data_path).unwrap()).unwrap();
+    assert_eq!(on_disk["timestamps"].as_array().unwrap().len(), 4);
+
+    // project.json ya no contiene los puntos
+    let raw = fs::read_to_string(tmp.path().join("project.json")).unwrap();
+    assert!(!raw.contains("\"timestamps\""));
+}
+
+#[test]
+fn describe_data_counts_points_and_series() {
+    let univariate = json!({ "timestamps": [1, 2, 3], "values": [10, 20, 30] });
+    let (points, series, columns) = crate::store::timeseries::describe_data(&univariate);
+    assert_eq!((points, series), (3, 1));
+    assert!(columns.is_none());
+
+    let multivariate = json!({
+        "timestamps": [1, 2],
+        "values": [[1, 2], [3, 4], [5, 6]],
+        "columns": ["a", "b", "c"],
+    });
+    let (points, series, columns) = crate::store::timeseries::describe_data(&multivariate);
+    assert_eq!((points, series), (2, 3));
+    assert_eq!(columns.unwrap(), vec!["a", "b", "c"]);
+}
+
+// ─── Tests: parseo de CSV de series temporales ──────────────────────────────
+
+fn parse_csv_text(text: &str, has_header: bool) -> crate::commands::csv_commands::CSVParseResult {
+    let tmp = tempfile::tempdir().unwrap();
+    let path = tmp.path().join("data.csv");
+    fs::write(&path, text).unwrap();
+    crate::commands::csv_commands::parse_csv(
+        path.to_string_lossy().to_string(),
+        crate::commands::csv_commands::CSVParseOptions {
+            has_header: Some(has_header),
+            timestamp_column: Some(0),
+            value_columns: None,
+            delimiter: None,
+        },
+    )
+    .expect("parse_csv")
+}
+
+#[test]
+fn parse_csv_accepts_iso_dates() {
+    let result = parse_csv_text("fecha,valor\n2026-01-15,1.5\n2026-01-16,2.5\n", true);
+    assert_eq!(result.row_count, 2, "un CSV con fechas no debe quedarse vacío");
+    assert_eq!(result.report.timestamp_format, "datetime");
+    // 2026-01-15T00:00:00Z en milisegundos
+    assert_eq!(result.timestamps[0], 1_768_435_200_000.0);
+    assert_eq!(result.report.skipped_bad_timestamp, 0);
+}
+
+#[test]
+fn parse_csv_accepts_datetime_with_time() {
+    let result = parse_csv_text("t,v\n2026-01-15 10:30:00,1\n2026-01-15T11:30:00,2\n", true);
+    assert_eq!(result.row_count, 2);
+    assert_eq!(result.timestamps[1] - result.timestamps[0], 3_600_000.0);
+}
+
+#[test]
+fn parse_csv_keeps_numeric_timestamps() {
+    let result = parse_csv_text("t,v\n0,1\n1,2\n2,3\n", true);
+    assert_eq!(result.report.timestamp_format, "numeric");
+    assert_eq!(result.timestamps, vec![0.0, 1.0, 2.0]);
+}
+
+#[test]
+fn parse_csv_respects_quoted_fields() {
+    // Una coma dentro de un campo entre comillas no añade una columna
+    let result = parse_csv_text("t,ciudad,v\n0,\"Madrid, ES\",1\n1,\"Lima, PE\",2\n", true);
+    assert_eq!(result.row_count, 2, "las filas con comillas no se descartan");
+    assert_eq!(result.column_count, 3);
+    assert_eq!(result.report.skipped_malformed, 0);
+}
+
+#[test]
+fn parse_csv_reports_missing_values_as_gaps() {
+    let result = parse_csv_text("t,v\n0,1\n1,\n2,NA\n3,4\n", true);
+    assert_eq!(result.row_count, 4);
+    assert_eq!(result.report.missing_values, 2);
+    let values = result.values.as_array().expect("array de valores");
+    assert!(values[1].is_null(), "una celda vacía es un hueco, no un cero");
+    assert!(values[2].is_null());
+    assert_eq!(values[3].as_f64().unwrap(), 4.0);
+}
+
+#[test]
+fn parse_csv_reports_dropped_rows() {
+    let result = parse_csv_text("t,v\n0,1\n no_es_fecha,2\n2,3\n", true);
+    assert_eq!(result.row_count, 2);
+    assert_eq!(result.report.skipped_bad_timestamp, 1);
+}
+
+#[test]
+fn parse_csv_falls_back_to_row_index_without_time_column() {
+    let result = parse_csv_text("etiqueta,v\nfoo,1\nbar,2\n", true);
+    assert_eq!(result.report.timestamp_format, "rowIndex");
+    assert_eq!(result.timestamps, vec![0.0, 1.0]);
+}
+
+#[test]
+fn validate_csv_accepts_quoted_commas() {
+    let tmp = tempfile::tempdir().unwrap();
+    let path = tmp.path().join("q.csv");
+    fs::write(&path, "t,ciudad,v\n0,\"Madrid, ES\",1\n").unwrap();
+    let validation =
+        crate::commands::csv_commands::validate_csv(path.to_string_lossy().to_string(), None)
+            .unwrap();
+    assert!(validation.valid, "{:?}", validation.error);
+    assert_eq!(validation.column_count, 3);
+}
+
+// ─── Tests: exportación de series temporales ────────────────────────────────
+
+fn ts_annotation(kind: &str, class_id: Option<i64>, data: serde_json::Value) -> TsAnnotationEntry {
+    TsAnnotationEntry {
+        id: uuid::Uuid::new_v4().to_string(),
+        annotation_type: kind.into(),
+        class_id,
+        data,
+    }
+}
+
+#[test]
+fn timeseries_csv_export_labels_points_and_keeps_gaps() {
+    let tmp = tempfile::tempdir().unwrap();
+    let mut project = make_project("series", "timeseries-segmentation", default_classes());
+    project.version = crate::store::project_file::CURRENT_VERSION;
+
+    let mut ts = ts_entry_with_inline_data("ts-1", 0);
+    ts.data = None;
+    ts.point_count = 4;
+    ts.annotations = vec![ts_annotation(
+        "range",
+        Some(0),
+        json!({ "startTimestamp": 1.0, "endTimestamp": 2.0 }),
+    )];
+    project.timeseries = vec![ts];
+
+    // Datos en su archivo, con un hueco
+    let ts_dir = tmp.path().join("timeseries");
+    fs::create_dir_all(&ts_dir).unwrap();
+    fs::write(
+        ts_dir.join("ts-1.json"),
+        serde_json::to_vec(&json!({
+            "timestamps": [0.0, 1.0, 2.0, 3.0],
+            "values": [10.0, null, 30.0, 40.0],
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+
+    let out = tmp.path().join("export.zip");
+    let file = fs::File::create(&out).unwrap();
+    export::timeseries_export::export(&project, tmp.path(), file, "timeseries-csv", |_| {}).unwrap();
+
+    let mut zip = ZipArchive::new(fs::File::open(&out).unwrap()).unwrap();
+    let names: Vec<String> = zip.file_names().map(|s| s.to_string()).collect();
+    assert!(names.iter().any(|n| n.ends_with(".csv") && n.starts_with("series/")));
+    assert!(names.contains(&"annotations.csv".to_string()));
+    assert!(names.contains(&"classes.csv".to_string()));
+
+    let series_name = names
+        .iter()
+        .find(|n| n.starts_with("series/"))
+        .unwrap()
+        .clone();
+    let mut csv = String::new();
+    {
+        use std::io::Read;
+        zip.by_name(&series_name).unwrap().read_to_string(&mut csv).unwrap();
+    }
+
+    let lines: Vec<&str> = csv.lines().collect();
+    assert_eq!(lines[0], "timestamp,value,label");
+    assert_eq!(lines[1], "0,10,");
+    assert_eq!(lines[2], "1,,cat", "el hueco queda vacío y el punto va etiquetado");
+    assert_eq!(lines[3], "2,30,cat");
+    assert_eq!(lines[4], "3,40,");
+}
+
+#[test]
+fn timeseries_export_rejects_project_without_series() {
+    let tmp = tempfile::tempdir().unwrap();
+    let project = make_project("vacio", "timeseries-classification", default_classes());
+    let out = tmp.path().join("export.zip");
+    let file = fs::File::create(&out).unwrap();
+    let err = export::timeseries_export::export(&project, tmp.path(), file, "timeseries-csv", |_| {})
+        .unwrap_err();
+    assert!(err.contains("No hay series temporales"));
+}
+
+// ─── Tests: consolidación (bake) de tracks de video ─────────────────────────
+
+use crate::store::videos::bake_annotations_for_frame;
+
+fn track_kfs_fixture() -> Vec<(String, i64, Vec<KeyframeEntry>)> {
+    vec![(
+        "track-1".to_string(),
+        0,
+        vec![kf(0, 0.0, 0.0, 50.0, 50.0), kf(10, 50.0, 50.0, 50.0, 50.0)],
+    )]
+}
+
+#[test]
+fn bake_converts_keyframe_percent_to_frame_pixels() {
+    // Keyframe en el 0% que ocupa la mitad del fotograma, sobre 1920x1080
+    let anns = bake_annotations_for_frame(&track_kfs_fixture(), 0, 1920, 1080);
+    assert_eq!(anns.len(), 1);
+    let data = &anns[0].data;
+    assert_eq!(data["x"].as_f64().unwrap(), 0.0);
+    assert_eq!(data["width"].as_f64().unwrap(), 960.0);
+    assert_eq!(data["height"].as_f64().unwrap(), 540.0);
+}
+
+#[test]
+fn bake_marks_annotations_as_track_source() {
+    let anns = bake_annotations_for_frame(&track_kfs_fixture(), 5, 1000, 1000);
+    assert_eq!(anns[0].source, "track", "lo interpolado no es una etiqueta humana");
+    assert_eq!(anns[0].track_id.as_deref(), Some("track-1"));
+    assert_eq!(anns[0].annotation_type, "bbox");
+}
+
+#[test]
+fn bake_interpolates_midpoint_in_pixels() {
+    // Punto medio entre 0% y 50% → 25% de 1000 px = 250 px
+    let anns = bake_annotations_for_frame(&track_kfs_fixture(), 5, 1000, 1000);
+    assert_eq!(anns[0].data["x"].as_f64().unwrap(), 250.0);
+    assert_eq!(anns[0].data["y"].as_f64().unwrap(), 250.0);
+}
+
+#[test]
+fn bake_produces_nothing_outside_track_span() {
+    let kfs = vec![(
+        "t".to_string(),
+        0,
+        vec![kf(10, 0.0, 0.0, 10.0, 10.0), kf(20, 0.0, 0.0, 10.0, 10.0)],
+    )];
+    assert!(bake_annotations_for_frame(&kfs, 5, 100, 100).is_empty());
+    assert!(bake_annotations_for_frame(&kfs, 25, 100, 100).is_empty());
+    assert_eq!(bake_annotations_for_frame(&kfs, 15, 100, 100).len(), 1);
+}
+
+#[test]
+fn bake_skips_disabled_spans() {
+    let mut kfs = track_kfs_fixture();
+    kfs[0].2[1].enabled = false;
+    assert!(
+        bake_annotations_for_frame(&kfs, 5, 100, 100).is_empty(),
+        "un tramo deshabilitado no produce anotación"
+    );
+}
+
+#[test]
+fn baked_bbox_normalizes_to_the_same_fraction_as_the_keyframe() {
+    // La caja consolidada, al normalizarse para YOLO, debe recuperar la misma
+    // fracción del fotograma que declaraba el keyframe. Este es el invariante
+    // que rompía escribir porcentajes en un campo leído como píxeles.
+    let width = 1920u32;
+    let height = 1080u32;
+    let anns = bake_annotations_for_frame(&track_kfs_fixture(), 0, width, height);
+    let bbox = export::parse_bbox(&anns[0].data).expect("bbox");
+    let (nx, ny, nw, nh) = crate::utils::converters::normalize_coordinates(
+        bbox.x,
+        bbox.y,
+        bbox.width,
+        bbox.height,
+        width as f64,
+        height as f64,
+    );
+    assert!((nx - 0.0).abs() < 1e-9);
+    assert!((ny - 0.0).abs() < 1e-9);
+    assert!((nw - 0.5).abs() < 1e-9, "50% del ancho → 0.5 normalizado, no 0.026");
+    assert!((nh - 0.5).abs() < 1e-9);
+}

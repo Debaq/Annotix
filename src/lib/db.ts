@@ -180,7 +180,16 @@ export interface TimeSeries {
   id?: string;
   projectId: string;           // Indexed
   name: string;
-  data: TimeSeriesData;
+  /**
+   * Datos completos de la serie. Solo vienen al pedir una serie concreta
+   * (`getById`); el listado los deja en null y describe la serie con
+   * `pointCount` / `seriesCount`, para no cargar cada serie del proyecto
+   * solo para pintar la galería.
+   */
+  data: TimeSeriesData | null;
+  pointCount: number;          // Nº de puntos (disponible siempre)
+  seriesCount: number;         // Nº de variables (1 = univariante)
+  columns?: string[] | null;   // Nombres de columnas (multivariante)
   annotations: TimeSeriesAnnotation[];
   metadata: {
     uploaded: number;
@@ -191,7 +200,12 @@ export interface TimeSeries {
 
 export interface TimeSeriesData {
   timestamps: number[];        // X-axis values (ms timestamps or sequential)
-  values: number[] | number[][];  // Y-axis values (univariate or multivariate)
+  /**
+   * Valores del eje Y (univariante o multivariante). `null` es un hueco
+   * declarado por el importador: una celda vacía o no numérica del CSV. No se
+   * sustituye por 0 porque un cero inventado es indistinguible de un dato real.
+   */
+  values: (number | null)[] | (number | null)[][];
   columns?: string[];          // Column names for multivariate data
 }
 
@@ -235,6 +249,11 @@ export interface AnomalyAnnotation {
   timestamp: number;
   score: number;               // Anomaly score
   threshold?: number;
+  /**
+   * Valor de la serie en ese instante. Sin él el marcador se dibujaba en y=0,
+   * que en una serie que no pasa por cero cae fuera del área visible.
+   */
+  value?: number;
 }
 
 // ============================================================================
@@ -385,7 +404,6 @@ export interface Video {
 export interface VideoTrack {
   id?: string;
   videoId: string;
-  trackUuid: string;
   classId: number;
   label: string | null;
   enabled: boolean;
@@ -393,8 +411,6 @@ export interface VideoTrack {
 }
 
 export interface VideoKeyframe {
-  id?: string;
-  trackId: string;
   frameIndex: number;
   bboxX: number;
   bboxY: number;
@@ -405,7 +421,6 @@ export interface VideoKeyframe {
 }
 
 export interface InterpolatedBBox {
-  trackUuid: string;
   trackId: string;
   classId: number;
   bbox: BBoxData;

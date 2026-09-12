@@ -35,6 +35,22 @@
     "point": "Haz clic en el gráfico para marcar un punto de anotación",
     "range": "Haz clic para establecer el punto inicial, luego haz clic nuevamente para establecer el punto final",
     "event": "Haz clic en el gráfico para marcar un evento",
-    "anomaly": "Haz clic en el gráfico para marcar una anomalía"
+    "anomaly": "Haz clic en el gráfico para marcar una anomalía",
+    "classification": "Elige la clase que describe la serie completa"
+  },
+  "loadingData": "Cargando datos de la serie…",
+  "seriesClass": "Clase de la serie",
+  "selectClass": "Sin clasificar",
+  "invalidCsv": "CSV no válido: {{error}}",
+  "report": {
+    "rows": "{{count}} filas importadas",
+    "badTimestamp": "{{count}} filas descartadas: marca de tiempo ilegible",
+    "malformed": "{{count}} filas descartadas: número de columnas distinto al de la cabecera",
+    "missing": "{{count}} valores vacíos o no numéricos, importados como huecos",
+    "format": {
+      "numeric": "tiempo numérico",
+      "datetime": "fechas convertidas a milisegundos",
+      "rowIndex": "sin columna de tiempo: se usa el número de fila"
+    }
   }
 }

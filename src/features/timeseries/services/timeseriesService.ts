@@ -1,4 +1,4 @@
-import { TimeSeries, TimeSeriesAnnotation } from '@/lib/db';
+import { TimeSeries, TimeSeriesAnnotation, TimeSeriesData } from '@/lib/db';
 import * as tauriDb from '@/lib/tauriDb';
 
 export const timeseriesService = {
@@ -12,12 +12,15 @@ export const timeseriesService = {
     return (record as unknown as TimeSeries) ?? undefined;
   },
 
-  async create(timeseries: Omit<TimeSeries, 'id'>): Promise<string> {
-    return await tauriDb.createTimeseries(
-      timeseries.projectId,
-      timeseries.name,
-      timeseries.data
-    );
+  async create(
+    projectId: string,
+    name: string,
+    data: TimeSeriesData,
+    annotations: TimeSeriesAnnotation[] = []
+  ): Promise<string> {
+    // El backend acepta anotaciones al crear; antes se descartaban aquí, así que
+    // importar una serie ya anotada era imposible.
+    return await tauriDb.createTimeseries(projectId, name, data, annotations);
   },
 
   async delete(projectId: string, id: string): Promise<void> {

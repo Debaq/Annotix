@@ -35,6 +35,22 @@
     "point": "点击图表以标记标注点",
     "range": "点击设置起点，然后再次点击设置终点",
     "event": "点击图表以标记事件",
-    "anomaly": "点击图表以标记异常"
+    "anomaly": "点击图表以标记异常",
+    "classification": "选择描述整条序列的类别"
+  },
+  "loadingData": "正在加载序列数据…",
+  "seriesClass": "序列类别",
+  "selectClass": "未分类",
+  "invalidCsv": "CSV 无效：{{error}}",
+  "report": {
+    "rows": "已导入 {{count}} 行",
+    "badTimestamp": "丢弃 {{count}} 行：时间戳无法解析",
+    "malformed": "丢弃 {{count}} 行：列数与表头不一致",
+    "missing": "{{count}} 个空值或非数值，已作为缺失值导入",
+    "format": {
+      "numeric": "数值时间",
+      "datetime": "日期已转换为毫秒",
+      "rowIndex": "没有时间列：使用行号"
+    }
   }
 }

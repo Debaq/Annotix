@@ -14,6 +14,10 @@ export const videoService = {
     return tauriDb.extractVideoFrames(projectId, videoId);
   },
 
+  async cancelExtraction(videoId: string): Promise<boolean> {
+    return tauriDb.cancelVideoExtraction(videoId);
+  },
+
   async get(projectId: string, videoId: string): Promise<Video | null> {
     return tauriDb.getVideo(projectId, videoId);
   },
@@ -31,8 +35,8 @@ export const videoService = {
   },
 
   // Track operations
-  async createTrack(projectId: string, videoId: string, trackUuid: string, classId: number, label?: string): Promise<string> {
-    return tauriDb.createTrack(projectId, videoId, trackUuid, classId, label);
+  async createTrack(projectId: string, videoId: string, classId: number, label?: string): Promise<string> {
+    return tauriDb.createTrack(projectId, videoId, classId, label);
   },
 
   async listTracks(projectId: string, videoId: string): Promise<VideoTrack[]> {
@@ -50,7 +54,7 @@ export const videoService = {
   async setKeyframe(
     projectId: string, trackId: string, videoId: string, frameIndex: number,
     bboxX: number, bboxY: number, bboxWidth: number, bboxHeight: number
-  ): Promise<string> {
+  ): Promise<void> {
     return tauriDb.setKeyframe(projectId, trackId, videoId, frameIndex, bboxX, bboxY, bboxWidth, bboxHeight);
   },
 

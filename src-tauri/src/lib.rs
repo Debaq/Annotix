@@ -309,6 +309,7 @@ pub fn run() {
             commands::video_commands::get_video_info,
             commands::video_commands::upload_video,
             commands::video_commands::extract_video_frames,
+            commands::video_commands::cancel_video_extraction,
             commands::video_commands::get_video,
             commands::video_commands::list_videos_by_project,
             commands::video_commands::list_frames_by_video,

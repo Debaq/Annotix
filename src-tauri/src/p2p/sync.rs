@@ -5,7 +5,10 @@ use bytes::Bytes;
 use tauri::{Emitter, Manager};
 use tokio::pin;
 
-use crate::store::project_file::{AnnotationEntry, ClassDef, ImageEntry, ProjectFile};
+use crate::store::project_file::{
+    AnnotationEntry, ClassDef, ImageEntry, ProjectFile, TimeSeriesEntry, TrackEntry,
+    TsAnnotationEntry, VideoEntry,
+};
 use crate::store::safe_path::sanitize_filename;
 
 use super::node::{IrohNode, P2pState};
@@ -148,6 +151,62 @@ pub async fn write_rules(
     Ok(())
 }
 
+/// Lee un blob con reintentos: la entrada del doc llega por gossip antes que su
+/// contenido, así que el primer intento suele fallar.
+async fn read_blob_with_retries(
+    blobs: &iroh_blobs::api::Store,
+    hash: iroh_blobs::Hash,
+    attempts: u32,
+) -> Option<Bytes> {
+    for attempt in 0..attempts {
+        if attempt > 0 {
+            tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+        }
+        if let Ok(content) = blobs.blobs().get_bytes(hash).await {
+            return Some(content);
+        }
+    }
+    None
+}
+
+fn now_ms() -> f64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as f64
+}
+
+/// Meta de imagen tal como viaja por el doc. `videoId`/`frameIndex` son lo que
+/// permite al peer reconstruir a qué video pertenece cada fotograma.
+fn image_meta_json(img: &ImageEntry) -> serde_json::Value {
+    serde_json::json!({
+        "id": img.id,
+        "name": img.name,
+        "file": img.file,
+        "width": img.width,
+        "height": img.height,
+        "status": img.status,
+        "videoId": img.video_id,
+        "frameIndex": img.frame_index,
+    })
+}
+
+/// Meta de video tal como viaja por el doc (sin tracks, que van en su propia clave).
+fn video_meta_json(video: &crate::store::project_file::VideoEntry) -> serde_json::Value {
+    serde_json::json!({
+        "id": video.id,
+        "name": video.name,
+        "file": video.file,
+        "fpsExtraction": video.fps_extraction,
+        "fpsOriginal": video.fps_original,
+        "totalFrames": video.total_frames,
+        "durationMs": video.duration_ms,
+        "width": video.width,
+        "height": video.height,
+        "status": video.status,
+    })
+}
+
 /// Escribe el proyecto completo al iroh-doc (usado por el host al crear sesión)
 pub async fn project_to_doc(
     p2p: &P2pState,
@@ -204,19 +263,68 @@ pub async fn project_to_doc(
             .map_err(|e| format!("Error escribiendo clase: {}", e))?;
     }
 
-    // images (skip video frames — only sync standalone images)
-    let standalone_images: Vec<_> = project.images.iter().filter(|i| i.video_id.is_none()).collect();
+    // videos: metadatos y tracks. Los fotogramas viajan como imágenes normales,
+    // con `videoId`/`frameIndex` en su meta, porque sin ellos un peer no puede
+    // anotar el video que la distribución de trabajo le asigna.
+    for video in &project.videos {
+        let key = format!("videos/{}/meta", video.id);
+        let val = serde_json::to_vec(&video_meta_json(video)).unwrap();
+        doc.set_bytes(author, key.into_bytes(), val)
+            .await
+            .map_err(|e| format!("Error escribiendo meta de video: {}", e))?;
+
+        let tracks_key = format!("videos/{}/tracks", video.id);
+        let tracks_json = serde_json::to_vec(&video.tracks).unwrap();
+        doc.set_bytes(author, tracks_key.into_bytes(), tracks_json)
+            .await
+            .map_err(|e| format!("Error escribiendo tracks: {}", e))?;
+    }
+
+    // series temporales: metadatos, datos y anotaciones
+    let timeseries_dir = images_dir
+        .parent()
+        .map(|p| p.join("timeseries"))
+        .unwrap_or_else(|| std::path::PathBuf::from("timeseries"));
+    for ts in &project.timeseries {
+        let meta_key = format!("timeseries/{}/meta", ts.id);
+        let meta_json = serde_json::json!({
+            "id": ts.id,
+            "name": ts.name,
+            "status": ts.status,
+        });
+        doc.set_bytes(author, meta_key.into_bytes(), serde_json::to_vec(&meta_json).unwrap())
+            .await
+            .map_err(|e| format!("Error escribiendo meta de serie: {}", e))?;
+
+        // Los datos viven en timeseries/{id}.json; el campo incrustado solo
+        // existe en proyectos que aún no se han migrado.
+        let data = match &ts.data {
+            Some(d) => d.clone(),
+            None => {
+                let path = timeseries_dir.join(format!("{}.json", ts.id));
+                std::fs::read(&path)
+                    .ok()
+                    .and_then(|b| serde_json::from_slice(&b).ok())
+                    .unwrap_or(serde_json::Value::Null)
+            }
+        };
+        let data_key = format!("timeseries/{}/data", ts.id);
+        doc.set_bytes(author, data_key.into_bytes(), serde_json::to_vec(&data).unwrap())
+            .await
+            .map_err(|e| format!("Error escribiendo datos de serie: {}", e))?;
+
+        let annots_key = format!("timeseries/{}/annots", ts.id);
+        doc.set_bytes(author, annots_key.into_bytes(), serde_json::to_vec(&ts.annotations).unwrap())
+            .await
+            .map_err(|e| format!("Error escribiendo anotaciones de serie: {}", e))?;
+    }
+
+    // images (incluye los fotogramas de video)
+    let standalone_images: Vec<_> = project.images.iter().collect();
     let total_images = standalone_images.len();
 
     for (idx, img) in standalone_images.iter().enumerate() {
-        let img_meta = serde_json::json!({
-            "id": img.id,
-            "name": img.name,
-            "file": img.file,
-            "width": img.width,
-            "height": img.height,
-            "status": img.status,
-        });
+        let img_meta = image_meta_json(img);
         let meta_key = format!("images/{}/meta", img.id);
         doc.set_bytes(author, meta_key.into_bytes(), serde_json::to_vec(&img_meta).unwrap())
             .await
@@ -346,6 +454,48 @@ pub async fn doc_to_project_metadata(
         }
     }
 
+    // Leer videos (meta + tracks)
+    let mut video_data: HashMap<String, HashMap<String, Vec<u8>>> = HashMap::new();
+    let video_entries = doc
+        .get_many(iroh_docs::store::Query::key_prefix(b"videos/"))
+        .await
+        .map_err(|e| format!("Error leyendo videos: {}", e))?;
+
+    pin!(video_entries);
+    while let Some(entry) = video_entries.next().await {
+        let entry = entry.map_err(|e| format!("Error en stream de videos: {}", e))?;
+        let key = String::from_utf8_lossy(entry.key()).to_string();
+        let parts: Vec<&str> = key.split('/').collect();
+        if parts.len() >= 3 && parts[0] == "videos" {
+            let content = read_entry_bytes(&entry, blobs).await?;
+            video_data
+                .entry(parts[1].to_string())
+                .or_default()
+                .insert(parts[2].to_string(), content.to_vec());
+        }
+    }
+
+    // Leer series temporales (meta + data + annots)
+    let mut ts_data: HashMap<String, HashMap<String, Vec<u8>>> = HashMap::new();
+    let ts_entries = doc
+        .get_many(iroh_docs::store::Query::key_prefix(b"timeseries/"))
+        .await
+        .map_err(|e| format!("Error leyendo series temporales: {}", e))?;
+
+    pin!(ts_entries);
+    while let Some(entry) = ts_entries.next().await {
+        let entry = entry.map_err(|e| format!("Error en stream de series: {}", e))?;
+        let key = String::from_utf8_lossy(entry.key()).to_string();
+        let parts: Vec<&str> = key.split('/').collect();
+        if parts.len() >= 3 && parts[0] == "timeseries" {
+            let content = read_entry_bytes(&entry, blobs).await?;
+            ts_data
+                .entry(parts[1].to_string())
+                .or_default()
+                .insert(parts[2].to_string(), content.to_vec());
+        }
+    }
+
     // Crear directorio de imágenes
     let project_id = uuid::Uuid::new_v4().to_string();
     let project_dir = target_dir.join(&project_id);
@@ -380,8 +530,8 @@ pub async fn doc_to_project_metadata(
                 annotated: if annots.is_empty() { None } else { Some(now) },
                 status: meta["status"].as_str().unwrap_or("pending").to_string(),
                 annotations: annots,
-                video_id: None,
-                frame_index: None,
+                video_id: meta["videoId"].as_str().map(|s| s.to_string()),
+                frame_index: meta["frameIndex"].as_i64(),
                 locked_by: None,
                 lock_expires: None,
                 download_status: Some("pending".to_string()),
@@ -391,6 +541,78 @@ pub async fn doc_to_project_metadata(
     }
 
     let total_images = images.len();
+
+    // Reconstruir videos. El archivo de video en sí no viaja (son cientos de MB
+    // y el peer anota sobre los fotogramas, no sobre el video): queda como
+    // referencia y el video se marca listo porque sus fotogramas ya están.
+    let mut videos: Vec<VideoEntry> = Vec::new();
+    for (video_id, fields) in &video_data {
+        let Some(meta_bytes) = fields.get("meta") else { continue };
+        let Ok(meta) = serde_json::from_slice::<serde_json::Value>(meta_bytes) else { continue };
+
+        let tracks: Vec<TrackEntry> = fields
+            .get("tracks")
+            .and_then(|b| serde_json::from_slice(b).ok())
+            .unwrap_or_default();
+
+        videos.push(VideoEntry {
+            id: video_id.clone(),
+            name: meta["name"].as_str().unwrap_or("").to_string(),
+            file: sanitize_filename(meta["file"].as_str().unwrap_or("")),
+            fps_extraction: meta["fpsExtraction"].as_f64().unwrap_or(5.0),
+            fps_original: meta["fpsOriginal"].as_f64(),
+            total_frames: meta["totalFrames"].as_i64().unwrap_or(0),
+            duration_ms: meta["durationMs"].as_i64().unwrap_or(0),
+            width: meta["width"].as_i64().unwrap_or(0),
+            height: meta["height"].as_i64().unwrap_or(0),
+            uploaded: now_ms(),
+            status: meta["status"].as_str().unwrap_or("ready").to_string(),
+            tracks,
+        });
+    }
+
+    // Reconstruir series temporales
+    let mut timeseries: Vec<TimeSeriesEntry> = Vec::new();
+    for (ts_id, fields) in &ts_data {
+        let Some(meta_bytes) = fields.get("meta") else { continue };
+        let Ok(meta) = serde_json::from_slice::<serde_json::Value>(meta_bytes) else { continue };
+
+        let data: serde_json::Value = fields
+            .get("data")
+            .and_then(|b| serde_json::from_slice(b).ok())
+            .unwrap_or(serde_json::Value::Null);
+
+        let annotations: Vec<TsAnnotationEntry> = fields
+            .get("annots")
+            .and_then(|b| serde_json::from_slice(b).ok())
+            .unwrap_or_default();
+
+        let annotated = if annotations.is_empty() { None } else { Some(now_ms()) };
+        let (point_count, series_count, columns) =
+            crate::store::timeseries::describe_data(&data);
+
+        // Los datos van a su propio archivo, igual que en un proyecto local.
+        let ts_dir = project_dir.join("timeseries");
+        if std::fs::create_dir_all(&ts_dir).is_ok() {
+            let path = ts_dir.join(format!("{}.json", ts_id));
+            if let Ok(bytes) = serde_json::to_vec(&data) {
+                let _ = std::fs::write(path, bytes);
+            }
+        }
+
+        timeseries.push(TimeSeriesEntry {
+            id: ts_id.clone(),
+            name: meta["name"].as_str().unwrap_or("").to_string(),
+            data: None,
+            point_count,
+            series_count,
+            columns,
+            annotations,
+            uploaded: now_ms(),
+            annotated,
+            status: meta["status"].as_str().unwrap_or("pending").to_string(),
+        });
+    }
 
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -415,8 +637,8 @@ pub async fn doc_to_project_metadata(
         created: now,
         updated: now,
         images,
-        timeseries: vec![],
-        videos: vec![],
+        timeseries,
+        videos,
         training_jobs: vec![],
         tabular_data: vec![],
         audio: vec![],
@@ -1010,6 +1232,121 @@ pub async fn sync_annotations_to_doc(
     Ok(())
 }
 
+/// Publica al doc los tracks de un video. Se manda la lista completa: un track
+/// es pequeño y así el estado del video converge sin resolver conflictos por
+/// keyframe.
+pub async fn sync_tracks_to_doc(
+    p2p: &P2pState,
+    project_id: &str,
+    video_id: &str,
+    tracks: &[TrackEntry],
+) -> Result<(), String> {
+    let node_guard = p2p.node.read().await;
+    let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+    let sessions = p2p.sessions.read().await;
+    let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
+
+    let doc = node
+        .docs
+        .open(session.namespace_id)
+        .await
+        .map_err(|e| format!("Error abriendo doc: {}", e))?
+        .ok_or("Documento no encontrado")?;
+
+    let key = format!("videos/{}/tracks", video_id);
+    let json = serde_json::to_vec(tracks)
+        .map_err(|e| format!("Error serializando tracks: {}", e))?;
+
+    doc.set_bytes(session.author_id, key.into_bytes(), json)
+        .await
+        .map_err(|e| format!("Error escribiendo tracks: {}", e))?;
+
+    Ok(())
+}
+
+/// Publica al doc las anotaciones de una serie temporal.
+pub async fn sync_ts_annotations_to_doc(
+    p2p: &P2pState,
+    project_id: &str,
+    ts_id: &str,
+    annotations: &[TsAnnotationEntry],
+) -> Result<(), String> {
+    let node_guard = p2p.node.read().await;
+    let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+    let sessions = p2p.sessions.read().await;
+    let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
+
+    let doc = node
+        .docs
+        .open(session.namespace_id)
+        .await
+        .map_err(|e| format!("Error abriendo doc: {}", e))?
+        .ok_or("Documento no encontrado")?;
+
+    let key = format!("timeseries/{}/annots", ts_id);
+    let json = serde_json::to_vec(annotations)
+        .map_err(|e| format!("Error serializando anotaciones de serie: {}", e))?;
+
+    doc.set_bytes(session.author_id, key.into_bytes(), json)
+        .await
+        .map_err(|e| format!("Error escribiendo anotaciones de serie: {}", e))?;
+
+    Ok(())
+}
+
+/// Publica al doc una serie temporal completa (meta + datos + anotaciones).
+pub async fn sync_new_timeseries_to_doc(
+    p2p: &P2pState,
+    project_id: &str,
+    ts: &TimeSeriesEntry,
+    data: &serde_json::Value,
+) -> Result<(), String> {
+    let node_guard = p2p.node.read().await;
+    let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
+    let sessions = p2p.sessions.read().await;
+    let session = sessions.get(project_id).ok_or("No hay sesión P2P activa para este proyecto")?;
+
+    let doc = node
+        .docs
+        .open(session.namespace_id)
+        .await
+        .map_err(|e| format!("Error abriendo doc: {}", e))?
+        .ok_or("Documento no encontrado")?;
+
+    let author = session.author_id;
+
+    let meta = serde_json::json!({
+        "id": ts.id,
+        "name": ts.name,
+        "status": ts.status,
+    });
+    doc.set_bytes(
+        author,
+        format!("timeseries/{}/meta", ts.id).into_bytes(),
+        serde_json::to_vec(&meta).unwrap(),
+    )
+    .await
+    .map_err(|e| format!("Error escribiendo meta de serie: {}", e))?;
+
+    doc.set_bytes(
+        author,
+        format!("timeseries/{}/data", ts.id).into_bytes(),
+        serde_json::to_vec(data).unwrap(),
+    )
+    .await
+    .map_err(|e| format!("Error escribiendo datos de serie: {}", e))?;
+
+    doc.set_bytes(
+        author,
+        format!("timeseries/{}/annots", ts.id).into_bytes(),
+        serde_json::to_vec(&ts.annotations).unwrap(),
+    )
+    .await
+    .map_err(|e| format!("Error escribiendo anotaciones de serie: {}", e))?;
+
+    Ok(())
+}
+
 /// Lee peers existentes del doc y emite eventos p2p:peer-joined para cada uno (excepto self)
 pub async fn emit_existing_peers(
     namespace_id: iroh_docs::NamespaceId,
@@ -1159,8 +1496,8 @@ pub fn start_doc_watcher(
                                     annotated: None,
                                     status: img_meta["status"].as_str().unwrap_or("pending").to_string(),
                                     annotations: vec![],
-                                    video_id: None,
-                                    frame_index: None,
+                                    video_id: img_meta["videoId"].as_str().map(|s| s.to_string()),
+                                    frame_index: img_meta["frameIndex"].as_i64(),
                                     locked_by: None,
                                     lock_expires: None,
                                     download_status: Some("pending".to_string()),
@@ -1181,6 +1518,177 @@ pub fn start_doc_watcher(
 
                                 // Descargar blob en background
                                 download_single_image(pid.clone(), image_id.clone(), file_name, ah.clone()).await;
+                            });
+                        }
+                    }
+                    else if key.starts_with("videos/") && key.ends_with("/tracks") {
+                        // Tracks de video modificados por un peer remoto. Se
+                        // reemplaza la lista completa: es lo que publica el otro
+                        // lado y evita fusionar keyframe a keyframe.
+                        let parts: Vec<&str> = key.split('/').collect();
+                        if parts.len() == 3 {
+                            let video_id = parts[1].to_string();
+                            let content_hash = entry.content_hash();
+                            let pid = project_id.clone();
+                            let ah = app_handle.clone();
+                            let bs = blobs_store.clone();
+                            tokio::spawn(async move {
+                                let blobs: &iroh_blobs::api::Store = &bs;
+                                let Some(content) = read_blob_with_retries(blobs, content_hash, 5).await
+                                else {
+                                    log::warn!("No se pudo leer tracks del video {}", video_id);
+                                    return;
+                                };
+                                let tracks: Vec<TrackEntry> = match serde_json::from_slice(&content) {
+                                    Ok(t) => t,
+                                    Err(e) => {
+                                        log::warn!("Tracks remotos ilegibles para {}: {}", video_id, e);
+                                        return;
+                                    }
+                                };
+                                let app_state = ah.state::<crate::store::state::AppState>();
+                                let vid = video_id.clone();
+                                let _ = app_state.with_project_mut(&pid, |pf| {
+                                    if let Some(v) = pf.videos.iter_mut().find(|v| v.id == vid) {
+                                        v.tracks = tracks;
+                                    }
+                                });
+                                let _ = ah.emit("db:tracks-changed", &video_id);
+                                log::info!("Tracks remotos aplicados al video {}", video_id);
+                            });
+                        }
+                    }
+                    else if key.starts_with("timeseries/") {
+                        // Serie temporal nueva o modificada por un peer remoto.
+                        let parts: Vec<&str> = key.split('/').collect();
+                        if parts.len() == 3 {
+                            let ts_id = parts[1].to_string();
+                            let field = parts[2].to_string();
+                            let content_hash = entry.content_hash();
+                            let pid = project_id.clone();
+                            let ah = app_handle.clone();
+                            let bs = blobs_store.clone();
+                            tokio::spawn(async move {
+                                let blobs: &iroh_blobs::api::Store = &bs;
+                                let Some(content) = read_blob_with_retries(blobs, content_hash, 5).await
+                                else {
+                                    log::warn!("No se pudo leer {} de la serie {}", field, ts_id);
+                                    return;
+                                };
+                                let app_state = ah.state::<crate::store::state::AppState>();
+                                let tsid = ts_id.clone();
+                                let mut pending_data: Option<serde_json::Value> = None;
+                                let applied = app_state.with_project_mut_ret(&pid, |pf| {
+                                    // Crear la serie si aún no existe localmente
+                                    if !pf.timeseries.iter().any(|t| t.id == tsid) {
+                                        if field != "meta" {
+                                            return false;
+                                        }
+                                        let Ok(meta) =
+                                            serde_json::from_slice::<serde_json::Value>(&content)
+                                        else {
+                                            return false;
+                                        };
+                                        pf.timeseries.push(TimeSeriesEntry {
+                                            id: tsid.clone(),
+                                            name: meta["name"].as_str().unwrap_or("").to_string(),
+                                            data: None,
+                                            point_count: 0,
+                                            series_count: 1,
+                                            columns: None,
+                                            annotations: vec![],
+                                            uploaded: now_ms(),
+                                            annotated: None,
+                                            status: meta["status"]
+                                                .as_str()
+                                                .unwrap_or("pending")
+                                                .to_string(),
+                                        });
+                                        return true;
+                                    }
+
+                                    let Some(ts) = pf.timeseries.iter_mut().find(|t| t.id == tsid)
+                                    else {
+                                        return false;
+                                    };
+
+                                    match field.as_str() {
+                                        "meta" => {
+                                            if let Ok(meta) =
+                                                serde_json::from_slice::<serde_json::Value>(&content)
+                                            {
+                                                if let Some(name) = meta["name"].as_str() {
+                                                    ts.name = name.to_string();
+                                                }
+                                                if let Some(status) = meta["status"].as_str() {
+                                                    ts.status = status.to_string();
+                                                }
+                                                return true;
+                                            }
+                                            false
+                                        }
+                                        "data" => {
+                                            // Los datos no entran en project.json:
+                                            // se escriben aparte y aquí solo queda
+                                            // el resumen para poder listarlos.
+                                            if let Ok(data) =
+                                                serde_json::from_slice::<serde_json::Value>(&content)
+                                            {
+                                                let (points, count, cols) =
+                                                    crate::store::timeseries::describe_data(&data);
+                                                ts.point_count = points;
+                                                ts.series_count = count;
+                                                ts.columns = cols;
+                                                pending_data = Some(data);
+                                                return true;
+                                            }
+                                            false
+                                        }
+                                        "annots" => {
+                                            if let Ok(annots) =
+                                                serde_json::from_slice::<Vec<TsAnnotationEntry>>(
+                                                    &content,
+                                                )
+                                            {
+                                                ts.annotated = if annots.is_empty() {
+                                                    None
+                                                } else {
+                                                    Some(now_ms())
+                                                };
+                                                ts.status = if annots.is_empty() {
+                                                    "pending".to_string()
+                                                } else {
+                                                    "annotated".to_string()
+                                                };
+                                                ts.annotations = annots;
+                                                return true;
+                                            }
+                                            false
+                                        }
+                                        _ => false,
+                                    }
+                                })
+                                .unwrap_or(false);
+
+                                if let Some(data) = pending_data {
+                                    if let Err(e) =
+                                        app_state.write_timeseries_data(&pid, &ts_id, &data)
+                                    {
+                                        log::warn!(
+                                            "Error escribiendo datos remotos de la serie {}: {}",
+                                            ts_id,
+                                            e
+                                        );
+                                    }
+                                }
+
+                                if applied {
+                                    let _ = ah.emit("db:timeseries-changed", serde_json::json!({
+                                        "projectId": &pid,
+                                        "action": "updated",
+                                        "timeseriesIds": [&ts_id],
+                                    }));
+                                }
                             });
                         }
                     }

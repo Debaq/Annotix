@@ -801,7 +801,12 @@ pub fn prepare_dataset_for_backend(
         TrainingBackend::Tsai | TrainingBackend::PytorchForecasting
         | TrainingBackend::Pyod | TrainingBackend::Tslearn
         | TrainingBackend::Pypots | TrainingBackend::Stumpy => {
-            prepare_timeseries_dataset(project, output_dir, val_split)
+            // El directorio del proyecto es el padre de images/: es donde
+            // viven timeseries/{id}.json.
+            let project_dir = images_dir
+                .parent()
+                .ok_or("No se pudo determinar el directorio del proyecto")?;
+            prepare_timeseries_dataset(project, project_dir, output_dir, val_split)
         }
         TrainingBackend::Sklearn => {
             prepare_tabular_dataset(project, output_dir)
@@ -1199,6 +1204,7 @@ pub fn prepare_multilabel_dataset(
 
 pub fn prepare_timeseries_dataset(
     project: &ProjectFile,
+    project_dir: &Path,
     output_dir: &Path,
     val_split: f64,
 ) -> Result<String, String> {
@@ -1209,62 +1215,30 @@ pub fn prepare_timeseries_dataset(
 
     std::fs::create_dir_all(output_dir).map_err(|e| format!("Error: {}", e))?;
 
-    // Export each time series to CSV from its `data` JSON field
     let mut all_files = Vec::new();
-    for ts in series {
-        let csv_name = format!("{}.csv", ts.id);
-        let csv_path = output_dir.join(&csv_name);
+    let mut exported = 0usize;
 
-        // `data` can be:
-        // - { "columns": ["col1","col2"], "rows": [[v1,v2],[v3,v4]] }
-        // - or an array of objects [{"timestamp":..., "value":...}, ...]
-        let csv_content = if let Some(columns) = ts.data.get("columns").and_then(|v| v.as_array()) {
-            let col_names: Vec<&str> = columns.iter().filter_map(|c| c.as_str()).collect();
-            let rows = ts.data.get("rows").and_then(|v| v.as_array());
-            let mut lines = vec![col_names.join(",")];
-            if let Some(rows) = rows {
-                for row in rows {
-                    if let Some(arr) = row.as_array() {
-                        let vals: Vec<String> = arr.iter().map(|v| {
-                            if let Some(f) = v.as_f64() { f.to_string() }
-                            else if let Some(s) = v.as_str() { s.to_string() }
-                            else { String::new() }
-                        }).collect();
-                        lines.push(vals.join(","));
-                    }
-                }
+    for ts in series {
+        // Los datos viven en timeseries/{id}.json desde la versión 3 del
+        // formato; en proyectos anteriores todavía pueden venir incrustados.
+        let data = match read_series_data(project_dir, ts) {
+            Some(d) => d,
+            None => {
+                log::warn!("Serie {} sin datos legibles, se omite del dataset", ts.id);
+                continue;
             }
-            lines.join("\n")
-        } else if let Some(arr) = ts.data.as_array() {
-            // Array of objects
-            if let Some(first) = arr.first().and_then(|v| v.as_object()) {
-                let keys: Vec<&String> = first.keys().collect();
-                let header = keys.iter().map(|k| k.as_str()).collect::<Vec<_>>().join(",");
-                let mut lines = vec![header];
-                for item in arr {
-                    if let Some(obj) = item.as_object() {
-                        let vals: Vec<String> = keys.iter().map(|k| {
-                            obj.get(*k).map(|v| {
-                                if let Some(f) = v.as_f64() { f.to_string() }
-                                else if let Some(s) = v.as_str() { s.to_string() }
-                                else { v.to_string() }
-                            }).unwrap_or_default()
-                        }).collect();
-                        lines.push(vals.join(","));
-                    }
-                }
-                lines.join("\n")
-            } else {
-                // Fallback: dump raw JSON
-                serde_json::to_string(&ts.data).unwrap_or_default()
-            }
-        } else {
-            serde_json::to_string(&ts.data).unwrap_or_default()
         };
 
-        std::fs::write(&csv_path, &csv_content)
+        let csv_content = series_to_csv(&data, ts)?;
+        let csv_name = format!("{}.csv", ts.id);
+        std::fs::write(output_dir.join(&csv_name), &csv_content)
             .map_err(|e| format!("Error escribiendo {}: {}", csv_name, e))?;
         all_files.push(csv_name);
+        exported += 1;
+    }
+
+    if exported == 0 {
+        return Err("Ninguna serie temporal del proyecto tiene datos legibles".to_string());
     }
 
     // Write metadata.json
@@ -1278,7 +1252,7 @@ pub fn prepare_timeseries_dataset(
     let metadata = serde_json::json!({
         "files": all_files,
         "val_split": val_split,
-        "num_series": series.len(),
+        "num_series": exported,
         "classes": project.classes.iter().map(|c| &c.name).collect::<Vec<_>>(),
         "annotations": annotations,
     });
@@ -1286,4 +1260,115 @@ pub fn prepare_timeseries_dataset(
         .map_err(|e| format!("Error escribiendo metadata.json: {}", e))?;
 
     Ok(output_dir.to_string_lossy().replace('\\', "/"))
+}
+
+/// Lee los datos de una serie: del archivo propio, o del campo incrustado si el
+/// proyecto es anterior a la migración.
+fn read_series_data(
+    project_dir: &Path,
+    ts: &crate::store::project_file::TimeSeriesEntry,
+) -> Option<serde_json::Value> {
+    if let Some(data) = &ts.data {
+        return Some(data.clone());
+    }
+    let path = project_dir.join("timeseries").join(format!("{}.json", ts.id));
+    let content = std::fs::read(path).ok()?;
+    serde_json::from_slice(&content).ok()
+}
+
+/// Convierte una serie al CSV que consumen los backends de series temporales.
+///
+/// El formato de entrada es el que produce el importador:
+/// `{ timestamps: [...], values: [...] | [[...], ...], columns: [...] }`.
+/// La versión anterior esperaba `{columns, rows}` o un array de objetos —dos
+/// formas que el programa nunca genera—, así que el CSV salía vacío para
+/// cualquier serie real.
+fn series_to_csv(
+    data: &serde_json::Value,
+    ts: &crate::store::project_file::TimeSeriesEntry,
+) -> Result<String, String> {
+    let timestamps = data
+        .get("timestamps")
+        .and_then(|t| t.as_array())
+        .ok_or_else(|| format!("La serie {} no tiene marcas de tiempo", ts.id))?;
+
+    let values = data.get("values").and_then(|v| v.as_array());
+
+    // Univariante: values = [v, v, ...]; multivariante: values = [[...], [...]]
+    let multivariate = values
+        .and_then(|v| v.first())
+        .map(|f| f.is_array())
+        .unwrap_or(false);
+
+    let column_names: Vec<String> = match data.get("columns").and_then(|c| c.as_array()) {
+        Some(cols) => cols
+            .iter()
+            .map(|c| c.as_str().unwrap_or("value").to_string())
+            .collect(),
+        None if multivariate => (0..values.map(|v| v.len()).unwrap_or(0))
+            .map(|i| format!("value_{}", i + 1))
+            .collect(),
+        None => vec!["value".to_string()],
+    };
+
+    let mut header = vec!["timestamp".to_string()];
+    header.extend(column_names.iter().cloned());
+    header.push("label".to_string());
+    let mut lines = vec![header.join(",")];
+
+    // Etiqueta por punto a partir de las anotaciones de la serie: los puntos y
+    // eventos marcan su propia marca de tiempo, los rangos todo su intervalo.
+    let label_at = |timestamp: f64| -> String {
+        for ann in &ts.annotations {
+            let hit = match ann.annotation_type.as_str() {
+                "range" => {
+                    let start = ann.data.get("startTimestamp").and_then(|v| v.as_f64());
+                    let end = ann.data.get("endTimestamp").and_then(|v| v.as_f64());
+                    matches!((start, end), (Some(s), Some(e)) if timestamp >= s.min(e) && timestamp <= s.max(e))
+                }
+                "classification" => true,
+                _ => ann
+                    .data
+                    .get("timestamp")
+                    .and_then(|v| v.as_f64())
+                    .map(|t| (t - timestamp).abs() < f64::EPSILON)
+                    .unwrap_or(false),
+            };
+            if hit {
+                return ann
+                    .class_id
+                    .map(|c| c.to_string())
+                    .unwrap_or_else(|| ann.annotation_type.clone());
+            }
+        }
+        String::new()
+    };
+
+    let cell = |v: Option<&serde_json::Value>| -> String {
+        match v.and_then(|v| v.as_f64()) {
+            Some(f) => f.to_string(),
+            // null = hueco declarado por el importador; se deja vacío para que
+            // pandas lo lea como NaN en vez de como un cero real.
+            None => String::new(),
+        }
+    };
+
+    for (i, ts_value) in timestamps.iter().enumerate() {
+        let timestamp = ts_value.as_f64().unwrap_or(i as f64);
+        let mut row = vec![timestamp.to_string()];
+
+        if multivariate {
+            let series_arrays = values.unwrap();
+            for serie in series_arrays {
+                row.push(cell(serie.as_array().and_then(|a| a.get(i))));
+            }
+        } else {
+            row.push(cell(values.and_then(|a| a.get(i))));
+        }
+
+        row.push(label_at(timestamp));
+        lines.push(row.join(","));
+    }
+
+    Ok(lines.join("\n"))
 }

@@ -298,6 +298,7 @@ impl AppState {
                                 confidence: Some(pred.confidence),
                                 model_class_name: Some(pred.class_name.clone()),
                                 created_by: None,
+                                track_id: None,
                             };
                             img.annotations.push(annotation);
                             converted += 1;

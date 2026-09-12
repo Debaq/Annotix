@@ -318,7 +318,11 @@
     "csvAudioClassification": "오디오 분류 CSV",
     "csvAudioClassificationDesc": "오디오 분류를 위한 file_name 및 label 열이 포함된 CSV",
     "csvSoundEvents": "사운드 이벤트 CSV",
-    "csvSoundEventsDesc": "사운드 이벤트 감지를 위한 file_name, start_ms, end_ms, label 열이 포함된 CSV"
+    "csvSoundEventsDesc": "사운드 이벤트 감지를 위한 file_name, start_ms, end_ms, label 열이 포함된 CSV",
+    "timeseriesCsv": "시계열 CSV",
+    "timeseriesCsvDesc": "시계열마다 CSV 한 개(포인트별 레이블 열 포함)와 annotations.csv, classes.csv",
+    "timeseriesJson": "시계열 JSON",
+    "timeseriesJsonDesc": "시계열마다 JSON 한 개. 데이터와 주석을 함께 저장"
   },
   "notAvailable": "이 프로젝트 유형에는 내보내기를 사용할 수 없습니다",
   "preparing": "내보내기 준비 중...",

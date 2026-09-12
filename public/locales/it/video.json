@@ -26,5 +26,11 @@
   "bake": "Applica tracce ai fotogrammi",
   "bakeDesc": "Scrive le interpolazioni delle tracce come annotazioni su ogni fotogramma",
   "baking": "Applicazione...",
-  "bakeDone": "Tracce applicate"
+  "bakeDone": "Tracce applicate",
+  "bakeError": "Consolidamento non riuscito",
+  "cancelExtraction": "Annulla l'estrazione",
+  "cancelling": "Annullamento…",
+  "extractionCancelled": "Estrazione annullata ({{count}} fotogrammi estratti)",
+  "resumeExtraction": "Riprendi l'estrazione",
+  "extractionFailed": "L'estrazione è fallita. Fai clic per riprovare."
 }

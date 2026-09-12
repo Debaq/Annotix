@@ -35,6 +35,22 @@
     "point": "グラフをクリックしてアノテーションポイントをマーク",
     "range": "クリックして開始点を設定し、再度クリックして終了点を設定",
     "event": "グラフをクリックしてイベントをマーク",
-    "anomaly": "グラフをクリックして異常をマーク"
+    "anomaly": "グラフをクリックして異常をマーク",
+    "classification": "系列全体を表すクラスを選択します"
+  },
+  "loadingData": "系列データを読み込み中…",
+  "seriesClass": "系列のクラス",
+  "selectClass": "未分類",
+  "invalidCsv": "不正な CSV: {{error}}",
+  "report": {
+    "rows": "{{count}} 行を取り込みました",
+    "badTimestamp": "{{count}} 行を破棄: タイムスタンプを解釈できません",
+    "malformed": "{{count}} 行を破棄: 列数がヘッダーと一致しません",
+    "missing": "空または非数値の値 {{count}} 件を欠損として取り込みました",
+    "format": {
+      "numeric": "数値の時間",
+      "datetime": "日付をミリ秒に変換",
+      "rowIndex": "時間列なし: 行番号を使用"
+    }
   }
 }

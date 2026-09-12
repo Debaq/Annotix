@@ -23,7 +23,9 @@ original del video. Keyframes, interpolación y consolidación trabajan en ese e
 
 Las cajas de keyframe se guardan en **porcentaje 0–100** del ancho y alto de la imagen. El puente
 al lienzo las convierte a píxeles al mostrarlas y de vuelta a porcentaje al guardarlas
-(`useVideoAnnotationBridge.ts:57-77`).
+(`useVideoAnnotationBridge.ts:57-77`). La consolidación las convierte a píxeles con
+`pct_bbox_to_px` (`store/videos.rs`), porque una `AnnotationEntry` de tipo `bbox` está en píxeles
+en todo el resto del programa.
 
 `KeyframeEntry` no tiene identificador propio: la clave es `frame_index` dentro del track, y es
 también el criterio de borrado.
@@ -76,16 +78,17 @@ t = (frame - prev.frame) / (next.frame - prev.frame)
 x = prev.x + (next.x - prev.x) · t        (ídem y, width, height)
 ```
 
-Hay dos implementaciones:
+Hay dos implementaciones, con el mismo criterio:
 
-- **Frontend** (`interpolation.ts:76-95`) — con un solo vecino sostiene el valor del keyframe más
-  cercano, extendiéndolo hacia atrás antes del primero y hacia delante después del último. El
-  estado habilitado resultante es `prev.enabled && next.enabled`.
-- **Backend** (`video_commands.rs:742`) — requiere vecino a ambos lados; sin uno de ellos devuelve
-  `None`. Si cualquiera de los dos extremos está deshabilitado devuelve `(0, 0, 0, 0, false)`.
+- **Frontend** (`interpolation.ts`) — requiere vecino a ambos lados. El estado habilitado
+  resultante es `prev.enabled && next.enabled`.
+- **Backend** (`store/videos.rs`, `interpolate_bbox`) — requiere vecino a ambos lados; sin uno de
+  ellos devuelve `None`. Si cualquiera de los dos extremos está deshabilitado devuelve
+  `(0, 0, 0, 0, false)`, que la consolidación descarta.
 
-Efecto de la diferencia: los fotogramas anteriores al primer keyframe y posteriores al último se
-muestran anotados en el editor y no producen anotación al consolidar.
+Ninguna de las dos extrapola: fuera del intervalo `[primer keyframe, último keyframe]` de un track
+no hay caja, ni en el editor ni en el dataset. El contador del botón de consolidar sigue el mismo
+criterio y cuenta solo fotogramas que existen, no un rango de enteros.
 
 ## Consolidación (bake)
 
@@ -95,15 +98,19 @@ muestran anotados en el editor y no producen anotación al consolidar.
    con al menos un keyframe.
 2. En un solo `with_project_mut` recorre las imágenes del proyecto, filtra las del video, e
    interpola cada track en el `frame_index` de cada una.
-3. Cada caja resultante pasa a `AnnotationEntry` de tipo `bbox`, con `source: "user"` e
+3. Convierte la caja de porcentaje a píxeles con el tamaño del fotograma y la pasa a
+   `AnnotationEntry` de tipo `bbox`, con `source: "track"`, `trackId` del track de origen e
    identificador nuevo.
-4. Reemplaza `img.annotations` por completo y marca el fotograma como `annotated`. Los fotogramas
-   donde ningún track produce caja se saltan y conservan lo que tuvieran.
+4. Quita del fotograma solo las anotaciones que tienen `trackId` —lo que puso un bake anterior— y
+   añade las nuevas. Lo anotado a mano o por inferencia sobre el mismo fotograma se conserva.
+   Si un track desapareció y el fotograma se queda sin ninguna anotación, vuelve a `pending`.
 5. Emite `db:images-changed`. Devuelve el número de fotogramas consolidados.
 
-Nota de implementación: el reemplazo es total, con el comentario explícito de que los fotogramas
-de video solo llevan anotaciones de consolidación. Una anotación hecha a mano sobre un fotograma
-se pierde en el siguiente bake.
+`source: "track"` distingue lo interpolado de lo anotado por una persona, que es lo que permite
+medir qué fracción de un dataset es sintética.
+
+Los proyectos creados antes de la versión 3 del formato pasan por
+`io::migrate_project`, que reescala a píxeles las cajas que un bake antiguo dejó en porcentaje.
 
 ## Flujo de trabajo del usuario
 

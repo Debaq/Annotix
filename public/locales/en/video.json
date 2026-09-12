@@ -26,5 +26,11 @@
   "bake": "Apply tracks to frames",
   "bakeDesc": "Writes track interpolations as annotations on each frame",
   "baking": "Applying...",
-  "bakeDone": "Tracks applied"
+  "bakeDone": "Tracks applied",
+  "bakeError": "Bake failed",
+  "cancelExtraction": "Cancel extraction",
+  "cancelling": "Cancelling…",
+  "extractionCancelled": "Extraction cancelled ({{count}} frames extracted)",
+  "resumeExtraction": "Resume extraction",
+  "extractionFailed": "Extraction failed. Click to retry."
 }

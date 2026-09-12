@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::SystemTime;
@@ -27,6 +27,11 @@ pub struct AppState {
     pub(crate) cache: Mutex<HashMap<String, CachedProject>>,
     /// Cache de summaries para list_projects (clave: ruta absoluta del project.json)
     pub(crate) summary_cache: Mutex<HashMap<PathBuf, CachedSummary>>,
+    /// Extracciones de fotogramas en curso, por `video_id`. La entrada existe
+    /// mientras el hilo de extracción corre; se marca para cancelar quitándola
+    /// de `extracting_videos` y añadiéndola a `cancelled_extractions`.
+    extracting_videos: Mutex<HashSet<String>>,
+    cancelled_extractions: Mutex<HashSet<String>>,
 }
 
 impl AppState {
@@ -47,6 +52,8 @@ impl AppState {
             data_dir,
             cache: Mutex::new(HashMap::new()),
             summary_cache: Mutex::new(HashMap::new()),
+            extracting_videos: Mutex::new(HashSet::new()),
+            cancelled_extractions: Mutex::new(HashSet::new()),
         })
     }
 
@@ -61,6 +68,55 @@ impl AppState {
     pub fn project_dir(&self, project_id: &str) -> Result<PathBuf, String> {
         let projects_dir = self.projects_dir()?;
         Ok(projects_dir.join(project_id))
+    }
+
+    // ─── Extracciones en curso ──────────────────────────────────────────────
+
+    /// Reserva la extracción de un video. Devuelve `false` si ya hay una en
+    /// curso, que es lo que evita que el resume automático del arranque y una
+    /// pulsación del usuario escriban los mismos fotogramas dos veces.
+    pub fn begin_extraction(&self, video_id: &str) -> Result<bool, String> {
+        let mut extracting = self.extracting_videos.lock().map_err(|e| e.to_string())?;
+        if extracting.contains(video_id) {
+            return Ok(false);
+        }
+        extracting.insert(video_id.to_string());
+        self.cancelled_extractions
+            .lock()
+            .map_err(|e| e.to_string())?
+            .remove(video_id);
+        Ok(true)
+    }
+
+    /// Libera la reserva al terminar (con éxito, con error o cancelada).
+    pub fn end_extraction(&self, video_id: &str) {
+        if let Ok(mut extracting) = self.extracting_videos.lock() {
+            extracting.remove(video_id);
+        }
+        if let Ok(mut cancelled) = self.cancelled_extractions.lock() {
+            cancelled.remove(video_id);
+        }
+    }
+
+    /// Pide la cancelación de una extracción en curso.
+    pub fn cancel_extraction(&self, video_id: &str) -> Result<bool, String> {
+        let extracting = self.extracting_videos.lock().map_err(|e| e.to_string())?;
+        if !extracting.contains(video_id) {
+            return Ok(false);
+        }
+        self.cancelled_extractions
+            .lock()
+            .map_err(|e| e.to_string())?
+            .insert(video_id.to_string());
+        Ok(true)
+    }
+
+    /// ¿Se pidió cancelar esta extracción?
+    pub fn is_extraction_cancelled(&self, video_id: &str) -> bool {
+        self.cancelled_extractions
+            .lock()
+            .map(|c| c.contains(video_id))
+            .unwrap_or(false)
     }
 
     // ─── Cache helpers ──────────────────────────────────────────────────────

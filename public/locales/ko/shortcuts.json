@@ -202,6 +202,9 @@
     "ttsSkip": {
       "name": "문장 건너뛰기",
       "description": "다음 문장으로 건너뛰기"
+    },
+    "tsToolClassification": {
+      "name": "시계열 분류 도구"
     }
   }
 }

@@ -202,6 +202,9 @@
     "ttsSkip": {
       "name": "跳过句子",
       "description": "跳到下一个句子"
+    },
+    "tsToolClassification": {
+      "name": "序列分类工具"
     }
   }
 }

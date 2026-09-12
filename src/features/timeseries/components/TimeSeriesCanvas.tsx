@@ -1,6 +1,6 @@
 // src/features/timeseries/components/TimeSeriesCanvas.tsx
 
-import { useRef, useEffect } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Chart as ChartJS,
@@ -68,9 +68,45 @@ export function TimeSeriesCanvas() {
     selectAnnotation,
     deleteAnnotation,
     clearAnnotations,
+    setSeriesClassification,
+    seriesClassification,
   } = useTSAnnotations({
     timeseriesId: timeseries?.id || null,
   });
+
+  const data = timeseries?.data ?? null;
+
+  // Marca de tiempo → índice del punto. Antes cada anotación resolvía su
+  // posición con `timestamps.indexOf(...)` en cada render: O(n) por anotación,
+  // y además descartaba en silencio cualquier anotación cuya marca no
+  // coincidiera exactamente con un punto de la serie.
+  const indexByTimestamp = useMemo(() => {
+    const map = new Map<number, number>();
+    if (!data) return map;
+    data.timestamps.forEach((ts, i) => {
+      if (!map.has(ts)) map.set(ts, i);
+    });
+    return map;
+  }, [data]);
+
+  // Índice del punto más cercano, para anotaciones que no caen justo sobre uno
+  // (importadas, editadas a mano, o de un CSV que cambió).
+  const indexOfTimestamp = (timestamp: number): number | null => {
+    if (!data || data.timestamps.length === 0) return null;
+    const exact = indexByTimestamp.get(timestamp);
+    if (exact !== undefined) return exact;
+
+    let best = 0;
+    let bestDist = Infinity;
+    data.timestamps.forEach((ts, i) => {
+      const dist = Math.abs(ts - timestamp);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = i;
+      }
+    });
+    return best;
+  };
 
   // Keyboard shortcuts (must be before early return)
   useEffect(() => {
@@ -91,6 +127,8 @@ export function TimeSeriesCanvas() {
         setActiveTool('event');
       } else if (matchesShortcut(e, 'ts-tool-anomaly')) {
         setActiveTool('anomaly');
+      } else if (matchesShortcut(e, 'ts-tool-classification')) {
+        setActiveTool('classification');
       }
     };
 
@@ -114,7 +152,19 @@ export function TimeSeriesCanvas() {
     );
   }
 
-  const { data } = timeseries;
+  // Los datos se cargan aparte del metadato de la serie (viven en su propio
+  // archivo), así que pueden no estar todavía.
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center text-muted-foreground">
+          <i className="fas fa-spinner fa-spin mr-2"></i>
+          {t('timeseries.loadingData')}
+        </div>
+      </div>
+    );
+  }
+
   const isMultivariate = Array.isArray(data.values[0]);
 
   // Prepare chart data
@@ -148,14 +198,21 @@ export function TimeSeriesCanvas() {
     const chartAnnotations: any = {};
 
     [...annotations, ...(tempAnnotation ? [tempAnnotation] : [])].forEach((ann, idx) => {
-      const classColor = ann.classId
-        ? project.classes.find((c) => c.id === ann.classId)?.color || '#666'
-        : '#666';
+      // La clasificación es de la serie entera: se muestra en la barra de
+      // herramientas, no como marca sobre un punto.
+      if (ann.type === 'classification') return;
+      // `ann.classId` puede ser 0: los ids de clase son la posición en la
+      // lista, así que la primera clase tiene id 0 y una comprobación de
+      // veracidad la pintaba del gris por defecto.
+      const classColor =
+        ann.classId != null
+          ? project.classes.find((c) => c.id === ann.classId)?.color || '#666'
+          : '#666';
 
       if (ann.type === 'point') {
         const pointData = ann.data as PointAnnotation;
-        const timestampIndex = data.timestamps.indexOf(pointData.timestamp);
-        if (timestampIndex !== -1) {
+        const timestampIndex = indexOfTimestamp(pointData.timestamp);
+        if (timestampIndex !== null) {
           chartAnnotations[`point-${ann.id || idx}`] = {
             type: 'point',
             xValue: timestampIndex,
@@ -168,9 +225,9 @@ export function TimeSeriesCanvas() {
         }
       } else if (ann.type === 'range') {
         const rangeData = ann.data as RangeAnnotation;
-        const startIndex = data.timestamps.indexOf(rangeData.startTimestamp);
-        const endIndex = data.timestamps.indexOf(rangeData.endTimestamp);
-        if (startIndex !== -1 && endIndex !== -1) {
+        const startIndex = indexOfTimestamp(rangeData.startTimestamp);
+        const endIndex = indexOfTimestamp(rangeData.endTimestamp);
+        if (startIndex !== null && endIndex !== null) {
           chartAnnotations[`range-${ann.id || idx}`] = {
             type: 'box',
             xMin: startIndex,
@@ -182,8 +239,8 @@ export function TimeSeriesCanvas() {
         }
       } else if (ann.type === 'event') {
         const eventData = ann.data as EventAnnotation;
-        const timestampIndex = data.timestamps.indexOf(eventData.timestamp);
-        if (timestampIndex !== -1) {
+        const timestampIndex = indexOfTimestamp(eventData.timestamp);
+        if (timestampIndex !== null) {
           chartAnnotations[`event-${ann.id || idx}`] = {
             type: 'line',
             xMin: timestampIndex,
@@ -200,12 +257,18 @@ export function TimeSeriesCanvas() {
         }
       } else if (ann.type === 'anomaly') {
         const anomalyData = ann.data as AnomalyAnnotation;
-        const timestampIndex = data.timestamps.indexOf(anomalyData.timestamp);
-        if (timestampIndex !== -1) {
+        const timestampIndex = indexOfTimestamp(anomalyData.timestamp);
+        if (timestampIndex !== null) {
+          // El marcador va sobre el valor de la serie en ese instante. Fijarlo
+          // en y=0 lo dejaba fuera de pantalla en cualquier serie que no pase
+          // por cero (temperaturas, precios, presiones).
+          const seriesValue = isMultivariate
+            ? (data.values as (number | null)[][])[0]?.[timestampIndex]
+            : (data.values as (number | null)[])[timestampIndex];
           chartAnnotations[`anomaly-${ann.id || idx}`] = {
             type: 'point',
             xValue: timestampIndex,
-            yValue: 0,
+            yValue: anomalyData.value ?? seriesValue ?? 0,
             backgroundColor: 'rgba(255, 0, 0, 0.8)',
             borderColor: 'red',
             borderWidth: 2,
@@ -330,6 +393,10 @@ export function TimeSeriesCanvas() {
         onToolChange={setActiveTool}
         onClearAnnotations={clearAnnotations}
         annotationCount={annotations.length}
+        projectType={project.type}
+        classes={project.classes}
+        seriesClassId={(seriesClassification?.data as { classId?: number } | undefined)?.classId ?? null}
+        onSetSeriesClass={setSeriesClassification}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -369,6 +436,7 @@ export function TimeSeriesCanvas() {
                 {activeTool === 'range' && t('timeseries.instructions.range')}
                 {activeTool === 'event' && t('timeseries.instructions.event')}
                 {activeTool === 'anomaly' && t('timeseries.instructions.anomaly')}
+                {activeTool === 'classification' && t('timeseries.instructions.classification')}
               </p>
             </Card>
           )}

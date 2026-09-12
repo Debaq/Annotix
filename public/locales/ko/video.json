@@ -26,5 +26,11 @@
   "bake": "트랙을 프레임에 적용",
   "bakeDesc": "트랙 보간을 각 프레임에 주석으로 기록합니다",
   "baking": "적용 중...",
-  "bakeDone": "트랙 적용 완료"
+  "bakeDone": "트랙 적용 완료",
+  "bakeError": "합성 실패",
+  "cancelExtraction": "프레임 추출 취소",
+  "cancelling": "취소 중…",
+  "extractionCancelled": "추출을 취소했습니다({{count}} 프레임 추출됨)",
+  "resumeExtraction": "추출 재개",
+  "extractionFailed": "추출에 실패했습니다. 클릭하여 다시 시도하세요."
 }
