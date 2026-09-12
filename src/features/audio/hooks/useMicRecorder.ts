@@ -89,14 +89,18 @@ export function useMicRecorder(onError?: (msg: string) => void): MicRecorder {
     } catch { /* ignore */ }
   }, [selectedDeviceId]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount. `state.audioUrl` se lee por ref: capturado en el
+  // closure era siempre el valor del primer render (null), así que la URL de la
+  // grabación nunca se revocaba.
+  const audioUrlRef = useRef(state.audioUrl);
+  audioUrlRef.current = state.audioUrl;
   useEffect(() => {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (durationTimerRef.current) clearInterval(durationTimerRef.current);
       if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
       if (audioContextRef.current) audioContextRef.current.close();
-      if (state.audioUrl) URL.revokeObjectURL(state.audioUrl);
+      if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
     };
   }, []);
 

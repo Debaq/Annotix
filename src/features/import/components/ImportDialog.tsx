@@ -64,14 +64,14 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
     [projects]
   );
 
-  const suggestUniqueName = (base: string): string => {
+  const suggestUniqueName = useCallback((base: string): string => {
     if (!existingNames.has(base.toLowerCase())) return base;
     for (let i = 2; i < 1000; i++) {
       const candidate = `${base}_${i}`;
       if (!existingNames.has(candidate.toLowerCase())) return candidate;
     }
     return `${base}_${Date.now()}`;
-  };
+  }, [existingNames]);
 
   const nameExists = projectName.trim() !== '' && existingNames.has(projectName.trim().toLowerCase());
 
@@ -120,7 +120,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
       );
       setStep('select');
     }
-  }, [t, existingNames]);
+  }, [t, suggestUniqueName]);
 
   const { isDragging: isDraggingImport } = useTauriPathDrop({
     active: open && step === 'select',

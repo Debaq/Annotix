@@ -10,11 +10,7 @@ export const ShortcutsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
 
   // Atajo para abrir el modal (? o /)
-  useShortcut(
-    'help',
-    () => setShowShortcutsModal(true),
-    [setShowShortcutsModal]
-  );
+  useShortcut('help', () => setShowShortcutsModal(true));
 
   // Escuchar la tecla ? para abrir el modal
   useEffect(() => {

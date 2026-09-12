@@ -22,13 +22,14 @@ export function WorkDistributionPanel() {
   const isHost = session ? canManage(session.role) : false;
 
   // Cargar stats cuando hay distribución
+  const hasDistribution = distribution !== null;
   useEffect(() => {
-    if (distribution && projectId) {
+    if (hasDistribution && projectId) {
       p2pService.getWorkStats(projectId).then(setStats).catch(() => {});
     } else {
       setStats([]);
     }
-  }, [distribution?.version, projectId]);
+  }, [hasDistribution, distribution?.version, projectId]);
 
   const handleDistribute = async () => {
     if (!projectId) return;

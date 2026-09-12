@@ -6,26 +6,10 @@ import type { P2pSessionInfo, ImageLockInfo, PeerInfo, BatchInfo, SyncProgress, 
 import { p2pService } from '../services/p2pService';
 
 export function useP2pSession() {
-  const {
-    setSession,
-    setImageLock,
-    removeImageLock,
-    addPeer,
-    removePeer,
-    addBatch,
-    setSyncProgress,
-    updateSessionStatus,
-    updateRules,
-    setDownloadProgress,
-    clearDownloadProgress,
-    setDistribution,
-    addPendingApproval,
-    removePendingApproval,
-    setHostStopped,
-  } = useP2pStore();
-
   // Listeners globales
   useEffect(() => {
+    const { setSession, setDistribution, setDownloadProgress, clearDownloadProgress } =
+      useP2pStore.getState();
     const unlisteners: (() => void)[] = [];
 
     // Consultar proactivamente si ya hay sesiones activas
@@ -72,6 +56,20 @@ export function useP2pSession() {
 
   // Session-dependent listeners - ahora son globales (los eventos incluyen projectId)
   useEffect(() => {
+    const {
+      setImageLock,
+      removeImageLock,
+      addPeer,
+      removePeer,
+      addBatch,
+      setSyncProgress,
+      updateSessionStatus,
+      updateRules,
+      setDistribution,
+      addPendingApproval,
+      removePendingApproval,
+      setHostStopped,
+    } = useP2pStore.getState();
     const unlisteners: (() => void)[] = [];
 
     const setup = async () => {

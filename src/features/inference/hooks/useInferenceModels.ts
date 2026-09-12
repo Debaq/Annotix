@@ -53,7 +53,7 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
 
   useEffect(() => {
     refreshModels();
-  }, [projectId]);
+  }, [refreshModels]);
 
   // Si selectedId cambió globalmente (upload en otra instancia) y no está
   // en la lista local, refrescar.
@@ -191,7 +191,7 @@ export function useInferenceModels(projectId: string | null): UseInferenceModels
     } finally {
       setLoading(false);
     }
-  }, [projectId, refreshModels]);
+  }, [projectId, refreshModels, setSelectedModelId]);
 
   const deleteModel = useCallback(async (modelId: string) => {
     if (!projectId) return;

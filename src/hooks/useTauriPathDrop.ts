@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getCurrentWebview } from '@tauri-apps/api/webview';
 
 interface Options {
@@ -18,6 +18,13 @@ function getExt(p: string): string {
 export function useTauriPathDrop({ active, extensions, onDrop }: Options): DropState {
   const [isDragging, setIsDragging] = useState(false);
 
+  // `extensions` suele llegar como literal nuevo en cada render. La clave
+  // estable decide cuándo re-suscribir el listener; la lista en sí se lee por
+  // ref para tener siempre la última sin re-suscribir de más.
+  const extensionsKey = extensions.join('|');
+  const extensionsRef = useRef(extensions);
+  extensionsRef.current = extensions;
+
   useEffect(() => {
     if (!active) {
       setIsDragging(false);
@@ -27,7 +34,7 @@ export function useTauriPathDrop({ active, extensions, onDrop }: Options): DropS
     let unlisten: (() => void) | null = null;
     let cancelled = false;
 
-    const accepts = (p: string) => extensions.includes(getExt(p));
+    const accepts = (p: string) => extensionsRef.current.includes(getExt(p));
 
     getCurrentWebview()
       .onDragDropEvent((event) => {
@@ -52,7 +59,7 @@ export function useTauriPathDrop({ active, extensions, onDrop }: Options): DropS
       unlisten?.();
       setIsDragging(false);
     };
-  }, [active, extensions.join('|'), onDrop]);
+  }, [active, extensionsKey, onDrop]);
 
   return { isDragging };
 }

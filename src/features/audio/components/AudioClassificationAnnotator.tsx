@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play, Pause, Save, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Audio, ClassDefinition } from '@/lib/db';
@@ -41,16 +41,22 @@ export function AudioClassificationAnnotator({
 }: Props) {
   const { t } = useTranslation('audio');
   const player = useAudioPlayer({ projectId, audioId: audio.id });
+  const { togglePlay } = player;
   const keyPlayPause = useShortcutKey('audio-play-pause');
   const keySave = useShortcutKey('save');
 
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Load from audio entry
+  // Load from audio entry: solo al cambiar de audio, no en cada refresco del
+  // store, que pisaría la clase que el usuario acaba de elegir.
+  const loadedAudioIdRef = useRef<string | null>(null);
   useEffect(() => {
+    const id = audio.id ?? null;
+    if (loadedAudioIdRef.current === id) return;
+    loadedAudioIdRef.current = id;
     setSelectedClassId(audio.classId ?? null);
-  }, [audio.id]);
+  }, [audio]);
 
   const handleSave = useCallback(async () => {
     if (!audio.id) return;
@@ -89,7 +95,7 @@ export function AudioClassificationAnnotator({
 
       if (matchesShortcut(e, 'audio-play-pause')) {
         e.preventDefault();
-        player.togglePlay();
+        togglePlay();
       }
       if (matchesShortcut(e, 'save')) {
         e.preventDefault();
@@ -105,7 +111,7 @@ export function AudioClassificationAnnotator({
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [player.togglePlay, handleSave, handleClassSelect, classes]);
+  }, [togglePlay, handleSave, handleClassSelect, classes]);
 
   const formatTime = (sec: number) => {
     const m = Math.floor(sec / 60);

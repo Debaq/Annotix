@@ -4,6 +4,9 @@ import { useVideoNavigation } from '../hooks/useVideoNavigation';
 import { VideoTrack } from '@/lib/db';
 import { cn } from '@/lib/utils';
 
+const SPEEDS = [1, 2, 4, 8] as const;
+const BASE_INTERVAL = 200; // ms (~5 fps a 1x)
+
 interface VideoTimelineProps {
   tracks: VideoTrack[];
   classes: { id: number; color: string }[];
@@ -27,9 +30,6 @@ export function VideoTimeline({ tracks, classes }: VideoTimelineProps) {
   const [isDragging, setIsDragging] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
   const playIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const SPEEDS = [1, 2, 4, 8] as const;
-  const BASE_INTERVAL = 200; // ms (~5 fps a 1x)
 
   // Play/Pause
   const togglePlay = useCallback(() => {

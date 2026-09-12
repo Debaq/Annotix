@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Audio } from '@/lib/db';
 import { useUIStore } from '../../core/store/uiStore';
 import { audioService } from '../services/audioService';
@@ -8,7 +8,7 @@ export function useCurrentAudio() {
   const [audio, setAudio] = useState<Audio | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!currentAudioId || !currentProjectId) {
       setAudio(null);
       return;
@@ -24,11 +24,11 @@ export function useCurrentAudio() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentAudioId, currentProjectId]);
 
   useEffect(() => {
     load();
-  }, [currentAudioId, currentProjectId]);
+  }, [load]);
 
   return {
     audio,

@@ -81,10 +81,14 @@ export function useAudioPlayer({ projectId, audioId }: UseAudioPlayerOptions): U
     };
   }, [projectId, audioId]);
 
-  // Cleanup blob URL on unmount
+  // Cleanup blob URL on unmount. Se lee por ref: con `blobUrl` capturado en el
+  // closure, el cleanup revocaba el valor del primer render (cadena vacía) y
+  // dejaba viva la URL real.
+  const blobUrlRef = useRef(blobUrl);
+  blobUrlRef.current = blobUrl;
   useEffect(() => {
     return () => {
-      if (blobUrl) URL.revokeObjectURL(blobUrl);
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
     };
   }, []);
 

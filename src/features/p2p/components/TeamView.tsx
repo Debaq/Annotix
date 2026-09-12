@@ -18,8 +18,9 @@ export function TeamView() {
   const { setWorkStats } = useP2pStore();
 
   // Refresh stats periodically
+  const hasSession = session !== null;
   useEffect(() => {
-    if (!session || !projectId) return;
+    if (!hasSession || !projectId) return;
 
     const loadStats = () => {
       p2pService.getWorkStats(projectId).then(stats => setWorkStats(projectId, stats)).catch(() => {});
@@ -28,7 +29,7 @@ export function TeamView() {
     loadStats();
     const interval = setInterval(loadStats, 10000);
     return () => clearInterval(interval);
-  }, [session?.sessionId, projectId]);
+  }, [hasSession, session?.sessionId, projectId, setWorkStats]);
 
   if (!session) {
     return (

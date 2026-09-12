@@ -21,13 +21,14 @@ export function PendingApprovalsPanel() {
   const requireApproval = session?.rules.requireDataApproval;
 
   // Load pending approvals on mount
+  const hasSession = session !== null;
   useEffect(() => {
-    if (session && requireApproval && projectId) {
+    if (hasSession && requireApproval && projectId) {
       p2pService.listPendingApprovals(projectId)
         .then((approvals) => setPendingApprovals(projectId, approvals.filter(a => a.status === 'pending')))
         .catch(() => {});
     }
-  }, [session?.sessionId, requireApproval, projectId]);
+  }, [hasSession, session?.sessionId, requireApproval, projectId, setPendingApprovals]);
 
   if (!session || !requireApproval || !projectId) return null;
 

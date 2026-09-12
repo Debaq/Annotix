@@ -52,7 +52,7 @@ export function VideoCard({ video }: VideoCardProps) {
             .then((path) => setThumbnailUrl(convertFileSrc(path)));
         });
     });
-  }, [projectId, video.id, video.status, video.totalFrames]);
+  }, [projectId, video.id, video.status, video.totalFrames, canOpen]);
 
   // Contar frames únicos con keyframes (marcados)
   const markedFrames = useMemo(() => {

@@ -1,22 +1,21 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { shortcutsManager } from '@/features/core/utils/ShortcutsManager';
 
 /**
  * Hook para registrar handlers de atajos de teclado
  * @param shortcutId - ID del atajo
- * @param handler - Función a ejecutar cuando se presione el atajo
- * @param dependencies - Dependencias para el efecto
+ * @param handler - Función a ejecutar cuando se presione el atajo. Se lee por
+ *   ref, así que siempre corre la última versión sin re-registrar el handler.
  */
-export const useShortcut = (
-  shortcutId: string,
-  handler: () => void,
-  dependencies: unknown[] = []
-): void => {
+export const useShortcut = (shortcutId: string, handler: () => void): void => {
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
+
   useEffect(() => {
     shortcutsManager.registerHandler(shortcutId, () => {
-      handler();
+      handlerRef.current();
     });
-  }, [shortcutId, handler, ...dependencies]);
+  }, [shortcutId]);
 };
 
 /**

@@ -1,8 +1,8 @@
 # Warnings pendientes de lint
 
 Estado tras la pasada de limpieza (commits `0c92c09`, `6c0c1bd`, `8c2fb94`)
-y del saneo de `exhaustive-deps` (canvas y anotadores de audio), el tipado de
-Konva y los structs de request en Rust.
+y del saneo completo de `exhaustive-deps`, el tipado de Konva y los structs de
+request en Rust.
 
 | Verificador | Errores | Warnings | Nota |
 |---|---|---|---|
@@ -10,7 +10,7 @@ Konva y los structs de request en Rust.
 | `cargo check --all-targets` | 0 | — | limpio |
 | `cargo fmt --check` | 0 | — | limpio |
 | `cargo test --lib` | 0 | — | 114 passed |
-| `eslint` | 0 | **56** | techo `--max-warnings 130` |
+| `eslint` | 0 | **29** | techo `--max-warnings 65` |
 | `cargo clippy --all-targets` | 0 | **22** | todos `too_many_arguments` |
 
 ---
@@ -95,29 +95,26 @@ requieren mirar el flujo completo antes de tocar la firma.
 
 | Regla | Count | Severidad |
 |---|---|---|
-| `@typescript-eslint/no-explicit-any` | 68 | Baja — tipado laxo en límites de I/O y eventos |
-| `react-hooks/exhaustive-deps` | 27 | **Media-alta** — riesgo real de stale closures |
+| `@typescript-eslint/no-explicit-any` | 29 | Baja — tipado laxo en límites de I/O |
+| `react-hooks/exhaustive-deps` | 0 | — cerrado |
 
 Ver `docs/roadmap-lint-cleanup.md` para el plan por fases; este documento
 solo refleja el conteo actual.
 
 ### Hotspots
 
-| Archivo | Total | de los cuales `exhaustive-deps` |
-|---|---|---|
-| `src/features/inference/components/InferencePanel.tsx` | 4 | 1 |
-| `src/utils/translationUtils.ts` | 4 | 0 |
-| `src/features/training/components/TrainingPanel.tsx` | 3 | 3 |
-| `src/features/sam/components/SamOverlay.tsx` | 3 | 0 |
-| `src/features/projects/components/ProjectCard.tsx` | 3 | 0 |
-| `src/features/inference/components/ModelUploader.tsx` | 3 | 0 |
+| Archivo | `no-explicit-any` |
+|---|---|
+| `src/utils/translationUtils.ts` | 4 |
+| `src/features/inference/components/InferencePanel.tsx` | 3 |
+| `src/features/sam/components/SamOverlay.tsx` | 3 |
+| `src/features/projects/components/ProjectCard.tsx` | 3 |
+| `src/features/inference/components/ModelUploader.tsx` | 3 |
 
-Ya no hay ningún archivo con más de 4. Los 27 `exhaustive-deps` que quedan
-están repartidos en 20 archivos, casi todos con 1 o 2; el único con 3 es
-`TrainingPanel.tsx`. Los 29 `no-explicit-any` restantes son casi todos
-accesos a campos no declarados en un tipo (`(project as any).xxx`,
-`(model.metadata as any).yyy`), que se arreglan ampliando el tipo, no
-casteando.
+Ya no hay ningún archivo con más de 4 warnings. Los 29 `no-explicit-any`
+restantes son casi todos accesos a campos no declarados en un tipo
+(`(project as any).xxx`, `(model.metadata as any).yyy`): se arreglan
+ampliando el tipo, no casteando.
 
 ### `AnnotationCanvas.tsx` — hecho
 
@@ -181,13 +178,40 @@ De paso se corrigió el guard "no auto-guardar al cargar" de
 cuando el load hace una copia — nunca era cierto, así que guardaba una vez de
 más en cada cambio de audio. Ahora es un flag explícito.
 
+### El resto de `exhaustive-deps` — hecho
+
+Los 27 que quedaban repartidos en 20 archivos están cerrados. Patrones nuevos
+respecto a los anteriores:
+
+- **Constantes declaradas dentro del componente** (`SPEEDS` en `VideoTimeline`,
+  `YOLO_COMMON_KEY_MAP` / `YOLO_BACKEND_PARAM_KEYS` en `TrainingPanel`). No
+  dependen del render: se suben a scope de módulo.
+- **Cleanups de desmontaje con valor stale.** `useAudioPlayer` y
+  `useMicRecorder` revocaban en `useEffect(..., [])` una blob URL leída del
+  closure, es decir la del primer render (cadena vacía / `null`): la URL viva
+  no se revocaba nunca. Ahora se leen por ref.
+- **`load` / `refresh` sin memoizar** (`useAudio`, `useCurrentAudio`,
+  `usePredictions`, `useInferenceModels`). Envolver en `useCallback` con las
+  deps que ya tenía el efecto y depender de la función.
+- **Objeto usado solo como guard de existencia** (`session`, `distribution` en
+  los paneles P2P). Depender del objeto entero re-dispara con cualquier campo;
+  se deriva un booleano (`hasSession`) y el efecto depende de ese más el id.
+- **`useP2pStore()` sin selector** en `useP2pSession`: suscribía al store
+  completo, así que el hook re-renderizaba con cada peer, lock o progreso de
+  descarga. Las acciones se leen con `getState()` dentro de cada efecto, como
+  ya hacía el tercer efecto del mismo archivo.
+- **Array de dependencias variádico.** `useShortcut(id, handler, deps[])`
+  hacía `[shortcutId, handler, ...dependencies]`, que ESLint no puede
+  verificar. El parámetro se elimina y el handler se toma por ref.
+- **`activeJobId` faltante en `TrainingPanel`.** Los dos `handleStart*` usan
+  `if (activeJobId) return` como guard contra arrancar un segundo
+  entrenamiento; sin la dependencia el guard leía un valor stale.
+
 ### Prioridad sugerida
 
-1. **`exhaustive-deps` en `TrainingPanel.tsx` (3)**, `AudioClassificationAnnotator.tsx` (2),
-   `useAnnotations.ts` (2), `useInferenceModels.ts` (2), `useP2pSession.ts` (2),
-   `useTauriPathDrop.ts` (2); el resto son sueltos.
-2. **`no-explicit-any` (68)** — mecánico, sin riesgo. Empezar por
-   `translationUtils.ts` y los handlers/renderers de canvas, que son tipos
-   internos y no límites de I/O.
+1. **`no-explicit-any` (29)** — ampliar los tipos donde hoy hay
+   `(project as any).inferenceModelCount`, `(model.metadata as any)`, etc.
+   `translationUtils.ts` (4) es el único bloque grande que queda.
 
-El techo de `--max-warnings` se puede bajar ya de 130 a 65.
+Con `exhaustive-deps` en 0, el techo está en `--max-warnings 65`; cerrando
+`no-explicit-any` puede bajar a 0.

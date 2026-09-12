@@ -1,4 +1,4 @@
-import { ReactNode, useState, useCallback } from 'react';
+import { ReactNode, useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -57,11 +57,15 @@ export function InferencePanel({ trigger, project }: InferencePanelProps) {
     ((selectedModel?.metadata as { preprocess?: PreprocessConfig } | null)?.preprocess) ??
     DEFAULT_PREPROCESS;
 
-  const projectClasses = (project?.classes || []) as Array<{
-    id: number;
-    name: string;
-    color: string;
-  }>;
+  const projectClasses = useMemo(
+    () =>
+      (project?.classes || []) as Array<{
+        id: number;
+        name: string;
+        color: string;
+      }>,
+    [project?.classes],
+  );
 
   const handleSyncClasses = useCallback(async () => {
     if (!projectId || !selectedModel) return;
@@ -104,7 +108,7 @@ export function InferencePanel({ trigger, project }: InferencePanelProps) {
       projectClassId: String(index),
     }));
     await updateMapping(selectedModel.id, newMapping);
-  }, [projectId, selectedModel, projectClasses, project, updateMapping]);
+  }, [projectId, selectedModel, projectClasses, project, updateMapping, t]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

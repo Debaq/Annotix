@@ -118,8 +118,13 @@ export function useAnnotations() {
   } = useAnnotationStore();
 
   const imageFingerprint = fingerprint(image?.annotations);
-  const undoStore = useUndoStore();
   const prevImageIdRef = useRef<string | null>(null);
+
+  // `image` se lee por ref: quién dispara este efecto son `image?.id` y el
+  // fingerprint de las anotaciones, no la identidad del objeto, que cambia en
+  // cada refresco del store y volvería a pisar los cambios optimistas.
+  const imageRef = useRef(image);
+  imageRef.current = image;
 
   // Sync image → store.
   // Se bloquea durante saves locales para que no sobrescriba cambios optimistas.
@@ -129,21 +134,22 @@ export function useAnnotations() {
     // de la imagen anterior — los saves se hacen contra el id capturado, no
     // sobrescriben la nueva). Sin esto, el canvas queda mostrando annotations
     // viejas al cambiar rápido entre imágenes.
-    const imageChanged = prevImageIdRef.current !== (image?.id ?? null);
+    const img = imageRef.current;
+    const imageChanged = prevImageIdRef.current !== (img?.id ?? null);
     if (!imageChanged && pendingSaves > 0) return;
-    if (image) {
-      setAnnotations(image.annotations || []);
+    if (img) {
+      setAnnotations(img.annotations || []);
       if (imageChanged) {
-        prevImageIdRef.current = image.id ?? null;
+        prevImageIdRef.current = img.id ?? null;
         setSelectedAnnotationIds(new Set());
-        undoStore.reset(image.id ?? null);
+        useUndoStore.getState().reset(img.id ?? null);
       }
     } else {
       setAnnotations([]);
       setSelectedAnnotationIds(new Set());
       if (prevImageIdRef.current !== null) {
         prevImageIdRef.current = null;
-        undoStore.reset(null);
+        useUndoStore.getState().reset(null);
       }
     }
   }, [image?.id, imageFingerprint, setAnnotations, setSelectedAnnotationIds]);
@@ -176,7 +182,7 @@ export function useAnnotations() {
     } finally {
       pendingSaves--;
     }
-  }, [image?.id, currentProjectId, toast, t]);
+  }, [image?.id, image?.videoId, currentProjectId, toast, t]);
 
   // ─── Debounce para saves durante drag de bbox ──────────────────────────────
   // Cada movimiento de mouse podría disparar un invoke; agrupamos a 300ms.

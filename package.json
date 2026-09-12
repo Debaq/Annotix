@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --report-unused-disable-directives --max-warnings 130",
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 65",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"

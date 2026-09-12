@@ -39,7 +39,7 @@ export function usePredictions(
 
   useEffect(() => {
     refresh();
-  }, [projectId, imageId]);
+  }, [refresh]);
 
   const accept = useCallback(async (predictionId: string) => {
     if (!projectId || !imageId) return;

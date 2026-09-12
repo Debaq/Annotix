@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Annotation, ClassificationData } from '@/lib/db';
 import { useCurrentImage } from '../../gallery/hooks/useCurrentImage';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
@@ -80,15 +80,19 @@ export function useClassification() {
     }
   };
 
-  // Auto-save on custom event
+  // Auto-save on custom event. El guardado se toma por ref para registrar el
+  // listener una sola vez y aun así usar siempre las etiquetas actuales.
+  const saveClassificationRef = useRef(saveClassification);
+  saveClassificationRef.current = saveClassification;
+
   useEffect(() => {
     const handleSave = () => {
-      saveClassification();
+      saveClassificationRef.current();
     };
 
     window.addEventListener('annotix:save', handleSave);
     return () => window.removeEventListener('annotix:save', handleSave);
-  }, [image, selectedLabels]);
+  }, []);
 
   return {
     selectedLabels,

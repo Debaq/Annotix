@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Audio } from '@/lib/db';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { audioService } from '../services/audioService';
@@ -8,7 +8,7 @@ export function useAudio() {
   const [audioList, setAudioList] = useState<Audio[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!project?.id) {
       setAudioList([]);
       return;
@@ -23,11 +23,11 @@ export function useAudio() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [project?.id]);
 
   useEffect(() => {
     load();
-  }, [project?.id]);
+  }, [load]);
 
   const deleteAudioItem = async (id: string) => {
     if (!project?.id) return;

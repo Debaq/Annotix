@@ -43,6 +43,26 @@ interface TrainingPanelProps {
   defaultOpen?: boolean;
 }
 
+// YOLO advanced UI escribe en yoloConfig (legacy). El request real se arma
+// desde commonParams + backendParams, así que espejamos los cambios para que
+// el entrenamiento use los valores que ve el usuario.
+const YOLO_COMMON_KEY_MAP: Record<string, string> = {
+  epochs: 'epochs',
+  batchSize: 'batchSize',
+  imgsz: 'imageSize',
+  patience: 'patience',
+  lr0: 'lr',
+  valSplit: 'valSplit',
+  testSplit: 'testSplit',
+  workers: 'workers',
+  amp: 'amp',
+};
+const YOLO_BACKEND_PARAM_KEYS = new Set([
+  'optimizer','lrf','cos_lr','warmup_epochs','warmup_momentum','warmup_bias_lr',
+  'momentum','weight_decay','nbs','box','cls','dfl','close_mosaic','max_det',
+  'multi_scale','rect','cache','single_cls','pretrained','freeze',
+]);
+
 export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelProps) {
   const { t } = useTranslation();
   const { project } = useCurrentProject();
@@ -214,7 +234,7 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
       showStartError(e, 'training.startFailed');
       setPhase('config');
     }
-  }, [project, backend, buildRequest, showStartError]);
+  }, [project, activeJobId, backend, buildRequest, showStartError]);
 
   // Python env setup completed → resume training start
   const handleEnvReady = useCallback((gpu: GpuInfo | null) => {
@@ -244,7 +264,7 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
       showStartError(e, 'training.startFailed');
       setPhase('config');
     }
-  }, [project, cloudProvider, cloudConfig, buildRequest, showStartError]);
+  }, [project, activeJobId, cloudProvider, cloudConfig, buildRequest, showStartError]);
 
   const handleStartBrowserAutomation = useCallback(async () => {
     if (!project?.id) return;
@@ -340,26 +360,6 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
     setBackend(jobBackend);
     setPhase('config');
   }, [setBaseModelPath, setBackend]);
-
-  // YOLO advanced UI escribe en yoloConfig (legacy). El request real se arma
-  // desde commonParams + backendParams, así que espejamos los cambios para que
-  // el entrenamiento use los valores que ve el usuario.
-  const YOLO_COMMON_KEY_MAP: Record<string, string> = {
-    epochs: 'epochs',
-    batchSize: 'batchSize',
-    imgsz: 'imageSize',
-    patience: 'patience',
-    lr0: 'lr',
-    valSplit: 'valSplit',
-    testSplit: 'testSplit',
-    workers: 'workers',
-    amp: 'amp',
-  };
-  const YOLO_BACKEND_PARAM_KEYS = new Set([
-    'optimizer','lrf','cos_lr','warmup_epochs','warmup_momentum','warmup_bias_lr',
-    'momentum','weight_decay','nbs','box','cls','dfl','close_mosaic','max_det',
-    'multi_scale','rect','cache','single_cls','pretrained','freeze',
-  ]);
 
   const syncYoloPartial = useCallback((partial: Partial<TrainingConfig>) => {
     for (const [k, v] of Object.entries(partial)) {
