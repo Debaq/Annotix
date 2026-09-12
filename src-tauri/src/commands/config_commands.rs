@@ -1,5 +1,5 @@
 use serde::Serialize;
-use tauri::State;
+use tauri::{Emitter, State};
 
 use crate::store::AppState;
 
@@ -110,9 +110,35 @@ pub fn set_projects_dir(state: State<AppState>, path: String) -> Result<(), Stri
     let mut config = state.config.lock().map_err(|e| e.to_string())?;
     config.projects_dir = Some(dir);
     config.save(&state.data_dir)?;
+    drop(config);
+    // Los caches apuntan a rutas de la carpeta anterior.
+    state.clear_caches();
 
     log::info!("Directorio de proyectos configurado: {}", path);
     Ok(())
+}
+
+/// Escanea una carpeta candidata a carpeta de trabajo buscando proyectos
+/// recuperables (instalación nueva sobre datos viejos, carpetas copiadas,
+/// escrituras interrumpidas). No modifica nada.
+#[tauri::command]
+pub fn scan_workspace(path: String) -> Result<crate::store::recovery::ScanReport, String> {
+    crate::store::recovery::scan_workspace(std::path::Path::new(&path))
+}
+
+/// Repara las carpetas indicadas para que vuelvan a listarse como proyectos.
+#[tauri::command]
+pub fn restore_workspace(
+    app: tauri::AppHandle,
+    state: State<AppState>,
+    path: String,
+    projects: Vec<String>,
+) -> Result<crate::store::recovery::RestoreReport, String> {
+    let report = state.restore_workspace(std::path::Path::new(&path), &projects)?;
+    if report.restored > 0 {
+        let _ = app.emit("db:projects-changed", ());
+    }
+    Ok(report)
 }
 
 #[tauri::command]

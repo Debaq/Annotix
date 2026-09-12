@@ -326,6 +326,8 @@ pub fn run() {
             commands::config_commands::is_setup_complete,
             commands::config_commands::get_config,
             commands::config_commands::set_projects_dir,
+            commands::config_commands::scan_workspace,
+            commands::config_commands::restore_workspace,
             commands::config_commands::save_network_config,
             commands::config_commands::check_for_updates,
             // Training

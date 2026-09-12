@@ -5,5 +5,26 @@
   "selectedFolder": "選択されたフォルダ",
   "confirm": "開始",
   "noFolder": "フォルダが選択されていません",
-  "changeFolder": "フォルダを変更"
+  "changeFolder": "フォルダを変更",
+  "pathSpacesWarning": "パスにスペースが含まれています。一部の学習ツールが失敗する場合があります。スペースのないパスを推奨します。",
+  "restore": {
+    "title": "見つかったプロジェクト",
+    "description": "このフォルダには既に Annotix のプロジェクトがあります。復元するものを選択してください。",
+    "scanning": "フォルダをスキャン中…",
+    "skip": "スキップ",
+    "restore": "選択したものを復元",
+    "images": "{{count}} 枚の画像",
+    "videos": "{{count}} 本の動画",
+    "willMove": "ルートに移動されます",
+    "alreadyOk": "{{count}} 件のプロジェクトは問題なく、変更は不要です。",
+    "done": "{{count}} 件のプロジェクトを復元しました",
+    "rebuiltNote": "一部のプロジェクトはファイルから再構築されました。画像は戻りますが、アノテーションは復元できませんでした。",
+    "status": {
+      "ok": "準備完了",
+      "idMismatch": "ID が不一致",
+      "recoverable": "書き込み中断、復元可能",
+      "corrupt": "project.json を読めません",
+      "orphan": "project.json なし、再構築されます"
+    }
+  }
 }

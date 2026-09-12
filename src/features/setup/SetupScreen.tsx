@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import { Button } from '@/components/ui/button';
+import { WorkspaceRestoreDialog } from './WorkspaceRestoreDialog';
 
 interface SetupScreenProps {
   onComplete: () => void;
@@ -13,6 +14,7 @@ export function SetupScreen({ onComplete }: SetupScreenProps) {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [pathWarning, setPathWarning] = useState(false);
+  const [scanPath, setScanPath] = useState<string | null>(null);
 
   const handleSelectFolder = async () => {
     const result = await open({
@@ -22,14 +24,10 @@ export function SetupScreen({ onComplete }: SetupScreenProps) {
     });
 
     if (result && typeof result === 'string') {
-      if (result.includes(' ')) {
-        // Ruta con espacios — avisar y sugerir alternativa
-        setPathWarning(true);
-        setSelectedPath(result.replace(/ /g, '_'));
-      } else {
-        setPathWarning(false);
-        setSelectedPath(result);
-      }
+      // Avisar si la ruta tiene espacios, pero respetarla: cambiarla apuntaría
+      // a otra carpeta y dejaría fuera los proyectos que ya existen ahí.
+      setPathWarning(result.includes(' '));
+      setSelectedPath(result);
     }
   };
 
@@ -38,7 +36,9 @@ export function SetupScreen({ onComplete }: SetupScreenProps) {
     setLoading(true);
     try {
       await invoke('set_projects_dir', { path: selectedPath });
-      onComplete();
+      // Si la carpeta ya tenía proyectos de una instalación anterior, el
+      // diálogo de restauración los ofrece antes de entrar.
+      setScanPath(selectedPath);
     } catch (err) {
       console.error('Error setting projects dir:', err);
     } finally {
@@ -47,6 +47,14 @@ export function SetupScreen({ onComplete }: SetupScreenProps) {
   };
 
   return (
+    <>
+    <WorkspaceRestoreDialog
+      path={scanPath}
+      onClose={() => {
+        setScanPath(null);
+        onComplete();
+      }}
+    />
     <div className="flex h-full items-center justify-center bg-[var(--annotix-light)] transition-colors">
       <div className="w-full max-w-lg rounded-xl border border-[var(--annotix-border)] bg-[var(--annotix-white)] p-8 shadow-lg transition-colors">
         <div className="text-center mb-8">
@@ -73,7 +81,7 @@ export function SetupScreen({ onComplete }: SetupScreenProps) {
               {pathWarning && (
                 <p className="mt-2 text-xs text-amber-600">
                   <i className="fas fa-exclamation-triangle mr-1" />
-                  {t('setup.pathSpacesWarning', 'La ruta tenía espacios, se reemplazaron por guiones bajos para evitar problemas.')}
+                  {t('setup.pathSpacesWarning', 'La ruta contiene espacios: algunas herramientas de entrenamiento pueden fallar. Se recomienda una ruta sin espacios.')}
                 </p>
               )}
               <button
@@ -111,5 +119,6 @@ export function SetupScreen({ onComplete }: SetupScreenProps) {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -5,5 +5,26 @@
   "selectedFolder": "Pasta selecionada",
   "confirm": "Começar",
   "noFolder": "Nenhuma pasta selecionada",
-  "changeFolder": "Mudar Pasta"
+  "changeFolder": "Mudar Pasta",
+  "pathSpacesWarning": "O caminho contém espaços: algumas ferramentas de treino podem falhar. Recomenda-se um caminho sem espaços.",
+  "restore": {
+    "title": "Projetos encontrados",
+    "description": "Esta pasta já contém projetos do Annotix. Seleciona os que queres restaurar.",
+    "scanning": "A analisar a pasta…",
+    "skip": "Ignorar",
+    "restore": "Restaurar selecionados",
+    "images": "{{count}} imagens",
+    "videos": "{{count}} vídeos",
+    "willMove": "será movido para a raiz",
+    "alreadyOk": "{{count}} projetos já estão prontos e não precisam de alterações.",
+    "done": "{{count}} projetos restaurados",
+    "rebuiltNote": "Alguns projetos foram reconstruídos a partir dos ficheiros: as imagens voltam, mas as anotações não puderam ser recuperadas.",
+    "status": {
+      "ok": "Pronto",
+      "idMismatch": "Identificador dessincronizado",
+      "recoverable": "Escrita interrompida, recuperável",
+      "corrupt": "project.json ilegível",
+      "orphan": "Sem project.json, será reconstruído"
+    }
+  }
 }

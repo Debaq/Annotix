@@ -5,5 +5,26 @@
   "selectedFolder": "Ausgewählter Ordner",
   "confirm": "Los geht's",
   "noFolder": "Kein Ordner ausgewählt",
-  "changeFolder": "Ordner ändern"
+  "changeFolder": "Ordner ändern",
+  "pathSpacesWarning": "Der Pfad enthält Leerzeichen: Einige Trainingswerkzeuge können fehlschlagen. Ein Pfad ohne Leerzeichen wird empfohlen.",
+  "restore": {
+    "title": "Gefundene Projekte",
+    "description": "Dieser Ordner enthält bereits Annotix-Projekte. Wähle die aus, die du wiederherstellen möchtest.",
+    "scanning": "Ordner wird durchsucht…",
+    "skip": "Überspringen",
+    "restore": "Ausgewählte wiederherstellen",
+    "images": "{{count}} Bilder",
+    "videos": "{{count}} Videos",
+    "willMove": "wird in das Stammverzeichnis verschoben",
+    "alreadyOk": "{{count}} Projekte sind bereits in Ordnung und brauchen keine Änderungen.",
+    "done": "{{count}} Projekte wiederhergestellt",
+    "rebuiltNote": "Einige Projekte wurden aus ihren Dateien neu aufgebaut: Bilder kommen zurück, ihre Annotationen konnten jedoch nicht wiederhergestellt werden.",
+    "status": {
+      "ok": "Bereit",
+      "idMismatch": "Kennung nicht synchron",
+      "recoverable": "Unterbrochener Schreibvorgang, wiederherstellbar",
+      "corrupt": "project.json nicht lesbar",
+      "orphan": "Keine project.json, wird neu aufgebaut"
+    }
+  }
 }

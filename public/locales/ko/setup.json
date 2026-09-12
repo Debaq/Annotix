@@ -5,5 +5,26 @@
   "selectedFolder": "선택된 폴더",
   "confirm": "시작하기",
   "noFolder": "폴더가 선택되지 않았습니다",
-  "changeFolder": "폴더 변경"
+  "changeFolder": "폴더 변경",
+  "pathSpacesWarning": "경로에 공백이 있습니다. 일부 학습 도구가 실패할 수 있습니다. 공백이 없는 경로를 권장합니다.",
+  "restore": {
+    "title": "발견된 프로젝트",
+    "description": "이 폴더에는 이미 Annotix 프로젝트가 있습니다. 복원할 항목을 선택하세요.",
+    "scanning": "폴더 검사 중…",
+    "skip": "건너뛰기",
+    "restore": "선택 항목 복원",
+    "images": "이미지 {{count}}개",
+    "videos": "동영상 {{count}}개",
+    "willMove": "루트로 이동됩니다",
+    "alreadyOk": "{{count}}개 프로젝트는 이미 정상이며 변경이 필요 없습니다.",
+    "done": "{{count}}개 프로젝트를 복원했습니다",
+    "rebuiltNote": "일부 프로젝트는 파일에서 재구성되었습니다. 이미지는 복구되지만 주석은 복구할 수 없습니다.",
+    "status": {
+      "ok": "준비됨",
+      "idMismatch": "식별자 불일치",
+      "recoverable": "쓰기 중단, 복구 가능",
+      "corrupt": "project.json을 읽을 수 없음",
+      "orphan": "project.json 없음, 재구성됨"
+    }
+  }
 }

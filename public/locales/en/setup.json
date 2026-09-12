@@ -5,5 +5,26 @@
   "selectedFolder": "Selected folder",
   "confirm": "Get Started",
   "noFolder": "No folder selected",
-  "changeFolder": "Change Folder"
+  "changeFolder": "Change Folder",
+  "pathSpacesWarning": "The path contains spaces: some training tools may fail. A path without spaces is recommended.",
+  "restore": {
+    "title": "Projects found",
+    "description": "This folder already contains Annotix projects. Select the ones you want to restore.",
+    "scanning": "Scanning folder…",
+    "skip": "Skip",
+    "restore": "Restore selected",
+    "images": "{{count}} images",
+    "videos": "{{count}} videos",
+    "willMove": "will be moved to the root",
+    "alreadyOk": "{{count}} projects are already fine and need no changes.",
+    "done": "{{count}} projects restored",
+    "rebuiltNote": "Some projects were rebuilt from their files: images come back, but their annotations could not be recovered.",
+    "status": {
+      "ok": "Ready",
+      "idMismatch": "Identifier out of sync",
+      "recoverable": "Interrupted write, recoverable",
+      "corrupt": "Unreadable project.json",
+      "orphan": "No project.json, will be rebuilt"
+    }
+  }
 }

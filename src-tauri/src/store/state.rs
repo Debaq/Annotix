@@ -176,6 +176,18 @@ impl AppState {
         }
     }
 
+    /// Vacía los caches de proyectos y summaries. Necesario cuando algo
+    /// mueve carpetas o reescribe ids fuera del flujo normal (restauración de
+    /// una carpeta de trabajo, cambio de `projects_dir`).
+    pub fn clear_caches(&self) {
+        if let Ok(mut cache) = self.cache.lock() {
+            cache.clear();
+        }
+        if let Ok(mut summaries) = self.summary_cache.lock() {
+            summaries.clear();
+        }
+    }
+
     /// Inserta directamente un proyecto en cache (para proyectos recién creados)
     pub fn insert_into_cache(&self, project_id: &str, pf: ProjectFile, dir: PathBuf) {
         if let Ok(mut cache) = self.cache.lock() {

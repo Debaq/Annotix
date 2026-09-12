@@ -5,5 +5,26 @@
   "selectedFolder": "已选文件夹",
   "confirm": "开始使用",
   "noFolder": "未选择文件夹",
-  "changeFolder": "更改文件夹"
+  "changeFolder": "更改文件夹",
+  "pathSpacesWarning": "路径包含空格：部分训练工具可能失败。建议使用不含空格的路径。",
+  "restore": {
+    "title": "发现的项目",
+    "description": "该文件夹中已有 Annotix 项目。请选择要恢复的项目。",
+    "scanning": "正在扫描文件夹…",
+    "skip": "跳过",
+    "restore": "恢复所选",
+    "images": "{{count}} 张图片",
+    "videos": "{{count}} 个视频",
+    "willMove": "将移动到根目录",
+    "alreadyOk": "{{count}} 个项目已正常，无需更改。",
+    "done": "已恢复 {{count}} 个项目",
+    "rebuiltNote": "部分项目已从文件重建：图片可以恢复，但其标注无法恢复。",
+    "status": {
+      "ok": "就绪",
+      "idMismatch": "标识不一致",
+      "recoverable": "写入中断，可恢复",
+      "corrupt": "project.json 无法读取",
+      "orphan": "缺少 project.json，将重建"
+    }
+  }
 }

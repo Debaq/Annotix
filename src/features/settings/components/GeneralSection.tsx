@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { WorkspaceRestoreDialog } from '@/features/setup/WorkspaceRestoreDialog';
 
 type ColorMode = 'light' | 'dark' | 'dracula' | 'system';
 
@@ -44,6 +45,7 @@ export function GeneralSection() {
   const [colorMode, setColorMode] = useState<ColorMode>(getSavedColorMode);
   const [projectsDir, setProjectsDir] = useState<string>('');
   const [changingDir, setChangingDir] = useState(false);
+  const [scanPath, setScanPath] = useState<string | null>(null);
   const [appVersion, setAppVersion] = useState<string>('');
   const [changelog, setChangelog] = useState<ChangelogEntry[]>([]);
 
@@ -77,6 +79,8 @@ export function GeneralSection() {
       try {
         await invoke('set_projects_dir', { path: result });
         setProjectsDir(result);
+        // Ofrecer restaurar proyectos que ya vivan en la carpeta elegida.
+        setScanPath(result);
       } catch (err) {
         console.error('Error changing projects dir:', err);
       } finally {
@@ -87,6 +91,7 @@ export function GeneralSection() {
 
   return (
     <div className="space-y-6">
+      <WorkspaceRestoreDialog path={scanPath} onClose={() => setScanPath(null)} />
       {/* Color Mode */}
       <div className="rounded-lg border p-4 space-y-3">
         <div className="flex items-center gap-2 text-sm font-medium">
