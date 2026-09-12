@@ -5,7 +5,9 @@ use crate::p2p::node::P2pState;
 use crate::p2p::P2pPermission;
 use crate::store::images::ImageResponse;
 use crate::store::project_file::KeyframeEntry;
-use crate::store::videos::{bake_annotations_for_frame, TrackResponse, VideoInfo, VideoResponse};
+use crate::store::videos::{
+    bake_annotations_for_frame, SetKeyframeRequest, TrackResponse, VideoInfo, VideoResponse,
+};
 use crate::store::AppState;
 
 // ─── get_video_info: usa ffmpeg-next en lugar de ffprobe ─────────────────────
@@ -806,29 +808,13 @@ pub async fn set_keyframe(
     state: State<'_, AppState>,
     p2p: State<'_, P2pState>,
     app: AppHandle,
-    project_id: String,
-    video_id: String,
-    track_id: String,
-    frame_index: i64,
-    bbox_x: f64,
-    bbox_y: f64,
-    bbox_width: f64,
-    bbox_height: f64,
+    request: SetKeyframeRequest,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Annotate)
+    p2p.check_permission(&request.project_id, P2pPermission::Annotate)
         .await?;
-    state.set_keyframe(
-        &project_id,
-        &video_id,
-        &track_id,
-        frame_index,
-        bbox_x,
-        bbox_y,
-        bbox_width,
-        bbox_height,
-    )?;
-    publish_tracks(&state, &p2p, &project_id, &video_id).await;
-    let _ = app.emit("db:tracks-changed", &video_id);
+    state.set_keyframe(&request)?;
+    publish_tracks(&state, &p2p, &request.project_id, &request.video_id).await;
+    let _ = app.emit("db:tracks-changed", &request.video_id);
     Ok(())
 }
 

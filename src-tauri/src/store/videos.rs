@@ -1,5 +1,21 @@
+use serde::Deserialize;
+
 use crate::store::project_file::{KeyframeEntry, TrackEntry, VideoEntry};
 use crate::store::state::AppState;
+
+/// Parámetros de `set_keyframe`. La caja va en porcentaje 0-100 del fotograma.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SetKeyframeRequest {
+    pub project_id: String,
+    pub video_id: String,
+    pub track_id: String,
+    pub frame_index: i64,
+    pub bbox_x: f64,
+    pub bbox_y: f64,
+    pub bbox_width: f64,
+    pub bbox_height: f64,
+}
 
 /// Timestamp compatible con JS Date.now()
 fn js_timestamp() -> f64 {
@@ -540,17 +556,14 @@ impl AppState {
     ///
     /// La caja va en porcentaje 0-100 del fotograma, que es la unidad en la que
     /// vive un keyframe. La conversión a píxeles ocurre al consolidar.
-    pub fn set_keyframe(
-        &self,
-        project_id: &str,
-        video_id: &str,
-        track_id: &str,
-        frame_index: i64,
-        bbox_x: f64,
-        bbox_y: f64,
-        bbox_width: f64,
-        bbox_height: f64,
-    ) -> Result<(), String> {
+    pub fn set_keyframe(&self, req: &SetKeyframeRequest) -> Result<(), String> {
+        let project_id = req.project_id.as_str();
+        let video_id = req.video_id.as_str();
+        let track_id = req.track_id.as_str();
+        let frame_index = req.frame_index;
+        let (bbox_x, bbox_y, bbox_width, bbox_height) =
+            (req.bbox_x, req.bbox_y, req.bbox_width, req.bbox_height);
+
         for (name, v) in [
             ("x", bbox_x),
             ("y", bbox_y),

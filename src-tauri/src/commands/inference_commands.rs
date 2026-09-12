@@ -5,7 +5,8 @@ use tauri::{AppHandle, State};
 
 use crate::inference::runner::InferenceProcessManager;
 use crate::inference::InferenceConfig;
-use crate::store::project_file::{ClassMapping, InferenceModelEntry, PredictionEntry};
+use crate::store::inference::{UpdateModelConfigRequest, UploadModelRequest};
+use crate::store::project_file::{InferenceModelEntry, PredictionEntry};
 use crate::store::AppState;
 use crate::training;
 
@@ -14,27 +15,9 @@ use crate::training;
 #[tauri::command]
 pub fn upload_inference_model(
     state: State<'_, AppState>,
-    project_id: String,
-    source_path: String,
-    name: String,
-    format: String,
-    task: String,
-    class_names: Vec<String>,
-    input_size: Option<u32>,
-    output_format: Option<String>,
-    metadata: Option<serde_json::Value>,
+    request: UploadModelRequest,
 ) -> Result<InferenceModelEntry, String> {
-    state.upload_inference_model(
-        &project_id,
-        &source_path,
-        &name,
-        &format,
-        &task,
-        class_names,
-        input_size,
-        output_format,
-        metadata,
-    )
+    state.upload_inference_model(request)
 }
 
 #[tauri::command]
@@ -57,25 +40,9 @@ pub fn list_inference_models(
 #[tauri::command]
 pub fn update_model_config(
     state: State<'_, AppState>,
-    project_id: String,
-    model_id: String,
-    class_mapping: Vec<ClassMapping>,
-    input_size: Option<u32>,
-    task: Option<String>,
-    output_format: Option<String>,
-    class_names: Option<Vec<String>>,
-    metadata_patch: Option<serde_json::Value>,
+    request: UpdateModelConfigRequest,
 ) -> Result<(), String> {
-    state.update_model_config(
-        &project_id,
-        &model_id,
-        class_mapping,
-        input_size,
-        task,
-        output_format,
-        class_names,
-        metadata_patch,
-    )
+    state.update_model_config(request)
 }
 
 // ─── Detección de metadatos ──────────────────────────────────────────────────

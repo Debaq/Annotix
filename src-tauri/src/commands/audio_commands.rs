@@ -2,8 +2,7 @@ use tauri::{AppHandle, Emitter, State};
 
 use crate::p2p::node::P2pState;
 use crate::p2p::P2pPermission;
-use crate::store::audio::AudioResponse;
-use crate::store::project_file::{AudioEvent, AudioSegment};
+use crate::store::audio::{AudioResponse, SaveAudioAnnotationRequest};
 use crate::store::AppState;
 
 #[tauri::command]
@@ -104,27 +103,12 @@ pub async fn save_audio_annotation(
     state: State<'_, AppState>,
     p2p: State<'_, P2pState>,
     app: AppHandle,
-    project_id: String,
-    audio_id: String,
-    transcription: Option<String>,
-    speaker_id: Option<String>,
-    language: Option<String>,
-    segments: Option<Vec<AudioSegment>>,
-    class_id: Option<i64>,
-    events: Option<Vec<AudioEvent>>,
+    request: SaveAudioAnnotationRequest,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Annotate)
+    p2p.check_permission(&request.project_id, P2pPermission::Annotate)
         .await?;
-    state.save_audio_annotation(
-        &project_id,
-        &audio_id,
-        transcription.as_deref(),
-        speaker_id.as_deref(),
-        language.as_deref(),
-        segments,
-        class_id,
-        events,
-    )?;
+    let project_id = request.project_id.clone();
+    state.save_audio_annotation(request)?;
     let _ = app.emit("db:audio-changed", &project_id);
     Ok(())
 }

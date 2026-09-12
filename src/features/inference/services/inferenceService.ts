@@ -23,15 +23,17 @@ export const inferenceService = {
     metadata?: Record<string, unknown> | null,
   ): Promise<InferenceModelEntry> {
     return invoke('upload_inference_model', {
-      projectId,
-      sourcePath,
-      name,
-      format,
-      task,
-      classNames,
-      inputSize,
-      outputFormat: outputFormat ?? null,
-      metadata: metadata ?? null,
+      request: {
+        projectId,
+        sourcePath,
+        name,
+        format,
+        task,
+        classNames,
+        inputSize,
+        outputFormat: outputFormat ?? null,
+        metadata: metadata ?? null,
+      },
     });
   },
 
@@ -54,14 +56,16 @@ export const inferenceService = {
     metadataPatch?: Record<string, unknown> | null,
   ): Promise<void> {
     return invoke('update_model_config', {
-      projectId,
-      modelId,
-      classMapping,
-      inputSize,
-      task,
-      outputFormat: outputFormat ?? null,
-      classNames: classNames ?? null,
-      metadataPatch: metadataPatch ?? null,
+      request: {
+        projectId,
+        modelId,
+        classMapping,
+        inputSize,
+        task,
+        outputFormat: outputFormat ?? null,
+        classNames: classNames ?? null,
+        metadataPatch: metadataPatch ?? null,
+      },
     });
   },
 

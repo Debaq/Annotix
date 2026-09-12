@@ -1,5 +1,23 @@
+use serde::Deserialize;
+
 use crate::store::project_file::{AudioEntry, AudioEvent, AudioSegment, TtsSentence};
 use crate::store::state::AppState;
+
+/// Parámetros de `save_audio_annotation`. Los tres `Option<String>` seguidos
+/// (transcripción, hablante, idioma) eran intercambiables sin error de
+/// compilación.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SaveAudioAnnotationRequest {
+    pub project_id: String,
+    pub audio_id: String,
+    pub transcription: Option<String>,
+    pub speaker_id: Option<String>,
+    pub language: Option<String>,
+    pub segments: Option<Vec<AudioSegment>>,
+    pub class_id: Option<i64>,
+    pub events: Option<Vec<AudioEvent>>,
+}
 
 /// Timestamp compatible con JS Date.now()
 fn js_timestamp() -> f64 {
@@ -255,17 +273,23 @@ impl AppState {
         Ok(id)
     }
 
-    pub fn save_audio_annotation(
-        &self,
-        project_id: &str,
-        audio_id: &str,
-        transcription: Option<&str>,
-        speaker_id: Option<&str>,
-        language: Option<&str>,
-        segments: Option<Vec<AudioSegment>>,
-        class_id: Option<i64>,
-        events: Option<Vec<AudioEvent>>,
-    ) -> Result<(), String> {
+    pub fn save_audio_annotation(&self, req: SaveAudioAnnotationRequest) -> Result<(), String> {
+        let SaveAudioAnnotationRequest {
+            project_id,
+            audio_id,
+            transcription,
+            speaker_id,
+            language,
+            segments,
+            class_id,
+            events,
+        } = req;
+        let project_id = project_id.as_str();
+        let audio_id = audio_id.as_str();
+        let transcription = transcription.as_deref();
+        let speaker_id = speaker_id.as_deref();
+        let language = language.as_deref();
+
         let now = js_timestamp();
         self.with_project_mut(project_id, |pf| {
             if let Some(a) = pf.audio.iter_mut().find(|a| a.id == audio_id) {

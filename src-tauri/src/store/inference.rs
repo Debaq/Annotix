@@ -1,9 +1,42 @@
 use std::path::PathBuf;
 
+use serde::Deserialize;
+
 use crate::store::project_file::{
     AnnotationEntry, ClassMapping, InferenceModelEntry, PredictionEntry,
 };
 use crate::store::state::AppState;
+
+/// Parámetros de `upload_inference_model`. Agrupa los cuatro `String`
+/// consecutivos (ruta, nombre, formato, tarea), que eran intercambiables sin
+/// que el compilador dijera nada.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UploadModelRequest {
+    pub project_id: String,
+    pub source_path: String,
+    pub name: String,
+    pub format: String,
+    pub task: String,
+    pub class_names: Vec<String>,
+    pub input_size: Option<u32>,
+    pub output_format: Option<String>,
+    pub metadata: Option<serde_json::Value>,
+}
+
+/// Parámetros de `update_model_config`.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateModelConfigRequest {
+    pub project_id: String,
+    pub model_id: String,
+    pub class_mapping: Vec<ClassMapping>,
+    pub input_size: Option<u32>,
+    pub task: Option<String>,
+    pub output_format: Option<String>,
+    pub class_names: Option<Vec<String>>,
+    pub metadata_patch: Option<serde_json::Value>,
+}
 
 /// Timestamp JS compatible con Date.now()
 fn js_timestamp() -> f64 {
@@ -25,16 +58,25 @@ impl AppState {
     /// Sube un modelo de inferencia al proyecto
     pub fn upload_inference_model(
         &self,
-        project_id: &str,
-        source_path: &str,
-        name: &str,
-        format: &str,
-        task: &str,
-        class_names: Vec<String>,
-        input_size: Option<u32>,
-        output_format: Option<String>,
-        metadata: Option<serde_json::Value>,
+        req: UploadModelRequest,
     ) -> Result<InferenceModelEntry, String> {
+        let UploadModelRequest {
+            project_id,
+            source_path,
+            name,
+            format,
+            task,
+            class_names,
+            input_size,
+            output_format,
+            metadata,
+        } = req;
+        let project_id = project_id.as_str();
+        let source_path = source_path.as_str();
+        let name = name.as_str();
+        let format = format.as_str();
+        let task = task.as_str();
+
         let models_dir = self.project_models_dir(project_id)?;
         let source = PathBuf::from(source_path);
 
@@ -150,17 +192,20 @@ impl AppState {
     }
 
     /// Actualiza configuración del modelo (mapeo de clases, task, etc.)
-    pub fn update_model_config(
-        &self,
-        project_id: &str,
-        model_id: &str,
-        class_mapping: Vec<ClassMapping>,
-        input_size: Option<u32>,
-        task: Option<String>,
-        output_format: Option<String>,
-        class_names: Option<Vec<String>>,
-        metadata_patch: Option<serde_json::Value>,
-    ) -> Result<(), String> {
+    pub fn update_model_config(&self, req: UpdateModelConfigRequest) -> Result<(), String> {
+        let UpdateModelConfigRequest {
+            project_id,
+            model_id,
+            class_mapping,
+            input_size,
+            task,
+            output_format,
+            class_names,
+            metadata_patch,
+        } = req;
+        let project_id = project_id.as_str();
+        let model_id = model_id.as_str();
+
         self.with_project_mut(project_id, |pf| {
             if let Some(model) = pf.inference_models.iter_mut().find(|m| m.id == model_id) {
                 model.class_mapping = class_mapping;

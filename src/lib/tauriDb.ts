@@ -324,7 +324,7 @@ export async function setKeyframe(
   bboxHeight: number
 ): Promise<void> {
   return invoke('set_keyframe', {
-    projectId, trackId, videoId, frameIndex, bboxX, bboxY, bboxWidth, bboxHeight,
+    request: { projectId, trackId, videoId, frameIndex, bboxX, bboxY, bboxWidth, bboxHeight },
   });
 }
 
@@ -406,14 +406,16 @@ export async function saveAudioAnnotation(
   }
 ): Promise<void> {
   return invoke('save_audio_annotation', {
-    projectId,
-    audioId,
-    transcription: data.transcription ?? null,
-    speakerId: data.speakerId ?? null,
-    language: data.language ?? null,
-    segments: data.segments ?? null,
-    classId: data.classId ?? null,
-    events: data.events ?? null,
+    request: {
+      projectId,
+      audioId,
+      transcription: data.transcription ?? null,
+      speakerId: data.speakerId ?? null,
+      language: data.language ?? null,
+      segments: data.segments ?? null,
+      classId: data.classId ?? null,
+      events: data.events ?? null,
+    },
   });
 }
 
