@@ -86,13 +86,21 @@ fn run_ffmpeg(args: &[&str]) -> Result<(), String> {
     Ok(())
 }
 
+/// Archivo de salida de una edición: de dónde sale y a dónde va.
+struct PreparedOutput {
+    src_path: String,
+    new_name: String,
+    out_filename: String,
+    out_path: std::path::PathBuf,
+}
+
 /// Genera ruta de salida y nombre para un archivo editado
 fn prepare_output(
     state: &AppState,
     project_id: &str,
     audio_id: &str,
     prefix: &str,
-) -> Result<(String, String, String, std::path::PathBuf), String> {
+) -> Result<PreparedOutput, String> {
     let src_path = state.get_audio_file_path(project_id, audio_id)?;
     let src_name = state
         .with_project(project_id, |pf| {
@@ -110,7 +118,12 @@ fn prepare_output(
     let out_filename = format!("{}_{}", &out_id[..8], &new_name);
     let out_path = audio_dir.join(&out_filename);
 
-    Ok((src_path, new_name, out_filename, out_path))
+    Ok(PreparedOutput {
+        src_path,
+        new_name,
+        out_filename,
+        out_path,
+    })
 }
 
 /// Registra el archivo de salida y emite eventos
@@ -120,15 +133,14 @@ fn register_output(
     project_id: &str,
     audio_id: &str,
     operation: &str,
-    out_filename: &str,
-    new_name: &str,
-    out_path: &std::path::Path,
+    out: &PreparedOutput,
 ) -> Result<String, String> {
-    let out_str = out_path.to_string_lossy().to_string();
+    let out_str = out.out_path.to_string_lossy().to_string();
     let duration = probe_duration_ms(&out_str)?;
     let sr = probe_sample_rate(&out_str);
 
-    let new_id = state.add_audio_from_file(project_id, out_filename, new_name, duration, sr)?;
+    let new_id =
+        state.add_audio_from_file(project_id, &out.out_filename, &out.new_name, duration, sr)?;
 
     let _ = app.emit(
         "audio:edit-progress",
@@ -160,9 +172,9 @@ pub async fn audio_trim(
     p2p.check_permission(&project_id, P2pPermission::UploadData)
         .await?;
 
-    let (src_path, new_name, out_filename, out_path) =
-        prepare_output(&state, &project_id, &audio_id, "trim")?;
-    let out_str = out_path.to_string_lossy().to_string();
+    let out = prepare_output(&state, &project_id, &audio_id, "trim")?;
+    let src_path = out.src_path.clone();
+    let out_str = out.out_path.to_string_lossy().to_string();
 
     let _ = app.emit(
         "audio:edit-progress",
@@ -180,16 +192,7 @@ pub async fn audio_trim(
     .await
     .map_err(|e| format!("Error en thread: {}", e))??;
 
-    register_output(
-        &state,
-        &app,
-        &project_id,
-        &audio_id,
-        "trim",
-        &out_filename,
-        &new_name,
-        &out_path,
-    )
+    register_output(&state, &app, &project_id, &audio_id, "trim", &out)
 }
 
 /// Cortar: extraer un rango como archivo independiente
@@ -206,9 +209,9 @@ pub async fn audio_cut(
     p2p.check_permission(&project_id, P2pPermission::UploadData)
         .await?;
 
-    let (src_path, new_name, out_filename, out_path) =
-        prepare_output(&state, &project_id, &audio_id, "cut")?;
-    let out_str = out_path.to_string_lossy().to_string();
+    let out = prepare_output(&state, &project_id, &audio_id, "cut")?;
+    let src_path = out.src_path.clone();
+    let out_str = out.out_path.to_string_lossy().to_string();
 
     let _ = app.emit(
         "audio:edit-progress",
@@ -226,16 +229,7 @@ pub async fn audio_cut(
     .await
     .map_err(|e| format!("Error en thread: {}", e))??;
 
-    register_output(
-        &state,
-        &app,
-        &project_id,
-        &audio_id,
-        "cut",
-        &out_filename,
-        &new_name,
-        &out_path,
-    )
+    register_output(&state, &app, &project_id, &audio_id, "cut", &out)
 }
 
 /// Eliminar: remover un rango del audio (concatenar antes + después)
@@ -252,9 +246,9 @@ pub async fn audio_delete_range(
     p2p.check_permission(&project_id, P2pPermission::UploadData)
         .await?;
 
-    let (src_path, new_name, out_filename, out_path) =
-        prepare_output(&state, &project_id, &audio_id, "del")?;
-    let out_str = out_path.to_string_lossy().to_string();
+    let out = prepare_output(&state, &project_id, &audio_id, "del")?;
+    let src_path = out.src_path.clone();
+    let out_str = out.out_path.to_string_lossy().to_string();
     let start_sec = ms_to_secs(start_ms);
     let end_sec = ms_to_secs(end_ms);
 
@@ -292,16 +286,7 @@ pub async fn audio_delete_range(
     .await
     .map_err(|e| format!("Error en thread: {}", e))??;
 
-    register_output(
-        &state,
-        &app,
-        &project_id,
-        &audio_id,
-        "delete",
-        &out_filename,
-        &new_name,
-        &out_path,
-    )
+    register_output(&state, &app, &project_id, &audio_id, "delete", &out)
 }
 
 /// Dividir: partir el audio en dos archivos en el punto dado
@@ -392,9 +377,9 @@ pub async fn audio_silence_range(
     p2p.check_permission(&project_id, P2pPermission::UploadData)
         .await?;
 
-    let (src_path, new_name, out_filename, out_path) =
-        prepare_output(&state, &project_id, &audio_id, "silence")?;
-    let out_str = out_path.to_string_lossy().to_string();
+    let out = prepare_output(&state, &project_id, &audio_id, "silence")?;
+    let src_path = out.src_path.clone();
+    let out_str = out.out_path.to_string_lossy().to_string();
     let start_sec = ms_to_secs(start_ms);
     let end_sec = ms_to_secs(end_ms);
 
@@ -415,16 +400,7 @@ pub async fn audio_silence_range(
     .await
     .map_err(|e| format!("Error en thread: {}", e))??;
 
-    register_output(
-        &state,
-        &app,
-        &project_id,
-        &audio_id,
-        "silence",
-        &out_filename,
-        &new_name,
-        &out_path,
-    )
+    register_output(&state, &app, &project_id, &audio_id, "silence", &out)
 }
 
 /// Normalizar volumen con loudnorm
@@ -439,9 +415,9 @@ pub async fn audio_normalize(
     p2p.check_permission(&project_id, P2pPermission::UploadData)
         .await?;
 
-    let (src_path, new_name, out_filename, out_path) =
-        prepare_output(&state, &project_id, &audio_id, "norm")?;
-    let out_str = out_path.to_string_lossy().to_string();
+    let out = prepare_output(&state, &project_id, &audio_id, "norm")?;
+    let src_path = out.src_path.clone();
+    let out_str = out.out_path.to_string_lossy().to_string();
 
     let _ = app.emit(
         "audio:edit-progress",
@@ -463,16 +439,7 @@ pub async fn audio_normalize(
     .await
     .map_err(|e| format!("Error en thread: {}", e))??;
 
-    register_output(
-        &state,
-        &app,
-        &project_id,
-        &audio_id,
-        "normalize",
-        &out_filename,
-        &new_name,
-        &out_path,
-    )
+    register_output(&state, &app, &project_id, &audio_id, "normalize", &out)
 }
 
 /// Aplicar ecualizador con preset
@@ -501,9 +468,9 @@ pub async fn audio_equalize(
     .to_string();
 
     let prefix = format!("eq-{}", &preset);
-    let (src_path, new_name, out_filename, out_path) =
-        prepare_output(&state, &project_id, &audio_id, &prefix)?;
-    let out_str = out_path.to_string_lossy().to_string();
+    let out = prepare_output(&state, &project_id, &audio_id, &prefix)?;
+    let src_path = out.src_path.clone();
+    let out_str = out.out_path.to_string_lossy().to_string();
 
     let _ = app.emit(
         "audio:edit-progress",
@@ -518,14 +485,5 @@ pub async fn audio_equalize(
     .await
     .map_err(|e| format!("Error en thread: {}", e))??;
 
-    register_output(
-        &state,
-        &app,
-        &project_id,
-        &audio_id,
-        "equalize",
-        &out_filename,
-        &new_name,
-        &out_path,
-    )
+    register_output(&state, &app, &project_id, &audio_id, "equalize", &out)
 }

@@ -1,5 +1,6 @@
 use tauri::{AppHandle, Emitter, State};
 
+use crate::store::audio::SaveTtsRecordingRequest;
 use crate::store::config::LlmConfig;
 use crate::store::project_file::TtsSentence;
 use crate::store::AppState;
@@ -28,23 +29,18 @@ pub fn save_tts_sentences(
 pub fn save_tts_recording(
     state: State<'_, AppState>,
     app: AppHandle,
-    project_id: String,
-    sentence_id: String,
-    audio_base64: String,
-    file_ext: String,
-    duration_ms: i64,
-    sample_rate: i32,
+    request: SaveTtsRecordingRequest,
 ) -> Result<String, String> {
     let id = state.save_tts_recording(
-        &project_id,
-        &sentence_id,
-        &audio_base64,
-        &file_ext,
-        duration_ms,
-        sample_rate,
+        &request.project_id,
+        &request.sentence_id,
+        &request.audio_base64,
+        &request.file_ext,
+        request.duration_ms,
+        request.sample_rate,
     )?;
-    let _ = app.emit("db:tts-changed", &project_id);
-    let _ = app.emit("db:audio-changed", &project_id);
+    let _ = app.emit("db:tts-changed", &request.project_id);
+    let _ = app.emit("db:audio-changed", &request.project_id);
     Ok(id)
 }
 

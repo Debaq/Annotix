@@ -6,7 +6,8 @@ use crate::p2p::P2pPermission;
 use crate::store::images::ImageResponse;
 use crate::store::project_file::KeyframeEntry;
 use crate::store::videos::{
-    bake_annotations_for_frame, SetKeyframeRequest, TrackResponse, VideoInfo, VideoResponse,
+    bake_annotations_for_frame, SetKeyframeRequest, ToggleKeyframeRequest, TrackResponse,
+    UpdateTrackRequest, VideoInfo, VideoResponse,
 };
 use crate::store::AppState;
 
@@ -763,13 +764,16 @@ pub async fn update_track(
     state: State<'_, AppState>,
     p2p: State<'_, P2pState>,
     app: AppHandle,
-    project_id: String,
-    video_id: String,
-    track_id: String,
-    class_id: Option<i64>,
-    label: Option<String>,
-    enabled: Option<bool>,
+    request: UpdateTrackRequest,
 ) -> Result<(), String> {
+    let UpdateTrackRequest {
+        project_id,
+        video_id,
+        track_id,
+        class_id,
+        label,
+        enabled,
+    } = request;
     p2p.check_permission(&project_id, P2pPermission::Annotate)
         .await?;
     let label_update = label.map(Some);
@@ -841,12 +845,15 @@ pub async fn toggle_keyframe_enabled(
     state: State<'_, AppState>,
     p2p: State<'_, P2pState>,
     app: AppHandle,
-    project_id: String,
-    video_id: String,
-    track_id: String,
-    frame_index: i64,
-    enabled: bool,
+    request: ToggleKeyframeRequest,
 ) -> Result<(), String> {
+    let ToggleKeyframeRequest {
+        project_id,
+        video_id,
+        track_id,
+        frame_index,
+        enabled,
+    } = request;
     p2p.check_permission(&project_id, P2pPermission::Annotate)
         .await?;
     state.toggle_keyframe_enabled(&project_id, &video_id, &track_id, frame_index, enabled)?;

@@ -306,7 +306,7 @@ export async function updateTrack(
   videoId: string,
   updates: { classId?: number; label?: string; enabled?: boolean }
 ): Promise<void> {
-  return invoke('update_track', { projectId, trackId, videoId, ...updates });
+  return invoke('update_track', { request: { projectId, trackId, videoId, ...updates } });
 }
 
 export async function deleteTrack(projectId: string, trackId: string, videoId: string): Promise<void> {
@@ -344,7 +344,9 @@ export async function toggleKeyframeEnabled(
   frameIndex: number,
   enabled: boolean
 ): Promise<void> {
-  return invoke('toggle_keyframe_enabled', { projectId, trackId, videoId, frameIndex, enabled });
+  return invoke('toggle_keyframe_enabled', {
+    request: { projectId, trackId, videoId, frameIndex, enabled },
+  });
 }
 
 export async function bakeVideoTracks(projectId: string, videoId: string): Promise<number> {
@@ -360,7 +362,9 @@ export async function uploadAudio(
   sampleRate: number,
   language?: string
 ): Promise<string> {
-  return invoke<string>('upload_audio', { projectId, filePath, durationMs, sampleRate, language });
+  return invoke<string>('upload_audio', {
+    request: { projectId, filePath, durationMs, sampleRate, language },
+  });
 }
 
 export async function getAudio(projectId: string, id: string): Promise<Audio | null> {
@@ -378,7 +382,9 @@ export async function saveTranscription(
   speakerId?: string,
   language?: string
 ): Promise<void> {
-  return invoke('save_transcription', { projectId, audioId, transcription, speakerId, language });
+  return invoke('save_transcription', {
+    request: { projectId, audioId, transcription, speakerId, language },
+  });
 }
 
 export async function deleteAudio(projectId: string, id: string): Promise<void> {
@@ -544,7 +550,7 @@ export async function saveTtsRecording(
   sampleRate: number,
 ): Promise<string> {
   return invoke<string>('save_tts_recording', {
-    projectId, sentenceId, audioBase64, fileExt, durationMs, sampleRate,
+    request: { projectId, sentenceId, audioBase64, fileExt, durationMs, sampleRate },
   });
 }
 

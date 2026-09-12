@@ -17,6 +17,30 @@ pub struct SetKeyframeRequest {
     pub bbox_height: f64,
 }
 
+/// Parámetros de `update_track`. Los tres ids van siempre juntos y `class_id`
+/// / `enabled` son opcionales del mismo tipo que `label`.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateTrackRequest {
+    pub project_id: String,
+    pub video_id: String,
+    pub track_id: String,
+    pub class_id: Option<i64>,
+    pub label: Option<String>,
+    pub enabled: Option<bool>,
+}
+
+/// Parámetros de `toggle_keyframe_enabled`.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ToggleKeyframeRequest {
+    pub project_id: String,
+    pub video_id: String,
+    pub track_id: String,
+    pub frame_index: i64,
+    pub enabled: bool,
+}
+
 /// Timestamp compatible con JS Date.now()
 fn js_timestamp() -> f64 {
     std::time::SystemTime::now()

@@ -19,6 +19,41 @@ pub struct SaveAudioAnnotationRequest {
     pub events: Option<Vec<AudioEvent>>,
 }
 
+/// Parámetros de `upload_audio`.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UploadAudioRequest {
+    pub project_id: String,
+    pub file_path: String,
+    pub duration_ms: i64,
+    pub sample_rate: i32,
+    pub language: Option<String>,
+}
+
+/// Parámetros de `save_transcription`. `speaker_id` y `language` son dos
+/// `Option<String>` seguidos, intercambiables sin error de compilación.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SaveTranscriptionRequest {
+    pub project_id: String,
+    pub audio_id: String,
+    pub transcription: String,
+    pub speaker_id: Option<String>,
+    pub language: Option<String>,
+}
+
+/// Parámetros de `save_tts_recording`.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SaveTtsRecordingRequest {
+    pub project_id: String,
+    pub sentence_id: String,
+    pub audio_base64: String,
+    pub file_ext: String,
+    pub duration_ms: i64,
+    pub sample_rate: i32,
+}
+
 /// Timestamp compatible con JS Date.now()
 fn js_timestamp() -> f64 {
     std::time::SystemTime::now()

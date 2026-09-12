@@ -2,7 +2,9 @@ use tauri::{AppHandle, Emitter, State};
 
 use crate::p2p::node::P2pState;
 use crate::p2p::P2pPermission;
-use crate::store::audio::{AudioResponse, SaveAudioAnnotationRequest};
+use crate::store::audio::{
+    AudioResponse, SaveAudioAnnotationRequest, SaveTranscriptionRequest, UploadAudioRequest,
+};
 use crate::store::AppState;
 
 #[tauri::command]
@@ -10,17 +12,19 @@ pub async fn upload_audio(
     state: State<'_, AppState>,
     p2p: State<'_, P2pState>,
     app: AppHandle,
-    project_id: String,
-    file_path: String,
-    duration_ms: i64,
-    sample_rate: i32,
-    language: Option<String>,
+    request: UploadAudioRequest,
 ) -> Result<String, String> {
-    p2p.check_permission(&project_id, P2pPermission::UploadData)
+    p2p.check_permission(&request.project_id, P2pPermission::UploadData)
         .await?;
-    let lang = language.as_deref().unwrap_or("en");
-    let id = state.upload_audio(&project_id, &file_path, duration_ms, sample_rate, lang)?;
-    let _ = app.emit("db:audio-changed", &project_id);
+    let lang = request.language.as_deref().unwrap_or("en");
+    let id = state.upload_audio(
+        &request.project_id,
+        &request.file_path,
+        request.duration_ms,
+        request.sample_rate,
+        lang,
+    )?;
+    let _ = app.emit("db:audio-changed", &request.project_id);
     Ok(id)
 }
 
@@ -46,22 +50,18 @@ pub async fn save_transcription(
     state: State<'_, AppState>,
     p2p: State<'_, P2pState>,
     app: AppHandle,
-    project_id: String,
-    audio_id: String,
-    transcription: String,
-    speaker_id: Option<String>,
-    language: Option<String>,
+    request: SaveTranscriptionRequest,
 ) -> Result<(), String> {
-    p2p.check_permission(&project_id, P2pPermission::Annotate)
+    p2p.check_permission(&request.project_id, P2pPermission::Annotate)
         .await?;
     state.save_transcription(
-        &project_id,
-        &audio_id,
-        &transcription,
-        speaker_id.as_deref(),
-        language.as_deref(),
+        &request.project_id,
+        &request.audio_id,
+        &request.transcription,
+        request.speaker_id.as_deref(),
+        request.language.as_deref(),
     )?;
-    let _ = app.emit("db:audio-changed", &project_id);
+    let _ = app.emit("db:audio-changed", &request.project_id);
     Ok(())
 }
 
