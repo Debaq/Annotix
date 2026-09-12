@@ -12,7 +12,7 @@ use zip::ZipWriter;
 
 use crate::store::project_file::{ImageEntry, ProjectFile};
 
-use super::{parse_bbox, parse_obb, parse_polygon};
+use super::{parse_bbox, parse_obb, parse_polygon, BBoxData, OBBData};
 
 const FONT_BYTES: &[u8] = include_bytes!("../../assets/fonts/DejaVuSans.ttf");
 
@@ -68,17 +68,7 @@ pub fn export<W: Write + Seek, F: Fn(f64)>(
             match ann.annotation_type.as_str() {
                 "bbox" => {
                     if let Some(b) = parse_bbox(&ann.data) {
-                        draw_bbox(
-                            &mut canvas,
-                            b.x,
-                            b.y,
-                            b.width,
-                            b.height,
-                            color,
-                            w,
-                            h,
-                            stroke,
-                        );
+                        draw_bbox(&mut canvas, &b, color, w, h, stroke);
                         if include_labels {
                             draw_label(
                                 &mut canvas,
@@ -112,16 +102,7 @@ pub fn export<W: Write + Seek, F: Fn(f64)>(
                 }
                 "obb" => {
                     if let Some(o) = parse_obb(&ann.data) {
-                        draw_obb(
-                            &mut canvas,
-                            o.x,
-                            o.y,
-                            o.width,
-                            o.height,
-                            o.rotation,
-                            color,
-                            stroke,
-                        );
+                        draw_obb(&mut canvas, &o, color, stroke);
                         if include_labels {
                             draw_label(
                                 &mut canvas,
@@ -201,19 +182,16 @@ fn parse_hex_color(hex: &str) -> Rgba<u8> {
 
 fn draw_bbox(
     canvas: &mut RgbaImage,
-    x: f64,
-    y: f64,
-    w: f64,
-    h: f64,
+    b: &BBoxData,
     color: Rgba<u8>,
     img_w: u32,
     img_h: u32,
     stroke: i32,
 ) {
-    let x = x.round().max(0.0) as i32;
-    let y = y.round().max(0.0) as i32;
-    let mut w = w.round() as i32;
-    let mut h = h.round() as i32;
+    let x = b.x.round().max(0.0) as i32;
+    let y = b.y.round().max(0.0) as i32;
+    let mut w = b.width.round() as i32;
+    let mut h = b.height.round() as i32;
     if x + w > img_w as i32 {
         w = img_w as i32 - x;
     }
@@ -254,23 +232,14 @@ fn draw_polygon(canvas: &mut RgbaImage, pts: &[(f64, f64)], color: Rgba<u8>, str
     }
 }
 
-fn draw_obb(
-    canvas: &mut RgbaImage,
-    cx: f64,
-    cy: f64,
-    w: f64,
-    h: f64,
-    angle: f64,
-    color: Rgba<u8>,
-    stroke: i32,
-) {
-    let (sin, cos) = angle.sin_cos();
-    let hw = w / 2.0;
-    let hh = h / 2.0;
+fn draw_obb(canvas: &mut RgbaImage, o: &OBBData, color: Rgba<u8>, stroke: i32) {
+    let (sin, cos) = o.rotation.sin_cos();
+    let hw = o.width / 2.0;
+    let hh = o.height / 2.0;
     let corners = [(-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)];
     let rotated: Vec<(f64, f64)> = corners
         .iter()
-        .map(|(x, y)| (cx + x * cos - y * sin, cy + x * sin + y * cos))
+        .map(|(x, y)| (o.x + x * cos - y * sin, o.y + x * sin + y * cos))
         .collect();
     draw_polygon(canvas, &rotated, color, stroke);
 }

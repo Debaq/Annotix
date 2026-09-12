@@ -11,6 +11,18 @@ use super::{InferenceConfig, InferenceProgressEvent};
 use crate::store::project_file::AnnotationEntry;
 use crate::store::AppState;
 
+/// Descripción de un job de inferencia, común a los dos backends (ONNX nativo
+/// y Python). Se arma una vez en `start_inference` y se pasa entero.
+struct InferenceJob<'a> {
+    job_id: &'a str,
+    model_path: &'a str,
+    model_info: &'a crate::store::project_file::InferenceModelEntry,
+    image_paths: &'a [(String, String)],
+    config: &'a InferenceConfig,
+    model_id: &'a str,
+    project_id: &'a str,
+}
+
 /// Gestor de procesos de inferencia activos
 pub struct InferenceProcessManager {
     /// Procesos Python activos (para .pt)
@@ -99,29 +111,19 @@ impl InferenceProcessManager {
             return Err("No se encontraron imágenes válidas para inferencia".to_string());
         }
 
+        let job = InferenceJob {
+            job_id: &job_id,
+            model_path: &model_path,
+            model_info: &model_info,
+            image_paths: &image_paths,
+            config: &config,
+            model_id,
+            project_id,
+        };
+
         match model_info.format.as_str() {
-            "onnx" => self.start_onnx_native(
-                app,
-                &job_id,
-                &model_path,
-                &model_info.class_names,
-                &image_paths,
-                &config,
-                model_id,
-                project_id,
-                &model_info.task,
-                model_info.output_format.as_deref(),
-            ),
-            "pt" => self.start_python_inference(
-                state,
-                app,
-                &job_id,
-                &model_path,
-                &model_info,
-                &image_paths,
-                &config,
-                project_id,
-            ),
+            "onnx" => self.start_onnx_native(app, job),
+            "pt" => self.start_python_inference(state, app, job),
             _ => Err(format!("Formato no soportado: {}", model_info.format)),
         }?;
 
@@ -129,19 +131,20 @@ impl InferenceProcessManager {
     }
 
     /// Inferencia ONNX nativa con el crate `ort`
-    fn start_onnx_native(
-        &self,
-        app: &AppHandle,
-        job_id: &str,
-        model_path: &str,
-        class_names: &[String],
-        image_paths: &[(String, String)],
-        config: &InferenceConfig,
-        model_id: &str,
-        project_id: &str,
-        task: &str,
-        output_format: Option<&str>,
-    ) -> Result<(), String> {
+    fn start_onnx_native(&self, app: &AppHandle, job: InferenceJob<'_>) -> Result<(), String> {
+        let InferenceJob {
+            job_id,
+            model_path,
+            model_info,
+            image_paths,
+            config,
+            model_id,
+            project_id,
+        } = job;
+        let class_names = model_info.class_names.as_slice();
+        let task = model_info.task.as_str();
+        let output_format = model_info.output_format.as_deref();
+
         // Cargar modelo (validar antes de lanzar el thread)
         let mut session = super::ort_runner::load_model(model_path)?;
         let input_size = config.input_size.unwrap_or(640);
@@ -228,12 +231,14 @@ impl InferenceProcessManager {
                 match super::ort_runner::run_inference_prepared(
                     &mut session,
                     input_data,
-                    conf_threshold,
-                    iou_threshold,
-                    input_size,
-                    num_classes,
-                    &task_owned,
-                    output_format_owned.as_deref(),
+                    super::ort_runner::InferenceParams {
+                        conf_threshold,
+                        iou_threshold,
+                        input_size,
+                        num_classes,
+                        task: &task_owned,
+                        format_hint: output_format_owned.as_deref(),
+                    },
                 ) {
                     Ok(result) => {
                         let ai_annotations = match result {
@@ -332,13 +337,18 @@ impl InferenceProcessManager {
         &self,
         state: &AppState,
         app: &AppHandle,
-        job_id: &str,
-        model_path: &str,
-        model_info: &crate::store::project_file::InferenceModelEntry,
-        image_paths: &[(String, String)],
-        config: &InferenceConfig,
-        project_id: &str,
+        job: InferenceJob<'_>,
     ) -> Result<(), String> {
+        let InferenceJob {
+            job_id,
+            model_path,
+            model_info,
+            image_paths,
+            config,
+            project_id,
+            ..
+        } = job;
+
         let python = crate::training::python_env::venv_python()?;
         if !python.exists() {
             return Err("Entorno Python no configurado. Ejecuta setup primero.".to_string());

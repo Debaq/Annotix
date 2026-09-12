@@ -328,17 +328,32 @@ pub fn preprocess_image(image_path: &str, input_size: u32) -> Result<Vec<f32>, S
     Ok(input_data)
 }
 
+/// Parámetros de una corrida de inferencia. Van juntos desde el runner hasta
+/// el parser del formato concreto.
+#[derive(Debug, Clone, Copy)]
+pub struct InferenceParams<'a> {
+    pub conf_threshold: f64,
+    pub iou_threshold: f64,
+    pub input_size: u32,
+    pub num_classes: usize,
+    pub task: &'a str,
+    pub format_hint: Option<&'a str>,
+}
+
 /// Variante de `run_inference` que recibe el tensor ya preprocesado.
 pub fn run_inference_prepared(
     session: &mut Session,
     input_data: Vec<f32>,
-    conf_threshold: f64,
-    iou_threshold: f64,
-    input_size: u32,
-    num_classes: usize,
-    task: &str,
-    format_hint: Option<&str>,
+    params: InferenceParams<'_>,
 ) -> Result<InferenceResult, String> {
+    let InferenceParams {
+        conf_threshold,
+        iou_threshold,
+        input_size,
+        num_classes,
+        task,
+        format_hint,
+    } = params;
     let isz = input_size as usize;
     let input_tensor = Tensor::from_array(([1i64, 3, isz as i64, isz as i64], input_data))
         .map_err(|e| format!("Error creando tensor de entrada: {e}"))?;
@@ -416,16 +431,7 @@ pub fn run_inference_prepared(
     };
 
     let detections = match format {
-        OutputFormat::YoloV8 => parse_yolov8(
-            data0,
-            dims0,
-            conf_threshold,
-            iou_threshold,
-            input_size,
-            num_classes,
-            task,
-            proto_owned.as_ref(),
-        )?,
+        OutputFormat::YoloV8 => parse_yolov8(data0, dims0, params, proto_owned.as_ref())?,
         OutputFormat::YoloV5 => {
             parse_yolov5(data0, dims0, conf_threshold, iou_threshold, input_size)?
         }
@@ -574,13 +580,17 @@ fn detect_3d_format(dim1: usize, dim2: usize, num_classes: usize) -> Result<Outp
 fn parse_yolov8(
     data: &[f32],
     dims: &[usize],
-    conf_threshold: f64,
-    iou_threshold: f64,
-    input_size: u32,
-    num_classes_config: usize,
-    task: &str,
+    params: InferenceParams<'_>,
     proto: Option<&(Vec<usize>, Vec<f32>)>,
 ) -> Result<Vec<Detection>, String> {
+    let InferenceParams {
+        conf_threshold,
+        iou_threshold,
+        input_size,
+        num_classes: num_classes_config,
+        task,
+        ..
+    } = params;
     let (_batch, dim1, dim2) = (dims[0], dims[1], dims[2]);
 
     // Orientación: lado más pequeño = features
@@ -676,10 +686,10 @@ fn parse_yolov8(
                 det.keypoints = Some(kpts);
             }
             "segment" if extra_count == 32 => {
-                if let Some((proto_dims, proto_data)) = proto {
+                if let Some(proto) = proto {
                     let coeffs: Vec<f32> = (0..32).map(|k| val(extra_offset + k)).collect();
                     let polygon =
-                        compute_mask_polygon(&coeffs, proto_dims, proto_data, cx, cy, w, h, isz);
+                        compute_mask_polygon(&coeffs, proto, MaskBox { cx, cy, w, h }, isz);
                     if let Some(pts) = polygon {
                         det.polygon = Some(pts);
                     }
@@ -1191,16 +1201,28 @@ fn get_num_elements(dims: &[usize]) -> usize {
 // ─── Segmentation Mask → Polygon ────────────────────────────────────────────
 
 /// Computa polígono desde mask coefficients + prototypes
-fn compute_mask_polygon(
-    coeffs: &[f32],
-    proto_dims: &[usize],
-    proto_data: &[f32],
+/// Bbox de una detección en coordenadas del tensor de entrada (centro + tamaño).
+#[derive(Debug, Clone, Copy)]
+struct MaskBox {
     cx: f64,
     cy: f64,
-    bw: f64,
-    bh: f64,
+    w: f64,
+    h: f64,
+}
+
+fn compute_mask_polygon(
+    coeffs: &[f32],
+    proto: &(Vec<usize>, Vec<f32>),
+    bbox: MaskBox,
     input_size: f64,
 ) -> Option<Vec<(f64, f64)>> {
+    let (proto_dims, proto_data) = proto;
+    let MaskBox {
+        cx,
+        cy,
+        w: bw,
+        h: bh,
+    } = bbox;
     // proto_dims: [1, 32, mask_h, mask_w]
     if proto_dims.len() != 4 || proto_dims[1] != 32 {
         return None;
