@@ -273,10 +273,12 @@ pub fn sam_auto_generate_masks(
 
     let masks = run_amg(
         &sam.sessions,
-        &embedding,
-        orig_size,
-        input_size,
-        &image_id,
+        crate::inference::sam::amg::AmgImage {
+            embedding: &embedding,
+            orig_size,
+            input_size,
+            image_id: &image_id,
+        },
         &config,
         &existing,
         &progress,

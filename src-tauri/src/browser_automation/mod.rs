@@ -220,14 +220,16 @@ impl BrowserAutomationManager {
         std::thread::spawn(move || {
             step_engine::run_automation(
                 app_handle,
-                sessions_ref,
-                sid,
-                browser_path,
-                request,
-                runner,
-                cancelled,
-                paused,
-                auto_config,
+                step_engine::AutomationJob {
+                    sessions: sessions_ref,
+                    session_id: sid,
+                    browser_path,
+                    request,
+                    runner,
+                    cancelled,
+                    paused,
+                    config: auto_config,
+                },
             );
         });
 

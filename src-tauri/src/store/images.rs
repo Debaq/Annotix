@@ -191,19 +191,33 @@ fn entry_to_response(entry: &ImageEntry, project_id: &str) -> ImageResponse {
     }
 }
 
+/// Imagen a escribir en disco: bytes, dimensiones ya conocidas y, si viene de
+/// un video, de qué fotograma sale.
+pub struct NewImage<'a> {
+    pub file_name: &'a str,
+    pub data: &'a [u8],
+    pub width: u32,
+    pub height: u32,
+    pub video_id: Option<&'a str>,
+    pub frame_index: Option<i64>,
+}
+
 impl AppState {
     /// Escribe imagen a disco y retorna (id, ImageEntry) SIN tocar project.json.
     /// Usa width/height conocidas para evitar decodificar el archivo.
     pub fn prepare_image_entry(
         &self,
         project_id: &str,
-        file_name: &str,
-        data: &[u8],
-        width: u32,
-        height: u32,
-        video_id: Option<&str>,
-        frame_index: Option<i64>,
+        image: NewImage<'_>,
     ) -> Result<(String, ImageEntry), String> {
+        let NewImage {
+            file_name,
+            data,
+            width,
+            height,
+            video_id,
+            frame_index,
+        } = image;
         let images_dir = self.project_images_dir(project_id)?;
         std::fs::create_dir_all(&images_dir)
             .map_err(|e| format!("Error creando directorio de imágenes: {}", e))?;

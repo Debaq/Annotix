@@ -38,19 +38,33 @@ impl Platform {
     }
 }
 
+/// Encabezado del notebook: qué proyecto, backend, modelo y tarea se entrena,
+/// y con qué zip de dataset.
+pub struct NotebookInfo<'a> {
+    pub title: &'a str,
+    pub project_name: &'a str,
+    pub backend: &'a str,
+    pub model_id: &'a str,
+    pub task: &'a str,
+    pub zip_filename: &'a str,
+}
+
 /// Converts a Python script + requirements into a Jupyter notebook JSON string
 /// tailored to the target platform.
 pub fn script_to_notebook(
     platform: Platform,
-    title: &str,
-    project_name: &str,
-    backend: &str,
-    model_id: &str,
-    task: &str,
-    zip_filename: &str,
+    info: &NotebookInfo<'_>,
     requirements: &[&str],
     script_content: &str,
 ) -> String {
+    let NotebookInfo {
+        title,
+        project_name,
+        backend,
+        model_id,
+        task,
+        zip_filename,
+    } = *info;
     let mut cells = Vec::new();
 
     // ── Markdown: branded header ──────────────────────────────────────────

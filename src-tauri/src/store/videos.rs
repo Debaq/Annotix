@@ -327,23 +327,29 @@ fn with_track(
     }
 }
 
+/// Video recién copiado al proyecto. `info` son los datos que ya devolvió
+/// `get_video_info` sobre el archivo.
+pub struct NewVideo<'a> {
+    pub name: &'a str,
+    pub file: &'a str,
+    pub fps_extraction: f64,
+    pub total_frames: i64,
+    pub info: &'a VideoInfo,
+}
+
 // ─── AppState impl ────────────────────────────────────────────────────────────
 
 impl AppState {
     // ─── Videos ──────────────────────────────────────────────────────────────
 
-    pub fn create_video(
-        &self,
-        project_id: &str,
-        name: &str,
-        file: &str,
-        fps_extraction: f64,
-        fps_original: Option<f64>,
-        total_frames: i64,
-        duration_ms: i64,
-        width: i64,
-        height: i64,
-    ) -> Result<String, String> {
+    pub fn create_video(&self, project_id: &str, video: NewVideo<'_>) -> Result<String, String> {
+        let NewVideo {
+            name,
+            file,
+            fps_extraction,
+            total_frames,
+            info,
+        } = video;
         let now = js_timestamp();
         let id = uuid::Uuid::new_v4().to_string();
 
@@ -352,11 +358,11 @@ impl AppState {
             name: name.to_string(),
             file: file.to_string(),
             fps_extraction,
-            fps_original,
+            fps_original: Some(info.fps_original),
             total_frames,
-            duration_ms,
-            width,
-            height,
+            duration_ms: info.duration_ms,
+            width: info.width,
+            height: info.height,
             uploaded: now,
             status: "pending".to_string(),
             tracks: vec![],

@@ -708,12 +708,14 @@ pub async fn start_training_v2(
         cloud_manager.start_cloud_training(
             &app,
             &state,
-            &project_id,
-            &job_id,
-            &request,
-            cloud_config,
-            &dataset_zip_str,
-            &classes,
+            crate::training::cloud::CloudJobSpec {
+                project_id: &project_id,
+                training_job_id: &job_id,
+                request: &request,
+                cloud_config,
+                dataset_path: &dataset_zip_str,
+                project_classes: &classes,
+            },
         )?;
 
         return Ok(job_id);

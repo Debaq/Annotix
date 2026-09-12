@@ -8,18 +8,31 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::Emitter;
 
+/// Todo lo que necesita una corrida de automatización: a qué sesión pertenece,
+/// qué navegador lanza, qué pasos ejecuta y sus flags de control.
+pub struct AutomationJob {
+    pub sessions: Arc<Mutex<HashMap<String, ActiveBrowserSession>>>,
+    pub session_id: String,
+    pub browser_path: String,
+    pub request: AutomationRequest,
+    pub runner: Box<dyn BrowserRunner>,
+    pub cancelled: Arc<Mutex<bool>>,
+    pub paused: Arc<Mutex<bool>>,
+    pub config: BrowserAutomationConfig,
+}
+
 /// Motor principal que ejecuta los pasos de un runner de automatización.
-pub fn run_automation(
-    app: tauri::AppHandle,
-    sessions: Arc<Mutex<HashMap<String, ActiveBrowserSession>>>,
-    session_id: String,
-    browser_path: String,
-    request: AutomationRequest,
-    mut runner: Box<dyn BrowserRunner>,
-    cancelled: Arc<Mutex<bool>>,
-    paused: Arc<Mutex<bool>>,
-    config: BrowserAutomationConfig,
-) {
+pub fn run_automation(app: tauri::AppHandle, job: AutomationJob) {
+    let AutomationJob {
+        sessions,
+        session_id,
+        browser_path,
+        request,
+        mut runner,
+        cancelled,
+        paused,
+        config,
+    } = job;
     let emitter = |msg: &str| {
         let _ = app.emit(
             "automation:log",

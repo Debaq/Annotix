@@ -176,8 +176,17 @@ fn extract_pages_blocking(
 
         let file_name = format!("{}_page_{:03}.jpg", pdf_name, i + 1);
 
-        let (id, entry) =
-            state.prepare_image_entry(project_id, &file_name, &buf, w, h, None, None)?;
+        let (id, entry) = state.prepare_image_entry(
+            project_id,
+            crate::store::images::NewImage {
+                file_name: &file_name,
+                data: &buf,
+                width: w,
+                height: h,
+                video_id: None,
+                frame_index: None,
+            },
+        )?;
 
         all_ids.push(id);
         pending_entries.push(entry);

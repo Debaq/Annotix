@@ -135,27 +135,16 @@ pub fn prepare_dataset(
     let test_indices = &indices[counts.train + counts.val..];
     let has_test = !test_indices.is_empty();
 
+    let indices = SplitIndices {
+        train: train_indices,
+        val: val_indices,
+        test: test_indices,
+    };
+
     if task == "classify" {
-        prepare_classification_dataset(
-            images_dir,
-            project,
-            images,
-            output_dir,
-            train_indices,
-            val_indices,
-            test_indices,
-        )?;
+        prepare_classification_dataset(images_dir, project, images, output_dir, &indices)?;
     } else {
-        prepare_detection_dataset(
-            images_dir,
-            project,
-            images,
-            output_dir,
-            train_indices,
-            val_indices,
-            test_indices,
-            task,
-        )?;
+        prepare_detection_dataset(images_dir, project, images, output_dir, &indices, task)?;
     }
 
     // Generar data.yaml
@@ -167,20 +156,34 @@ pub fn prepare_dataset(
     Ok(yaml_path.to_string_lossy().replace('\\', "/"))
 }
 
+/// Índices de `images` que van a cada split.
+struct SplitIndices<'a> {
+    train: &'a [usize],
+    val: &'a [usize],
+    test: &'a [usize],
+}
+
+impl SplitIndices<'_> {
+    /// Pares (nombre, índices) omitiendo test cuando está vacío.
+    fn as_pairs(&self) -> Vec<(&'static str, &[usize])> {
+        let mut pairs: Vec<(&'static str, &[usize])> =
+            vec![("train", self.train), ("val", self.val)];
+        if !self.test.is_empty() {
+            pairs.push(("test", self.test));
+        }
+        pairs
+    }
+}
+
 fn prepare_detection_dataset(
     images_dir: &Path,
     project: &ProjectFile,
     images: &[ImageEntry],
     output_dir: &Path,
-    train_indices: &[usize],
-    val_indices: &[usize],
-    test_indices: &[usize],
+    indices: &SplitIndices<'_>,
     task: &str,
 ) -> Result<(), String> {
-    let mut splits: Vec<(&str, &[usize])> = vec![("train", train_indices), ("val", val_indices)];
-    if !test_indices.is_empty() {
-        splits.push(("test", test_indices));
-    }
+    let splits = indices.as_pairs();
 
     for (split, _) in &splits {
         std::fs::create_dir_all(output_dir.join("images").join(split))
@@ -203,14 +206,9 @@ fn prepare_classification_dataset(
     project: &ProjectFile,
     images: &[ImageEntry],
     output_dir: &Path,
-    train_indices: &[usize],
-    val_indices: &[usize],
-    test_indices: &[usize],
+    indices: &SplitIndices<'_>,
 ) -> Result<(), String> {
-    let mut splits: Vec<(&str, &[usize])> = vec![("train", train_indices), ("val", val_indices)];
-    if !test_indices.is_empty() {
-        splits.push(("test", test_indices));
-    }
+    let splits = indices.as_pairs();
 
     for (split, _) in &splits {
         for cls in &project.classes {
@@ -878,17 +876,29 @@ fn draw_mask_on_target(
 
 // ─── Dataset Router ─────────────────────────────────────────────────────────
 
+/// Qué dataset construir: proporciones de split, tarea y backend destino.
+pub struct DatasetSpec<'a> {
+    pub val_split: f64,
+    pub test_split: f64,
+    pub task: &'a str,
+    pub backend: &'a TrainingBackend,
+}
+
 /// Prepara dataset según el backend seleccionado
 pub fn prepare_dataset_for_backend(
     images_dir: &Path,
     project: &ProjectFile,
     images: &[ImageEntry],
     output_dir: &Path,
-    val_split: f64,
-    test_split: f64,
-    task: &str,
-    backend: &TrainingBackend,
+    spec: DatasetSpec<'_>,
 ) -> Result<String, String> {
+    let DatasetSpec {
+        val_split,
+        test_split,
+        task,
+        backend,
+    } = spec;
+
     match backend {
         TrainingBackend::Yolo | TrainingBackend::RtDetr | TrainingBackend::MmRotate => {
             prepare_dataset(

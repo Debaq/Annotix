@@ -92,6 +92,16 @@ pub struct CloudTrainingManager {
     active_jobs: Arc<Mutex<HashMap<String, ActiveCloudJob>>>,
 }
 
+/// Job de entrenamiento a despachar a un proveedor cloud.
+pub struct CloudJobSpec<'a> {
+    pub project_id: &'a str,
+    pub training_job_id: &'a str,
+    pub request: &'a TrainingRequest,
+    pub cloud_config: &'a CloudTrainingConfig,
+    pub dataset_path: &'a str,
+    pub project_classes: &'a [String],
+}
+
 impl CloudTrainingManager {
     pub fn new() -> Self {
         Self {
@@ -103,13 +113,16 @@ impl CloudTrainingManager {
         &self,
         app: &AppHandle,
         state: &AppState,
-        project_id: &str,
-        training_job_id: &str,
-        request: &TrainingRequest,
-        cloud_config: &CloudTrainingConfig,
-        dataset_path: &str,
-        project_classes: &[String],
+        job: CloudJobSpec<'_>,
     ) -> Result<String, String> {
+        let CloudJobSpec {
+            project_id,
+            training_job_id,
+            request,
+            cloud_config,
+            dataset_path,
+            project_classes,
+        } = job;
         let runner = self.get_runner(&cloud_config.provider, state)?;
         // reqwest::blocking no puede correr dentro del runtime tokio del comando Tauri.
         // Aislamos la llamada en un thread propio.

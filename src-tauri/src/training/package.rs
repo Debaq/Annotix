@@ -30,10 +30,12 @@ pub fn generate_training_package(
         project,
         images,
         &dataset_dir,
-        request.val_split,
-        request.test_split,
-        &request.task,
-        &request.backend,
+        dataset::DatasetSpec {
+            val_split: request.val_split,
+            test_split: request.test_split,
+            task: &request.task,
+            backend: &request.backend,
+        },
     )?;
 
     // Absolute prefix usado por scripts/yamls generados; lo sustituimos por
@@ -114,15 +116,19 @@ pub fn generate_training_package(
     };
 
     // 6. Generate notebooks — uno por plataforma (Colab, Kaggle, HF, local)
+    let nb_title = format!("{} Training — {}", backend_name, request.model_id);
+    let nb_info = notebook::NotebookInfo {
+        title: &nb_title,
+        project_name: &project.name,
+        backend: backend_name,
+        model_id: &request.model_id,
+        task: &request.task,
+        zip_filename: &zip_filename,
+    };
     for platform in notebook::Platform::all() {
         let nb_content = notebook::script_to_notebook(
             platform,
-            &format!("{} Training — {}", backend_name, request.model_id),
-            &project.name,
-            backend_name,
-            &request.model_id,
-            &request.task,
-            &zip_filename,
+            &nb_info,
             &requirements,
             &train_script_rewritten,
         );

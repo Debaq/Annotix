@@ -1125,15 +1125,12 @@ pub async fn list_pending_approvals(
 pub async fn sync_new_image_to_doc(
     p2p: &P2pState,
     project_id: &str,
-    image_id: &str,
-    image_name: &str,
-    image_file: &str,
-    width: u32,
-    height: u32,
-    status: &str,
-    annotations: &[AnnotationEntry],
+    image: &ImageEntry,
     image_path: &std::path::Path,
 ) -> Result<(), String> {
+    let image_id = image.id.as_str();
+    let annotations = image.annotations.as_slice();
+
     let node_guard = p2p.node.read().await;
     let node = node_guard.as_ref().ok_or("No hay nodo P2P activo")?;
     let sessions = p2p.sessions.read().await;
@@ -1154,11 +1151,11 @@ pub async fn sync_new_image_to_doc(
     // Escribir metadata de la imagen
     let img_meta = serde_json::json!({
         "id": image_id,
-        "name": image_name,
-        "file": image_file,
-        "width": width,
-        "height": height,
-        "status": status,
+        "name": image.name,
+        "file": image.file,
+        "width": image.width,
+        "height": image.height,
+        "status": image.status,
     });
     let meta_key = format!("images/{}/meta", image_id);
     doc.set_bytes(

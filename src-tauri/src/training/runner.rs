@@ -254,10 +254,12 @@ impl TrainingProcessManager {
                 &pf,
                 &images,
                 &dataset_dir,
-                request.val_split,
-                request.test_split,
-                &request.task,
-                &request.backend,
+                dataset::DatasetSpec {
+                    val_split: request.val_split,
+                    test_split: request.test_split,
+                    task: &request.task,
+                    backend: &request.backend,
+                },
             )?
         };
 

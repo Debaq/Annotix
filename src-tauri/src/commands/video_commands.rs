@@ -6,7 +6,7 @@ use crate::p2p::P2pPermission;
 use crate::store::images::ImageResponse;
 use crate::store::project_file::KeyframeEntry;
 use crate::store::videos::{
-    bake_annotations_for_frame, SetKeyframeRequest, ToggleKeyframeRequest, TrackResponse,
+    bake_annotations_for_frame, NewVideo, SetKeyframeRequest, ToggleKeyframeRequest, TrackResponse,
     UpdateTrackRequest, VideoInfo, VideoResponse,
 };
 use crate::store::AppState;
@@ -89,14 +89,13 @@ pub async fn upload_video(
 
     let video_id = state.create_video(
         &project_id,
-        &file_name,
-        &unique_name,
-        fps_extraction,
-        Some(info.fps_original),
-        0,
-        info.duration_ms,
-        info.width,
-        info.height,
+        NewVideo {
+            name: &file_name,
+            file: &unique_name,
+            fps_extraction,
+            total_frames: 0,
+            info: &info,
+        },
     )?;
 
     let _ = app.emit(
@@ -534,12 +533,14 @@ fn do_extract_frames(
             // Escribir imagen a disco sin flush a project.json
             let (image_id, entry) = state.prepare_image_entry(
                 project_id,
-                &frame_name,
-                &encoded,
-                w as u32,
-                h as u32,
-                Some(video_id),
-                Some(*fc),
+                crate::store::images::NewImage {
+                    file_name: &frame_name,
+                    data: &encoded,
+                    width: w as u32,
+                    height: h as u32,
+                    video_id: Some(video_id),
+                    frame_index: Some(*fc),
+                },
             )?;
 
             pending.push(entry);

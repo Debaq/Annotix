@@ -35,16 +35,29 @@ struct Candidate {
     best_score: f32,
 }
 
+/// Imagen ya codificada por el encoder, tal como la necesita el decoder.
+pub struct AmgImage<'a> {
+    pub embedding: &'a [f32],
+    /// (w, h) originales.
+    pub orig_size: (u32, u32),
+    /// (w, h) tras resize 1024 (para `transform_points`).
+    pub input_size: (u32, u32),
+    pub image_id: &'a str,
+}
+
 pub fn run_amg(
     sessions: &Mutex<Option<SamSessions>>,
-    embedding: &[f32],
-    orig_size: (u32, u32),  // (w, h) originales
-    input_size: (u32, u32), // (w, h) tras resize 1024 (para transform_points)
-    image_id: &str,
+    image: AmgImage<'_>,
     config: &AmgConfig,
     existing_bboxes: &[[f32; 4]],
     progress: ProgressCb<'_>,
 ) -> Result<Vec<SamMask>, String> {
+    let AmgImage {
+        embedding,
+        orig_size,
+        input_size,
+        image_id,
+    } = image;
     let n = config.points_per_side.max(1) as usize;
     let total = n * n;
 
