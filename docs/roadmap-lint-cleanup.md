@@ -1,6 +1,6 @@
 # Roadmap limpieza ESLint
 
-Tras migración a flat config (eslint v9 + typescript-eslint v8): **0 errores**. Estado actual: **120 warnings** (191 originales). Script `lint` corre con `--max-warnings 130` (techo se baja al cerrar fases).
+**Completado.** Tras migración a flat config (eslint v9 + typescript-eslint v8): 0 errores y **0 warnings** (191 originales). El script `lint` corre con `--max-warnings 0`. Ver `docs/lint_warning.md` para el estado y cómo se cerró cada regla; lo de abajo es el plan original, ya ejecutado.
 
 **Hecho:** Fase 1 (unused-vars) y Fase 2 (react-refresh).
 - 66 → 0 unused-vars (imports muertos borrados, args/vars sin uso prefijados con `_` o eliminados, config con `varsIgnorePattern`/`caughtErrorsIgnorePattern`/`destructuredArrayIgnorePattern`).

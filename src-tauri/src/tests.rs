@@ -1724,3 +1724,181 @@ fn baked_bbox_normalizes_to_the_same_fraction_as_the_keyframe() {
     );
     assert!((nh - 0.5).abs() < 1e-9);
 }
+
+// ─── Payloads IPC: structs `request` de los comandos ────────────────────────
+//
+// Los comandos que agrupan sus parámetros en un struct reciben el objeto bajo
+// la clave `request` y lo deserializan con `rename_all = "camelCase"`. Un
+// campo renombrado en `tauriDb.ts` / `inferenceService.ts` y no aquí (o al
+// revés) falla en runtime, no al compilar: estos tests fijan el contrato con
+// el JSON exacto que manda el frontend.
+
+#[test]
+fn ipc_upload_audio_request_matches_frontend_payload() {
+    let payload = json!({
+        "projectId": "p1",
+        "filePath": "/tmp/a.wav",
+        "durationMs": 1200,
+        "sampleRate": 44100,
+        "language": "es",
+    });
+    let req: crate::store::audio::UploadAudioRequest =
+        serde_json::from_value(payload).expect("deserializa");
+    assert_eq!(req.project_id, "p1");
+    assert_eq!(req.file_path, "/tmp/a.wav");
+    assert_eq!(req.duration_ms, 1200);
+    assert_eq!(req.sample_rate, 44100);
+    assert_eq!(req.language.as_deref(), Some("es"));
+}
+
+#[test]
+fn ipc_save_transcription_request_matches_frontend_payload() {
+    // `speakerId` y `language` viajan como undefined cuando el anotador no los
+    // llena: tauri los envía como null.
+    let payload = json!({
+        "projectId": "p1",
+        "audioId": "a1",
+        "transcription": "hola",
+        "speakerId": null,
+        "language": null,
+    });
+    let req: crate::store::audio::SaveTranscriptionRequest =
+        serde_json::from_value(payload).expect("deserializa");
+    assert_eq!(req.audio_id, "a1");
+    assert_eq!(req.transcription, "hola");
+    assert!(req.speaker_id.is_none());
+    assert!(req.language.is_none());
+}
+
+#[test]
+fn ipc_save_tts_recording_request_matches_frontend_payload() {
+    let payload = json!({
+        "projectId": "p1",
+        "sentenceId": "s1",
+        "audioBase64": "AAAA",
+        "fileExt": "webm",
+        "durationMs": 900,
+        "sampleRate": 48000,
+    });
+    let req: crate::store::audio::SaveTtsRecordingRequest =
+        serde_json::from_value(payload).expect("deserializa");
+    assert_eq!(req.sentence_id, "s1");
+    assert_eq!(req.file_ext, "webm");
+    assert_eq!(req.duration_ms, 900);
+    assert_eq!(req.sample_rate, 48000);
+}
+
+#[test]
+fn ipc_save_audio_annotation_request_accepts_partial_payload() {
+    // `saveAudioAnnotation` manda siempre las seis claves, con null en las que
+    // no aplican al tipo de proyecto.
+    let payload = json!({
+        "projectId": "p1",
+        "audioId": "a1",
+        "transcription": null,
+        "speakerId": null,
+        "language": null,
+        "segments": null,
+        "classId": 3,
+        "events": null,
+    });
+    let req: crate::store::audio::SaveAudioAnnotationRequest =
+        serde_json::from_value(payload).expect("deserializa");
+    assert_eq!(req.class_id, Some(3));
+    assert!(req.segments.is_none());
+    assert!(req.events.is_none());
+}
+
+#[test]
+fn ipc_update_track_request_matches_frontend_payload() {
+    // `updateTrack` esparce `updates`: las claves ausentes no llegan.
+    let payload = json!({
+        "projectId": "p1",
+        "trackId": "t1",
+        "videoId": "v1",
+        "enabled": false,
+    });
+    let req: crate::store::videos::UpdateTrackRequest =
+        serde_json::from_value(payload).expect("deserializa");
+    assert_eq!(req.track_id, "t1");
+    assert_eq!(req.video_id, "v1");
+    assert_eq!(req.enabled, Some(false));
+    assert!(req.class_id.is_none());
+    assert!(req.label.is_none());
+}
+
+#[test]
+fn ipc_toggle_keyframe_request_matches_frontend_payload() {
+    let payload = json!({
+        "projectId": "p1",
+        "trackId": "t1",
+        "videoId": "v1",
+        "frameIndex": 12,
+        "enabled": true,
+    });
+    let req: crate::store::videos::ToggleKeyframeRequest =
+        serde_json::from_value(payload).expect("deserializa");
+    assert_eq!(req.frame_index, 12);
+    assert!(req.enabled);
+}
+
+#[test]
+fn ipc_set_keyframe_request_matches_frontend_payload() {
+    let payload = json!({
+        "projectId": "p1",
+        "trackId": "t1",
+        "videoId": "v1",
+        "frameIndex": 4,
+        "bboxX": 10.0,
+        "bboxY": 20.0,
+        "bboxWidth": 30.0,
+        "bboxHeight": 40.0,
+    });
+    let req: crate::store::videos::SetKeyframeRequest =
+        serde_json::from_value(payload).expect("deserializa");
+    assert_eq!(req.frame_index, 4);
+    assert_eq!(req.bbox_x, 10.0);
+    assert_eq!(req.bbox_height, 40.0);
+}
+
+#[test]
+fn ipc_upload_model_request_matches_frontend_payload() {
+    let payload = json!({
+        "projectId": "p1",
+        "sourcePath": "/tmp/m.onnx",
+        "name": "m",
+        "format": "onnx",
+        "task": "detect",
+        "classNames": ["a", "b"],
+        "inputSize": 640,
+        "outputFormat": null,
+        "metadata": null,
+    });
+    let req: crate::store::inference::UploadModelRequest =
+        serde_json::from_value(payload).expect("deserializa");
+    assert_eq!(req.source_path, "/tmp/m.onnx");
+    assert_eq!(req.class_names.len(), 2);
+    assert_eq!(req.input_size, Some(640));
+    assert!(req.output_format.is_none());
+}
+
+#[test]
+fn ipc_update_model_config_request_matches_frontend_payload() {
+    let payload = json!({
+        "projectId": "p1",
+        "modelId": "m1",
+        "classMapping": [
+            { "modelClassId": 0, "modelClassName": "a", "projectClassId": "0" }
+        ],
+        "inputSize": null,
+        "task": null,
+        "outputFormat": null,
+        "classNames": null,
+        "metadataPatch": null,
+    });
+    let req: crate::store::inference::UpdateModelConfigRequest =
+        serde_json::from_value(payload).expect("deserializa");
+    assert_eq!(req.model_id, "m1");
+    assert_eq!(req.class_mapping.len(), 1);
+    assert!(req.input_size.is_none());
+}
