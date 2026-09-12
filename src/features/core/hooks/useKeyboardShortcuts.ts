@@ -6,6 +6,7 @@ import { useAnnotations } from '../../canvas/hooks/useAnnotations';
 import { useSamStore } from '../../sam/store/useSamStore';
 import { CLASS_SHORTCUTS } from '../constants';
 import { matchesShortcut } from '../utils/matchShortcut';
+import type { AnnotationData } from '@/lib/db';
 
 export function useKeyboardShortcuts() {
   const { setActiveTool, setActiveClassId, cycleGalleryMode, toggleAnnotationsVisible } = useUIStore();
@@ -215,13 +216,12 @@ export function useKeyboardShortcuts() {
         for (const id of selectedAnnotationIds) {
           const ann = annotations.find(a => a.id === id);
           if (!ann) continue;
-          const data = ann.data as any;
-          if (data.x !== undefined && data.y !== undefined) {
+          const data = ann.data;
+          if ('x' in data && 'y' in data) {
             updateAnnotation(id, { data: { ...data, x: data.x + dx, y: data.y + dy } });
-          } else if (data.points) {
-            updateAnnotation(id, {
-              data: { ...data, points: data.points.map((p: any) => ({ x: p.x + dx, y: p.y + dy })) },
-            });
+          } else if ('points' in data) {
+            const points = data.points.map((p) => ({ ...p, x: p.x + dx, y: p.y + dy }));
+            updateAnnotation(id, { data: { ...data, points } as AnnotationData });
           }
         }
       }

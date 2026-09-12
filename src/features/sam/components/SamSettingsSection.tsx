@@ -52,8 +52,7 @@ export function SamSettingsSection() {
         filters: [{ name: 'ONNX', extensions: ['onnx'] }],
       });
       if (!file) return;
-      const filePath = typeof file === 'string' ? file : (file as any).path ?? '';
-      if (!filePath) return;
+      const filePath = file;
       const baseName = filePath.split(/[\\/]/).pop() || 'model.onnx';
       setUploading(kind);
       const entry = await samUploadAppModel(filePath, baseName, kind);

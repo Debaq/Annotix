@@ -14,7 +14,7 @@ import {
   ChartOptions,
 } from 'chart.js';
 import { getRelativePosition } from 'chart.js/helpers';
-import annotationPlugin from 'chartjs-plugin-annotation';
+import annotationPlugin, { type AnnotationOptions } from 'chartjs-plugin-annotation';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import { Line } from 'react-chartjs-2';
 import { Card } from '@/components/ui/card';
@@ -195,7 +195,7 @@ export function TimeSeriesCanvas() {
 
   // Generate annotations config for Chart.js
   const getChartAnnotations = () => {
-    const chartAnnotations: any = {};
+    const chartAnnotations: Record<string, AnnotationOptions> = {};
 
     [...annotations, ...(tempAnnotation ? [tempAnnotation] : [])].forEach((ann, idx) => {
       // La clasificación es de la serie entera: se muestra en la barra de

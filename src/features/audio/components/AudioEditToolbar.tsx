@@ -112,8 +112,8 @@ export function AudioEditToolbar({
       }
       onToolChange(null);
       onComplete();
-    } catch (err: any) {
-      setError(err?.message || String(err));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setProcessing(false);
     }

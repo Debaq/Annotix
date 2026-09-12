@@ -20,7 +20,14 @@ interface UseAudioPlayerResult {
   setPlaybackRate: (rate: number) => void;
 }
 
-const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+declare global {
+  interface Window {
+    /** Safari expone el AudioContext bajo prefijo. */
+    webkitAudioContext?: typeof AudioContext;
+  }
+}
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext!)();
 
 export function useAudioPlayer({ projectId, audioId }: UseAudioPlayerOptions): UseAudioPlayerResult {
   const audioRef = useRef<HTMLAudioElement>(null);

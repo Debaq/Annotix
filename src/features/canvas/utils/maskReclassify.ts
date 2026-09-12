@@ -49,7 +49,7 @@ export async function reclassifyIsland(
   if (!result.changed) return noChange;
 
   // Reconstruir array de anotaciones
-  const updated = [...annotations];
+  const updated: (Annotation | null)[] = [...annotations];
 
   for (const mu of result.updatedMasks) {
     const entry = maskEntries[mu.index];
@@ -62,7 +62,7 @@ export async function reclassifyIsland(
       };
     } else {
       // Máscara vacía: marcar para eliminar
-      (updated as any)[entry.idx] = null;
+      updated[entry.idx] = null;
     }
   }
 

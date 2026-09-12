@@ -23,6 +23,13 @@ interface SamComposite {
   visibleIds: string[];
 }
 
+declare global {
+  interface Window {
+    /** Composite publicado para que `samHitTest` no dependa de prop drilling. */
+    __samComposite?: SamComposite;
+  }
+}
+
 function hslColor(seed: number, alpha: number): [number, number, number, number] {
   const h = (seed * 137.508) % 360;
   // hsl → rgb (s=70%, l=55%)
@@ -93,7 +100,7 @@ function compose(
     if (!lr) return;
     const [lw, lh] = m.lowresSize;
     if (lw <= 0 || lh <= 0) return;
-    const lrBytes = lr instanceof Uint8Array ? lr : new Uint8Array(lr as any);
+    const lrBytes = lr instanceof Uint8Array ? lr : new Uint8Array(lr as ArrayLike<number>);
     if (lrBytes.length < lw * lh) return;
 
     const isHover = hoverMaskId === m.id;
@@ -186,7 +193,7 @@ export function SamOverlay({
   const compositeRef = useRef(composite);
   compositeRef.current = composite;
   useEffect(() => {
-    (window as any).__samComposite = compositeRef.current;
+    window.__samComposite = compositeRef.current;
   }, [composite]);
 
   useEffect(() => {
@@ -230,7 +237,7 @@ export function samHitTest(
   imageWidth: number,
   imageHeight: number,
 ): string | null {
-  const composite: SamComposite | undefined = (window as any).__samComposite;
+  const composite: SamComposite | undefined = window.__samComposite;
   if (!composite || !composite.canvas) return null;
   if (imageX < 0 || imageY < 0 || imageX >= imageWidth || imageY >= imageHeight) return null;
   const cx = Math.min(ID_MAP_DIM - 1, Math.floor((imageX / imageWidth) * ID_MAP_DIM));

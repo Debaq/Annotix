@@ -60,7 +60,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
   const [importedProjectId, setImportedProjectId] = useState<string | null>(null);
 
   const existingNames = React.useMemo(
-    () => new Set((projects ?? []).map((p: any) => (p.name ?? '').toLowerCase())),
+    () => new Set((projects ?? []).map((p) => (p.name ?? '').toLowerCase())),
     [projects]
   );
 

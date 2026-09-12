@@ -2,6 +2,12 @@ const REPO = 'Debaq/Annotix';
 const CACHE_KEY = 'annotix-changelog';
 const CACHE_TTL = 1000 * 60 * 30; // 30 minutos
 
+/** Campos que usamos de `GET /repos/{repo}/commits`. */
+interface GithubCommit {
+  sha: string;
+  commit: { message: string };
+}
+
 export interface ChangelogEntry {
   hash: string;
   message: string;
@@ -36,10 +42,10 @@ export async function fetchChangelog(): Promise<ChangelogEntry[]> {
 
     if (!res.ok) return [];
 
-    const data = await res.json();
-    const entries: ChangelogEntry[] = data.map((c: any) => ({
-      hash: (c.sha as string).slice(0, 7),
-      message: (c.commit.message as string).split('\n')[0],
+    const data: GithubCommit[] = await res.json();
+    const entries: ChangelogEntry[] = data.map((c) => ({
+      hash: c.sha.slice(0, 7),
+      message: c.commit.message.split('\n')[0],
     }));
 
     // Guardar cache

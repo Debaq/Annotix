@@ -29,7 +29,7 @@ function paintPredictionPreview(
   if (!lr) return null;
   const [lw, lh] = pred.lowresSize;
   if (lw <= 0 || lh <= 0) return null;
-  const bytes = lr instanceof Uint8Array ? lr : new Uint8Array(lr as any);
+  const bytes = lr instanceof Uint8Array ? lr : new Uint8Array(lr as ArrayLike<number>);
   if (bytes.length < lw * lh) return null;
 
   const tmp = document.createElement('canvas');

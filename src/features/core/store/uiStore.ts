@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type ToolType = 'pan' | 'bbox' | 'mask' | 'polygon' | 'keypoints' | 'landmarks' | 'obb';
+export type ToolType = 'pan' | 'bbox' | 'mask' | 'polygon' | 'keypoints' | 'landmarks' | 'obb';
 type GalleryFilterType = 'all' | 'annotated' | 'unannotated';
 export type GalleryMode = 'normal' | 'compact' | 'hidden';
 

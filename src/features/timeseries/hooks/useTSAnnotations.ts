@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { TimeSeriesAnnotation, TimeSeriesAnnotationData } from '@/lib/db';
+import { TimeSeriesAnnotation, TimeSeriesAnnotationData, RangeAnnotation } from '@/lib/db';
 import { useUIStore } from '../../core/store/uiStore';
 import { timeseriesService } from '../services/timeseriesService';
 
@@ -209,7 +209,7 @@ export function useTSAnnotations({ timeseriesId }: UseTSAnnotationsProps) {
       setTempAnnotation({
         ...tempAnnotation,
         data: {
-          ...(tempAnnotation.data as any),
+          ...(tempAnnotation.data as RangeAnnotation),
           endTimestamp: timestamp,
         },
       });

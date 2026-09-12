@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Hand, Square, PenTool, Hexagon, Dot, LayoutGrid, Box, Wand2 } from 'lucide-react';
-import { useUIStore } from '../../core/store/uiStore';
+import { Hand, Square, PenTool, Hexagon, Dot, LayoutGrid, Box, Wand2, type LucideIcon } from 'lucide-react';
+import { useUIStore, type ToolType } from '../../core/store/uiStore';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useSamStore } from '../../sam/store/useSamStore';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ export function CanvasToolbar() {
   const candidatesCount = useSamStore((s) => s.candidates.length);
   const requestAmg = useSamStore((s) => s.requestAmg);
 
-  const tools = [
+  const tools: { id: ToolType; icon: LucideIcon; label: string; shortcut: string }[] = [
     { id: 'pan', icon: Hand, label: 'tools.pan', shortcut: 'H' },
   ];
 
@@ -69,7 +69,7 @@ export function CanvasToolbar() {
                     "h-10 w-10 transition-colors",
                     activeTool === tool.id ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                   )}
-                  onClick={() => setActiveTool(tool.id as any)}
+                  onClick={() => setActiveTool(tool.id)}
                 >
                   <tool.icon className="h-5 w-5" />
                 </Button>

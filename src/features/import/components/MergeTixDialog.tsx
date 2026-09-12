@@ -53,7 +53,7 @@ export const MergeTixDialog: React.FC<Props> = ({ trigger }) => {
   const [mergedProjectId, setMergedProjectId] = useState<string | null>(null);
 
   const existingNames = useMemo(
-    () => new Set((projects ?? []).map((p: any) => (p.name ?? '').toLowerCase())),
+    () => new Set((projects ?? []).map((p) => (p.name ?? '').toLowerCase())),
     [projects],
   );
   const nameExists = projectName.trim() !== '' && existingNames.has(projectName.trim().toLowerCase());
