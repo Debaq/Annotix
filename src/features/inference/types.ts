@@ -13,7 +13,22 @@ export interface InferenceModelEntry {
   outputFormat: string | null;
   modelHash: string;
   uploaded: number;
-  metadata: Record<string, unknown> | null;
+  metadata: InferenceModelMetadata | null;
+}
+
+/**
+ * Metadata libre que acompaña al modelo. Los campos declarados son los que
+ * escribe `detect_model_metadata`; el index signature deja pasar el resto.
+ */
+export interface InferenceModelMetadata {
+  model_info?: {
+    version?: string;
+    type?: string;
+    [key: string]: unknown;
+  };
+  color_palette?: Record<string, string>;
+  preprocess?: PreprocessConfig | null;
+  [key: string]: unknown;
 }
 
 export interface ClassMapping {

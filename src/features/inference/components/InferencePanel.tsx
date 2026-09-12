@@ -11,6 +11,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { projectService } from '../../projects/services/projectService';
+import { imageService } from '../../gallery/services/imageService';
 import { useInferenceModels } from '../hooks/useInferenceModels';
 import { ModelUploader } from './ModelUploader';
 import { ClassMappingEditor } from './ClassMappingEditor';
@@ -54,8 +55,7 @@ export function InferencePanel({ trigger, project }: InferencePanelProps) {
   });
 
   const currentPreprocess: PreprocessConfig =
-    ((selectedModel?.metadata as { preprocess?: PreprocessConfig } | null)?.preprocess) ??
-    DEFAULT_PREPROCESS;
+    selectedModel?.metadata?.preprocess ?? DEFAULT_PREPROCESS;
 
   const projectClasses = useMemo(
     () =>
@@ -71,14 +71,13 @@ export function InferencePanel({ trigger, project }: InferencePanelProps) {
     if (!projectId || !selectedModel) return;
 
     const colorPalette: Record<string, string> =
-      (selectedModel.metadata as any)?.color_palette || {};
+      selectedModel.metadata?.color_palette || {};
     const classNames = selectedModel.classNames;
     if (classNames.length === 0) return;
 
     const existingCount = projectClasses.length;
-    const hasAnnotations = (project as any)?.images?.some(
-      (img: any) => img.annotations && img.annotations.length > 0
-    );
+    const images = await imageService.listByProject(projectId);
+    const hasAnnotations = images.some((img) => img.annotations.length > 0);
 
     let warning = t('inference.replaceClassesConfirm', { existing: existingCount, count: classNames.length });
     if (hasAnnotations) {
@@ -108,7 +107,7 @@ export function InferencePanel({ trigger, project }: InferencePanelProps) {
       projectClassId: String(index),
     }));
     await updateMapping(selectedModel.id, newMapping);
-  }, [projectId, selectedModel, projectClasses, project, updateMapping, t]);
+  }, [projectId, selectedModel, projectClasses, updateMapping, t]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

@@ -16,6 +16,8 @@ export interface Project {
     version: string;
   };
   imageCount?: number;
+  /** Cantidad de modelos de inferencia del proyecto (lo envía ProjectSummary) */
+  inferenceModelCount?: number;
   p2pDownload?: { totalImages: number; downloadedImages: number };
   hasP2pConfig?: boolean;
   folder?: string;

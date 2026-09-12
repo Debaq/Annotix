@@ -15,16 +15,12 @@ export function ModelUploader({ model, loading, configResult, onUpload, onDelete
   const { t } = useTranslation();
 
   // Extraer info del modelo desde metadata si existe
-  const modelVersion = model?.metadata
-    ? (model.metadata as any)?.model_info?.version
-    : null;
-  const modelType = model?.metadata
-    ? (model.metadata as any)?.model_info?.type
-    : null;
+  const modelVersion = model?.metadata?.model_info?.version ?? null;
+  const modelType = model?.metadata?.model_info?.type ?? null;
 
   // Colores del config result o de la metadata guardada
   const colors: Record<string, string> = configResult?.colors
-    || (model?.metadata as any)?.color_palette
+    || model?.metadata?.color_palette
     || {};
 
   if (model) {

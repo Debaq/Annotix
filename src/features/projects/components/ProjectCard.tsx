@@ -335,10 +335,10 @@ export function ProjectCard({ project, folders = [] }: ProjectCardProps) {
             <span className="text-muted-foreground">{t('projects.stats.classes')}</span>
             <span className="font-medium">{project.classes.length}</span>
           </div>
-          {(project as any).inferenceModelCount > 0 && (
+          {(project.inferenceModelCount ?? 0) > 0 && (
             <div className="flex items-center gap-2 text-xs" style={{ color: '#7c3aed' }}>
               <i className="fas fa-brain" />
-              <span>{(project as any).inferenceModelCount} {(project as any).inferenceModelCount === 1 ? 'modelo AI' : 'modelos AI'}</span>
+              <span>{project.inferenceModelCount} {project.inferenceModelCount === 1 ? 'modelo AI' : 'modelos AI'}</span>
             </div>
           )}
           <div className="flex flex-wrap gap-1">
