@@ -20,7 +20,7 @@ import { useImagePresence } from '../../p2p/hooks/useImagePresence';
 import { skeletonPresets } from '../data/skeletonPresets';
 import { imageService } from '../../gallery/services/imageService';
 import type { Annotation, BBoxData, OBBData, PolygonData, KeypointsData, LandmarksData, MaskData } from '@/lib/db';
-import type { MouseEventData } from '../types/handlers';
+import type { MouseEventData, RectDrawingData } from '../types/handlers';
 import { BBoxHandler } from '../handlers/BBoxHandler';
 import { OBBHandler } from '../handlers/OBBHandler';
 import { PolygonHandler } from '../handlers/PolygonHandler';
@@ -104,8 +104,8 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
   const [stageScale, setStageScale] = useState(1);
   const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 });
   const [maskImage, setMaskImage] = useState<MaskPreviewImage | null>(null);
-  const [bboxDrawingData, setBboxDrawingData] = useState<any>(null);
-  const [obbDrawingData, setObbDrawingData] = useState<any>(null);
+  const [bboxDrawingData, setBboxDrawingData] = useState<RectDrawingData | null>(null);
+  const [obbDrawingData, setObbDrawingData] = useState<RectDrawingData | null>(null);
   const [maskBrushSize, setMaskBrushSize] = useState(15);
   const [imageInfoCollapsed, setImageInfoCollapsed] = useState(() => {
     try { return localStorage.getItem('annotix:imageInfoCollapsed') !== 'false'; } catch { return true; }

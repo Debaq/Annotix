@@ -25,7 +25,7 @@ export interface BaseHandler {
 
   // Annotation events
   onAnnotationDragEnd?(annotationId: string, newPosition: Point): void;
-  onAnnotationTransform?(annotationId: string, newData: any): void;
+  onAnnotationTransform?(annotationId: string, newData: TransformedBox): void;
 
   // State
   isActive(): boolean;
@@ -36,7 +36,28 @@ export interface BaseHandler {
   cancel?(): void;
 }
 
-export interface DrawingState {
+/**
+ * Rectángulo en curso de dibujo, en coordenadas de imagen. `width` y `height`
+ * pueden ser negativos mientras se arrastra hacia arriba o hacia la izquierda;
+ * se normalizan al cerrar la anotación.
+ */
+export interface RectDrawingData {
+  startX: number;
+  startY: number;
+  width: number;
+  height: number;
+}
+
+/** Caja resultante de arrastrar el transformer, en coordenadas de imagen. */
+export interface TransformedBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation?: number;
+}
+
+export interface DrawingState<T = unknown> {
   isDrawing: boolean;
-  data: any;
+  data: T | null;
 }

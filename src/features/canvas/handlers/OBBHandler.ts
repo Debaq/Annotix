@@ -1,12 +1,12 @@
-import type { BaseHandler, MouseEventData, DrawingState } from '../types/handlers';
+import type { BaseHandler, MouseEventData, DrawingState, RectDrawingData } from '../types/handlers';
 import type { Annotation, OBBData } from '@/lib/db';
 
 export class OBBHandler implements BaseHandler {
-  private drawingState: DrawingState = {
+  private drawingState: DrawingState<RectDrawingData> = {
     isDrawing: false,
     data: null,
   };
-  private onDrawingDataUpdate: ((data: any) => void) | null = null;
+  private onDrawingDataUpdate: ((data: RectDrawingData | null) => void) | null = null;
   private isValid: boolean = true;
 
   constructor(
@@ -14,7 +14,7 @@ export class OBBHandler implements BaseHandler {
     private onAddAnnotation: (annotation: Annotation) => void
   ) {}
 
-  setDrawingDataUpdateCallback(callback: (data: any) => void): void {
+  setDrawingDataUpdateCallback(callback: (data: RectDrawingData | null) => void): void {
     this.onDrawingDataUpdate = callback;
   }
 
@@ -99,7 +99,7 @@ export class OBBHandler implements BaseHandler {
     return this.drawingState.isDrawing;
   }
 
-  getDrawingData(): any {
+  getDrawingData(): RectDrawingData | null {
     return this.drawingState.data;
   }
 

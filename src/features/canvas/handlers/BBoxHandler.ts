@@ -1,12 +1,12 @@
-import type { BaseHandler, MouseEventData, DrawingState } from '../types/handlers';
+import type { BaseHandler, MouseEventData, DrawingState, RectDrawingData, TransformedBox } from '../types/handlers';
 import type { Annotation, BBoxData } from '@/lib/db';
 
 export class BBoxHandler implements BaseHandler {
-  private drawingState: DrawingState = {
+  private drawingState: DrawingState<RectDrawingData> = {
     isDrawing: false,
     data: null,
   };
-  private onDrawingDataUpdate: ((data: any) => void) | null = null;
+  private onDrawingDataUpdate: ((data: RectDrawingData | null) => void) | null = null;
   private isValid: boolean = true;
 
   constructor(
@@ -16,7 +16,7 @@ export class BBoxHandler implements BaseHandler {
     console.log('[BBoxHandler] NUEVO HANDLER CREADO con classId:', activeClassId);
   }
 
-  setDrawingDataUpdateCallback(callback: (data: any) => void): void {
+  setDrawingDataUpdateCallback(callback: (data: RectDrawingData | null) => void): void {
     this.onDrawingDataUpdate = callback;
   }
 
@@ -40,8 +40,6 @@ export class BBoxHandler implements BaseHandler {
       data: {
         startX: event.imageX,
         startY: event.imageY,
-        x: event.imageX,
-        y: event.imageY,
         width: 0,
         height: 0,
       },
@@ -112,7 +110,7 @@ export class BBoxHandler implements BaseHandler {
     // Handled by canvas
   }
 
-  onAnnotationTransform(_annotationId: string, _data: { x: number; y: number; width: number; height: number }): void {
+  onAnnotationTransform(_annotationId: string, _data: TransformedBox): void {
     // Handled by canvas
   }
 
@@ -120,7 +118,7 @@ export class BBoxHandler implements BaseHandler {
     return this.drawingState.isDrawing;
   }
 
-  getDrawingData(): any {
+  getDrawingData(): RectDrawingData | null {
     return this.drawingState.data;
   }
 
