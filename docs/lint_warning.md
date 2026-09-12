@@ -10,7 +10,7 @@ request en Rust.
 | `cargo check --all-targets` | 0 | — | limpio |
 | `cargo fmt --check` | 0 | — | limpio |
 | `cargo test --lib` | 0 | — | 114 passed |
-| `eslint` | 0 | **29** | techo `--max-warnings 65` |
+| `eslint` | 0 | **29** | techo `--max-warnings 30` |
 | `cargo clippy --all-targets` | 0 | **22** | todos `too_many_arguments` |
 
 ---
@@ -103,18 +103,24 @@ solo refleja el conteo actual.
 
 ### Hotspots
 
+Los 29 restantes viven en 17 archivos; ninguno pasa de 4.
+
 | Archivo | `no-explicit-any` |
 |---|---|
 | `src/utils/translationUtils.ts` | 4 |
 | `src/features/inference/components/InferencePanel.tsx` | 3 |
-| `src/features/sam/components/SamOverlay.tsx` | 3 |
-| `src/features/projects/components/ProjectCard.tsx` | 3 |
 | `src/features/inference/components/ModelUploader.tsx` | 3 |
+| `src/features/projects/components/ProjectCard.tsx` | 3 |
+| `src/features/sam/components/SamOverlay.tsx` | 3 |
+| `src/features/core/hooks/useKeyboardShortcuts.ts` | 2 |
+| 11 archivos más | 1 cada uno |
 
-Ya no hay ningún archivo con más de 4 warnings. Los 29 `no-explicit-any`
-restantes son casi todos accesos a campos no declarados en un tipo
-(`(project as any).xxx`, `(model.metadata as any).yyy`): se arreglan
-ampliando el tipo, no casteando.
+Casi todos son accesos a campos no declarados en un tipo
+(`(project as any).inferenceModelCount`, `(model.metadata as any).model_info`):
+se arreglan ampliando el tipo, no casteando. Los sueltos que no siguen ese
+patrón son `catch (err: any)` (`AudioEditToolbar`), el shim de
+`webkitAudioContext` (`useAudioPlayer`) y `(window as any).__samComposite`
+(`SamOverlay`, `SamRefineLayer`).
 
 ### `AnnotationCanvas.tsx` — hecho
 
@@ -213,5 +219,6 @@ respecto a los anteriores:
    `(project as any).inferenceModelCount`, `(model.metadata as any)`, etc.
    `translationUtils.ts` (4) es el único bloque grande que queda.
 
-Con `exhaustive-deps` en 0, el techo está en `--max-warnings 65`; cerrando
+Con `exhaustive-deps` en 0, el techo está en `--max-warnings 30`, uno por
+encima del conteo real: cualquier warning nuevo rompe el build. Cerrando
 `no-explicit-any` puede bajar a 0.
