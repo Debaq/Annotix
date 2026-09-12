@@ -479,5 +479,7 @@
     "test": "测试",
     "noImages": "项目中没有已标注的图像",
     "tinyWarning": "数据集过小。请考虑禁用测试集划分（0）或标注更多图像。"
-  }
+  },
+  "startFailed": "无法开始训练",
+  "packageFailed": "无法生成软件包"
 }

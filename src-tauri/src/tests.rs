@@ -879,6 +879,87 @@ fn training_prepare_dataset_is_deterministic_per_project_id() {
     assert_eq!(f1, f2, "split debería ser determinístico por project.id");
 }
 
+// ─── Tests: selección de imágenes entrenables ───────────────────────────────
+
+#[test]
+fn select_trainable_images_drops_unannotated() {
+    let classes = default_classes();
+    let images = vec![
+        image_entry("a.png", "a.png", 100, 100, vec![bbox_ann(0, 1.0, 1.0, 10.0, 10.0)]),
+        image_entry("sin_anotar.png", "sin_anotar.png", 100, 100, vec![]),
+        image_entry("b.png", "b.png", 100, 100, vec![bbox_ann(1, 2.0, 2.0, 10.0, 10.0)]),
+    ];
+
+    let kept = dataset::select_trainable_images(images, &classes);
+
+    assert_eq!(kept.len(), 2, "la imagen sin anotaciones no debe entrar al dataset");
+    let names: Vec<_> = kept.iter().map(|i| i.name.as_str()).collect();
+    assert!(!names.contains(&"sin_anotar.png"));
+}
+
+#[test]
+fn select_trainable_images_drops_orphan_annotations_and_then_image() {
+    let classes = default_classes(); // ids 0 y 1
+    let images = vec![
+        // Solo tiene una anotación de una clase borrada → queda vacía → se descarta
+        image_entry("huerfana.png", "huerfana.png", 100, 100, vec![bbox_ann(99, 1.0, 1.0, 5.0, 5.0)]),
+        // Mezcla: conserva la válida y sobrevive
+        image_entry(
+            "mixta.png",
+            "mixta.png",
+            100,
+            100,
+            vec![bbox_ann(99, 1.0, 1.0, 5.0, 5.0), bbox_ann(0, 2.0, 2.0, 5.0, 5.0)],
+        ),
+    ];
+
+    let kept = dataset::select_trainable_images(images, &classes);
+
+    assert_eq!(kept.len(), 1);
+    assert_eq!(kept[0].name, "mixta.png");
+    assert_eq!(kept[0].annotations.len(), 1, "la anotación huérfana debe quedar fuera");
+    assert_eq!(kept[0].annotations[0].class_id, 0);
+}
+
+#[test]
+fn select_trainable_images_keeps_annotated_video_frames() {
+    let classes = default_classes();
+    let mut frame = image_entry("f_000001.jpg", "f_000001.jpg", 100, 100, vec![bbox_ann(0, 1.0, 1.0, 10.0, 10.0)]);
+    frame.video_id = Some("vid-1".into());
+    frame.frame_index = Some(1);
+
+    let mut frame_vacio = image_entry("f_000002.jpg", "f_000002.jpg", 100, 100, vec![]);
+    frame_vacio.video_id = Some("vid-1".into());
+    frame_vacio.frame_index = Some(2);
+
+    let kept = dataset::select_trainable_images(vec![frame, frame_vacio], &classes);
+
+    assert_eq!(kept.len(), 1, "un frame bakeado es una imagen anotada más");
+    assert_eq!(kept[0].frame_index, Some(1));
+}
+
+#[test]
+fn select_trainable_images_empty_when_nothing_annotated() {
+    let classes = default_classes();
+    let images = vec![
+        image_entry("a.png", "a.png", 100, 100, vec![]),
+        image_entry("b.png", "b.png", 100, 100, vec![]),
+    ];
+    assert!(dataset::select_trainable_images(images, &classes).is_empty());
+}
+
+#[test]
+fn backend_uses_images_only_for_vision_backends() {
+    use crate::training::TrainingBackend as B;
+    for b in [B::Yolo, B::RtDetr, B::RfDetr, B::MmDetection, B::Smp, B::HfSegmentation,
+              B::MmSegmentation, B::Detectron2, B::MmPose, B::MmRotate, B::Timm, B::HfClassification] {
+        assert!(dataset::backend_uses_images(&b), "{:?} entrena sobre imágenes", b);
+    }
+    for b in [B::Tsai, B::PytorchForecasting, B::Pyod, B::Tslearn, B::Pypots, B::Stumpy, B::Sklearn] {
+        assert!(!dataset::backend_uses_images(&b), "{:?} lee su propio CSV", b);
+    }
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // Utils/converters — funciones numéricas y de strings
 // ════════════════════════════════════════════════════════════════════════════
@@ -965,3 +1046,4 @@ fn polygon_area_is_orientation_independent() {
     let ccw = vec![(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)];
     assert!((polygon_area(&cw) - polygon_area(&ccw)).abs() < 1e-9);
 }
+

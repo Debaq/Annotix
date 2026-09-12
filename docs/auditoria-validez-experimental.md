@@ -7,6 +7,8 @@ entrenamiento. Ordenados por impacto.
 
 ## A1. Las imágenes sin anotar entran al entrenamiento como negativos
 
+> **Resuelto** el 2026-09-10. Ver «Corrección aplicada» al final de esta sección.
+
 **Dónde.** `runner.rs:66-71` toma `pf.images` completo. `dataset.rs:150` (`copy_image_and_label`)
 escribe un `.txt` vacío para cada imagen sin anotaciones. No hay filtro por `status` ni por
 `!annotations.is_empty()` en ninguna parte del pipeline.
@@ -21,9 +23,37 @@ distorsiona el mAP.
 `video_id.is_none() && !annotations.is_empty()`, y ese número alimenta `DatasetSplitVisualizer`.
 La interfaz anuncia una partición sobre las imágenes anotadas y el backend entrena sobre todas.
 
-**Corrección.** Filtrar por anotaciones no vacías antes de `prepare_dataset`, y decidir
-explícitamente qué proporción de negativos se admite. Hacer que interfaz y backend cuenten lo
-mismo.
+**Corrección aplicada.**
+
+`dataset::select_trainable_images(images, classes)` centraliza el criterio: descarta anotaciones
+huérfanas y luego las imágenes que quedan sin ninguna. Se aplica en las cuatro rutas que arman un
+dataset, que antes filtraban solo las huérfanas:
+
+| Ruta | Archivo |
+|---|---|
+| Entrenamiento local YOLO | `runner.rs::start_training` |
+| Entrenamiento local multi-backend | `runner.rs::start_training_v2` |
+| Entrenamiento en la nube | `training_commands.rs::start_training_v2` |
+| Paquete descargable | `training_commands.rs::generate_training_package` |
+
+Si tras el filtro no queda ninguna imagen, el trabajo se marca `failed` y devuelve un mensaje que
+dice cuántas imágenes tenía el proyecto y que ninguna está anotada. Cada arranque registra en el
+log cuántas de cuántas entraron al dataset.
+
+`count_annotated_images` pasa a aplicar el mismo criterio, para que el visualizador de partición
+muestre el reparto real. Antes excluía además los fotogramas de video, que tras el bake son
+imágenes anotadas y sí se entrenan.
+
+`backend_uses_images` distingue los backends que trabajan sobre imágenes de los de series
+temporales y tabular, que leen su propio CSV. De paso corrige que un proyecto de series temporales
+exigiera imágenes para arrancar.
+
+Cubierto por cinco pruebas en `tests.rs`: descarte de no anotadas, descarte de huérfanas antes de
+evaluar si la imagen queda vacía, conservación de fotogramas de video anotados, caso de proyecto
+sin nada anotado, y la clasificación de backends por uso de imágenes.
+
+Esto resuelve también **A4**: al no llegar imágenes sin clase, la carpeta `unknown` deja de
+crearse.
 
 ---
 
@@ -59,6 +89,9 @@ aplica al camino de MMRotate, que además espera el campo de dificultad del form
 ---
 
 ## A4. En clasificación, las imágenes sin anotar crean una clase espuria
+
+> **Resuelto** el 2026-09-10 como efecto de la corrección de A1: el filtro deja fuera las imágenes
+> sin clase antes de llegar aquí. El respaldo `unknown` sigue en el código como red de seguridad.
 
 **Dónde.** `dataset.rs:188-195` (`copy_classification_image`) manda toda imagen sin anotación a la
 carpeta `unknown`.

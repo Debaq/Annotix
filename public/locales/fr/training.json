@@ -479,5 +479,7 @@
     "test": "Test",
     "noImages": "Aucune image annotée dans le projet",
     "tinyWarning": "Jeu de données très petit. Désactivez le split de test (0) ou annotez plus d'images."
-  }
+  },
+  "startFailed": "Impossible de démarrer l'entraînement",
+  "packageFailed": "Impossible de générer le paquet"
 }

@@ -18,6 +18,7 @@ import { useTrainingConfig } from '../hooks/useTrainingConfig';
 import { useTrainingProgress } from '../hooks/useTrainingProgress';
 import { useTrainingRequest } from '../hooks/useTrainingRequest';
 import { trainingService } from '../services/trainingService';
+import { toast } from '@/hooks/use-toast';
 import { BackendSelector } from './BackendSelector';
 import { BackendModelSelector } from './BackendModelSelector';
 import { ExecutionModeSelector } from './ExecutionModeSelector';
@@ -131,6 +132,18 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
   }, [setBackend]);
 
   // When user picks "Train locally" → check Python env + backend packages first
+  // Los errores de arranque (sin imágenes anotadas, entorno roto, etc.) llegan
+  // como string desde Rust. Sin esto el panel volvía a 'config' en silencio y
+  // parecía que el botón no hacía nada.
+  const showStartError = useCallback((e: unknown, fallbackKey: string) => {
+    const message = typeof e === 'string' ? e : e instanceof Error ? e.message : String(e);
+    toast({
+      title: t('training.startFailed', 'No se pudo iniciar el entrenamiento'),
+      description: message || t(fallbackKey, 'Error desconocido'),
+      variant: 'destructive',
+    });
+  }, [t]);
+
   const handleStartLocal = useCallback(async () => {
     if (!project?.id) return;
     if (activeJobId) {
@@ -198,9 +211,10 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
       setPhase('training');
     } catch (e) {
       console.error('Error starting training:', e);
+      showStartError(e, 'training.startFailed');
       setPhase('config');
     }
-  }, [project, backend, buildRequest]);
+  }, [project, backend, buildRequest, showStartError]);
 
   // Python env setup completed → resume training start
   const handleEnvReady = useCallback((gpu: GpuInfo | null) => {
@@ -227,9 +241,10 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
       setPhase('training');
     } catch (e) {
       console.error('Error starting cloud training:', e);
+      showStartError(e, 'training.startFailed');
       setPhase('config');
     }
-  }, [project, cloudProvider, cloudConfig, buildRequest]);
+  }, [project, cloudProvider, cloudConfig, buildRequest, showStartError]);
 
   const handleStartBrowserAutomation = useCallback(async () => {
     if (!project?.id) return;
@@ -241,8 +256,9 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
       setAutomationSessionId(sessionId);
     } catch (e) {
       console.error('Error starting browser automation:', e);
+      showStartError(e, 'training.startFailed');
     }
-  }, [project]);
+  }, [project, showStartError]);
 
   const handleDownloadPackage = useCallback(async () => {
     if (!project?.id) return;
@@ -263,8 +279,9 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
       await trainingService.generateTrainingPackage(project.id, request, filePath);
     } catch (e) {
       console.error('Error generating package:', e);
+      showStartError(e, 'training.packageFailed');
     }
-  }, [project, backend, buildRequest]);
+  }, [project, backend, buildRequest, showStartError]);
 
   const handleCancel = useCallback(async () => {
     if (!activeJobId || !project?.id) return;

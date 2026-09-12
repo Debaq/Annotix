@@ -3,10 +3,57 @@ use std::path::Path;
 
 use image::{GrayImage, Luma};
 
-use crate::store::project_file::{ProjectFile, ImageEntry};
+use crate::store::project_file::{ClassDef, ProjectFile, ImageEntry};
 use crate::export::{parse_bbox, parse_obb, parse_polygon, parse_mask};
 use crate::utils::converters::normalize_coordinates;
 use super::TrainingBackend;
+
+/// `true` si el backend entrena sobre las imágenes del proyecto.
+/// Los de series temporales y tabular leen sus propios CSV y no tocan `images`.
+pub fn backend_uses_images(backend: &TrainingBackend) -> bool {
+    !matches!(
+        backend,
+        TrainingBackend::Tsai
+            | TrainingBackend::PytorchForecasting
+            | TrainingBackend::Pyod
+            | TrainingBackend::Tslearn
+            | TrainingBackend::Pypots
+            | TrainingBackend::Stumpy
+            | TrainingBackend::Sklearn
+    )
+}
+
+/// Selecciona las imágenes que entran al dataset de entrenamiento.
+///
+/// Hace dos cosas, en este orden:
+///
+/// 1. Descarta anotaciones huérfanas: las que apuntan a un `class_id` que ya no
+///    existe (queda así tras borrar una clase).
+/// 2. Descarta las imágenes que quedan sin ninguna anotación.
+///
+/// El segundo paso es el importante. Una imagen sin anotaciones genera un
+/// archivo de labels vacío, y en YOLO eso no significa "ignorar esta imagen"
+/// sino "imagen de fondo": un negativo puro. Mandar al entrenamiento las
+/// imágenes que el usuario todavía no anotó sesga el modelo a no detectar nada
+/// (ultralytics recomienda ~10% de fondos, no 80%) y mete imágenes sin ground
+/// truth en el split de validación, donde distorsionan el mAP.
+///
+/// En clasificación evita además que las imágenes sin clase caigan en una
+/// carpeta `unknown`, que ImageFolder tomaría como una clase más.
+pub fn select_trainable_images(images: Vec<ImageEntry>, classes: &[ClassDef]) -> Vec<ImageEntry> {
+    let class_ids: std::collections::HashSet<i64> = classes.iter().map(|c| c.id).collect();
+    images
+        .into_iter()
+        .filter_map(|mut img| {
+            img.annotations.retain(|ann| class_ids.contains(&ann.class_id));
+            if img.annotations.is_empty() {
+                None
+            } else {
+                Some(img)
+            }
+        })
+        .collect()
+}
 
 /// Resultado del split: cuántas imágenes en cada partición.
 #[allow(dead_code)]

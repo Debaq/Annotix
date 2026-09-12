@@ -479,5 +479,7 @@
     "test": "Teste",
     "noImages": "Não há imagens anotadas no projeto",
     "tinyWarning": "Dataset muito pequeno. Considere desativar o test split (0) ou anotar mais imagens."
-  }
+  },
+  "startFailed": "Não foi possível iniciar o treinamento",
+  "packageFailed": "Não foi possível gerar o pacote"
 }

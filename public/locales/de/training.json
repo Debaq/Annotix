@@ -479,5 +479,7 @@
     "test": "Test",
     "noImages": "Keine annotierten Bilder im Projekt",
     "tinyWarning": "Sehr kleiner Datensatz. Test-Split (0) deaktivieren oder mehr Bilder annotieren."
-  }
+  },
+  "startFailed": "Training konnte nicht gestartet werden",
+  "packageFailed": "Paket konnte nicht erstellt werden"
 }

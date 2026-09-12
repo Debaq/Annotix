@@ -433,10 +433,17 @@ pub fn get_available_backends(project_type: String) -> Result<Vec<BackendInfo>, 
 /// Cuenta imágenes con al menos 1 anotación. Usa el cache en memoria del
 /// proyecto si está cargado; lectura ligera, sin tocar la galería.
 #[tauri::command]
+/// Cuenta las imágenes que realmente entrarán al dataset de entrenamiento.
+///
+/// Debe coincidir con `dataset::select_trainable_images`: misma condición
+/// (anotaciones no huérfanas y no vacías) para que el visualizador de split de
+/// la UI muestre la partición que el runner va a aplicar. Los frames de video
+/// se cuentan: tras el bake son imágenes anotadas como cualquier otra.
 pub fn count_annotated_images(state: State<'_, AppState>, project_id: String) -> Result<usize, String> {
     state.with_project(&project_id, |pf| {
+        let class_ids: std::collections::HashSet<i64> = pf.classes.iter().map(|c| c.id).collect();
         pf.images.iter()
-            .filter(|i| i.video_id.is_none() && !i.annotations.is_empty())
+            .filter(|i| i.annotations.iter().any(|a| class_ids.contains(&a.class_id)))
             .count()
     })
 }
@@ -589,12 +596,17 @@ pub async fn start_training_v2(
         let dataset_zip = temp_dir.path().join("dataset.zip");
         let dataset_zip_str = dataset_zip.to_string_lossy().to_string();
 
-        let images: Vec<crate::store::project_file::ImageEntry> = pf.images.iter().cloned().map(|mut img| {
-            img.annotations.retain(|ann| {
-                pf.classes.iter().any(|c| c.id == ann.class_id)
-            });
-            img
-        }).collect();
+        // Mismo criterio que el runner local: solo imágenes anotadas.
+        let images = crate::training::dataset::select_trainable_images(
+            pf.images.clone(), &pf.classes,
+        );
+        if images.is_empty() {
+            return Err(format!(
+                "Ninguna de las {} imágenes del proyecto tiene anotaciones. \
+                 Anota al menos una antes de entrenar.",
+                pf.images.len()
+            ));
+        }
 
         crate::training::package::generate_training_package(
             &images_dir, &pf, &images, &request, &dataset_zip_str,
@@ -685,12 +697,15 @@ pub fn generate_training_package(
     let pf = state.read_project_file(&project_id)?;
     let images_dir = state.project_images_dir(&project_id)?;
 
-    let images: Vec<crate::store::project_file::ImageEntry> = pf.images.iter().cloned().map(|mut img| {
-        img.annotations.retain(|ann| {
-            pf.classes.iter().any(|c| c.id == ann.class_id)
-        });
-        img
-    }).collect();
+    // Mismo criterio que el runner local: solo imágenes anotadas.
+    let images = crate::training::dataset::select_trainable_images(pf.images.clone(), &pf.classes);
+    if crate::training::dataset::backend_uses_images(&request.backend) && images.is_empty() {
+        return Err(format!(
+            "Ninguna de las {} imágenes del proyecto tiene anotaciones. \
+             Anota al menos una antes de generar el paquete.",
+            pf.images.len()
+        ));
+    }
 
     crate::training::package::generate_training_package(
         &images_dir, &pf, &images, &request, &output_path,

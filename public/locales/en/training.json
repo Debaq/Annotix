@@ -535,5 +535,7 @@
     "test": "Test",
     "noImages": "No annotated images in the project",
     "tinyWarning": "Very small dataset. Consider disabling the test split (0) or annotating more images."
-  }
+  },
+  "startFailed": "Could not start training",
+  "packageFailed": "Could not generate the package"
 }

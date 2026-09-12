@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
@@ -63,13 +63,29 @@ impl TrainingProcessManager {
             return Err("No hay imágenes en el proyecto".to_string());
         }
 
-        // Filtrar anotaciones huérfanas: HashSet O(1) lookup, drain para evitar 2do clone
-        let class_ids: HashSet<i64> = pf.classes.iter().map(|c| c.id).collect();
+        // Solo entran al dataset las imágenes anotadas (ver select_trainable_images).
         let raw_images = std::mem::take(&mut pf.images);
-        let images: Vec<ImageEntry> = raw_images.into_iter().map(|mut img| {
-            img.annotations.retain(|ann| class_ids.contains(&ann.class_id));
-            img
-        }).collect();
+        let total_images = raw_images.len();
+        let images: Vec<ImageEntry> = dataset::select_trainable_images(raw_images, &pf.classes);
+
+        if images.is_empty() {
+            state.with_project_mut(project_id, |pf| {
+                if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
+                    job.status = "failed".to_string();
+                    job.updated_at = js_timestamp();
+                }
+            })?;
+            return Err(format!(
+                "Ninguna de las {} imágenes del proyecto tiene anotaciones. \
+                 Anota al menos una antes de entrenar.",
+                total_images
+            ));
+        }
+
+        log::info!(
+            "Training {}: {} de {} imágenes tienen anotaciones y entran al dataset",
+            job_id_owned, images.len(), total_images
+        );
 
         // Preparar dataset en disco
         let data_yaml_path = dataset::prepare_dataset(
@@ -156,8 +172,11 @@ impl TrainingProcessManager {
             .map_err(|e| format!("Error creando directorio de training: {}", e))?;
 
         let is_tabular = request.backend == super::TrainingBackend::Sklearn;
+        // Los backends de series temporales y tabular leen su propio CSV: no
+        // deben exigir imágenes ni pasar por el filtro de anotaciones.
+        let uses_images = dataset::backend_uses_images(&request.backend);
 
-        if !is_tabular && pf.images.is_empty() {
+        if uses_images && pf.images.is_empty() {
             state.with_project_mut(project_id, |pf| {
                 if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
                     job.status = "failed".to_string();
@@ -188,12 +207,34 @@ impl TrainingProcessManager {
             }
         }
 
-        let images: Vec<crate::store::project_file::ImageEntry> = pf.images.iter().cloned().map(|mut img| {
-            img.annotations.retain(|ann| {
-                pf.classes.iter().any(|c| c.id == ann.class_id)
-            });
-            img
-        }).collect();
+        // Solo entran al dataset las imágenes anotadas (ver select_trainable_images).
+        let total_images = pf.images.len();
+        let images: Vec<crate::store::project_file::ImageEntry> = if uses_images {
+            dataset::select_trainable_images(pf.images.clone(), &pf.classes)
+        } else {
+            Vec::new()
+        };
+
+        if uses_images && images.is_empty() {
+            state.with_project_mut(project_id, |pf| {
+                if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
+                    job.status = "failed".to_string();
+                    job.updated_at = js_timestamp();
+                }
+            })?;
+            return Err(format!(
+                "Ninguna de las {} imágenes del proyecto tiene anotaciones. \
+                 Anota al menos una antes de entrenar.",
+                total_images
+            ));
+        }
+
+        if uses_images {
+            log::info!(
+                "Training {}: {} de {} imágenes tienen anotaciones y entran al dataset",
+                job_id_owned, images.len(), total_images
+            );
+        }
 
         // Prepare dataset using backend router
         let dataset_path = if is_tabular {
