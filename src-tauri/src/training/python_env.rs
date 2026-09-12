@@ -28,14 +28,14 @@ pub fn run_with_feedback<F: Fn(&str, f64, Option<String>)>(
 
     let tx_out = tx.clone();
     std::thread::spawn(move || {
-        for line in reader_out.lines().flatten() {
+        for line in reader_out.lines().map_while(Result::ok) {
             let _ = tx_out.send(line);
         }
     });
 
     let tx_err = tx.clone();
     std::thread::spawn(move || {
-        for line in reader_err.lines().flatten() {
+        for line in reader_err.lines().map_while(Result::ok) {
             let _ = tx_err.send(format!("ERR: {}", line));
         }
     });

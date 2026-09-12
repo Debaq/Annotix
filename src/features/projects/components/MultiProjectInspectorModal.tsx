@@ -110,7 +110,7 @@ export function MultiProjectInspectorModal({ open, onOpenChange }: Props) {
         case 'problems': av = a.problems; bv = b.problems; break;
         case 'coverage': av = a.classCoveragePct; bv = b.classCoveragePct; break;
       }
-      let cmp = 0;
+      let cmp: number;
       if (typeof av === 'string') cmp = av.localeCompare(bv as string);
       else cmp = (av as number) - (bv as number);
       return sortDesc ? -cmp : cmp;

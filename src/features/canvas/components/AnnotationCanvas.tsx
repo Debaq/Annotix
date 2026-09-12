@@ -109,7 +109,7 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
     try { return localStorage.getItem('annotix:imageInfoCollapsed') !== 'false'; } catch { return true; }
   });
   const toggleImageInfo = () => setImageInfoCollapsed((v) => {
-    try { localStorage.setItem('annotix:imageInfoCollapsed', String(!v)); } catch {}
+    try { localStorage.setItem('annotix:imageInfoCollapsed', String(!v)); } catch { /* ignorar */ }
     return !v;
   });
   const [maskEraseMode, setMaskEraseMode] = useState(false);
