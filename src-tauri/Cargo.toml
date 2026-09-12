@@ -1,6 +1,6 @@
 [package]
 name = "annotix"
-version = "2.9.10"
+version = "2.9.11"
 description = "Annotix - ML Dataset Annotation Tool"
 authors = ["TecMedHub"]
 license = "MIT"

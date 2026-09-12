@@ -132,7 +132,7 @@ dependencies = [
 
 [[package]]
 name = "annotix"
-version = "2.9.10"
+version = "2.9.11"
 dependencies = [
  "ab_glyph",
  "axum",
