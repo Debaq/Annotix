@@ -12,7 +12,12 @@ use serde::{Deserialize, Serialize};
 /// - 4: las muestras pueden declarar a qué sujeto pertenecen (`subjectId`). El
 ///   campo es opcional y los proyectos anteriores se leen con `None`, así que la
 ///   migración sólo sube el número de versión: no hay datos que reescribir.
-pub const CURRENT_VERSION: u32 = 4;
+/// - 5: cada anotación declara su procedencia (`origin`, `modelId`, `review`,
+///   autoría y marcas de tiempo). La migración rellena `origin` desde el `source`
+///   legado sólo donde no hay ambigüedad; lo que era `source: "user"` queda como
+///   `unknown`, porque ese valor mezclaba lo trazado a mano con lo aceptado de un
+///   modelo y adivinarlo sería inventar procedencia.
+pub const CURRENT_VERSION: u32 = 5;
 
 // ─── ProjectFile: todo el contenido de project.json ─────────────────────────
 
@@ -186,6 +191,68 @@ pub struct AnnotationEntry {
     /// anotado a mano o por inferencia sobre el mismo fotograma.
     #[serde(default, skip_serializing_if = "Option::is_none", rename = "trackId")]
     pub track_id: Option<String>,
+
+    // ─── Procedencia ────────────────────────────────────────────────────────
+    //
+    // De dónde salió esta etiqueta y qué pasó con ella. `source` se queda por
+    // compatibilidad —lo leen exportadores e importadores— pero es ambiguo: su
+    // valor "user" mezcla lo trazado a mano con lo sugerido por un modelo y
+    // aceptado sin cambios, que no son lo mismo. `origin` es el campo bueno.
+    /// `manual` | `model` | `track` | `import` | `adjudicated` | `unknown`.
+    ///
+    /// `unknown` es el valor de las anotaciones anteriores a este campo: su
+    /// `source: "user"` no permite distinguir lo manual de lo aceptado, y
+    /// adivinarlo sería inventar procedencia.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub origin: Option<String>,
+    /// Qué modelo la sugirió, cuando `origin` es `model`. Sin esto, aceptar una
+    /// predicción borraba de qué modelo venía.
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "modelId")]
+    pub model_id: Option<String>,
+    /// Estado de revisión humana: `unreviewed` | `reviewed` | `corrected` |
+    /// `accepted` | `rejected`.
+    ///
+    /// `accepted` y `corrected` son distintos a propósito: aceptar una sugerencia
+    /// sin tocarla y corregirle la geometría dicen cosas distintas sobre el
+    /// modelo que la propuso, y el contrato de modelo las reporta por separado.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub review: Option<String>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        rename = "reviewedBy"
+    )]
+    pub reviewed_by: Option<String>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        rename = "reviewedAt"
+    )]
+    pub reviewed_at: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "createdAt")]
+    pub created_at: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "updatedAt")]
+    pub updated_at: Option<f64>,
+}
+
+impl AnnotationEntry {
+    /// Procedencia declarada, o la que se deduce sin riesgo del `source` legado.
+    ///
+    /// `source: "user"` no se traduce a `manual`: mezcla lo trazado a mano con lo
+    /// aceptado de un modelo. Eso es justamente lo que este campo viene a
+    /// separar, así que devuelve `unknown` en vez de adivinar.
+    pub fn origen(&self) -> &str {
+        if let Some(o) = self.origin.as_deref() {
+            if !o.is_empty() {
+                return o;
+            }
+        }
+        match self.source.as_str() {
+            "ai" => "model",
+            "track" => "track",
+            _ => "unknown",
+        }
+    }
 }
 
 fn default_source() -> String {

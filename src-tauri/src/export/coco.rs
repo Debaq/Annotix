@@ -136,7 +136,7 @@ pub fn export<F: Fn(f64)>(
     Ok(())
 }
 
-fn convert_annotation(
+pub(crate) fn convert_annotation(
     ann: &AnnotationEntry,
     image_id: i64,
     annotation_id: i64,
@@ -149,6 +149,20 @@ fn convert_annotation(
         "category_id": ann.class_id,
         "iscrowd": 0,
     });
+
+    // Procedencia bajo un prefijo propio. COCO admite campos extra por anotación
+    // y los lectores ajenos los ignoran, así que el dataset sale sabiendo de dónde
+    // vino cada caja en vez de perderlo en la exportación.
+    base["annotix_origin"] = json!(ann.origen());
+    if let Some(m) = &ann.model_id {
+        base["annotix_model_id"] = json!(m);
+    }
+    if let Some(r) = &ann.review {
+        base["annotix_review"] = json!(r);
+    }
+    if let Some(c) = ann.confidence {
+        base["annotix_confidence"] = json!(c);
+    }
 
     match ann.annotation_type.as_str() {
         "bbox" => {

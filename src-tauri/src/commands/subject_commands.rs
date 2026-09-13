@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use tauri::{AppHandle, Emitter, State};
 
 use crate::store::state::AppState;
-use crate::store::subjects::{PatternPreview, SubjectSummary};
+use crate::store::subjects::{PatternPreview, ProvenanceSummary, SubjectSummary};
 
 /// Avisa a la galería de que las imágenes cambiaron.
 ///
@@ -98,4 +98,13 @@ pub fn apply_subject_map(
     let (n, sin_uso) = state.apply_subject_map(&project_id, &mapping)?;
     avisar_cambio(&app, &project_id, n);
     Ok((n, sin_uso))
+}
+
+/// De dónde salieron las etiquetas del proyecto y qué pasó con las del modelo.
+#[tauri::command]
+pub fn get_provenance_summary(
+    state: State<'_, AppState>,
+    project_id: String,
+) -> Result<ProvenanceSummary, String> {
+    state.provenance_summary(&project_id)
 }

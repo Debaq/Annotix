@@ -88,6 +88,16 @@ pub fn create_annotation(
         model_class_name: None,
         created_by: None,
         track_id: None,
+        // Viene de un archivo externo: no es ni trazado a mano aquí ni sugerido
+        // por un modelo del proyecto, y mezclarlo con lo manual borraría de dónde
+        // salió el corpus.
+        origin: Some("import".to_string()),
+        model_id: None,
+        review: None,
+        reviewed_by: None,
+        reviewed_at: None,
+        created_at: Some(crate::store::images::js_timestamp_pub()),
+        updated_at: None,
     }
 }
 

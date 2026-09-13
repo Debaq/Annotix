@@ -71,6 +71,15 @@ pub fn export<F: Fn(f64)>(
                             "source": ann.source,
                             "confidence": ann.confidence,
                             "modelClassName": ann.model_class_name,
+                            // El formato propio lleva la procedencia completa: es
+                            // el único que puede reimportarse sin perderla.
+                            "origin": ann.origen(),
+                            "modelId": ann.model_id,
+                            "review": ann.review,
+                            "reviewedBy": ann.reviewed_by,
+                            "reviewedAt": ann.reviewed_at,
+                            "createdAt": ann.created_at,
+                            "updatedAt": ann.updated_at,
                         }
                     })
                 })

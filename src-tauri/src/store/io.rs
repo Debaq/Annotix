@@ -122,6 +122,11 @@ pub fn migrate_project(project: &mut ProjectFile, dir: &Path) -> bool {
         changed = true;
     }
 
+    if project.version < 5 {
+        migrate_v4_procedencia(project);
+        changed = true;
+    }
+
     // v3 → v4: el sujeto es un campo opcional nuevo. Los proyectos anteriores se
     // leen con `None` gracias a `#[serde(default)]`, así que no hay datos que
     // reescribir: sólo sube el número de versión, y eso lo hace el bloque de
@@ -134,6 +139,32 @@ pub fn migrate_project(project: &mut ProjectFile, dir: &Path) -> bool {
     }
 
     changed
+}
+
+/// v4 → v5: rellena `origin` desde el `source` legado, sólo donde no hay
+/// ambigüedad.
+///
+/// `source: "ai"` y `source: "track"` dicen inequívocamente de dónde salió la
+/// etiqueta. `source: "user"` no: mezcla lo trazado a mano con lo que un modelo
+/// sugirió y alguien aceptó sin tocar, que es exactamente la distinción que este
+/// campo viene a hacer. Esas quedan `unknown` en vez de marcarse `manual`, porque
+/// marcarlas sería inventar procedencia sobre corpus ya existente — y el contrato
+/// de modelo la reportaría como si fuera un dato.
+fn migrate_v4_procedencia(project: &mut ProjectFile) {
+    for img in project.images.iter_mut() {
+        for ann in img.annotations.iter_mut() {
+            if ann.origin.is_none() {
+                ann.origin = Some(
+                    match ann.source.as_str() {
+                        "ai" => "model",
+                        "track" => "track",
+                        _ => "unknown",
+                    }
+                    .to_string(),
+                );
+            }
+        }
+    }
 }
 
 /// v1 → v2: la consolidación de tracks escribía las cajas en porcentaje 0-100

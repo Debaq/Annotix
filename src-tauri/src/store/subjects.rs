@@ -358,3 +358,53 @@ mod tests {
         );
     }
 }
+
+// ─── Procedencia del corpus ─────────────────────────────────────────────────
+
+/// Cuántas etiquetas hay de cada procedencia, y qué pasó con las del modelo.
+///
+/// Es el insumo del contrato de modelo: un corpus con el 80 % de las etiquetas
+/// autogeneradas y aceptadas sin tocar es una cosa distinta de uno trazado a
+/// mano, y hasta ahora no había forma de distinguirlos.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProvenanceSummary {
+    /// Procedencia → número de etiquetas: `manual`, `model`, `track`, `import`,
+    /// `adjudicated`, `unknown`.
+    pub by_origin: BTreeMap<String, usize>,
+    /// Estado de revisión → número de etiquetas.
+    pub by_review: BTreeMap<String, usize>,
+    /// Modelo que la sugirió → número de etiquetas.
+    pub by_model: BTreeMap<String, usize>,
+    pub total: usize,
+    /// Etiquetas anteriores al registro de procedencia. Se cuentan aparte porque
+    /// no son un origen más: son la parte del corpus sobre la que no se puede
+    /// afirmar nada.
+    pub unknown: usize,
+}
+
+impl AppState {
+    /// Resumen de procedencia de las anotaciones de imagen del proyecto.
+    pub fn provenance_summary(&self, project_id: &str) -> Result<ProvenanceSummary, String> {
+        self.with_project(project_id, |pf| {
+            let mut r = ProvenanceSummary::default();
+            for img in &pf.images {
+                for ann in &img.annotations {
+                    r.total += 1;
+                    let origen = ann.origen().to_string();
+                    if origen == "unknown" {
+                        r.unknown += 1;
+                    }
+                    *r.by_origin.entry(origen).or_insert(0) += 1;
+                    if let Some(rev) = ann.review.as_deref().filter(|s| !s.is_empty()) {
+                        *r.by_review.entry(rev.to_string()).or_insert(0) += 1;
+                    }
+                    if let Some(m) = ann.model_id.as_deref().filter(|s| !s.is_empty()) {
+                        *r.by_model.entry(m.to_string()).or_insert(0) += 1;
+                    }
+                }
+            }
+            r
+        })
+    }
+}

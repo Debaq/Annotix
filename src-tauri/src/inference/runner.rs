@@ -488,7 +488,7 @@ impl InferenceProcessManager {
 fn handle_python_event(
     app: &AppHandle,
     job_id: &str,
-    _model_id: &str,
+    model_id: &str,
     project_id: &str,
     event: &serde_json::Value,
 ) {
@@ -536,6 +536,13 @@ fn handle_python_event(
                                 model_class_name: Some(class_name),
                                 created_by: None,
                                 track_id: None,
+                                origin: Some("model".to_string()),
+                                model_id: Some(model_id.to_string()),
+                                review: Some("unreviewed".to_string()),
+                                reviewed_by: None,
+                                reviewed_at: None,
+                                created_at: Some(crate::store::images::js_timestamp_pub()),
+                                updated_at: None,
                             })
                         })
                         .collect()
@@ -816,6 +823,13 @@ fn detections_to_annotations(
                 model_class_name: Some(class_name),
                 created_by: None,
                 track_id: None,
+                origin: Some("model".to_string()),
+                model_id: Some(model_id.to_string()),
+                review: Some("unreviewed".to_string()),
+                reviewed_by: None,
+                reviewed_at: None,
+                created_at: Some(crate::store::images::js_timestamp_pub()),
+                updated_at: None,
             })
         })
         .collect();
@@ -872,6 +886,13 @@ fn classifications_to_annotations(
             model_class_name: Some(class_name),
             created_by: None,
             track_id: None,
+            origin: Some("model".to_string()),
+            model_id: Some(model_id.to_string()),
+            review: Some("unreviewed".to_string()),
+            reviewed_by: None,
+            reviewed_at: None,
+            created_at: Some(crate::store::images::js_timestamp_pub()),
+            updated_at: None,
         }],
         None => {
             log::warn!("[Inference] Clasificación descartada: proyecto sin clases definidas");

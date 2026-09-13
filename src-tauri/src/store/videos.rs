@@ -258,6 +258,15 @@ pub fn bake_annotations_for_frame(
             model_class_name: None,
             created_by: None,
             track_id: Some(bt.track_id.clone()),
+            origin: Some("track".to_string()),
+            model_id: None,
+            // Un fotograma interpolado no lo revisó nadie todavía. Es lo que
+            // distingue una caja fijada a mano de una que el sistema dedujo.
+            review: Some("unreviewed".to_string()),
+            reviewed_by: None,
+            reviewed_at: None,
+            created_at: Some(crate::store::images::js_timestamp_pub()),
+            updated_at: None,
         });
     }
 

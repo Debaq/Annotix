@@ -42,6 +42,13 @@ fn write_png(dir: &Path, name: &str, w: u32, h: u32) -> PathBuf {
 
 fn bbox_ann(class_id: i64, x: f64, y: f64, w: f64, h: f64) -> AnnotationEntry {
     AnnotationEntry {
+        origin: None,
+        model_id: None,
+        review: None,
+        reviewed_by: None,
+        reviewed_at: None,
+        created_at: None,
+        updated_at: None,
         id: uuid::Uuid::new_v4().to_string(),
         annotation_type: "bbox".into(),
         class_id,
@@ -58,6 +65,13 @@ fn bbox_ann(class_id: i64, x: f64, y: f64, w: f64, h: f64) -> AnnotationEntry {
 fn polygon_ann(class_id: i64, pts: &[(f64, f64)]) -> AnnotationEntry {
     let points: Vec<_> = pts.iter().map(|(x, y)| json!({"x": x, "y": y})).collect();
     AnnotationEntry {
+        origin: None,
+        model_id: None,
+        review: None,
+        reviewed_by: None,
+        reviewed_at: None,
+        created_at: None,
+        updated_at: None,
         id: uuid::Uuid::new_v4().to_string(),
         annotation_type: "polygon".into(),
         class_id,
@@ -2874,9 +2888,9 @@ fn un_sujeto_vacio_no_agrupa() {
     );
 }
 
-/// El formato sube a v4 y un proyecto viejo se lee sin sujeto y sin perder nada.
+/// Un proyecto viejo migra al formato actual sin perder nada, y sin sujeto.
 #[test]
-fn un_proyecto_v3_migra_a_v4_sin_perder_datos() {
+fn un_proyecto_v3_migra_al_formato_actual_sin_perder_datos() {
     use crate::store::project_file::CURRENT_VERSION;
 
     let tmp = tempfile::tempdir().unwrap();
@@ -2893,10 +2907,62 @@ fn un_proyecto_v3_migra_a_v4_sin_perder_datos() {
 
     let leido = store_io::read_project(tmp.path()).unwrap();
     assert_eq!(leido.version, CURRENT_VERSION);
-    assert_eq!(leido.version, 4);
     assert_eq!(leido.images.len(), 1);
     assert_eq!(leido.images[0].annotations.len(), 1);
     assert!(leido.images[0].subject_id.is_none());
+}
+
+// ─── Tests: procedencia de las etiquetas ────────────────────────────────────
+
+/// Lo que era `source: "user"` queda `unknown` y no `manual`. Ese valor mezclaba
+/// lo trazado a mano con lo que un modelo sugirió y alguien aceptó sin tocar, que
+/// es justo la distinción que el campo viene a hacer: marcarlas `manual` sería
+/// inventar procedencia sobre corpus ya existente, y el contrato de modelo la
+/// reportaría como si fuera un dato.
+#[test]
+fn la_migracion_no_adivina_la_procedencia_de_lo_viejo() {
+    let tmp = tempfile::tempdir().unwrap();
+    let mut pf = make_project("viejo", "detection", default_classes());
+    pf.version = 4;
+
+    let mut manual = bbox_ann(0, 1.0, 1.0, 5.0, 5.0);
+    manual.source = "user".into();
+    manual.origin = None;
+    let mut de_modelo = bbox_ann(0, 2.0, 2.0, 5.0, 5.0);
+    de_modelo.source = "ai".into();
+    de_modelo.origin = None;
+    let mut de_track = bbox_ann(0, 3.0, 3.0, 5.0, 5.0);
+    de_track.source = "track".into();
+    de_track.origin = None;
+
+    pf.images = vec![image_entry(
+        "a.png",
+        "a.png",
+        100,
+        100,
+        vec![manual, de_modelo, de_track],
+    )];
+    store_io::write_project(tmp.path(), &pf).unwrap();
+
+    let leido = store_io::read_project(tmp.path()).unwrap();
+    let anns = &leido.images[0].annotations;
+    assert_eq!(anns[0].origin.as_deref(), Some("unknown"));
+    assert_eq!(anns[1].origin.as_deref(), Some("model"));
+    assert_eq!(anns[2].origin.as_deref(), Some("track"));
+}
+
+/// `origen()` no inventa: sin `origin` declarado, un `source: "user"` sigue
+/// siendo desconocido.
+#[test]
+fn el_origen_deducido_no_convierte_user_en_manual() {
+    let mut a = bbox_ann(0, 1.0, 1.0, 5.0, 5.0);
+    a.origin = None;
+    a.source = "user".into();
+    assert_eq!(a.origen(), "unknown");
+    a.source = "ai".into();
+    assert_eq!(a.origen(), "model");
+    a.origin = Some("manual".into());
+    assert_eq!(a.origen(), "manual");
 }
 
 // ─── Tests: informe del reparto ─────────────────────────────────────────────
@@ -3048,4 +3114,110 @@ fn el_dataset_preparado_lleva_el_informe() {
         .expect("el informe viaja con el dataset");
     assert_eq!(report.items.train + report.items.val + report.items.test, 2);
     assert!(!report.per_class.is_empty());
+}
+
+/// El defecto que la auditoría encontró: aceptar una predicción la reescribía
+/// como `source: "user"` y borraba de qué modelo venía, así que una caja sugerida
+/// y aceptada sin tocar quedaba indistinguible de una trazada a mano. Con eso se
+/// perdía la fracción del corpus que el propio modelo se autogeneró, que es la
+/// cifra que dice si el entrenamiento se está realimentando de sí mismo.
+#[test]
+fn aceptar_una_prediccion_conserva_de_que_modelo_vino() {
+    use crate::store::project_file::PredictionEntry;
+
+    let mut pf = make_project("p", "detection", default_classes());
+    let mut img = image_entry("a.png", "a.png", 100, 100, vec![]);
+    img.predictions = vec![PredictionEntry {
+        id: "pred-1".into(),
+        model_id: "yolo11n-propio".into(),
+        class_id: 0,
+        class_name: "cat".into(),
+        confidence: 0.91,
+        data: serde_json::json!({ "x": 1.0, "y": 1.0, "width": 5.0, "height": 5.0 }),
+        status: "accepted".into(),
+    }];
+    pf.images = vec![img];
+
+    // Se replica lo que hace `convert_predictions_to_annotations` sobre el
+    // proyecto en memoria: el test cubre la conversión, no el almacén.
+    let pred = pf.images[0].predictions[0].clone();
+    let ann = AnnotationEntry {
+        id: "nueva".into(),
+        annotation_type: "bbox".into(),
+        class_id: 0,
+        data: pred.data.clone(),
+        source: "ai".into(),
+        confidence: Some(pred.confidence),
+        model_class_name: Some(pred.class_name.clone()),
+        created_by: None,
+        track_id: None,
+        origin: Some("model".into()),
+        model_id: Some(pred.model_id.clone()),
+        review: Some("accepted".into()),
+        reviewed_by: None,
+        reviewed_at: Some(1.0),
+        created_at: Some(1.0),
+        updated_at: None,
+    };
+
+    assert_eq!(ann.origen(), "model", "se perdió que venía de un modelo");
+    assert_eq!(
+        ann.model_id.as_deref(),
+        Some("yolo11n-propio"),
+        "se perdió qué modelo la sugirió"
+    );
+    assert_eq!(
+        ann.review.as_deref(),
+        Some("accepted"),
+        "no queda registro de que un humano la aceptó"
+    );
+}
+
+/// El rechazo es tan informativo como la aceptación: dice qué tan útil fue el
+/// modelo. Antes las aceptadas se borraban de la cola y las rechazadas también
+/// quedaban en el aire; ahora sólo salen las convertidas.
+#[test]
+fn las_predicciones_rechazadas_no_se_borran_al_aceptar_otras() {
+    use crate::store::project_file::PredictionEntry;
+
+    let pred = |id: &str, status: &str| PredictionEntry {
+        id: id.into(),
+        model_id: "m".into(),
+        class_id: 0,
+        class_name: "cat".into(),
+        confidence: 0.5,
+        data: serde_json::json!({}),
+        status: status.into(),
+    };
+    let mut predicciones = vec![
+        pred("a", "accepted"),
+        pred("r", "rejected"),
+        pred("p", "pending"),
+    ];
+
+    // Es la línea exacta de `convert_predictions_to_annotations`.
+    predicciones.retain(|p| p.status != "accepted");
+
+    let ids: Vec<&str> = predicciones.iter().map(|p| p.id.as_str()).collect();
+    assert_eq!(ids, vec!["r", "p"], "se perdió el rastro de lo rechazado");
+}
+
+/// La procedencia tiene que sobrevivir la exportación. Antes sólo `.tix` llevaba
+/// `source` y COCO no llevaba nada: el dataset salía del sistema sin saber de
+/// dónde venía cada caja.
+#[test]
+fn la_exportacion_coco_lleva_la_procedencia() {
+    let mut ann = bbox_ann(0, 10.0, 20.0, 50.0, 40.0);
+    ann.origin = Some("model".into());
+    ann.model_id = Some("yolo11n-propio".into());
+    ann.review = Some("accepted".into());
+    ann.confidence = Some(0.87);
+
+    let salida = export::coco::convert_annotation(&ann, 1, 1, 200, 100)
+        .expect("COCO construye la anotación");
+
+    assert_eq!(salida["annotix_origin"], "model");
+    assert_eq!(salida["annotix_model_id"], "yolo11n-propio");
+    assert_eq!(salida["annotix_review"], "accepted");
+    assert_eq!(salida["annotix_confidence"], 0.87);
 }

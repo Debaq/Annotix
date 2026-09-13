@@ -384,6 +384,7 @@ pub fn run() {
             commands::training_commands::download_trained_model,
             commands::training_commands::get_available_backends,
             commands::subject_commands::get_subject_summary,
+            commands::subject_commands::get_provenance_summary,
             commands::subject_commands::set_image_subjects,
             commands::subject_commands::set_video_subject,
             commands::subject_commands::preview_subject_pattern,

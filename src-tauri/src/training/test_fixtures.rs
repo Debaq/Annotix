@@ -36,6 +36,13 @@ pub fn classes() -> Vec<ClassDef> {
 
 pub fn ann(kind: &str, class_id: i64, data: serde_json::Value) -> AnnotationEntry {
     AnnotationEntry {
+        origin: None,
+        model_id: None,
+        review: None,
+        reviewed_by: None,
+        reviewed_at: None,
+        created_at: None,
+        updated_at: None,
         id: uuid::Uuid::new_v4().to_string(),
         annotation_type: kind.into(),
         class_id,

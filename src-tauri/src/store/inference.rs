@@ -329,16 +329,31 @@ impl AppState {
                     if let Some(class_id) = project_class_id {
                         // Verificar que la clase existe en el proyecto
                         if pf.classes.iter().any(|c| c.id == class_id) {
+                            // La procedencia se conserva. Antes esto escribía
+                            // `source: "user"` y perdía el `modelId`, así que una
+                            // caja sugerida por un modelo y aceptada sin tocarla
+                            // quedaba indistinguible de una trazada a mano — y con
+                            // ella, la fracción del corpus que el modelo se
+                            // autogeneró.
                             let annotation = AnnotationEntry {
                                 id: uuid::Uuid::new_v4().to_string(),
                                 annotation_type: infer_annotation_type(&pred.data),
                                 class_id,
                                 data: pred.data.clone(),
-                                source: "user".to_string(),
+                                source: "ai".to_string(),
                                 confidence: Some(pred.confidence),
                                 model_class_name: Some(pred.class_name.clone()),
                                 created_by: None,
                                 track_id: None,
+                                origin: Some("model".to_string()),
+                                model_id: Some(pred.model_id.clone()),
+                                // Aceptada sin cambios. Corregir la geometría es
+                                // otra cosa y se marca `corrected` donde se edita.
+                                review: Some("accepted".to_string()),
+                                reviewed_by: None,
+                                reviewed_at: Some(now),
+                                created_at: Some(now),
+                                updated_at: None,
                             };
                             img.annotations.push(annotation);
                             converted += 1;
@@ -346,7 +361,10 @@ impl AppState {
                     }
                 }
 
-                // Eliminar predicciones convertidas
+                // Las aceptadas salen de la cola porque ya son anotaciones. Las
+                // rechazadas se quedan: el rechazo es tan informativo como la
+                // aceptación para saber qué tan útil fue el modelo, y borrarlo
+                // perdía esa mitad del dato.
                 img.predictions.retain(|p| p.status != "accepted");
 
                 // Actualizar estado de imagen
