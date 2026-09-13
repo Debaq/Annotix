@@ -204,10 +204,8 @@
     "commonTitle": "Общие параметры",
     "rtdetrTitle": "Параметры RT-DETR",
     "rfdetrTitle": "Параметры RF-DETR",
-    "mmdetTitle": "Параметры MMDetection",
     "smpTitle": "Параметры SMP",
     "hfSegTitle": "Параметры HuggingFace Сегментация",
-    "mmsegTitle": "Параметры MMSegmentation",
     "resolution": "Разрешение",
     "resolutionDesc": "Входное разрешение (должно быть кратно 56)",
     "lr_encoder": "LR энкодера",
@@ -296,9 +294,6 @@
     "n_headsDesc": "Number of attention heads",
     "normalize": "Normalize",
     "normalizeDesc": "Normalize time series before processing",
-    "detectron2Title": "Detectron2 Parameters",
-    "mmposeTitle": "MMPose Parameters",
-    "mmrotateTitle": "MMRotate Parameters",
     "timmTitle": "timm Parameters",
     "hfClsTitle": "HuggingFace Classification Parameters",
     "tsaiTitle": "tsai Parameters",
@@ -308,7 +303,11 @@
     "pypotsTitle": "PyPOTS Parameters",
     "stumpyTitle": "STUMPY Parameters",
     "testSplit": "Тестовое разбиение",
-    "testSplitDesc": "Доля изображений для отложенного теста. 0 отключает тестовое разбиение."
+    "testSplitDesc": "Доля изображений для отложенного теста. 0 отключает тестовое разбиение.",
+    "hfDetectionTitle": "Параметры HuggingFace Detection",
+    "hfInstanceTitle": "Параметры сегментации экземпляров",
+    "hfPoseTitle": "Параметры позы",
+    "heatmap_sigma": "Сигма теплокарты"
   },
   "monitor": {
     "title": "Обучение выполняется",

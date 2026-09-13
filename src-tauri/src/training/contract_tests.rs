@@ -111,6 +111,7 @@ fn assert_python_valido(script: &str, etiqueta: &str) {
 }
 
 /// Qué se espera hoy de cada backend.
+#[allow(dead_code)] // FaltaClave queda para el próximo backend que entre a medias
 enum Expect {
     /// Genera scripts correctamente.
     Genera,
@@ -250,46 +251,38 @@ fn sklearn_tabular() {
     caso(TrainingBackend::Sklearn, "tabular", Expect::Genera);
 }
 
-// ─── Backends con configs OpenMMLab / Detectron2 ────────────────────────────
-//
-// Estos generan el script (el contrato de rutas se cumple), pero su config no
-// define el modelo y su stack es incompatible con torch 2.x + numpy 2: se
-// reemplazan por backends HuggingFace en la Fase 3 del plan.
+// ─── Backends HuggingFace de visión ─────────────────────────────────────────
 
 #[test]
-fn mmdetection_detect_genera_pero_no_entrena() {
-    caso(TrainingBackend::MmDetection, "detect", Expect::Genera);
+fn hf_detection_detect() {
+    caso(TrainingBackend::HfDetection, "detect", Expect::Genera);
 }
 
 #[test]
-fn mmsegmentation_segment_genera_pero_no_entrena() {
-    caso(TrainingBackend::MmSegmentation, "segment", Expect::Genera);
-}
-
-#[test]
-fn mmpose_pose_genera_pero_no_entrena() {
-    caso(TrainingBackend::MmPose, "pose", Expect::Genera);
-}
-
-#[test]
-fn detectron2_instance_genera_pero_no_entrena() {
+fn hf_instance_segment() {
     caso(
-        TrainingBackend::Detectron2,
+        TrainingBackend::HfInstance,
         "instance_segment",
         Expect::Genera,
     );
 }
 
+#[test]
+fn hf_pose_pose() {
+    caso(TrainingBackend::HfPose, "pose", Expect::Genera);
+}
+
+#[test]
+fn hf_pose_landmarks() {
+    caso(TrainingBackend::HfPose, "landmarks", Expect::Genera);
+}
+
 // ─── Series temporales ──────────────────────────────────────────────────────
 
 #[test]
-fn mmrotate_obb_recibe_layout_yolo() {
-    // El router manda MMRotate al preparador YOLO txt, pero su config pide COCO.
-    caso(
-        TrainingBackend::MmRotate,
-        "obb",
-        Expect::FaltaClave(keys::ANN_TRAIN),
-    );
+fn yolo_obb() {
+    // OBB queda sólo con ultralytics: MMRotate se retiró por dependencias muertas.
+    caso(TrainingBackend::Yolo, "obb", Expect::Genera);
 }
 
 #[test]

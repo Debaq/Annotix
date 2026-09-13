@@ -216,21 +216,22 @@ pub fn model_id_real(backend: &TrainingBackend) -> &'static str {
         TrainingBackend::Yolo => "yolo11",
         TrainingBackend::RtDetr => "rtdetr-l",
         TrainingBackend::RfDetr => "RFDETRMedium",
-        TrainingBackend::MmDetection => "cascade-rcnn_r50_fpn",
+        TrainingBackend::HfDetection => "facebook/detr-resnet-50",
         TrainingBackend::Smp => "DeepLabV3Plus-resnet50",
         TrainingBackend::HfSegmentation => "nvidia/segformer-b0-finetuned-ade-512-512",
-        TrainingBackend::MmSegmentation => "deeplabv3plus_r50-d8",
-        TrainingBackend::Detectron2 => "mask_rcnn_R_50_FPN_3x",
-        TrainingBackend::MmPose => "rtmpose-t",
-        TrainingBackend::MmRotate => "oriented-rcnn_r50_fpn",
+
+        TrainingBackend::HfInstance => "facebook/mask2former-swin-tiny-coco-instance",
+        // Pose: backbone de timm con cabeza de heatmaps (ver generate_hf_pose_script).
+        TrainingBackend::HfPose => "resnet18",
+
         TrainingBackend::Timm => "resnet50",
         TrainingBackend::HfClassification => "google/vit-base-patch16-224",
-        TrainingBackend::Tsai => "InceptionTime",
+        TrainingBackend::Tsai => "InceptionTimePlus",
         TrainingBackend::PytorchForecasting => "deepar",
-        TrainingBackend::Pyod => "iforest",
-        TrainingBackend::Tslearn => "kmeans_dtw",
-        TrainingBackend::Pypots => "saits",
-        TrainingBackend::Stumpy => "motif",
+        TrainingBackend::Pyod => "pyod-iforest",
+        TrainingBackend::Tslearn => "tslearn-kmeans-dtw",
+        TrainingBackend::Pypots => "pypots-saits",
+        TrainingBackend::Stumpy => "stumpy-mp",
         TrainingBackend::Sklearn => "random_forest_classifier",
     }
 }

@@ -259,46 +259,20 @@ pub fn py_const_name(key: &str) -> String {
 /// que no encontraría sus datos.
 #[derive(Debug, Clone)]
 pub struct ScriptPaths {
-    /// Bloque de constantes Python (`DATASET_DIR`, `IMAGES_TRAIN`, …).
+    /// Bloque de constantes Python (`DATASET_DIR`, `IMAGES_TRAIN`, …). Es la única
+    /// vía por la que un script recibe rutas del dataset: su cuerpo usa las
+    /// constantes y nunca compone un path de entrada.
     pub header: String,
-    /// Raíz del dataset con separador `/`.
-    pub root_py: String,
     pub num_classes: usize,
-    rel: BTreeMap<String, String>,
-}
-
-impl ScriptPaths {
-    /// Ruta relativa de una clave **pedida al construir** este `ScriptPaths`.
-    ///
-    /// Pedir aquí una clave que no se declaró en `needed` es un error de
-    /// programación (el router pide y luego usa el mismo conjunto), no una
-    /// condición de entrada: por eso entra en pánico en vez de devolver `Result`.
-    /// Los tests de contrato recorren todos los backends y lo cubren.
-    pub fn rel(&self, key: &str) -> &str {
-        self.rel
-            .get(key)
-            .unwrap_or_else(|| {
-                panic!(
-                    "ScriptPaths::rel('{key}') no fue pedida al construir el ScriptPaths                      de este backend; añádela a la lista de claves del router"
-                )
-            })
-            .as_str()
-    }
 }
 
 impl PreparedDataset {
     /// Resuelve y valida las claves que un backend necesita.
     pub fn script_paths(&self, needed: &[&str]) -> Result<ScriptPaths, String> {
-        let header = self.py_header(needed)?;
-        let mut rel = BTreeMap::new();
-        for key in needed {
-            rel.insert((*key).to_string(), self.input(key)?.to_string());
-        }
+        // `py_header` valida que cada clave pedida esté declarada.
         Ok(ScriptPaths {
-            header,
-            root_py: self.root_py(),
+            header: self.py_header(needed)?,
             num_classes: self.num_classes(),
-            rel,
         })
     }
 }
@@ -354,13 +328,13 @@ mod tests {
     }
 
     #[test]
-    fn script_paths_expone_relativas_pedidas() {
+    fn script_paths_trae_cabecera_y_clases() {
         let ds = sample();
         let sp = ds
             .script_paths(&[keys::IMAGES_TRAIN, keys::DATA_YAML])
             .unwrap();
-        assert_eq!(sp.rel(keys::IMAGES_TRAIN), "images/train");
-        assert_eq!(sp.rel(keys::DATA_YAML), "data.yaml");
+        assert!(sp.header.contains("IMAGES_TRAIN = os.path.join"));
+        assert!(sp.header.contains("DATA_YAML = os.path.join"));
         assert_eq!(sp.num_classes, 2);
     }
 

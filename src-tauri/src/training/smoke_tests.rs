@@ -71,13 +71,23 @@ fn correr(script_dir: &Path, python: &Path) -> Result<Resultado, String> {
 
     let mut epocas = 0usize;
     let mut epocas_con_metricas = 0usize;
+    let mut eventos_invalidos: Vec<String> = Vec::new();
     let mut best = None;
     let mut salida = Vec::new();
     let inicio = Instant::now();
 
     for linea in BufReader::new(stdout).lines().map_while(Result::ok) {
         salida.push(linea.clone());
-        if let Some(json) = linea.strip_prefix("ANNOTIX_EVENT:") {
+        // Igual que el runner: el marcador puede venir pegado a una barra de progreso.
+        if let Some(json) = linea
+            .find("ANNOTIX_EVENT:")
+            .map(|pos| &linea[pos + "ANNOTIX_EVENT:".len()..])
+        {
+            if serde_json::from_str::<serde_json::Value>(json).is_err() {
+                // Un evento que no parsea es invisible para el runner: normalmente
+                // son `Infinity`/`NaN`, que json.dumps escribe y JSON no admite.
+                eventos_invalidos.push(json.chars().take(160).collect::<String>());
+            }
             if let Ok(ev) = serde_json::from_str::<serde_json::Value>(json) {
                 match ev["type"].as_str().unwrap_or("") {
                     "epoch" => {
@@ -117,6 +127,15 @@ fn correr(script_dir: &Path, python: &Path) -> Result<Resultado, String> {
                 .map(|l| l.as_str())
                 .collect::<Vec<_>>()
                 .join("\n")
+        ));
+    }
+
+    if !eventos_invalidos.is_empty() {
+        return Err(format!(
+            "emitió {} evento(s) con JSON inválido, que el runner descarta en \
+             silencio. Primero: {}",
+            eventos_invalidos.len(),
+            eventos_invalidos[0]
         ));
     }
 
@@ -308,6 +327,26 @@ fn smoke_stumpy_ts_pattern() {
     smoke(TrainingBackend::Stumpy, "ts_pattern");
 }
 
-// Los backends OpenMMLab y Detectron2 se reemplazan por backends HuggingFace en la
-// Fase 3 del plan (docs/plan_train_fix.md): sus smoke tests llegan con el reemplazo,
-// porque su stack no es instalable sobre torch 2.x + numpy 2.
+#[test]
+#[ignore = "requiere entorno Python con transformers"]
+fn smoke_hf_detection() {
+    smoke(TrainingBackend::HfDetection, "detect");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con transformers"]
+fn smoke_hf_instance() {
+    smoke(TrainingBackend::HfInstance, "instance_segment");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con timm"]
+fn smoke_hf_pose() {
+    smoke(TrainingBackend::HfPose, "pose");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con timm"]
+fn smoke_hf_pose_landmarks() {
+    smoke(TrainingBackend::HfPose, "landmarks");
+}

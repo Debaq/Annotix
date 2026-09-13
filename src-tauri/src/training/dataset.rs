@@ -6,7 +6,7 @@ use image::{GrayImage, Luma};
 use super::contract::{keys, PreparedDataset};
 use super::npy;
 use super::{DatasetFormat, TrainingBackend};
-use crate::export::{parse_bbox, parse_mask, parse_obb, parse_polygon};
+use crate::export::{parse_bbox, parse_keypoints, parse_mask, parse_obb, parse_polygon};
 use crate::store::project_file::{ClassDef, ImageEntry, ProjectFile};
 use crate::utils::converters::normalize_coordinates;
 
@@ -504,7 +504,7 @@ pub enum CocoLayout {
     /// RF-DETR: train/_annotations.coco.json + valid/_annotations.coco.json (images beside JSON)
     RfDetr,
     /// MMDetection: annotations/instances_train.json + annotations/instances_val.json (images in train/val dirs)
-    MmDetection,
+    Coco,
 }
 
 /// Prepara un dataset en formato COCO JSON
@@ -598,7 +598,7 @@ pub fn prepare_coco_dataset(
                     .declare(keys::ANN_TEST, "test/_annotations.coco.json");
             }
         }
-        CocoLayout::MmDetection => {
+        CocoLayout::Coco => {
             let train_dir = output_dir.join("train");
             let val_dir = output_dir.join("val");
             let ann_dir = output_dir.join("annotations");
@@ -971,11 +971,9 @@ pub fn prepare_dataset_for_backend(
     } = spec;
 
     match backend {
-        TrainingBackend::Yolo | TrainingBackend::RtDetr | TrainingBackend::MmRotate => {
-            prepare_dataset(
-                images_dir, project, images, output_dir, val_split, test_split, task,
-            )
-        }
+        TrainingBackend::Yolo | TrainingBackend::RtDetr => prepare_dataset(
+            images_dir, project, images, output_dir, val_split, test_split, task,
+        ),
         TrainingBackend::RfDetr => prepare_coco_dataset(
             images_dir,
             project,
@@ -985,24 +983,23 @@ pub fn prepare_dataset_for_backend(
             test_split,
             CocoLayout::RfDetr,
         ),
-        TrainingBackend::MmDetection => prepare_coco_dataset(
+        // Los backends HF de detección y pose consumen COCO estándar.
+        TrainingBackend::HfDetection => prepare_coco_dataset(
             images_dir,
             project,
             images,
             output_dir,
             val_split,
             test_split,
-            CocoLayout::MmDetection,
+            CocoLayout::Coco,
         ),
-        TrainingBackend::Smp
-        | TrainingBackend::HfSegmentation
-        | TrainingBackend::MmSegmentation => prepare_mask_dataset(
+        TrainingBackend::Smp | TrainingBackend::HfSegmentation => prepare_mask_dataset(
             images_dir, project, images, output_dir, val_split, test_split,
         ),
-        TrainingBackend::Detectron2 => prepare_coco_instance_dataset(
+        TrainingBackend::HfInstance => prepare_coco_instance_dataset(
             images_dir, project, images, output_dir, val_split, test_split,
         ),
-        TrainingBackend::MmPose => prepare_coco_keypoints_dataset(
+        TrainingBackend::HfPose => prepare_coco_keypoints_dataset(
             images_dir, project, images, output_dir, val_split, test_split,
         ),
         TrainingBackend::Timm | TrainingBackend::HfClassification => {
@@ -1409,13 +1406,20 @@ fn build_coco_keypoints_json(
             };
             let category_id = (class_idx + 1) as u64;
 
-            // Parse keypoints from annotation data
-            let data = &ann.data;
-            let keypoints: Vec<f64> = data
-                .get("keypoints")
-                .and_then(|v| v.as_array())
-                .map(|arr| arr.iter().filter_map(|v| v.as_f64()).collect())
-                .unwrap_or_default();
+            // Las anotaciones de la app guardan `points: [{x, y, visible}]`; esto
+            // leía un `keypoints: [x, y, v, …]` plano que el programa nunca escribe,
+            // así que el JSON salía siempre sin keypoints y el dataset de pose vacío.
+            let keypoints: Vec<f64> = match parse_keypoints(&ann.data) {
+                Some(kp) => kp
+                    .points
+                    .iter()
+                    .flat_map(|p| {
+                        // COCO: 0 = ausente, 1 = presente oculto, 2 = visible.
+                        [p.x, p.y, if p.visible { 2.0 } else { 1.0 }]
+                    })
+                    .collect(),
+                None => continue,
+            };
 
             let num_keypoints = keypoints.len() / 3; // [x, y, visibility] triplets
 

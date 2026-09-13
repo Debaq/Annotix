@@ -204,10 +204,8 @@
     "commonTitle": "通用参数",
     "rtdetrTitle": "RT-DETR 参数",
     "rfdetrTitle": "RF-DETR 参数",
-    "mmdetTitle": "MMDetection 参数",
     "smpTitle": "SMP 参数",
     "hfSegTitle": "HuggingFace 分割参数",
-    "mmsegTitle": "MMSegmentation 参数",
     "resolution": "分辨率",
     "resolutionDesc": "输入分辨率（必须是56的倍数）",
     "lr_encoder": "编码器LR",
@@ -296,9 +294,6 @@
     "n_headsDesc": "Number of attention heads",
     "normalize": "Normalize",
     "normalizeDesc": "Normalize time series before processing",
-    "detectron2Title": "Detectron2 Parameters",
-    "mmposeTitle": "MMPose Parameters",
-    "mmrotateTitle": "MMRotate Parameters",
     "timmTitle": "timm Parameters",
     "hfClsTitle": "HuggingFace Classification Parameters",
     "tsaiTitle": "tsai Parameters",
@@ -308,7 +303,11 @@
     "pypotsTitle": "PyPOTS Parameters",
     "stumpyTitle": "STUMPY Parameters",
     "testSplit": "测试集划分",
-    "testSplitDesc": "用于独立测试集的图像比例。0 表示禁用测试集划分。"
+    "testSplitDesc": "用于独立测试集的图像比例。0 表示禁用测试集划分。",
+    "hfDetectionTitle": "HuggingFace Detection 参数",
+    "hfInstanceTitle": "实例分割参数",
+    "hfPoseTitle": "姿态参数",
+    "heatmap_sigma": "热力图 sigma"
   },
   "monitor": {
     "title": "训练进行中",

@@ -96,13 +96,13 @@ pub fn generate_training_package(
         TrainingBackend::Yolo => "YOLO",
         TrainingBackend::RtDetr => "RT-DETR",
         TrainingBackend::RfDetr => "RF-DETR",
-        TrainingBackend::MmDetection => "MMDetection",
+        TrainingBackend::HfDetection => "HuggingFace Detection",
         TrainingBackend::Smp => "SMP",
         TrainingBackend::HfSegmentation => "HuggingFace Segmentation",
-        TrainingBackend::MmSegmentation => "MMSegmentation",
-        TrainingBackend::Detectron2 => "Detectron2",
-        TrainingBackend::MmPose => "MMPose",
-        TrainingBackend::MmRotate => "MMRotate",
+
+        TrainingBackend::HfInstance => "HuggingFace Instance Segmentation",
+        TrainingBackend::HfPose => "HuggingFace Pose",
+
         TrainingBackend::Timm => "timm",
         TrainingBackend::HfClassification => "HuggingFace Classification",
         TrainingBackend::Tsai => "tsai",

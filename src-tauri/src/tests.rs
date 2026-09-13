@@ -1075,13 +1075,11 @@ fn backend_uses_images_only_for_vision_backends() {
         B::Yolo,
         B::RtDetr,
         B::RfDetr,
-        B::MmDetection,
+        B::HfDetection,
         B::Smp,
         B::HfSegmentation,
-        B::MmSegmentation,
-        B::Detectron2,
-        B::MmPose,
-        B::MmRotate,
+        B::HfInstance,
+        B::HfPose,
         B::Timm,
         B::HfClassification,
     ] {
@@ -1907,4 +1905,25 @@ fn ipc_update_model_config_request_matches_frontend_payload() {
     assert_eq!(req.model_id, "m1");
     assert_eq!(req.class_mapping.len(), 1);
     assert!(req.input_size.is_none());
+}
+
+// ─── Runner: eventos de entrenamiento ───────────────────────────────────────
+
+#[test]
+fn eventos_con_infinity_o_nan_siguen_llegando() {
+    // Python escribe `Infinity`/`NaN` para métricas no finitas y eso no es JSON
+    // válido: antes se perdía el evento entero, con las métricas buenas incluidas.
+    let linea = r#"{"type": "epoch", "epoch": 1, "metrics": {"a": Infinity, "b": NaN, "c": 1.5}}"#;
+    let saneado = crate::training::runner::sanear_no_finitos(linea);
+    let valor: serde_json::Value = serde_json::from_str(&saneado).expect("parsea tras sanear");
+    assert!(valor["metrics"]["a"].is_null());
+    assert!(valor["metrics"]["b"].is_null());
+    assert_eq!(valor["metrics"]["c"].as_f64(), Some(1.5));
+}
+
+#[test]
+fn infinity_negativo_tambien_se_sanea() {
+    let saneado = crate::training::runner::sanear_no_finitos(r#"{"v": -Infinity}"#);
+    let valor: serde_json::Value = serde_json::from_str(&saneado).unwrap();
+    assert!(valor["v"].is_null());
 }

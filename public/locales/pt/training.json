@@ -204,10 +204,8 @@
     "commonTitle": "Parâmetros Comuns",
     "rtdetrTitle": "Parâmetros RT-DETR",
     "rfdetrTitle": "Parâmetros RF-DETR",
-    "mmdetTitle": "Parâmetros MMDetection",
     "smpTitle": "Parâmetros SMP",
     "hfSegTitle": "Parâmetros HuggingFace Segmentação",
-    "mmsegTitle": "Parâmetros MMSegmentation",
     "resolution": "Resolução",
     "resolutionDesc": "Resolução de entrada (deve ser múltiplo de 56)",
     "lr_encoder": "LR do Encoder",
@@ -296,9 +294,6 @@
     "n_headsDesc": "Number of attention heads",
     "normalize": "Normalize",
     "normalizeDesc": "Normalize time series before processing",
-    "detectron2Title": "Detectron2 Parameters",
-    "mmposeTitle": "MMPose Parameters",
-    "mmrotateTitle": "MMRotate Parameters",
     "timmTitle": "timm Parameters",
     "hfClsTitle": "HuggingFace Classification Parameters",
     "tsaiTitle": "tsai Parameters",
@@ -308,7 +303,11 @@
     "pypotsTitle": "PyPOTS Parameters",
     "stumpyTitle": "STUMPY Parameters",
     "testSplit": "Split Teste",
-    "testSplitDesc": "Fração de imagens para conjunto de teste separado. 0 desativa o split de teste."
+    "testSplitDesc": "Fração de imagens para conjunto de teste separado. 0 desativa o split de teste.",
+    "hfDetectionTitle": "Parâmetros do HuggingFace Detection",
+    "hfInstanceTitle": "Parâmetros de segmentação por instâncias",
+    "hfPoseTitle": "Parâmetros de pose",
+    "heatmap_sigma": "Sigma do heatmap"
   },
   "monitor": {
     "title": "Treinamento em Progresso",

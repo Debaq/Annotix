@@ -529,11 +529,23 @@ fn process_log_line(
     logs: &mut Vec<String>,
     project_dir: &Path,
 ) -> bool {
-    if let Some(json_str) = line.strip_prefix("ANNOTIX_EVENT:") {
+    // El marcador puede no estar al principio de la línea: fastai y tqdm escriben
+    // barras de progreso con `\r` sin salto final, así que el evento llega pegado a
+    // ellas. Buscarlo sólo como prefijo hacía que el progreso de esos backends (tsai
+    // entre ellos) no llegara nunca a la UI.
+    if let Some(pos) = line.find(EVENT_MARKER) {
+        let json_str = &line[pos + EVENT_MARKER.len()..];
         if let Ok(event) = serde_json::from_str::<serde_json::Value>(json_str) {
             return handle_event(app, job_id, &event, project_dir);
         }
-        return false;
+        // Segundo intento: `json.dumps` de Python escribe `Infinity`/`NaN` para
+        // métricas no finitas (un perfil matricial o una inercia degenerada los
+        // produce), y eso no es JSON válido. Antes se perdía el evento entero, con
+        // sus métricas buenas incluidas.
+        if let Ok(event) = serde_json::from_str::<serde_json::Value>(&sanear_no_finitos(json_str)) {
+            return handle_event(app, job_id, &event, project_dir);
+        }
+        // Marcador sin JSON recuperable: la línea sigue siendo log para el usuario.
     }
     // Acumula en memoria + emite en vivo. La persistencia a project.json la
     // hace el monitor por tiempo (ver spawn_monitor_thread), no por línea, para
@@ -550,6 +562,16 @@ fn process_log_line(
 /// inflar project.json ni reescribir un vector enorme. El reporte PDF usa
 /// tail(-400), así que esto sobra.
 const MAX_PERSISTED_LOG_LINES: usize = 2000;
+
+/// Prefijo con el que los scripts generados emiten eventos estructurados.
+const EVENT_MARKER: &str = "ANNOTIX_EVENT:";
+
+/// Reemplaza los literales no finitos de Python por `null` para que el JSON parsee.
+pub fn sanear_no_finitos(json: &str) -> String {
+    json.replace("-Infinity", "null")
+        .replace("Infinity", "null")
+        .replace("NaN", "null")
+}
 
 /// Persiste un tail acotado de los logs en project.json.
 fn persist_logs_tail(app: &AppHandle, project_dir: &Path, job_id: &str, logs: &[String]) {

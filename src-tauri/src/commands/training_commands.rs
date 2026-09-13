@@ -488,45 +488,14 @@ pub fn install_backend_packages(
 
     let packages: Vec<String> = match backend.as_str() {
         "yolo" | "rt_detr" => vec!["ultralytics".to_string()],
-        "rf_detr" => vec!["rfdetr[train]".to_string()],
-        "mmdetection" => vec![
-            "openmim".to_string(),
-            "mmengine".to_string(),
-            "mmcv".to_string(),
-            "mmdet".to_string(),
-        ],
-        "smp" => vec![
-            "segmentation-models-pytorch".to_string(),
-            "albumentations".to_string(),
-        ],
-        "hf_segmentation" => vec![
+        "rf_detr" => vec!["rfdetr[train]".to_string(), "transformers>=5".to_string()],
+        "hf_detection" | "hf_instance" => vec![
             "transformers".to_string(),
-            // El Trainer de HuggingFace exige accelerate>=1.1: sin él aborta al
-            // configurar el dispositivo, ya con el modelo cargado.
             "accelerate".to_string(),
-            "datasets".to_string(),
-            "evaluate".to_string(),
+            "torchmetrics".to_string(),
+            "pycocotools".to_string(),
         ],
-        "mmsegmentation" => vec![
-            "openmim".to_string(),
-            "mmengine".to_string(),
-            "mmcv".to_string(),
-            "mmsegmentation".to_string(),
-        ],
-        "detectron2" => vec!["detectron2".to_string()],
-        "mmpose" => vec![
-            "openmim".to_string(),
-            "mmengine".to_string(),
-            "mmcv".to_string(),
-            "mmpose".to_string(),
-            "mmdet".to_string(),
-        ],
-        "mmrotate" => vec![
-            "openmim".to_string(),
-            "mmengine".to_string(),
-            "mmcv".to_string(),
-            "mmrotate".to_string(),
-        ],
+        "hf_pose" => vec!["timm".to_string()],
         "timm" => vec!["timm".to_string()],
         "hf_classification" => vec![
             "transformers".to_string(),
@@ -543,6 +512,14 @@ pub fn install_backend_packages(
         "tslearn" => vec!["tslearn".to_string(), "scikit-learn".to_string()],
         "pypots" => vec!["pypots".to_string()],
         "stumpy" => vec!["stumpy".to_string(), "numpy".to_string()],
+        // Faltaba: sin esta rama el backend tabular no se podía instalar desde la UI.
+        "sklearn" => vec![
+            "scikit-learn".to_string(),
+            "xgboost".to_string(),
+            "lightgbm".to_string(),
+            "pandas".to_string(),
+            "skl2onnx".to_string(),
+        ],
         _ => return Err(format!("Backend desconocido: {}", backend)),
     };
 

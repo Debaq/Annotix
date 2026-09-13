@@ -269,10 +269,8 @@
     "commonTitle": "Common Parameters",
     "rtdetrTitle": "RT-DETR Parameters",
     "rfdetrTitle": "RF-DETR Parameters",
-    "mmdetTitle": "MMDetection Parameters",
     "smpTitle": "SMP Parameters",
     "hfSegTitle": "HuggingFace Segmentation Parameters",
-    "mmsegTitle": "MMSegmentation Parameters",
     "resolution": "Resolution",
     "resolutionDesc": "Input resolution (must be multiple of 56)",
     "lr_encoder": "Encoder LR",
@@ -447,9 +445,6 @@
     "n_headsDesc": "Number of attention heads",
     "normalize": "Normalize",
     "normalizeDesc": "Normalize time series before processing",
-    "detectron2Title": "Detectron2 Parameters",
-    "mmposeTitle": "MMPose Parameters",
-    "mmrotateTitle": "MMRotate Parameters",
     "timmTitle": "timm Parameters",
     "hfClsTitle": "HuggingFace Classification Parameters",
     "tsaiTitle": "tsai Parameters",
@@ -459,7 +454,11 @@
     "pypotsTitle": "PyPOTS Parameters",
     "stumpyTitle": "STUMPY Parameters",
     "testSplit": "Test Split",
-    "testSplitDesc": "Fraction of images for hold-out test set. 0 disables test split."
+    "testSplitDesc": "Fraction of images for hold-out test set. 0 disables test split.",
+    "hfDetectionTitle": "HuggingFace Detection Parameters",
+    "hfInstanceTitle": "Instance Segmentation Parameters",
+    "hfPoseTitle": "Pose Parameters",
+    "heatmap_sigma": "Heatmap sigma"
   },
   "model": {
     "version": "Model Version",

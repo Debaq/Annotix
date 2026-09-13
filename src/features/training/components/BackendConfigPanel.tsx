@@ -58,20 +58,11 @@ const RFDETR_PARAMS: ParamDefinition[] = [
   { key: 'gradient_checkpointing', type: 'checkbox' },
 ];
 
-const MMDET_PARAMS: ParamDefinition[] = [
-  { key: 'optimizer_type', type: 'select', options: [
-    { value: 'SGD', label: 'SGD' },
-    { value: 'Adam', label: 'Adam' },
-    { value: 'AdamW', label: 'AdamW' },
-  ]},
-  { key: 'momentum', type: 'number', min: 0, max: 1, step: 0.01 },
+// Sólo los parámetros que el script generado lee de verdad: los que había antes
+// (momentum, warmup_iters, checkpoint_interval) venían de los configs de OpenMMLab y
+// no los consumía nadie.
+const HF_DETECTION_PARAMS: ParamDefinition[] = [
   { key: 'weight_decay', type: 'number', min: 0, max: 0.1, step: 0.0001 },
-  { key: 'lr_schedule', type: 'select', options: [
-    { value: 'step', label: 'Step LR' },
-    { value: 'cosine', label: 'Cosine Annealing' },
-  ]},
-  { key: 'warmup_iters', type: 'number', min: 0, max: 5000 },
-  { key: 'checkpoint_interval', type: 'number', min: 1, max: 50 },
 ];
 
 const SMP_PARAMS: ParamDefinition[] = [
@@ -102,20 +93,14 @@ const HF_SEG_PARAMS: ParamDefinition[] = [
   ]},
 ];
 
-const MMSEG_PARAMS: ParamDefinition[] = [
-  { key: 'optimizer_type', type: 'select', options: [
-    { value: 'AdamW', label: 'AdamW' },
-    { value: 'SGD', label: 'SGD' },
-  ]},
-  { key: 'lr_schedule', type: 'select', options: [
-    { value: 'poly', label: 'Polynomial' },
-    { value: 'cosine', label: 'Cosine Annealing' },
-    { value: 'step', label: 'Step LR' },
-  ]},
-  { key: 'crop_size', type: 'number', min: 256, max: 1024, step: 32 },
-  { key: 'warmup_iters', type: 'number', min: 0, max: 5000 },
+const HF_INSTANCE_PARAMS: ParamDefinition[] = [
   { key: 'weight_decay', type: 'number', min: 0, max: 0.1, step: 0.001 },
-  { key: 'checkpoint_interval', type: 'number', min: 1, max: 50 },
+];
+
+const HF_POSE_PARAMS: ParamDefinition[] = [
+  { key: 'weight_decay', type: 'number', min: 0, max: 0.1, step: 0.001 },
+  // Dispersión del heatmap gaussiano por keypoint, en píxeles de la salida.
+  { key: 'heatmap_sigma', type: 'number', min: 0.5, max: 6, step: 0.5 },
 ];
 
 export function BackendConfigPanel({
@@ -174,9 +159,9 @@ export function BackendConfigPanel({
       specificParams = RFDETR_PARAMS;
       specificTitle = 'training.params.rfdetrTitle';
       break;
-    case 'mmdetection':
-      specificParams = MMDET_PARAMS;
-      specificTitle = 'training.params.mmdetTitle';
+    case 'hf_detection':
+      specificParams = HF_DETECTION_PARAMS;
+      specificTitle = 'training.params.hfDetectionTitle';
       break;
     case 'smp':
       specificParams = SMP_PARAMS;
@@ -186,9 +171,13 @@ export function BackendConfigPanel({
       specificParams = HF_SEG_PARAMS;
       specificTitle = 'training.params.hfSegTitle';
       break;
-    case 'mmsegmentation':
-      specificParams = MMSEG_PARAMS;
-      specificTitle = 'training.params.mmsegTitle';
+    case 'hf_instance':
+      specificParams = HF_INSTANCE_PARAMS;
+      specificTitle = 'training.params.hfInstanceTitle';
+      break;
+    case 'hf_pose':
+      specificParams = HF_POSE_PARAMS;
+      specificTitle = 'training.params.hfPoseTitle';
       break;
   }
 

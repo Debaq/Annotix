@@ -35,8 +35,27 @@ Pendiente que salió de lo mismo, sin arreglar todavía:
   range`, que no dice nada al usuario. Hace falta un mínimo de `imgsz` por backend,
   validado en la UI.
 
-Estado del smoke hoy: `yolo` (detect/segment/classify), `rt_detr`, `smp`,
-`hf_segmentation` y `sklearn` en verde.
+### Lo que salió al arreglar clasificación, series y el reemplazo de OpenMMLab
+
+| Backend | Fallo real | Estado |
+|---|---|---|
+| `timm`, `hf_classification` | El layout ImageFolder se leía con `int(nombre_carpeta)`: **todas** las imágenes quedaban en la clase 0, sin error | ✅ `labels_{split}.json` con el índice real |
+| `timm`, `hf_classification` | Multi-etiqueta usaba CrossEntropy y argmax, que no significan nada ahí | ✅ BCE + métricas por umbral |
+| Los 6 de series | Cargaban `.npy` que nadie generaba | ✅ `prepare_timeseries_arrays` con ventaneo, etiquetado por tarea y normalización |
+| `pyod`, `pypots`, `tslearn`, `pytorch_forecasting`, `stumpy` | Los ids del catálogo (`pyod-iforest`) no coincidían con lo que comparaba el script (`IForest`): **elegir modelo en la UI no tenía efecto**, todos entrenaban el del `else` | ✅ normalización del id en el dispatch |
+| `tsai` | `from tsai.all import …` falla con fastcore nuevo; y las métricas como string revientan en el Recorder de fastai | ✅ `tsai.basics` + métricas invocables |
+| `pyod` | `epochs` pasó a ser `epoch_num` en pyod 2+ | ✅ filtro de kwargs por versión |
+| `pypots` | El lr va en el optimizador; `patience` debe ser menor que `epochs`; y `save()` añade extensión, así que la ruta reportada no existía | ✅ |
+| `pypots` | Recibía (ventanas, canales, pasos) donde espera (ventanas, pasos, variables) | ✅ transposición explícita |
+| `tslearn` | `silhouette_score` está en `clustering`, no en `metrics` | ✅ |
+| `tslearn` | Emitía `inertia: Infinity`, que **no es JSON válido**: el runner descartaba el evento completo | ✅ métricas no finitas a `null` |
+| `pytorch_forecasting` | Trainer de `pytorch_lightning` con modelos de `lightning.pytorch`; y las longitudes por defecto no caben en series cortas | ✅ |
+| `stumpy` | Exige float64 y recibía float32 | ✅ |
+| COCO keypoints | El exportador leía un `keypoints: [x,y,v,…]` plano que la app nunca escribe (guarda `points: [{x,y,visible}]`): el dataset de pose salía **vacío** | ✅ usa `parse_keypoints` |
+| **Runner** | Buscaba `ANNOTIX_EVENT:` sólo al inicio de línea, y fastai/tqdm lo dejan pegado a la barra de progreso: el progreso de esos backends no llegaba nunca a la UI | ✅ se busca en cualquier posición |
+
+Estado del smoke hoy: **23 tests en verde**, uno por backend y tarea, incluidos los
+tres HuggingFace nuevos que reemplazan a OpenMMLab y Detectron2.
 
 ---
 

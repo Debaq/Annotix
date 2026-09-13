@@ -204,10 +204,8 @@
     "commonTitle": "共通パラメータ",
     "rtdetrTitle": "RT-DETR パラメータ",
     "rfdetrTitle": "RF-DETR パラメータ",
-    "mmdetTitle": "MMDetection パラメータ",
     "smpTitle": "SMPパラメータ",
     "hfSegTitle": "HuggingFaceセグメンテーションパラメータ",
-    "mmsegTitle": "MMSegmentationパラメータ",
     "resolution": "解像度",
     "resolutionDesc": "入力解像度（56の倍数である必要があります）",
     "lr_encoder": "エンコーダLR",
@@ -296,9 +294,6 @@
     "n_headsDesc": "Number of attention heads",
     "normalize": "Normalize",
     "normalizeDesc": "Normalize time series before processing",
-    "detectron2Title": "Detectron2 Parameters",
-    "mmposeTitle": "MMPose Parameters",
-    "mmrotateTitle": "MMRotate Parameters",
     "timmTitle": "timm Parameters",
     "hfClsTitle": "HuggingFace Classification Parameters",
     "tsaiTitle": "tsai Parameters",
@@ -308,7 +303,11 @@
     "pypotsTitle": "PyPOTS Parameters",
     "stumpyTitle": "STUMPY Parameters",
     "testSplit": "テスト分割",
-    "testSplitDesc": "ホールドアウトテストセット用の画像の割合。0でテスト分割を無効化。"
+    "testSplitDesc": "ホールドアウトテストセット用の画像の割合。0でテスト分割を無効化。",
+    "hfDetectionTitle": "HuggingFace Detection のパラメータ",
+    "hfInstanceTitle": "インスタンスセグメンテーションのパラメータ",
+    "hfPoseTitle": "姿勢推定のパラメータ",
+    "heatmap_sigma": "ヒートマップのシグマ"
   },
   "monitor": {
     "title": "トレーニング進行中",

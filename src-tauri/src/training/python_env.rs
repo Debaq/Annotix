@@ -123,13 +123,8 @@ pub fn check_env_full() -> Result<(PythonEnvStatus, super::GpuInfo), String> {
         torch_version: None,
         cuda_available: false,
         rfdetr_version: None,
-        mmdet_version: None,
         smp_version: None,
         hf_transformers_version: None,
-        mmseg_version: None,
-        detectron2_version: None,
-        mmpose_version: None,
-        mmrotate_version: None,
         timm_version: None,
         tsai_version: None,
         pytorch_forecasting_version: None,
@@ -156,9 +151,8 @@ import json
 result = {
     "ultralytics": None, "torch": None, "cuda": False,
     "cuda_version": None, "gpus": [], "mps_available": False,
-    "rfdetr": None, "mmdet": None,
-    "smp": None, "hf_transformers": None, "mmseg": None,
-    "detectron2": None, "mmpose": None, "mmrotate": None,
+    "rfdetr": None,
+    "smp": None, "hf_transformers": None,
     "timm": None, "tsai": None, "pytorch_forecasting": None,
     "pyod": None, "tslearn": None, "pypots": None, "stumpy": None,
     "sklearn": None
@@ -174,11 +168,6 @@ try:
 except ImportError:
     pass
 try:
-    import mmdet
-    result["mmdet"] = mmdet.__version__
-except ImportError:
-    pass
-try:
     import segmentation_models_pytorch as smp
     result["smp"] = smp.__version__
 except ImportError:
@@ -186,26 +175,6 @@ except ImportError:
 try:
     import transformers
     result["hf_transformers"] = transformers.__version__
-except ImportError:
-    pass
-try:
-    import mmseg
-    result["mmseg"] = mmseg.__version__
-except ImportError:
-    pass
-try:
-    import detectron2
-    result["detectron2"] = detectron2.__version__
-except ImportError:
-    pass
-try:
-    import mmpose
-    result["mmpose"] = mmpose.__version__
-except ImportError:
-    pass
-try:
-    import mmrotate
-    result["mmrotate"] = mmrotate.__version__
 except ImportError:
     pass
 try:
@@ -284,13 +253,8 @@ print(json.dumps(result))
             torch_version: None,
             cuda_available: false,
             rfdetr_version: None,
-            mmdet_version: None,
             smp_version: None,
             hf_transformers_version: None,
-            mmseg_version: None,
-            detectron2_version: None,
-            mmpose_version: None,
-            mmrotate_version: None,
             timm_version: None,
             tsai_version: None,
             pytorch_forecasting_version: None,
@@ -310,13 +274,8 @@ print(json.dumps(result))
     let torch_version = info["torch"].as_str().map(|s| s.to_string());
     let cuda_available = info["cuda"].as_bool().unwrap_or(false);
     let rfdetr_version = info["rfdetr"].as_str().map(|s| s.to_string());
-    let mmdet_version = info["mmdet"].as_str().map(|s| s.to_string());
     let smp_version = info["smp"].as_str().map(|s| s.to_string());
     let hf_transformers_version = info["hf_transformers"].as_str().map(|s| s.to_string());
-    let mmseg_version = info["mmseg"].as_str().map(|s| s.to_string());
-    let detectron2_version = info["detectron2"].as_str().map(|s| s.to_string());
-    let mmpose_version = info["mmpose"].as_str().map(|s| s.to_string());
-    let mmrotate_version = info["mmrotate"].as_str().map(|s| s.to_string());
     let timm_version = info["timm"].as_str().map(|s| s.to_string());
     let tsai_version = info["tsai"].as_str().map(|s| s.to_string());
     let pytorch_forecasting_version = info["pytorch_forecasting"].as_str().map(|s| s.to_string());
@@ -334,13 +293,8 @@ print(json.dumps(result))
         torch_version,
         cuda_available,
         rfdetr_version,
-        mmdet_version,
         smp_version,
         hf_transformers_version,
-        mmseg_version,
-        detectron2_version,
-        mmpose_version,
-        mmrotate_version,
         timm_version,
         tsai_version,
         pytorch_forecasting_version,
@@ -392,19 +346,7 @@ pub fn install_packages<F: Fn(&str, f64, Option<String>)>(
     let total = packages.len();
     for (i, pkg) in packages.iter().enumerate() {
         let mut cmd = Command::new(&python);
-        // For OpenMMLab packages we use mim install
-        if *pkg == "mmcv"
-            || *pkg == "mmdet"
-            || *pkg == "mmengine"
-            || *pkg == "mmsegmentation"
-            || *pkg == "mmpose"
-            || *pkg == "mmrotate"
-        {
-            cmd = Command::new(&python);
-            cmd.args(["-m", "mim", "install", *pkg]);
-        } else {
-            cmd.args(["-m", "pip", "install", *pkg]);
-        }
+        cmd.args(["-m", "pip", "install", *pkg]);
 
         let base_p = (i as f64 / total as f64) * 100.0;
         let span = 100.0 / total as f64;

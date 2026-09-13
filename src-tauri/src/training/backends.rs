@@ -49,19 +49,17 @@ pub fn get_available_backends(project_type: &str) -> Vec<BackendInfo> {
             backends.push(build_yolo_backend(task));
             backends.push(build_rtdetr_backend());
             backends.push(build_rfdetr_backend(task));
-            backends.push(build_mmdet_backend());
+            backends.push(build_hf_detection_backend());
         }
         "segment" => {
             backends.push(build_yolo_backend(task));
             backends.push(build_rfdetr_backend(task));
             backends.push(build_smp_backend());
             backends.push(build_hf_seg_backend());
-            backends.push(build_mmseg_backend());
         }
         "instance_segment" => {
             backends.push(build_yolo_backend("segment"));
-            backends.push(build_detectron2_backend());
-            backends.push(build_mmdet_instance_backend());
+            backends.push(build_hf_instance_backend());
         }
         "classify" => {
             backends.push(build_yolo_backend(task));
@@ -74,14 +72,15 @@ pub fn get_available_backends(project_type: &str) -> Vec<BackendInfo> {
         }
         "pose" => {
             backends.push(build_yolo_backend(task));
-            backends.push(build_mmpose_backend());
+            backends.push(build_hf_pose_backend(task));
         }
         "landmarks" => {
-            backends.push(build_mmpose_backend());
+            backends.push(build_hf_pose_backend(task));
         }
         "obb" => {
+            // Sólo ultralytics: MMRotate llevaba sin mantención desde 2022 y exigía
+            // mmcv<2.1 con numpy 1.x, incompatible con el entorno de Annotix.
             backends.push(build_yolo_backend(task));
-            backends.push(build_mmrotate_backend());
         }
         "ts_classify" | "ts_forecast" | "ts_regress" | "ts_segment" | "ts_event" => {
             backends.push(build_tsai_backend(task));
@@ -423,121 +422,9 @@ fn build_rfdetr_backend(task: &str) -> BackendInfo {
         models,
         dataset_format: DatasetFormat::CocoJson,
         // El extra [train] trae pytorch-lightning y compañía: sin él `train()`
-        // aborta pidiéndolo, ya con los pesos descargados.
-        pip_packages: vec!["rfdetr[train]".into()],
-    }
-}
-
-fn build_mmdet_backend() -> BackendInfo {
-    let models = vec![
-        // Two-stage
-        BackendModelInfo {
-            id: "faster-rcnn_r50_fpn".into(),
-            name: "Faster R-CNN".into(),
-            family: "two-stage".into(),
-            description: "Classic two-stage detector with ResNet-50 + FPN".into(),
-            params_count: Some("41M".into()),
-            tasks: vec!["detect".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "cascade-rcnn_r50_fpn".into(),
-            name: "Cascade R-CNN".into(),
-            family: "two-stage".into(),
-            description: "Multi-stage R-CNN with cascaded refinement".into(),
-            params_count: Some("69M".into()),
-            tasks: vec!["detect".into()],
-            sizes: None,
-            recommended: false,
-        },
-        // One-stage
-        BackendModelInfo {
-            id: "retinanet_r50_fpn".into(),
-            name: "RetinaNet".into(),
-            family: "one-stage".into(),
-            description: "One-stage detector with focal loss".into(),
-            params_count: Some("37M".into()),
-            tasks: vec!["detect".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "fcos_r50_fpn".into(),
-            name: "FCOS".into(),
-            family: "one-stage".into(),
-            description: "Anchor-free fully convolutional detector".into(),
-            params_count: Some("32M".into()),
-            tasks: vec!["detect".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "rtmdet_l".into(),
-            name: "RTMDet-L".into(),
-            family: "one-stage".into(),
-            description: "Real-time modern detector — high throughput".into(),
-            params_count: Some("52M".into()),
-            tasks: vec!["detect".into()],
-            sizes: None,
-            recommended: true,
-        },
-        // Transformer
-        BackendModelInfo {
-            id: "detr_r50".into(),
-            name: "DETR".into(),
-            family: "transformer".into(),
-            description: "End-to-end detection transformer".into(),
-            params_count: Some("41M".into()),
-            tasks: vec!["detect".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "deformable-detr_r50".into(),
-            name: "Deformable DETR".into(),
-            family: "transformer".into(),
-            description: "DETR with deformable attention — faster convergence".into(),
-            params_count: Some("40M".into()),
-            tasks: vec!["detect".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "dino-4scale_r50".into(),
-            name: "DINO".into(),
-            family: "transformer".into(),
-            description: "DETR with improved denoising — SOTA transformer detector".into(),
-            params_count: Some("47M".into()),
-            tasks: vec!["detect".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "co_detr_r50".into(),
-            name: "Co-DETR".into(),
-            family: "transformer".into(),
-            description: "Collaborative DETR with auxiliary heads".into(),
-            params_count: Some("56M".into()),
-            tasks: vec!["detect".into()],
-            sizes: None,
-            recommended: false,
-        },
-    ];
-
-    BackendInfo {
-        id: "mmdetection".into(),
-        name: "MMDetection".into(),
-        description: "OpenMMLab detection toolbox — wide model variety".into(),
-        supported_tasks: vec!["detect".into()],
-        models,
-        dataset_format: DatasetFormat::CocoJson,
-        pip_packages: vec![
-            "openmim".into(),
-            "mmengine".into(),
-            "mmcv".into(),
-            "mmdet".into(),
-        ],
+        // aborta pidiéndolo, ya con los pesos descargados. El pin de transformers
+        // es real: rfdetr 1.10 usa la API de la 5.x.
+        pip_packages: vec!["rfdetr[train]".into(), "transformers>=5".into()],
     }
 }
 
@@ -829,676 +716,200 @@ fn build_hf_seg_backend() -> BackendInfo {
     }
 }
 
-fn build_mmseg_backend() -> BackendInfo {
-    let models = vec![
-        // ── CNN clásicos ──
-        BackendModelInfo {
-            id: "fcn_r50-d8".into(),
-            name: "FCN (R50)".into(),
-            family: "fcn".into(),
-            description: "Fully Convolutional Network — baseline model".into(),
-            params_count: Some("49M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "pspnet_r50-d8".into(),
-            name: "PSPNet (R50)".into(),
-            family: "pspnet".into(),
-            description: "Pyramid Scene Parsing Network with ResNet-50".into(),
-            params_count: Some("49M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "deeplabv3_r50-d8".into(),
-            name: "DeepLabV3 (R50)".into(),
-            family: "deeplab".into(),
-            description: "Atrous spatial pyramid pooling — no decoder".into(),
-            params_count: Some("58M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "deeplabv3plus_r50-d8".into(),
-            name: "DeepLabV3+ (R50)".into(),
-            family: "deeplab".into(),
-            description: "Atrous spatial pyramid pooling with decoder".into(),
-            params_count: Some("44M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: true,
-        },
-        BackendModelInfo {
-            id: "unet_s5-d16".into(),
-            name: "UNet (S5-D16)".into(),
-            family: "unet".into(),
-            description: "Encoder-decoder with skip connections — medical/general".into(),
-            params_count: Some("29M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "upernet_r50".into(),
-            name: "UPerNet (R50)".into(),
-            family: "upernet".into(),
-            description: "Unified Perceptual Parsing with FPN".into(),
-            params_count: Some("66M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "ocrnet_hr48".into(),
-            name: "OCRNet (HR48)".into(),
-            family: "ocrnet".into(),
-            description: "Object-Contextual Representations with HRNet".into(),
-            params_count: Some("70M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "pointrend_r50".into(),
-            name: "PointRend (R50)".into(),
-            family: "pointrend".into(),
-            description: "Point-based refinement for sharp boundaries".into(),
-            params_count: Some("38M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        // ── Ligeros / tiempo real ──
-        BackendModelInfo {
-            id: "bisenetv1".into(),
-            name: "BiSeNetV1".into(),
-            family: "bisenet".into(),
-            description: "Bilateral segmentation — two-branch real-time".into(),
-            params_count: Some("13M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "bisenetv2".into(),
-            name: "BiSeNetV2".into(),
-            family: "bisenet".into(),
-            description: "Bilateral segmentation v2 — faster inference".into(),
-            params_count: Some("3.4M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "stdc1".into(),
-            name: "STDC1".into(),
-            family: "stdc".into(),
-            description: "Short-Term Dense Concatenate — very fast".into(),
-            params_count: Some("8M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "stdc2".into(),
-            name: "STDC2".into(),
-            family: "stdc".into(),
-            description: "Short-Term Dense Concatenate — larger variant".into(),
-            params_count: Some("12M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "fast_scnn".into(),
-            name: "Fast-SCNN".into(),
-            family: "fast_scnn".into(),
-            description: "Ultra lightweight — fast semantic segmentation".into(),
-            params_count: Some("1.1M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "cgnet".into(),
-            name: "CGNet".into(),
-            family: "cgnet".into(),
-            description: "Context Guided Network — lightweight".into(),
-            params_count: Some("0.5M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "erfnet".into(),
-            name: "ERFNet".into(),
-            family: "erfnet".into(),
-            description: "Efficient Residual Factorized — fast and accurate".into(),
-            params_count: Some("2.1M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "pidnet-s".into(),
-            name: "PIDNet-S".into(),
-            family: "pidnet".into(),
-            description: "PID controller inspired — good speed/accuracy balance".into(),
-            params_count: Some("7.6M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "pidnet-m".into(),
-            name: "PIDNet-M".into(),
-            family: "pidnet".into(),
-            description: "PIDNet medium — higher accuracy".into(),
-            params_count: Some("28M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "pidnet-l".into(),
-            name: "PIDNet-L".into(),
-            family: "pidnet".into(),
-            description: "PIDNet large — best accuracy in family".into(),
-            params_count: Some("37M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "icnet".into(),
-            name: "ICNet".into(),
-            family: "icnet".into(),
-            description: "Image Cascade Network — multi-resolution fast".into(),
-            params_count: Some("7M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "ddrnet".into(),
-            name: "DDRNet".into(),
-            family: "ddrnet".into(),
-            description: "Dual-resolution — fast with high accuracy".into(),
-            params_count: Some("20M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        // ── Transformer (SOTA) ──
-        BackendModelInfo {
-            id: "segformer_mit-b0".into(),
-            name: "SegFormer (MiT-B0)".into(),
-            family: "segformer".into(),
-            description: "Efficient transformer — lightweight variant".into(),
-            params_count: Some("3.8M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "segformer_mit-b2".into(),
-            name: "SegFormer (MiT-B2)".into(),
-            family: "segformer".into(),
-            description: "Efficient transformer — balanced speed/accuracy".into(),
-            params_count: Some("25M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "segformer_mit-b5".into(),
-            name: "SegFormer (MiT-B5)".into(),
-            family: "segformer".into(),
-            description: "Efficient transformer — highest accuracy variant".into(),
-            params_count: Some("84M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "segmenter_vit-b".into(),
-            name: "Segmenter (ViT-B)".into(),
-            family: "segmenter".into(),
-            description: "Pure ViT segmenter — mask transformer decoder".into(),
-            params_count: Some("86M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "setr_vit-l".into(),
-            name: "SETR (ViT-L)".into(),
-            family: "setr".into(),
-            description: "Serialized Transformer — treats segmentation as sequence".into(),
-            params_count: Some("308M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "dpt_vit-b16".into(),
-            name: "DPT (ViT-B16)".into(),
-            family: "dpt".into(),
-            description: "Dense Prediction Transformer — multi-scale features".into(),
-            params_count: Some("86M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "mask2former_swin-l".into(),
-            name: "Mask2Former (Swin-L)".into(),
-            family: "mask2former".into(),
-            description: "SOTA universal segmentation — highest accuracy".into(),
-            params_count: Some("216M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "maskformer_swin-b".into(),
-            name: "MaskFormer (Swin-B)".into(),
-            family: "maskformer".into(),
-            description: "Per-pixel classification via mask prediction".into(),
-            params_count: Some("102M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "knet_swin-l".into(),
-            name: "K-Net (Swin-L)".into(),
-            family: "knet".into(),
-            description: "Kernel-based segmentation — dynamic kernels".into(),
-            params_count: Some("200M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "san_vit-l".into(),
-            name: "SAN (ViT-L)".into(),
-            family: "san".into(),
-            description: "Side Adapter Network — adapts CLIP for segmentation".into(),
-            params_count: Some("300M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "segnext_large".into(),
-            name: "SegNeXt (Large)".into(),
-            family: "segnext".into(),
-            description: "Efficient convolutional attention — good accuracy/speed".into(),
-            params_count: Some("49M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-    ];
-
-    BackendInfo {
-        id: "mmsegmentation".into(),
-        name: "MMSegmentation".into(),
-        description: "OpenMMLab semantic segmentation toolbox — wide model variety".into(),
-        supported_tasks: vec!["segment".into()],
-        models,
-        dataset_format: DatasetFormat::MaskPng,
-        pip_packages: vec![
-            "openmim".into(),
-            "mmengine".into(),
-            "mmcv".into(),
-            "mmsegmentation".into(),
-        ],
-    }
-}
-
 // ─── Detectron2 (Instance Segmentation / Polygon) ───────────────────────────
-
-fn build_detectron2_backend() -> BackendInfo {
-    let models = vec![
-        BackendModelInfo {
-            id: "mask_rcnn_R_50_FPN_3x".into(),
-            name: "Mask R-CNN R50".into(),
-            family: "mask-rcnn".into(),
-            description: "Standard Mask R-CNN with ResNet-50 FPN".into(),
-            params_count: Some("44M".into()),
-            tasks: vec!["instance_segment".into()],
-            sizes: None,
-            recommended: true,
-        },
-        BackendModelInfo {
-            id: "mask_rcnn_R_101_FPN_3x".into(),
-            name: "Mask R-CNN R101".into(),
-            family: "mask-rcnn".into(),
-            description: "Mask R-CNN with deeper ResNet-101 backbone".into(),
-            params_count: Some("63M".into()),
-            tasks: vec!["instance_segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "cascade_mask_rcnn_R_50_FPN_3x".into(),
-            name: "Cascade Mask R-CNN".into(),
-            family: "cascade".into(),
-            description: "Multi-stage cascaded Mask R-CNN".into(),
-            params_count: Some("77M".into()),
-            tasks: vec!["instance_segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "mask2former_swin_L_IN21k".into(),
-            name: "Mask2Former Swin-L".into(),
-            family: "mask2former".into(),
-            description: "SOTA universal instance segmentation".into(),
-            params_count: Some("216M".into()),
-            tasks: vec!["instance_segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "pointrend_R_50_FPN_3x".into(),
-            name: "PointRend R50".into(),
-            family: "pointrend".into(),
-            description: "Point-based refinement for sharp mask boundaries".into(),
-            params_count: Some("45M".into()),
-            tasks: vec!["instance_segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-    ];
-
-    BackendInfo {
-        id: "detectron2".into(),
-        name: "Detectron2".into(),
-        description: "Facebook AI instance segmentation — Mask R-CNN, Mask2Former, PointRend"
-            .into(),
-        supported_tasks: vec!["instance_segment".into()],
-        models,
-        dataset_format: DatasetFormat::CocoInstanceJson,
-        pip_packages: vec!["detectron2".into()],
-    }
-}
 
 // ─── MMDetection Instance Seg ────────────────────────────────────────────────
 
-fn build_mmdet_instance_backend() -> BackendInfo {
-    let models = vec![
-        BackendModelInfo {
-            id: "mask-rcnn_r50_fpn_ins".into(),
-            name: "Mask R-CNN (R50)".into(),
-            family: "mask-rcnn".into(),
-            description: "Classic instance segmentation with ResNet-50".into(),
-            params_count: Some("44M".into()),
-            tasks: vec!["instance_segment".into()],
-            sizes: None,
-            recommended: true,
-        },
-        BackendModelInfo {
-            id: "cascade-mask-rcnn_r50_fpn_ins".into(),
-            name: "Cascade Mask R-CNN".into(),
-            family: "cascade".into(),
-            description: "Multi-stage cascaded instance segmentation".into(),
-            params_count: Some("77M".into()),
-            tasks: vec!["instance_segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "solov2_r50_fpn".into(),
-            name: "SOLOv2 (R50)".into(),
-            family: "solo".into(),
-            description: "Segmenting objects by locations — direct mask prediction".into(),
-            params_count: Some("46M".into()),
-            tasks: vec!["instance_segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "mask2former_swin-l_ins".into(),
-            name: "Mask2Former (Swin-L)".into(),
-            family: "mask2former".into(),
-            description: "SOTA universal instance segmentation via MMDet".into(),
-            params_count: Some("216M".into()),
-            tasks: vec!["instance_segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "htc_r50_fpn".into(),
-            name: "HTC (R50)".into(),
-            family: "htc".into(),
-            description: "Hybrid Task Cascade — progressive refinement".into(),
-            params_count: Some("76M".into()),
-            tasks: vec!["instance_segment".into()],
-            sizes: None,
-            recommended: false,
-        },
-    ];
-
-    BackendInfo {
-        id: "mmdetection".into(),
-        name: "MMDetection".into(),
-        description: "OpenMMLab instance segmentation — Mask R-CNN, SOLOv2, Mask2Former, HTC"
-            .into(),
-        supported_tasks: vec!["instance_segment".into()],
-        models,
-        dataset_format: DatasetFormat::CocoInstanceJson,
-        pip_packages: vec![
-            "openmim".into(),
-            "mmengine".into(),
-            "mmcv".into(),
-            "mmdet".into(),
-        ],
-    }
-}
-
 // ─── MMPose (Keypoints + Landmarks) ──────────────────────────────────────────
-
-fn build_mmpose_backend() -> BackendInfo {
-    let models = vec![
-        BackendModelInfo {
-            id: "rtmpose-t".into(),
-            name: "RTMPose-T".into(),
-            family: "rtmpose".into(),
-            description: "Real-time pose — tiny variant, fastest".into(),
-            params_count: Some("3.3M".into()),
-            tasks: vec!["pose".into(), "landmarks".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "rtmpose-s".into(),
-            name: "RTMPose-S".into(),
-            family: "rtmpose".into(),
-            description: "Real-time pose — small, good balance".into(),
-            params_count: Some("5.5M".into()),
-            tasks: vec!["pose".into(), "landmarks".into()],
-            sizes: None,
-            recommended: true,
-        },
-        BackendModelInfo {
-            id: "rtmpose-m".into(),
-            name: "RTMPose-M".into(),
-            family: "rtmpose".into(),
-            description: "Real-time pose — medium, higher accuracy".into(),
-            params_count: Some("13M".into()),
-            tasks: vec!["pose".into(), "landmarks".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "rtmpose-l".into(),
-            name: "RTMPose-L".into(),
-            family: "rtmpose".into(),
-            description: "Real-time pose — large, best RTMPose accuracy".into(),
-            params_count: Some("28M".into()),
-            tasks: vec!["pose".into(), "landmarks".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "hrnet-w32".into(),
-            name: "HRNet-W32".into(),
-            family: "hrnet".into(),
-            description: "High-Resolution Network — multi-scale features".into(),
-            params_count: Some("29M".into()),
-            tasks: vec!["pose".into(), "landmarks".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "hrnet-w48".into(),
-            name: "HRNet-W48".into(),
-            family: "hrnet".into(),
-            description: "HRNet wider variant — higher accuracy".into(),
-            params_count: Some("64M".into()),
-            tasks: vec!["pose".into(), "landmarks".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "vitpose-b".into(),
-            name: "ViTPose-B".into(),
-            family: "vitpose".into(),
-            description: "Vision Transformer for pose — base variant".into(),
-            params_count: Some("86M".into()),
-            tasks: vec!["pose".into(), "landmarks".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "vitpose-l".into(),
-            name: "ViTPose-L".into(),
-            family: "vitpose".into(),
-            description: "ViTPose large — maximum accuracy".into(),
-            params_count: Some("307M".into()),
-            tasks: vec!["pose".into(), "landmarks".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "simplebaseline-r50".into(),
-            name: "SimpleBaseline R50".into(),
-            family: "simplebaseline".into(),
-            description: "Simple deconv baseline with ResNet-50".into(),
-            params_count: Some("34M".into()),
-            tasks: vec!["pose".into(), "landmarks".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "litehrnet-30".into(),
-            name: "LiteHRNet-30".into(),
-            family: "litehrnet".into(),
-            description: "Lightweight HRNet — mobile-friendly".into(),
-            params_count: Some("1.8M".into()),
-            tasks: vec!["pose".into(), "landmarks".into()],
-            sizes: None,
-            recommended: false,
-        },
-    ];
-
-    BackendInfo {
-        id: "mmpose".into(),
-        name: "MMPose".into(),
-        description: "OpenMMLab pose estimation — RTMPose, HRNet, ViTPose and more".into(),
-        supported_tasks: vec!["pose".into(), "landmarks".into()],
-        models,
-        dataset_format: DatasetFormat::CocoKeypointsJson,
-        pip_packages: vec![
-            "openmim".into(),
-            "mmengine".into(),
-            "mmcv".into(),
-            "mmpose".into(),
-            "mmdet".into(),
-        ],
-    }
-}
 
 // ─── MMRotate (OBB) ──────────────────────────────────────────────────────────
 
-fn build_mmrotate_backend() -> BackendInfo {
-    let models = vec![
-        BackendModelInfo {
-            id: "oriented-rcnn_r50_fpn".into(),
-            name: "Oriented R-CNN".into(),
-            family: "oriented-rcnn".into(),
-            description: "Two-stage oriented detector with midpoint offset".into(),
-            params_count: Some("41M".into()),
-            tasks: vec!["obb".into()],
-            sizes: None,
-            recommended: true,
-        },
-        BackendModelInfo {
-            id: "rotated-faster-rcnn_r50_fpn".into(),
-            name: "Rotated Faster R-CNN".into(),
-            family: "rotated-rcnn".into(),
-            description: "Faster R-CNN adapted for rotated boxes".into(),
-            params_count: Some("41M".into()),
-            tasks: vec!["obb".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "rotated-retinanet_r50_fpn".into(),
-            name: "Rotated RetinaNet".into(),
-            family: "rotated-retinanet".into(),
-            description: "One-stage rotated detector with focal loss".into(),
-            params_count: Some("37M".into()),
-            tasks: vec!["obb".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "roi-transformer_r50_fpn".into(),
-            name: "RoI Transformer".into(),
-            family: "roi-transformer".into(),
-            description: "Learns spatial transformation for rotated RoIs".into(),
-            params_count: Some("55M".into()),
-            tasks: vec!["obb".into()],
-            sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "gliding-vertex_r50_fpn".into(),
-            name: "Gliding Vertex".into(),
-            family: "gliding-vertex".into(),
-            description: "Gliding vertex on horizontal bounding boxes".into(),
-            params_count: Some("41M".into()),
-            tasks: vec!["obb".into()],
-            sizes: None,
-            recommended: false,
-        },
-    ];
+// ─── timm (Classification / Multi-label) ─────────────────────────────────────
 
+// ─── HuggingFace: detección, instancias y pose ───────────────────────────────
+
+fn modelo(
+    id: &str,
+    name: &str,
+    family: &str,
+    description: &str,
+    params: &str,
+    task: &str,
+    recommended: bool,
+) -> BackendModelInfo {
+    BackendModelInfo {
+        id: id.into(),
+        name: name.into(),
+        family: family.into(),
+        description: description.into(),
+        params_count: Some(params.into()),
+        tasks: vec![task.into()],
+        sizes: None,
+        recommended,
+    }
+}
+
+fn build_hf_detection_backend() -> BackendInfo {
     BackendInfo {
-        id: "mmrotate".into(),
-        name: "MMRotate".into(),
-        description: "OpenMMLab rotated object detection — Oriented R-CNN, RoI Transformer".into(),
-        supported_tasks: vec!["obb".into()],
-        models,
-        dataset_format: DatasetFormat::DotaTxt,
+        id: "hf_detection".into(),
+        name: "HuggingFace Detection".into(),
+        description: "DETR y variantes desde el Hub — reemplaza MMDetection".into(),
+        supported_tasks: vec!["detect".into()],
+        models: vec![
+            modelo(
+                "facebook/detr-resnet-50",
+                "DETR (R50)",
+                "detr",
+                "Transformer de detección de referencia",
+                "41M",
+                "detect",
+                true,
+            ),
+            modelo(
+                "facebook/detr-resnet-101",
+                "DETR (R101)",
+                "detr",
+                "Más capacidad, más lento",
+                "60M",
+                "detect",
+                false,
+            ),
+            modelo(
+                "SenseTime/deformable-detr",
+                "Deformable DETR",
+                "deformable-detr",
+                "Atención deformable: converge antes que DETR",
+                "40M",
+                "detect",
+                false,
+            ),
+            modelo(
+                "microsoft/conditional-detr-resnet-50",
+                "Conditional DETR (R50)",
+                "conditional-detr",
+                "Consultas condicionales, entrenamiento más rápido",
+                "43M",
+                "detect",
+                false,
+            ),
+        ],
+        dataset_format: DatasetFormat::CocoJson,
         pip_packages: vec![
-            "openmim".into(),
-            "mmengine".into(),
-            "mmcv".into(),
-            "mmrotate".into(),
+            "transformers".into(),
+            "accelerate".into(),
+            "torchmetrics".into(),
+            "pycocotools".into(),
         ],
     }
 }
 
-// ─── timm (Classification / Multi-label) ─────────────────────────────────────
+fn build_hf_instance_backend() -> BackendInfo {
+    BackendInfo {
+        id: "hf_instance".into(),
+        name: "HuggingFace Instance Segmentation".into(),
+        description: "Mask2Former y MaskFormer — reemplazan Detectron2".into(),
+        supported_tasks: vec!["instance_segment".into()],
+        models: vec![
+            modelo(
+                "facebook/mask2former-swin-tiny-coco-instance",
+                "Mask2Former (Swin-T)",
+                "mask2former",
+                "Segmentación por instancias, variante ligera",
+                "47M",
+                "instance_segment",
+                true,
+            ),
+            modelo(
+                "facebook/mask2former-swin-small-coco-instance",
+                "Mask2Former (Swin-S)",
+                "mask2former",
+                "Equilibrio entre precisión y coste",
+                "69M",
+                "instance_segment",
+                false,
+            ),
+            modelo(
+                "facebook/mask2former-swin-base-coco-instance",
+                "Mask2Former (Swin-B)",
+                "mask2former",
+                "Mayor precisión, requiere más memoria",
+                "107M",
+                "instance_segment",
+                false,
+            ),
+            modelo(
+                "facebook/maskformer-swin-tiny-coco",
+                "MaskFormer (Swin-T)",
+                "maskformer",
+                "Predecesor de Mask2Former, más simple",
+                "42M",
+                "instance_segment",
+                false,
+            ),
+        ],
+        dataset_format: DatasetFormat::CocoInstanceJson,
+        pip_packages: vec![
+            "transformers".into(),
+            "accelerate".into(),
+            "torchmetrics".into(),
+            "pycocotools".into(),
+        ],
+    }
+}
+
+fn build_hf_pose_backend(task: &str) -> BackendInfo {
+    let etiqueta = if task == "landmarks" {
+        "landmarks"
+    } else {
+        "pose"
+    };
+    BackendInfo {
+        id: "hf_pose".into(),
+        name: "Pose (heatmaps sobre timm)".into(),
+        description: "Backbone preentrenado con cabeza de heatmaps — reemplaza MMPose".into(),
+        supported_tasks: vec!["pose".into(), "landmarks".into()],
+        models: vec![
+            modelo(
+                "resnet50",
+                "ResNet-50",
+                "resnet",
+                "Backbone estándar, buen punto de partida",
+                "25M",
+                etiqueta,
+                true,
+            ),
+            modelo(
+                "resnet18",
+                "ResNet-18",
+                "resnet",
+                "Ligero: entrena rápido en CPU",
+                "12M",
+                etiqueta,
+                false,
+            ),
+            modelo(
+                "convnext_tiny",
+                "ConvNeXt-T",
+                "convnext",
+                "Más preciso a igual coste que ResNet",
+                "28M",
+                etiqueta,
+                false,
+            ),
+            modelo(
+                "hrnet_w32",
+                "HRNet-W32",
+                "hrnet",
+                "Alta resolución: la arquitectura clásica de pose",
+                "29M",
+                etiqueta,
+                false,
+            ),
+        ],
+        dataset_format: DatasetFormat::CocoKeypointsJson,
+        pip_packages: vec!["timm".into(), "torch".into(), "torchvision".into()],
+    }
+}
 
 fn build_timm_backend(task: &str) -> BackendInfo {
     let tasks = if task == "multi_classify" {

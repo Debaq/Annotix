@@ -183,8 +183,6 @@ pub struct PythonEnvStatus {
     pub cuda_available: bool,
     #[serde(rename = "rfdetrVersion", skip_serializing_if = "Option::is_none")]
     pub rfdetr_version: Option<String>,
-    #[serde(rename = "mmdetVersion", skip_serializing_if = "Option::is_none")]
-    pub mmdet_version: Option<String>,
     #[serde(rename = "smpVersion", skip_serializing_if = "Option::is_none")]
     pub smp_version: Option<String>,
     #[serde(
@@ -192,14 +190,6 @@ pub struct PythonEnvStatus {
         skip_serializing_if = "Option::is_none"
     )]
     pub hf_transformers_version: Option<String>,
-    #[serde(rename = "mmsegVersion", skip_serializing_if = "Option::is_none")]
-    pub mmseg_version: Option<String>,
-    #[serde(rename = "detectron2Version", skip_serializing_if = "Option::is_none")]
-    pub detectron2_version: Option<String>,
-    #[serde(rename = "mmposeVersion", skip_serializing_if = "Option::is_none")]
-    pub mmpose_version: Option<String>,
-    #[serde(rename = "mmrotateVersion", skip_serializing_if = "Option::is_none")]
-    pub mmrotate_version: Option<String>,
     #[serde(rename = "timmVersion", skip_serializing_if = "Option::is_none")]
     pub timm_version: Option<String>,
     #[serde(rename = "tsaiVersion", skip_serializing_if = "Option::is_none")]
@@ -371,14 +361,15 @@ pub enum TrainingBackend {
     Yolo,
     RtDetr,
     RfDetr,
-    MmDetection,
     Smp,
     HfSegmentation,
-    MmSegmentation,
-    // New backends
-    Detectron2,
-    MmPose,
-    MmRotate,
+    // Detección, instancias y pose con HuggingFace. Reemplazan a MMDetection,
+    // MMSegmentation, MMPose, MMRotate y Detectron2, cuyo stack (mmcv, detectron2)
+    // no es instalable sobre torch 2.x + numpy 2 y nunca llegó a entrenar aquí:
+    // sus configs generados no definían el modelo. Ver docs/roadmap_train.md.
+    HfDetection,
+    HfInstance,
+    HfPose,
     Timm,
     HfClassification,
     Tsai,

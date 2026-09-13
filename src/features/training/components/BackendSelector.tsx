@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
+import { isBackendInstalled } from '../utils/backendEnv';
 import { trainingService } from '../services/trainingService';
 import type { BackendInfo, PythonEnvStatus, TrainingBackend } from '../types';
 
@@ -14,30 +15,36 @@ const BACKEND_ICONS: Record<string, string> = {
   yolo: 'fas fa-bolt',
   rt_detr: 'fas fa-atom',
   rf_detr: 'fas fa-bullseye',
-  mmdetection: 'fas fa-cubes',
+  hf_detection: 'fas fa-cubes',
+  hf_instance: 'fas fa-object-group',
+  hf_pose: 'fas fa-child-reaching',
   smp: 'fas fa-layer-group',
   hf_segmentation: 'fas fa-brain',
-  mmsegmentation: 'fas fa-puzzle-piece',
+
 };
 
 const BACKEND_COLORS: Record<string, string> = {
   yolo: 'border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10',
   rt_detr: 'border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10',
   rf_detr: 'border-green-500/30 bg-green-500/5 hover:bg-green-500/10',
-  mmdetection: 'border-orange-500/30 bg-orange-500/5 hover:bg-orange-500/10',
+  hf_detection: 'border-orange-500/30 bg-orange-500/5 hover:bg-orange-500/10',
+  hf_instance: 'border-fuchsia-500/30 bg-fuchsia-500/5 hover:bg-fuchsia-500/10',
+  hf_pose: 'border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-500/10',
   smp: 'border-teal-500/30 bg-teal-500/5 hover:bg-teal-500/10',
   hf_segmentation: 'border-yellow-500/30 bg-yellow-500/5 hover:bg-yellow-500/10',
-  mmsegmentation: 'border-rose-500/30 bg-rose-500/5 hover:bg-rose-500/10',
+
 };
 
 const BACKEND_SELECTED_COLORS: Record<string, string> = {
   yolo: 'border-blue-500 bg-blue-500/20',
   rt_detr: 'border-purple-500 bg-purple-500/20',
   rf_detr: 'border-green-500 bg-green-500/20',
-  mmdetection: 'border-orange-500 bg-orange-500/20',
+  hf_detection: 'border-orange-500 bg-orange-500/20',
+  hf_instance: 'border-fuchsia-500 bg-fuchsia-500/20',
+  hf_pose: 'border-cyan-500 bg-cyan-500/20',
   smp: 'border-teal-500 bg-teal-500/20',
   hf_segmentation: 'border-yellow-500 bg-yellow-500/20',
-  mmsegmentation: 'border-rose-500 bg-rose-500/20',
+
 };
 
 export function BackendSelector({ projectType, envStatus, onSelect }: BackendSelectorProps) {
@@ -49,28 +56,8 @@ export function BackendSelector({ projectType, envStatus, onSelect }: BackendSel
     trainingService.getAvailableBackends(projectType).then(setBackends).catch(() => {});
   }, [projectType]);
 
-  const isInstalled = (backend: BackendInfo) => {
-    const id = backend.id;
-    if (id === 'yolo' || id === 'rt_detr') {
-      return envStatus?.ultralyticsVersion != null;
-    }
-    if (id === 'rf_detr') {
-      return envStatus?.rfdetrVersion != null;
-    }
-    if (id === 'mmdetection') {
-      return envStatus?.mmdetVersion != null;
-    }
-    if (id === 'smp') {
-      return envStatus?.smpVersion != null;
-    }
-    if (id === 'hf_segmentation') {
-      return envStatus?.hfTransformersVersion != null;
-    }
-    if (id === 'mmsegmentation') {
-      return envStatus?.mmsegVersion != null;
-    }
-    return false;
-  };
+  const isInstalled = (backend: BackendInfo) =>
+    isBackendInstalled(backend.id as TrainingBackend, envStatus);
 
   const handleSelect = (backend: BackendInfo) => {
     setSelected(backend.id);

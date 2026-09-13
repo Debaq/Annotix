@@ -204,10 +204,8 @@
     "commonTitle": "공통 파라미터",
     "rtdetrTitle": "RT-DETR 파라미터",
     "rfdetrTitle": "RF-DETR 파라미터",
-    "mmdetTitle": "MMDetection 파라미터",
     "smpTitle": "SMP 파라미터",
     "hfSegTitle": "HuggingFace 세그멘테이션 파라미터",
-    "mmsegTitle": "MMSegmentation 파라미터",
     "resolution": "해상도",
     "resolutionDesc": "입력 해상도 (56의 배수여야 합니다)",
     "lr_encoder": "인코더 LR",
@@ -296,9 +294,6 @@
     "n_headsDesc": "Number of attention heads",
     "normalize": "Normalize",
     "normalizeDesc": "Normalize time series before processing",
-    "detectron2Title": "Detectron2 Parameters",
-    "mmposeTitle": "MMPose Parameters",
-    "mmrotateTitle": "MMRotate Parameters",
     "timmTitle": "timm Parameters",
     "hfClsTitle": "HuggingFace Classification Parameters",
     "tsaiTitle": "tsai Parameters",
@@ -308,7 +303,11 @@
     "pypotsTitle": "PyPOTS Parameters",
     "stumpyTitle": "STUMPY Parameters",
     "testSplit": "테스트 분할",
-    "testSplitDesc": "홀드아웃 테스트 세트용 이미지 비율. 0이면 테스트 분할 비활성화."
+    "testSplitDesc": "홀드아웃 테스트 세트용 이미지 비율. 0이면 테스트 분할 비활성화.",
+    "hfDetectionTitle": "HuggingFace Detection 매개변수",
+    "hfInstanceTitle": "인스턴스 분할 매개변수",
+    "hfPoseTitle": "포즈 매개변수",
+    "heatmap_sigma": "히트맵 시그마"
   },
   "monitor": {
     "title": "학습 진행 중",

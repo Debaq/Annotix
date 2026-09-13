@@ -46,17 +46,8 @@ const RFDETR_PARAMS: ParamDefinition[] = [
   { key: 'gradient_checkpointing', type: 'checkbox' },
 ];
 
-const MMDET_PARAMS: ParamDefinition[] = [
-  { key: 'optimizer_type', type: 'select', options: [
-    { value: 'SGD', label: 'SGD' }, { value: 'Adam', label: 'Adam' }, { value: 'AdamW', label: 'AdamW' },
-  ]},
-  { key: 'momentum', type: 'number', min: 0, max: 1, step: 0.01 },
+const HF_DETECTION_PARAMS: ParamDefinition[] = [
   { key: 'weight_decay', type: 'number', min: 0, max: 0.1, step: 0.0001 },
-  { key: 'lr_schedule', type: 'select', options: [
-    { value: 'step', label: 'Step LR' }, { value: 'cosine', label: 'Cosine Annealing' },
-  ]},
-  { key: 'warmup_iters', type: 'number', min: 0, max: 5000 },
-  { key: 'checkpoint_interval', type: 'number', min: 1, max: 50 },
 ];
 
 const SMP_PARAMS: ParamDefinition[] = [
@@ -83,61 +74,13 @@ const HF_SEG_PARAMS: ParamDefinition[] = [
   ]},
 ];
 
-const MMSEG_PARAMS: ParamDefinition[] = [
-  { key: 'optimizer_type', type: 'select', options: [
-    { value: 'AdamW', label: 'AdamW' }, { value: 'SGD', label: 'SGD' },
-  ]},
-  { key: 'lr_schedule', type: 'select', options: [
-    { value: 'poly', label: 'Polynomial' }, { value: 'cosine', label: 'Cosine Annealing' },
-    { value: 'step', label: 'Step LR' },
-  ]},
-  { key: 'crop_size', type: 'number', min: 256, max: 1024, step: 32 },
-  { key: 'warmup_iters', type: 'number', min: 0, max: 5000 },
+const HF_INSTANCE_PARAMS: ParamDefinition[] = [
   { key: 'weight_decay', type: 'number', min: 0, max: 0.1, step: 0.001 },
-  { key: 'checkpoint_interval', type: 'number', min: 1, max: 50 },
 ];
 
-const DETECTRON2_PARAMS: ParamDefinition[] = [
-  { key: 'optimizer_type', type: 'select', options: [
-    { value: 'SGD', label: 'SGD' }, { value: 'AdamW', label: 'AdamW' },
-  ]},
-  { key: 'momentum', type: 'number', min: 0, max: 1, step: 0.01 },
-  { key: 'weight_decay', type: 'number', min: 0, max: 0.1, step: 0.0001 },
-  { key: 'lr_schedule', type: 'select', options: [
-    { value: 'WarmupMultiStepLR', label: 'MultiStep LR' }, { value: 'WarmupCosineLR', label: 'Cosine LR' },
-  ]},
-  { key: 'warmup_iters', type: 'number', min: 0, max: 5000 },
-  { key: 'checkpoint_interval', type: 'number', min: 1, max: 50 },
-];
-
-const MMPOSE_PARAMS: ParamDefinition[] = [
-  { key: 'optimizer_type', type: 'select', options: [
-    { value: 'AdamW', label: 'AdamW' }, { value: 'Adam', label: 'Adam' }, { value: 'SGD', label: 'SGD' },
-  ]},
+const HF_POSE_PARAMS: ParamDefinition[] = [
   { key: 'weight_decay', type: 'number', min: 0, max: 0.1, step: 0.001 },
-  { key: 'lr_schedule', type: 'select', options: [
-    { value: 'linear', label: 'Linear' }, { value: 'cosine', label: 'Cosine' }, { value: 'step', label: 'Step LR' },
-  ]},
-  { key: 'warmup_iters', type: 'number', min: 0, max: 5000 },
-  { key: 'input_size_h', type: 'number', min: 64, max: 1024, step: 32 },
-  { key: 'input_size_w', type: 'number', min: 64, max: 1024, step: 32 },
-  { key: 'checkpoint_interval', type: 'number', min: 1, max: 50 },
-];
-
-const MMROTATE_PARAMS: ParamDefinition[] = [
-  { key: 'optimizer_type', type: 'select', options: [
-    { value: 'SGD', label: 'SGD' }, { value: 'AdamW', label: 'AdamW' },
-  ]},
-  { key: 'momentum', type: 'number', min: 0, max: 1, step: 0.01 },
-  { key: 'weight_decay', type: 'number', min: 0, max: 0.1, step: 0.0001 },
-  { key: 'lr_schedule', type: 'select', options: [
-    { value: 'step', label: 'Step LR' }, { value: 'cosine', label: 'Cosine' },
-  ]},
-  { key: 'warmup_iters', type: 'number', min: 0, max: 5000 },
-  { key: 'angle_version', type: 'select', options: [
-    { value: 'le90', label: 'LE90' }, { value: 'le135', label: 'LE135' }, { value: 'oc', label: 'OpenCV' },
-  ]},
-  { key: 'checkpoint_interval', type: 'number', min: 1, max: 50 },
+  { key: 'heatmap_sigma', type: 'number', min: 0.5, max: 6, step: 0.5 },
 ];
 
 const TIMM_PARAMS: ParamDefinition[] = [
@@ -226,13 +169,13 @@ export const BACKEND_PARAMS: Record<string, ParamDefinition[]> = {
   yolo: [...COMMON_PARAMS, ...RTDETR_PARAMS],
   rt_detr: [...COMMON_PARAMS, ...RTDETR_PARAMS],
   rf_detr: [...COMMON_PARAMS.filter(p => ['epochs', 'batchSize', 'lr', 'valSplit'].includes(p.key)), ...RFDETR_PARAMS],
-  mmdetection: [...COMMON_IMG, ...MMDET_PARAMS],
+  hf_detection: [...COMMON_IMG, ...HF_DETECTION_PARAMS],
   smp: [...COMMON_PARAMS.filter(p => ['epochs', 'batchSize', 'imageSize', 'lr', 'valSplit', 'workers', 'amp'].includes(p.key)), ...SMP_PARAMS],
   hf_segmentation: [...COMMON_PARAMS.filter(p => ['epochs', 'batchSize', 'imageSize', 'lr', 'valSplit'].includes(p.key)), ...HF_SEG_PARAMS],
-  mmsegmentation: [...COMMON_PARAMS.filter(p => ['epochs', 'batchSize', 'lr', 'valSplit', 'workers'].includes(p.key)), ...MMSEG_PARAMS],
-  detectron2: [...COMMON_IMG, ...DETECTRON2_PARAMS],
-  mmpose: [...COMMON_IMG, ...MMPOSE_PARAMS],
-  mmrotate: [...COMMON_IMG, ...MMROTATE_PARAMS],
+
+  hf_instance: [...COMMON_IMG, ...HF_INSTANCE_PARAMS],
+  hf_pose: [...COMMON_IMG, ...HF_POSE_PARAMS],
+
   timm: [...COMMON_PARAMS.filter(p => ['epochs', 'batchSize', 'imageSize', 'lr', 'valSplit', 'workers', 'amp'].includes(p.key)), ...TIMM_PARAMS],
   hf_classification: [...COMMON_PARAMS.filter(p => ['epochs', 'batchSize', 'imageSize', 'lr', 'valSplit'].includes(p.key)), ...HF_CLS_PARAMS],
   tsai: [...COMMON_TS, ...TSAI_PARAMS],
@@ -262,11 +205,6 @@ export const DEFAULT_VALUES: Record<string, Record<string, unknown>> = {
     resolution: 576, lr_encoder: 0.00001, grad_accum_steps: 4,
     use_ema: true, early_stopping: true, weight_decay: 0.0001, gradient_checkpointing: false,
   },
-  mmdetection: {
-    epochs: 12, batchSize: 8, imageSize: 800, lr: 0.02, valSplit: 0.2, workers: 4,
-    optimizer_type: 'SGD', momentum: 0.9, weight_decay: 0.0001,
-    lr_schedule: 'step', warmup_iters: 500, checkpoint_interval: 1,
-  },
   smp: {
     epochs: 100, batchSize: 16, imageSize: 512, lr: 0.0001, valSplit: 0.2, workers: 4, amp: true,
     loss_type: 'dice+ce', scheduler: 'cosine', encoder_depth: 5, freeze_encoder: false,
@@ -275,26 +213,9 @@ export const DEFAULT_VALUES: Record<string, Record<string, unknown>> = {
     epochs: 100, batchSize: 16, imageSize: 512, lr: 0.00006, valSplit: 0.2,
     do_reduce_labels: false, warmup_ratio: 0.05, weight_decay: 0.01, lr_scheduler_type: 'cosine',
   },
-  mmsegmentation: {
-    epochs: 80, batchSize: 8, lr: 0.0001, valSplit: 0.2, workers: 4,
-    optimizer_type: 'AdamW', lr_schedule: 'poly', crop_size: 512,
-    warmup_iters: 500, weight_decay: 0.01, checkpoint_interval: 1,
-  },
-  detectron2: {
-    epochs: 12, batchSize: 8, imageSize: 800, lr: 0.0025, valSplit: 0.2, workers: 4,
-    optimizer_type: 'SGD', momentum: 0.9, weight_decay: 0.0001,
-    lr_schedule: 'WarmupMultiStepLR', warmup_iters: 1000, checkpoint_interval: 1,
-  },
-  mmpose: {
-    epochs: 210, batchSize: 64, imageSize: 256, lr: 0.0005, valSplit: 0.2, workers: 4,
-    optimizer_type: 'AdamW', weight_decay: 0.05, lr_schedule: 'linear',
-    warmup_iters: 500, input_size_h: 256, input_size_w: 192, checkpoint_interval: 10,
-  },
-  mmrotate: {
-    epochs: 12, batchSize: 4, imageSize: 1024, lr: 0.0025, valSplit: 0.2, workers: 4,
-    optimizer_type: 'SGD', momentum: 0.9, weight_decay: 0.0001,
-    lr_schedule: 'step', warmup_iters: 500, angle_version: 'le90', checkpoint_interval: 1,
-  },
+  hf_detection: { weight_decay: 0.0001 },
+  hf_instance: { weight_decay: 0.0001 },
+  hf_pose: { weight_decay: 0.0001, heatmap_sigma: 2 },
   timm: {
     epochs: 100, batchSize: 32, imageSize: 224, lr: 0.001, valSplit: 0.2, workers: 4, amp: true,
     optimizer_type: 'AdamW', weight_decay: 0.05, scheduler: 'cosine',

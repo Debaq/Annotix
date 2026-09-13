@@ -204,10 +204,8 @@
     "commonTitle": "Parámetros Comunes",
     "rtdetrTitle": "Parámetros RT-DETR",
     "rfdetrTitle": "Parámetros RF-DETR",
-    "mmdetTitle": "Parámetros MMDetection",
     "smpTitle": "Parámetros SMP",
     "hfSegTitle": "Parámetros HuggingFace Segmentación",
-    "mmsegTitle": "Parámetros MMSegmentation",
     "resolution": "Resolución",
     "resolutionDesc": "Resolución de entrada (debe ser múltiplo de 56)",
     "lr_encoder": "LR del Encoder",
@@ -296,9 +294,6 @@
     "n_headsDesc": "Número de cabezas de atención",
     "normalize": "Normalizar",
     "normalizeDesc": "Normalizar series temporales antes de procesar",
-    "detectron2Title": "Parámetros de Detectron2",
-    "mmposeTitle": "Parámetros de MMPose",
-    "mmrotateTitle": "Parámetros de MMRotate",
     "timmTitle": "Parámetros de timm",
     "hfClsTitle": "Parámetros de HuggingFace Classification",
     "tsaiTitle": "Parámetros de tsai",
@@ -308,7 +303,11 @@
     "pypotsTitle": "Parámetros de PyPOTS",
     "stumpyTitle": "Parámetros de STUMPY",
     "testSplit": "Split Test",
-    "testSplitDesc": "Fracción de imágenes para test independiente. 0 desactiva el split de test."
+    "testSplitDesc": "Fracción de imágenes para test independiente. 0 desactiva el split de test.",
+    "hfDetectionTitle": "Parámetros de HuggingFace Detection",
+    "hfInstanceTitle": "Parámetros de segmentación por instancias",
+    "hfPoseTitle": "Parámetros de pose",
+    "heatmap_sigma": "Sigma del heatmap"
   },
   "monitor": {
     "title": "Entrenamiento en Progreso",

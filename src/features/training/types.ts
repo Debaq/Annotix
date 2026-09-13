@@ -89,13 +89,8 @@ export interface PythonEnvStatus {
   torchVersion: string | null;
   cudaAvailable: boolean;
   rfdetrVersion?: string | null;
-  mmdetVersion?: string | null;
   smpVersion?: string | null;
   hfTransformersVersion?: string | null;
-  mmsegVersion?: string | null;
-  detectron2Version?: string | null;
-  mmposeVersion?: string | null;
-  mmrotateVersion?: string | null;
   timmVersion?: string | null;
   tsaiVersion?: string | null;
   pytorchForecastingVersion?: string | null;
@@ -234,8 +229,8 @@ export interface TrainingJob {
 // ─── Multi-Backend Types ─────────────────────────────────────────────────────
 
 export type TrainingBackend =
-  | 'yolo' | 'rt_detr' | 'rf_detr' | 'mmdetection' | 'smp' | 'hf_segmentation' | 'mmsegmentation'
-  | 'detectron2' | 'mmpose' | 'mmrotate' | 'timm' | 'hf_classification'
+  | 'yolo' | 'rt_detr' | 'rf_detr' | 'hf_detection' | 'smp' | 'hf_segmentation'
+  | 'hf_instance' | 'hf_pose' | 'timm' | 'hf_classification'
   | 'tsai' | 'pytorch_forecasting' | 'pyod' | 'tslearn' | 'pypots' | 'stumpy'
   | 'sklearn';
 export type ExecutionMode = 'local' | 'download_package' | 'cloud' | 'browser_automation';

@@ -17,6 +17,7 @@ import { useAnnotatedCount } from '../hooks/useAnnotatedCount';
 import { useTrainingConfig } from '../hooks/useTrainingConfig';
 import { useTrainingProgress } from '../hooks/useTrainingProgress';
 import { useTrainingRequest } from '../hooks/useTrainingRequest';
+import { isBackendInstalled } from '../utils/backendEnv';
 import { trainingService } from '../services/trainingService';
 import { toast } from '@/hooks/use-toast';
 import { BackendSelector } from './BackendSelector';
@@ -182,26 +183,8 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
         return;
       }
 
-      // 2) Check backend-specific packages
-      const needsBackendInstall =
-        ((backend === 'yolo' || backend === 'rt_detr') && !info.env.ultralyticsVersion) ||
-        (backend === 'rf_detr' && !info.env.rfdetrVersion) ||
-        (backend === 'mmdetection' && !info.env.mmdetVersion) ||
-        (backend === 'smp' && !info.env.smpVersion) ||
-        (backend === 'hf_segmentation' && !info.env.hfTransformersVersion) ||
-        (backend === 'hf_classification' && !info.env.hfTransformersVersion) ||
-        (backend === 'mmsegmentation' && !info.env.mmsegVersion) ||
-        (backend === 'detectron2' && !info.env.detectron2Version) ||
-        (backend === 'mmpose' && !info.env.mmposeVersion) ||
-        (backend === 'mmrotate' && !info.env.mmrotateVersion) ||
-        (backend === 'timm' && !info.env.timmVersion) ||
-        (backend === 'tsai' && !info.env.tsaiVersion) ||
-        (backend === 'pytorch_forecasting' && !info.env.pytorchForecastingVersion) ||
-        (backend === 'pyod' && !info.env.pyodVersion) ||
-        (backend === 'tslearn' && !info.env.tslearnVersion) ||
-        (backend === 'pypots' && !info.env.pypotsVersion) ||
-        (backend === 'stumpy' && !info.env.stumpyVersion) ||
-        (backend === 'sklearn' && !info.env.sklearnVersion);
+      // 2) Dependencias del backend elegido (tabla en utils/backendEnv.ts)
+      const needsBackendInstall = !isBackendInstalled(backend, info.env);
 
       if (needsBackendInstall) {
         setPhase('installing_backend');
