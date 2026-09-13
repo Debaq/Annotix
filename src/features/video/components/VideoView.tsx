@@ -7,7 +7,7 @@ import { useCurrentVideo } from '../hooks/useCurrentVideo';
 import { useVideoNavigation } from '../hooks/useVideoNavigation';
 import { useVideoTracks } from '../hooks/useVideoTracks';
 import { useInterpolation } from '../hooks/useInterpolation';
-import { countCoveredFrames } from '../utils/interpolation';
+import { countCoveredFrames, openTracks } from '../utils/interpolation';
 import { VideoTimeline } from './VideoTimeline';
 import { VideoAnnotationCanvas } from './VideoAnnotationCanvas';
 import { VideoTrackPanel } from './VideoTrackPanel';
@@ -57,13 +57,25 @@ export function VideoView() {
     [tracks, totalFrames, positionByFrameIndex],
   );
 
+  // Tracks que llegan al final del video sin marcar la salida de escena. Su
+  // última caja se va a escribir en todos los fotogramas que queden, que es el
+  // olvido caro de prolongar: nada en el dataset delata que ahí ya no había
+  // objeto. Se avisa antes de escribir, no después.
+  const tracksAbiertos = useMemo(() => {
+    const indices = [...positionByFrameIndex.keys()];
+    if (indices.length === 0) return [];
+    return openTracks(tracks, Math.max(...indices));
+  }, [tracks, positionByFrameIndex]);
+
   // Track seleccionado: lo comparten el panel y las pistas de la línea de tiempo.
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [isBaking, setIsBaking] = useState(false);
   const [bakeResult, setBakeResult] = useState<number | null>(null);
   const [bakeError, setBakeError] = useState<string | null>(null);
+  const [confirmandoBake, setConfirmandoBake] = useState(false);
 
   const handleBake = useCallback(async () => {
+    setConfirmandoBake(false);
     setIsBaking(true);
     setBakeResult(null);
     setBakeError(null);
@@ -240,7 +252,11 @@ export function VideoView() {
                   variant="default"
                   size="sm"
                   className="w-full"
-                  onClick={handleBake}
+                  onClick={() =>
+                    tracksAbiertos.length > 0 && !confirmandoBake
+                      ? setConfirmandoBake(true)
+                      : handleBake()
+                  }
                   disabled={isBaking || bakeableCount === 0}
                   title={t('video.bakeDesc')}
                 >
@@ -250,6 +266,59 @@ export function VideoView() {
                     <><i className="fas fa-fire mr-2"></i>{t('video.bake')} ({bakeableCount})</>
                   )}
                 </Button>
+
+                {confirmandoBake && (
+                  <div className="rounded border border-amber-500/60 bg-amber-500/10 p-2 text-xs">
+                    <p className="font-medium text-amber-700 dark:text-amber-500">
+                      <i className="fas fa-triangle-exclamation mr-1"></i>
+                      {t('video.bakeOpenTracks', { count: tracksAbiertos.length })}
+                    </p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {t('video.bakeOpenTracksDesc')}
+                    </p>
+                    <ul className="mt-1 space-y-0.5">
+                      {tracksAbiertos.slice(0, 4).map(track => {
+                        const info = project.classes.find(c => c.id === track.classId);
+                        const desde = Math.max(...track.keyframes.map(kf => kf.frameIndex));
+                        return (
+                          <li key={track.id} className="flex items-center gap-1 text-[11px]">
+                            <span
+                              className="h-2 w-2 shrink-0 rounded-full border border-black/20"
+                              style={{ backgroundColor: info?.color || '#888' }}
+                            />
+                            <span className="truncate">{track.label || info?.name || track.id}</span>
+                            <span className="ml-auto shrink-0 font-mono tabular-nums opacity-70">
+                              #{desde}
+                            </span>
+                          </li>
+                        );
+                      })}
+                      {tracksAbiertos.length > 4 && (
+                        <li className="text-[11px] opacity-70">
+                          +{tracksAbiertos.length - 4}
+                        </li>
+                      )}
+                    </ul>
+                    <div className="mt-2 flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-6 flex-1 text-[11px]"
+                        onClick={() => setConfirmandoBake(false)}
+                      >
+                        {t('common.cancel')}
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="h-6 flex-1 text-[11px]"
+                        onClick={handleBake}
+                      >
+                        {t('video.bakeAnyway')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 {bakeResult !== null && (
                   <p className="text-xs text-center text-green-600">
                     <i className="fas fa-check mr-1"></i>

@@ -51,5 +51,9 @@
   "trackDone": "Seguido até #{{frame}} · {{keyframes}} keyframes",
   "trackLost": "Perdido em #{{frame}} · {{keyframes}} keyframes",
   "trackNoTexture": "Textura insuficiente para seguir",
-  "trackError": "Não foi possível seguir"
+  "trackError": "Não foi possível seguir",
+  "bakeOpenTracks": "{{count}} track sem saída marcada",
+  "bakeOpenTracks_other": "{{count}} tracks sem saída marcada",
+  "bakeOpenTracksDesc": "A última caixa será escrita em todos os quadros restantes. Se o objeto já não está lá, marque a saída com Del antes de aplicar.",
+  "bakeAnyway": "Aplicar mesmo assim"
 }

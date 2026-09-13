@@ -51,5 +51,8 @@
   "trackDone": "#{{frame}} まで追跡 · キーフレーム {{keyframes}}",
   "trackLost": "#{{frame}} で見失いました · キーフレーム {{keyframes}}",
   "trackNoTexture": "追跡できるテクスチャがありません",
-  "trackError": "追跡できませんでした"
+  "trackError": "追跡できませんでした",
+  "bakeOpenTracks": "退出が未指定のトラックが {{count}} 件",
+  "bakeOpenTracksDesc": "最後のボックスが残り全フレームに書き込まれます。対象が消えているなら、適用前に Del で退出を指定してください。",
+  "bakeAnyway": "それでも適用"
 }

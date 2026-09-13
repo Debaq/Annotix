@@ -51,5 +51,9 @@
   "trackDone": "Tracked to #{{frame}} · {{keyframes}} keyframes",
   "trackLost": "Lost at #{{frame}} · {{keyframes}} keyframes",
   "trackNoTexture": "Not enough texture to track it",
-  "trackError": "Could not track"
+  "trackError": "Could not track",
+  "bakeOpenTracks": "{{count}} track with no exit marked",
+  "bakeOpenTracks_other": "{{count}} tracks with no exit marked",
+  "bakeOpenTracksDesc": "Their last box will be written to every remaining frame. If the object is gone, mark the exit with Del before applying.",
+  "bakeAnyway": "Apply anyway"
 }

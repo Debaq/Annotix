@@ -139,7 +139,12 @@ export const AnnotationsBar: React.FC<AnnotationsBarProps> = ({ image }) => {
               className="rounded border bg-background px-2 py-1"
               style={{ fontSize: '0.7rem', width: '90px' }}
             />
-            <DropdownMenu open={filterOpen} onOpenChange={setFilterOpen}>
+            {/* `modal={false}` por lo mismo que en el panel de tracks: en modo
+                modal Radix bloquea el scroll y apaga los eventos del resto de la
+                página al abrir, y aquí, sobre la vista de anotación, eso
+                descartaba el menú en el mismo clic que lo abría. Con el ratón no
+                llegaba a verse. */}
+            <DropdownMenu open={filterOpen} onOpenChange={setFilterOpen} modal={false}>
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn('annotix-btn annotix-btn-outline', filterActive && 'border-primary')}

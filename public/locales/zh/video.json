@@ -51,5 +51,8 @@
   "trackDone": "跟踪至 #{{frame}} · {{keyframes}} 个关键帧",
   "trackLost": "在 #{{frame}} 处丢失 · {{keyframes}} 个关键帧",
   "trackNoTexture": "纹理不足，无法跟踪",
-  "trackError": "无法跟踪"
+  "trackError": "无法跟踪",
+  "bakeOpenTracks": "{{count}} 个轨迹未标记离场",
+  "bakeOpenTracksDesc": "它们的最后一个框会写入剩下的每一帧。如果目标已经离开，请在应用前用 Del 标记离场。",
+  "bakeAnyway": "仍然应用"
 }

@@ -51,5 +51,8 @@
   "trackDone": "#{{frame}}까지 추적 · 키프레임 {{keyframes}}개",
   "trackLost": "#{{frame}}에서 놓침 · 키프레임 {{keyframes}}개",
   "trackNoTexture": "추적할 텍스처가 부족합니다",
-  "trackError": "추적할 수 없습니다"
+  "trackError": "추적할 수 없습니다",
+  "bakeOpenTracks": "이탈이 표시되지 않은 트랙 {{count}}개",
+  "bakeOpenTracksDesc": "마지막 박스가 남은 모든 프레임에 기록됩니다. 대상이 사라졌다면 적용 전에 Del로 이탈을 표시하세요.",
+  "bakeAnyway": "그래도 적용"
 }

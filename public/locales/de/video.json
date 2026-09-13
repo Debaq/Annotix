@@ -51,5 +51,9 @@
   "trackDone": "Bis #{{frame}} verfolgt · {{keyframes}} Keyframes",
   "trackLost": "Bei #{{frame}} verloren · {{keyframes}} Keyframes",
   "trackNoTexture": "Zu wenig Textur zum Verfolgen",
-  "trackError": "Verfolgen fehlgeschlagen"
+  "trackError": "Verfolgen fehlgeschlagen",
+  "bakeOpenTracks": "{{count}} Track ohne markierten Ausstieg",
+  "bakeOpenTracks_other": "{{count}} Tracks ohne markierten Ausstieg",
+  "bakeOpenTracksDesc": "Ihre letzte Box wird in jeden verbleibenden Frame geschrieben. Ist das Objekt weg, den Ausstieg vorher mit Entf markieren.",
+  "bakeAnyway": "Trotzdem anwenden"
 }

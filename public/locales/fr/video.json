@@ -51,5 +51,9 @@
   "trackDone": "Suivi jusqu'à #{{frame}} · {{keyframes}} images clés",
   "trackLost": "Perdu à #{{frame}} · {{keyframes}} images clés",
   "trackNoTexture": "Pas assez de texture pour le suivre",
-  "trackError": "Suivi impossible"
+  "trackError": "Suivi impossible",
+  "bakeOpenTracks": "{{count}} piste sans sortie marquée",
+  "bakeOpenTracks_other": "{{count}} pistes sans sortie marquée",
+  "bakeOpenTracksDesc": "Leur dernière boîte sera écrite sur toutes les images restantes. Si l'objet a disparu, marquez la sortie avec Suppr avant d'appliquer.",
+  "bakeAnyway": "Appliquer quand même"
 }

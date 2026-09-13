@@ -51,5 +51,9 @@
   "trackDone": "Seguido hasta #{{frame}} · {{keyframes}} keyframes",
   "trackLost": "Se perdió en #{{frame}} · {{keyframes}} keyframes",
   "trackNoTexture": "Sin textura suficiente para seguirlo",
-  "trackError": "No se pudo seguir"
+  "trackError": "No se pudo seguir",
+  "bakeOpenTracks": "{{count}} track sin salida marcada",
+  "bakeOpenTracks_other": "{{count}} tracks sin salida marcada",
+  "bakeOpenTracksDesc": "Su última caja se escribirá en todos los fotogramas que quedan. Si el objeto ya no está ahí, marca la salida con Supr antes de consolidar.",
+  "bakeAnyway": "Consolidar igualmente"
 }

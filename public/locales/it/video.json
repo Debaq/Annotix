@@ -51,5 +51,9 @@
   "trackDone": "Seguito fino a #{{frame}} · {{keyframes}} keyframe",
   "trackLost": "Perso a #{{frame}} · {{keyframes}} keyframe",
   "trackNoTexture": "Texture insufficiente per seguirlo",
-  "trackError": "Impossibile seguirlo"
+  "trackError": "Impossibile seguirlo",
+  "bakeOpenTracks": "{{count}} track senza uscita segnata",
+  "bakeOpenTracks_other": "{{count}} track senza uscita segnata",
+  "bakeOpenTracksDesc": "Il loro ultimo box verrà scritto su tutti i frame rimanenti. Se l'oggetto non c'è più, segna l'uscita con Canc prima di applicare.",
+  "bakeAnyway": "Applica comunque"
 }

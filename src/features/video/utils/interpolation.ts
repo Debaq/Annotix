@@ -286,3 +286,27 @@ export function trackSpans(track: VideoTrack): { desde: number; hasta: number }[
   }
   return spans;
 }
+
+/**
+ * Tracks cuya última caja llega al final del video porque nadie marcó su salida
+ * de escena.
+ *
+ * Prolongar es útil mientras el objeto siga ahí; el fallo caro es olvidarse de
+ * cerrar el track, y entonces la consolidación escribe esa caja en todos los
+ * fotogramas restantes sin que nada lo delate. Esto los localiza para poder
+ * avisar antes de escribir.
+ *
+ * `lastFrameIndex` es el `frameIndex` real del último fotograma extraído.
+ */
+export function openTracks(tracks: VideoTrack[], lastFrameIndex: number): VideoTrack[] {
+  return tracks.filter(track => {
+    if (!track.enabled || track.keyframes.length === 0) return false;
+    if (extendModeOf(track) === 'none') return false;
+
+    const ultimo = sorted(track.keyframes)[track.keyframes.length - 1];
+    // Un keyframe de salida ya cierra el track: no queda nada prolongándose.
+    if (!ultimo.enabled) return false;
+    // Y si el último keyframe es el último fotograma, no prolonga sobre nada.
+    return ultimo.frameIndex < lastFrameIndex;
+  });
+}
