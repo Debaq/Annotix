@@ -44,5 +44,12 @@
   "extend": "키프레임 밖",
   "extendNone": "없음",
   "extendAfter": "끝까지",
-  "extendBoth": "영상 전체"
+  "extendBoth": "영상 전체",
+  "trackForward": "객체 추적",
+  "trackFrames": "{{count}} 프레임",
+  "tracking": "추적 중…",
+  "trackDone": "#{{frame}}까지 추적 · 키프레임 {{keyframes}}개",
+  "trackLost": "#{{frame}}에서 놓침 · 키프레임 {{keyframes}}개",
+  "trackNoTexture": "추적할 텍스처가 부족합니다",
+  "trackError": "추적할 수 없습니다"
 }

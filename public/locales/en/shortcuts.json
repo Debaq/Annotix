@@ -205,6 +205,9 @@
     },
     "tsToolClassification": {
       "name": "Series classification tool"
+    },
+    "videoPropagate": {
+      "name": "Copy box to next frame"
     }
   }
 }

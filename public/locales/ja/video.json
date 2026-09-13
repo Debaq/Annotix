@@ -44,5 +44,12 @@
   "extend": "キーフレーム外",
   "extendNone": "なし",
   "extendAfter": "最後まで",
-  "extendBoth": "動画全体"
+  "extendBoth": "動画全体",
+  "trackForward": "オブジェクトを追跡",
+  "trackFrames": "{{count}} フレーム",
+  "tracking": "追跡中…",
+  "trackDone": "#{{frame}} まで追跡 · キーフレーム {{keyframes}}",
+  "trackLost": "#{{frame}} で見失いました · キーフレーム {{keyframes}}",
+  "trackNoTexture": "追跡できるテクスチャがありません",
+  "trackError": "追跡できませんでした"
 }

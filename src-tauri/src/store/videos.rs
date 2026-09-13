@@ -32,6 +32,17 @@ pub struct UpdateTrackRequest {
     pub extend: Option<String>,
 }
 
+/// Cambios a aplicar sobre un track. Cada campo en `None` se deja como está;
+/// `label` distingue "no tocar" de "borrar la etiqueta".
+#[derive(Debug, Default)]
+pub struct TrackUpdate {
+    pub class_id: Option<i64>,
+    pub label: Option<Option<String>>,
+    pub enabled: Option<bool>,
+    pub interpolation: Option<String>,
+    pub extend: Option<String>,
+}
+
 /// Parámetros de `toggle_keyframe_enabled`.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -735,29 +746,25 @@ impl AppState {
         project_id: &str,
         video_id: &str,
         track_id: &str,
-        class_id: Option<i64>,
-        label: Option<Option<String>>,
-        enabled: Option<bool>,
-        interpolation: Option<String>,
-        extend: Option<String>,
+        update: TrackUpdate,
     ) -> Result<(), String> {
         let now = js_timestamp();
         let found = self.with_project_mut_ret(project_id, |pf| {
             let found = with_track(pf, video_id, track_id, |t| {
-                if let Some(cid) = class_id {
+                if let Some(cid) = update.class_id {
                     t.class_id = cid;
                 }
-                if let Some(lbl) = label {
+                if let Some(lbl) = update.label {
                     t.label = lbl;
                 }
-                if let Some(en) = enabled {
+                if let Some(en) = update.enabled {
                     t.enabled = en;
                 }
-                if let Some(mode) = &interpolation {
-                    t.interpolation = mode.clone();
+                if let Some(mode) = update.interpolation {
+                    t.interpolation = mode;
                 }
-                if let Some(ext) = &extend {
-                    t.extend = ext.clone();
+                if let Some(ext) = update.extend {
+                    t.extend = ext;
                 }
             });
             pf.updated = now;
@@ -845,6 +852,63 @@ impl AppState {
                     // Mantener orden por frame_index
                     t.keyframes.sort_by_key(|k| k.frame_index);
                 }
+            });
+            pf.updated = now;
+            found
+        })?;
+
+        found.resolve(video_id, track_id)
+    }
+
+    /// Inserta o reemplaza varios keyframes de un track de una sola vez.
+    ///
+    /// El seguidor escribe una tanda entera; uno a uno serían tantas escrituras
+    /// completas de `project.json` como keyframes propuestos.
+    pub fn set_keyframes_bulk(
+        &self,
+        project_id: &str,
+        video_id: &str,
+        track_id: &str,
+        boxes: &[(i64, f64, f64, f64, f64)],
+    ) -> Result<(), String> {
+        for (frame_index, x, y, w, h) in boxes {
+            for (name, v) in [("x", x), ("y", y), ("width", w), ("height", h)] {
+                if !v.is_finite() {
+                    return Err(format!(
+                        "Coordenada de keyframe inválida ({}) en el fotograma {}: {}",
+                        name, frame_index, v
+                    ));
+                }
+            }
+        }
+
+        let now = js_timestamp();
+        let found = self.with_project_mut_ret(project_id, |pf| {
+            let found = with_track(pf, video_id, track_id, |t| {
+                for (frame_index, x, y, w, h) in boxes {
+                    if let Some(existing) = t
+                        .keyframes
+                        .iter_mut()
+                        .find(|k| k.frame_index == *frame_index)
+                    {
+                        existing.bbox_x = *x;
+                        existing.bbox_y = *y;
+                        existing.bbox_width = *w;
+                        existing.bbox_height = *h;
+                        existing.is_keyframe = true;
+                    } else {
+                        t.keyframes.push(KeyframeEntry {
+                            frame_index: *frame_index,
+                            bbox_x: *x,
+                            bbox_y: *y,
+                            bbox_width: *w,
+                            bbox_height: *h,
+                            is_keyframe: true,
+                            enabled: true,
+                        });
+                    }
+                }
+                t.keyframes.sort_by_key(|k| k.frame_index);
             });
             pf.updated = now;
             found

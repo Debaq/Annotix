@@ -205,6 +205,9 @@
     },
     "tsToolClassification": {
       "name": "Strumento classificazione serie"
+    },
+    "videoPropagate": {
+      "name": "Copia il box sul frame successivo"
     }
   }
 }

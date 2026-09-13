@@ -225,6 +225,35 @@ export function useVideoAnnotationBridge(
     await toggleKeyframe(trackId, frameIndex, !bbox.enabled);
   }, [interpolatedBBoxes, setKeyframe, toggleKeyframe, frameIndex]);
 
+  /**
+   * Copia al fotograma `targetFrameIndex` las cajas de este, como keyframes.
+   *
+   * Con selección, solo las seleccionadas; sin ella, todas las del fotograma.
+   * Es el gesto de un objeto quieto o casi: dejar el keyframe donde ya estaba
+   * evita que la interpolación lo arrastre hacia el siguiente movimiento.
+   */
+  const propagateToFrame = useCallback(async (targetFrameIndex: number) => {
+    if (targetFrameIndex === frameIndex) return;
+    const seleccionados = new Set(
+      [...selectedAnnotationIds].map(id => id.slice(VKF_PREFIX.length)),
+    );
+    const objetivo = interpolatedBBoxes.filter(
+      b => b.enabled && (seleccionados.size === 0 || seleccionados.has(b.trackId)),
+    );
+
+    for (const b of objetivo) {
+      await setKeyframe(
+        b.trackId,
+        targetFrameIndex,
+        b.bbox.x,
+        b.bbox.y,
+        b.bbox.width,
+        b.bbox.height,
+      );
+    }
+    return objetivo.length;
+  }, [interpolatedBBoxes, selectedAnnotationIds, setKeyframe, frameIndex]);
+
   const clearAnnotations = useCallback(async () => {}, []);
   const saveAnnotations = useCallback(() => {}, []);
 
@@ -237,6 +266,7 @@ export function useVideoAnnotationBridge(
     updateAnnotation,
     updateAnnotationLocal,
     deleteAnnotation,
+    propagateToFrame,
     clearAnnotations,
     saveAnnotations,
     disabledAnnotationIds,

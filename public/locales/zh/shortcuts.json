@@ -205,6 +205,9 @@
     },
     "tsToolClassification": {
       "name": "序列分类工具"
+    },
+    "videoPropagate": {
+      "name": "将框复制到下一帧"
     }
   }
 }

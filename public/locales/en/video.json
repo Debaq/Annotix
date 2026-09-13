@@ -44,5 +44,12 @@
   "extend": "Outside keyframes",
   "extendNone": "Nothing",
   "extendAfter": "Until the end",
-  "extendBoth": "Whole video"
+  "extendBoth": "Whole video",
+  "trackForward": "Track object",
+  "trackFrames": "{{count}} frames",
+  "tracking": "Tracking…",
+  "trackDone": "Tracked to #{{frame}} · {{keyframes}} keyframes",
+  "trackLost": "Lost at #{{frame}} · {{keyframes}} keyframes",
+  "trackNoTexture": "Not enough texture to track it",
+  "trackError": "Could not track"
 }

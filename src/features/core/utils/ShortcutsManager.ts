@@ -270,6 +270,15 @@ class ShortcutsManager {
         enabled: true,
         editable: true,
       },
+      {
+        id: 'video-propagate',
+        nameKey: 'shortcuts.items.videoPropagate.name',
+        key: 'C',
+        category: 'editing',
+        context: 'video',
+        enabled: true,
+        editable: true,
+      },
       // Timeseries
       {
         id: 'ts-tool-select',

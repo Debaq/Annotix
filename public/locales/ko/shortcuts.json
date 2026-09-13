@@ -205,6 +205,9 @@
     },
     "tsToolClassification": {
       "name": "시계열 분류 도구"
+    },
+    "videoPropagate": {
+      "name": "다음 프레임으로 박스 복사"
     }
   }
 }

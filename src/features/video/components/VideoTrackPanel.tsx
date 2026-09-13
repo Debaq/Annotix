@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '../../core/store/uiStore';
+import type { TrackingResult } from '@/lib/tauriDb';
 import {
   EXTEND_MODES,
   INTERP_MODES,
@@ -41,7 +42,15 @@ interface VideoTrackPanelProps {
       extend?: string;
     },
   ) => Promise<void>;
+  onTrackForward: (
+    trackId: string,
+    fromFrame: number,
+    frames: number,
+  ) => Promise<TrackingResult | undefined>;
 }
+
+/** Cuántos fotogramas puede seguir el seguidor de una tirada. */
+const TRAMOS_DE_SEGUIMIENTO = [10, 30, 100];
 
 /**
  * Extensión temporal de un track, en índices de fotograma reales.
@@ -84,11 +93,38 @@ export function VideoTrackPanel({
   onCreateTrack,
   onDeleteTrack,
   onUpdateTrack,
+  onTrackForward,
 }: VideoTrackPanelProps) {
   const { t } = useTranslation();
   const { activeClassId } = useUIStore();
   const [soloEsteFotograma, setSoloEsteFotograma] = useState(true);
   const [filtroClase, setFiltroClase] = useState<number | null>(null);
+  const [siguiendo, setSiguiendo] = useState(false);
+  const [avisoSeguimiento, setAvisoSeguimiento] = useState<string | null>(null);
+
+  const seguir = async (trackId: string, frames: number) => {
+    setSiguiendo(true);
+    setAvisoSeguimiento(null);
+    try {
+      const res = await onTrackForward(trackId, currentFrameIndex, frames);
+      if (!res) return;
+      if (res.reason === 'noTexture' && res.keyframes <= 1) {
+        setAvisoSeguimiento(t('video.trackNoTexture'));
+      } else if (res.reason === 'lost' || res.reason === 'noTexture') {
+        setAvisoSeguimiento(
+          t('video.trackLost', { frame: res.lastFrame, keyframes: res.keyframes }),
+        );
+      } else {
+        setAvisoSeguimiento(
+          t('video.trackDone', { frame: res.lastFrame, keyframes: res.keyframes }),
+        );
+      }
+    } catch (error) {
+      setAvisoSeguimiento(`${t('video.trackError')}: ${String(error)}`);
+    } finally {
+      setSiguiendo(false);
+    }
+  };
 
   const porClase = useMemo(() => {
     const acc = new Map<number, number>();
@@ -308,6 +344,22 @@ export function VideoTrackPanel({
                           </DropdownMenuRadioGroup>
                         </DropdownMenuSubContent>
                       </DropdownMenuSub>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger disabled={siguiendo}>
+                          <i className="fas fa-crosshairs mr-2 w-3"></i>
+                          {t('video.trackForward')}
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                          {TRAMOS_DE_SEGUIMIENTO.map(frames => (
+                            <DropdownMenuItem
+                              key={frames}
+                              onClick={() => track.id && void seguir(track.id, frames)}
+                            >
+                              {t('video.trackFrames', { count: frames })}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-red-600 focus:text-red-600"
@@ -322,6 +374,19 @@ export function VideoTrackPanel({
               );
             })}
           </div>
+
+          {(siguiendo || avisoSeguimiento) && (
+            <p className="mt-1.5 text-[10px] text-muted-foreground">
+              {siguiendo ? (
+                <>
+                  <i className="fas fa-spinner fa-spin mr-1"></i>
+                  {t('video.tracking')}
+                </>
+              ) : (
+                avisoSeguimiento
+              )}
+            </p>
+          )}
         </>
       )}
     </div>

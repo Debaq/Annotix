@@ -6,7 +6,7 @@ use crate::p2p::P2pPermission;
 use crate::store::images::ImageResponse;
 use crate::store::videos::{
     bake_annotations_for_frame, BakeTrack, NewVideo, SetKeyframeRequest, ToggleKeyframeRequest,
-    TrackResponse, UpdateTrackRequest, VideoInfo, VideoResponse,
+    TrackResponse, TrackUpdate, UpdateTrackRequest, VideoInfo, VideoResponse,
 };
 use crate::store::AppState;
 
@@ -778,16 +778,17 @@ pub async fn update_track(
     } = request;
     p2p.check_permission(&project_id, P2pPermission::Annotate)
         .await?;
-    let label_update = label.map(Some);
     state.update_track(
         &project_id,
         &video_id,
         &track_id,
-        class_id,
-        label_update,
-        enabled,
-        interpolation,
-        extend,
+        TrackUpdate {
+            class_id,
+            label: label.map(Some),
+            enabled,
+            interpolation,
+            extend,
+        },
     )?;
     publish_tracks(&state, &p2p, &project_id, &video_id).await;
     let _ = app.emit("db:tracks-changed", &video_id);
@@ -942,4 +943,223 @@ pub async fn bake_video_tracks(
         }),
     );
     Ok(baked_count)
+}
+
+// ─── Seguimiento asistido ────────────────────────────────────────────────────
+
+/// Resultado de propagar un track hacia adelante.
+#[derive(Debug, serde::Serialize)]
+pub struct TrackingResult {
+    /// Fotogramas seguidos, sin contar el de partida.
+    pub tracked: i64,
+    /// Keyframes escritos tras simplificar la trayectoria.
+    pub keyframes: i64,
+    /// Último fotograma con caja propuesta.
+    #[serde(rename = "lastFrame")]
+    pub last_frame: i64,
+    /// `completed`, `lost` (encaje por debajo del umbral), `end` (fin del video)
+    /// o `noTexture` (la región de partida no se puede buscar).
+    pub reason: String,
+    /// Peor encaje aceptado del recorrido, para saber cuánto fiarse.
+    #[serde(rename = "worstScore")]
+    pub worst_score: f64,
+}
+
+/// Parámetros de `track_object_forward`.
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TrackForwardRequest {
+    pub project_id: String,
+    pub video_id: String,
+    pub track_id: String,
+    /// Fotograma de partida: de ahí sale la caja que se va a buscar.
+    pub from_frame: i64,
+    /// Cuántos fotogramas seguir como mucho.
+    pub max_frames: i64,
+    /// Encaje mínimo aceptable, en [0, 1]. Por debajo se detiene.
+    pub min_score: Option<f64>,
+}
+
+/// Sigue la caja de un track desde un fotograma y escribe los keyframes.
+///
+/// El seguidor propone, no decide: recorre como mucho `max_frames` fotogramas,
+/// se detiene en cuanto el encaje baja de `min_score` y deja keyframes normales
+/// y editables. Lo que ya hubiera en esos fotogramas se reemplaza.
+#[tauri::command]
+pub async fn track_object_forward(
+    state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
+    app: AppHandle,
+    request: TrackForwardRequest,
+) -> Result<TrackingResult, String> {
+    let TrackForwardRequest {
+        project_id,
+        video_id,
+        track_id,
+        from_frame,
+        max_frames,
+        min_score,
+    } = request;
+
+    p2p.check_permission(&project_id, P2pPermission::Annotate)
+        .await?;
+
+    if max_frames <= 0 {
+        return Err("El número de fotogramas a seguir debe ser positivo".into());
+    }
+    let min_score = min_score.unwrap_or(0.4);
+
+    // Fotogramas del video ordenados, y el track de partida.
+    struct Frame {
+        frame_index: i64,
+        file: String,
+        width: u32,
+        height: u32,
+    }
+
+    let (frames, keyframes, interp) = state.with_project(&project_id, |pf| {
+        let mut frames: Vec<Frame> = pf
+            .images
+            .iter()
+            .filter(|i| i.video_id.as_deref() == Some(&video_id))
+            .map(|i| Frame {
+                frame_index: i.frame_index.unwrap_or(0),
+                file: i.file.clone(),
+                width: i.width,
+                height: i.height,
+            })
+            .collect();
+        frames.sort_by_key(|f| f.frame_index);
+
+        let track = pf
+            .videos
+            .iter()
+            .find(|v| v.id == video_id)
+            .and_then(|v| v.tracks.iter().find(|t| t.id == track_id));
+        let keyframes = track.map(|t| {
+            let mut kfs = t.keyframes.clone();
+            kfs.sort_by_key(|k| k.frame_index);
+            kfs
+        });
+        let interp = track.map(crate::store::videos::TrackInterp::from_track);
+        (frames, keyframes, interp)
+    })?;
+
+    let keyframes = keyframes.ok_or_else(|| format!("Track no encontrado: {}", track_id))?;
+    let interp = interp.unwrap_or_default();
+
+    let start_pct = crate::store::videos::interpolate_bbox(&keyframes, from_frame, interp)
+        .filter(|(_, _, _, _, enabled)| *enabled)
+        .ok_or("El track no tiene caja en este fotograma")?;
+
+    let start_at = frames
+        .iter()
+        .position(|f| f.frame_index == from_frame)
+        .ok_or_else(|| format!("Fotograma no encontrado: {}", from_frame))?;
+
+    let images_dir = state.project_images_dir(&project_id)?;
+
+    // El trabajo pesado va fuera del runtime async: son varios decodes de
+    // imagen y una correlación por fotograma.
+    let result = tauri::async_runtime::spawn_blocking(move || -> Result<_, String> {
+        use crate::tracking::{simplify_trajectory, track_step, PctBox, PxBox, TrackedBox};
+
+        let first = &frames[start_at];
+        let (sx, sy, sw, sh) = crate::store::videos::pct_bbox_to_px(
+            start_pct.0,
+            start_pct.1,
+            start_pct.2,
+            start_pct.3,
+            first.width as f64,
+            first.height as f64,
+        );
+
+        let mut samples = vec![TrackedBox {
+            frame_index: first.frame_index,
+            bbox: PctBox {
+                x: start_pct.0,
+                y: start_pct.1,
+                w: start_pct.2,
+                h: start_pct.3,
+            },
+        }];
+
+        let load = |file: &str| -> Result<image::GrayImage, String> {
+            image::open(images_dir.join(file))
+                .map_err(|e| format!("No se pudo leer el fotograma {}: {}", file, e))
+                .map(|img| img.to_luma8())
+        };
+
+        let mut prev_img = load(&first.file)?;
+        let mut bbox = PxBox {
+            x: sx,
+            y: sy,
+            w: sw,
+            h: sh,
+        };
+        let mut worst_score = 1.0f64;
+        let mut reason = "completed";
+        let mut last_frame = first.frame_index;
+
+        let end = (start_at + max_frames as usize + 1).min(frames.len());
+        if end <= start_at + 1 {
+            reason = "end";
+        }
+
+        for frame in &frames[start_at + 1..end] {
+            let next_img = load(&frame.file)?;
+            let Some((found, score)) = track_step(&prev_img, &next_img, bbox) else {
+                reason = "noTexture";
+                break;
+            };
+            if score < min_score {
+                reason = "lost";
+                break;
+            }
+
+            worst_score = worst_score.min(score);
+            bbox = found;
+            last_frame = frame.frame_index;
+            samples.push(TrackedBox {
+                frame_index: frame.frame_index,
+                bbox: PctBox {
+                    x: found.x / frame.width as f64 * 100.0,
+                    y: found.y / frame.height as f64 * 100.0,
+                    w: found.w / frame.width as f64 * 100.0,
+                    h: found.h / frame.height as f64 * 100.0,
+                },
+            });
+            prev_img = next_img;
+        }
+
+        if reason == "completed" && end == frames.len() {
+            reason = "end";
+        }
+
+        // Una caja por fotograma es una lista de keyframes inservible: se
+        // conservan los que la interpolación lineal no reconstruye sola.
+        let kept = simplify_trajectory(&samples, 0.5);
+        Ok((kept, worst_score, reason.to_string(), last_frame, samples.len()))
+    })
+    .await
+    .map_err(|e| format!("Error siguiendo el objeto: {}", e))??;
+
+    let (kept, worst_score, reason, last_frame, tracked) = result;
+
+    let boxes: Vec<(i64, f64, f64, f64, f64)> = kept
+        .iter()
+        .map(|s| (s.frame_index, s.bbox.x, s.bbox.y, s.bbox.w, s.bbox.h))
+        .collect();
+    state.set_keyframes_bulk(&project_id, &video_id, &track_id, &boxes)?;
+
+    publish_tracks(&state, &p2p, &project_id, &video_id).await;
+    let _ = app.emit("db:tracks-changed", &video_id);
+
+    Ok(TrackingResult {
+        tracked: tracked as i64 - 1,
+        keyframes: boxes.len() as i64,
+        last_frame,
+        reason,
+        worst_score: if tracked > 1 { worst_score } else { 1.0 },
+    })
 }

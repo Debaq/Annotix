@@ -6,6 +6,7 @@ mod inference;
 mod p2p;
 mod serve;
 mod store;
+mod tracking;
 mod training;
 mod utils;
 
@@ -336,6 +337,7 @@ pub fn run() {
             commands::video_commands::delete_keyframe,
             commands::video_commands::toggle_keyframe_enabled,
             commands::video_commands::bake_video_tracks,
+            commands::video_commands::track_object_forward,
             // Config
             commands::config_commands::is_setup_complete,
             commands::config_commands::get_config,

@@ -205,6 +205,9 @@
     },
     "tsToolClassification": {
       "name": "Outil de classification de la série"
+    },
+    "videoPropagate": {
+      "name": "Copier la boîte sur l’image suivante"
     }
   }
 }

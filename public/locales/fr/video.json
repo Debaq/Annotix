@@ -44,5 +44,12 @@
   "extend": "Hors des images clés",
   "extendNone": "Rien",
   "extendAfter": "Jusqu'à la fin",
-  "extendBoth": "Toute la vidéo"
+  "extendBoth": "Toute la vidéo",
+  "trackForward": "Suivre l'objet",
+  "trackFrames": "{{count}} images",
+  "tracking": "Suivi…",
+  "trackDone": "Suivi jusqu'à #{{frame}} · {{keyframes}} images clés",
+  "trackLost": "Perdu à #{{frame}} · {{keyframes}} images clés",
+  "trackNoTexture": "Pas assez de texture pour le suivre",
+  "trackError": "Suivi impossible"
 }

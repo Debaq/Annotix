@@ -353,6 +353,29 @@ export async function bakeVideoTracks(projectId: string, videoId: string): Promi
   return invoke<number>('bake_video_tracks', { projectId, videoId });
 }
 
+/** Resultado de propagar un track hacia adelante con el seguidor. */
+export interface TrackingResult {
+  tracked: number;
+  keyframes: number;
+  lastFrame: number;
+  /** `completed` | `lost` | `end` | `noTexture` */
+  reason: string;
+  worstScore: number;
+}
+
+export async function trackObjectForward(
+  projectId: string,
+  videoId: string,
+  trackId: string,
+  fromFrame: number,
+  maxFrames: number,
+  minScore?: number
+): Promise<TrackingResult> {
+  return invoke<TrackingResult>('track_object_forward', {
+    request: { projectId, videoId, trackId, fromFrame, maxFrames, minScore },
+  });
+}
+
 // ─── Audio Commands ─────────────────────────────────────────────────────────
 
 export async function uploadAudio(

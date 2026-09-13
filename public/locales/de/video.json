@@ -44,5 +44,12 @@
   "extend": "Außerhalb der Keyframes",
   "extendNone": "Nichts",
   "extendAfter": "Bis zum Ende",
-  "extendBoth": "Ganzes Video"
+  "extendBoth": "Ganzes Video",
+  "trackForward": "Objekt verfolgen",
+  "trackFrames": "{{count}} Frames",
+  "tracking": "Verfolge…",
+  "trackDone": "Bis #{{frame}} verfolgt · {{keyframes}} Keyframes",
+  "trackLost": "Bei #{{frame}} verloren · {{keyframes}} Keyframes",
+  "trackNoTexture": "Zu wenig Textur zum Verfolgen",
+  "trackError": "Verfolgen fehlgeschlagen"
 }

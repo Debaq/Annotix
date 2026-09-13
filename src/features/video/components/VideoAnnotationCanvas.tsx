@@ -5,6 +5,7 @@ import { InterpolatedBBox, VideoTrack, ClassDefinition, Video } from '@/lib/db';
 import { useUIStore } from '../../core/store/uiStore';
 import { useVideoAnnotationBridge } from '../hooks/useVideoAnnotationBridge';
 import { matchesShortcut } from '../../core/utils/matchShortcut';
+import { useVideoNavigation } from '../hooks/useVideoNavigation';
 
 interface VideoAnnotationCanvasProps {
   interpolatedBBoxes: InterpolatedBBox[];
@@ -27,6 +28,7 @@ export function VideoAnnotationCanvas({
 }: VideoAnnotationCanvasProps) {
   const { currentFrameIndex } = useUIStore();
   const { image } = useCurrentImage();
+  const { position, totalFrames, goToPosition, positionByFrameIndex } = useVideoNavigation();
 
   // Dimensiones de la imagen del frame actual (píxeles)
   const imageWidth = image?.width ?? 0;
@@ -39,7 +41,17 @@ export function VideoAnnotationCanvas({
     imageHeight,
   );
 
-  // Borrado de la caja seleccionada. Vive aquí porque este es el único punto
+  // `frameIndex` real del fotograma siguiente. Los keyframes se guardan por
+  // `frameIndex`, no por posición, y los dos se separan en cuanto falta un
+  // fotograma de la secuencia.
+  const siguienteFrameIndex = useMemo(() => {
+    for (const [frameIndex, pos] of positionByFrameIndex) {
+      if (pos === position + 1) return frameIndex;
+    }
+    return null;
+  }, [positionByFrameIndex, position]);
+
+  // Atajos sobre la caja seleccionada. Viven aquí porque este es el único punto
   // que conoce la selección del puente; el atajo global opera sobre las
   // anotaciones de la imagen, que en modo track no son las que se ven.
   useEffect(() => {
@@ -48,17 +60,32 @@ export function VideoAnnotationCanvas({
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
         return;
       }
-      if (!matchesShortcut(e, 'delete')) return;
-      if (bridge.selectedAnnotationIds.size === 0) return;
-      e.preventDefault();
-      for (const id of bridge.selectedAnnotationIds) {
-        void bridge.deleteAnnotation(id);
+
+      if (matchesShortcut(e, 'delete')) {
+        if (bridge.selectedAnnotationIds.size === 0) return;
+        e.preventDefault();
+        for (const id of bridge.selectedAnnotationIds) {
+          void bridge.deleteAnnotation(id);
+        }
+        return;
+      }
+
+      // Copiar la caja al fotograma siguiente y avanzar: anotar un objeto
+      // quieto es esto repetido, y hacerlo redibujando la caja cada vez es lo
+      // que empuja a poner dos keyframes lejanos y dejar que la interpolación
+      // se invente el medio.
+      if (matchesShortcut(e, 'video-propagate')) {
+        if (siguienteFrameIndex === null || position + 1 >= totalFrames) return;
+        e.preventDefault();
+        void bridge.propagateToFrame(siguienteFrameIndex).then(() => {
+          goToPosition(position + 1);
+        });
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [bridge]);
+  }, [bridge, siguienteFrameIndex, position, totalFrames, goToPosition]);
 
   const videoFrameInfo = useMemo(() => ({
     frameIndex: currentFrameIndex,

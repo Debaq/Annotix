@@ -205,6 +205,9 @@
     },
     "tsToolClassification": {
       "name": "Ferramenta de classificação da série"
+    },
+    "videoPropagate": {
+      "name": "Copiar caixa para o próximo quadro"
     }
   }
 }

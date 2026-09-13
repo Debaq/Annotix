@@ -69,4 +69,11 @@ export const videoService = {
   async bake(projectId: string, videoId: string): Promise<number> {
     return tauriDb.bakeVideoTracks(projectId, videoId);
   },
+
+  async trackForward(
+    projectId: string, videoId: string, trackId: string,
+    fromFrame: number, maxFrames: number, minScore?: number
+  ): Promise<tauriDb.TrackingResult> {
+    return tauriDb.trackObjectForward(projectId, videoId, trackId, fromFrame, maxFrames, minScore);
+  },
 };

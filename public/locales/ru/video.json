@@ -44,5 +44,12 @@
   "extend": "Вне ключевых кадров",
   "extendNone": "Ничего",
   "extendAfter": "До конца",
-  "extendBoth": "Всё видео"
+  "extendBoth": "Всё видео",
+  "trackForward": "Следить за объектом",
+  "trackFrames": "{{count}} кадров",
+  "tracking": "Слежение…",
+  "trackDone": "Отслежено до #{{frame}} · {{keyframes}} ключевых кадров",
+  "trackLost": "Потерян на #{{frame}} · {{keyframes}} ключевых кадров",
+  "trackNoTexture": "Недостаточно текстуры для слежения",
+  "trackError": "Не удалось отследить"
 }

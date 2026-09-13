@@ -3,6 +3,7 @@ import { VideoTrack } from '@/lib/db';
 import { useUIStore } from '../../core/store/uiStore';
 import { videoService } from '../services/videoService';
 import { useTauriQuery } from '@/hooks/useTauriQuery';
+import type { TrackingResult } from '@/lib/tauriDb';
 
 export function useVideoTracks() {
   const { currentVideoId, currentProjectId } = useUIStore();
@@ -49,6 +50,14 @@ export function useVideoTracks() {
     await videoService.toggleKeyframeEnabled(currentProjectId, trackId, currentVideoId, frameIndex, enabled);
   }, [currentVideoId, currentProjectId]);
 
+  /** Propaga la caja de un track hacia adelante con el seguidor. */
+  const trackForward = useCallback(async (
+    trackId: string, fromFrame: number, maxFrames: number,
+  ): Promise<TrackingResult | undefined> => {
+    if (!currentVideoId || !currentProjectId) return undefined;
+    return videoService.trackForward(currentProjectId, currentVideoId, trackId, fromFrame, maxFrames);
+  }, [currentVideoId, currentProjectId]);
+
   const bake = useCallback(async (): Promise<number> => {
     if (!currentVideoId || !currentProjectId) return 0;
     return videoService.bake(currentProjectId, currentVideoId);
@@ -64,6 +73,7 @@ export function useVideoTracks() {
     setKeyframe,
     removeKeyframe,
     toggleKeyframe,
+    trackForward,
     bake,
   };
 }

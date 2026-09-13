@@ -2239,3 +2239,128 @@ fn los_runners_cloud_no_incrustan_ningun_backend() {
     }
     assert!(revisados >= 6, "sólo se revisaron {revisados} archivos");
 }
+
+// ─── Tests: seguimiento asistido de una caja ────────────────────────────────
+
+use crate::tracking::{simplify_trajectory, track_step, PctBox, PxBox, TrackedBox};
+
+/// Patrón determinista con textura de alta frecuencia y sin periodo corto, para
+/// que la correlación tenga un máximo único.
+fn textured_frame(width: u32, height: u32, shift_x: i64, shift_y: i64) -> image::GrayImage {
+    // Mezcla estilo splitmix64. Un hash multiplicativo simple deja bandas
+    // cuasi-periódicas y la correlación encuentra máximos falsos lejos del sitio.
+    fn mix(mut v: u64) -> u64 {
+        v ^= v >> 30;
+        v = v.wrapping_mul(0xbf58476d1ce4e5b9);
+        v ^= v >> 27;
+        v = v.wrapping_mul(0x94d049bb133111eb);
+        v ^ (v >> 31)
+    }
+    // Ruido suavizado: valores aleatorios en una rejilla de 8 px interpolados
+    // bilinealmente. Un fotograma real tiene esta pinta; ruido blanco píxel a
+    // píxel no, y con él ninguna búsqueda que submuestree puede funcionar.
+    const CELL: f64 = 8.0;
+    let node = |gx: i64, gy: i64| -> f64 {
+        (mix((gx as u64).wrapping_mul(0x9e3779b97f4a7c15) ^ mix(gy as u64)) >> 56) as f64
+    };
+    image::GrayImage::from_fn(width, height, |x, y| {
+        let sx = (x as i64 - shift_x) as f64 / CELL;
+        let sy = (y as i64 - shift_y) as f64 / CELL;
+        let (gx, gy) = (sx.floor(), sy.floor());
+        let (fx, fy) = (sx - gx, sy - gy);
+        let (gx, gy) = (gx as i64, gy as i64);
+        let top = node(gx, gy) * (1.0 - fx) + node(gx + 1, gy) * fx;
+        let bottom = node(gx, gy + 1) * (1.0 - fx) + node(gx + 1, gy + 1) * fx;
+        image::Luma([(top * (1.0 - fy) + bottom * fy) as u8])
+    })
+}
+
+#[test]
+fn track_step_follows_a_translated_patch() {
+    let prev = textured_frame(200, 200, 0, 0);
+    let next = textured_frame(200, 200, 7, -5);
+    let bbox = PxBox {
+        x: 60.0,
+        y: 60.0,
+        w: 40.0,
+        h: 40.0,
+    };
+
+    let (found, score) = track_step(&prev, &next, bbox).expect("región con textura");
+    assert!(score > 0.9, "el encaje exacto debería puntuar alto: {}", score);
+    assert!((found.x - 67.0).abs() <= 1.0, "x = {}", found.x);
+    assert!((found.y - 55.0).abs() <= 1.0, "y = {}", found.y);
+}
+
+#[test]
+fn track_step_gives_up_on_a_flat_region() {
+    // Sin textura el mejor encaje es ruido: proponer una caja ahí sería escribir
+    // una posición inventada en el dataset.
+    let flat = image::GrayImage::from_pixel(120, 120, image::Luma([128]));
+    let bbox = PxBox {
+        x: 20.0,
+        y: 20.0,
+        w: 40.0,
+        h: 40.0,
+    };
+    assert!(track_step(&flat, &flat, bbox).is_none());
+}
+
+#[test]
+fn track_step_rejects_a_box_too_small_to_correlate() {
+    let prev = textured_frame(100, 100, 0, 0);
+    let bbox = PxBox {
+        x: 10.0,
+        y: 10.0,
+        w: 2.0,
+        h: 2.0,
+    };
+    assert!(track_step(&prev, &prev, bbox).is_none());
+}
+
+fn tracked(frame_index: i64, x: f64, y: f64) -> TrackedBox {
+    TrackedBox {
+        frame_index,
+        bbox: PctBox {
+            x,
+            y,
+            w: 10.0,
+            h: 10.0,
+        },
+    }
+}
+
+#[test]
+fn simplify_drops_what_linear_interpolation_already_reproduces() {
+    // Movimiento en línea recta a velocidad constante: dos keyframes bastan.
+    let samples: Vec<TrackedBox> = (0..20).map(|i| tracked(i, i as f64, i as f64 * 2.0)).collect();
+    let kept = simplify_trajectory(&samples, 0.5);
+    assert_eq!(kept.len(), 2);
+    assert_eq!(kept[0].frame_index, 0);
+    assert_eq!(kept[1].frame_index, 19);
+}
+
+#[test]
+fn simplify_keeps_the_turn() {
+    // Un giro en el fotograma 10 no lo reconstruye ninguna recta: tiene que
+    // sobrevivir a la simplificación.
+    let mut samples: Vec<TrackedBox> = (0..=10).map(|i| tracked(i, i as f64, 0.0)).collect();
+    samples.extend((11..=20).map(|i| tracked(i, 10.0, (i - 10) as f64)));
+
+    let kept = simplify_trajectory(&samples, 0.5);
+    assert!(
+        kept.iter().any(|s| s.frame_index == 10),
+        "el vértice del giro debe quedarse: {:?}",
+        kept.iter().map(|s| s.frame_index).collect::<Vec<_>>()
+    );
+    assert!(kept.len() < samples.len() / 2, "y el resto debe caer");
+}
+
+#[test]
+fn simplify_respects_the_tolerance() {
+    // Desviación de 2 puntos porcentuales en el centro: se conserva con una
+    // tolerancia de 0.5 y se descarta con una de 5.
+    let samples = vec![tracked(0, 0.0, 0.0), tracked(5, 5.0, 2.0), tracked(10, 10.0, 0.0)];
+    assert_eq!(simplify_trajectory(&samples, 0.5).len(), 3);
+    assert_eq!(simplify_trajectory(&samples, 5.0).len(), 2);
+}

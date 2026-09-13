@@ -205,6 +205,9 @@
     },
     "tsToolClassification": {
       "name": "系列分類ツール"
+    },
+    "videoPropagate": {
+      "name": "ボックスを次のフレームにコピー"
     }
   }
 }

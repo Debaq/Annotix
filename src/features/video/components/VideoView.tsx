@@ -33,7 +33,7 @@ export function VideoView() {
   const { project } = useCurrentProject();
   const { video } = useCurrentVideo();
   const { currentFrameIndex, totalFrames, positionByFrameIndex, goPrev, goNext } = useVideoNavigation();
-  const { tracks, createTrack, deleteTrack, updateTrack, bake } = useVideoTracks();
+  const { tracks, createTrack, deleteTrack, updateTrack, trackForward, bake } = useVideoTracks();
   const { byClass: globalByClass } = useClassCounts();
 
   const localByClass = useMemo(() => {
@@ -279,6 +279,7 @@ export function VideoView() {
                 onCreateTrack={createTrack}
                 onDeleteTrack={deleteTrack}
                 onUpdateTrack={updateTrack}
+                onTrackForward={trackForward}
               />
             </div>
           )}
