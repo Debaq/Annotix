@@ -232,138 +232,20 @@ impl KaggleRunner {
         }
     }
 
-    fn generate_notebook_source(
-        &self,
-        request: &TrainingRequest,
-        dataset_slug: &str,
-        project_classes: &[String],
-    ) -> String {
-        let classes_str = project_classes
-            .iter()
-            .map(|c| format!("'{}'", c))
-            .collect::<Vec<_>>()
-            .join(", ");
+    /// Notebook de Kaggle: el entrypoint genérico sobre el paquete montado.
+    ///
+    /// Kaggle descomprime los datasets al montarlos, así que el paquete llega como
+    /// árbol de archivos en `/kaggle/input/<slug>`; el entrypoint acepta ambas
+    /// formas. Los resultados quedan en `/kaggle/working`, que es lo que la API
+    /// devuelve como output del kernel.
+    fn generate_notebook_source(&self, dataset_slug: &str) -> String {
         let dataset_name = dataset_slug.rsplit('/').next().unwrap_or(dataset_slug);
-
-        format!(
-            r#"# Annotix Cloud Training Notebook (Kaggle)
-import subprocess, sys, json, os, shutil
-subprocess.run([sys.executable, "-m", "pip", "install", "-q", "ultralytics"], check=True)
-
-from ultralytics import YOLO
-
-DATASET_DIR = "/kaggle/input/{dataset_name}"
-WORK_DIR = "/kaggle/working"
-os.makedirs(WORK_DIR, exist_ok=True)
-
-# Classes: [{classes}]
-
-def _emit(ev):
-    print("ANNOTIX_EVENT:" + json.dumps(ev), flush=True)
-
-_emit({{"type": "log", "message": "Starting training on Kaggle"}})
-
-data_yaml = os.path.join(DATASET_DIR, "dataset.yaml")
-if not os.path.exists(data_yaml):
-    for cand in os.listdir(DATASET_DIR):
-        if cand.endswith(".yaml") or cand.endswith(".yml"):
-            data_yaml = os.path.join(DATASET_DIR, cand); break
-
-model = YOLO("{model_id}")
-
-def on_fit_epoch_end(trainer):
-    metrics = {{}}
-    epoch = trainer.epoch + 1
-    total = trainer.epochs
-    m = getattr(trainer, "metrics", None)
-    if isinstance(m, dict):
-        metrics["precision"] = m.get("metrics/precision(B)")
-        metrics["recall"] = m.get("metrics/recall(B)")
-        metrics["mAP50"] = m.get("metrics/mAP50(B)")
-        metrics["mAP50_95"] = m.get("metrics/mAP50-95(B)")
-    li = getattr(trainer, "loss_items", None)
-    if li is not None:
-        try:
-            arr = li.cpu().numpy()
-            if len(arr) >= 3:
-                metrics["boxLoss"] = float(arr[0])
-                metrics["clsLoss"] = float(arr[1])
-                metrics["dflLoss"] = float(arr[2])
-        except Exception: pass
-    tloss = getattr(trainer, "tloss", None)
-    if tloss is not None:
-        try: metrics["trainLoss"] = float(tloss.cpu().numpy())
-        except Exception: pass
-    lr = getattr(trainer, "lr", None)
-    if lr:
-        try: metrics["lr"] = list(lr.values())[0] if isinstance(lr, dict) else float(lr)
-        except Exception: pass
-    _emit({{"type": "epoch", "epoch": epoch, "totalEpochs": total,
-            "progress": (epoch / max(total, 1)) * 100.0, "metrics": metrics}})
-
-model.add_callback("on_fit_epoch_end", on_fit_epoch_end)
-
-results = model.train(
-    data=data_yaml,
-    epochs={epochs},
-    batch={batch_size},
-    imgsz={image_size},
-    device="0",
-    lr0={lr},
-    patience={patience},
-    workers=2,
-    project=WORK_DIR,
-    name="train",
-)
-
-train_dir = os.path.join(WORK_DIR, "train")
-best = os.path.join(train_dir, "weights", "best.pt")
-last = os.path.join(train_dir, "weights", "last.pt")
-
-final = {{}}
-if results and hasattr(results, "results_dict"):
-    rd = results.results_dict
-    final = {{
-        "precision": rd.get("metrics/precision(B)"),
-        "recall": rd.get("metrics/recall(B)"),
-        "mAP50": rd.get("metrics/mAP50(B)"),
-        "mAP50_95": rd.get("metrics/mAP50-95(B)"),
-    }}
-
-# Export ONNX
-onnx_path = None
-try:
-    if os.path.exists(best):
-        onnx_path = YOLO(best).export(format="onnx")
-        if isinstance(onnx_path, (list, tuple)) and onnx_path:
-            onnx_path = onnx_path[0]
-except Exception as e:
-    _emit({{"type": "log", "message": f"ONNX export failed: {{e}}"}})
-
-# Copy models to /kaggle/working raíz para que aparezcan en output
-for src in [best, last, onnx_path]:
-    if src and os.path.exists(src):
-        try: shutil.copy2(src, os.path.join(WORK_DIR, os.path.basename(src)))
-        except Exception: pass
-
-_emit({{
-    "type": "completed",
-    "bestModelPath": best if os.path.exists(best) else None,
-    "lastModelPath": last if os.path.exists(last) else None,
-    "resultsDir": train_dir,
-    "finalMetrics": final,
-    "exportedModels": [p for p in [onnx_path] if p and os.path.exists(p)],
-}})
-"#,
-            dataset_name = dataset_name,
-            classes = classes_str,
-            model_id = request.model_id,
-            epochs = request.epochs,
-            batch_size = request.batch_size,
-            image_size = request.image_size,
-            lr = request.lr,
-            patience = request.patience,
-        )
+        super::script::entrypoint_python(&super::script::Entrypoint {
+            package_location: &format!("/kaggle/input/{}", dataset_name),
+            workdir: "/kaggle/working/annotix",
+            upload_cmd: None,
+            results_uri: None,
+        })
     }
 }
 
@@ -371,16 +253,17 @@ impl CloudRunner for KaggleRunner {
     fn submit_job(
         &self,
         config: &CloudTrainingConfig,
-        request: &TrainingRequest,
+        // El paquete de entrenamiento ya lleva dentro el backend, el modelo y las
+        // clases: la nube sólo lo ejecuta (ver cloud::script).
+        _request: &TrainingRequest,
         dataset_path: &str,
-        project_classes: &[String],
+        _project_classes: &[String],
     ) -> Result<CloudJobHandle, String> {
         // 1. Upload dataset
         let dataset_slug = self.create_dataset(dataset_path)?;
 
         // 2. Generate notebook
-        let notebook_source =
-            self.generate_notebook_source(request, &dataset_slug, project_classes);
+        let notebook_source = self.generate_notebook_source(&dataset_slug);
         let slug_short = uuid::Uuid::new_v4()
             .to_string()
             .split('-')

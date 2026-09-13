@@ -30,86 +30,51 @@ impl VertexCustomRunner {
             self.region, self.project_id, self.region
         )
     }
-
-    fn generate_train_script(
-        &self,
-        request: &TrainingRequest,
-        gcs_dataset: &str,
-        project_classes: &[String],
-    ) -> String {
-        let classes_str = project_classes
-            .iter()
-            .map(|c| format!("'{}'", c))
-            .collect::<Vec<_>>()
-            .join(", ");
-
-        let gcs_results = format!("gs://{}/results/{}", self.bucket, uuid::Uuid::new_v4());
-
-        format!(
-            r#"#!/usr/bin/env python3
-import subprocess, os
-subprocess.run(["pip", "install", "ultralytics"], check=True)
-from ultralytics import YOLO
-
-# Download dataset from GCS
-subprocess.run(["gsutil", "-m", "cp", "-r", "{gcs_dataset}/*", "/tmp/dataset/"], check=True)
-
-# Classes: [{classes}]
-model = YOLO("{model_id}")
-results = model.train(
-    data="/tmp/dataset/dataset.yaml",
-    epochs={epochs},
-    batch={batch_size},
-    imgsz={image_size},
-    device="0",
-    lr0={lr},
-    patience={patience},
-    workers=2,
-    project="/tmp/results",
-)
-
-# Upload results to GCS
-subprocess.run(["gsutil", "-m", "cp", "-r", "/tmp/results/", "{gcs_results}/"], check=True)
-"#,
-            gcs_dataset = gcs_dataset,
-            classes = classes_str,
-            model_id = request.model_id,
-            epochs = request.epochs,
-            batch_size = request.batch_size,
-            image_size = request.image_size,
-            lr = request.lr,
-            patience = request.patience,
-            gcs_results = gcs_results,
-        )
-    }
 }
 
 impl CloudRunner for VertexCustomRunner {
     fn submit_job(
         &self,
         config: &CloudTrainingConfig,
-        request: &TrainingRequest,
+        // El paquete ya lleva el backend, el modelo y las clases dentro: la nube no
+        // necesita conocer el `TrainingRequest`.
+        _request: &TrainingRequest,
         dataset_path: &str,
-        project_classes: &[String],
+        _project_classes: &[String],
     ) -> Result<CloudJobHandle, String> {
         let token = self.get_token()?;
         let job_uuid = uuid::Uuid::new_v4().to_string();
 
-        // 1. Upload dataset to GCS
-        let gcs_prefix = format!("annotix-training/{}/dataset", job_uuid);
-        let gcs_dataset = gcs::upload_file(
+        // 1. Subir el paquete de entrenamiento (train.py + dataset + requirements)
+        let gcs_prefix = format!("annotix-training/{}", job_uuid);
+        let gcs_paquete = gcs::upload_file(
             &token,
             &self.bucket,
-            &format!("{}/dataset.zip", gcs_prefix),
+            &format!("{}/paquete.zip", gcs_prefix),
             dataset_path,
         )?;
 
-        // 2. Generate and upload training script
-        let script = self.generate_train_script(request, &gcs_dataset, project_classes);
-        let script_path = format!("/tmp/annotix_train_{}.py", job_uuid);
+        // 2. Entrypoint genérico: descarga el paquete, lo ejecuta y publica el zip
+        //    de resultados en el mismo bucket.
+        let gcs_resultados = format!("gs://{}/{}/results.zip", self.bucket, gcs_prefix);
+        let script = super::script::entrypoint_python(&super::script::Entrypoint {
+            package_location: "/tmp/annotix/paquete.zip",
+            workdir: "/tmp/annotix/pkg",
+            upload_cmd: Some("gsutil cp {src} {dest}"),
+            results_uri: Some(&gcs_resultados),
+        });
+        let descarga = format!(
+            "import subprocess, os\nos.makedirs('/tmp/annotix', exist_ok=True)\n\
+             subprocess.check_call(['gsutil', 'cp', '{}', '/tmp/annotix/paquete.zip'])\n",
+            gcs_paquete
+        );
+        let script = format!("{}{}", descarga, script);
+        // Rutas temporales del host: `/tmp` no existe en Windows.
+        let script_path = std::env::temp_dir().join(format!("annotix_train_{}.py", job_uuid));
+        let script_path = script_path.to_string_lossy().to_string();
         std::fs::write(&script_path, &script)
             .map_err(|e| format!("Error escribiendo script: {}", e))?;
-        let _gcs_script = gcs::upload_file(
+        let gcs_script = gcs::upload_file(
             &token,
             &self.bucket,
             &format!("{}/train.py", gcs_prefix),
@@ -136,7 +101,7 @@ impl CloudRunner for VertexCustomRunner {
                     "replicaCount": 1,
                     "pythonPackageSpec": {
                         "executorImageUri": "us-docker.pkg.dev/vertex-ai/training/pytorch-gpu.2-1:latest",
-                        "packageUris": [format!("gs://{}/{}/train.py", self.bucket, gcs_prefix)],
+                        "packageUris": [gcs_script.clone()],
                         "pythonModule": "train",
                     },
                 }],
@@ -254,5 +219,13 @@ impl CloudRunner for VertexCustomRunner {
         let (bucket, object) = uri.split_once('/').ok_or("URI inválida")?;
 
         gcs::download_file(&token, bucket, object, output_dir)
+    }
+
+    fn fetch_progress(&self, handle: &CloudJobHandle) -> Result<Vec<serde_json::Value>, String> {
+        // Los eventos del entrenamiento llegan a Cloud Logging por stdout del job.
+        // Sin esto, Vertex AI no daba progreso en vivo: la UI mostraba sólo el estado
+        // grueso del job y el gráfico de métricas se quedaba vacío.
+        let token = self.get_token()?;
+        super::gcp_auth::fetch_annotix_events(&token, &self.project_id, &handle.job_id)
     }
 }

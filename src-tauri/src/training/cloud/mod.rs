@@ -5,8 +5,8 @@ pub mod huggingface;
 pub mod kaggle;
 pub mod lightning;
 pub mod saturn;
+pub mod script;
 pub mod vertex_custom;
-pub mod vertex_tuning;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -248,21 +248,6 @@ impl CloudTrainingManager {
                     sa_path, project_id, region, bucket,
                 )))
             }
-            CloudProvider::VertexAiGeminiTuning => {
-                let gcp_cfg = config
-                    .cloud_providers
-                    .gcp
-                    .ok_or("GCP no configurado. Ve a Settings > Cloud Providers")?;
-                let sa_path = gcp_cfg
-                    .service_account_path
-                    .ok_or("Falta Service Account JSON path")?;
-                let project_id = gcp_cfg.project_id.ok_or("Falta GCP Project ID")?;
-                let region = gcp_cfg.region.unwrap_or_else(|| "us-central1".to_string());
-                let bucket = gcp_cfg.gcs_bucket.ok_or("Falta GCS Bucket")?;
-                Ok(Box::new(vertex_tuning::VertexTuningRunner::new(
-                    sa_path, project_id, region, bucket,
-                )))
-            }
             CloudProvider::LightningAi => {
                 let lai_cfg = config
                     .cloud_providers
@@ -306,6 +291,7 @@ impl CloudTrainingManager {
         std::thread::spawn(move || {
             let poll_interval = std::time::Duration::from_secs(30);
             let mut seen_epochs: std::collections::HashSet<u64> = std::collections::HashSet::new();
+            let mut artifact_uri: Option<String> = None;
             let mut last_metrics_history: Vec<serde_json::Value> = Vec::new();
 
             loop {
@@ -384,6 +370,14 @@ impl CloudTrainingManager {
                                 }
                                 let _ = io::write_project(&project_dir, &pf);
                             }
+                        } else if ev_type == "artifact" {
+                            // El entrypoint publica el zip de resultados y anuncia su
+                            // URI: es el sumidero uniforme con el que la descarga
+                            // funciona igual en todos los proveedores, sin adivinar
+                            // endpoints.
+                            if let Some(uri) = ev["uri"].as_str() {
+                                artifact_uri = Some(uri.to_string());
+                            }
                         } else if ev_type == "log" {
                             if let Some(msg) = ev["message"].as_str() {
                                 let _ = app.emit(
@@ -437,15 +431,43 @@ impl CloudTrainingManager {
 
                         match status.state {
                             CloudJobState::Succeeded => {
-                                if let Ok(model_path) =
-                                    runner.download_model(&handle, &status, "/tmp")
-                                {
-                                    update_job_model(
+                                // Si el proveedor no publica una URI, vale la que
+                                // anunció el propio entrypoint.
+                                let status = CloudJobStatus {
+                                    model_output_uri: status
+                                        .model_output_uri
+                                        .clone()
+                                        .or_else(|| artifact_uri.clone()),
+                                    ..status
+                                };
+
+                                // Los resultados van al proyecto, no a /tmp: en
+                                // Windows esa ruta no existe y el archivo se perdía
+                                // al reiniciar.
+                                let destino = project_dir.join("training").join("cloud");
+                                let _ = std::fs::create_dir_all(&destino);
+                                match runner.download_model(
+                                    &handle,
+                                    &status,
+                                    &destino.to_string_lossy(),
+                                ) {
+                                    Ok(model_path) => update_job_model(
                                         &project_dir,
                                         &training_job_id,
                                         &model_path,
                                         status.model_output_uri.as_deref(),
-                                    );
+                                    ),
+                                    Err(e) => {
+                                        let _ = app.emit(
+                                            "training:log",
+                                            serde_json::json!({
+                                                "jobId": training_job_id,
+                                                "message": format!(
+                                                    "No se pudo descargar el resultado: {}", e
+                                                ),
+                                            }),
+                                        );
+                                    }
                                 }
 
                                 let _ = app.emit(
@@ -538,7 +560,6 @@ fn provider_to_string(provider: &CloudProvider) -> String {
     match provider {
         CloudProvider::ColabEnterprise => "colab_enterprise".to_string(),
         CloudProvider::VertexAiCustom => "vertex_ai_custom".to_string(),
-        CloudProvider::VertexAiGeminiTuning => "vertex_ai_gemini_tuning".to_string(),
         CloudProvider::Kaggle => "kaggle".to_string(),
         CloudProvider::LightningAi => "lightning_ai".to_string(),
         CloudProvider::HuggingFace => "hugging_face".to_string(),

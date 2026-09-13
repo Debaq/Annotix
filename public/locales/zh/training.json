@@ -431,7 +431,6 @@
       "kaggle": "Kaggle",
       "vertex_ai_custom": "Vertex AI Custom",
       "colab_enterprise": "Colab Enterprise",
-      "vertex_ai_gemini_tuning": "Gemini Tuning",
       "lightning_ai": "Lightning AI",
       "hugging_face": "Hugging Face",
       "saturn_cloud": "Saturn Cloud"
@@ -440,7 +439,6 @@
       "kaggle": "免费T4/P100 GPU，每周30小时",
       "vertex_ai_custom": "在GCP上使用任意GPU进行自定义训练",
       "colab_enterprise": "Vertex AI上的托管笔记本",
-      "vertex_ai_gemini_tuning": "微调Gemini模型",
       "lightning_ai": "通过Lightning Studios的免费T4/L4 GPU",
       "hugging_face": "具有免费CPU/GPU层级的AutoTrain",
       "saturn_cloud": "用于ML的免费T4 GPU实例"

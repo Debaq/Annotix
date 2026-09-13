@@ -2023,3 +2023,42 @@ fn el_catalogo_publica_el_mismo_minimo_que_valida_el_runner() {
         }
     }
 }
+
+// ─── Cloud: ningún proveedor reimplementa el entrenamiento ──────────────────
+
+#[test]
+fn los_runners_cloud_no_incrustan_ningun_backend() {
+    // Los seis proveedores incrustaban `from ultralytics import YOLO` con los
+    // hiperparámetros interpolados: elegir SMP, timm o tsai y ejecutar en la nube
+    // entrenaba un YOLO. Ahora todos ejecutan el paquete generado, y este test
+    // impide que vuelva a colarse lógica de backend.
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src/training/cloud");
+    let mut revisados = 0;
+    for entrada in fs::read_dir(&dir).expect("leer cloud/") {
+        let ruta = entrada.expect("entrada").path();
+        if ruta.extension().and_then(|e| e.to_str()) != Some("rs") {
+            continue;
+        }
+        let nombre = ruta.file_name().unwrap().to_string_lossy().to_string();
+        // `script.rs` documenta el problema en sus comentarios y lo cubre su propio test.
+        if nombre == "script.rs" {
+            continue;
+        }
+        let contenido = fs::read_to_string(&ruta).expect("leer runner");
+        revisados += 1;
+        for linea in contenido.lines() {
+            let codigo = linea.trim_start();
+            if codigo.starts_with("//") || codigo.starts_with("///") {
+                continue;
+            }
+            for prohibido in ["from ultralytics", "YOLO(", "model.train("] {
+                assert!(
+                    !codigo.contains(prohibido),
+                    "{nombre} vuelve a incrustar entrenamiento ({prohibido}): la nube \
+                     debe ejecutar el paquete generado, no reimplementar el backend"
+                );
+            }
+        }
+    }
+    assert!(revisados >= 6, "sólo se revisaron {revisados} archivos");
+}

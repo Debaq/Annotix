@@ -32,57 +32,34 @@ impl ColabEnterpriseRunner {
         )
     }
 
-    fn generate_notebook(
-        &self,
-        request: &TrainingRequest,
-        gcs_dataset: &str,
-        project_classes: &[String],
-    ) -> serde_json::Value {
-        let classes_str = project_classes
-            .iter()
-            .map(|c| format!("'{}'", c))
-            .collect::<Vec<_>>()
-            .join(", ");
-
-        let gcs_results = format!("gs://{}/results/{}", self.bucket, uuid::Uuid::new_v4());
-
+    /// Notebook de una celda: el entrypoint genérico que ejecuta el paquete.
+    ///
+    /// Antes esto incrustaba `YOLO(...)` con los hiperparámetros interpolados, hacía
+    /// `gsutil cp -r <uri-del-zip>/*` —una glob sobre un archivo, que no copia
+    /// nada— y nunca descomprimía: buscaba un `dataset.yaml` que el paquete no
+    /// genera.
+    fn generate_notebook(&self, gcs_paquete: &str, gcs_resultados: &str) -> serde_json::Value {
+        let descarga = format!(
+            "import os, subprocess\nos.makedirs('/content/annotix', exist_ok=True)\n\
+             subprocess.check_call(['gsutil', 'cp', '{}', '/content/annotix/paquete.zip'])\n",
+            gcs_paquete
+        );
         let code = format!(
-            r#"!pip install ultralytics -q
-!gsutil -m cp -r {gcs_dataset}/* /tmp/dataset/
-from ultralytics import YOLO
-model = YOLO("{model_id}")
-# Classes: [{classes}]
-results = model.train(
-    data="/tmp/dataset/dataset.yaml",
-    epochs={epochs},
-    batch={batch_size},
-    imgsz={image_size},
-    device="0",
-    lr0={lr},
-    patience={patience},
-    workers=2,
-)
-!gsutil -m cp -r /tmp/results/* {gcs_results}/
-"#,
-            gcs_dataset = gcs_dataset,
-            classes = classes_str,
-            model_id = request.model_id,
-            epochs = request.epochs,
-            batch_size = request.batch_size,
-            image_size = request.image_size,
-            lr = request.lr,
-            patience = request.patience,
-            gcs_results = gcs_results,
+            "{}{}",
+            descarga,
+            super::script::entrypoint_python(&super::script::Entrypoint {
+                package_location: "/content/annotix/paquete.zip",
+                workdir: "/content/annotix/pkg",
+                upload_cmd: Some("gsutil cp {src} {dest}"),
+                results_uri: Some(gcs_resultados),
+            })
         );
 
         serde_json::json!({
             "nbformat": 4,
             "nbformat_minor": 4,
             "metadata": {
-                "kernelspec": {
-                    "name": "python3",
-                    "display_name": "Python 3"
-                }
+                "kernelspec": {"name": "python3", "display_name": "Python 3"}
             },
             "cells": [{
                 "cell_type": "code",
@@ -99,25 +76,31 @@ impl CloudRunner for ColabEnterpriseRunner {
     fn submit_job(
         &self,
         config: &CloudTrainingConfig,
-        request: &TrainingRequest,
+        // El paquete de entrenamiento ya lleva dentro el backend, el modelo y las
+        // clases: la nube sólo lo ejecuta (ver cloud::script).
+        _request: &TrainingRequest,
         dataset_path: &str,
-        project_classes: &[String],
+        _project_classes: &[String],
     ) -> Result<CloudJobHandle, String> {
         let token = self.get_token()?;
         let job_uuid = uuid::Uuid::new_v4().to_string();
 
-        // 1. Upload dataset to GCS
-        let gcs_prefix = format!("annotix-training/{}/dataset", job_uuid);
-        let gcs_dataset = gcs::upload_file(
+        // 1. Subir el paquete de entrenamiento completo
+        let gcs_prefix = format!("annotix-training/{}", job_uuid);
+        let gcs_paquete = gcs::upload_file(
             &token,
             &self.bucket,
-            &format!("{}/dataset.zip", gcs_prefix),
+            &format!("{}/paquete.zip", gcs_prefix),
             dataset_path,
         )?;
+        let gcs_resultados = format!("gs://{}/{}/results.zip", self.bucket, gcs_prefix);
 
         // 2. Generate and upload notebook
-        let notebook = self.generate_notebook(request, &gcs_dataset, project_classes);
-        let notebook_path = format!("/tmp/annotix_colab_{}.ipynb", job_uuid);
+        let notebook = self.generate_notebook(&gcs_paquete, &gcs_resultados);
+        let notebook_path = std::env::temp_dir()
+            .join(format!("annotix_colab_{}.ipynb", job_uuid))
+            .to_string_lossy()
+            .to_string();
         std::fs::write(
             &notebook_path,
             serde_json::to_string_pretty(&notebook).unwrap(),
@@ -133,26 +116,40 @@ impl CloudRunner for ColabEnterpriseRunner {
 
         let _ = std::fs::remove_file(&notebook_path);
 
-        // 3. Create notebook execution job
-        let _machine_type = config.machine_type.as_deref().unwrap_or("n1-standard-4");
-        let _accelerator_type = config
+        // 3. Create notebook execution job.
+        //
+        // La máquina y el acelerador se leían y se descartaban (iban prefijados con
+        // `_`): ahora definen el runtime del job. El template ya no está fijo en
+        // "default", que no existe salvo que alguien lo cree con ese nombre.
+        let machine_type = config.machine_type.as_deref().unwrap_or("n1-standard-4");
+        let accelerator_type = config
             .accelerator_type
             .as_deref()
             .unwrap_or("NVIDIA_TESLA_T4");
-        let _accelerator_count = config.accelerator_count.unwrap_or(1);
+        let accelerator_count = config.accelerator_count.unwrap_or(1);
 
-        let execution_spec = serde_json::json!({
+        let mut execution_spec = serde_json::json!({
             "displayName": format!("annotix-colab-{}", &job_uuid[..8]),
             "executionTimeout": format!("{}s", config.max_runtime_seconds.unwrap_or(21600)),
-            "notebookRuntimeTemplateResourceName": format!(
-                "projects/{}/locations/{}/notebookRuntimeTemplates/default",
-                self.project_id, self.region
-            ),
             "gcsNotebookSource": {
                 "uri": gcs_notebook,
             },
-            "serviceAccount": "",
+            "gcsOutputUri": format!("gs://{}/{}/salida", self.bucket, gcs_prefix),
+            "directNotebookSource": serde_json::Value::Null,
+            "customEnvironmentSpec": {
+                "machineSpec": {
+                    "machineType": machine_type,
+                    "acceleratorType": accelerator_type,
+                    "acceleratorCount": accelerator_count,
+                },
+            },
         });
+        if let Some(obj) = execution_spec.as_object_mut() {
+            obj.remove("directNotebookSource");
+            if accelerator_count == 0 {
+                obj.remove("customEnvironmentSpec");
+            }
+        }
 
         let url = format!("{}/notebookExecutionJobs", self.api_base());
         let client = reqwest::blocking::Client::new();
@@ -253,5 +250,13 @@ impl CloudRunner for ColabEnterpriseRunner {
         let (bucket, object) = uri.split_once('/').ok_or("URI inválida")?;
 
         gcs::download_file(&token, bucket, object, output_dir)
+    }
+
+    fn fetch_progress(&self, handle: &CloudJobHandle) -> Result<Vec<serde_json::Value>, String> {
+        // Los eventos del entrenamiento llegan a Cloud Logging por stdout del job.
+        // Sin esto, Colab Enterprise no daba progreso en vivo: la UI mostraba sólo el estado
+        // grueso del job y el gráfico de métricas se quedaba vacío.
+        let token = self.get_token()?;
+        super::gcp_auth::fetch_annotix_events(&token, &self.project_id, &handle.job_id)
     }
 }

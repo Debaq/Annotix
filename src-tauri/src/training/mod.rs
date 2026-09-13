@@ -414,7 +414,6 @@ pub enum ExecutionMode {
 pub enum CloudProvider {
     ColabEnterprise,
     VertexAiCustom,
-    VertexAiGeminiTuning,
     Kaggle,
     LightningAi,
     HuggingFace,

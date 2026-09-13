@@ -53,7 +53,7 @@ tareas (y `landmarks` gana un backend que antes no tenía).
 | 1 — split de test universal | ✅ hecho |
 | 2 — clasificación y series temporales | ✅ hecho |
 | 3 — reemplazo de OpenMMLab/Detectron2 por HF | ✅ hecho: `hf_detection`, `hf_instance`, `hf_pose` |
-| 4 — cloud con el backend elegido | pendiente |
+| 4 — cloud con el backend elegido | ✅ hecho: los 6 proveedores ejecutan el paquete generado |
 | 5 — browser automation | ✅ hecho: sube y ejecuta el paquete generado desde la configuración real |
 | 6 — coherencia de UI | ✅ hecho: tabla de instalados, mínimo de resolución, gating de fine-tune y export |
 | 7 — verificación final | parcial: 23 smoke tests en verde; falta la prueba manual en la app |

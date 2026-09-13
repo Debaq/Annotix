@@ -81,14 +81,14 @@ impl HuggingFaceRunner {
             std::fs::read(dataset_path).map_err(|e| format!("Error leyendo dataset: {}", e))?;
 
         let upload_url = format!(
-            "https://huggingface.co/api/datasets/{}/upload/main/dataset.zip",
+            "https://huggingface.co/api/datasets/{}/upload/main/paquete.zip",
             dataset_repo
         );
 
         let form = reqwest::blocking::multipart::Form::new().part(
             "file",
             reqwest::blocking::multipart::Part::bytes(data)
-                .file_name("dataset.zip")
+                .file_name("paquete.zip")
                 .mime_str("application/zip")
                 .map_err(|e| format!("Error preparando upload: {}", e))?,
         );
@@ -109,64 +109,52 @@ impl HuggingFaceRunner {
         Ok(dataset_repo)
     }
 
-    fn generate_train_script(
-        &self,
-        request: &TrainingRequest,
-        dataset_repo: &str,
-        model_repo: &str,
-        project_classes: &[String],
-    ) -> String {
-        let classes_str = project_classes
-            .iter()
-            .map(|c| format!("'{}'", c))
-            .collect::<Vec<_>>()
-            .join(", ");
+    /// Entrypoint genérico: baja el paquete del repo de dataset, lo ejecuta y sube
+    /// los resultados al repo de modelo.
+    ///
+    /// El script anterior incrustaba YOLO, buscaba `dataset.yaml` y subía `best.pt`
+    /// desde una ruta fija de ultralytics.
+    fn generate_train_script(&self, dataset_repo: &str, model_repo: &str) -> String {
+        let preludio = format!(
+            r#"import os, subprocess, sys
+subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "huggingface_hub"])
+from huggingface_hub import hf_hub_download
+
+os.makedirs("/tmp/annotix", exist_ok=True)
+descargado = hf_hub_download(
+    repo_id="{dataset_repo}",
+    filename="paquete.zip",
+    repo_type="dataset",
+    local_dir="/tmp/annotix",
+)
+print(f"Paquete descargado en {{descargado}}", flush=True)
+"#,
+            dataset_repo = dataset_repo
+        );
+
+        let subida = format!(
+            r#"
+from huggingface_hub import upload_file
+upload_file(
+    path_or_fileobj=os.path.join("/tmp/annotix/pkg", "results.zip"),
+    path_in_repo="results.zip",
+    repo_id="{model_repo}",
+)
+print("Resultados subidos al repo del modelo", flush=True)
+"#,
+            model_repo = model_repo
+        );
 
         format!(
-            r#"#!/usr/bin/env python3
-import subprocess, os
-
-subprocess.run(["pip", "install", "ultralytics", "huggingface_hub"], check=True)
-
-from ultralytics import YOLO
-from huggingface_hub import hf_hub_download, upload_folder
-
-# Download dataset
-hf_hub_download(repo_id="{dataset_repo}", filename="dataset.zip", repo_type="dataset", local_dir="/tmp/hf_dataset")
-subprocess.run(["unzip", "-o", "/tmp/hf_dataset/dataset.zip", "-d", "/tmp/dataset"], check=True)
-
-# Classes: [{classes}]
-
-model = YOLO("{model_id}")
-results = model.train(
-    data="/tmp/dataset/dataset.yaml",
-    epochs={epochs},
-    batch={batch_size},
-    imgsz={image_size},
-    device="0",
-    lr0={lr},
-    patience={patience},
-    workers=2,
-    project="/tmp/results",
-)
-model.export(format="onnx")
-
-# Upload results to model repo
-upload_folder(
-    folder_path="/tmp/results/train/weights",
-    repo_id="{model_repo}",
-    repo_type="model",
-)
-"#,
-            dataset_repo = dataset_repo,
-            classes = classes_str,
-            model_id = request.model_id,
-            epochs = request.epochs,
-            batch_size = request.batch_size,
-            image_size = request.image_size,
-            lr = request.lr,
-            patience = request.patience,
-            model_repo = model_repo,
+            "{}{}{}",
+            preludio,
+            super::script::entrypoint_python(&super::script::Entrypoint {
+                package_location: "/tmp/annotix/paquete.zip",
+                workdir: "/tmp/annotix/pkg",
+                upload_cmd: None,
+                results_uri: None,
+            }),
+            subida
         )
     }
 }
@@ -175,9 +163,11 @@ impl CloudRunner for HuggingFaceRunner {
     fn submit_job(
         &self,
         _config: &CloudTrainingConfig,
-        request: &TrainingRequest,
+        // El paquete de entrenamiento ya lleva dentro el backend, el modelo y las
+        // clases: la nube sólo lo ejecuta (ver cloud::script).
+        _request: &TrainingRequest,
         dataset_path: &str,
-        project_classes: &[String],
+        _project_classes: &[String],
     ) -> Result<CloudJobHandle, String> {
         let job_uuid = uuid::Uuid::new_v4().to_string();
         let short_id = job_uuid.split('-').next().unwrap_or("job");
@@ -190,8 +180,7 @@ impl CloudRunner for HuggingFaceRunner {
         let dataset_repo = self.upload_dataset_to_repo(&repo_name, dataset_path)?;
 
         // 3. Generate training script
-        let script =
-            self.generate_train_script(request, &dataset_repo, &model_repo, project_classes);
+        let script = self.generate_train_script(&dataset_repo, &model_repo);
 
         // 4. Upload training script to model repo
         let script_form = reqwest::blocking::multipart::Form::new().part(
@@ -319,36 +308,42 @@ impl CloudRunner for HuggingFaceRunner {
     fn download_model(
         &self,
         handle: &CloudJobHandle,
-        _status: &CloudJobStatus,
+        status: &CloudJobStatus,
         output_dir: &str,
     ) -> Result<String, String> {
-        // Try to extract model repo from the job_id / space_id
-        // The model repo follows the naming convention from submit
-        let model_repo = handle.job_id.clone();
-
-        let url = format!(
-            "https://huggingface.co/api/models/{}/resolve/main/best.pt",
-            model_repo
-        );
+        // La URL de descarga de un repo es `huggingface.co/<repo>/resolve/<rama>/<archivo>`:
+        // el `api/models/...` que había aquí sirve metadatos, no ficheros. Y el repo
+        // del modelo lo publica el propio job, así que se toma de la URI reportada.
+        let repo = status
+            .model_output_uri
+            .as_deref()
+            .unwrap_or(handle.job_id.as_str());
+        let url = format!("https://huggingface.co/{}/resolve/main/results.zip", repo);
 
         let resp = self
             .client()
             .get(&url)
             .header("Authorization", self.auth_header())
             .send()
-            .map_err(|e| format!("Error descargando modelo de HF: {}", e))?;
+            .map_err(|e| format!("Error descargando resultados de HF: {}", e))?;
 
         if !resp.status().is_success() {
+            let estado = resp.status();
             let body = resp.text().unwrap_or_default();
-            return Err(format!("Error HF model download: {}", body));
+            return Err(format!(
+                "Error descargando de {} ({}): {}",
+                url,
+                estado,
+                body.chars().take(200).collect::<String>()
+            ));
         }
 
-        let output_path = std::path::Path::new(output_dir).join("hf_best.pt");
+        let destino = std::path::Path::new(output_dir).join("hf_results.zip");
         let bytes = resp.bytes().map_err(|e| e.to_string())?;
-        std::fs::write(&output_path, &bytes)
-            .map_err(|e| format!("Error escribiendo modelo: {}", e))?;
+        std::fs::write(&destino, &bytes)
+            .map_err(|e| format!("Error escribiendo resultados: {}", e))?;
 
-        Ok(output_path.to_string_lossy().to_string())
+        Ok(destino.to_string_lossy().to_string())
     }
 }
 

@@ -22,51 +22,17 @@ impl LightningRunner {
         "https://lightning.ai/api/v1".to_string()
     }
 
-    fn generate_train_script(
-        &self,
-        request: &TrainingRequest,
-        project_classes: &[String],
-    ) -> String {
-        let classes_str = project_classes
-            .iter()
-            .map(|c| format!("'{}'", c))
-            .collect::<Vec<_>>()
-            .join(", ");
-
-        format!(
-            r#"#!/usr/bin/env python3
-import subprocess, os
-
-subprocess.run(["pip", "install", "ultralytics"], check=True)
-
-from ultralytics import YOLO
-
-DATASET_DIR = "/teamspace/studios/this_studio/dataset"
-
-# Classes: [{classes}]
-
-model = YOLO("{model_id}")
-results = model.train(
-    data=os.path.join(DATASET_DIR, "dataset.yaml"),
-    epochs={epochs},
-    batch={batch_size},
-    imgsz={image_size},
-    device="0",
-    lr0={lr},
-    patience={patience},
-    workers=2,
-    project="/teamspace/studios/this_studio/results",
-)
-model.export(format="onnx")
-"#,
-            classes = classes_str,
-            model_id = request.model_id,
-            epochs = request.epochs,
-            batch_size = request.batch_size,
-            image_size = request.image_size,
-            lr = request.lr,
-            patience = request.patience,
-        )
+    /// Entrypoint genérico: descomprime el paquete subido al studio y lo ejecuta.
+    ///
+    /// El script anterior incrustaba YOLO y buscaba `dataset.yaml`, que el paquete
+    /// no genera (escribe `data.yaml`): fallaba antes de entrenar.
+    fn generate_train_script(&self) -> String {
+        super::script::entrypoint_python(&super::script::Entrypoint {
+            package_location: "/teamspace/studios/this_studio",
+            workdir: "/teamspace/studios/this_studio/annotix",
+            upload_cmd: None,
+            results_uri: None,
+        })
     }
 
     fn resolve_gpu_type(config: &CloudTrainingConfig) -> String {
@@ -82,9 +48,11 @@ impl CloudRunner for LightningRunner {
     fn submit_job(
         &self,
         config: &CloudTrainingConfig,
-        request: &TrainingRequest,
+        // El paquete de entrenamiento ya lleva dentro el backend, el modelo y las
+        // clases: la nube sólo lo ejecuta (ver cloud::script).
+        _request: &TrainingRequest,
         dataset_path: &str,
-        project_classes: &[String],
+        _project_classes: &[String],
     ) -> Result<CloudJobHandle, String> {
         let job_uuid = uuid::Uuid::new_v4().to_string();
         let short_id = job_uuid.split('-').next().unwrap_or("job");
@@ -147,7 +115,7 @@ impl CloudRunner for LightningRunner {
         }
 
         // 3. Generate training script and upload
-        let script = self.generate_train_script(request, project_classes);
+        let script = self.generate_train_script();
         let script_form = reqwest::blocking::multipart::Form::new().part(
             "file",
             reqwest::blocking::multipart::Part::bytes(script.into_bytes())

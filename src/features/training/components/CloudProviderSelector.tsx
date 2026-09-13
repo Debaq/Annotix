@@ -20,7 +20,6 @@ const FREE_PROVIDERS: { id: CloudProvider; icon: string; color: string }[] = [
 const PAID_PROVIDERS: { id: CloudProvider; icon: string; color: string }[] = [
   { id: 'vertex_ai_custom', icon: 'fas fa-server', color: 'blue' },
   { id: 'colab_enterprise', icon: 'fas fa-laptop-code', color: 'orange' },
-  { id: 'vertex_ai_gemini_tuning', icon: 'fas fa-gem', color: 'purple' },
 ];
 
 const GCP_MACHINE_TYPES = [
@@ -81,7 +80,7 @@ export function CloudProviderSelector({
     }
   };
 
-  const isGcpProvider = selected === 'vertex_ai_custom' || selected === 'colab_enterprise' || selected === 'vertex_ai_gemini_tuning';
+  const isGcpProvider = selected === 'vertex_ai_custom' || selected === 'colab_enterprise';
 
   const renderProviderCard = (p: { id: CloudProvider; icon: string; color: string }) => (
     <button

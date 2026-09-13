@@ -204,7 +204,7 @@ arreglara el config, Mask R-CNN entrenaría sin máscaras.
 
 ## 4. Cloud
 
-### 4.1 Ningún proveedor conoce el backend
+### 4.1 Ningún proveedor conocía el backend (resuelto)
 
 `grep -c "request.backend" src-tauri/src/training/cloud/*.rs` → **0**. Los seis
 generadores de notebook hardcodean `from ultralytics import YOLO`. Si el usuario elige

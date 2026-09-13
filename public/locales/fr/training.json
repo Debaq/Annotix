@@ -431,7 +431,6 @@
       "kaggle": "Kaggle",
       "vertex_ai_custom": "Vertex AI Custom",
       "colab_enterprise": "Colab Enterprise",
-      "vertex_ai_gemini_tuning": "Gemini Tuning",
       "lightning_ai": "Lightning AI",
       "hugging_face": "Hugging Face",
       "saturn_cloud": "Saturn Cloud"
@@ -440,7 +439,6 @@
       "kaggle": "GPUs T4/P100 gratuits, 30h/semaine",
       "vertex_ai_custom": "Entraînement personnalisé avec n'importe quel GPU sur GCP",
       "colab_enterprise": "Notebooks gérés sur Vertex AI",
-      "vertex_ai_gemini_tuning": "Affiner les modèles Gemini",
       "lightning_ai": "GPUs T4/L4 gratuits via Lightning Studios",
       "hugging_face": "AutoTrain avec niveau gratuit CPU/GPU",
       "saturn_cloud": "Instances T4 GPU gratuites pour ML"

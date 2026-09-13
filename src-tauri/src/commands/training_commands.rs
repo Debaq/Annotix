@@ -1098,7 +1098,7 @@ pub fn download_cloud_model(
             // These providers store the download URL directly
             Ok(download_url.to_string())
         }
-        "vertex_ai_custom" | "colab_enterprise" | "vertex_ai_gemini_tuning" => {
+        "vertex_ai_custom" | "colab_enterprise" => {
             let gcp = config.cloud_providers.gcp.ok_or("GCP no configurado")?;
             let sa_path = gcp
                 .service_account_path
