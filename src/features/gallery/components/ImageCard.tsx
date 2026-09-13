@@ -156,6 +156,17 @@ export function ImageCard({ image }: ImageCardProps) {
           </div>
         )}
 
+        {/* Sujeto: identifica de quién es la muestra sin abrir la imagen, que es lo
+            que permite ver de un vistazo si el corpus está bien agrupado. */}
+        {image.subjectId && !isPendingDownload && (
+          <div
+            className="absolute top-1 left-1 z-10 px-1 py-0.5 rounded bg-rose-500/90 text-white text-[8px] font-bold font-mono truncate max-w-[70px]"
+            title={`${t('subjects:subject')}: ${image.subjectId}`}
+          >
+            {image.subjectId}
+          </div>
+        )}
+
         {/* Status indicator (top-right) */}
         {!isPendingDownload && (
           <div className="absolute top-1 right-1">

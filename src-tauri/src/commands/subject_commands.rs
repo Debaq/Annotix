@@ -1,9 +1,27 @@
 use std::collections::BTreeMap;
 
-use tauri::State;
+use tauri::{AppHandle, Emitter, State};
 
 use crate::store::state::AppState;
 use crate::store::subjects::{PatternPreview, SubjectSummary};
+
+/// Avisa a la galería de que las imágenes cambiaron.
+///
+/// El refresco de la UI cuelga del evento de Tauri `db:images-changed`, no de un
+/// evento del DOM: sin emitirlo, el sujeto queda bien en disco y la galería sigue
+/// mostrando lo de antes hasta que se recarga a mano.
+fn avisar_cambio(app: &AppHandle, project_id: &str, cambiadas: usize) {
+    if cambiadas == 0 {
+        return;
+    }
+    let _ = app.emit(
+        "db:images-changed",
+        serde_json::json!({
+            "projectId": project_id,
+            "action": "updated",
+        }),
+    );
+}
 
 /// Reparto de muestras por sujeto: cuántas hay de cada uno y cuántas sin asignar.
 #[tauri::command]
@@ -17,23 +35,29 @@ pub fn get_subject_summary(
 /// Asigna (o borra, con `null`) el sujeto de un conjunto de imágenes.
 #[tauri::command]
 pub fn set_image_subjects(
+    app: AppHandle,
     state: State<'_, AppState>,
     project_id: String,
     image_ids: Vec<String>,
     subject_id: Option<String>,
 ) -> Result<usize, String> {
-    state.set_image_subjects(&project_id, &image_ids, subject_id.as_deref())
+    let n = state.set_image_subjects(&project_id, &image_ids, subject_id.as_deref())?;
+    avisar_cambio(&app, &project_id, n);
+    Ok(n)
 }
 
 /// Asigna el sujeto de un video y lo propaga a sus fotogramas ya extraídos.
 #[tauri::command]
 pub fn set_video_subject(
+    app: AppHandle,
     state: State<'_, AppState>,
     project_id: String,
     video_id: String,
     subject_id: Option<String>,
 ) -> Result<usize, String> {
-    state.set_video_subject(&project_id, &video_id, subject_id.as_deref())
+    let n = state.set_video_subject(&project_id, &video_id, subject_id.as_deref())?;
+    avisar_cambio(&app, &project_id, n);
+    Ok(n)
 }
 
 /// Qué sujeto saldría de aplicar el patrón, sin aplicarlo. La UI enseña los
@@ -51,11 +75,14 @@ pub fn preview_subject_pattern(
 /// sujeto adivinado.
 #[tauri::command]
 pub fn apply_subject_pattern(
+    app: AppHandle,
     state: State<'_, AppState>,
     project_id: String,
     pattern: String,
 ) -> Result<usize, String> {
-    state.apply_subject_pattern(&project_id, &pattern)
+    let n = state.apply_subject_pattern(&project_id, &pattern)?;
+    avisar_cambio(&app, &project_id, n);
+    Ok(n)
 }
 
 /// Aplica un mapeo `nombre de archivo → sujeto`. Devuelve cuántas cambiaron y
@@ -63,9 +90,12 @@ pub fn apply_subject_pattern(
 /// CSV que no corresponde al corpus es un error del usuario que conviene mostrar.
 #[tauri::command]
 pub fn apply_subject_map(
+    app: AppHandle,
     state: State<'_, AppState>,
     project_id: String,
     mapping: BTreeMap<String, String>,
 ) -> Result<(usize, Vec<String>), String> {
-    state.apply_subject_map(&project_id, &mapping)
+    let (n, sin_uso) = state.apply_subject_map(&project_id, &mapping)?;
+    avisar_cambio(&app, &project_id, n);
+    Ok((n, sin_uso))
 }

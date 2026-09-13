@@ -11,6 +11,7 @@ import { useToast } from '@/components/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ClassFilterControls } from './ClassFilterControls';
 import { AnnotationInspectorModal } from './AnnotationInspectorModal';
+import { SubjectManagerDialog } from '../../subjects/components/SubjectManagerDialog';
 import type { InferenceConfig, InferenceCompletedEvent, InferenceErrorEvent } from '../../inference/types';
 
 type FilterType = 'all' | 'annotated' | 'unannotated';
@@ -35,6 +36,7 @@ export function GalleryFilters() {
   const [logOpen, setLogOpen] = useState(false);
   const [batchTotal, setBatchTotal] = useState(0);
   const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [subjectsOpen, setSubjectsOpen] = useState(false);
 
   const fileNameById = useMemo(() => {
     const m = new Map<string, string>();
@@ -95,6 +97,25 @@ export function GalleryFilters() {
       </button>
 
       <AnnotationInspectorModal open={inspectorOpen} onOpenChange={setInspectorOpen} />
+
+      {/* Sujetos: la carga masiva del identificador que agrupa el reparto. */}
+      <button
+        onClick={() => setSubjectsOpen(true)}
+        disabled={!currentProjectId}
+        className="annotix-btn annotix-btn-outline w-full mt-2"
+        style={{ fontSize: '0.75rem' }}
+        title={t('subjects.manage')}
+      >
+        <i className="fas fa-user-tag mr-2" style={{ color: '#e11d48' }} />
+        {t('subjects.manage')}
+      </button>
+      {currentProjectId && (
+        <SubjectManagerDialog
+          projectId={currentProjectId}
+          open={subjectsOpen}
+          onClose={() => setSubjectsOpen(false)}
+        />
+      )}
 
       {/* Inferencia: sin modelo = cargar; con modelo = inferir todas + engrane */}
       {!selectedModel ? (

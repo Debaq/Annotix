@@ -322,6 +322,14 @@ export interface AnnotixImage {
     annotated?: number;
     status: 'pending' | 'annotated' | 'reviewed';
   };
+  /**
+   * Sujeto al que pertenece la muestra: paciente, animal, cultivo, lámina.
+   *
+   * Opcional; un proyecto generalista nunca lo usa. Cuando está, el reparto
+   * train/val/test agrupa por él para que dos muestras del mismo sujeto no
+   * caigan en particiones distintas.
+   */
+  subjectId?: string | null;
   videoId?: string | null;
   frameIndex?: number | null;
   /**
