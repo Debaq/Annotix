@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/hooks/use-toast';
 import { exportTrainingReportFromJob } from '../services/trainingReportService';
+import { SplitReportPanel } from './SplitReportPanel';
 import type { BackendInfo, TrainingJob, TrainingBackend } from '../types';
 
 interface TrainingJobCardProps {
@@ -28,6 +29,7 @@ const STATUS_COLORS: Record<string, string> = {
 export function TrainingJobCard({ job, onDelete, onFineTune, onResume, projectName, backends = [] }: TrainingJobCardProps) {
   const { t } = useTranslation();
   const [exporting, setExporting] = useState(false);
+  const [splitOpen, setSplitOpen] = useState(false);
 
   const config = job.config as Record<string, unknown>;
   const model = `${config.yoloVersion || config.modelId || '?'}${config.modelSize || ''}`;
@@ -59,8 +61,11 @@ export function TrainingJobCard({ job, onDelete, onFineTune, onResume, projectNa
     }
   };
 
+  const avisos = job.splitReport?.warnings.length ?? 0;
+
   return (
-    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors">
+    <div className="border rounded-lg hover:bg-accent/50 transition-colors">
+    <div className="flex items-center justify-between p-3">
       <div className="flex items-center gap-3">
         <Badge className={STATUS_COLORS[job.status] || 'bg-zinc-500'}>
           {t(`training.status.${job.status}`)}
@@ -159,6 +164,18 @@ export function TrainingJobCard({ job, onDelete, onFineTune, onResume, projectNa
             <i className={`fas ${exporting ? 'fa-spinner fa-spin' : 'fa-file-pdf'} text-xs`} />
           </Button>
         )}
+        {job.splitReport && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSplitOpen((v) => !v)}
+            className={avisos > 0 ? 'text-amber-500' : 'text-muted-foreground hover:text-foreground'}
+            title={t('training.splitReport.title')}
+          >
+            <i className="fas fa-table-columns text-xs" />
+            {avisos > 0 && <span className="ml-1 text-[10px] font-bold">{avisos}</span>}
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"
@@ -168,6 +185,15 @@ export function TrainingJobCard({ job, onDelete, onFineTune, onResume, projectNa
           <i className="fas fa-trash text-xs" />
         </Button>
       </div>
+    </div>
+
+    {/* Cómo se repartió el corpus. El contador de avisos va en el botón para que
+        una clase sin evaluar se vea sin tener que desplegar. */}
+    {splitOpen && job.splitReport && (
+      <div className="px-3 pb-3 border-t border-border/60 pt-2">
+        <SplitReportPanel report={job.splitReport} />
+      </div>
+    )}
     </div>
   );
 }

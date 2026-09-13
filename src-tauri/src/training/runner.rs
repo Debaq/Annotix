@@ -117,11 +117,35 @@ impl TrainingProcessManager {
         // Batch: status→training + rutas en un solo flush
         let ds_str = dataset_dir.to_string_lossy().to_string();
         let result_str = dataset_dir.join("train").to_string_lossy().to_string();
+        // El informe del reparto se guarda con el trabajo: una métrica sin saber
+        // cómo se repartió el corpus no se puede leer, y reconstruirlo después es
+        // imposible porque el dataset preparado se borra.
+        let informe = prepared
+            .split_report()
+            .and_then(|r| serde_json::to_value(r).ok());
+        if let Some(r) = prepared.split_report() {
+            for aviso in &r.warnings {
+                match aviso.class.as_deref() {
+                    Some(clase) => log::warn!(
+                        "Training {}: aviso de reparto '{}' en la clase '{}'",
+                        job_id_owned,
+                        aviso.code,
+                        clase
+                    ),
+                    None => log::warn!(
+                        "Training {}: aviso de reparto '{}'",
+                        job_id_owned,
+                        aviso.code
+                    ),
+                }
+            }
+        }
         state.with_project_mut(project_id, |pf| {
             if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
                 job.status = "training".to_string();
                 job.dataset_dir = Some(ds_str);
                 job.result_dir = Some(result_str);
+                job.split_report = informe;
                 job.updated_at = js_timestamp();
             }
         })?;
@@ -286,11 +310,35 @@ impl TrainingProcessManager {
 
         let ds_str = dataset_dir.to_string_lossy().to_string();
         let result_str = dataset_dir.join("train").to_string_lossy().to_string();
+        // El informe del reparto se guarda con el trabajo: una métrica sin saber
+        // cómo se repartió el corpus no se puede leer, y reconstruirlo después es
+        // imposible porque el dataset preparado se borra.
+        let informe = prepared
+            .split_report()
+            .and_then(|r| serde_json::to_value(r).ok());
+        if let Some(r) = prepared.split_report() {
+            for aviso in &r.warnings {
+                match aviso.class.as_deref() {
+                    Some(clase) => log::warn!(
+                        "Training {}: aviso de reparto '{}' en la clase '{}'",
+                        job_id_owned,
+                        aviso.code,
+                        clase
+                    ),
+                    None => log::warn!(
+                        "Training {}: aviso de reparto '{}'",
+                        job_id_owned,
+                        aviso.code
+                    ),
+                }
+            }
+        }
         state.with_project_mut(project_id, |pf| {
             if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
                 job.status = "training".to_string();
                 job.dataset_dir = Some(ds_str);
                 job.result_dir = Some(result_str);
+                job.split_report = informe;
                 job.updated_at = js_timestamp();
             }
         })?;

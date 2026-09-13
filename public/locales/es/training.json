@@ -923,5 +923,25 @@
       "noneMatch": "Ningún modelo de este backend cumple los filtros.",
       "clear": "Quitar filtros"
     }
+  },
+  "splitReport": {
+    "title": "Cómo se repartió el corpus",
+    "groupedBy": "Agrupado por {{unit}}",
+    "unit": {
+      "subject": "sujeto",
+      "video": "video",
+      "item": "imagen"
+    },
+    "images": "Imágenes",
+    "groups": "Grupos",
+    "subjects": "Sujetos",
+    "undeclared": "{{count}} muestras sin sujeto declarado: esas se agrupan por imagen, no por sujeto.",
+    "warnings": {
+      "no_test": "Sin conjunto de test: las métricas son de validación y están sesgadas por la selección del mejor epoch.",
+      "class_absent_in_test": "La clase «{{class}}» no aparece en test: no está evaluada, aunque la métrica global se vea bien.",
+      "class_absent_in_val": "La clase «{{class}}» no aparece en validación: no se puede seguir su progreso durante el entrenamiento.",
+      "single_group": "Todo el corpus es un solo grupo: no hay reparto real y la validación mide sobre lo mismo que entrena.",
+      "subject_partially_declared": "Hay muestras con sujeto y muestras sin él: media parte se agrupa por sujeto y la otra por imagen."
+    }
   }
 }

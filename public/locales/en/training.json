@@ -923,5 +923,25 @@
       "noneMatch": "No model in this backend matches the filters.",
       "clear": "Clear filters"
     }
+  },
+  "splitReport": {
+    "title": "How the corpus was split",
+    "groupedBy": "Grouped by {{unit}}",
+    "unit": {
+      "subject": "subject",
+      "video": "video",
+      "item": "image"
+    },
+    "images": "Images",
+    "groups": "Groups",
+    "subjects": "Subjects",
+    "undeclared": "{{count}} samples with no declared subject: those group by image, not by subject.",
+    "warnings": {
+      "no_test": "No test set: the metrics are validation metrics and are biased by best-epoch selection.",
+      "class_absent_in_test": "Class “{{class}}” does not appear in test: it is not evaluated, however good the overall metric looks.",
+      "class_absent_in_val": "Class “{{class}}” does not appear in validation: its progress cannot be followed during training.",
+      "single_group": "The whole corpus is a single group: there is no real split and validation measures on what it trains on.",
+      "subject_partially_declared": "Some samples have a subject and some do not: half groups by subject and half by image."
+    }
   }
 }

@@ -2,6 +2,7 @@ use std::io::Cursor;
 use std::path::Path;
 
 use image::{GrayImage, Luma};
+use serde::{Deserialize, Serialize};
 
 use super::contract::{keys, PreparedDataset};
 use super::npy;
@@ -150,6 +151,72 @@ pub struct SplitComposition {
     pub groups: SplitCounts,
 }
 
+/// Cuántas anotaciones de una clase quedaron en cada partición.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClassSplitCounts {
+    pub class: String,
+    pub train: usize,
+    pub val: usize,
+    pub test: usize,
+}
+
+/// Un problema del reparto que el usuario debería saber antes de creerse la
+/// métrica. Va como código estable y no como frase: la UI lo traduce, y así el
+/// mismo aviso sirve en los diez idiomas sin que el backend sepa de idiomas.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SplitWarning {
+    /// `no_test` | `class_absent_in_test` | `class_absent_in_val` |
+    /// `single_group` | `subject_partially_declared`
+    pub code: String,
+    /// Clase afectada, cuando el aviso es sobre una clase.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub class: Option<String>,
+}
+
+/// Informe del reparto, tal como se persiste en el trabajo de entrenamiento.
+///
+/// Existe porque el número de imágenes por partición no dice lo que hace falta
+/// para leer una métrica: con 400 imágenes en train que son dos pacientes, el
+/// modelo vio dos personas, no cuatrocientas. Y una clase que no aparece en test
+/// no está evaluada, por mucho que la métrica global se vea bien.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SplitReport {
+    /// Unidad por la que se agrupó: `subject`, `video` o `item`.
+    pub unit: String,
+    /// Imágenes por partición.
+    pub items: SplitCountsReport,
+    /// Grupos por partición.
+    pub groups: SplitCountsReport,
+    /// Sujetos distintos por partición, cuando el corpus los declara.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subjects: Option<SplitCountsReport>,
+    /// Muestras sin sujeto declarado, cuando el corpus declara alguno.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subjects_undeclared: Option<usize>,
+    pub per_class: Vec<ClassSplitCounts>,
+    pub warnings: Vec<SplitWarning>,
+}
+
+/// `SplitCounts` serializable. El original es `Copy` y sin `serde` a propósito:
+/// lo usan los preparadores en caliente.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct SplitCountsReport {
+    pub train: usize,
+    pub val: usize,
+    pub test: usize,
+}
+
+impl From<SplitCounts> for SplitCountsReport {
+    fn from(c: SplitCounts) -> Self {
+        Self {
+            train: c.train,
+            val: c.val,
+            test: c.test,
+        }
+    }
+}
+
 impl SplitPlan {
     /// Lo que de verdad quedó en cada partición, no lo que se pidió.
     pub fn composition(&self) -> SplitComposition {
@@ -165,6 +232,130 @@ impl SplitPlan {
 
     pub fn has_test(&self) -> bool {
         !self.test.is_empty()
+    }
+
+    /// Informe del reparto para persistir en el trabajo de entrenamiento.
+    ///
+    /// Los avisos son lo que justifica el informe. El más importante es la clase
+    /// que no aparece en test: la métrica global sigue viéndose bien y esa clase
+    /// simplemente no está evaluada, cosa que no se descubre mirando un mAP.
+    pub fn report(&self, project: &ProjectFile, images: &[ImageEntry]) -> SplitReport {
+        let unit = if images
+            .iter()
+            .any(|i| i.subject_id.as_deref().is_some_and(|s| !s.is_empty()))
+        {
+            "subject"
+        } else if images
+            .iter()
+            .any(|i| i.video_id.as_deref().is_some_and(|v| !v.is_empty()))
+        {
+            "video"
+        } else {
+            "item"
+        };
+
+        // Sujetos y clases por partición.
+        let mut sujetos: [std::collections::BTreeSet<&str>; 3] = Default::default();
+        let mut por_clase: std::collections::BTreeMap<i64, [usize; 3]> = Default::default();
+        let mut sin_sujeto = 0usize;
+
+        for (parte, indices) in [(0usize, &self.train), (1, &self.val), (2, &self.test)] {
+            for &i in indices {
+                let img = &images[i];
+                match img.subject_id.as_deref().filter(|s| !s.is_empty()) {
+                    Some(s) => {
+                        sujetos[parte].insert(s);
+                    }
+                    None => sin_sujeto += 1,
+                }
+                for ann in &img.annotations {
+                    por_clase.entry(ann.class_id).or_default()[parte] += 1;
+                }
+            }
+        }
+
+        let nombre_de = |id: i64| -> String {
+            project
+                .classes
+                .iter()
+                .find(|c| c.id == id)
+                .map(|c| c.name.clone())
+                .unwrap_or_else(|| format!("#{id}"))
+        };
+
+        let per_class: Vec<ClassSplitCounts> = por_clase
+            .iter()
+            .map(|(id, n)| ClassSplitCounts {
+                class: nombre_de(*id),
+                train: n[0],
+                val: n[1],
+                test: n[2],
+            })
+            .collect();
+
+        let mut warnings = Vec::new();
+
+        if self.test.is_empty() {
+            warnings.push(SplitWarning {
+                code: "no_test".into(),
+                class: None,
+            });
+        }
+        for c in &per_class {
+            if !self.test.is_empty() && c.test == 0 {
+                warnings.push(SplitWarning {
+                    code: "class_absent_in_test".into(),
+                    class: Some(c.class.clone()),
+                });
+            }
+            if c.val == 0 {
+                warnings.push(SplitWarning {
+                    code: "class_absent_in_val".into(),
+                    class: Some(c.class.clone()),
+                });
+            }
+        }
+        if self.groups.train + self.groups.val + self.groups.test <= 1 {
+            warnings.push(SplitWarning {
+                code: "single_group".into(),
+                class: None,
+            });
+        }
+        // Un corpus a medio declarar es peor que uno sin declarar: la mitad se
+        // agrupa por sujeto y la otra mitad por imagen, sin que se note.
+        if unit == "subject" && sin_sujeto > 0 {
+            warnings.push(SplitWarning {
+                code: "subject_partially_declared".into(),
+                class: None,
+            });
+        }
+
+        SplitReport {
+            unit: unit.to_string(),
+            items: SplitCounts {
+                train: self.train.len(),
+                val: self.val.len(),
+                test: self.test.len(),
+            }
+            .into(),
+            groups: self.groups.into(),
+            subjects: if unit == "subject" {
+                Some(SplitCountsReport {
+                    train: sujetos[0].len(),
+                    val: sujetos[1].len(),
+                    test: sujetos[2].len(),
+                })
+            } else {
+                None
+            },
+            subjects_undeclared: if unit == "subject" {
+                Some(sin_sujeto)
+            } else {
+                None
+            },
+            per_class,
+            warnings,
+        }
     }
 
     /// Pares (nombre, índices), omitiendo test cuando está vacío.
@@ -356,6 +547,7 @@ pub fn prepare_dataset(
     };
     let mut ds = PreparedDataset::new(output_dir, format, class_names(project));
     ds.set_split(plan.composition());
+    ds.set_split_report(plan.report(project, images));
 
     if task == "classify" {
         prepare_classification_dataset(images_dir, project, images, output_dir, &plan)?;
@@ -714,6 +906,7 @@ pub fn prepare_coco_dataset(
 
     let mut ds = PreparedDataset::new(output_dir, DatasetFormat::CocoJson, class_names(project));
     ds.set_split(plan.composition());
+    ds.set_split_report(plan.report(project, images));
 
     match layout {
         CocoLayout::RfDetr => {
@@ -937,6 +1130,7 @@ pub fn prepare_mask_dataset(
 
     let mut ds = PreparedDataset::new(output_dir, DatasetFormat::MaskPng, class_names(project));
     ds.set_split(plan.composition());
+    ds.set_split_report(plan.report(project, images));
     ds.declare(keys::IMAGES_TRAIN, "images/train")
         .declare(keys::IMAGES_VAL, "images/val")
         .declare(keys::MASKS_TRAIN, "masks/train")
@@ -1324,6 +1518,7 @@ pub fn prepare_coco_instance_dataset(
         class_names(project),
     );
     ds.set_split(plan.composition());
+    ds.set_split_report(plan.report(project, images));
     ds.declare(keys::IMAGES_TRAIN, "train")
         .declare(keys::ANN_TRAIN, "annotations/instances_train.json")
         .declare(keys::IMAGES_VAL, "val")
@@ -1517,6 +1712,7 @@ pub fn prepare_coco_keypoints_dataset(
         class_names(project),
     );
     ds.set_split(plan.composition());
+    ds.set_split_report(plan.report(project, images));
     ds.declare(keys::IMAGES_TRAIN, "train")
         .declare(keys::ANN_TRAIN, "annotations/person_keypoints_train.json")
         .declare(keys::IMAGES_VAL, "val")
@@ -1681,6 +1877,7 @@ pub fn prepare_classification_dataset_labeled(
         class_names(project),
     );
     ds.set_split(plan.composition());
+    ds.set_split_report(plan.report(project, images));
 
     for (split, idxs) in plan.splits() {
         let split_dir = output_dir.join("images").join(split);

@@ -245,6 +245,7 @@ pub async fn start_training(
     // Crear job en project.json
     state.with_project_mut(&project_id, |pf| {
         pf.training_jobs.push(TrainingJobEntry {
+            split_report: None,
             id: job_id_clone,
             status: "pending".to_string(),
             config: config_json,
@@ -770,6 +771,7 @@ pub async fn start_training_v2(
         // Create job entry
         state.with_project_mut(&project_id, |pf| {
             pf.training_jobs.push(TrainingJobEntry {
+                split_report: None,
                 id: job_id_clone,
                 status: "pending".to_string(),
                 config: config_json,
@@ -846,6 +848,7 @@ pub async fn start_training_v2(
 
         state.with_project_mut(&project_id, |pf| {
             pf.training_jobs.push(TrainingJobEntry {
+                split_report: None,
                 id: job_id_clone,
                 status: "pending".to_string(),
                 config: config_json,
@@ -879,6 +882,7 @@ pub async fn start_training_v2(
 
     state.with_project_mut(&project_id, |pf| {
         pf.training_jobs.push(TrainingJobEntry {
+            split_report: None,
             id: job_id_clone,
             status: "pending".to_string(),
             config: config_json,

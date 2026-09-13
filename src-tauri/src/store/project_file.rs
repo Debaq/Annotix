@@ -447,6 +447,18 @@ pub struct TrainingJobEntry {
     pub best_model_path: Option<String>,
     #[serde(default, rename = "datasetDir")]
     pub dataset_dir: Option<String>,
+    /// Informe del reparto train/val/test con el que se entrenó: unidad de
+    /// agrupación, imágenes y grupos por partición, sujetos, distribución de
+    /// clases y avisos. Se guarda porque sin él una métrica no se puede leer:
+    /// 400 imágenes en train que son dos pacientes no son cuatrocientos casos, y
+    /// una clase ausente en test no está evaluada por mucho que el mAP se vea
+    /// bien. Es además el primer insumo del contrato de modelo.
+    #[serde(
+        default,
+        rename = "splitReport",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub split_report: Option<serde_json::Value>,
     #[serde(default, rename = "cloudProvider")]
     pub cloud_provider: Option<String>,
     #[serde(default, rename = "cloudJobId")]

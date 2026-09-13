@@ -131,6 +131,9 @@ pub struct PreparedDataset {
     /// preparadores de serie temporal y tabular no reparten por muestra y la
     /// dejan en `None`.
     split: Option<super::dataset::SplitComposition>,
+    /// Informe del reparto, para persistirlo en el trabajo. Ver
+    /// `dataset::SplitReport`.
+    split_report: Option<super::dataset::SplitReport>,
 }
 
 impl PreparedDataset {
@@ -141,6 +144,7 @@ impl PreparedDataset {
             class_names,
             inputs: BTreeMap::new(),
             split: None,
+            split_report: None,
         }
     }
 
@@ -153,6 +157,17 @@ impl PreparedDataset {
     /// Composición del reparto, si el preparador la declaró.
     pub fn split(&self) -> Option<super::dataset::SplitComposition> {
         self.split
+    }
+
+    /// Registra el informe completo del reparto.
+    pub fn set_split_report(&mut self, report: super::dataset::SplitReport) -> &mut Self {
+        self.split_report = Some(report);
+        self
+    }
+
+    /// Informe del reparto, si el preparador lo declaró.
+    pub fn split_report(&self) -> Option<&super::dataset::SplitReport> {
+        self.split_report.as_ref()
     }
 
     /// Declara un archivo o directorio escrito por el preparador.

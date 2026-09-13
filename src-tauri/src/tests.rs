@@ -2354,6 +2354,7 @@ fn infinity_negativo_tambien_se_sanea() {
 
 fn job_con_result_dir(dir: &Path) -> crate::store::project_file::TrainingJobEntry {
     crate::store::project_file::TrainingJobEntry {
+        split_report: None,
         id: "job-1".into(),
         status: "completed".into(),
         config: json!({}),
@@ -2896,4 +2897,155 @@ fn un_proyecto_v3_migra_a_v4_sin_perder_datos() {
     assert_eq!(leido.images.len(), 1);
     assert_eq!(leido.images[0].annotations.len(), 1);
     assert!(leido.images[0].subject_id.is_none());
+}
+
+// ─── Tests: informe del reparto ─────────────────────────────────────────────
+
+fn codigos(report: &crate::training::dataset::SplitReport) -> Vec<&str> {
+    report.warnings.iter().map(|w| w.code.as_str()).collect()
+}
+
+/// El aviso que más importa: una clase que no aparece en test no está evaluada,
+/// y la métrica global sigue viéndose bien. Sin este aviso no hay forma de
+/// enterarse mirando el resultado.
+#[test]
+fn avisa_de_una_clase_que_no_quedo_en_test() {
+    let mut pf = make_project("p", "detection", default_classes());
+    // Ocho imágenes de la clase 0 y una sola de la clase 1: con un test chico, la
+    // clase rara se queda fuera.
+    for i in 0..8 {
+        pf.images.push(image_entry(
+            &format!("a{i}.png"),
+            &format!("a{i}.png"),
+            200,
+            100,
+            vec![bbox_ann(0, 1.0, 1.0, 5.0, 5.0)],
+        ));
+    }
+    pf.images.push(image_entry(
+        "rara.png",
+        "rara.png",
+        200,
+        100,
+        vec![bbox_ann(1, 1.0, 1.0, 5.0, 5.0)],
+    ));
+
+    let plan = dataset::split_plan(&pf, &pf.images, 0.2, 0.2);
+    let report = plan.report(&pf, &pf.images);
+
+    let rara = report
+        .per_class
+        .iter()
+        .find(|c| c.class == "dog")
+        .expect("la clase rara está en el informe");
+    if rara.test == 0 {
+        assert!(
+            codigos(&report).contains(&"class_absent_in_test"),
+            "la clase no está en test y no se avisó: {:?}",
+            report.warnings
+        );
+    }
+    // El informe cuenta anotaciones, no imágenes: las nueve anotaciones reparten.
+    let total: usize = report
+        .per_class
+        .iter()
+        .map(|c| c.train + c.val + c.test)
+        .sum();
+    assert_eq!(total, 9);
+}
+
+/// Entrenar sin test es legítimo, pero el informe tiene que decirlo: las métricas
+/// que se reporten son de validación y están sesgadas por la selección del mejor
+/// epoch.
+#[test]
+fn avisa_cuando_no_hay_conjunto_de_test() {
+    let mut pf = make_project("p", "detection", default_classes());
+    for i in 0..6 {
+        pf.images.push(image_entry(
+            &format!("i{i}.png"),
+            &format!("i{i}.png"),
+            200,
+            100,
+            vec![bbox_ann(0, 1.0, 1.0, 5.0, 5.0)],
+        ));
+    }
+    let plan = dataset::split_plan(&pf, &pf.images, 0.25, 0.0);
+    let report = plan.report(&pf, &pf.images);
+    assert!(codigos(&report).contains(&"no_test"));
+    assert_eq!(report.unit, "item");
+    assert!(report.subjects.is_none());
+}
+
+/// Con sujetos, el informe cuenta personas y no sólo imágenes: es la cifra que
+/// permite leer la métrica.
+#[test]
+fn el_informe_cuenta_sujetos_por_particion() {
+    let mut pf = make_project("p", "detection", default_classes());
+    for paciente in ["PAC-1", "PAC-2", "PAC-3", "PAC-4"] {
+        for i in 0..4 {
+            pf.images.push(imagen_de_sujeto(
+                &format!("{paciente}_{i}.png"),
+                Some(paciente),
+                None,
+            ));
+        }
+    }
+    let plan = dataset::split_plan(&pf, &pf.images, 0.25, 0.25);
+    let report = plan.report(&pf, &pf.images);
+
+    assert_eq!(report.unit, "subject");
+    let s = report.subjects.expect("sujetos por partición");
+    assert_eq!(s.train + s.val + s.test, 4, "se perdió o duplicó un sujeto");
+    assert_eq!(report.subjects_undeclared, Some(0));
+    assert_eq!(
+        report.items.train + report.items.val + report.items.test,
+        16
+    );
+}
+
+/// Un corpus a medio declarar es peor que uno sin declarar: media parte agrupa
+/// por paciente y la otra por imagen, sin que se note en ningún lado.
+#[test]
+fn avisa_cuando_el_sujeto_esta_declarado_a_medias() {
+    let mut pf = make_project("p", "detection", default_classes());
+    for i in 0..4 {
+        pf.images.push(imagen_de_sujeto(
+            &format!("con{i}.png"),
+            Some("PAC-1"),
+            None,
+        ));
+    }
+    for i in 0..4 {
+        pf.images
+            .push(imagen_de_sujeto(&format!("sin{i}.png"), None, None));
+    }
+    let plan = dataset::split_plan(&pf, &pf.images, 0.25, 0.0);
+    let report = plan.report(&pf, &pf.images);
+
+    assert_eq!(report.unit, "subject");
+    assert_eq!(report.subjects_undeclared, Some(4));
+    assert!(codigos(&report).contains(&"subject_partially_declared"));
+}
+
+/// El informe llega al dataset preparado, que es por donde viaja al trabajo.
+#[test]
+fn el_dataset_preparado_lleva_el_informe() {
+    let (pf, imgs_dir) = build_detection_fixture();
+    let out = tempfile::tempdir().unwrap();
+    let prepared = dataset::prepare_dataset(
+        imgs_dir.path(),
+        &pf,
+        &pf.images,
+        out.path(),
+        0.5,
+        0.0,
+        "detect",
+    )
+    .expect("preparar");
+
+    let report = prepared
+        .split_report()
+        .expect("el informe viaja con el dataset");
+    assert_eq!(report.items.train + report.items.val + report.items.test, 2);
+    assert!(!report.per_class.is_empty());
 }

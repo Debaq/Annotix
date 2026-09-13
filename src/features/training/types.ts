@@ -204,6 +204,48 @@ export interface YoloModelInfo {
 
 // ─── Training Job (from DB) ─────────────────────────────────────────────────
 
+/** Cuántas anotaciones de una clase quedaron en cada partición. */
+export interface ClassSplitCounts {
+  class: string;
+  train: number;
+  val: number;
+  test: number;
+}
+
+export interface SplitCountsReport {
+  train: number;
+  val: number;
+  test: number;
+}
+
+/**
+ * Un problema del reparto que conviene saber antes de creerse la métrica.
+ * `code` es estable y la UI lo traduce; el backend no sabe de idiomas.
+ */
+export interface SplitWarning {
+  /** `no_test` | `class_absent_in_test` | `class_absent_in_val` | `single_group` | `subject_partially_declared` */
+  code: string;
+  class?: string;
+}
+
+/**
+ * Cómo se repartió el corpus con el que se entrenó.
+ *
+ * Sin esto una métrica no se puede leer: 400 imágenes en train que son dos
+ * pacientes no son cuatrocientos casos, y una clase ausente en test no está
+ * evaluada por mucho que el mAP se vea bien.
+ */
+export interface SplitReport {
+  /** `subject` | `video` | `item`. */
+  unit: string;
+  items: SplitCountsReport;
+  groups: SplitCountsReport;
+  subjects?: SplitCountsReport;
+  subjectsUndeclared?: number;
+  perClass: ClassSplitCounts[];
+  warnings: SplitWarning[];
+}
+
 export interface TrainingJob {
   id: string | null;
   projectId: string;
@@ -218,6 +260,7 @@ export interface TrainingJob {
   lastModelPath?: string | null;
   resultDir?: string | null;
   datasetDir?: string | null;
+  splitReport?: SplitReport | null;
   hasBest?: boolean;
   hasLast?: boolean;
   cloudProvider?: string | null;
