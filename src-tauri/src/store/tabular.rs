@@ -52,6 +52,7 @@ impl AppState {
         let now = chrono::Utc::now().timestamp_millis() as f64;
 
         let entry = TabularDataEntry {
+            subject_id: None,
             id: entry_id,
             name: file_name.to_string(),
             file: safe_name,
@@ -104,6 +105,7 @@ impl AppState {
         let now = chrono::Utc::now().timestamp_millis() as f64;
 
         let entry = TabularDataEntry {
+            subject_id: None,
             id: entry_id,
             name: name.to_string(),
             file: file_name,

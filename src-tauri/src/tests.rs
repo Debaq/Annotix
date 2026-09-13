@@ -97,6 +97,7 @@ fn make_project(name: &str, ptype: &str, classes: Vec<ClassDef>) -> ProjectFile 
 
 fn image_entry(name: &str, file: &str, w: u32, h: u32, anns: Vec<AnnotationEntry>) -> ImageEntry {
     ImageEntry {
+        subject_id: None,
         id: uuid::Uuid::new_v4().to_string(),
         name: name.into(),
         file: file.into(),
@@ -1457,6 +1458,7 @@ fn kf(frame_index: i64, x: f64, y: f64, w: f64, h: f64) -> KeyframeEntry {
 
 fn video_with_track(video_id: &str, class_id: i64, keyframes: Vec<KeyframeEntry>) -> VideoEntry {
     VideoEntry {
+        subject_id: None,
         id: video_id.into(),
         name: "v.mp4".into(),
         file: "v.mp4".into(),
@@ -1786,6 +1788,7 @@ fn ts_entry_with_inline_data(id: &str, points: usize) -> TimeSeriesEntry {
     let timestamps: Vec<f64> = (0..points).map(|i| i as f64).collect();
     let values: Vec<f64> = (0..points).map(|i| (i * 2) as f64).collect();
     TimeSeriesEntry {
+        subject_id: None,
         id: id.into(),
         name: format!("serie-{}", id),
         data: Some(json!({ "timestamps": timestamps, "values": values })),
@@ -2773,4 +2776,124 @@ fn una_misma_familia_en_dos_backends_son_fichas_distintas() {
                 .any(|m| m.contains(&"series".to_string())),
         "las fichas 'resnet' no distinguen imagen de serie temporal: {modalidades:?}"
     );
+}
+
+// ─── Tests: agrupación por sujeto en el reparto ─────────────────────────────
+
+fn imagen_de_sujeto(nombre: &str, sujeto: Option<&str>, video: Option<&str>) -> ImageEntry {
+    let mut img = image_entry(
+        nombre,
+        nombre,
+        200,
+        100,
+        vec![bbox_ann(0, 10.0, 20.0, 50.0, 40.0)],
+    );
+    img.subject_id = sujeto.map(|s| s.to_string());
+    img.video_id = video.map(|v| v.to_string());
+    img
+}
+
+/// El sujeto manda sobre el video: dos estudios distintos del mismo paciente no
+/// pueden caer en particiones distintas. Es la misma fuga una escala más arriba.
+#[test]
+fn el_reparto_no_parte_un_sujeto_entre_particiones() {
+    let mut pf = make_project("p", "detection", default_classes());
+    // Tres pacientes, cada uno con dos videos de tres fotogramas.
+    for (paciente, videos) in [
+        ("PAC-1", ["v1a", "v1b"]),
+        ("PAC-2", ["v2a", "v2b"]),
+        ("PAC-3", ["v3a", "v3b"]),
+    ] {
+        for vid in videos {
+            for i in 0..3 {
+                pf.images.push(imagen_de_sujeto(
+                    &format!("{vid}_{i}.png"),
+                    Some(paciente),
+                    Some(vid),
+                ));
+            }
+        }
+    }
+
+    let plan = dataset::split_plan(&pf, &pf.images, 0.25, 0.25);
+    let sujetos_de = |indices: &[usize]| -> std::collections::HashSet<String> {
+        indices
+            .iter()
+            .filter_map(|&i| pf.images[i].subject_id.clone())
+            .collect()
+    };
+    let t = sujetos_de(&plan.train);
+    let v = sujetos_de(&plan.val);
+    let s = sujetos_de(&plan.test);
+
+    assert!(
+        t.is_disjoint(&v),
+        "un paciente quedó en train y val: {t:?} / {v:?}"
+    );
+    assert!(
+        t.is_disjoint(&s),
+        "un paciente quedó en train y test: {t:?} / {s:?}"
+    );
+    assert!(
+        v.is_disjoint(&s),
+        "un paciente quedó en val y test: {v:?} / {s:?}"
+    );
+    assert_eq!(plan.groups.train + plan.groups.val + plan.groups.test, 3);
+}
+
+/// Sin sujeto, el reparto sigue agrupando por video: el campo nuevo no cambia el
+/// comportamiento de los proyectos que no lo usan.
+#[test]
+fn sin_sujeto_el_reparto_sigue_agrupando_por_video() {
+    let mut pf = make_project("p", "detection", default_classes());
+    for vid in ["a", "b", "c", "d"] {
+        for i in 0..3 {
+            pf.images
+                .push(imagen_de_sujeto(&format!("{vid}_{i}.png"), None, Some(vid)));
+        }
+    }
+    let plan = dataset::split_plan(&pf, &pf.images, 0.25, 0.0);
+    assert_eq!(plan.groups.train + plan.groups.val + plan.groups.test, 4);
+}
+
+/// Un sujeto vacío no es un sujeto: no puede colapsar todas las muestras que lo
+/// tengan en un único grupo gigante.
+#[test]
+fn un_sujeto_vacio_no_agrupa() {
+    let mut pf = make_project("p", "detection", default_classes());
+    for i in 0..6 {
+        pf.images
+            .push(imagen_de_sujeto(&format!("img{i}.png"), Some(""), None));
+    }
+    let plan = dataset::split_plan(&pf, &pf.images, 0.25, 0.0);
+    assert_eq!(
+        plan.groups.train + plan.groups.val + plan.groups.test,
+        6,
+        "las imágenes con sujeto vacío se agruparon como si fueran el mismo"
+    );
+}
+
+/// El formato sube a v4 y un proyecto viejo se lee sin sujeto y sin perder nada.
+#[test]
+fn un_proyecto_v3_migra_a_v4_sin_perder_datos() {
+    use crate::store::project_file::CURRENT_VERSION;
+
+    let tmp = tempfile::tempdir().unwrap();
+    let mut pf = make_project("viejo", "detection", default_classes());
+    pf.version = 3;
+    pf.images = vec![image_entry(
+        "a.png",
+        "a.png",
+        100,
+        100,
+        vec![bbox_ann(0, 1.0, 1.0, 5.0, 5.0)],
+    )];
+    store_io::write_project(tmp.path(), &pf).unwrap();
+
+    let leido = store_io::read_project(tmp.path()).unwrap();
+    assert_eq!(leido.version, CURRENT_VERSION);
+    assert_eq!(leido.version, 4);
+    assert_eq!(leido.images.len(), 1);
+    assert_eq!(leido.images[0].annotations.len(), 1);
+    assert!(leido.images[0].subject_id.is_none());
 }

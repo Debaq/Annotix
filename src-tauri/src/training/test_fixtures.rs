@@ -126,6 +126,7 @@ pub fn fixture(task: &str) -> (ProjectFile, TempDir, PathBuf) {
         write_png(&images_dir.join(&name), 64, 64);
         let class_id = if i % 2 == 0 { 10 } else { 20 };
         pf.images.push(ImageEntry {
+            subject_id: None,
             id: format!("img-{i}"),
             name: name.clone(),
             file: name,
@@ -163,6 +164,7 @@ pub fn fixture(task: &str) -> (ProjectFile, TempDir, PathBuf) {
             )
             .unwrap();
             pf.timeseries.push(TimeSeriesEntry {
+                subject_id: None,
                 id,
                 name: format!("serie {s}"),
                 data: None,
@@ -186,6 +188,7 @@ pub fn fixture(task: &str) -> (ProjectFile, TempDir, PathBuf) {
         }
         std::fs::write(tab_dir.join("data.csv"), csv).unwrap();
         pf.tabular_data.push(TabularDataEntry {
+            subject_id: None,
             id: "tab-1".into(),
             name: "datos".into(),
             file: "data.csv".into(),

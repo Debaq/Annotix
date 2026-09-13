@@ -162,6 +162,7 @@ impl AppState {
         self.write_timeseries_data(project_id, &id, &data)?;
 
         let entry = TimeSeriesEntry {
+            subject_id: None,
             id: id.clone(),
             name: name.to_string(),
             data: None,

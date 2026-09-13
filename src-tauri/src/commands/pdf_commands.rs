@@ -185,6 +185,7 @@ fn extract_pages_blocking(
                 height: h,
                 video_id: None,
                 frame_index: None,
+                    subject_id: None,
             },
         )?;
 

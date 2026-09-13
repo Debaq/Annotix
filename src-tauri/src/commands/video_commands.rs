@@ -415,6 +415,15 @@ fn do_extract_frames(
 
     // Formato de imagen del proyecto: "jpg" | "webp"
     let image_format = state.with_project(project_id, |pf| pf.image_format.clone())?;
+
+    // El sujeto del video se hereda a sus fotogramas: sin esto, el reparto
+    // agrupado no podría separar por paciente los fotogramas de un mismo estudio.
+    let subject_id = state.with_project(project_id, |pf| {
+        pf.videos
+            .iter()
+            .find(|v| v.id == video_id)
+            .and_then(|v| v.subject_id.clone())
+    })?;
     let frame_ext = if image_format == "webp" {
         "webp"
     } else {
@@ -539,6 +548,7 @@ fn do_extract_frames(
                     height: h as u32,
                     video_id: Some(video_id),
                     frame_index: Some(*fc),
+                    subject_id: subject_id.as_deref(),
                 },
             )?;
 

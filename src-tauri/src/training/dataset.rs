@@ -186,10 +186,16 @@ impl SplitPlan {
 /// vez de generalización: la métrica sale alta sin que el modelo haya aprendido
 /// nada nuevo.
 ///
-/// La cascada es sujeto → video → la propia imagen. El nivel de sujeto todavía
-/// no existe en el esquema (`ImageEntry` no tiene `subjectId`): cuando se
-/// agregue, entra aquí delante de `video_id` y el resto del reparto no cambia.
+/// La cascada es **sujeto → video → la propia imagen**. El sujeto manda sobre el
+/// video porque un mismo paciente puede tener varios estudios: agrupar sólo por
+/// video dejaría dos videos del mismo sujeto en particiones distintas, que es la
+/// misma fuga una escala más arriba.
 fn group_key(img: &ImageEntry) -> &str {
+    if let Some(sujeto) = img.subject_id.as_deref() {
+        if !sujeto.is_empty() {
+            return sujeto;
+        }
+    }
     match img.video_id.as_deref() {
         Some(vid) if !vid.is_empty() => vid,
         _ => &img.id,

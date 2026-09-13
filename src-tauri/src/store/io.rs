@@ -122,6 +122,12 @@ pub fn migrate_project(project: &mut ProjectFile, dir: &Path) -> bool {
         changed = true;
     }
 
+    // v3 → v4: el sujeto es un campo opcional nuevo. Los proyectos anteriores se
+    // leen con `None` gracias a `#[serde(default)]`, así que no hay datos que
+    // reescribir: sólo sube el número de versión, y eso lo hace el bloque de
+    // abajo. Se documenta aquí para que la ausencia de una función de migración
+    // sea una decisión visible y no un olvido.
+
     if project.version < CURRENT_VERSION {
         project.version = CURRENT_VERSION;
         changed = true;

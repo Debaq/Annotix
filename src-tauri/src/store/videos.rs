@@ -563,6 +563,7 @@ impl AppState {
         let id = uuid::Uuid::new_v4().to_string();
 
         let entry = VideoEntry {
+            subject_id: None,
             id: id.clone(),
             name: name.to_string(),
             file: file.to_string(),

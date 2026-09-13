@@ -9,7 +9,10 @@ use serde::{Deserialize, Serialize};
 ///   La migración vive en `io::migrate_project`.
 /// - 3: los datos de las series temporales se guardan en
 ///   `timeseries/{id}.json` en vez de dentro de `project.json`.
-pub const CURRENT_VERSION: u32 = 3;
+/// - 4: las muestras pueden declarar a qué sujeto pertenecen (`subjectId`). El
+///   campo es opcional y los proyectos anteriores se leen con `None`, así que la
+///   migración sólo sube el número de versión: no hay datos que reescribir.
+pub const CURRENT_VERSION: u32 = 4;
 
 // ─── ProjectFile: todo el contenido de project.json ─────────────────────────
 
@@ -115,6 +118,18 @@ pub struct ImageEntry {
     pub status: String,
     #[serde(default)]
     pub annotations: Vec<AnnotationEntry>,
+    /// Sujeto al que pertenece la muestra: paciente, animal, cultivo, lámina.
+    ///
+    /// Es opcional y un proyecto generalista nunca lo ve. Cuando está, el reparto
+    /// train/val/test agrupa por él (ver `training::dataset::group_key`), que es
+    /// lo que evita que dos cortes del mismo paciente caigan en particiones
+    /// distintas y la métrica mida memoria en vez de generalización.
+    ///
+    /// Guarda lo que el usuario cargue. Si viene de un identificador clínico real,
+    /// seudonimizarlo es responsabilidad de quien lo carga: este campo se exporta
+    /// y viaja con el proyecto.
+    #[serde(default, rename = "subjectId", skip_serializing_if = "Option::is_none")]
+    pub subject_id: Option<String>,
     #[serde(default, rename = "videoId")]
     pub video_id: Option<String>,
     #[serde(default, rename = "frameIndex")]
@@ -187,6 +202,10 @@ fn default_source() -> String {
 pub struct TimeSeriesEntry {
     pub id: String,
     pub name: String,
+    /// Sujeto al que pertenece la muestra. Ver `ImageEntry::subject_id`.
+    #[serde(default, rename = "subjectId", skip_serializing_if = "Option::is_none")]
+    pub subject_id: Option<String>,
+
     /// Solo presente en proyectos anteriores a la versión 3 del formato; la
     /// migración la vacía al escribir los datos a su archivo.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -228,6 +247,9 @@ pub struct VideoEntry {
     pub id: String,
     pub name: String,
     pub file: String,
+    /// Sujeto al que pertenece la muestra. Ver `ImageEntry::subject_id`.
+    #[serde(default, rename = "subjectId", skip_serializing_if = "Option::is_none")]
+    pub subject_id: Option<String>,
     #[serde(rename = "fpsExtraction")]
     pub fps_extraction: f64,
     #[serde(rename = "fpsOriginal")]
@@ -365,6 +387,9 @@ pub struct TabularDataEntry {
     pub id: String,
     pub name: String,
     pub file: String,
+    /// Sujeto al que pertenece la muestra. Ver `ImageEntry::subject_id`.
+    #[serde(default, rename = "subjectId", skip_serializing_if = "Option::is_none")]
+    pub subject_id: Option<String>,
     pub uploaded: f64,
     pub rows: usize,
     pub columns: Vec<TabularColumnInfo>,

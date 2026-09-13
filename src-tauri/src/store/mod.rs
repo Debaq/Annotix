@@ -9,6 +9,7 @@ pub mod recovery;
 pub mod safe_path;
 pub mod sam_models;
 pub mod state;
+pub mod subjects;
 pub mod tabular;
 pub mod timeseries;
 pub mod videos;

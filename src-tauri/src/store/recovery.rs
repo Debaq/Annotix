@@ -337,6 +337,7 @@ fn rebuild_project_file(dir: &Path, id: &str) -> Result<ProjectFile, String> {
             }
 
             images.push(ImageEntry {
+                subject_id: None,
                 id: img_id,
                 name: display_name,
                 file: file_name,

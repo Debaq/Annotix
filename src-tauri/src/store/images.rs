@@ -147,6 +147,8 @@ pub struct ImageResponse {
     pub height: u32,
     pub annotations: Vec<AnnotationEntry>,
     pub metadata: ImageMetadataResponse,
+    #[serde(rename = "subjectId", skip_serializing_if = "Option::is_none")]
+    pub subject_id: Option<String>,
     #[serde(rename = "videoId")]
     pub video_id: Option<String>,
     #[serde(rename = "frameIndex")]
@@ -184,6 +186,7 @@ fn entry_to_response(entry: &ImageEntry, project_id: &str) -> ImageResponse {
             annotated: entry.annotated,
             status: entry.status.clone(),
         },
+        subject_id: entry.subject_id.clone(),
         video_id: entry.video_id.clone(),
         frame_index: entry.frame_index,
         is_background: entry.is_background,
@@ -203,6 +206,10 @@ pub struct NewImage<'a> {
     pub height: u32,
     pub video_id: Option<&'a str>,
     pub frame_index: Option<i64>,
+    /// Sujeto de la muestra. Los fotogramas lo heredan del video: si el video es
+    /// de un paciente, sus fotogramas también, y sin eso el reparto agrupado no
+    /// podría separarlos por sujeto.
+    pub subject_id: Option<&'a str>,
 }
 
 impl AppState {
@@ -220,6 +227,7 @@ impl AppState {
             height,
             video_id,
             frame_index,
+            subject_id,
         } = image;
         let images_dir = self.project_images_dir(project_id)?;
         std::fs::create_dir_all(&images_dir)
@@ -238,6 +246,7 @@ impl AppState {
             id: id.clone(),
             name: file_name.to_string(),
             file: unique_name,
+            subject_id: subject_id.map(|s| s.to_string()),
             width,
             height,
             uploaded: now,
@@ -347,6 +356,7 @@ impl AppState {
                     id,
                     name: file_name,
                     file: unique_name,
+                    subject_id: None,
                     width,
                     height,
                     uploaded: now,
@@ -442,6 +452,7 @@ impl AppState {
             id: id.clone(),
             name: file_name.to_string(),
             file: unique_name,
+            subject_id: None,
             width,
             height,
             uploaded: now,

@@ -20,6 +20,7 @@ pub mod storage_commands;
 pub mod study_commands;
 pub mod tabular_commands;
 pub mod timeseries_commands;
+pub mod subject_commands;
 pub mod training_commands;
 pub mod tts_commands;
 pub mod video_commands;

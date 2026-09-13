@@ -199,6 +199,7 @@ fn image_meta_json(img: &ImageEntry) -> serde_json::Value {
         "width": img.width,
         "height": img.height,
         "status": img.status,
+        "subjectId": img.subject_id,
         "videoId": img.video_id,
         "frameIndex": img.frame_index,
     })
@@ -217,6 +218,7 @@ fn video_meta_json(video: &crate::store::project_file::VideoEntry) -> serde_json
         "width": video.width,
         "height": video.height,
         "status": video.status,
+        "subjectId": video.subject_id,
     })
 }
 
@@ -587,6 +589,7 @@ pub async fn doc_to_project_metadata(
                 annotated: if annots.is_empty() { None } else { Some(now) },
                 status: meta["status"].as_str().unwrap_or("pending").to_string(),
                 annotations: annots,
+                subject_id: meta["subjectId"].as_str().map(|s| s.to_string()),
                 video_id: meta["videoId"].as_str().map(|s| s.to_string()),
                 frame_index: meta["frameIndex"].as_i64(),
                 is_background: false,
@@ -620,6 +623,7 @@ pub async fn doc_to_project_metadata(
         videos.push(VideoEntry {
             id: video_id.clone(),
             name: meta["name"].as_str().unwrap_or("").to_string(),
+            subject_id: meta["subjectId"].as_str().map(|s| s.to_string()),
             file: sanitize_filename(meta["file"].as_str().unwrap_or("")),
             fps_extraction: meta["fpsExtraction"].as_f64().unwrap_or(5.0),
             fps_original: meta["fpsOriginal"].as_f64(),
@@ -672,6 +676,7 @@ pub async fn doc_to_project_metadata(
         timeseries.push(TimeSeriesEntry {
             id: ts_id.clone(),
             name: meta["name"].as_str().unwrap_or("").to_string(),
+            subject_id: meta["subjectId"].as_str().map(|s| s.to_string()),
             data: None,
             point_count,
             series_count,
@@ -1676,6 +1681,9 @@ pub fn start_doc_watcher(
                                 let new_entry = ImageEntry {
                                     id: image_id.clone(),
                                     name: img_name,
+                                    subject_id: img_meta["subjectId"]
+                                        .as_str()
+                                        .map(|s| s.to_string()),
                                     file: file_name.clone(),
                                     width,
                                     height,
@@ -1803,6 +1811,9 @@ pub fn start_doc_watcher(
                                             };
                                             pf.timeseries.push(TimeSeriesEntry {
                                                 id: tsid.clone(),
+                                                subject_id: meta["subjectId"]
+                                                    .as_str()
+                                                    .map(|s| s.to_string()),
                                                 name: meta["name"]
                                                     .as_str()
                                                     .unwrap_or("")
