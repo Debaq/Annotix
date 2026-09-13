@@ -965,6 +965,189 @@ fn training_prepare_dataset_is_deterministic_per_project_id() {
     assert_eq!(f1, f2, "split debería ser determinístico por project.id");
 }
 
+// ─── Tests: split agrupado por unidad natural ───────────────────────────────
+
+/// Imagen que es un fotograma de un video, como la deja la extracción.
+fn frame_entry(video_id: &str, idx: i64) -> ImageEntry {
+    let mut img = image_entry(
+        &format!("{}_f{}.png", video_id, idx),
+        &format!("{}_f{}.png", video_id, idx),
+        200,
+        100,
+        vec![bbox_ann(0, 10.0, 20.0, 50.0, 40.0)],
+    );
+    img.video_id = Some(video_id.to_string());
+    img.frame_index = Some(idx);
+    img
+}
+
+#[test]
+fn split_agrupado_no_parte_un_video_entre_particiones() {
+    // Tres videos de 6 fotogramas y dos imágenes sueltas. Antes de agrupar, los
+    // fotogramas vecinos —casi idénticos entre sí— caían en train y val a la vez,
+    // y la validación medía memoria en vez de generalización.
+    let mut pf = make_project("p", "detection", default_classes());
+    for vid in ["vidA", "vidB", "vidC"] {
+        for i in 0..6 {
+            pf.images.push(frame_entry(vid, i));
+        }
+    }
+    pf.images.push(image_entry(
+        "solo1.png",
+        "solo1.png",
+        200,
+        100,
+        vec![bbox_ann(0, 1.0, 1.0, 5.0, 5.0)],
+    ));
+    pf.images.push(image_entry(
+        "solo2.png",
+        "solo2.png",
+        200,
+        100,
+        vec![bbox_ann(0, 1.0, 1.0, 5.0, 5.0)],
+    ));
+
+    let plan = dataset::split_plan(&pf, &pf.images, 0.25, 0.25);
+
+    let videos_de = |indices: &[usize]| -> std::collections::HashSet<String> {
+        indices
+            .iter()
+            .filter_map(|&i| pf.images[i].video_id.clone())
+            .collect()
+    };
+    let t = videos_de(&plan.train);
+    let v = videos_de(&plan.val);
+    let s = videos_de(&plan.test);
+
+    assert!(
+        t.is_disjoint(&v),
+        "un video quedó en train y val: {t:?} vs {v:?}"
+    );
+    assert!(
+        t.is_disjoint(&s),
+        "un video quedó en train y test: {t:?} vs {s:?}"
+    );
+    assert!(
+        v.is_disjoint(&s),
+        "un video quedó en val y test: {v:?} vs {s:?}"
+    );
+
+    // Ninguna imagen se pierde ni se duplica.
+    let mut todos: Vec<usize> = plan
+        .train
+        .iter()
+        .chain(plan.val.iter())
+        .chain(plan.test.iter())
+        .copied()
+        .collect();
+    todos.sort_unstable();
+    let esperado: Vec<usize> = (0..pf.images.len()).collect();
+    assert_eq!(todos, esperado, "el reparto perdió o duplicó imágenes");
+}
+
+#[test]
+fn split_sin_grupos_reparte_igual_que_el_corte_por_indice() {
+    // Regresión: en un proyecto de imágenes sueltas el reparto agrupado tiene que
+    // dar exactamente lo que daba el corte por índice, o cambiaría el split de
+    // todo proyecto existente sin motivo.
+    let mut pf = make_project("p", "detection", default_classes());
+    for i in 0..11 {
+        pf.images.push(image_entry(
+            &format!("img{i}.png"),
+            &format!("img{i}.png"),
+            200,
+            100,
+            vec![bbox_ann(0, 1.0, 1.0, 5.0, 5.0)],
+        ));
+    }
+    let total = pf.images.len();
+
+    // Reimplementación literal del reparto anterior, como referencia.
+    let mut indices: Vec<usize> = (0..total).collect();
+    let seed = pf.id.bytes().fold(42usize, |acc, b| {
+        acc.wrapping_mul(31).wrapping_add(b as usize)
+    });
+    for i in (1..indices.len()).rev() {
+        let j = (seed.wrapping_mul(i).wrapping_add(7)) % (i + 1);
+        indices.swap(i, j);
+    }
+    let counts = dataset::compute_split(total, 0.2, 0.2);
+    let val_end = counts.train + counts.val;
+    let ref_train = &indices[..counts.train];
+    let ref_val = &indices[counts.train..val_end];
+    let ref_test = &indices[val_end..];
+
+    let plan = dataset::split_plan(&pf, &pf.images, 0.2, 0.2);
+    assert_eq!(plan.train, ref_train, "train cambió sin haber grupos");
+    assert_eq!(plan.val, ref_val, "val cambió sin haber grupos");
+    assert_eq!(plan.test, ref_test, "test cambió sin haber grupos");
+}
+
+#[test]
+fn split_agrupado_deja_val_no_vacio_aunque_un_grupo_se_coma_train() {
+    // Un video de 20 fotogramas y una imagen suelta: el objetivo de train se
+    // cubre con el primer grupo y aun así val tiene que quedar con algo, o el
+    // entrenamiento arranca sin validación.
+    let mut pf = make_project("p", "detection", default_classes());
+    for i in 0..20 {
+        pf.images.push(frame_entry("vidUnico", i));
+    }
+    pf.images.push(image_entry(
+        "solo.png",
+        "solo.png",
+        200,
+        100,
+        vec![bbox_ann(0, 1.0, 1.0, 5.0, 5.0)],
+    ));
+
+    let plan = dataset::split_plan(&pf, &pf.images, 0.2, 0.0);
+    assert!(!plan.train.is_empty(), "train vacío");
+    assert!(!plan.val.is_empty(), "val vacío con dos grupos disponibles");
+    assert_eq!(plan.groups.train + plan.groups.val + plan.groups.test, 2);
+}
+
+#[test]
+fn split_agrupado_sin_test_no_inventa_particion_de_test() {
+    // Un grupo que desborda su partición empuja el resto a la siguiente. Con
+    // `test_split` en 0 ese empuje no puede terminar creando un conjunto de test
+    // que nadie pidió: el dataset lo declararía y el script lo evaluaría.
+    let mut pf = make_project("p", "detection", default_classes());
+    for i in 0..15 {
+        pf.images.push(frame_entry("vidGrande", i));
+    }
+    for vid in ["vidB", "vidC"] {
+        for i in 0..3 {
+            pf.images.push(frame_entry(vid, i));
+        }
+    }
+
+    let plan = dataset::split_plan(&pf, &pf.images, 0.2, 0.0);
+    assert!(plan.test.is_empty(), "apareció test con test_split = 0");
+    assert!(!plan.has_test());
+    assert!(!plan.train.is_empty());
+    assert!(!plan.val.is_empty());
+    assert_eq!(
+        plan.train.len() + plan.val.len(),
+        pf.images.len(),
+        "se perdieron imágenes"
+    );
+}
+
+#[test]
+fn split_agrupado_es_reproducible() {
+    let mut pf = make_project("p", "detection", default_classes());
+    for vid in ["a", "b", "c", "d"] {
+        for i in 0..4 {
+            pf.images.push(frame_entry(vid, i));
+        }
+    }
+    let p1 = dataset::split_plan(&pf, &pf.images, 0.25, 0.25);
+    let p2 = dataset::split_plan(&pf, &pf.images, 0.25, 0.25);
+    assert_eq!(p1.train, p2.train);
+    assert_eq!(p1.val, p2.val);
+    assert_eq!(p1.test, p2.test);
+}
+
 // ─── Tests: selección de imágenes entrenables ───────────────────────────────
 
 #[test]

@@ -314,14 +314,44 @@ impl TrainingProcessManager {
             procs.insert(job_id.to_string(), child);
         }
 
-        // Modo estudio: la partición real la decide el script, así que aquí se
-        // registra la que pidió el usuario sobre las imágenes que entran.
-        let n_val = (images.len() as f64 * request.val_split).round() as usize;
+        // Modo estudio: se registra la partición que el preparador escribió de
+        // verdad. Antes se estimaba multiplicando por `val_split`, que con el
+        // reparto agrupado ya no coincide: un grupo no se puede partir, así que
+        // las cantidades reales se desvían de las pedidas. Los preparadores que
+        // no reparten por muestra (serie temporal, tabular) no declaran
+        // composición y ahí sigue valiendo la estimación.
+        let (n_train, n_val) = match prepared.split() {
+            Some(c) => {
+                // Con grupos de verdad (fotogramas de un mismo video) el número de
+                // imágenes por partición no dice lo que importa: 400 imágenes en
+                // train pueden ser dos videos. Se informan las dos cifras.
+                if c.groups.train + c.groups.val + c.groups.test
+                    < c.items.train + c.items.val + c.items.test
+                {
+                    log::info!(
+                        "Training {}: reparto agrupado — train {} img / {} grupos, \
+                         val {} / {}, test {} / {}",
+                        job_id,
+                        c.items.train,
+                        c.groups.train,
+                        c.items.val,
+                        c.groups.val,
+                        c.items.test,
+                        c.groups.test,
+                    );
+                }
+                (c.items.train, c.items.val)
+            }
+            None => {
+                let val = (images.len() as f64 * request.val_split).round() as usize;
+                (images.len().saturating_sub(val), val)
+            }
+        };
         super::study_hooks::train_started(
             job_id,
             &format!("{:?}", request.backend).to_lowercase(),
             super::study_hooks::mode_name(&request.execution_mode),
-            images.len().saturating_sub(n_val),
+            n_train,
             n_val,
             request.epochs,
             pid,

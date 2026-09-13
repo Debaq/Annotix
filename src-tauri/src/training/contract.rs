@@ -127,6 +127,10 @@ pub struct PreparedDataset {
     format: DatasetFormat,
     class_names: Vec<String>,
     inputs: BTreeMap<&'static str, String>,
+    /// Composición real del split, cuando el preparador reparte muestras. Los
+    /// preparadores de serie temporal y tabular no reparten por muestra y la
+    /// dejan en `None`.
+    split: Option<super::dataset::SplitComposition>,
 }
 
 impl PreparedDataset {
@@ -136,7 +140,19 @@ impl PreparedDataset {
             format,
             class_names,
             inputs: BTreeMap::new(),
+            split: None,
         }
+    }
+
+    /// Registra la composición del reparto que hizo el preparador.
+    pub fn set_split(&mut self, split: super::dataset::SplitComposition) -> &mut Self {
+        self.split = Some(split);
+        self
+    }
+
+    /// Composición del reparto, si el preparador la declaró.
+    pub fn split(&self) -> Option<super::dataset::SplitComposition> {
+        self.split
     }
 
     /// Declara un archivo o directorio escrito por el preparador.

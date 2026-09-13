@@ -135,9 +135,34 @@ pub struct SplitPlan {
     pub train: Vec<usize>,
     pub val: Vec<usize>,
     pub test: Vec<usize>,
+    /// Cuántos grupos (no imágenes) cayó en cada partición. Sirve para informar
+    /// el reparto real: con 3 videos y 600 fotogramas, `train: 400 imágenes`
+    /// esconde que son 2 videos.
+    pub groups: SplitCounts,
+}
+
+/// Composición real del reparto: cuántas imágenes y cuántos grupos por
+/// partición. Viaja con el dataset preparado para que quien informa el
+/// entrenamiento no tenga que volver a estimarla.
+#[derive(Debug, Clone, Copy)]
+pub struct SplitComposition {
+    pub items: SplitCounts,
+    pub groups: SplitCounts,
 }
 
 impl SplitPlan {
+    /// Lo que de verdad quedó en cada partición, no lo que se pidió.
+    pub fn composition(&self) -> SplitComposition {
+        SplitComposition {
+            items: SplitCounts {
+                train: self.train.len(),
+                val: self.val.len(),
+                test: self.test.len(),
+            },
+            groups: self.groups,
+        }
+    }
+
     pub fn has_test(&self) -> bool {
         !self.test.is_empty()
     }
@@ -153,27 +178,150 @@ impl SplitPlan {
     }
 }
 
+/// Clave de agrupación de una imagen para el split.
+///
+/// Las imágenes de un mismo grupo van **enteras** a la misma partición. Sin
+/// esto los fotogramas de un mismo video se reparten entre train, val y test, y
+/// como los fotogramas vecinos son casi idénticos la validación mide memoria en
+/// vez de generalización: la métrica sale alta sin que el modelo haya aprendido
+/// nada nuevo.
+///
+/// La cascada es sujeto → video → la propia imagen. El nivel de sujeto todavía
+/// no existe en el esquema (`ImageEntry` no tiene `subjectId`): cuando se
+/// agregue, entra aquí delante de `video_id` y el resto del reparto no cambia.
+fn group_key(img: &ImageEntry) -> &str {
+    match img.video_id.as_deref() {
+        Some(vid) if !vid.is_empty() => vid,
+        _ => &img.id,
+    }
+}
+
+/// Agrupa índices por clave conservando el orden de primera aparición.
+///
+/// El orden importa: es lo que hace el reparto reproducible. Iterar un `HashMap`
+/// daría un orden distinto en cada ejecución y el mismo proyecto dejaría de dar
+/// el mismo split.
+fn agrupar(images: &[ImageEntry]) -> Vec<Vec<usize>> {
+    let mut orden: Vec<Vec<usize>> = Vec::new();
+    let mut por_clave: std::collections::HashMap<&str, usize> = std::collections::HashMap::new();
+
+    for (idx, img) in images.iter().enumerate() {
+        let clave = group_key(img);
+        match por_clave.get(clave) {
+            Some(&pos) => orden[pos].push(idx),
+            None => {
+                por_clave.insert(clave, orden.len());
+                orden.push(vec![idx]);
+            }
+        }
+    }
+    orden
+}
+
+/// Reparto determinista de las imágenes en train/val/test, **agrupando por
+/// unidad natural** (ver [`group_key`]).
+///
+/// El barajado se siembra con el id del proyecto, así que el mismo proyecto da
+/// siempre el mismo reparto: dos entrenamientos son comparables. Antes esta lógica
+/// estaba copiada en seis preparadores, y cinco de ellos ignoraban `test_split`.
+///
+/// Con imágenes sueltas (un grupo por imagen) el resultado es idéntico al del
+/// reparto por índice que había antes: mismo barajado sobre la misma cantidad de
+/// elementos y mismo corte. El comportamiento solo cambia donde había grupos de
+/// verdad, que es donde estaba el defecto.
 pub fn split_plan(
     project: &ProjectFile,
-    total: usize,
+    images: &[ImageEntry],
     val_split: f64,
     test_split: f64,
 ) -> SplitPlan {
-    let mut indices: Vec<usize> = (0..total).collect();
+    let total = images.len();
+    let mut grupos = agrupar(images);
+
     let seed = project.id.bytes().fold(42usize, |acc, b| {
         acc.wrapping_mul(31).wrapping_add(b as usize)
     });
-    for i in (1..indices.len()).rev() {
+    for i in (1..grupos.len()).rev() {
         let j = (seed.wrapping_mul(i).wrapping_add(7)) % (i + 1);
-        indices.swap(i, j);
+        grupos.swap(i, j);
     }
 
     let counts = compute_split(total, val_split, test_split);
-    let val_end = counts.train + counts.val;
+
+    // Se llena train, luego val, luego test, en el orden barajado de los grupos:
+    // el mismo corte de antes, pero un grupo no se puede partir. Un grupo que
+    // cruza el límite se queda entero donde empezó, así que las cantidades reales
+    // pueden desviarse de las pedidas — con un video de 300 fotogramas y un
+    // objetivo de 200 para train no hay reparto que dé 200 exactos.
+    let objetivos = [counts.train, counts.val, counts.test];
+    let mut particiones: [Vec<usize>; 3] = [Vec::new(), Vec::new(), Vec::new()];
+    let mut n_grupos = [0usize; 3];
+
+    // Solo las particiones que se pidieron. Sin esto, un grupo que desborda su
+    // partición podría empujar el resto a `test` incluso con `test_split` en 0, y
+    // el dataset declararía un conjunto de test que nadie pidió.
+    let activos: Vec<usize> = (0..3).filter(|&i| objetivos[i] > 0).collect();
+    let mut cursor = 0usize;
+
+    for grupo in &grupos {
+        // Avanzar a la siguiente partición pendiente, sin pasarse de la última:
+        // lo que sobra cae en la que quedó abierta.
+        while cursor + 1 < activos.len()
+            && particiones[activos[cursor]].len() >= objetivos[activos[cursor]]
+        {
+            cursor += 1;
+        }
+        let destino = activos.get(cursor).copied().unwrap_or(0);
+        particiones[destino].extend(grupo.iter().copied());
+        n_grupos[destino] += 1;
+    }
+
+    let [mut train, mut val, mut test] = particiones;
+
+    // Garantías mínimas, por si un grupo grande se comió su partición y dejó
+    // vacías las siguientes. Se mueve el último grupo asignado, que es el que el
+    // barajado puso más cerca del límite.
+    if val.is_empty() && n_grupos[0] >= 2 {
+        if let Some(ultimo) = grupos.get(n_grupos[0] - 1) {
+            train.retain(|i| !ultimo.contains(i));
+            val.extend(ultimo.iter().copied());
+            n_grupos[0] -= 1;
+            n_grupos[1] += 1;
+        }
+    }
+    if test.is_empty() && counts.test > 0 && n_grupos[0] >= 2 {
+        if let Some(ultimo) = grupos.get(n_grupos[0] - 1) {
+            train.retain(|i| !ultimo.contains(i));
+            test.extend(ultimo.iter().copied());
+            n_grupos[0] -= 1;
+            n_grupos[2] += 1;
+        }
+    }
+
+    if grupos.len() < total {
+        log::info!(
+            "split agrupado: {} imágenes en {} grupos → train {} ({} grupos), \
+             val {} ({}), test {} ({})",
+            total,
+            grupos.len(),
+            train.len(),
+            n_grupos[0],
+            val.len(),
+            n_grupos[1],
+            test.len(),
+            n_grupos[2],
+        );
+    }
+
     SplitPlan {
-        train: indices[..counts.train].to_vec(),
-        val: indices[counts.train..val_end].to_vec(),
-        test: indices[val_end..].to_vec(),
+        train,
+        val,
+        test,
+        groups: SplitCounts {
+            train: n_grupos[0],
+            val: n_grupos[1],
+            test: n_grupos[2],
+        },
     }
 }
 
@@ -192,7 +340,7 @@ pub fn prepare_dataset(
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    let plan = split_plan(project, total, val_split, test_split);
+    let plan = split_plan(project, images, val_split, test_split);
     let has_test = plan.has_test();
 
     let format = if task == "classify" {
@@ -201,6 +349,7 @@ pub fn prepare_dataset(
         DatasetFormat::YoloTxt
     };
     let mut ds = PreparedDataset::new(output_dir, format, class_names(project));
+    ds.set_split(plan.composition());
 
     if task == "classify" {
         prepare_classification_dataset(images_dir, project, images, output_dir, &plan)?;
@@ -538,7 +687,7 @@ pub fn prepare_coco_dataset(
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    let plan = split_plan(project, total, val_split, test_split);
+    let plan = split_plan(project, images, val_split, test_split);
     let train_indices: &[usize] = &plan.train;
     let val_indices: &[usize] = &plan.val;
     let test_indices: &[usize] = &plan.test;
@@ -558,6 +707,7 @@ pub fn prepare_coco_dataset(
         .collect();
 
     let mut ds = PreparedDataset::new(output_dir, DatasetFormat::CocoJson, class_names(project));
+    ds.set_split(plan.composition());
 
     match layout {
         CocoLayout::RfDetr => {
@@ -759,7 +909,7 @@ pub fn prepare_mask_dataset(
     }
 
     // Shuffle (same seed as other prepare functions)
-    let plan = split_plan(project, total, val_split, test_split);
+    let plan = split_plan(project, images, val_split, test_split);
 
     for (split, idxs) in plan.splits() {
         std::fs::create_dir_all(output_dir.join("images").join(split))
@@ -780,6 +930,7 @@ pub fn prepare_mask_dataset(
         .map_err(|e| format!("Error escribiendo classes.txt: {}", e))?;
 
     let mut ds = PreparedDataset::new(output_dir, DatasetFormat::MaskPng, class_names(project));
+    ds.set_split(plan.composition());
     ds.declare(keys::IMAGES_TRAIN, "images/train")
         .declare(keys::IMAGES_VAL, "images/val")
         .declare(keys::MASKS_TRAIN, "masks/train")
@@ -1123,7 +1274,7 @@ pub fn prepare_coco_instance_dataset(
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    let plan = split_plan(project, total, val_split, test_split);
+    let plan = split_plan(project, images, val_split, test_split);
     let train_indices: &[usize] = &plan.train;
     let val_indices: &[usize] = &plan.val;
     let test_indices: &[usize] = &plan.test;
@@ -1166,6 +1317,7 @@ pub fn prepare_coco_instance_dataset(
         DatasetFormat::CocoInstanceJson,
         class_names(project),
     );
+    ds.set_split(plan.composition());
     ds.declare(keys::IMAGES_TRAIN, "train")
         .declare(keys::ANN_TRAIN, "annotations/instances_train.json")
         .declare(keys::IMAGES_VAL, "val")
@@ -1307,7 +1459,7 @@ pub fn prepare_coco_keypoints_dataset(
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    let plan = split_plan(project, total, val_split, test_split);
+    let plan = split_plan(project, images, val_split, test_split);
     let train_indices: &[usize] = &plan.train;
     let val_indices: &[usize] = &plan.val;
     let test_indices: &[usize] = &plan.test;
@@ -1358,6 +1510,7 @@ pub fn prepare_coco_keypoints_dataset(
         DatasetFormat::CocoKeypointsJson,
         class_names(project),
     );
+    ds.set_split(plan.composition());
     ds.declare(keys::IMAGES_TRAIN, "train")
         .declare(keys::ANN_TRAIN, "annotations/person_keypoints_train.json")
         .declare(keys::IMAGES_VAL, "val")
@@ -1508,7 +1661,7 @@ pub fn prepare_classification_dataset_labeled(
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    let plan = split_plan(project, total, val_split, test_split);
+    let plan = split_plan(project, images, val_split, test_split);
 
     let indice_de_clase = |class_id: i64| project.classes.iter().position(|c| c.id == class_id);
 
@@ -1521,6 +1674,7 @@ pub fn prepare_classification_dataset_labeled(
         },
         class_names(project),
     );
+    ds.set_split(plan.composition());
 
     for (split, idxs) in plan.splits() {
         let split_dir = output_dir.join("images").join(split);
