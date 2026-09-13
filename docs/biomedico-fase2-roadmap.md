@@ -1,5 +1,9 @@
 # Fase 2 — Roadmap de biomedicalización
 
+> **El avance real está en `docs/biomedico-estado.md`.** Este documento es el
+> plan; los encabezados llevan una marca, pero el estado al día, los huecos
+> abiertos y las decisiones tomadas viven allí.
+
 > Entrega de la **Fase 2** del prompt `docs/prompt-annotix-biomedico.md`.
 > Se apoya en el diagnóstico de `docs/biomedico-fase1-auditoria.md`.
 > Las etapas están ordenadas **por dependencia técnica y relación
@@ -59,7 +63,7 @@ que un proyecto de imágenes sueltas da exactamente el mismo reparto que antes
 
 ---
 
-## Etapa 2 — Identificador de sujeto como campo de primer nivel
+## Etapa 2 — Identificador de sujeto como campo de primer nivel ✅ **hecho**
 
 **Qué se construye.** `subjectId: Option<String>` en `ImageEntry`,
 `VideoEntry`, `TimeSeriesEntry` y `TabularDataEntry`
@@ -89,7 +93,7 @@ corrompan al sincronizar.
 
 ---
 
-## Etapa 3 — Política de partición declarada y test obligatorio
+## Etapa 3 — Política de partición declarada y test obligatorio 🟡 **informe hecho**
 
 **Qué se construye.** Un bloque de política de partición a nivel de proyecto:
 unidad de agrupación (ítem / video / sujeto), fracciones, semilla, y si el test
@@ -112,7 +116,7 @@ de los directorios preparados en disco (contarlos, no confiar en el plan).
 
 ---
 
-## Etapa 4 — Procedencia por etiqueta, generalizada
+## Etapa 4 — Procedencia por etiqueta, generalizada ✅ **hecho**
 
 **Qué se construye.** `AnnotationEntry` (`store/project_file.rs:139-172`) suma:
 `createdAt`, `updatedAt`, `author`, `origin` (`manual` | `model` | `track` |
