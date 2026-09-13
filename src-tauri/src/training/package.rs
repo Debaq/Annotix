@@ -25,7 +25,7 @@ pub fn generate_training_package(
         .map_err(|e| format!("Error creando dataset dir: {}", e))?;
 
     // 1. Prepare dataset (escribe imágenes, labels, data.yaml con rutas absolutas)
-    let dataset_path = dataset::prepare_dataset_for_backend(
+    let prepared = dataset::prepare_dataset_for_backend(
         images_dir,
         project,
         images,
@@ -43,9 +43,7 @@ pub fn generate_training_package(
     let abs_ds = dataset_dir.to_string_lossy().replace('\\', "/");
 
     // 2. Generate scripts (con rutas absolutas del tmp) y reescribirlas relativas
-    let num_classes = project.classes.len();
-    let script_files =
-        scripts::generate_train_script_for_backend(request, &dataset_path, num_classes);
+    let script_files = scripts::generate_train_script_for_backend(request, &prepared)?;
 
     let mut train_script_rewritten = String::new();
     for (filename, content) in &script_files {

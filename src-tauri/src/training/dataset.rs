@@ -3,10 +3,16 @@ use std::path::Path;
 
 use image::{GrayImage, Luma};
 
-use super::TrainingBackend;
+use super::contract::{keys, PreparedDataset};
+use super::{DatasetFormat, TrainingBackend};
 use crate::export::{parse_bbox, parse_mask, parse_obb, parse_polygon};
 use crate::store::project_file::{ClassDef, ImageEntry, ProjectFile};
 use crate::utils::converters::normalize_coordinates;
+
+/// Nombres de clase en el orden en que los scripts los indexan (posición = índice).
+fn class_names(project: &ProjectFile) -> Vec<String> {
+    project.classes.iter().map(|c| c.name.clone()).collect()
+}
 
 /// `true` si el backend entrena sobre las imágenes del proyecto.
 /// Los de series temporales y tabular leen sus propios CSV y no tocan `images`.
@@ -112,7 +118,7 @@ pub fn prepare_dataset(
     val_split: f64,
     test_split: f64,
     task: &str,
-) -> Result<String, String> {
+) -> Result<PreparedDataset, String> {
     let total = images.len();
     if total == 0 {
         return Err("No hay imágenes en el proyecto".to_string());
@@ -141,10 +147,31 @@ pub fn prepare_dataset(
         test: test_indices,
     };
 
+    let format = if task == "classify" {
+        DatasetFormat::ImageFolder
+    } else {
+        DatasetFormat::YoloTxt
+    };
+    let mut ds = PreparedDataset::new(output_dir, format, class_names(project));
+
     if task == "classify" {
         prepare_classification_dataset(images_dir, project, images, output_dir, &indices)?;
+        ds.declare(keys::IMAGEFOLDER_ROOT, ".")
+            .declare(keys::IMAGEFOLDER_TRAIN, "train")
+            .declare(keys::IMAGEFOLDER_VAL, "val");
+        if has_test {
+            ds.declare(keys::IMAGEFOLDER_TEST, "test");
+        }
     } else {
         prepare_detection_dataset(images_dir, project, images, output_dir, &indices, task)?;
+        ds.declare(keys::IMAGES_TRAIN, "images/train")
+            .declare(keys::IMAGES_VAL, "images/val")
+            .declare(keys::LABELS_TRAIN, "labels/train")
+            .declare(keys::LABELS_VAL, "labels/val");
+        if has_test {
+            ds.declare(keys::IMAGES_TEST, "images/test")
+                .declare(keys::LABELS_TEST, "labels/test");
+        }
     }
 
     // Generar data.yaml
@@ -152,8 +179,9 @@ pub fn prepare_dataset(
     let yaml_content = generate_data_yaml(project, output_dir, task, has_test);
     std::fs::write(&yaml_path, &yaml_content)
         .map_err(|e| format!("Error escribiendo data.yaml: {}", e))?;
+    ds.declare(keys::DATA_YAML, "data.yaml");
 
-    Ok(yaml_path.to_string_lossy().replace('\\', "/"))
+    Ok(ds)
 }
 
 /// Índices de `images` que van a cada split.
@@ -474,7 +502,7 @@ pub fn prepare_coco_dataset(
     output_dir: &Path,
     val_split: f64,
     layout: CocoLayout,
-) -> Result<String, String> {
+) -> Result<PreparedDataset, String> {
     let total = images.len();
     if total == 0 {
         return Err("No hay imágenes en el proyecto".to_string());
@@ -511,6 +539,8 @@ pub fn prepare_coco_dataset(
         })
         .collect();
 
+    let mut ds = PreparedDataset::new(output_dir, DatasetFormat::CocoJson, class_names(project));
+
     match layout {
         CocoLayout::RfDetr => {
             let train_dir = output_dir.join("train");
@@ -541,6 +571,12 @@ pub fn prepare_coco_dataset(
                 .map_err(|e| format!("Error escribiendo train annotations: {}", e))?;
             std::fs::write(valid_dir.join("_annotations.coco.json"), &valid_json)
                 .map_err(|e| format!("Error escribiendo valid annotations: {}", e))?;
+
+            // RF-DETR exige este layout: las imágenes y su json en el mismo directorio.
+            ds.declare(keys::IMAGES_TRAIN, "train")
+                .declare(keys::ANN_TRAIN, "train/_annotations.coco.json")
+                .declare(keys::IMAGES_VAL, "valid")
+                .declare(keys::ANN_VAL, "valid/_annotations.coco.json");
         }
         CocoLayout::MmDetection => {
             let train_dir = output_dir.join("train");
@@ -573,10 +609,15 @@ pub fn prepare_coco_dataset(
                 .map_err(|e| format!("Error escribiendo instances_train.json: {}", e))?;
             std::fs::write(ann_dir.join("instances_val.json"), &val_json)
                 .map_err(|e| format!("Error escribiendo instances_val.json: {}", e))?;
+
+            ds.declare(keys::IMAGES_TRAIN, "train")
+                .declare(keys::ANN_TRAIN, "annotations/instances_train.json")
+                .declare(keys::IMAGES_VAL, "val")
+                .declare(keys::ANN_VAL, "annotations/instances_val.json");
         }
     }
 
-    Ok(output_dir.to_string_lossy().replace('\\', "/"))
+    Ok(ds)
 }
 
 fn build_coco_json(
@@ -656,7 +697,7 @@ pub fn prepare_mask_dataset(
     images: &[ImageEntry],
     output_dir: &Path,
     val_split: f64,
-) -> Result<String, String> {
+) -> Result<PreparedDataset, String> {
     let total = images.len();
     if total == 0 {
         return Err("No hay imágenes en el proyecto".to_string());
@@ -705,7 +746,13 @@ pub fn prepare_mask_dataset(
     std::fs::write(output_dir.join("classes.txt"), &classes_content)
         .map_err(|e| format!("Error escribiendo classes.txt: {}", e))?;
 
-    Ok(output_dir.to_string_lossy().replace('\\', "/"))
+    let mut ds = PreparedDataset::new(output_dir, DatasetFormat::MaskPng, class_names(project));
+    ds.declare(keys::IMAGES_TRAIN, "images/train")
+        .declare(keys::IMAGES_VAL, "images/val")
+        .declare(keys::MASKS_TRAIN, "masks/train")
+        .declare(keys::MASKS_VAL, "masks/val")
+        .declare(keys::CLASSES_FILE, "classes.txt");
+    Ok(ds)
 }
 
 fn copy_image_and_mask(
@@ -891,7 +938,7 @@ pub fn prepare_dataset_for_backend(
     images: &[ImageEntry],
     output_dir: &Path,
     spec: DatasetSpec<'_>,
-) -> Result<String, String> {
+) -> Result<PreparedDataset, String> {
     let DatasetSpec {
         val_split,
         test_split,
@@ -954,27 +1001,42 @@ pub fn prepare_dataset_for_backend(
                 .ok_or("No se pudo determinar el directorio del proyecto")?;
             prepare_timeseries_dataset(project, project_dir, output_dir, val_split)
         }
-        TrainingBackend::Sklearn => prepare_tabular_dataset(project, output_dir),
+        TrainingBackend::Sklearn => {
+            let project_dir = images_dir
+                .parent()
+                .ok_or("No se pudo determinar el directorio del proyecto")?;
+            prepare_tabular_dataset(project, project_dir, output_dir)
+        }
     }
 }
 
 /// Prepares a tabular dataset: copies the first CSV from project tabular_data to output_dir
-pub fn prepare_tabular_dataset(project: &ProjectFile, output_dir: &Path) -> Result<String, String> {
-    let _entry = project
+pub fn prepare_tabular_dataset(
+    project: &ProjectFile,
+    project_dir: &Path,
+    output_dir: &Path,
+) -> Result<PreparedDataset, String> {
+    let entry = project
         .tabular_data
         .first()
         .ok_or_else(|| "No hay datos tabulares en el proyecto".to_string())?;
 
-    // Find source CSV in project tabular dir
-    // The project dir is derived from output_dir's parent (training job dir), so we need
-    // to find the CSV from the project's tabular directory.
-    // For training, the CSV is stored in the project dir under tabular/
-    // We'll just write the path - the runner will copy it before calling this.
-    // Actually, we copy it from the tabular dir which is referenced via project metadata.
+    std::fs::create_dir_all(output_dir)
+        .map_err(|e| format!("Error creando directorio del dataset: {}", e))?;
 
-    // The output_dir is the training job directory. We just return it as the dataset path.
-    // The runner will copy the CSV there before generating scripts.
-    Ok(output_dir.to_string_lossy().replace('\\', "/"))
+    // El CSV vive en {proyecto}/tabular/{archivo}. Copiarlo aquí y no en el runner
+    // es lo que permite que el paquete descargable incluya los datos: antes sólo el
+    // runner local hacía la copia y el zip salía sin CSV.
+    let src = project_dir.join("tabular").join(&entry.file);
+    if !src.exists() {
+        return Err(format!("No se encontró el CSV tabular: {:?}", src));
+    }
+    let dest = output_dir.join("data.csv");
+    std::fs::copy(&src, &dest).map_err(|e| format!("Error copiando CSV tabular: {}", e))?;
+
+    let mut ds = PreparedDataset::new(output_dir, DatasetFormat::TabularCsv, class_names(project));
+    ds.declare(keys::TABLE_CSV, "data.csv");
+    Ok(ds)
 }
 
 // ─── COCO Instance JSON Dataset (with polygon segmentation) ──────────────────
@@ -985,7 +1047,7 @@ pub fn prepare_coco_instance_dataset(
     images: &[ImageEntry],
     output_dir: &Path,
     val_split: f64,
-) -> Result<String, String> {
+) -> Result<PreparedDataset, String> {
     let total = images.len();
     if total == 0 {
         return Err("No hay imágenes en el proyecto".to_string());
@@ -1039,7 +1101,16 @@ pub fn prepare_coco_instance_dataset(
     std::fs::write(ann_dir.join("instances_val.json"), &val_json)
         .map_err(|e| format!("Error escribiendo instances_val.json: {}", e))?;
 
-    Ok(output_dir.to_string_lossy().replace('\\', "/"))
+    let mut ds = PreparedDataset::new(
+        output_dir,
+        DatasetFormat::CocoInstanceJson,
+        class_names(project),
+    );
+    ds.declare(keys::IMAGES_TRAIN, "train")
+        .declare(keys::ANN_TRAIN, "annotations/instances_train.json")
+        .declare(keys::IMAGES_VAL, "val")
+        .declare(keys::ANN_VAL, "annotations/instances_val.json");
+    Ok(ds)
 }
 
 fn build_coco_instance_json(
@@ -1151,7 +1222,7 @@ pub fn prepare_coco_keypoints_dataset(
     images: &[ImageEntry],
     output_dir: &Path,
     val_split: f64,
-) -> Result<String, String> {
+) -> Result<PreparedDataset, String> {
     let total = images.len();
     if total == 0 {
         return Err("No hay imágenes en el proyecto".to_string());
@@ -1213,12 +1284,22 @@ pub fn prepare_coco_keypoints_dataset(
         &val_dir,
     )?;
 
+    let mut ds = PreparedDataset::new(
+        output_dir,
+        DatasetFormat::CocoKeypointsJson,
+        class_names(project),
+    );
+    ds.declare(keys::IMAGES_TRAIN, "train")
+        .declare(keys::ANN_TRAIN, "annotations/person_keypoints_train.json")
+        .declare(keys::IMAGES_VAL, "val")
+        .declare(keys::ANN_VAL, "annotations/person_keypoints_val.json");
+
     std::fs::write(ann_dir.join("person_keypoints_train.json"), &train_json)
         .map_err(|e| format!("Error escribiendo keypoints train: {}", e))?;
     std::fs::write(ann_dir.join("person_keypoints_val.json"), &val_json)
         .map_err(|e| format!("Error escribiendo keypoints val: {}", e))?;
 
-    Ok(output_dir.to_string_lossy().replace('\\', "/"))
+    Ok(ds)
 }
 
 fn build_coco_keypoints_json(
@@ -1316,8 +1397,7 @@ pub fn prepare_classification_dataset_imagefolder(
     images: &[ImageEntry],
     output_dir: &Path,
     val_split: f64,
-) -> Result<String, String> {
-    // Same as existing classification dataset but returns the base dir path
+) -> Result<PreparedDataset, String> {
     prepare_dataset(
         images_dir, project, images, output_dir, val_split, 0.0, "classify",
     )
@@ -1331,7 +1411,7 @@ pub fn prepare_multilabel_dataset(
     images: &[ImageEntry],
     output_dir: &Path,
     val_split: f64,
-) -> Result<String, String> {
+) -> Result<PreparedDataset, String> {
     let total = images.len();
     if total == 0 {
         return Err("No hay imágenes en el proyecto".to_string());
@@ -1356,7 +1436,7 @@ pub fn prepare_multilabel_dataset(
     std::fs::create_dir_all(&img_dir).map_err(|e| format!("Error: {}", e))?;
 
     // Build CSV: image_path,class1,class2,...
-    let class_names: Vec<&str> = project.classes.iter().map(|c| c.name.as_str()).collect();
+    let label_columns: Vec<&str> = project.classes.iter().map(|c| c.name.as_str()).collect();
     let mut train_rows = Vec::new();
     let mut val_rows = Vec::new();
 
@@ -1368,7 +1448,7 @@ pub fn prepare_multilabel_dataset(
         }
         let _ = std::fs::copy(&src, img_dir.join(&image.name));
 
-        let mut labels = vec![0u8; class_names.len()];
+        let mut labels = vec![0u8; label_columns.len()];
         for ann in &image.annotations {
             if let Some(pos) = project.classes.iter().position(|c| c.id == ann.class_id) {
                 labels[pos] = 1;
@@ -1386,7 +1466,7 @@ pub fn prepare_multilabel_dataset(
         }
         let _ = std::fs::copy(&src, img_dir.join(&image.name));
 
-        let mut labels = vec![0u8; class_names.len()];
+        let mut labels = vec![0u8; label_columns.len()];
         for ann in &image.annotations {
             if let Some(pos) = project.classes.iter().position(|c| c.id == ann.class_id) {
                 labels[pos] = 1;
@@ -1396,7 +1476,7 @@ pub fn prepare_multilabel_dataset(
         val_rows.push(format!("images/{},{}", image.name, labels_str.join(",")));
     }
 
-    let header = format!("image_path,{}", class_names.join(","));
+    let header = format!("image_path,{}", label_columns.join(","));
     let train_csv = format!("{}\n{}", header, train_rows.join("\n"));
     let val_csv = format!("{}\n{}", header, val_rows.join("\n"));
 
@@ -1405,7 +1485,19 @@ pub fn prepare_multilabel_dataset(
     std::fs::write(output_dir.join("val.csv"), &val_csv)
         .map_err(|e| format!("Error escribiendo val.csv: {}", e))?;
 
-    Ok(output_dir.to_string_lossy().replace('\\', "/"))
+    // NB: las imágenes de ambos splits viven en el mismo directorio; el split lo
+    // determinan los CSV. Falta declarar las etiquetas: este preparador todavía
+    // emite CSV y los scripts de clasificación consumen JSON (ver Fase 2 del plan
+    // en docs/plan_train_fix.md), así que el generador falla con un error explícito
+    // en vez de producir un script que no encuentra sus datos.
+    let mut ds = PreparedDataset::new(
+        output_dir,
+        DatasetFormat::MultiLabelCsv,
+        class_names(project),
+    );
+    ds.declare(keys::IMAGES_TRAIN, "images")
+        .declare(keys::IMAGES_VAL, "images");
+    Ok(ds)
 }
 
 // ─── TimeSeries CSV Dataset ──────────────────────────────────────────────────
@@ -1415,7 +1507,7 @@ pub fn prepare_timeseries_dataset(
     project_dir: &Path,
     output_dir: &Path,
     val_split: f64,
-) -> Result<String, String> {
+) -> Result<PreparedDataset, String> {
     let series = &project.timeseries;
     if series.is_empty() {
         return Err("No hay series temporales en el proyecto".to_string());
@@ -1475,7 +1567,18 @@ pub fn prepare_timeseries_dataset(
     )
     .map_err(|e| format!("Error escribiendo metadata.json: {}", e))?;
 
-    Ok(output_dir.to_string_lossy().replace('\\', "/"))
+    // NB: aquí sólo hay un CSV por serie. Los seis backends de series consumen
+    // arrays `.npy` ventaneados (`x_train`, `y_train`, …), que este preparador
+    // todavía no produce — es la Fase 2 del plan (docs/plan_train_fix.md). Al no
+    // declararlos, el generador del script falla con un error explícito en vez de
+    // emitir un `train.py` que muere con FileNotFoundError.
+    let mut ds = PreparedDataset::new(
+        output_dir,
+        DatasetFormat::TimeSeriesCsv,
+        class_names(project),
+    );
+    ds.declare(keys::TS_META, "metadata.json");
+    Ok(ds)
 }
 
 /// Lee los datos de una serie: del archivo propio, o del campo incrustado si el

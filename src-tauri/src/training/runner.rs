@@ -91,7 +91,7 @@ impl TrainingProcessManager {
         );
 
         // Preparar dataset en disco
-        let data_yaml_path = dataset::prepare_dataset(
+        let prepared = dataset::prepare_dataset(
             &images_dir,
             &pf,
             &images,
@@ -100,9 +100,12 @@ impl TrainingProcessManager {
             config.test_split,
             &config.task,
         )?;
+        // En clasificación ultralytics exige el directorio, no el yaml (ver
+        // scripts::ultralytics_data_arg).
+        let data_arg = scripts::ultralytics_data_arg(&prepared, &config.task)?;
 
         // Generar script
-        let script_content = scripts::generate_train_script(&config, &data_yaml_path);
+        let script_content = scripts::generate_train_script(&config, &data_arg);
         let script_path = dataset_dir.join("train.py");
         std::fs::write(&script_path, &script_content)
             .map_err(|e| format!("Error escribiendo train.py: {}", e))?;
@@ -178,7 +181,6 @@ impl TrainingProcessManager {
         std::fs::create_dir_all(&dataset_dir)
             .map_err(|e| format!("Error creando directorio de training: {}", e))?;
 
-        let is_tabular = request.backend == super::TrainingBackend::Sklearn;
         // Los backends de series temporales y tabular leen su propio CSV: no
         // deben exigir imágenes ni pasar por el filtro de anotaciones.
         let uses_images = dataset::backend_uses_images(&request.backend);
@@ -193,25 +195,17 @@ impl TrainingProcessManager {
             return Err("No hay imágenes en el proyecto".to_string());
         }
 
-        // For tabular projects, copy the CSV to the dataset dir
-        if is_tabular {
-            if let Some(tabular_entry) = pf.tabular_data.first() {
-                let tabular_dir = state.project_dir(project_id)?.join("tabular");
-                let src = tabular_dir.join(&tabular_entry.file);
-                if src.exists() {
-                    let dest = dataset_dir.join("data.csv");
-                    std::fs::copy(&src, &dest)
-                        .map_err(|e| format!("Error copiando CSV para training: {}", e))?;
+        // NB: el CSV tabular lo copia ahora `dataset::prepare_tabular_dataset`, que es
+        // quien declara `table_csv` en el contrato. Antes se copiaba aquí, y por eso el
+        // paquete descargable (que no pasa por el runner) salía sin datos.
+        if request.backend == super::TrainingBackend::Sklearn && pf.tabular_data.is_empty() {
+            state.with_project_mut(project_id, |pf| {
+                if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
+                    job.status = "failed".to_string();
+                    job.updated_at = js_timestamp();
                 }
-            } else {
-                state.with_project_mut(project_id, |pf| {
-                    if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id_owned) {
-                        job.status = "failed".to_string();
-                        job.updated_at = js_timestamp();
-                    }
-                })?;
-                return Err("No hay datos tabulares en el proyecto".to_string());
-            }
+            })?;
+            return Err("No hay datos tabulares en el proyecto".to_string());
         }
 
         // Solo entran al dataset las imágenes anotadas (ver select_trainable_images).
@@ -246,27 +240,21 @@ impl TrainingProcessManager {
         }
 
         // Prepare dataset using backend router
-        let dataset_path = if is_tabular {
-            dataset_dir.to_string_lossy().replace('\\', "/")
-        } else {
-            dataset::prepare_dataset_for_backend(
-                &images_dir,
-                &pf,
-                &images,
-                &dataset_dir,
-                dataset::DatasetSpec {
-                    val_split: request.val_split,
-                    test_split: request.test_split,
-                    task: &request.task,
-                    backend: &request.backend,
-                },
-            )?
-        };
+        let prepared = dataset::prepare_dataset_for_backend(
+            &images_dir,
+            &pf,
+            &images,
+            &dataset_dir,
+            dataset::DatasetSpec {
+                val_split: request.val_split,
+                test_split: request.test_split,
+                task: &request.task,
+                backend: &request.backend,
+            },
+        )?;
 
         // Generate scripts
-        let num_classes = pf.classes.len();
-        let script_files =
-            scripts::generate_train_script_for_backend(&request, &dataset_path, num_classes);
+        let script_files = scripts::generate_train_script_for_backend(&request, &prepared)?;
 
         // Write all generated files
         for (filename, content) in &script_files {

@@ -509,6 +509,9 @@ pub struct BackendModelInfo {
 
 pub mod backends;
 pub mod cloud;
+pub mod contract;
+#[cfg(test)]
+mod contract_tests;
 pub mod dataset;
 pub mod gpu;
 pub mod micromamba;
@@ -519,6 +522,10 @@ pub mod package;
 pub mod python_env;
 pub mod runner;
 pub mod scripts;
+#[cfg(test)]
+mod smoke_tests;
+#[cfg(test)]
+mod test_fixtures;
 
 /// En Windows, configura CREATE_NO_WINDOW para evitar que aparezca una ventana de consola.
 #[cfg(windows)]

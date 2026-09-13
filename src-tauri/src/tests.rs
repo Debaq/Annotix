@@ -853,7 +853,7 @@ fn training_prepare_dataset_creates_yolo_structure() {
     let (pf, imgs_dir) = build_detection_fixture();
     let out = tempfile::tempdir().unwrap();
 
-    let yaml_path = dataset::prepare_dataset(
+    let prepared = dataset::prepare_dataset(
         imgs_dir.path(),
         &pf,
         &pf.images,
@@ -863,8 +863,11 @@ fn training_prepare_dataset_creates_yolo_structure() {
         "detect",
     )
     .expect("prepare");
+    let yaml_path = prepared
+        .abs(crate::training::contract::keys::DATA_YAML)
+        .expect("data.yaml declarado");
 
-    assert!(std::path::Path::new(&yaml_path).exists());
+    assert!(yaml_path.exists());
     assert!(out.path().join("images/train").exists());
     assert!(out.path().join("images/val").exists());
     assert!(out.path().join("labels/train").exists());
@@ -894,7 +897,7 @@ fn training_prepare_dataset_classify_uses_folders_by_class() {
 
     // Para classify, las anotaciones deben ser bbox con class_id válido; el primer bbox
     // determina la clase. Nuestra fixture tiene eso.
-    let yaml_path = dataset::prepare_dataset(
+    let prepared = dataset::prepare_dataset(
         imgs_dir.path(),
         &pf,
         &pf.images,
@@ -904,6 +907,9 @@ fn training_prepare_dataset_classify_uses_folders_by_class() {
         "classify",
     )
     .expect("prepare classify");
+    let yaml_path = prepared
+        .abs(crate::training::contract::keys::DATA_YAML)
+        .expect("data.yaml declarado");
 
     // Estructura: {split}/{class_name}/*.png
     assert!(out.path().join("train/cat").exists() || out.path().join("val/cat").exists());
