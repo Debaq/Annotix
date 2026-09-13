@@ -31,7 +31,7 @@ con el resto en la etapa 11.
 
 ---
 
-## Etapa 1 — Split agrupado por unidad natural
+## Etapa 1 — Split agrupado por unidad natural ✅ **hecho**
 
 **Qué se construye.** `split_plan` (`training/dataset.rs:155-176`) deja de
 barajar índices de imagen y pasa a barajar **grupos**. La clave de grupo se
@@ -290,6 +290,13 @@ verificar los hashes con las herramientas que el propio sistema expone.
 Tres sub-etapas de costo muy distinto. **Ninguna cierra un pilar**: desbloquean
 modalidades, y sin ellas buena parte del catálogo de la Fase 3 es inalcanzable.
 
+> **Corrección al plan (2026-09-13).** Esta etapa **no** es precondición de todo
+> lo biomédico, como se leía más arriba. Una tesela de histopatología, una foto de
+> fondo de ojo y una radiografía exportada a PNG son imágenes 2D normales: entran
+> por el camino que ya existe. Sólo la **volumetría** (9c) y la **lectura de
+> lámina completa** (9b) dependen de verdad de esta etapa. Por eso la 10b pudo
+> empezar antes que la 9.
+
 **9a — DICOM y NIfTI 2D.** Lectura de DICOM (corte único y series) y NIfTI con
 extracción de cortes, metadatos de adquisición (modalidad, equipo, kVp/TE/TR,
 espaciado de píxel), ventaneo window/level en el canvas, y **deidentificación al
@@ -330,7 +337,12 @@ camino SAM ya construido: encoder + decoder ONNX en
 arquitectura. Combinado con la etapa 4, cada máscara aceptada queda marcada como
 sugerida por modelo y revisada por humano.
 
-**10b — Pesos biomédicos sobre backends existentes (medio).** RadImageNet,
+**10b — Pesos biomédicos sobre backends existentes (medio). 🟡 empezado.**
+Ya entraron cinco por catálogo, sin tocar generadores: RadioDINO S/16 y B/16
+(RadImageNet), Lunit DINO y Owkin Phikon (histopatología), y RAD-DINO (radiografía
+de tórax). Queda lo que exige token del Hub —UNI, RETFound— y lo que exige
+`trust_remote_code`.
+ RadImageNet,
 BiomedCLIP, UNI, CTransPath, RETFound y TorchXRayVision como **inicialización**
 en los backends `timm`, `hf_classification` y `smp`, en lugar de ImageNet. No
 requiere backend nuevo: requiere resolución de pesos, caché local, y declarar la
