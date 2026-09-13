@@ -21,5 +21,17 @@
   "none": "No subject",
   "manage": "Manage subjects",
   "filterBySubject": "Filter by subject",
-  "allSubjects": "All subjects"
+  "allSubjects": "All subjects",
+  "corpusTitle": "Corpus state",
+  "provenance": "Where the labels came from",
+  "origin": {
+    "manual": "Drawn by hand",
+    "model": "Suggested by a model",
+    "track": "Interpolated from video",
+    "import": "Imported",
+    "adjudicated": "Adjudicated",
+    "unknown": "Unknown origin"
+  },
+  "modelBreakdown": "Of what a model suggested ({{pct}}% of the corpus): {{accepted}} accepted unchanged and {{corrected}} corrected.",
+  "unknownNote": "{{count}} labels predate provenance tracking: it cannot be said whether they were drawn by hand or accepted from a model."
 }

@@ -197,6 +197,75 @@ fn entry_to_response(entry: &ImageEntry, project_id: &str) -> ImageResponse {
     }
 }
 
+/// Conserva la procedencia al guardar las anotaciones de una imagen.
+///
+/// El guardado reemplaza la lista entera con lo que manda el cliente, y el
+/// cliente no tiene por qué conocer los campos de procedencia: si los omite, el
+/// reemplazo directo los borraría en silencio. Se fusiona contra lo que ya había,
+/// emparejando por `id`.
+///
+/// Además es donde se detecta la **corrección**: si la geometría cambió respecto
+/// de lo guardado y la etiqueta venía de un modelo, pasa a `corrected`. Aceptar
+/// una sugerencia sin tocarla y corregirle la caja dicen cosas distintas del
+/// modelo que la propuso, y sin compararlas aquí no hay otro momento en que se
+/// sepa cuál de las dos ocurrió.
+pub fn fusionar_procedencia(
+    previas: &[AnnotationEntry],
+    entrantes: &[AnnotationEntry],
+    now: f64,
+) -> Vec<AnnotationEntry> {
+    entrantes
+        .iter()
+        .map(|entrante| {
+            let mut ann = entrante.clone();
+            match previas.iter().find(|p| p.id == ann.id) {
+                Some(previa) => {
+                    // Lo que el cliente no manda se conserva.
+                    ann.origin = ann.origin.take().or_else(|| previa.origin.clone());
+                    ann.model_id = ann.model_id.take().or_else(|| previa.model_id.clone());
+                    ann.model_class_name = ann
+                        .model_class_name
+                        .take()
+                        .or_else(|| previa.model_class_name.clone());
+                    ann.confidence = ann.confidence.or(previa.confidence);
+                    ann.created_by = ann.created_by.take().or_else(|| previa.created_by.clone());
+                    ann.track_id = ann.track_id.take().or_else(|| previa.track_id.clone());
+                    ann.created_at = ann.created_at.or(previa.created_at);
+                    ann.reviewed_by = ann
+                        .reviewed_by
+                        .take()
+                        .or_else(|| previa.reviewed_by.clone());
+                    ann.reviewed_at = ann.reviewed_at.or(previa.reviewed_at);
+
+                    let cambio = ann.data != previa.data || ann.class_id != previa.class_id;
+                    if cambio {
+                        ann.updated_at = Some(now);
+                        // Sólo lo que no trazó una persona puede "corregirse":
+                        // editar algo propio es seguir anotando, no revisar.
+                        if matches!(previa.origen(), "model" | "track" | "import") {
+                            ann.review = Some("corrected".to_string());
+                            ann.reviewed_at = Some(now);
+                        }
+                    } else {
+                        ann.review = ann.review.take().or_else(|| previa.review.clone());
+                        ann.updated_at = ann.updated_at.or(previa.updated_at);
+                    }
+                }
+                None => {
+                    // Etiqueta nueva: si nadie declaró su origen, la trazó una
+                    // persona en el canvas. Es el único caso donde `manual` no es
+                    // una suposición.
+                    if ann.origin.is_none() && ann.source == "user" {
+                        ann.origin = Some("manual".to_string());
+                    }
+                    ann.created_at = ann.created_at.or(Some(now));
+                }
+            }
+            ann
+        })
+        .collect()
+}
+
 /// Imagen a escribir en disco: bytes, dimensiones ya conocidas y, si viene de
 /// un video, de qué fotograma sale.
 pub struct NewImage<'a> {
@@ -568,7 +637,7 @@ impl AppState {
         let now = js_timestamp();
         self.with_project_mut(project_id, |pf| {
             if let Some(img) = pf.images.iter_mut().find(|i| i.id == image_id) {
-                img.annotations = annotations.to_vec();
+                img.annotations = fusionar_procedencia(&img.annotations, annotations, now);
                 img.status = if annotations.is_empty() {
                     "pending".to_string()
                 } else {

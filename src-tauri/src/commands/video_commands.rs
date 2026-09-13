@@ -822,6 +822,27 @@ pub async fn delete_track(
     Ok(())
 }
 
+/// Marca un fotograma del track como revisado por una persona.
+///
+/// Es para los **interpolados**: entre dos keyframes el sistema deduce la caja, y
+/// hasta que alguien la mira esa deducción no está validada. Al consolidar, lo
+/// revisado sale como `review: "reviewed"` y lo demás como `unreviewed`, así que
+/// el dataset distingue una caja que alguien vio de una que nadie miró.
+#[tauri::command]
+pub async fn set_frame_reviewed(
+    state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
+    app: AppHandle,
+    request: crate::store::videos::SetFrameReviewedRequest,
+) -> Result<(), String> {
+    p2p.check_permission(&request.project_id, P2pPermission::Annotate)
+        .await?;
+    state.set_frame_reviewed(&request)?;
+    publish_tracks(&state, &p2p, &request.project_id, &request.video_id).await;
+    let _ = app.emit("db:tracks-changed", &request.video_id);
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn set_keyframe(
     state: State<'_, AppState>,

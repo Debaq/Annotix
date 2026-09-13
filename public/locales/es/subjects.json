@@ -21,5 +21,17 @@
   "none": "Sin sujeto",
   "manage": "Gestionar sujetos",
   "filterBySubject": "Filtrar por sujeto",
-  "allSubjects": "Todos los sujetos"
+  "allSubjects": "Todos los sujetos",
+  "corpusTitle": "Estado del corpus",
+  "provenance": "Procedencia de las etiquetas",
+  "origin": {
+    "manual": "Trazadas a mano",
+    "model": "Sugeridas por un modelo",
+    "track": "Interpoladas de video",
+    "import": "Importadas",
+    "adjudicated": "Adjudicadas",
+    "unknown": "Origen desconocido"
+  },
+  "modelBreakdown": "De lo sugerido por un modelo ({{pct}}% del corpus): {{accepted}} aceptadas sin cambios y {{corrected}} corregidas.",
+  "unknownNote": "{{count}} etiquetas son anteriores al registro de procedencia: no se puede afirmar si se trazaron a mano o se aceptaron de un modelo."
 }

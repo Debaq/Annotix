@@ -305,6 +305,21 @@ pub struct TsAnnotationEntry {
     #[serde(rename = "classId")]
     pub class_id: Option<i64>,
     pub data: serde_json::Value,
+    /// Procedencia de la etiqueta. Ver `AnnotationEntry`: los mismos campos y el
+    /// mismo significado, porque la pregunta «de dónde salió esto» no cambia
+    /// según la modalidad.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub origin: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "modelId")]
+    pub model_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub review: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "createdBy")]
+    pub created_by: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "createdAt")]
+    pub created_at: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "updatedAt")]
+    pub updated_at: Option<f64>,
 }
 
 // ─── Videos ─────────────────────────────────────────────────────────────────
@@ -379,6 +394,16 @@ pub struct KeyframeEntry {
     #[serde(rename = "isKeyframe")]
     pub is_keyframe: bool,
     pub enabled: bool,
+    /// Si una persona miró este fotograma y dio por buena la caja.
+    ///
+    /// `isKeyframe` dice que la caja se fijó a mano; esto dice que un fotograma
+    /// **interpolado** se revisó. Son cosas distintas: entre dos keyframes el
+    /// sistema deduce, y hasta que alguien mira, esa deducción no está validada.
+    ///
+    /// Antes este dato vivía sólo en memoria de sesión del modo estudio
+    /// (`videoStudy.ts`), así que cerrar la app borraba qué se había revisado.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub reviewed: bool,
 }
 
 // ─── Audio (ASR) ──────────────────────────────────────────────────────────
@@ -418,6 +443,21 @@ pub struct AudioSegment {
     pub text: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub speaker_id: Option<i64>,
+    /// Procedencia de la etiqueta. Ver `AnnotationEntry`: los mismos campos y el
+    /// mismo significado, porque la pregunta «de dónde salió esto» no cambia
+    /// según la modalidad.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub origin: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "modelId")]
+    pub model_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub review: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "createdBy")]
+    pub created_by: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "createdAt")]
+    pub created_at: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "updatedAt")]
+    pub updated_at: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -427,6 +467,21 @@ pub struct AudioEvent {
     pub start_ms: i64,
     pub end_ms: i64,
     pub class_id: i64,
+    /// Procedencia de la etiqueta. Ver `AnnotationEntry`: los mismos campos y el
+    /// mismo significado, porque la pregunta «de dónde salió esto» no cambia
+    /// según la modalidad.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub origin: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "modelId")]
+    pub model_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub review: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "createdBy")]
+    pub created_by: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "createdAt")]
+    pub created_at: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "updatedAt")]
+    pub updated_at: Option<f64>,
 }
 
 fn default_audio_language() -> String {

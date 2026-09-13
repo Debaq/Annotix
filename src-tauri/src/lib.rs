@@ -346,6 +346,7 @@ pub fn run() {
             commands::video_commands::update_track,
             commands::video_commands::delete_track,
             commands::video_commands::set_keyframe,
+            commands::video_commands::set_frame_reviewed,
             commands::video_commands::delete_keyframe,
             commands::video_commands::toggle_keyframe_enabled,
             commands::video_commands::bake_video_tracks,

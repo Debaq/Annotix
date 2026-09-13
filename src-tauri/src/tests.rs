@@ -1460,6 +1460,7 @@ use crate::store::videos::{interpolate_bbox, pct_bbox_to_px, Extend, InterpMode,
 
 fn kf(frame_index: i64, x: f64, y: f64, w: f64, h: f64) -> KeyframeEntry {
     KeyframeEntry {
+        reviewed: false,
         frame_index,
         bbox_x: x,
         bbox_y: y,
@@ -1964,6 +1965,12 @@ fn validate_csv_accepts_quoted_commas() {
 
 fn ts_annotation(kind: &str, class_id: Option<i64>, data: serde_json::Value) -> TsAnnotationEntry {
     TsAnnotationEntry {
+        origin: None,
+        model_id: None,
+        review: None,
+        created_by: None,
+        created_at: None,
+        updated_at: None,
         id: uuid::Uuid::new_v4().to_string(),
         annotation_type: kind.into(),
         class_id,
@@ -3220,4 +3227,134 @@ fn la_exportacion_coco_lleva_la_procedencia() {
     assert_eq!(salida["annotix_model_id"], "yolo11n-propio");
     assert_eq!(salida["annotix_review"], "accepted");
     assert_eq!(salida["annotix_confidence"], 0.87);
+}
+
+/// El cliente no conoce los campos de procedencia, y el guardado reemplaza la
+/// lista entera. Sin fusionar, guardar una imagen borraría de qué modelo vino
+/// cada caja — en silencio y en cada edición.
+#[test]
+fn guardar_anotaciones_no_borra_la_procedencia_que_el_cliente_no_manda() {
+    use crate::store::images::fusionar_procedencia as fusionar;
+
+    let mut previa = bbox_ann(0, 10.0, 20.0, 50.0, 40.0);
+    previa.id = "a1".into();
+    previa.origin = Some("model".into());
+    previa.model_id = Some("yolo11n".into());
+    previa.review = Some("accepted".into());
+    previa.created_at = Some(100.0);
+
+    // Lo que devuelve un cliente que no sabe de estos campos.
+    let mut entrante = bbox_ann(0, 10.0, 20.0, 50.0, 40.0);
+    entrante.id = "a1".into();
+    entrante.origin = None;
+    entrante.model_id = None;
+    entrante.review = None;
+    entrante.created_at = None;
+
+    let fusionadas = fusionar(&[previa], &[entrante], 200.0);
+    assert_eq!(fusionadas[0].origin.as_deref(), Some("model"));
+    assert_eq!(fusionadas[0].model_id.as_deref(), Some("yolo11n"));
+    assert_eq!(fusionadas[0].review.as_deref(), Some("accepted"));
+    assert_eq!(fusionadas[0].created_at, Some(100.0));
+}
+
+/// Corregir la geometría de algo que propuso un modelo es distinto de aceptarlo
+/// tal cual. Es el único momento en que se puede saber cuál de las dos pasó.
+#[test]
+fn editar_una_caja_del_modelo_la_marca_como_corregida() {
+    use crate::store::images::fusionar_procedencia as fusionar;
+
+    let mut previa = bbox_ann(0, 10.0, 20.0, 50.0, 40.0);
+    previa.id = "a1".into();
+    previa.origin = Some("model".into());
+    previa.review = Some("accepted".into());
+
+    let mut movida = bbox_ann(0, 99.0, 20.0, 50.0, 40.0);
+    movida.id = "a1".into();
+    movida.origin = None;
+    movida.review = None;
+
+    let fusionadas = fusionar(&[previa], &[movida], 200.0);
+    assert_eq!(fusionadas[0].review.as_deref(), Some("corrected"));
+    assert_eq!(fusionadas[0].updated_at, Some(200.0));
+    assert_eq!(fusionadas[0].origin.as_deref(), Some("model"));
+}
+
+/// Editar lo que uno mismo trazó es seguir anotando, no revisar: no se marca
+/// como corrección, que es un juicio sobre el trabajo de otro.
+#[test]
+fn editar_una_caja_propia_no_la_marca_como_corregida() {
+    use crate::store::images::fusionar_procedencia as fusionar;
+
+    let mut previa = bbox_ann(0, 10.0, 20.0, 50.0, 40.0);
+    previa.id = "a1".into();
+    previa.origin = Some("manual".into());
+
+    let mut movida = bbox_ann(0, 99.0, 20.0, 50.0, 40.0);
+    movida.id = "a1".into();
+    movida.origin = None;
+
+    let fusionadas = fusionar(&[previa], &[movida], 200.0);
+    assert_eq!(fusionadas[0].review, None);
+    assert_eq!(fusionadas[0].origin.as_deref(), Some("manual"));
+}
+
+/// Una caja nueva trazada en el canvas sí es manual: es el único caso donde no
+/// es una suposición.
+#[test]
+fn una_anotacion_nueva_sin_origen_declarado_es_manual() {
+    use crate::store::images::fusionar_procedencia as fusionar;
+
+    let mut nueva = bbox_ann(0, 1.0, 1.0, 5.0, 5.0);
+    nueva.id = "nueva".into();
+    nueva.origin = None;
+    nueva.source = "user".into();
+
+    let fusionadas = fusionar(&[], &[nueva], 200.0);
+    assert_eq!(fusionadas[0].origin.as_deref(), Some("manual"));
+    assert_eq!(fusionadas[0].created_at, Some(200.0));
+}
+
+/// Lo revisado en video deja de vivir en memoria de sesión: al consolidar, un
+/// fotograma que alguien miró sale como revisado y uno deducido no. Antes esto se
+/// perdía al cerrar la app, y el dataset no distinguía una caja validada de una
+/// que nadie vio.
+#[test]
+fn la_consolidacion_distingue_el_fotograma_revisado_del_deducido() {
+    use crate::store::project_file::KeyframeEntry;
+    use crate::store::videos::{bake_annotations_for_frame, BakeTrack, TrackInterp};
+
+    let kf = |idx: i64, reviewed: bool, is_key: bool| KeyframeEntry {
+        frame_index: idx,
+        bbox_x: 10.0,
+        bbox_y: 10.0,
+        bbox_width: 20.0,
+        bbox_height: 20.0,
+        is_keyframe: is_key,
+        enabled: true,
+        reviewed,
+    };
+
+    let track = BakeTrack {
+        track_id: "t1".into(),
+        class_id: 0,
+        // 0 y 10 fijados a mano; el 5 marcado como visto sin fijar la caja.
+        keyframes: vec![kf(0, true, true), kf(5, true, false), kf(10, true, true)],
+        interp: TrackInterp::default(),
+    };
+
+    let revisado = bake_annotations_for_frame(&[track], 5, 200, 100);
+    assert_eq!(revisado.len(), 1);
+    assert_eq!(revisado[0].review.as_deref(), Some("reviewed"));
+    assert_eq!(revisado[0].origen(), "track");
+
+    let track2 = BakeTrack {
+        track_id: "t1".into(),
+        class_id: 0,
+        keyframes: vec![kf(0, true, true), kf(10, true, true)],
+        interp: TrackInterp::default(),
+    };
+    // El 5 no tiene entrada propia: es pura interpolación, nadie lo miró.
+    let deducido = bake_annotations_for_frame(&[track2], 5, 200, 100);
+    assert_eq!(deducido[0].review.as_deref(), Some("unreviewed"));
 }

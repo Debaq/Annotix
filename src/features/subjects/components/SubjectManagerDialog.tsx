@@ -9,7 +9,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/hooks/use-toast';
 import { subjectService } from '../services/subjectService';
-import type { PatternPreview, SubjectSummary } from '../types';
+import type { PatternPreview, ProvenanceSummary, SubjectSummary } from '../types';
+import { ProvenanceSection } from './ProvenanceSection';
 
 interface Props {
   projectId: string;
@@ -35,6 +36,7 @@ export function SubjectManagerDialog({ projectId, open, onClose, onChanged }: Pr
   const { toast } = useToast();
 
   const [summary, setSummary] = useState<SubjectSummary | null>(null);
+  const [provenance, setProvenance] = useState<ProvenanceSummary | null>(null);
   const [pattern, setPattern] = useState('{subject}_*');
   const [preview, setPreview] = useState<PatternPreview | null>(null);
   const [busy, setBusy] = useState(false);
@@ -45,6 +47,10 @@ export function SubjectManagerDialog({ projectId, open, onClose, onChanged }: Pr
       .getSummary(projectId)
       .then(setSummary)
       .catch(() => setSummary(null));
+    subjectService
+      .getProvenance(projectId)
+      .then(setProvenance)
+      .catch(() => setProvenance(null));
   }, [projectId]);
 
   useEffect(() => {
@@ -118,7 +124,7 @@ export function SubjectManagerDialog({ projectId, open, onClose, onChanged }: Pr
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-base">{t('subjects.title')}</DialogTitle>
+          <DialogTitle className="text-base">{t('subjects.corpusTitle')}</DialogTitle>
         </DialogHeader>
 
         <p className="text-xs text-muted-foreground -mt-2">{t('subjects.why')}</p>
@@ -244,6 +250,8 @@ export function SubjectManagerDialog({ projectId, open, onClose, onChanged }: Pr
             className="text-xs"
           />
         </section>
+
+        {provenance && <ProvenanceSection summary={provenance} />}
 
         <p className="text-[11px] text-muted-foreground border-t border-border pt-3">
           {t('subjects.privacy')}

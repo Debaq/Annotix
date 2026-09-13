@@ -1,9 +1,13 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { PatternPreview, SubjectSummary } from '../types';
+import type { PatternPreview, ProvenanceSummary, SubjectSummary } from '../types';
 
 export const subjectService = {
   getSummary(projectId: string): Promise<SubjectSummary> {
     return invoke('get_subject_summary', { projectId });
+  },
+
+  getProvenance(projectId: string): Promise<ProvenanceSummary> {
+    return invoke('get_provenance_summary', { projectId });
   },
 
   /** `null` borra el sujeto. Devuelve cuántas imágenes cambiaron de verdad. */

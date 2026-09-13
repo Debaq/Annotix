@@ -3,6 +3,18 @@ use serde::Deserialize;
 use crate::store::project_file::{KeyframeEntry, TrackEntry, VideoEntry};
 use crate::store::state::AppState;
 
+/// Parámetros de `set_frame_reviewed`. Los tres ids y el fotograma van siempre
+/// juntos, igual que en `SetKeyframeRequest`.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SetFrameReviewedRequest {
+    pub project_id: String,
+    pub video_id: String,
+    pub track_id: String,
+    pub frame_index: i64,
+    pub reviewed: bool,
+}
+
 /// Parámetros de `set_keyframe`. La caja va en porcentaje 0-100 del fotograma.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -260,9 +272,21 @@ pub fn bake_annotations_for_frame(
             track_id: Some(bt.track_id.clone()),
             origin: Some("track".to_string()),
             model_id: None,
-            // Un fotograma interpolado no lo revisó nadie todavía. Es lo que
-            // distingue una caja fijada a mano de una que el sistema dedujo.
-            review: Some("unreviewed".to_string()),
+            // Un fotograma interpolado no lo revisó nadie; uno fijado o marcado
+            // como visto, sí. Es lo que distingue una caja que una persona validó
+            // de una que el sistema dedujo y nadie miró.
+            review: Some(
+                if bt
+                    .keyframes
+                    .iter()
+                    .any(|k| k.frame_index == frame_index && k.reviewed)
+                {
+                    "reviewed"
+                } else {
+                    "unreviewed"
+                }
+                .to_string(),
+            ),
             reviewed_by: None,
             reviewed_at: None,
             created_at: Some(crate::store::images::js_timestamp_pub()),
@@ -849,6 +873,7 @@ impl AppState {
                     existing.bbox_width = bbox_width;
                     existing.bbox_height = bbox_height;
                     existing.is_keyframe = true;
+                    existing.reviewed = true;
                 } else {
                     t.keyframes.push(KeyframeEntry {
                         frame_index,
@@ -858,6 +883,8 @@ impl AppState {
                         bbox_height,
                         is_keyframe: true,
                         enabled: true,
+                        // Fijar la caja a mano es revisarla: la persona la puso ahí.
+                        reviewed: true,
                     });
                     // Mantener orden por frame_index
                     t.keyframes.sort_by_key(|k| k.frame_index);
@@ -874,6 +901,52 @@ impl AppState {
     ///
     /// El seguidor escribe una tanda entera; uno a uno serían tantas escrituras
     /// completas de `project.json` como keyframes propuestos.
+    /// Marca (o desmarca) como revisado un fotograma de un track.
+    ///
+    /// Existe para los fotogramas **interpolados**: el sistema dedujo la caja y
+    /// hasta que alguien la mira esa deducción no está validada. Si el fotograma
+    /// no tiene entrada propia se crea una sin fijar la caja (`isKeyframe: false`),
+    /// porque marcar como visto no debe convertir una interpolación en un
+    /// keyframe: eso cambiaría la trayectoria.
+    pub fn set_frame_reviewed(&self, req: &SetFrameReviewedRequest) -> Result<(), String> {
+        let SetFrameReviewedRequest {
+            project_id,
+            video_id,
+            track_id,
+            frame_index,
+            reviewed,
+        } = req;
+        let (frame_index, reviewed) = (*frame_index, *reviewed);
+        self.with_project_mut(project_id, |pf| {
+            if let Some(v) = pf.videos.iter_mut().find(|v| &v.id == video_id) {
+                if let Some(t) = v.tracks.iter_mut().find(|t| &t.id == track_id) {
+                    match t
+                        .keyframes
+                        .iter_mut()
+                        .find(|k| k.frame_index == frame_index)
+                    {
+                        Some(k) => k.reviewed = reviewed,
+                        None => {
+                            if reviewed {
+                                t.keyframes.push(KeyframeEntry {
+                                    frame_index,
+                                    bbox_x: 0.0,
+                                    bbox_y: 0.0,
+                                    bbox_width: 0.0,
+                                    bbox_height: 0.0,
+                                    is_keyframe: false,
+                                    enabled: true,
+                                    reviewed: true,
+                                });
+                                t.keyframes.sort_by_key(|k| k.frame_index);
+                            }
+                        }
+                    }
+                }
+            }
+        })
+    }
+
     pub fn set_keyframes_bulk(
         &self,
         project_id: &str,
@@ -906,6 +979,7 @@ impl AppState {
                         existing.bbox_width = *w;
                         existing.bbox_height = *h;
                         existing.is_keyframe = true;
+                        existing.reviewed = true;
                     } else {
                         t.keyframes.push(KeyframeEntry {
                             frame_index: *frame_index,
@@ -915,6 +989,7 @@ impl AppState {
                             bbox_height: *h,
                             is_keyframe: true,
                             enabled: true,
+                            reviewed: true,
                         });
                     }
                 }
