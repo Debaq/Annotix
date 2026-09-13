@@ -534,5 +534,382 @@
     "tinyWarning": "Dataset muy pequeño. Considerá desactivar el test split (0) o anotar más imágenes."
   },
   "startFailed": "No se pudo iniciar el entrenamiento",
-  "packageFailed": "No se pudo generar el paquete"
+  "packageFailed": "No se pudo generar el paquete",
+  "families": {
+    "labels": {
+      "title": "Cómo elegir",
+      "useWhen": "Cuándo usarlo",
+      "avoidWhen": "Cuándo no",
+      "vram": "Memoria de GPU",
+      "speed": "Velocidad",
+      "minSamples": "Dato mínimo orientativo",
+      "minSamplesValue": "desde ~{{count}} muestras etiquetadas",
+      "license": "Licencia",
+      "pretrainedOn": "Preentrenado en",
+      "pretrainedOnNone": "Se entrena desde cero",
+      "reference": "Desempeño de referencia",
+      "referenceCaveat": "Métrica publicada sobre otro conjunto de datos. Sirve para comparar familias entre sí, no para predecir lo que dará tu corpus.",
+      "vramCaveat": "Estimación con los valores por defecto del backend.",
+      "minSamplesCaveat": "Orden de magnitud, no un límite: por debajo suele rendir mejor una familia más simple.",
+      "licenseVaries": "Cada modelo del repositorio trae la suya: consulta su ficha.",
+      "licenseInherited": "La licencia del modelo base se hereda al modelo que entrenes y viaja con él al despliegue.",
+      "noBiomedicalYet": "Todavía no hay modelos preentrenados con datos biomédicos en el catálogo. Las familias marcadas como biomédicas son arquitecturas generalistas que funcionan bien en esta imagen con el preset adecuado."
+    },
+    "axes": {
+      "domain": {
+        "general": "General",
+        "biomedical": "Biomédico"
+      },
+      "vram": {
+        "le4gb": "Hasta 4 GB",
+        "4to8gb": "4–8 GB",
+        "8to16gb": "8–16 GB",
+        "gt16gb": "Más de 16 GB"
+      },
+      "speed": {
+        "fast": "Rápido",
+        "medium": "Medio",
+        "slow": "Lento"
+      },
+      "access": {
+        "open": "Abierto",
+        "gated": "Requiere aceptar términos",
+        "non_commercial": "No comercial"
+      },
+      "modality": {
+        "any": "Cualquier imagen",
+        "series": "Serie temporal",
+        "tabular": "Tabular",
+        "ct": "TAC",
+        "mri": "Resonancia",
+        "xray": "Radiografía",
+        "microscopy": "Microscopía",
+        "wsi": "Lámina completa (WSI)",
+        "fundus": "Fondo de ojo",
+        "oct": "OCT",
+        "ultrasound": "Ultrasonido",
+        "ecg": "ECG",
+        "eeg": "EEG"
+      }
+    },
+    "items": {
+      "hf_classification": {
+        "beit": {
+          "use": "Preentrenamiento auto-supervisado fuerte, útil cuando tienes muchas imágenes y pocas etiquetas.",
+          "avoid": "Con GPU modesta: es el más lento de este backend."
+        },
+        "convnext": {
+          "use": "Punto medio recomendable: precisión de transformer con exigencia de datos de CNN.",
+          "avoid": "Cuando el corpus es mínimo: mejor ResNet."
+        },
+        "deit": {
+          "use": "ViT destilado: mismo esquema con menos datos necesarios.",
+          "avoid": "Si ya tienes mucho dato: ViT o Swin llegan más alto."
+        },
+        "swin": {
+          "use": "Buen techo de precisión y robusto ante cambios de escala.",
+          "avoid": "Con corpus pequeño o poca VRAM."
+        },
+        "vit": {
+          "use": "Clasificación con transformer y pesos ImageNet-21k; el camino para llegar después a backbones biomédicos.",
+          "avoid": "Con pocos cientos de imágenes, donde una CNN preentrenada rinde más."
+        }
+      },
+      "hf_detection": {
+        "conditional-detr": {
+          "use": "Convergencia más rápida que DETR clásico conservando el mismo esquema.",
+          "avoid": "Con corpus muy pequeño, donde cualquier DETR se queda corto."
+        },
+        "deformable-detr": {
+          "use": "Cuando quieres DETR pero sin su lentitud de convergencia; también mejor en objetos pequeños.",
+          "avoid": "Si YOLO ya resuelve el problema: sigue costando bastante más entrenarlo."
+        },
+        "detr": {
+          "use": "Referencia conceptual de detección con transformer, útil como línea base comparable con la literatura.",
+          "avoid": "En proyectos reales con pocos datos: es el que más imágenes y más épocas necesita para converger."
+        }
+      },
+      "hf_instance": {
+        "mask2former": {
+          "use": "Máxima calidad en instancias solapadas, con GPU grande.",
+          "avoid": "Con poca VRAM: entrena con lote de 1 y aun así va justo."
+        },
+        "maskformer": {
+          "use": "Instancias por máscara cuando los objetos se solapan y una caja no basta.",
+          "avoid": "Si un polígono por objeto ya te sirve: YOLO-seg entrena mucho más rápido."
+        }
+      },
+      "hf_pose": {
+        "convnext": {
+          "use": "Más precisión que ResNet manteniendo el esquema top-down.",
+          "avoid": "Si el proyecto es pequeño o el equipo modesto: ResNet cuesta menos por poca diferencia."
+        },
+        "hrnet": {
+          "use": "La arquitectura pensada para pose: mantiene alta resolución en todo el recorrido y es la referencia en keypoints.",
+          "avoid": "Si necesitas velocidad máxima en CPU."
+        },
+        "resnet": {
+          "use": "Backbone de pose por defecto: rápido, estable y suficiente para la mayoría de esqueletos.",
+          "avoid": "Cuando hacen falta articulaciones muy precisas en cuerpos pequeños dentro de la imagen."
+        }
+      },
+      "hf_segmentation": {
+        "beit": {
+          "use": "Cuando el techo de precisión manda y el hardware no es un límite.",
+          "avoid": "Casi siempre que no tengas GPU grande: es el más pesado del backend."
+        },
+        "dpt": {
+          "use": "Máscaras globalmente coherentes en escenas amplias.",
+          "avoid": "Cuando importa el borde fino o la velocidad."
+        },
+        "mask2former": {
+          "use": "La opción más precisa del backend cuando hay GPU: mejora clara sobre MaskFormer.",
+          "avoid": "Con menos de 8 GB de VRAM o pocos cientos de imágenes."
+        },
+        "maskformer": {
+          "use": "Cuando quieres tratar segmentación semántica y de instancias con un mismo formalismo de máscaras.",
+          "avoid": "Si sólo necesitas semántica simple: SegFormer hace lo mismo más barato."
+        },
+        "mobilevit": {
+          "use": "Segmentar en CPU o en equipo modesto sin bajar a resultados inservibles.",
+          "avoid": "Si buscas la mejor precisión: es un compromiso hacia el tamaño."
+        },
+        "segformer": {
+          "use": "Segmentación semántica moderna con buen equilibrio coste/precisión y pesos ADE20K listos.",
+          "avoid": "Con corpus pequeño: los transformers piden más datos que una U-Net."
+        },
+        "upernet": {
+          "use": "Escenas de muchas clases donde conviene un decoder que unifica escalas.",
+          "avoid": "Proyectos de pocas clases, donde no compensa el coste."
+        }
+      },
+      "pyod": {
+        "autoencoder": {
+          "use": "Anomalías con estructura, cuando hay bastantes datos normales para aprender lo que es normal.",
+          "avoid": "Con pocos datos: los métodos estadísticos rinden más y cuestan menos."
+        },
+        "ensemble": {
+          "use": "Opción robusta por defecto: combina criterios y aguanta bien datos sucios.",
+          "avoid": "Si necesitas explicar exactamente por qué algo se marcó como anómalo."
+        },
+        "proximity": {
+          "use": "Anomalías definidas por vecindad: útil cuando lo raro es estar lejos de todo lo demás.",
+          "avoid": "Con muchos datos: el coste crece rápido con el tamaño."
+        },
+        "statistical": {
+          "use": "Detección de anomalías sin entrenamiento pesado: rápida, explicable y buena primera pasada.",
+          "avoid": "Cuando la anomalía es un patrón complejo y no un valor extremo."
+        }
+      },
+      "pypots": {
+        "gan": {
+          "use": "Imputación que conserva la distribución de la señal, no sólo la media.",
+          "avoid": "Si buscas estabilidad: es el más difícil de entrenar del backend."
+        },
+        "rnn": {
+          "use": "Imputación secuencial cuando los huecos son cortos y el orden local manda.",
+          "avoid": "En huecos largos: el transformer aprovecha mejor el contexto lejano."
+        },
+        "transformer": {
+          "use": "Imputación de huecos usando el contexto de toda la serie y de las demás variables.",
+          "avoid": "Con huecos muy pequeños: una interpolación simple basta y no requiere entrenar."
+        }
+      },
+      "pytorch_forecasting": {
+        "deepar": {
+          "use": "Cuando quieres intervalos de predicción y no sólo un valor puntual.",
+          "avoid": "Si sólo necesitas el punto central: N-HiTS cuesta menos."
+        },
+        "nbeats": {
+          "use": "Predicción univariante potente sin ingeniería de rasgos.",
+          "avoid": "Si tienes covariables externas que importan: no las usa."
+        },
+        "nhits": {
+          "use": "Versión más eficiente de N-BEATS, mejor en horizontes largos.",
+          "avoid": "Cuando necesitas interpretar la descomposición de N-BEATS."
+        },
+        "tft": {
+          "use": "Predicción con varias covariables cuando además hace falta saber qué pesó en el resultado.",
+          "avoid": "Series simples y cortas: es el más caro del backend para poca ganancia."
+        }
+      },
+      "rf_detr": {
+        "rfdetr": {
+          "use": "Buen equilibrio moderno precisión/velocidad, con licencia Apache-2.0 apta para producto cerrado.",
+          "avoid": "Si necesitas resoluciones libres: exige múltiplos de 32 y no baja de 320 px."
+        }
+      },
+      "rt_detr": {
+        "rtdetr": {
+          "use": "Cuando quieres precisión de transformer sin el NMS de YOLO y tienes GPU de sobra.",
+          "avoid": "Con pocas imágenes o GPU chica: converge más lento que YOLO y pide más memoria."
+        },
+        "rtdetrv2": {
+          "use": "Versión afinada de RT-DETR con más tamaños para elegir; la variante S entra donde RT-DETR-L no cabe.",
+          "avoid": "Si el corpus es pequeño: sigue siendo un DETR y necesita más datos que YOLO."
+        }
+      },
+      "sklearn": {
+        "boosting": {
+          "use": "Primera opción en datos tabulares: XGBoost y LightGBM son lo que gana en la práctica.",
+          "avoid": "Con muy pocas filas o cuando hace falta un modelo trivialmente interpretable."
+        },
+        "ensemble": {
+          "use": "Random Forest como línea base sólida que casi no necesita ajuste.",
+          "avoid": "Cuando persigues el máximo rendimiento: boosting suele ganar."
+        },
+        "linear": {
+          "use": "Cuando la interpretabilidad manda o hay muy pocas filas.",
+          "avoid": "Con relaciones no lineales entre variables."
+        },
+        "neighbors": {
+          "use": "Línea base sin supuestos sobre la forma de los datos.",
+          "avoid": "Con muchas columnas: la distancia pierde sentido y el rendimiento cae."
+        },
+        "neural": {
+          "use": "Cuando hay bastantes filas y las interacciones son complejas.",
+          "avoid": "En tabular con pocos datos: boosting gana casi siempre y ajusta menos."
+        },
+        "svm": {
+          "use": "Pocas filas con muchas columnas y frontera no lineal.",
+          "avoid": "Con miles de filas: escala mal frente a boosting."
+        }
+      },
+      "smp": {
+        "deeplab": {
+          "use": "Cuando necesitas campo receptivo amplio sin perder resolución: sus convoluciones dilatadas son la referencia CNN.",
+          "avoid": "Con GPU limitada o pocas imágenes: pesa bastante más que U-Net para ganar poco."
+        },
+        "dpt": {
+          "use": "Predicción densa con transformer cuando la coherencia global de la máscara importa más que el borde.",
+          "avoid": "Si buscas velocidad o tienes poco dato: es de lo más lento de la familia."
+        },
+        "fpn": {
+          "use": "Objetos de escalas variadas con un coste menor que PSPNet o DeepLab.",
+          "avoid": "En objetos de escala uniforme, donde la pirámide no aporta nada."
+        },
+        "linknet": {
+          "use": "La más liviana de la familia: buena para tiempo real o GPU pequeña.",
+          "avoid": "Cuando la frontera del objeto tiene que quedar fina: sacrifica detalle por velocidad."
+        },
+        "manet": {
+          "use": "Cuando los objetos vienen en tamaños muy distintos dentro de la misma imagen: su atención multiescala está para eso.",
+          "avoid": "Si U-Net ya te da el resultado: añade coste sin ganancia garantizada."
+        },
+        "pan": {
+          "use": "Equilibrio entre velocidad y precisión cuando LinkNet se queda corto y U-Net no mejora.",
+          "avoid": "Si ya tienes una U-Net funcionando bien: el cambio rara vez se nota."
+        },
+        "pspnet": {
+          "use": "Escenas con mucho contexto donde importa lo que rodea al objeto, no sólo el objeto.",
+          "avoid": "Con máscaras pequeñas o detalle fino: su agrupación por regiones borra bordes."
+        },
+        "segformer": {
+          "use": "Transformer eficiente: mejor generalización que las CNN con un coste contenido.",
+          "avoid": "Por debajo de unos cientos de imágenes, donde una U-Net con encoder preentrenado gana."
+        },
+        "unet": {
+          "use": "Punto de partida por defecto en segmentación, y el estándar de facto en imagen biomédica. Rinde con pocas máscaras.",
+          "avoid": "En escenas complejas con muchas clases de contexto, donde las arquitecturas de pirámide capturan mejor lo global."
+        },
+        "upernet": {
+          "use": "Escenas complejas multiclase donde hace falta unificar contexto de varias escalas.",
+          "avoid": "Proyectos de una o dos clases: es mucha arquitectura para el problema."
+        }
+      },
+      "stumpy": {
+        "matrix-profile": {
+          "use": "Encontrar motivos y discordancias sin entrenar nada ni etiquetar: pasada exploratoria ideal.",
+          "avoid": "Cuando necesitas un clasificador: describe la señal, no predice etiquetas."
+        }
+      },
+      "timm": {
+        "convnext": {
+          "use": "CNN moderna que alcanza a los transformers necesitando menos datos que ellos. Buen punto medio.",
+          "avoid": "Si el corpus es realmente pequeño: ResNet o EfficientNet siguen siendo más seguros."
+        },
+        "efficientnet": {
+          "use": "Mejor exactitud que ResNet con parecido consumo; buena elección general con datos moderados.",
+          "avoid": "Si necesitas máxima velocidad de inferencia en CPU: MobileNet es más directo."
+        },
+        "eva": {
+          "use": "Cuando quieres el techo de exactitud del catálogo y tienes GPU grande.",
+          "avoid": "Casi siempre en un portátil: pasa de 16 GB de VRAM y es el más lento."
+        },
+        "mobilenet": {
+          "use": "Clasificar en CPU, móvil o navegador con modelos de pocos MB.",
+          "avoid": "Cuando la exactitud manda por encima del tamaño."
+        },
+        "resnet": {
+          "use": "Línea base obligatoria en clasificación: entrena con pocas imágenes, en CPU si hace falta, y es el control contra el que medir todo lo demás.",
+          "avoid": "Cuando persigues el último punto de exactitud y tienes datos y GPU para un transformer."
+        },
+        "swin": {
+          "use": "Transformer jerárquico: buen techo de precisión y mejor con objetos de escalas distintas que ViT.",
+          "avoid": "Con corpus pequeño o GPU limitada."
+        },
+        "vit": {
+          "use": "Con dataset mediano o grande y GPU: generaliza mejor que las CNN y es la base de los backbones biomédicos.",
+          "avoid": "Con pocos cientos de imágenes: sin preentrenamiento fuerte rinde por debajo de un ResNet."
+        }
+      },
+      "tsai": {
+        "cnn": {
+          "use": "Convolución simple: rápida, interpretable y buena línea base.",
+          "avoid": "En patrones de escala muy variable, donde Inception cubre más rangos."
+        },
+        "inception": {
+          "use": "Línea base fuerte en clasificación de series con arquitectura entrenable.",
+          "avoid": "Con muy pocas muestras, donde ROCKET gana con una fracción del coste."
+        },
+        "resnet": {
+          "use": "ResNet 1D: sólida y rápida para clasificar señales.",
+          "avoid": "Cuando hace falta contexto muy largo: un transformer lo captura mejor."
+        },
+        "rnn": {
+          "use": "Secuencias donde el orden manda y la longitud es moderada.",
+          "avoid": "En series largas: es lenta de entrenar y sufre con dependencias distantes."
+        },
+        "rocket": {
+          "use": "Primera opción en series con muy pocas muestras: entrena en segundos y es difícil de superar.",
+          "avoid": "Si necesitas ajustar la arquitectura o interpretar el modelo: no se entrena por gradiente."
+        },
+        "tcn": {
+          "use": "Alternativa convolucional a las RNN: entrena más rápido y capta contexto largo con dilataciones.",
+          "avoid": "Si la señal es corta: una CNN simple basta."
+        },
+        "transformer": {
+          "use": "Series largas con dependencias a distancia, cuando hay datos suficientes.",
+          "avoid": "Con pocos cientos de ventanas: se sobreajusta antes de aprender."
+        },
+        "xception": {
+          "use": "Convolución separable: más capacidad que la CNN simple con coste parecido.",
+          "avoid": "Si Inception ya te sirve: la diferencia suele ser marginal."
+        }
+      },
+      "tslearn": {
+        "kmeans": {
+          "use": "Agrupar series por forma permitiendo desfases temporales, con DTW.",
+          "avoid": "Con muchas series largas: DTW es costoso."
+        },
+        "kshape": {
+          "use": "Agrupar por forma normalizada, invariante a amplitud y desplazamiento.",
+          "avoid": "Si el desfase temporal es lo que quieres capturar: DTW lo maneja mejor."
+        }
+      },
+      "yolo": {
+        "yolo": {
+          "use": "Primera opción para detección: rápido de entrenar, tolera pocos datos y exporta a casi cualquier runtime.",
+          "avoid": "Si necesitas la máxima precisión sin importar la velocidad, o si la licencia AGPL-3.0 no te sirve para distribuir el producto."
+        }
+      }
+    },
+    "filters": {
+      "domain": "Dominio",
+      "fitsIn": "Cabe en",
+      "onlyOpen": "Solo licencia abierta",
+      "noneMatch": "Ningún modelo de este backend cumple los filtros.",
+      "clear": "Quitar filtros"
+    }
+  }
 }

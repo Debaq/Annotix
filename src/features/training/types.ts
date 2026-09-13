@@ -318,6 +318,35 @@ export interface BackendInfo {
   supportsFineTune: boolean;
 }
 
+/**
+ * Ficha de decisión de una familia de modelos: lo que hace falta para saber cuál
+ * usar. La sirve `get_model_families` desde `training/catalog.rs`; los textos de
+ * "cuándo usarlo" viven en i18n (`training.families.items.<backend>.<familia>`).
+ */
+export interface FamilyInfo {
+  /** `"{backend}/{familia}"`. */
+  key: string;
+  backend: string;
+  family: string;
+  /** `general` | `biomedical`. */
+  domains: string[];
+  /** `any` | `series` | `tabular` | modalidades biomédicas. */
+  modalities: string[];
+  /** `le4gb` | `4to8gb` | `8to16gb` | `gt16gb`. */
+  vram: string;
+  /** `fast` | `medium` | `slow`. */
+  speed: string;
+  /** Muestras etiquetadas por debajo de las cuales conviene algo más simple. */
+  minSamples: number;
+  license: string;
+  /** `open` | `gated` | `non_commercial`. */
+  access: string;
+  /** Datos del preentrenamiento, o `none`. */
+  pretrainedOn: string;
+  /** Métrica publicada sobre otro dataset. Ausente cuando no hay cifra comparable. */
+  reference?: string;
+}
+
 export interface BackendModelInfo {
   id: string;
   name: string;

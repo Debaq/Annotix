@@ -511,6 +511,7 @@ pub struct BackendModelInfo {
 }
 
 pub mod backends;
+pub mod catalog;
 pub mod cloud;
 pub mod contract;
 #[cfg(test)]

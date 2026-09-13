@@ -472,7 +472,10 @@ pub async fn delete_training_job(
 #[tauri::command]
 pub fn export_trained_model(model_path: String, format: String) -> Result<String, String> {
     use crate::study::events;
-    study_emit_export(events::EXPORT_START, serde_json::json!({ "format": format }));
+    study_emit_export(
+        events::EXPORT_START,
+        serde_json::json!({ "format": format }),
+    );
 
     let t0 = std::time::Instant::now();
     let res = crate::training::model_export::export_model(&model_path, &format);
@@ -529,6 +532,14 @@ pub fn get_available_backends(project_type: String) -> Result<Vec<BackendInfo>, 
     Ok(crate::training::backends::get_available_backends(
         &project_type,
     ))
+}
+
+/// Fichas de decisión de las familias de modelos: dominio, modalidad, coste,
+/// licencia y desempeño de referencia. Es lo que la UI necesita para que el
+/// usuario sepa cuál elegir; los textos de "cuándo usarlo" salen de i18n.
+#[tauri::command]
+pub fn get_model_families() -> Result<Vec<crate::training::catalog::FamilyInfo>, String> {
+    Ok(crate::training::catalog::families())
 }
 
 /// Cuenta imágenes con al menos 1 anotación. Usa el cache en memoria del

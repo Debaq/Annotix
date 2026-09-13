@@ -1,7 +1,16 @@
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import type { BackendModelInfo, TrainingBackend } from '../types';
 import { SIZE_LABELS } from '../utils/modelMapping';
+import { findFamily, useModelFamilies } from '../hooks/useModelFamilies';
+import { ModelFamilyInfo } from './ModelFamilyInfo';
+import { ModelCatalogFilters } from './ModelCatalogFilters';
+import {
+  FILTROS_VACIOS,
+  pasaFiltros,
+  type CatalogFilters,
+} from '../utils/catalogFilters';
 
 interface BackendModelSelectorProps {
   backend: TrainingBackend;
@@ -22,11 +31,24 @@ export function BackendModelSelector({
 }: BackendModelSelectorProps) {
   const { t } = useTranslation();
   const selectedModel = models.find((m) => m.id === selectedModelId);
+  const { families: catalogo } = useModelFamilies();
+  const [filtros, setFiltros] = useState<CatalogFilters>(FILTROS_VACIOS);
+
+  // Familias presentes en este backend, con su ficha. Las fichas son la fuente de
+  // los filtros: sin catálogo la lista se comporta como antes.
+  const fichasPresentes = useMemo(() => {
+    const vistas = [...new Set(models.map((m) => m.family))];
+    return vistas
+      .map((f) => findFamily(catalogo, backend, f))
+      .filter((f): f is NonNullable<typeof f> => !!f);
+  }, [models, catalogo, backend]);
 
   // For YOLO: version + size grid
   if (backend === 'yolo') {
+    const fichaYolo = findFamily(catalogo, backend, 'yolo');
     return (
       <div className="space-y-4">
+        {fichaYolo && <ModelFamilyInfo info={fichaYolo} />}
         <div>
           <label className="text-sm font-medium mb-2 block">{t('training.model.version')}</label>
           <div className="flex flex-wrap gap-2">
@@ -84,21 +106,41 @@ export function BackendModelSelector({
   }
 
   // For other backends: grouped model list
-  const families = [...new Set(models.map((m) => m.family))];
+  const todasLasFamilias = [...new Set(models.map((m) => m.family))];
+  const families = todasLasFamilias.filter((f) =>
+    pasaFiltros(findFamily(catalogo, backend, f), filtros),
+  );
 
   return (
     <div className="space-y-4">
       <label className="text-sm font-medium block">{t('training.model.selectModel')}</label>
 
+      <ModelCatalogFilters present={fichasPresentes} value={filtros} onChange={setFiltros} />
+
+      {families.length === 0 && (
+        <div className="text-xs text-muted-foreground space-y-2 py-2">
+          <p>{t('training.families.filters.noneMatch')}</p>
+          <button
+            type="button"
+            onClick={() => setFiltros(FILTROS_VACIOS)}
+            className="text-blue-500 hover:underline"
+          >
+            {t('training.families.filters.clear')}
+          </button>
+        </div>
+      )}
+
       {families.map((family) => {
         const familyModels = models.filter((m) => m.family === family);
+        const ficha = findFamily(catalogo, backend, family);
         return (
           <div key={family} className="space-y-2">
-            {families.length > 1 && (
+            {todasLasFamilias.length > 1 && (
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 {family}
               </p>
             )}
+            {ficha && <ModelFamilyInfo info={ficha} />}
             <div className="grid gap-2">
               {familyModels.map((model) => (
                 <button

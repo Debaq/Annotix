@@ -9,6 +9,7 @@ import type {
   BackendInfo,
   TrainingRequest,
   CloudProviderConfig,
+  FamilyInfo,
 } from '../types';
 
 export const trainingService = {
@@ -67,6 +68,10 @@ export const trainingService = {
   // Multi-backend API
   getAvailableBackends(projectType: string): Promise<BackendInfo[]> {
     return invoke('get_available_backends', { projectType });
+  },
+
+  getModelFamilies(): Promise<FamilyInfo[]> {
+    return invoke('get_model_families');
   },
 
   installBackendPackages(backend: string): Promise<void> {

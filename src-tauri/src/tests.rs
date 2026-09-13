@@ -1271,7 +1271,13 @@ fn background_images_stay_out_of_classification() {
 fn background_flag_does_not_erase_annotations() {
     // Marcar fondo y luego anotar no debe perder las cajas: manda lo anotado.
     let classes = default_classes();
-    let mut img = image_entry("a.png", "a.png", 100, 100, vec![bbox_ann(0, 1.0, 1.0, 5.0, 5.0)]);
+    let mut img = image_entry(
+        "a.png",
+        "a.png",
+        100,
+        100,
+        vec![bbox_ann(0, 1.0, 1.0, 5.0, 5.0)],
+    );
     img.is_background = true;
 
     let kept = dataset::select_trainable_images(vec![img], &classes, true);
@@ -2609,4 +2615,162 @@ fn simplify_respects_the_tolerance() {
     ];
     assert_eq!(simplify_trajectory(&samples, 0.5).len(), 3);
     assert_eq!(simplify_trajectory(&samples, 5.0).len(), 2);
+}
+
+// ─── Tests: catálogo de familias de modelos ─────────────────────────────────
+
+/// Todo modelo publicado tiene que tener ficha de decisión, y toda ficha tiene que
+/// corresponder a un modelo real. Sin esto, agregar un modelo con una familia nueva
+/// deja un hueco silencioso en la UI: el usuario ve el modelo y no ve con qué
+/// criterio elegirlo.
+#[test]
+fn cada_familia_publicada_tiene_ficha_y_cada_ficha_tiene_modelos() {
+    use crate::training::{backends, catalog};
+    use std::collections::BTreeSet;
+
+    // Todos los tipos de proyecto, para barrer los 17 backends.
+    const TIPOS: &[&str] = &[
+        "bbox",
+        "mask",
+        "polygon",
+        "instance-segmentation",
+        "keypoints",
+        "landmarks",
+        "obb",
+        "classification",
+        "multi-label-classification",
+        "timeseries-classification",
+        "timeseries-forecasting",
+        "anomaly-detection",
+        "timeseries-segmentation",
+        "pattern-recognition",
+        "event-detection",
+        "timeseries-regression",
+        "clustering",
+        "imputation",
+        "tabular",
+    ];
+
+    let mut publicadas: BTreeSet<(String, String)> = BTreeSet::new();
+    for tipo in TIPOS {
+        for backend in backends::get_available_backends(tipo) {
+            for modelo in &backend.models {
+                publicadas.insert((backend.id.clone(), modelo.family.clone()));
+            }
+        }
+    }
+    assert!(
+        publicadas.len() > 50,
+        "el barrido de tipos de proyecto sólo encontró {} familias; \
+         ¿se dejó fuera algún backend?",
+        publicadas.len()
+    );
+
+    let fichadas: BTreeSet<(String, String)> = catalog::families()
+        .into_iter()
+        .map(|f| (f.backend, f.family))
+        .collect();
+
+    let sin_ficha: Vec<_> = publicadas.difference(&fichadas).collect();
+    assert!(
+        sin_ficha.is_empty(),
+        "estas familias se publican en el selector y no tienen ficha en \
+         training/catalog.rs: {sin_ficha:?}"
+    );
+
+    let huerfanas: Vec<_> = fichadas.difference(&publicadas).collect();
+    assert!(
+        huerfanas.is_empty(),
+        "estas fichas no corresponden a ningún modelo publicado: {huerfanas:?}"
+    );
+}
+
+/// Los valores de los ejes son un vocabulario cerrado: la UI traduce y agrupa por
+/// ellos, así que un valor suelto no se muestra mal — desaparece.
+#[test]
+fn las_fichas_usan_el_vocabulario_esperado() {
+    use crate::training::catalog;
+
+    const DOMINIOS: &[&str] = &["general", "biomedical"];
+    const VRAM: &[&str] = &["le4gb", "4to8gb", "8to16gb", "gt16gb"];
+    const VELOCIDAD: &[&str] = &["fast", "medium", "slow"];
+    const ACCESO: &[&str] = &["open", "gated", "non_commercial"];
+    const MODALIDADES: &[&str] = &[
+        "any",
+        "series",
+        "tabular",
+        "ct",
+        "mri",
+        "xray",
+        "microscopy",
+        "wsi",
+        "fundus",
+        "oct",
+        "ultrasound",
+        "ecg",
+        "eeg",
+    ];
+
+    for f in catalog::families() {
+        let k = &f.key;
+        assert!(!f.domains.is_empty(), "{k}: sin dominio");
+        for d in &f.domains {
+            assert!(
+                DOMINIOS.contains(&d.as_str()),
+                "{k}: dominio '{d}' no válido"
+            );
+        }
+        assert!(!f.modalities.is_empty(), "{k}: sin modalidad");
+        for m in &f.modalities {
+            assert!(
+                MODALIDADES.contains(&m.as_str()),
+                "{k}: modalidad '{m}' no válida"
+            );
+        }
+        assert!(
+            VRAM.contains(&f.vram.as_str()),
+            "{k}: vram '{}' no válida",
+            f.vram
+        );
+        assert!(
+            VELOCIDAD.contains(&f.speed.as_str()),
+            "{k}: velocidad '{}' no válida",
+            f.speed
+        );
+        assert!(
+            ACCESO.contains(&f.access.as_str()),
+            "{k}: acceso '{}' no válido",
+            f.access
+        );
+        assert!(f.min_samples > 0, "{k}: min_samples en 0 no orienta nada");
+        assert!(!f.license.is_empty(), "{k}: sin licencia");
+        assert!(
+            !f.pretrained_on.is_empty(),
+            "{k}: sin origen de preentrenamiento"
+        );
+    }
+}
+
+/// La clave es el par (backend, familia) y no la familia sola, porque `resnet` en
+/// `timm` clasifica imágenes y `resnet` en `tsai` es una red 1D para series.
+#[test]
+fn una_misma_familia_en_dos_backends_son_fichas_distintas() {
+    use crate::training::catalog;
+
+    let resnet: Vec<_> = catalog::families()
+        .into_iter()
+        .filter(|f| f.family == "resnet")
+        .collect();
+    assert!(
+        resnet.len() >= 2,
+        "se esperaban varias fichas 'resnet' en backends distintos"
+    );
+    let modalidades: Vec<_> = resnet.iter().map(|f| f.modalities.clone()).collect();
+    assert!(
+        modalidades.iter().any(|m| m.contains(&"any".to_string()))
+            && modalidades
+                .iter()
+                .any(|m| m.contains(&"series".to_string())),
+        "las fichas 'resnet' no distinguen imagen de serie temporal: {modalidades:?}"
+    );
 }
