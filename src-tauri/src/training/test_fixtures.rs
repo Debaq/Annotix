@@ -215,7 +215,7 @@ pub fn model_id_real(backend: &TrainingBackend) -> &'static str {
     match backend {
         TrainingBackend::Yolo => "yolo11",
         TrainingBackend::RtDetr => "rtdetr-l",
-        TrainingBackend::RfDetr => "RFDETRBase",
+        TrainingBackend::RfDetr => "RFDETRMedium",
         TrainingBackend::MmDetection => "cascade-rcnn_r50_fpn",
         TrainingBackend::Smp => "DeepLabV3Plus-resnet50",
         TrainingBackend::HfSegmentation => "nvidia/segformer-b0-finetuned-ade-512-512",
@@ -235,16 +235,10 @@ pub fn model_id_real(backend: &TrainingBackend) -> &'static str {
     }
 }
 
-/// Resolución mínima con la que el backend funciona.
-///
-/// 64 px basta para casi todos y mantiene los smoke tests en segundos. RT-DETR no:
-/// su selección top-k sobre los tokens del feature map se queda sin índices y
-/// aborta con "selected index k out of range" por debajo de ~320 px.
+/// Resolución del fixture: la mínima que el backend acepta, pero nunca menos de 64
+/// px, que es lo que mantiene los smoke tests en segundos.
 pub fn image_size_minima(backend: &TrainingBackend) -> u32 {
-    match backend {
-        TrainingBackend::RtDetr => 320,
-        _ => 64,
-    }
+    crate::training::backends::min_image_size(backend).max(64)
 }
 
 pub fn request(backend: TrainingBackend, task: &str) -> TrainingRequest {

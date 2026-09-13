@@ -1034,8 +1034,23 @@ pub fn prepare_tabular_dataset(
     let dest = output_dir.join("data.csv");
     std::fs::copy(&src, &dest).map_err(|e| format!("Error copiando CSV tabular: {}", e))?;
 
+    // La columna objetivo se eligió al importar el CSV y vive en el proyecto. Sin
+    // esto el script depende de que la UI la reenvíe en `backendParams`, y no lo
+    // hace: el entrenamiento tabular fallaba siempre con "Target column '' not found".
+    let meta = serde_json::json!({
+        "target_column": entry.target_column,
+        "feature_columns": entry.feature_columns,
+        "task_type": entry.task_type,
+    });
+    std::fs::write(
+        output_dir.join("tabular_meta.json"),
+        serde_json::to_string_pretty(&meta).unwrap_or_default(),
+    )
+    .map_err(|e| format!("Error escribiendo tabular_meta.json: {}", e))?;
+
     let mut ds = PreparedDataset::new(output_dir, DatasetFormat::TabularCsv, class_names(project));
-    ds.declare(keys::TABLE_CSV, "data.csv");
+    ds.declare(keys::TABLE_CSV, "data.csv")
+        .declare(keys::TABLE_META, "tabular_meta.json");
     Ok(ds)
 }
 

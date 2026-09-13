@@ -1,4 +1,4 @@
-use super::{BackendInfo, BackendModelInfo, DatasetFormat};
+use super::{BackendInfo, BackendModelInfo, DatasetFormat, TrainingBackend};
 
 /// Maps project type to training task
 fn project_type_to_task(project_type: &str) -> &str {
@@ -22,6 +22,20 @@ fn project_type_to_task(project_type: &str) -> &str {
         "imputation" => "ts_impute",
         "tabular" => "tabular",
         _ => "detect",
+    }
+}
+
+/// Resolución mínima con la que un backend puede entrenar.
+///
+/// No es una preferencia estética: RT-DETR hace una selección top-k sobre los tokens
+/// del feature map y por debajo de ~320 px se queda sin índices, abortando con
+/// `RuntimeError: selected index k out of range`, que al usuario no le dice nada.
+/// RF-DETR además exige múltiplos de 32 (lo ajusta su propio script).
+pub fn min_image_size(backend: &TrainingBackend) -> u32 {
+    match backend {
+        TrainingBackend::RtDetr | TrainingBackend::RfDetr => 320,
+        // El resto entrena con recortes pequeños sin problema.
+        _ => 32,
     }
 }
 
@@ -360,16 +374,6 @@ fn build_rfdetr_backend(task: &str) -> BackendInfo {
             params_count: Some("22M".into()),
             tasks: vec!["detect".into()],
             sizes: None,
-            recommended: false,
-        },
-        BackendModelInfo {
-            id: "RFDETRBase".into(),
-            name: "RF-DETR Base".into(),
-            family: "rfdetr".into(),
-            description: "Standard model — best accuracy/speed trade-off".into(),
-            params_count: Some("29M".into()),
-            tasks: vec!["detect".into()],
-            sizes: None,
             recommended: true,
         },
         BackendModelInfo {
@@ -385,16 +389,25 @@ fn build_rfdetr_backend(task: &str) -> BackendInfo {
     ];
 
     if task == "segment" {
-        models.push(BackendModelInfo {
-            id: "RFDETRBaseSeg".into(),
-            name: "RF-DETR Base Seg (preview)".into(),
-            family: "rfdetr".into(),
-            description: "Instance segmentation — preview release".into(),
-            params_count: Some("31M".into()),
-            tasks: vec!["segment".into()],
-            sizes: None,
-            recommended: false,
-        });
+        // Los nombres de las clases de segmentación son RFDETRSeg*; `RFDETRBaseSeg`
+        // no existe en la librería y el script fallaba con ImportError al importarlo.
+        for (id, name, params, recommended) in [
+            ("RFDETRSegNano", "RF-DETR Seg Nano", "4M", false),
+            ("RFDETRSegSmall", "RF-DETR Seg Small", "10M", false),
+            ("RFDETRSegMedium", "RF-DETR Seg Medium", "24M", true),
+            ("RFDETRSegLarge", "RF-DETR Seg Large", "130M", false),
+        ] {
+            models.push(BackendModelInfo {
+                id: id.into(),
+                name: name.into(),
+                family: "rfdetr".into(),
+                description: "Segmentación por instancias con RF-DETR".into(),
+                params_count: Some(params.into()),
+                tasks: vec!["segment".into()],
+                sizes: None,
+                recommended,
+            });
+        }
     }
 
     let models: Vec<BackendModelInfo> = models
@@ -409,7 +422,9 @@ fn build_rfdetr_backend(task: &str) -> BackendInfo {
         supported_tasks: vec!["detect".into(), "segment".into()],
         models,
         dataset_format: DatasetFormat::CocoJson,
-        pip_packages: vec!["rfdetr".into()],
+        // El extra [train] trae pytorch-lightning y compañía: sin él `train()`
+        // aborta pidiéndolo, ya con los pesos descargados.
+        pip_packages: vec!["rfdetr[train]".into()],
     }
 }
 

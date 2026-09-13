@@ -167,6 +167,16 @@ impl TrainingProcessManager {
             return Err("Entorno Python no configurado. Ejecuta setup primero.".to_string());
         }
 
+        // Validar la resolución antes de preparar nada: algunos backends mueren con
+        // un error indescifrable si es demasiado baja (ver backends::min_image_size).
+        let minima = super::backends::min_image_size(&request.backend);
+        if request.image_size < minima {
+            return Err(format!(
+                "{:?} necesita al menos {} px de resolución (se pidieron {}).",
+                request.backend, minima, request.image_size
+            ));
+        }
+
         let project_dir = state.project_dir(project_id)?;
         let images_dir = state.project_images_dir(project_id)?;
         let job_id_owned = job_id.to_string();

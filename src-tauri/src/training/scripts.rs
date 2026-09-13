@@ -620,7 +620,9 @@ if __name__ == "__main__":
 pub fn generate_rfdetr_script(req: &TrainingRequest, sp: &ScriptPaths) -> String {
     let bp = &req.backend_params;
     let model_class = &req.model_id; // e.g. "RFDETRBase"
-    let resolution = bp.get("resolution").and_then(|v| v.as_u64()).unwrap_or(560);
+                                     // RF-DETR exige que la resolución sea múltiplo de 32 (patch_size 16 × 2 ventanas).
+                                     // El 560 que había por defecto no lo es y la librería aborta antes de entrenar.
+    let resolution = bp.get("resolution").and_then(|v| v.as_u64()).unwrap_or(576);
     let lr_encoder = bp
         .get("lr_encoder")
         .and_then(|v| v.as_f64())
@@ -654,44 +656,88 @@ import os
 def main():
     from rfdetr import {model_class}
 
-    model = {model_class}()
-
     dataset_dir = DATASET_DIR
     output_dir = os.path.join(dataset_dir, "train_output")
     os.makedirs(output_dir, exist_ok=True)
 
-    # Callback for epoch metrics
-    def on_epoch_end(metrics_dict):
-        epoch = metrics_dict.get("epoch", 0)
-        total = {epochs}
-        progress = (epoch / total) * 100.0
-        metrics = {{
-            "trainLoss": metrics_dict.get("train_loss", None),
-            "valLoss": metrics_dict.get("test_loss", None),
-        }}
-        event = {{
-            "type": "epoch",
-            "epoch": epoch,
-            "totalEpochs": total,
-            "progress": progress,
-            "metrics": metrics,
-        }}
-        print("ANNOTIX_EVENT:" + json.dumps(event), flush=True)
+    # La resolución tiene que ser múltiplo de 32 (patch_size 16 × 2 ventanas); se
+    # ajusta en vez de dejar que la librería aborte.
+    RESOLUTION = max(32, int(round({resolution} / 32)) * 32)
+    if RESOLUTION != {resolution}:
+        print(f"Resolución ajustada de {resolution} a {{RESOLUTION}} (múltiplo de 32)", flush=True)
 
-    if hasattr(model, 'callbacks') and "on_fit_epoch_end" in model.callbacks:
-        model.callbacks["on_fit_epoch_end"].append(on_epoch_end)
+    # `resolution` y `gradient_checkpointing` son del modelo, no del entrenamiento:
+    # pasarlos a train() hace que rfdetr aborte con ValidationError de pydantic.
+    model = {model_class}(
+        resolution=RESOLUTION,
+        gradient_checkpointing={gradient_checkpointing},
+    )
+
+    # Progreso por época.
+    #
+    # RF-DETR entrena sobre PyTorch Lightning y su `train()` no acepta callbacks:
+    # el `model.callbacks["on_fit_epoch_end"]` que había aquí era un dict vacío, así
+    # que el gráfico en vivo nunca recibía nada. Se engancha un callback de Lightning
+    # envolviendo el `build_trainer` que usa rfdetr.detr, que es el punto por donde
+    # pasa sí o sí.
+    from pytorch_lightning.callbacks import Callback as _PLCallback
+    import rfdetr.detr as _rfdetr_detr
+
+    def _num(v):
+        try:
+            return float(v.item() if hasattr(v, "item") else v)
+        except (TypeError, ValueError):
+            return None
+
+    class _AnnotixProgress(_PLCallback):
+        def on_train_epoch_end(self, trainer, pl_module):
+            crudas = {{k: _num(v) for k, v in dict(trainer.callback_metrics).items()}}
+            crudas = {{k: v for k, v in crudas.items() if v is not None}}
+
+            def buscar(*fragmentos):
+                for k, v in crudas.items():
+                    kl = k.lower()
+                    if all(f in kl for f in fragmentos):
+                        return v
+                return None
+
+            metrics = {{
+                "trainLoss": buscar("train", "loss"),
+                "valLoss": buscar("val", "loss"),
+                "mAP50_95": buscar("map") if buscar("map50") is None else buscar("map", "50", "95"),
+                "mAP50": buscar("map50"),
+            }}
+            metrics = {{k: v for k, v in metrics.items() if v is not None}}
+
+            epoch = int(trainer.current_epoch) + 1
+            total = int(trainer.max_epochs or {epochs})
+            print("ANNOTIX_EVENT:" + json.dumps({{
+                "type": "epoch",
+                "epoch": epoch,
+                "totalEpochs": total,
+                "progress": (epoch / max(1, total)) * 100.0,
+                "metrics": metrics,
+            }}), flush=True)
+
+    _build_original = _rfdetr_detr.build_trainer
+
+    def _build_con_progreso(*args, **kwargs):
+        trainer = _build_original(*args, **kwargs)
+        trainer.callbacks.append(_AnnotixProgress())
+        return trainer
+
+    _rfdetr_detr.build_trainer = _build_con_progreso
 
     model.train(
         dataset_dir=dataset_dir,
         epochs={epochs},
         batch_size={batch},
-        resolution={resolution},
         lr={lr},
         lr_encoder={lr_encoder},
         grad_accum_steps={grad_accum},
         use_ema={use_ema},
         weight_decay={weight_decay},
-        gradient_checkpointing={gradient_checkpointing},
+        output_dir=output_dir,
     )
 
     # Find best checkpoint
@@ -932,6 +978,39 @@ if __name__ == "__main__":
 
 // ─── Script Router ───────────────────────────────────────────────────────────
 
+/// Bloque Python que adapta los argumentos del `Trainer` a la versión instalada.
+///
+/// `transformers` 5 quitó `warmup_ratio` y renombró `evaluation_strategy` a
+/// `eval_strategy`; en 4.x es al revés. Pasar el nombre equivocado no degrada nada:
+/// `TrainingArguments` levanta `TypeError` y el entrenamiento no arranca. En vez de
+/// fijar una versión, se traduce en tiempo de ejecución.
+fn hf_training_args_compat() -> &'static str {
+    r#"
+def _hf_training_args(cls, kwargs, n_train, batch, epochs, warmup_ratio):
+    """Filtra y traduce los argumentos del Trainer segun la version instalada."""
+    import inspect, math
+    allowed = set(inspect.signature(cls.__init__).parameters)
+    out = dict(kwargs)
+
+    # eval_strategy (transformers 5) <-> evaluation_strategy (transformers 4)
+    if "eval_strategy" in out and "eval_strategy" not in allowed and "evaluation_strategy" in allowed:
+        out["evaluation_strategy"] = out.pop("eval_strategy")
+
+    # warmup_ratio ya no existe en 5.x: se traduce a pasos reales
+    if warmup_ratio and warmup_ratio > 0:
+        if "warmup_ratio" in allowed:
+            out["warmup_ratio"] = warmup_ratio
+        elif "warmup_steps" in allowed:
+            pasos = math.ceil(max(1, n_train) / max(1, batch)) * max(1, epochs)
+            out["warmup_steps"] = max(1, int(pasos * warmup_ratio))
+
+    descartados = sorted(k for k in out if k not in allowed)
+    if descartados:
+        print(f"Aviso: esta version de transformers ignora {descartados}", file=sys.stderr)
+    return {k: v for k, v in out.items() if k in allowed}
+"#
+}
+
 /// Valor del argumento `data=` de ultralytics para una tarea.
 ///
 /// En detección, segmentación, pose y OBB es el `data.yaml`. En clasificación
@@ -1166,7 +1245,7 @@ pub fn generate_train_script_for_backend(
             one("train.py", generate_stumpy_script(req, &sp))
         }
         TrainingBackend::Sklearn => {
-            let sp = ds.script_paths(&[keys::TABLE_CSV])?;
+            let sp = ds.script_paths(&[keys::TABLE_CSV, keys::TABLE_META])?;
             one("train.py", generate_sklearn_script(req, &sp))
         }
     }
@@ -1176,7 +1255,7 @@ pub fn generate_train_script_for_backend(
 pub fn get_requirements_for_backend(backend: &TrainingBackend) -> Vec<&'static str> {
     match backend {
         TrainingBackend::Yolo | TrainingBackend::RtDetr => vec!["ultralytics"],
-        TrainingBackend::RfDetr => vec!["rfdetr", "torch", "torchvision"],
+        TrainingBackend::RfDetr => vec!["rfdetr[train]", "torch", "torchvision"],
         TrainingBackend::MmDetection => vec![
             "openmim",
             "mmengine",
@@ -1193,6 +1272,7 @@ pub fn get_requirements_for_backend(backend: &TrainingBackend) -> Vec<&'static s
         ],
         TrainingBackend::HfSegmentation => vec![
             "transformers",
+            "accelerate",
             "datasets",
             "evaluate",
             "torch",
@@ -1228,6 +1308,7 @@ pub fn get_requirements_for_backend(backend: &TrainingBackend) -> Vec<&'static s
         TrainingBackend::Timm => vec!["timm", "torch", "torchvision"],
         TrainingBackend::HfClassification => vec![
             "transformers",
+            "accelerate",
             "datasets",
             "evaluate",
             "torch",
@@ -1382,7 +1463,11 @@ def main():
     train_ds = SegDataset(IMAGES_TRAIN, MASKS_TRAIN, train_transform)
     val_ds = SegDataset(IMAGES_VAL, MASKS_VAL, val_transform)
 
-    train_loader = DataLoader(train_ds, batch_size={batch}, shuffle=True, num_workers={workers}, pin_memory=True)
+    # drop_last: si el último lote queda con una sola muestra, BatchNorm aborta con
+    # "Expected more than 1 value per channel when training". Se descarta ese lote,
+    # salvo que el set sea tan pequeño que descartarlo lo dejaría vacío.
+    _drop_last = len(train_ds) > {batch}
+    train_loader = DataLoader(train_ds, batch_size={batch}, shuffle=True, num_workers={workers}, pin_memory=True, drop_last=_drop_last)
     val_loader = DataLoader(val_ds, batch_size={batch}, shuffle=False, num_workers={workers}, pin_memory=True)
 
     # Optimizer & scheduler
@@ -1559,6 +1644,7 @@ import numpy as np
 from pathlib import Path
 
 {header}
+{hf_compat}
 
 def main():
     import torch
@@ -1637,14 +1723,13 @@ def main():
     )
 
     # Training args
-    training_args = TrainingArguments(
+    _ta = dict(
         output_dir=output_dir,
         num_train_epochs={epochs},
         per_device_train_batch_size={batch},
         per_device_eval_batch_size={batch},
         learning_rate={lr},
         lr_scheduler_type="{lr_scheduler_type}",
-        warmup_ratio={warmup_ratio},
         weight_decay={weight_decay},
         eval_strategy="epoch",
         save_strategy="epoch",
@@ -1656,6 +1741,11 @@ def main():
         dataloader_num_workers={workers},
         logging_steps=10,
         remove_unused_columns=False,
+    )
+    training_args = TrainingArguments(
+        **_hf_training_args(
+            TrainingArguments, _ta, len(train_ds), {batch}, {epochs}, {warmup_ratio}
+        )
     )
 
     # Metrics
@@ -1762,6 +1852,7 @@ if __name__ == "__main__":
 "#,
         model_checkpoint = model_checkpoint,
         header = sp.header,
+        hf_compat = hf_training_args_compat(),
         num_classes = sp.num_classes,
         do_reduce_labels = py_bool(do_reduce_labels),
         epochs = req.epochs,
@@ -2656,7 +2747,11 @@ def main():
         val_transform,
     )
 
-    train_loader = DataLoader(train_ds, batch_size={batch}, shuffle=True, num_workers={workers}, pin_memory=True)
+    # drop_last: si el último lote queda con una sola muestra, BatchNorm aborta con
+    # "Expected more than 1 value per channel when training". Se descarta ese lote,
+    # salvo que el set sea tan pequeño que descartarlo lo dejaría vacío.
+    _drop_last = len(train_ds) > {batch}
+    train_loader = DataLoader(train_ds, batch_size={batch}, shuffle=True, num_workers={workers}, pin_memory=True, drop_last=_drop_last)
     val_loader = DataLoader(val_ds, batch_size={batch}, shuffle=False, num_workers={workers}, pin_memory=True)
 
     # Loss, optimizer, scheduler
@@ -2823,6 +2918,7 @@ import numpy as np
 from pathlib import Path
 
 {header}
+{hf_compat}
 
 def main():
     import torch
@@ -2952,14 +3048,13 @@ def main():
                 }}
                 print("ANNOTIX_EVENT:" + json.dumps(event), flush=True)
 
-    training_args = TrainingArguments(
+    _ta = dict(
         output_dir=output_dir,
         num_train_epochs={epochs},
         per_device_train_batch_size={batch},
         per_device_eval_batch_size={batch},
         learning_rate={lr},
         lr_scheduler_type="{lr_scheduler_type}",
-        warmup_ratio={warmup_ratio},
         weight_decay={weight_decay},
         eval_strategy="epoch",
         save_strategy="epoch",
@@ -2971,6 +3066,11 @@ def main():
         dataloader_num_workers={workers},
         logging_steps=10,
         remove_unused_columns=False,
+    )
+    training_args = TrainingArguments(
+        **_hf_training_args(
+            TrainingArguments, _ta, len(train_ds), {batch}, {epochs}, {warmup_ratio}
+        )
     )
 
     trainer = Trainer(
@@ -3008,6 +3108,7 @@ if __name__ == "__main__":
 "#,
         model_checkpoint = model_checkpoint,
         header = sp.header,
+        hf_compat = hf_training_args_compat(),
         num_classes = sp.num_classes,
         epochs = req.epochs,
         batch = req.batch_size,
@@ -4024,12 +4125,20 @@ def main():
     df = pd.read_csv(csv_path)
     print(f"Dataset: {{df.shape[0]}} rows, {{df.shape[1]}} columns")
 
-    target_column = "{target_column}"
-    feature_columns = json.loads('{feature_columns_json}')
-    task_type_override = "{task_type_override}"
+    # Lo que llega en backendParams manda; si no llega, valen los metadatos que
+    # dejó la importación del CSV (ver dataset::prepare_tabular_dataset).
+    with open(TABLE_META) as _f:
+        _meta = json.load(_f)
+
+    target_column = "{target_column}" or (_meta.get("target_column") or "")
+    feature_columns = json.loads('{feature_columns_json}') or (_meta.get("feature_columns") or [])
+    task_type_override = "{task_type_override}" or (_meta.get("task_type") or "")
 
     if not target_column or target_column not in df.columns:
-        print("ANNOTIX_EVENT:" + json.dumps({{"type": "error", "message": f"Target column '{{target_column}}' not found"}}))
+        print("ANNOTIX_EVENT:" + json.dumps({{
+            "type": "error",
+            "message": f"Columna objetivo '{{target_column}}' no encontrada. Columnas: {{list(df.columns)}}",
+        }}))
         sys.exit(1)
 
     # Auto-select features if not specified
@@ -4107,22 +4216,22 @@ def main():
     model = build_model(model_id, task_type)
     pipeline = Pipeline(steps=[('preprocessor', preprocessor), ('model', model)])
 
-    # Report progress: training start
-    print("ANNOTIX_EVENT:" + json.dumps({{
-        "type": "progress",
-        "epoch": 1, "total_epochs": 3, "phase": "training",
-        "metrics": {{}}
-    }}))
+    # Etapas como "épocas": sklearn no itera, pero la UI necesita avance.
+    def _etapa(n, metrics=None):
+        print("ANNOTIX_EVENT:" + json.dumps({{
+            "type": "epoch",
+            "epoch": n,
+            "totalEpochs": 3,
+            "progress": (n / 3.0) * 100.0,
+            "metrics": metrics or {{}},
+        }}, default=str), flush=True)
+
+    _etapa(1)
 
     # Fit
     pipeline.fit(X_train, y_train)
 
-    # Report progress: evaluation
-    print("ANNOTIX_EVENT:" + json.dumps({{
-        "type": "progress",
-        "epoch": 2, "total_epochs": 3, "phase": "evaluating",
-        "metrics": {{}}
-    }}))
+    _etapa(2)
 
     # Evaluate
     y_pred = pipeline.predict(X_val)
@@ -4235,13 +4344,10 @@ def main():
         "finalMetrics": metrics,
         "exportedModels": exported,
     }}
-    print("ANNOTIX_EVENT:" + json.dumps(result, default=str))
-
-    print("ANNOTIX_EVENT:" + json.dumps({{
-        "type": "progress",
-        "epoch": 3, "total_epochs": 3, "phase": "completed",
-        "metrics": metrics
-    }}, default=str))
+    # La etapa final va antes de `completed`: el runner deja de escuchar épocas
+    # en cuanto lo recibe.
+    _etapa(3, metrics)
+    print("ANNOTIX_EVENT:" + json.dumps(result, default=str), flush=True)
 
 
 def build_model(model_id, task_type):

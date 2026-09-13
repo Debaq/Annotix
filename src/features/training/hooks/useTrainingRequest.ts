@@ -108,7 +108,7 @@ const DEFAULT_BACKEND_PARAMS: Record<TrainingBackend, Record<string, unknown>> =
     freeze: null,
   },
   rf_detr: {
-    resolution: 560,
+    resolution: 576,
     lr_encoder: 0.00001,
     grad_accum_steps: 4,
     use_ema: true,

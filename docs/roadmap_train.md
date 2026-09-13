@@ -9,6 +9,37 @@ sospechas.
 
 ---
 
+## 0. Verificado con corridas reales (2026-09-12)
+
+La auditoría de abajo se hizo leyendo código. Después se construyó el arnés
+(`scripts/train_smoke.sh` + `src-tauri/src/training/smoke_tests.rs`), que prepara un
+proyecto sintético y **entrena de verdad** 2 épocas en CPU. Eso confirmó lo leído y
+destapó ocho bugs más que ninguna lectura habría encontrado, todos ya corregidos:
+
+| Backend | Fallo real | Estado |
+|---|---|---|
+| `yolo` (classify) | Recibía el `data.yaml`; ultralytics exige un **directorio** en clasificación ("Classification datasets must be a directory"). La clasificación con YOLO nunca pudo entrenar | ✅ `ultralytics_data_arg` |
+| `sklearn` | `target_column` no lo setea **ninguna** UI (queda `''` en `useTrainingRequest`): fallaba siempre con "Target column '' not found" | ✅ los metadatos del CSV viajan con el dataset (`tabular_meta.json`) |
+| `sklearn` | Emitía `{"type":"progress", "total_epochs":…}`, que el runner descarta: la UI no mostraba avance | ✅ emite el evento canónico `epoch`/`totalEpochs` |
+| `hf_segmentation`, `hf_classification` | `accelerate` no estaba en los requirements y el `Trainer` lo exige: abortaba con el modelo ya cargado | ✅ añadido a requirements e instalador |
+| `hf_segmentation`, `hf_classification` | `warmup_ratio` y `evaluation_strategy` no existen en transformers 5 (`TypeError` al construir `TrainingArguments`) | ✅ adaptador que traduce según la versión instalada |
+| `smp`, `timm` | Con un lote final de una sola muestra, BatchNorm aborta ("Expected more than 1 value per channel") | ✅ `drop_last` cuando el set lo permite |
+| `rf_detr` | El catálogo recomendaba `RFDETRBase`, deprecado desde rfdetr 1.7, y ofrecía `RFDETRBaseSeg`, que no existe en la librería | ✅ recomendado `RFDETRMedium`; segmentación con las clases `RFDETRSeg*` reales |
+| `rf_detr` | Faltaba el extra `[train]` (pytorch-lightning): abortaba tras descargar 386 MB de pesos | ✅ `rfdetr[train]` |
+| `rf_detr` | `resolution` por defecto 560, que no es múltiplo de 32 y la librería rechaza; y `resolution`/`gradient_checkpointing` se pasaban a `train()` cuando son del constructor | ✅ 576 por defecto, ajuste automático y argumentos en su sitio |
+| `rf_detr` | No se pasaba `output_dir`: los checkpoints caían en el directorio de trabajo | ✅ |
+
+Pendiente que salió de lo mismo, sin arreglar todavía:
+
+- **RT-DETR por debajo de ~320 px** muere con `RuntimeError: selected index k out of
+  range`, que no dice nada al usuario. Hace falta un mínimo de `imgsz` por backend,
+  validado en la UI.
+
+Estado del smoke hoy: `yolo` (detect/segment/classify), `rt_detr`, `smp`,
+`hf_segmentation` y `sklearn` en verde.
+
+---
+
 ## 1. Resumen ejecutivo
 
 19 backends declarados en `TrainingBackend`. Estado real:

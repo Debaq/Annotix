@@ -36,7 +36,8 @@ const RTDETR_PARAMS: ParamDefinition[] = [
 ];
 
 const RFDETR_PARAMS: ParamDefinition[] = [
-  { key: 'resolution', type: 'number', min: 56, max: 1568, step: 56 },
+  // Múltiplos de 32: RF-DETR rechaza cualquier otro valor.
+  { key: 'resolution', type: 'number', min: 320, max: 1568, step: 32 },
   { key: 'lr_encoder', type: 'number', min: 0.000001, max: 0.01, step: 0.000001 },
   { key: 'grad_accum_steps', type: 'number', min: 1, max: 16 },
   { key: 'use_ema', type: 'checkbox' },
@@ -258,7 +259,7 @@ export const DEFAULT_VALUES: Record<string, Record<string, unknown>> = {
   },
   rf_detr: {
     epochs: 100, batchSize: 16, lr: 0.0004, valSplit: 0.2,
-    resolution: 560, lr_encoder: 0.00001, grad_accum_steps: 4,
+    resolution: 576, lr_encoder: 0.00001, grad_accum_steps: 4,
     use_ema: true, early_stopping: true, weight_decay: 0.0001, gradient_checkpointing: false,
   },
   mmdetection: {

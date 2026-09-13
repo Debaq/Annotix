@@ -488,7 +488,7 @@ pub fn install_backend_packages(
 
     let packages: Vec<String> = match backend.as_str() {
         "yolo" | "rt_detr" => vec!["ultralytics".to_string()],
-        "rf_detr" => vec!["rfdetr".to_string()],
+        "rf_detr" => vec!["rfdetr[train]".to_string()],
         "mmdetection" => vec![
             "openmim".to_string(),
             "mmengine".to_string(),
@@ -501,6 +501,9 @@ pub fn install_backend_packages(
         ],
         "hf_segmentation" => vec![
             "transformers".to_string(),
+            // El Trainer de HuggingFace exige accelerate>=1.1: sin él aborta al
+            // configurar el dispositivo, ya con el modelo cargado.
+            "accelerate".to_string(),
             "datasets".to_string(),
             "evaluate".to_string(),
         ],
@@ -527,6 +530,7 @@ pub fn install_backend_packages(
         "timm" => vec!["timm".to_string()],
         "hf_classification" => vec![
             "transformers".to_string(),
+            "accelerate".to_string(),
             "datasets".to_string(),
             "evaluate".to_string(),
         ],

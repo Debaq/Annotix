@@ -74,6 +74,10 @@ pub mod keys {
 
     /// CSV tabular de entrada.
     pub const TABLE_CSV: &str = "table_csv";
+    /// Metadatos del CSV: columna objetivo, features y tipo de tarea, tal como
+    /// quedaron al importarlo. Viajan con el dataset para que el script no dependa
+    /// de que la UI los reenvíe.
+    pub const TABLE_META: &str = "table_meta";
 
     /// Todas las claves válidas, para validar declaraciones y para el lint de tests.
     pub const ALL: &[&str] = &[
@@ -107,6 +111,7 @@ pub mod keys {
         TS_META,
         LONG_CSV,
         TABLE_CSV,
+        TABLE_META,
     ];
 }
 
