@@ -349,6 +349,18 @@ export async function toggleKeyframeEnabled(
   });
 }
 
+/**
+ * Marca o desmarca una imagen como fondo (sin objetos, a propósito).
+ * En detección eso la convierte en un negativo real en vez de descartarla.
+ */
+export async function setImageBackground(
+  projectId: string,
+  imageId: string,
+  isBackground: boolean
+): Promise<void> {
+  return invoke('set_image_background', { projectId, imageId, isBackground });
+}
+
 export async function bakeVideoTracks(projectId: string, videoId: string): Promise<number> {
   return invoke<number>('bake_video_tracks', { projectId, videoId });
 }

@@ -54,5 +54,11 @@
   "trackError": "추적할 수 없습니다",
   "bakeOpenTracks": "이탈이 표시되지 않은 트랙 {{count}}개",
   "bakeOpenTracksDesc": "마지막 박스가 남은 모든 프레임에 기록됩니다. 대상이 사라졌다면 적용 전에 Del로 이탈을 표시하세요.",
-  "bakeAnyway": "그래도 적용"
+  "bakeAnyway": "그래도 적용",
+  "emptyFrameTitle": "박스가 없는 프레임",
+  "emptyFrameDesc": "여기에 정말 대상이 없나요? 배경으로 표시하면 음성 예제로 학습에 들어갑니다. 아직 주석을 달지 않은 것뿐이라면 표시하지 마세요.",
+  "emptyFrameYes": "배경입니다",
+  "emptyFrameNo": "아직 미주석",
+  "markedBackground": "배경",
+  "unmarkBackground": "해제"
 }

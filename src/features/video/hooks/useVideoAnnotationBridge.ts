@@ -96,6 +96,21 @@ export function useVideoAnnotationBridge(
     });
   }, [allBBoxes, imageWidth, imageHeight, pctToPx, localOverrides]);
 
+  // Fotograma que el usuario acaba de dejar sin cajas. Se pregunta solo tras la
+  // acción que lo vació: navegar a un fotograma vacío no es lo mismo que
+  // vaciarlo, y preguntar en cada uno sería insufrible.
+  const [frameVaciado, setFrameVaciado] = useState<number | null>(null);
+
+  useEffect(() => {
+    setFrameVaciado(null);
+  }, [frameIndex]);
+
+  /** Avisa si tras quitar `trackId` no queda ninguna caja visible. */
+  const avisarSiQuedaVacio = useCallback((trackId: string) => {
+    const quedan = interpolatedBBoxes.filter(b => b.enabled && b.trackId !== trackId);
+    if (quedan.length === 0) setFrameVaciado(frameIndex);
+  }, [interpolatedBBoxes, frameIndex]);
+
   const [selectedAnnotationIds, setSelectedAnnotationIds] = useState<Set<string>>(new Set());
 
   const selectedAnnotationId = selectedAnnotationIds.size > 0
@@ -190,6 +205,8 @@ export function useVideoAnnotationBridge(
       await toggleKeyframe(trackId, frameIndex, false);
     }
 
+    avisarSiQuedaVacio(trackId);
+
     if (selectedAnnotationIds.has(id)) {
       setSelectedAnnotationIds(prev => {
         const next = new Set(prev);
@@ -198,6 +215,7 @@ export function useVideoAnnotationBridge(
       });
     }
   }, [
+    avisarSiQuedaVacio,
     interpolatedBBoxes,
     tracks,
     deleteTrack,
@@ -221,7 +239,8 @@ export function useVideoAnnotationBridge(
     }
 
     await toggleKeyframe(trackId, frameIndex, !bbox.enabled);
-  }, [interpolatedBBoxes, setKeyframe, toggleKeyframe, frameIndex]);
+    if (bbox.enabled) avisarSiQuedaVacio(trackId);
+  }, [interpolatedBBoxes, setKeyframe, toggleKeyframe, frameIndex, avisarSiQuedaVacio]);
 
   /**
    * Copia al fotograma `targetFrameIndex` las cajas de este, como keyframes.
@@ -269,5 +288,7 @@ export function useVideoAnnotationBridge(
     saveAnnotations,
     disabledAnnotationIds,
     onToggleAnnotation,
+    frameVaciado,
+    descartarAvisoFondo: () => setFrameVaciado(null),
   };
 }

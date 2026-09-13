@@ -55,5 +55,11 @@
   "bakeOpenTracks": "{{count}} track with no exit marked",
   "bakeOpenTracks_other": "{{count}} tracks with no exit marked",
   "bakeOpenTracksDesc": "Their last box will be written to every remaining frame. If the object is gone, mark the exit with Del before applying.",
-  "bakeAnyway": "Apply anyway"
+  "bakeAnyway": "Apply anyway",
+  "emptyFrameTitle": "Frame with no boxes",
+  "emptyFrameDesc": "Is there really no object here? Mark it as background and it joins training as a negative example. If it just isn't annotated yet, leave it.",
+  "emptyFrameYes": "It's background",
+  "emptyFrameNo": "Not annotated yet",
+  "markedBackground": "Background",
+  "unmarkBackground": "remove"
 }

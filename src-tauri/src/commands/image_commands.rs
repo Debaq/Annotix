@@ -176,6 +176,37 @@ pub fn get_image_file_path(
     Ok(path.to_string_lossy().to_string())
 }
 
+/// Marca o desmarca una imagen como fondo (imagen sin objetos, a propósito).
+///
+/// Una imagen sin anotaciones se descarta del entrenamiento porque no se puede
+/// distinguir de una que nadie anotó todavía. Esta marca es esa distinción: la
+/// convierte en un negativo real, que en detección es un ejemplo tan válido
+/// como cualquier caja.
+#[tauri::command]
+pub async fn set_image_background(
+    state: State<'_, AppState>,
+    p2p: State<'_, P2pState>,
+    app: AppHandle,
+    project_id: String,
+    image_id: String,
+    is_background: bool,
+) -> Result<(), String> {
+    p2p.check_permission(&project_id, P2pPermission::Annotate)
+        .await?;
+
+    state.set_image_background(&project_id, &image_id, is_background)?;
+    let _ = app.emit(
+        "db:images-changed",
+        serde_json::json!({
+            "projectId": &project_id,
+            "action": "updated",
+            "imageIds": [&image_id],
+        }),
+    );
+
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn save_annotations(
     state: State<'_, AppState>,

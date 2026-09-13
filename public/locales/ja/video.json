@@ -54,5 +54,11 @@
   "trackError": "追跡できませんでした",
   "bakeOpenTracks": "退出が未指定のトラックが {{count}} 件",
   "bakeOpenTracksDesc": "最後のボックスが残り全フレームに書き込まれます。対象が消えているなら、適用前に Del で退出を指定してください。",
-  "bakeAnyway": "それでも適用"
+  "bakeAnyway": "それでも適用",
+  "emptyFrameTitle": "ボックスのないフレーム",
+  "emptyFrameDesc": "ここには本当に対象がありませんか。背景として指定すると、負例として学習に入ります。未アノテーションなだけなら指定しないでください。",
+  "emptyFrameYes": "背景です",
+  "emptyFrameNo": "未アノテーション",
+  "markedBackground": "背景",
+  "unmarkBackground": "解除"
 }

@@ -55,5 +55,11 @@
   "bakeOpenTracks": "{{count}} piste sans sortie marquée",
   "bakeOpenTracks_other": "{{count}} pistes sans sortie marquée",
   "bakeOpenTracksDesc": "Leur dernière boîte sera écrite sur toutes les images restantes. Si l'objet a disparu, marquez la sortie avec Suppr avant d'appliquer.",
-  "bakeAnyway": "Appliquer quand même"
+  "bakeAnyway": "Appliquer quand même",
+  "emptyFrameTitle": "Image sans boîtes",
+  "emptyFrameDesc": "Vraiment aucun objet ici ? Marquez-la comme fond et elle entrera à l'entraînement comme exemple négatif. S'il reste à l'annoter, ne la marquez pas.",
+  "emptyFrameYes": "C'est du fond",
+  "emptyFrameNo": "Reste à annoter",
+  "markedBackground": "Fond",
+  "unmarkBackground": "retirer"
 }

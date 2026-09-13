@@ -324,6 +324,12 @@ export interface AnnotixImage {
   };
   videoId?: string | null;
   frameIndex?: number | null;
+  /**
+   * Marcada a mano como fondo: una imagen donde de verdad no hay ningún objeto.
+   * Sin esto, una imagen sin anotaciones es indistinguible de una que nadie ha
+   * anotado todavía y el entrenamiento la descarta.
+   */
+  isBackground?: boolean;
   downloadStatus?: string;
 }
 

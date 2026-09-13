@@ -137,6 +137,7 @@ pub fn fixture(task: &str) -> (ProjectFile, TempDir, PathBuf) {
             annotations: vec![ann_for_task(task, class_id)],
             video_id: None,
             frame_index: None,
+            is_background: false,
             locked_by: None,
             lock_expires: None,
             download_status: None,

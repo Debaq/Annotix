@@ -1139,7 +1139,13 @@ pub async fn track_object_forward(
         // Una caja por fotograma es una lista de keyframes inservible: se
         // conservan los que la interpolación lineal no reconstruye sola.
         let kept = simplify_trajectory(&samples, 0.5);
-        Ok((kept, worst_score, reason.to_string(), last_frame, samples.len()))
+        Ok((
+            kept,
+            worst_score,
+            reason.to_string(),
+            last_frame,
+            samples.len(),
+        ))
     })
     .await
     .map_err(|e| format!("Error siguiendo el objeto: {}", e))??;

@@ -119,6 +119,11 @@ pub struct ImageEntry {
     pub video_id: Option<String>,
     #[serde(default, rename = "frameIndex")]
     pub frame_index: Option<i64>,
+    /// Marcada a mano como fondo: una imagen donde de verdad no hay ningún
+    /// objeto. Sin esto una imagen sin anotaciones es indistinguible de una que
+    /// nadie ha anotado todavía, y el entrenamiento las descarta todas.
+    #[serde(default, rename = "isBackground", skip_serializing_if = "is_false")]
+    pub is_background: bool,
     #[serde(default, rename = "lockedBy")]
     pub locked_by: Option<String>,
     #[serde(default, rename = "lockExpires")]
@@ -131,6 +136,10 @@ pub struct ImageEntry {
     pub download_status: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub predictions: Vec<PredictionEntry>,
+}
+
+fn is_false(v: &bool) -> bool {
+    !*v
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

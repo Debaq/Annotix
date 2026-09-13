@@ -54,5 +54,11 @@
   "trackError": "无法跟踪",
   "bakeOpenTracks": "{{count}} 个轨迹未标记离场",
   "bakeOpenTracksDesc": "它们的最后一个框会写入剩下的每一帧。如果目标已经离开，请在应用前用 Del 标记离场。",
-  "bakeAnyway": "仍然应用"
+  "bakeAnyway": "仍然应用",
+  "emptyFrameTitle": "没有框的帧",
+  "emptyFrameDesc": "这里真的没有目标吗？标记为背景后，它会作为负样本进入训练。如果只是还没标注，就别标记。",
+  "emptyFrameYes": "是背景",
+  "emptyFrameNo": "还没标注",
+  "markedBackground": "背景",
+  "unmarkBackground": "取消"
 }

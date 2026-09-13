@@ -151,6 +151,8 @@ pub struct ImageResponse {
     pub video_id: Option<String>,
     #[serde(rename = "frameIndex")]
     pub frame_index: Option<i64>,
+    #[serde(rename = "isBackground")]
+    pub is_background: bool,
     #[serde(rename = "lockedBy")]
     pub locked_by: Option<String>,
     #[serde(rename = "lockExpires")]
@@ -184,6 +186,7 @@ fn entry_to_response(entry: &ImageEntry, project_id: &str) -> ImageResponse {
         },
         video_id: entry.video_id.clone(),
         frame_index: entry.frame_index,
+        is_background: entry.is_background,
         locked_by: entry.locked_by.clone(),
         lock_expires: entry.lock_expires,
         download_status: entry.download_status.clone(),
@@ -243,6 +246,7 @@ impl AppState {
             annotations: vec![],
             video_id: video_id.map(|s| s.to_string()),
             frame_index,
+            is_background: false,
             locked_by: None,
             lock_expires: None,
             download_status: None,
@@ -351,6 +355,7 @@ impl AppState {
                     annotations: vec![],
                     video_id: None,
                     frame_index: None,
+                    is_background: false,
                     locked_by: None,
                     lock_expires: None,
                     download_status: None,
@@ -449,6 +454,7 @@ impl AppState {
             annotations: annotations.to_vec(),
             video_id: video_id.map(|s| s.to_string()),
             frame_index,
+            is_background: false,
             locked_by: None,
             lock_expires: None,
             download_status: None,
@@ -500,6 +506,46 @@ impl AppState {
             frames.sort_by_key(|f| f.frame_index.unwrap_or(0));
             frames
         })
+    }
+
+    /// Marca (o desmarca) una imagen como fondo: sin objetos a propósito.
+    ///
+    /// Solo tiene efecto mientras la imagen no tenga anotaciones; en cuanto
+    /// tiene alguna es un positivo y la marca se ignora. Se guarda igualmente
+    /// para no perderla si el usuario borra las cajas y vuelve atrás.
+    pub fn set_image_background(
+        &self,
+        project_id: &str,
+        image_id: &str,
+        is_background: bool,
+    ) -> Result<(), String> {
+        let now = js_timestamp();
+        let found = self.with_project_mut_ret(project_id, |pf| {
+            let found = match pf.images.iter_mut().find(|i| i.id == image_id) {
+                Some(img) => {
+                    img.is_background = is_background;
+                    // Un fondo confirmado no es una imagen pendiente de anotar.
+                    if img.annotations.is_empty() {
+                        img.status = if is_background {
+                            "annotated".to_string()
+                        } else {
+                            "pending".to_string()
+                        };
+                        img.annotated = if is_background { Some(now) } else { None };
+                    }
+                    true
+                }
+                None => false,
+            };
+            pf.updated = now;
+            found
+        })?;
+
+        if found {
+            Ok(())
+        } else {
+            Err(format!("Imagen no encontrada: {}", image_id))
+        }
     }
 
     pub fn save_annotations(

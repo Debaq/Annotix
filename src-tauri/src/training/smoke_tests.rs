@@ -161,7 +161,7 @@ fn smoke(backend: TrainingBackend, task: &str) {
     let job = proyecto.path().join("job");
     std::fs::create_dir_all(&job).unwrap();
 
-    let imagenes = dataset::select_trainable_images(pf.images.clone(), &pf.classes);
+    let imagenes = dataset::select_trainable_images(pf.images.clone(), &pf.classes, true);
     let ds = dataset::prepare_dataset_for_backend(
         &images_dir,
         &pf,

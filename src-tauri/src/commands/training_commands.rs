@@ -501,22 +501,34 @@ pub fn get_available_backends(project_type: String) -> Result<Vec<BackendInfo>, 
 #[tauri::command]
 /// Cuenta las imágenes que realmente entrarán al dataset de entrenamiento.
 ///
-/// Debe coincidir con `dataset::select_trainable_images`: misma condición
-/// (anotaciones no huérfanas y no vacías) para que el visualizador de split de
-/// la UI muestre la partición que el runner va a aplicar. Los frames de video
-/// se cuentan: tras el bake son imágenes anotadas como cualquier otra.
+/// Debe coincidir con `dataset::select_trainable_images`: mismas condiciones
+/// (anotaciones no huérfanas y no vacías, o marcada como fondo) para que el
+/// visualizador de split de la UI muestre la partición que el runner va a
+/// aplicar. Los frames de video se cuentan: tras el bake son imágenes anotadas
+/// como cualquier otra.
+///
+/// Los fondos solo cuentan en proyectos que pueden usarlos: en clasificación
+/// una imagen sin clase no es un negativo, es una imagen sin etiquetar.
 pub fn count_annotated_images(
     state: State<'_, AppState>,
     project_id: String,
 ) -> Result<usize, String> {
     state.with_project(&project_id, |pf| {
         let class_ids: std::collections::HashSet<i64> = pf.classes.iter().map(|c| c.id).collect();
+        // Del tipo de proyecto sale la tarea, y de la tarea si un fondo cuenta.
+        // Derivarlo en vez de repetir la lista evita que este contador y el
+        // preparador del dataset se separen.
+        let fondos_cuentan = crate::training::dataset::task_uses_background(
+            crate::training::backends::project_type_to_task(&pf.project_type),
+        );
         pf.images
             .iter()
             .filter(|i| {
-                i.annotations
+                let anotada = i
+                    .annotations
                     .iter()
-                    .any(|a| class_ids.contains(&a.class_id))
+                    .any(|a| class_ids.contains(&a.class_id));
+                anotada || (fondos_cuentan && i.is_background)
             })
             .count()
     })
@@ -722,8 +734,11 @@ pub async fn start_training_v2(
         let dataset_zip_str = dataset_zip.to_string_lossy().to_string();
 
         // Mismo criterio que el runner local: solo imágenes anotadas.
-        let images =
-            crate::training::dataset::select_trainable_images(pf.images.clone(), &pf.classes);
+        let images = crate::training::dataset::select_trainable_images(
+            pf.images.clone(),
+            &pf.classes,
+            crate::training::dataset::task_uses_background(&request.task),
+        );
         if images.is_empty() {
             return Err(format!(
                 "Ninguna de las {} imágenes del proyecto tiene anotaciones. \
@@ -836,7 +851,11 @@ pub fn generate_training_package(
     let images_dir = state.project_images_dir(&project_id)?;
 
     // Mismo criterio que el runner local: solo imágenes anotadas.
-    let images = crate::training::dataset::select_trainable_images(pf.images.clone(), &pf.classes);
+    let images = crate::training::dataset::select_trainable_images(
+        pf.images.clone(),
+        &pf.classes,
+        crate::training::dataset::task_uses_background(&request.task),
+    );
     if crate::training::dataset::backend_uses_images(&request.backend) && images.is_empty() {
         return Err(format!(
             "Ninguna de las {} imágenes del proyecto tiene anotaciones. \

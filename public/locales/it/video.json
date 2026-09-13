@@ -55,5 +55,11 @@
   "bakeOpenTracks": "{{count}} track senza uscita segnata",
   "bakeOpenTracks_other": "{{count}} track senza uscita segnata",
   "bakeOpenTracksDesc": "Il loro ultimo box verrà scritto su tutti i frame rimanenti. Se l'oggetto non c'è più, segna l'uscita con Canc prima di applicare.",
-  "bakeAnyway": "Applica comunque"
+  "bakeAnyway": "Applica comunque",
+  "emptyFrameTitle": "Frame senza box",
+  "emptyFrameDesc": "Qui non c'è davvero nessun oggetto? Segnalo come sfondo ed entrerà nell'addestramento come esempio negativo. Se manca solo annotarlo, non segnarlo.",
+  "emptyFrameYes": "È sfondo",
+  "emptyFrameNo": "Da annotare",
+  "markedBackground": "Sfondo",
+  "unmarkBackground": "togli"
 }

@@ -55,5 +55,11 @@
   "bakeOpenTracks": "{{count}} Track ohne markierten Ausstieg",
   "bakeOpenTracks_other": "{{count}} Tracks ohne markierten Ausstieg",
   "bakeOpenTracksDesc": "Ihre letzte Box wird in jeden verbleibenden Frame geschrieben. Ist das Objekt weg, den Ausstieg vorher mit Entf markieren.",
-  "bakeAnyway": "Trotzdem anwenden"
+  "bakeAnyway": "Trotzdem anwenden",
+  "emptyFrameTitle": "Frame ohne Boxen",
+  "emptyFrameDesc": "Ist hier wirklich kein Objekt? Als Hintergrund markiert geht er als Negativbeispiel ins Training. Fehlt nur die Annotation, nicht markieren.",
+  "emptyFrameYes": "Ist Hintergrund",
+  "emptyFrameNo": "Noch nicht annotiert",
+  "markedBackground": "Hintergrund",
+  "unmarkBackground": "entfernen"
 }

@@ -1,7 +1,7 @@
 use super::{BackendInfo, BackendModelInfo, DatasetFormat, TrainingBackend};
 
 /// Maps project type to training task
-fn project_type_to_task(project_type: &str) -> &str {
+pub(crate) fn project_type_to_task(project_type: &str) -> &str {
     match project_type {
         "bbox" | "object-detection" => "detect",
         "mask" | "semantic-segmentation" => "segment",

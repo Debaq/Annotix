@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCurrentImage } from '../../gallery/hooks/useCurrentImage';
 import { AnnotationCanvas } from '../../canvas/components/AnnotationCanvas';
 import { InterpolatedBBox, VideoTrack, ClassDefinition, Video } from '@/lib/db';
@@ -6,6 +7,8 @@ import { useUIStore } from '../../core/store/uiStore';
 import { useVideoAnnotationBridge } from '../hooks/useVideoAnnotationBridge';
 import { matchesShortcut } from '../../core/utils/matchShortcut';
 import { useVideoNavigation } from '../hooks/useVideoNavigation';
+import { Button } from '@/components/ui/button';
+import * as tauriDb from '@/lib/tauriDb';
 
 interface VideoAnnotationCanvasProps {
   interpolatedBBoxes: InterpolatedBBox[];
@@ -26,8 +29,10 @@ export function VideoAnnotationCanvas({
   classes: _classes,
   video,
 }: VideoAnnotationCanvasProps) {
-  const { currentFrameIndex } = useUIStore();
+  const { t } = useTranslation();
+  const { currentFrameIndex, currentProjectId } = useUIStore();
   const { image } = useCurrentImage();
+  const [guardandoFondo, setGuardandoFondo] = useState(false);
   const { position, totalFrames, goToPosition, positionByFrameIndex } = useVideoNavigation();
 
   // Dimensiones de la imagen del frame actual (píxeles)
@@ -87,14 +92,76 @@ export function VideoAnnotationCanvas({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [bridge, siguienteFrameIndex, position, totalFrames, goToPosition]);
 
+  // Marca este fotograma como fondo: una imagen sin objetos a propósito, que
+  // entra al entrenamiento como negativo en vez de quedar descartada.
+  const marcarFondo = useCallback(async (esFondo: boolean) => {
+    if (!currentProjectId || !image?.id) return;
+    setGuardandoFondo(true);
+    try {
+      await tauriDb.setImageBackground(currentProjectId, image.id, esFondo);
+    } finally {
+      setGuardandoFondo(false);
+      bridge.descartarAvisoFondo();
+    }
+  }, [currentProjectId, image?.id, bridge]);
+
   const videoFrameInfo = useMemo(() => ({
     frameIndex: currentFrameIndex,
     fps: video.fpsExtraction,
   }), [currentFrameIndex, video.fpsExtraction]);
 
+  const preguntarFondo = bridge.frameVaciado === currentFrameIndex && !image?.isBackground;
+
   return (
     <div className="relative flex-1 h-full">
       <AnnotationCanvas overrideAnnotations={bridge} videoFrameInfo={videoFrameInfo} />
+
+      {/* Se acaba de quedar sin cajas: es el único momento en que se sabe si el
+          fotograma está vacío porque no hay nada o porque falta anotarlo, y
+          solo el anotador puede decirlo. */}
+      {preguntarFondo && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 rounded-lg border border-[var(--annotix-border)] bg-[var(--annotix-white)] px-3 py-2 shadow-lg">
+          <p className="text-xs font-medium">{t('video.emptyFrameTitle')}</p>
+          <p className="mt-0.5 max-w-xs text-[11px] text-muted-foreground">
+            {t('video.emptyFrameDesc')}
+          </p>
+          <div className="mt-2 flex gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 flex-1 text-[11px]"
+              disabled={guardandoFondo}
+              onClick={() => bridge.descartarAvisoFondo()}
+            >
+              {t('video.emptyFrameNo')}
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              className="h-6 flex-1 text-[11px]"
+              disabled={guardandoFondo}
+              onClick={() => void marcarFondo(true)}
+            >
+              {t('video.emptyFrameYes')}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Ya marcado: se ve y se puede deshacer sin buscar dónde. */}
+      {image?.isBackground && (
+        <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[var(--annotix-border)] bg-[var(--annotix-white)] px-3 py-1 shadow-lg">
+          <i className="fas fa-image text-[11px] opacity-70"></i>
+          <span className="text-[11px] font-medium">{t('video.markedBackground')}</span>
+          <button
+            className="text-[11px] text-muted-foreground underline hover:text-foreground"
+            disabled={guardandoFondo}
+            onClick={() => void marcarFondo(false)}
+          >
+            {t('video.unmarkBackground')}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

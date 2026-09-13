@@ -292,6 +292,7 @@ pub fn run() {
             commands::image_commands::get_image_data,
             commands::image_commands::get_image_file_path,
             commands::image_commands::save_annotations,
+            commands::image_commands::set_image_background,
             commands::image_commands::delete_image,
             commands::image_commands::convert_project_images,
             // Series temporales

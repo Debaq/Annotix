@@ -55,5 +55,11 @@
   "bakeOpenTracks": "{{count}} track sin salida marcada",
   "bakeOpenTracks_other": "{{count}} tracks sin salida marcada",
   "bakeOpenTracksDesc": "Su última caja se escribirá en todos los fotogramas que quedan. Si el objeto ya no está ahí, marca la salida con Supr antes de consolidar.",
-  "bakeAnyway": "Consolidar igualmente"
+  "bakeAnyway": "Consolidar igualmente",
+  "emptyFrameTitle": "Fotograma sin cajas",
+  "emptyFrameDesc": "¿Aquí no hay ningún objeto? Márcalo como fondo y entrará al entrenamiento como ejemplo negativo. Si solo falta anotarlo, no lo marques.",
+  "emptyFrameYes": "Es fondo",
+  "emptyFrameNo": "Falta anotar",
+  "markedBackground": "Fondo",
+  "unmarkBackground": "quitar"
 }

@@ -32,11 +32,22 @@ pub fn backend_uses_images(backend: &TrainingBackend) -> bool {
 
 /// Selecciona las imágenes que entran al dataset de entrenamiento.
 ///
+/// `true` si la tarea sabe qué hacer con una imagen sin objetos.
+///
+/// En detección un negativo es un ejemplo legítimo: labels vacío. En
+/// clasificación no existe tal cosa —toda imagen pertenece a una clase— y una
+/// sin anotaciones acabaría en una carpeta `unknown` que ImageFolder tomaría
+/// como una clase más.
+pub fn task_uses_background(task: &str) -> bool {
+    !matches!(task, "classify" | "multi_classify")
+}
+
 /// Hace dos cosas, en este orden:
 ///
 /// 1. Descarta anotaciones huérfanas: las que apuntan a un `class_id` que ya no
 ///    existe (queda así tras borrar una clase).
-/// 2. Descarta las imágenes que quedan sin ninguna anotación.
+/// 2. Descarta las imágenes que quedan sin ninguna anotación, salvo las que el
+///    usuario marcó como fondo.
 ///
 /// El segundo paso es el importante. Una imagen sin anotaciones genera un
 /// archivo de labels vacío, y en YOLO eso no significa "ignorar esta imagen"
@@ -45,16 +56,21 @@ pub fn backend_uses_images(backend: &TrainingBackend) -> bool {
 /// (ultralytics recomienda ~10% de fondos, no 80%) y mete imágenes sin ground
 /// truth en el split de validación, donde distorsionan el mAP.
 ///
-/// En clasificación evita además que las imágenes sin clase caigan en una
-/// carpeta `unknown`, que ImageFolder tomaría como una clase más.
-pub fn select_trainable_images(images: Vec<ImageEntry>, classes: &[ClassDef]) -> Vec<ImageEntry> {
+/// La marca de fondo es justo la diferencia que faltaba: distingue "aquí no hay
+/// nada" de "esto no lo he anotado todavía". `keep_background` la respeta solo
+/// en las tareas que pueden usar negativos (ver `task_uses_background`).
+pub fn select_trainable_images(
+    images: Vec<ImageEntry>,
+    classes: &[ClassDef],
+    keep_background: bool,
+) -> Vec<ImageEntry> {
     let class_ids: std::collections::HashSet<i64> = classes.iter().map(|c| c.id).collect();
     images
         .into_iter()
         .filter_map(|mut img| {
             img.annotations
                 .retain(|ann| class_ids.contains(&ann.class_id));
-            if img.annotations.is_empty() {
+            if img.annotations.is_empty() && !(keep_background && img.is_background) {
                 None
             } else {
                 Some(img)

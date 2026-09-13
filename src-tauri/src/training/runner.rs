@@ -67,7 +67,11 @@ impl TrainingProcessManager {
         // Solo entran al dataset las imágenes anotadas (ver select_trainable_images).
         let raw_images = std::mem::take(&mut pf.images);
         let total_images = raw_images.len();
-        let images: Vec<ImageEntry> = dataset::select_trainable_images(raw_images, &pf.classes);
+        let images: Vec<ImageEntry> = dataset::select_trainable_images(
+            raw_images,
+            &pf.classes,
+            dataset::task_uses_background(&config.task),
+        );
 
         if images.is_empty() {
             state.with_project_mut(project_id, |pf| {
@@ -221,7 +225,11 @@ impl TrainingProcessManager {
         // Solo entran al dataset las imágenes anotadas (ver select_trainable_images).
         let total_images = pf.images.len();
         let images: Vec<crate::store::project_file::ImageEntry> = if uses_images {
-            dataset::select_trainable_images(pf.images.clone(), &pf.classes)
+            dataset::select_trainable_images(
+                pf.images.clone(),
+                &pf.classes,
+                dataset::task_uses_background(&request.task),
+            )
         } else {
             Vec::new()
         };

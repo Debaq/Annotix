@@ -55,5 +55,11 @@
   "bakeOpenTracks": "{{count}} track sem saída marcada",
   "bakeOpenTracks_other": "{{count}} tracks sem saída marcada",
   "bakeOpenTracksDesc": "A última caixa será escrita em todos os quadros restantes. Se o objeto já não está lá, marque a saída com Del antes de aplicar.",
-  "bakeAnyway": "Aplicar mesmo assim"
+  "bakeAnyway": "Aplicar mesmo assim",
+  "emptyFrameTitle": "Quadro sem caixas",
+  "emptyFrameDesc": "Aqui não há mesmo nenhum objeto? Marque como fundo e entrará no treino como exemplo negativo. Se só falta anotar, não marque.",
+  "emptyFrameYes": "É fundo",
+  "emptyFrameNo": "Falta anotar",
+  "markedBackground": "Fundo",
+  "unmarkBackground": "remover"
 }

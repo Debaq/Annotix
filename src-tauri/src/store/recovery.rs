@@ -348,6 +348,7 @@ fn rebuild_project_file(dir: &Path, id: &str) -> Result<ProjectFile, String> {
                 annotations: vec![],
                 video_id: None,
                 frame_index: None,
+                is_background: false,
                 locked_by: None,
                 lock_expires: None,
                 download_status: None,

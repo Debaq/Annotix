@@ -108,6 +108,7 @@ fn image_entry(name: &str, file: &str, w: u32, h: u32, anns: Vec<AnnotationEntry
         annotations: anns,
         video_id: None,
         frame_index: None,
+        is_background: false,
         locked_by: None,
         lock_expires: None,
         download_status: None,
@@ -987,7 +988,7 @@ fn select_trainable_images_drops_unannotated() {
         ),
     ];
 
-    let kept = dataset::select_trainable_images(images, &classes);
+    let kept = dataset::select_trainable_images(images, &classes, false);
 
     assert_eq!(
         kept.len(),
@@ -1023,7 +1024,7 @@ fn select_trainable_images_drops_orphan_annotations_and_then_image() {
         ),
     ];
 
-    let kept = dataset::select_trainable_images(images, &classes);
+    let kept = dataset::select_trainable_images(images, &classes, false);
 
     assert_eq!(kept.len(), 1);
     assert_eq!(kept[0].name, "mixta.png");
@@ -1052,10 +1053,56 @@ fn select_trainable_images_keeps_annotated_video_frames() {
     frame_vacio.video_id = Some("vid-1".into());
     frame_vacio.frame_index = Some(2);
 
-    let kept = dataset::select_trainable_images(vec![frame, frame_vacio], &classes);
+    let kept = dataset::select_trainable_images(vec![frame, frame_vacio], &classes, false);
 
     assert_eq!(kept.len(), 1, "un frame bakeado es una imagen anotada más");
     assert_eq!(kept[0].frame_index, Some(1));
+}
+
+#[test]
+fn background_images_enter_the_dataset_as_negatives() {
+    // Una imagen sin anotaciones se descarta porque no se distingue de una sin
+    // anotar. La marca de fondo es esa distinción: la vuelve un negativo real.
+    let classes = default_classes();
+    let sin_anotar = image_entry("a.png", "a.png", 100, 100, vec![]);
+    let mut fondo = image_entry("b.png", "b.png", 100, 100, vec![]);
+    fondo.is_background = true;
+
+    let kept = dataset::select_trainable_images(vec![sin_anotar, fondo], &classes, true);
+    assert_eq!(kept.len(), 1);
+    assert_eq!(kept[0].name, "b.png");
+    assert!(kept[0].annotations.is_empty(), "el fondo va sin cajas");
+}
+
+#[test]
+fn background_images_stay_out_of_classification() {
+    // En clasificación no existe el negativo: una imagen sin clase acabaría en
+    // una carpeta `unknown` que ImageFolder tomaría como una clase más.
+    let classes = default_classes();
+    let mut fondo = image_entry("b.png", "b.png", 100, 100, vec![]);
+    fondo.is_background = true;
+    assert!(dataset::select_trainable_images(vec![fondo], &classes, false).is_empty());
+}
+
+#[test]
+fn background_flag_does_not_erase_annotations() {
+    // Marcar fondo y luego anotar no debe perder las cajas: manda lo anotado.
+    let classes = default_classes();
+    let mut img = image_entry("a.png", "a.png", 100, 100, vec![bbox_ann(0, 1.0, 1.0, 5.0, 5.0)]);
+    img.is_background = true;
+
+    let kept = dataset::select_trainable_images(vec![img], &classes, true);
+    assert_eq!(kept.len(), 1);
+    assert_eq!(kept[0].annotations.len(), 1);
+}
+
+#[test]
+fn task_uses_background_only_outside_classification() {
+    assert!(dataset::task_uses_background("detect"));
+    assert!(dataset::task_uses_background("segment"));
+    assert!(dataset::task_uses_background("pose"));
+    assert!(!dataset::task_uses_background("classify"));
+    assert!(!dataset::task_uses_background("multi_classify"));
 }
 
 #[test]
@@ -1065,7 +1112,7 @@ fn select_trainable_images_empty_when_nothing_annotated() {
         image_entry("a.png", "a.png", 100, 100, vec![]),
         image_entry("b.png", "b.png", 100, 100, vec![]),
     ];
-    assert!(dataset::select_trainable_images(images, &classes).is_empty());
+    assert!(dataset::select_trainable_images(images, &classes, false).is_empty());
 }
 
 #[test]
@@ -1278,8 +1325,7 @@ fn interpolate_bbox_returns_exact_keyframe() {
 #[test]
 fn interpolate_bbox_is_linear_between_keyframes() {
     let kfs = vec![kf(0, 0.0, 0.0, 10.0, 10.0), kf(10, 100.0, 50.0, 20.0, 30.0)];
-    let (x, y, w, h, _) =
-        interpolate_bbox(&kfs, 5, TrackInterp::default()).expect("punto medio");
+    let (x, y, w, h, _) = interpolate_bbox(&kfs, 5, TrackInterp::default()).expect("punto medio");
     assert!((x - 50.0).abs() < 1e-9);
     assert!((y - 25.0).abs() < 1e-9);
     assert!((w - 15.0).abs() < 1e-9);
@@ -1455,7 +1501,10 @@ fn smooth_never_produces_a_negative_size() {
     };
     for frame in 1..30 {
         let (_, _, w, h, _) = interpolate_bbox(&kfs, frame, smooth).expect("spline");
-        assert!(w >= 0.0 && h >= 0.0, "tamaño negativo en el fotograma {frame}");
+        assert!(
+            w >= 0.0 && h >= 0.0,
+            "tamaño negativo en el fotograma {frame}"
+        );
     }
 }
 
@@ -1876,7 +1925,11 @@ fn bake_extends_the_last_keyframe_when_the_track_says_so() {
     let mut kfs = track_kfs_fixture();
     kfs[0].interp.extend = Extend::After;
     let anns = bake_annotations_for_frame(&kfs, 500, 100, 100);
-    assert_eq!(anns.len(), 1, "la última caja sigue hasta el final del video");
+    assert_eq!(
+        anns.len(),
+        1,
+        "la última caja sigue hasta el final del video"
+    );
     assert_eq!(anns[0].data["x"].as_f64().unwrap(), 50.0);
 }
 
@@ -2287,7 +2340,11 @@ fn track_step_follows_a_translated_patch() {
     };
 
     let (found, score) = track_step(&prev, &next, bbox).expect("región con textura");
-    assert!(score > 0.9, "el encaje exacto debería puntuar alto: {}", score);
+    assert!(
+        score > 0.9,
+        "el encaje exacto debería puntuar alto: {}",
+        score
+    );
     assert!((found.x - 67.0).abs() <= 1.0, "x = {}", found.x);
     assert!((found.y - 55.0).abs() <= 1.0, "y = {}", found.y);
 }
@@ -2333,7 +2390,9 @@ fn tracked(frame_index: i64, x: f64, y: f64) -> TrackedBox {
 #[test]
 fn simplify_drops_what_linear_interpolation_already_reproduces() {
     // Movimiento en línea recta a velocidad constante: dos keyframes bastan.
-    let samples: Vec<TrackedBox> = (0..20).map(|i| tracked(i, i as f64, i as f64 * 2.0)).collect();
+    let samples: Vec<TrackedBox> = (0..20)
+        .map(|i| tracked(i, i as f64, i as f64 * 2.0))
+        .collect();
     let kept = simplify_trajectory(&samples, 0.5);
     assert_eq!(kept.len(), 2);
     assert_eq!(kept[0].frame_index, 0);
@@ -2360,7 +2419,11 @@ fn simplify_keeps_the_turn() {
 fn simplify_respects_the_tolerance() {
     // Desviación de 2 puntos porcentuales en el centro: se conserva con una
     // tolerancia de 0.5 y se descarta con una de 5.
-    let samples = vec![tracked(0, 0.0, 0.0), tracked(5, 5.0, 2.0), tracked(10, 10.0, 0.0)];
+    let samples = vec![
+        tracked(0, 0.0, 0.0),
+        tracked(5, 5.0, 2.0),
+        tracked(10, 10.0, 0.0),
+    ];
     assert_eq!(simplify_trajectory(&samples, 0.5).len(), 3);
     assert_eq!(simplify_trajectory(&samples, 5.0).len(), 2);
 }
