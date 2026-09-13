@@ -1927,3 +1927,99 @@ fn infinity_negativo_tambien_se_sanea() {
     let valor: serde_json::Value = serde_json::from_str(&saneado).unwrap();
     assert!(valor["v"].is_null());
 }
+
+// ─── Localización de artefactos de entrenamiento ────────────────────────────
+
+fn job_con_result_dir(dir: &Path) -> crate::store::project_file::TrainingJobEntry {
+    crate::store::project_file::TrainingJobEntry {
+        id: "job-1".into(),
+        status: "completed".into(),
+        config: json!({}),
+        progress: 100.0,
+        logs: vec![],
+        metrics: None,
+        test_metrics: None,
+        metrics_history: vec![],
+        created_at: 0.0,
+        updated_at: 0.0,
+        result_dir: Some(dir.to_string_lossy().to_string()),
+        best_model_path: None,
+        dataset_dir: None,
+        cloud_provider: None,
+        cloud_job_id: None,
+        cloud_job_url: None,
+        model_download_url: None,
+    }
+}
+
+#[test]
+fn encuentra_los_pesos_de_cada_layout_de_backend() {
+    // Cada backend guarda con un nombre distinto; antes sólo se miraba el de
+    // ultralytics y los demás salían sin modelo (y sin botones) en la lista.
+    for (relativo, descripcion) in [
+        ("weights/best.pt", "ultralytics"),
+        ("train_output/best.pth", "smp / timm / pose"),
+        ("train_output/best_model.joblib", "sklearn"),
+        ("train_output/model.pkl", "pyod / tslearn"),
+    ] {
+        let tmp = TempDir::new().unwrap();
+        let ruta = tmp.path().join(relativo);
+        fs::create_dir_all(ruta.parent().unwrap()).unwrap();
+        fs::write(&ruta, b"x").unwrap();
+
+        let job = job_con_result_dir(tmp.path());
+        let (hay_best, _, best, _) = crate::commands::training_commands::localizar_artefactos(&job);
+        assert!(hay_best, "{descripcion}: no se encontró {relativo}");
+        assert_eq!(best.unwrap(), ruta.to_string_lossy());
+    }
+}
+
+#[test]
+fn encuentra_pesos_con_extension_añadida() {
+    // pypots añade su propia extensión a la ruta pedida.
+    let tmp = TempDir::new().unwrap();
+    fs::create_dir_all(tmp.path().join("train_output")).unwrap();
+    let real = tmp.path().join("train_output/best_model.pypots");
+    fs::write(&real, b"x").unwrap();
+
+    let job = job_con_result_dir(tmp.path());
+    let (hay_best, _, best, _) = crate::commands::training_commands::localizar_artefactos(&job);
+    assert!(hay_best);
+    assert_eq!(best.unwrap(), real.to_string_lossy());
+}
+
+#[test]
+fn sin_artefactos_no_inventa_rutas() {
+    let tmp = TempDir::new().unwrap();
+    let job = job_con_result_dir(tmp.path());
+    let (hay_best, hay_last, best, last) =
+        crate::commands::training_commands::localizar_artefactos(&job);
+    assert!(!hay_best && !hay_last);
+    assert!(best.is_none() && last.is_none());
+}
+
+#[test]
+fn el_catalogo_publica_el_mismo_minimo_que_valida_el_runner() {
+    // El runner rechaza resoluciones por debajo de `min_image_size`; si el catálogo
+    // publicara otro valor, la UI dejaría pedir algo que el backend rechaza.
+    use crate::training::backends;
+    for project_type in [
+        "detection",
+        "segmentation",
+        "classification",
+        "keypoints",
+        "obb",
+    ] {
+        for info in backends::get_available_backends(project_type) {
+            let esperado = match info.id.as_str() {
+                "rt_detr" | "rf_detr" => 320,
+                _ => 32,
+            };
+            assert_eq!(
+                info.min_image_size, esperado,
+                "{} publica {} px",
+                info.id, info.min_image_size
+            );
+        }
+    }
+}

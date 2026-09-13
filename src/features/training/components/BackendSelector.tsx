@@ -8,7 +8,8 @@ import type { BackendInfo, PythonEnvStatus, TrainingBackend } from '../types';
 interface BackendSelectorProps {
   projectType: string;
   envStatus: PythonEnvStatus | null;
-  onSelect: (backend: TrainingBackend) => void;
+  /** Recibe el id y el mínimo de resolución que publica el backend. */
+  onSelect: (backend: TrainingBackend, info: BackendInfo) => void;
 }
 
 const BACKEND_ICONS: Record<string, string> = {
@@ -61,7 +62,7 @@ export function BackendSelector({ projectType, envStatus, onSelect }: BackendSel
 
   const handleSelect = (backend: BackendInfo) => {
     setSelected(backend.id);
-    onSelect(backend.id as TrainingBackend);
+    onSelect(backend.id as TrainingBackend, backend);
   };
 
   return (

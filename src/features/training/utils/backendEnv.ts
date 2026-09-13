@@ -39,3 +39,15 @@ export function isBackendInstalled(
   const campo = BACKEND_ENV_FIELD[backend];
   return campo ? env[campo] != null : false;
 }
+
+/**
+ * `true` si el backend produce checkpoints de ultralytics, los únicos con
+ * exportador universal (`YOLO(...).export()`).
+ *
+ * El resto entrega su formato nativo más un ONNX que el propio script de
+ * entrenamiento escribe, así que ofrecerles TensorRT o CoreML era ofrecer un botón
+ * que sólo podía fallar.
+ */
+export function esUltralytics(backend: TrainingBackend): boolean {
+  return backend === 'yolo' || backend === 'rt_detr';
+}

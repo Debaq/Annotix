@@ -54,9 +54,9 @@ tareas (y `landmarks` gana un backend que antes no tenía).
 | 2 — clasificación y series temporales | ✅ hecho |
 | 3 — reemplazo de OpenMMLab/Detectron2 por HF | ✅ hecho: `hf_detection`, `hf_instance`, `hf_pose` |
 | 4 — cloud con el backend elegido | pendiente |
-| 5 — browser automation | pendiente |
-| 6 — coherencia de UI | pendiente |
-| 7 — verificación final | parcial: 23 smoke tests en verde (los 16 backends) |
+| 5 — browser automation | ✅ hecho: sube y ejecuta el paquete generado desde la configuración real |
+| 6 — coherencia de UI | ✅ hecho: tabla de instalados, mínimo de resolución, gating de fine-tune y export |
+| 7 — verificación final | parcial: 23 smoke tests en verde; falta la prueba manual en la app |
 
 Los ocho bugs que el arnés destapó en los backends que la auditoría daba por
 buenos están en la sección 0 de `roadmap_train.md`.

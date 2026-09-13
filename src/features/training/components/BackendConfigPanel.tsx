@@ -7,6 +7,8 @@ import { OPTIMIZERS } from '../utils/presets';
 
 interface BackendConfigPanelProps {
   backend: TrainingBackend;
+  /** Resolución mínima del backend, de `BackendInfo.minImageSize`. */
+  minImageSize?: number;
   commonParams: {
     epochs: number;
     batchSize: number;
@@ -105,6 +107,7 @@ const HF_POSE_PARAMS: ParamDefinition[] = [
 
 export function BackendConfigPanel({
   backend,
+  minImageSize,
   commonParams,
   backendParams,
   yoloConfig,
@@ -114,6 +117,12 @@ export function BackendConfigPanel({
   onYoloConfigChange,
   onYoloAugChange,
 }: BackendConfigPanelProps) {
+  // El mínimo lo publica el backend (BackendInfo.minImageSize): RT-DETR y RF-DETR
+  // no arrancan por debajo de 320 px y el runner rechaza la corrida, así que el
+  // control no debe dejar bajar de ahí.
+  const paramsComunes: ParamDefinition[] = COMMON_PARAMS.map((p) =>
+    p.key === 'imageSize' ? { ...p, min: minImageSize ?? p.min } : p,
+  );
 
   const splitVisualizer = (
     <DatasetSplitVisualizer
@@ -132,7 +141,7 @@ export function BackendConfigPanel({
           titleKey="training.params.commonTitle"
           icon="fas fa-sliders-h"
           defaultOpen={true}
-          params={COMMON_PARAMS}
+          params={paramsComunes}
           values={commonParams}
           onChange={onCommonChange}
         />

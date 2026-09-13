@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { esUltralytics } from '../utils/backendEnv';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/hooks/use-toast';
 import { exportTrainingReportFromJob } from '../services/trainingReportService';
-import type { TrainingJob } from '../types';
+import type { TrainingJob, TrainingBackend } from '../types';
 
 interface TrainingJobCardProps {
   job: TrainingJob;
@@ -28,6 +29,8 @@ export function TrainingJobCard({ job, onDelete, onFineTune, onResume, projectNa
 
   const config = job.config as Record<string, unknown>;
   const model = `${config.yoloVersion || config.modelId || '?'}${config.modelSize || ''}`;
+  // Heredar pesos (`model = YOLO(best.pt)`) sólo existe en ultralytics.
+  const soportaFineTune = esUltralytics((config.backend as TrainingBackend) || 'yolo');
   const date = new Date(job.createdAt).toLocaleString();
   const canExportReport = job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled';
 
@@ -94,7 +97,10 @@ export function TrainingJobCard({ job, onDelete, onFineTune, onResume, projectNa
         {job.status === 'training' && (
           <span className="text-xs text-blue-500 font-mono">{job.progress.toFixed(0)}%</span>
         )}
-        {job.status === 'completed' && job.bestModelPath && onFineTune && (
+        {/* El fine-tune hereda pesos con `model = YOLO(best.pt)`: sólo existe en
+            ultralytics. Antes el botón aparecía para todos y al pulsarlo no pasaba
+            nada (handleFineTune salía con un return silencioso). */}
+        {job.status === 'completed' && job.bestModelPath && onFineTune && soportaFineTune && (
           <Button
             variant="ghost"
             size="sm"
@@ -106,9 +112,7 @@ export function TrainingJobCard({ job, onDelete, onFineTune, onResume, projectNa
           </Button>
         )}
         {(job.status === 'cancelled' || job.status === 'failed') && (job.hasBest || job.hasLast) && (() => {
-          const backend = (config.backend as string) || 'yolo';
-          const isUltralytics = backend === 'yolo' || backend === 'rt_detr';
-          const canTrueResume = isUltralytics && job.hasLast && !!onResume;
+          const canTrueResume = soportaFineTune && job.hasLast && !!onResume;
           if (canTrueResume) {
             return (
               <Button

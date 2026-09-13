@@ -178,7 +178,7 @@ impl BrowserAutomationManager {
 
         // Crear runner según provider
         let runner: Box<dyn BrowserRunner> = match request.provider {
-            BrowserProvider::ColabFree => Box::new(colab_free::ColabFreeRunner::new()),
+            BrowserProvider::ColabFree => Box::new(colab_free::ColabFreeRunner::new(&request)),
             _ => Box::new(llm_chat::LlmChatRunner::new(request.provider.clone())),
         };
 

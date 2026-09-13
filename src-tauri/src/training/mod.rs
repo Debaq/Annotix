@@ -318,6 +318,10 @@ pub struct TrainingResult {
     pub results_dir: Option<String>,
     #[serde(rename = "finalMetrics")]
     pub final_metrics: Option<TrainingEpochMetrics>,
+    /// Evaluación sobre el split de test, cuando el proyecto lo configuró. El
+    /// script YOLO ya la calculaba y se descartaba por no tener dónde guardarla.
+    #[serde(rename = "testMetrics", skip_serializing_if = "Option::is_none")]
+    pub test_metrics: Option<TrainingEpochMetrics>,
     #[serde(rename = "exportedModels")]
     pub exported_models: Vec<ExportedModel>,
 }
@@ -483,6 +487,10 @@ pub struct BackendInfo {
     pub dataset_format: DatasetFormat,
     #[serde(rename = "pipPackages")]
     pub pip_packages: Vec<String>,
+    /// Resolución mínima con la que el backend entrena (ver
+    /// `backends::min_image_size`). La UI la usa como tope inferior del control.
+    #[serde(rename = "minImageSize")]
+    pub min_image_size: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

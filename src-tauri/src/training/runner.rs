@@ -734,6 +734,7 @@ fn handle_event(
                 last_model_path: event["lastModelPath"].as_str().map(|s| s.to_string()),
                 results_dir: event["resultsDir"].as_str().map(|s| s.to_string()),
                 final_metrics: event.get("finalMetrics").and_then(parse_metrics),
+                test_metrics: event.get("testMetrics").and_then(parse_metrics),
                 exported_models: event["exportedModels"]
                     .as_array()
                     .map(|arr| {
@@ -763,6 +764,7 @@ fn handle_event(
             // Actualizar project.json
             let best = result.best_model_path.clone();
             let final_metrics = result.final_metrics.clone();
+            let test_metrics = result.test_metrics.clone();
             update_job_in_project(app, project_dir, job_id, |job| {
                 job.status = "completed".to_string();
                 job.progress = 100.0;
@@ -772,6 +774,11 @@ fn handle_event(
                 if let Some(metrics) = final_metrics {
                     if let Ok(m) = serde_json::to_value(metrics) {
                         job.metrics = Some(m);
+                    }
+                }
+                if let Some(metrics) = test_metrics {
+                    if let Ok(m) = serde_json::to_value(metrics) {
+                        job.test_metrics = Some(m);
                     }
                 }
                 job.updated_at = js_timestamp();

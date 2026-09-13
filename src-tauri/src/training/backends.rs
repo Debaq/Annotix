@@ -25,6 +25,39 @@ fn project_type_to_task(project_type: &str) -> &str {
     }
 }
 
+/// Id público de un backend, el mismo que viaja al frontend y a los comandos.
+pub fn backend_id(backend: &TrainingBackend) -> &'static str {
+    match backend {
+        TrainingBackend::Yolo => "yolo",
+        TrainingBackend::RtDetr => "rt_detr",
+        TrainingBackend::RfDetr => "rf_detr",
+        TrainingBackend::HfDetection => "hf_detection",
+        TrainingBackend::Smp => "smp",
+        TrainingBackend::HfSegmentation => "hf_segmentation",
+        TrainingBackend::HfInstance => "hf_instance",
+        TrainingBackend::HfPose => "hf_pose",
+        TrainingBackend::Timm => "timm",
+        TrainingBackend::HfClassification => "hf_classification",
+        TrainingBackend::Tsai => "tsai",
+        TrainingBackend::PytorchForecasting => "pytorch_forecasting",
+        TrainingBackend::Pyod => "pyod",
+        TrainingBackend::Tslearn => "tslearn",
+        TrainingBackend::Pypots => "pypots",
+        TrainingBackend::Stumpy => "stumpy",
+        TrainingBackend::Sklearn => "sklearn",
+    }
+}
+
+/// Mínimo por id, para que el catálogo lo publique sin conocer el enum.
+fn min_image_size_por_id(id: &str) -> u32 {
+    match id {
+        // RT-DETR hace una selección top-k sobre los tokens del feature map y por
+        // debajo de ~320 px se queda sin índices. RF-DETR exige múltiplos de 32.
+        "rt_detr" | "rf_detr" => 320,
+        _ => 32,
+    }
+}
+
 /// Resolución mínima con la que un backend puede entrenar.
 ///
 /// No es una preferencia estética: RT-DETR hace una selección top-k sobre los tokens
@@ -32,11 +65,7 @@ fn project_type_to_task(project_type: &str) -> &str {
 /// `RuntimeError: selected index k out of range`, que al usuario no le dice nada.
 /// RF-DETR además exige múltiplos de 32 (lo ajusta su propio script).
 pub fn min_image_size(backend: &TrainingBackend) -> u32 {
-    match backend {
-        TrainingBackend::RtDetr | TrainingBackend::RfDetr => 320,
-        // El resto entrena con recortes pequeños sin problema.
-        _ => 32,
-    }
+    min_image_size_por_id(backend_id(backend))
 }
 
 /// Returns available backends filtered by project type
@@ -265,6 +294,7 @@ fn build_yolo_backend(task: &str) -> BackendInfo {
         models,
         dataset_format: DatasetFormat::YoloTxt,
         pip_packages: vec!["ultralytics".into()],
+        min_image_size: min_image_size_por_id("yolo"),
     }
 }
 
@@ -340,6 +370,7 @@ fn build_rtdetr_backend() -> BackendInfo {
         models,
         dataset_format: DatasetFormat::YoloTxt,
         pip_packages: vec!["ultralytics".into()],
+        min_image_size: min_image_size_por_id("rt_detr"),
     }
 }
 
@@ -425,6 +456,7 @@ fn build_rfdetr_backend(task: &str) -> BackendInfo {
         // aborta pidiéndolo, ya con los pesos descargados. El pin de transformers
         // es real: rfdetr 1.10 usa la API de la 5.x.
         pip_packages: vec!["rfdetr[train]".into(), "transformers>=5".into()],
+        min_image_size: min_image_size_por_id("rf_detr"),
     }
 }
 
@@ -568,6 +600,7 @@ fn build_smp_backend() -> BackendInfo {
             "torchvision".into(),
             "albumentations".into(),
         ],
+        min_image_size: min_image_size_por_id("smp"),
     }
 }
 
@@ -713,6 +746,7 @@ fn build_hf_seg_backend() -> BackendInfo {
             "torch".into(),
             "torchvision".into(),
         ],
+        min_image_size: min_image_size_por_id("hf_segmentation"),
     }
 }
 
@@ -800,6 +834,7 @@ fn build_hf_detection_backend() -> BackendInfo {
             "torchmetrics".into(),
             "pycocotools".into(),
         ],
+        min_image_size: min_image_size_por_id("hf_detection"),
     }
 }
 
@@ -854,6 +889,7 @@ fn build_hf_instance_backend() -> BackendInfo {
             "torchmetrics".into(),
             "pycocotools".into(),
         ],
+        min_image_size: min_image_size_por_id("hf_instance"),
     }
 }
 
@@ -908,6 +944,7 @@ fn build_hf_pose_backend(task: &str) -> BackendInfo {
         ],
         dataset_format: DatasetFormat::CocoKeypointsJson,
         pip_packages: vec!["timm".into(), "torch".into(), "torchvision".into()],
+        min_image_size: min_image_size_por_id("hf_pose"),
     }
 }
 
@@ -1020,6 +1057,7 @@ fn build_timm_backend(task: &str) -> BackendInfo {
         models: filtered,
         dataset_format: ds_fmt,
         pip_packages: vec!["timm".into(), "torch".into(), "torchvision".into()],
+        min_image_size: min_image_size_por_id("timm"),
     }
 }
 
@@ -1121,6 +1159,7 @@ fn build_hf_classification_backend(task: &str) -> BackendInfo {
             "torch".into(),
             "torchvision".into(),
         ],
+        min_image_size: min_image_size_por_id("hf_classification"),
     }
 }
 
@@ -1280,6 +1319,7 @@ fn build_tsai_backend(task: &str) -> BackendInfo {
         models: filtered,
         dataset_format: DatasetFormat::TimeSeriesCsv,
         pip_packages: vec!["tsai".into()],
+        min_image_size: min_image_size_por_id("tsai"),
     }
 }
 
@@ -1340,6 +1380,7 @@ fn build_pytorch_forecasting_backend() -> BackendInfo {
             "pytorch-lightning".into(),
             "torch".into(),
         ],
+        min_image_size: min_image_size_por_id("pytorch_forecasting"),
     }
 }
 
@@ -1406,6 +1447,7 @@ fn build_pyod_backend() -> BackendInfo {
         models,
         dataset_format: DatasetFormat::TimeSeriesCsv,
         pip_packages: vec!["pyod".into(), "torch".into()],
+        min_image_size: min_image_size_por_id("pyod"),
     }
 }
 
@@ -1461,6 +1503,7 @@ fn build_tslearn_backend() -> BackendInfo {
         models,
         dataset_format: DatasetFormat::TimeSeriesCsv,
         pip_packages: vec!["tslearn".into(), "scikit-learn".into()],
+        min_image_size: min_image_size_por_id("tslearn"),
     }
 }
 
@@ -1506,6 +1549,7 @@ fn build_pypots_backend() -> BackendInfo {
         models,
         dataset_format: DatasetFormat::TimeSeriesCsv,
         pip_packages: vec!["pypots".into(), "torch".into()],
+        min_image_size: min_image_size_por_id("pypots"),
     }
 }
 
@@ -1542,6 +1586,7 @@ fn build_stumpy_backend() -> BackendInfo {
         models,
         dataset_format: DatasetFormat::TimeSeriesCsv,
         pip_packages: vec!["stumpy".into(), "numpy".into()],
+        min_image_size: min_image_size_por_id("stumpy"),
     }
 }
 
@@ -1767,5 +1812,6 @@ fn build_sklearn_backend() -> BackendInfo {
             "skl2onnx".into(),
             "onnxmltools".into(),
         ],
+        min_image_size: min_image_size_por_id("sklearn"),
     }
 }

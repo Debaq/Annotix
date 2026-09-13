@@ -312,6 +312,8 @@ export interface BackendInfo {
   models: BackendModelInfo[];
   datasetFormat: DatasetFormat;
   pipPackages: string[];
+  /** Resolución mínima con la que el backend entrena. */
+  minImageSize: number;
 }
 
 export interface BackendModelInfo {

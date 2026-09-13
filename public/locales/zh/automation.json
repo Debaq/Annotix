@@ -60,7 +60,8 @@
   },
   "instructions": {
     "login": "请在浏览器窗口中登录。登录后自动化将自动继续。",
-    "captcha": "检测到验证码。请在浏览器窗口中解决。"
+    "captcha": "检测到验证码。请在浏览器窗口中解决。",
+    "uploadPackage": "在 Colab 的文件选择框中选择 Annotix 生成的训练包（.zip）。"
   },
   "result": {
     "modelDownloaded": "模型已下载: {{path}}",

@@ -60,7 +60,8 @@
   },
   "instructions": {
     "login": "Please login in the browser window. The automation will continue automatically once logged in.",
-    "captcha": "A CAPTCHA has been detected. Please solve it in the browser window."
+    "captcha": "A CAPTCHA has been detected. Please solve it in the browser window.",
+    "uploadPackage": "Select the training package (.zip) that Annotix generated in Colab's file picker."
   },
   "result": {
     "modelDownloaded": "Model downloaded: {{path}}",

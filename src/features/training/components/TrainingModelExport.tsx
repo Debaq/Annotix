@@ -4,14 +4,17 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { Button } from '@/components/ui/button';
 import { trainingService } from '../services/trainingService';
 import { EXPORT_FORMATS } from '../utils/presets';
+import { esUltralytics } from '../utils/backendEnv';
+import type { TrainingBackend } from '../types';
 import { buildModelDownloadName, extensionFromPath } from '../utils/downloadName';
 
 interface TrainingModelExportProps {
   modelPath: string;
   projectName: string;
+  backend: TrainingBackend;
 }
 
-export function TrainingModelExport({ modelPath, projectName }: TrainingModelExportProps) {
+export function TrainingModelExport({ modelPath, projectName, backend }: TrainingModelExportProps) {
   const { t } = useTranslation();
   const [exporting, setExporting] = useState<string | null>(null);
   const [exported, setExported] = useState<{ format: string; path: string }[]>([]);
@@ -55,11 +58,16 @@ export function TrainingModelExport({ modelPath, projectName }: TrainingModelExp
     }
   };
 
+  // Fuera de ultralytics sólo hay ONNX, y lo emite el propio script al terminar.
+  const formatos = esUltralytics(backend)
+    ? EXPORT_FORMATS
+    : EXPORT_FORMATS.filter((f) => f.value === 'onnx');
+
   return (
     <div className="space-y-3">
       <h4 className="text-sm font-medium">{t('training.result.exportModel')}</h4>
       <div className="grid grid-cols-3 gap-2">
-        {EXPORT_FORMATS.map((fmt) => {
+        {formatos.map((fmt) => {
           const isExported = exported.some((e) => e.format === fmt.value);
           const isExporting = exporting === fmt.value;
           return (

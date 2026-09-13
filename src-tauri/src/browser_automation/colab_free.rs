@@ -8,10 +8,16 @@ use std::time::Duration;
 pub struct ColabFreeRunner {
     result: Option<AutomationResult>,
     selectors: super::selectors::SelectorRegistry,
+    /// Configuración real del entrenamiento que pidió el usuario.
+    ///
+    /// Antes este runner inyectaba `YOLO('yolov8n.pt')` con 50 épocas, 640 px y
+    /// batch 16 escritos a mano: el backend, el modelo y los hiperparámetros
+    /// elegidos en el panel se descartaban en silencio.
+    request: AutomationRequest,
 }
 
 impl ColabFreeRunner {
-    pub fn new() -> Self {
+    pub fn new(request: &AutomationRequest) -> Self {
         let selectors_dir = std::env::current_exe()
             .ok()
             .and_then(|p| p.parent().map(|p| p.to_path_buf()))
@@ -28,7 +34,38 @@ impl ColabFreeRunner {
         Self {
             result: None,
             selectors: super::selectors::SelectorRegistry::load(&selectors_dir),
+            request: request.clone(),
         }
+    }
+
+    /// `TrainingRequest` que viajó en `trainingParams`, si vino.
+    fn training_request(&self) -> Option<crate::training::TrainingRequest> {
+        self.request
+            .training_params
+            .clone()
+            .and_then(|v| serde_json::from_value(v).ok())
+    }
+
+    /// Paquetes pip que necesita el backend elegido.
+    fn requirements(&self) -> Vec<String> {
+        match self.training_request() {
+            Some(req) => crate::training::scripts::get_requirements_for_backend(&req.backend)
+                .iter()
+                .map(|p| p.to_string())
+                .collect(),
+            // Sin configuración sólo se puede asumir el backend por defecto.
+            None => vec!["ultralytics".to_string()],
+        }
+    }
+
+    /// Nombre del zip del paquete de entrenamiento que el usuario va a subir.
+    fn nombre_paquete(&self) -> String {
+        self.request
+            .dataset_path
+            .as_deref()
+            .and_then(|p| std::path::Path::new(p).file_name())
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| "paquete.zip".to_string())
     }
 }
 
@@ -79,8 +116,11 @@ impl BrowserRunner for ColabFreeRunner {
                 id: "upload_dataset".into(),
                 name: "automation.colab.steps.uploadDataset".into(),
                 state: StepState::Pending,
-                requires_user: false,
-                user_instruction: None,
+                // Colab abre su propio selector de archivos: sin la persona no hay
+                // subida. Declararlo como automático dejaba la sesión esperando
+                // cinco minutos sin decir qué hacía falta.
+                requires_user: true,
+                user_instruction: Some("automation.instructions.uploadPackage".into()),
                 progress: 0.0,
             },
             AutomationStep {
@@ -293,10 +333,11 @@ impl ColabFreeRunner {
         _session: &AutomationSession,
         emitter: &dyn Fn(&str),
     ) -> Result<bool, String> {
-        emitter("Instalando dependencias (pip install ultralytics)...");
+        let paquetes = self.requirements().join(" ");
+        emitter(&format!("Instalando dependencias: {}", paquetes));
 
-        let code = "!pip install ultralytics -q";
-        self.inject_and_run_cell(tab, code, emitter)?;
+        let code = format!("!pip install -q {}", paquetes);
+        self.inject_and_run_cell(tab, &code, emitter)?;
 
         // Esperar a que la celda termine (buscar output con "Successfully")
         self.wait_for_cell_completion(tab, 120, emitter)?;
@@ -333,7 +374,10 @@ else:
         self.add_new_cell(tab, emitter)?;
         self.inject_and_run_cell(tab, upload_code, emitter)?;
 
-        emitter("Esperando que el usuario seleccione el archivo zip del dataset...");
+        emitter(&format!(
+            "Esperando que selecciones el paquete de entrenamiento ({})...",
+            self.nombre_paquete()
+        ));
         // Este paso necesitará intervención del usuario para seleccionar el archivo
         // en el diálogo de upload de Colab
         self.wait_for_cell_completion(tab, 300, emitter)?;
@@ -348,57 +392,44 @@ else:
         _session: &AutomationSession,
         emitter: &dyn Fn(&str),
     ) -> Result<bool, String> {
-        emitter("Inyectando código de entrenamiento...");
+        emitter("Preparando el entrenamiento con la configuración del panel...");
 
-        // Generar script de training adaptado para Colab
-        let training_code = r#"
-import os, json
-from ultralytics import YOLO
+        // El paquete que el usuario sube ya trae su `train.py` generado desde el
+        // `TrainingRequest` (backend, modelo, épocas, resolución…) y su dataset, con
+        // rutas relativas al propio zip. Ejecutarlo es lo que respeta la
+        // configuración elegida; antes aquí se inyectaba un YOLO fijo.
+        let code = r#"
+import glob, os, subprocess, sys
 
-# Configuración de entrenamiento
-DATA_DIR = '/content/dataset'
-yaml_path = None
+RAIZ = "/content/dataset"
+candidatos = sorted(glob.glob(os.path.join(RAIZ, "**", "train.py"), recursive=True))
+if not candidatos:
+    raise FileNotFoundError(
+        "El zip subido no contiene train.py: genera el paquete desde Annotix "
+        "(Entrenar > Descargar paquete) y sube ese archivo."
+    )
 
-# Buscar data.yaml
-for root, dirs, files in os.walk(DATA_DIR):
-    for f in files:
-        if f == 'data.yaml' or f == 'data.yml':
-            yaml_path = os.path.join(root, f)
-            break
-    if yaml_path:
-        break
+script = candidatos[0]
+print(f"Ejecutando {script}", flush=True)
 
-if not yaml_path:
-    raise FileNotFoundError("No se encontró data.yaml en el dataset")
-
-print(f"Dataset encontrado: {yaml_path}")
-
-# Entrenar
-model = YOLO('yolov8n.pt')
-results = model.train(
-    data=yaml_path,
-    epochs=50,
-    imgsz=640,
-    batch=16,
-    device=0,
-    project='/content/runs',
-    name='annotix_training',
-    exist_ok=True,
-    verbose=True,
+# -u para que los ANNOTIX_EVENT lleguen a la salida de la celda sin buffering.
+proceso = subprocess.Popen(
+    [sys.executable, "-u", os.path.basename(script)],
+    cwd=os.path.dirname(script),
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,
+    text=True,
 )
-
-# Notificar resultado
-best_path = str(model.trainer.best)
-print(f"\nANNOTIX_EVENT:" + json.dumps({
-    "type": "completed",
-    "bestModelPath": best_path,
-}))
+for linea in proceso.stdout:
+    print(linea, end="", flush=True)
+proceso.wait()
+print(f"ANNOTIX_EXIT:{proceso.returncode}", flush=True)
 "#;
 
         self.add_new_cell(tab, emitter)?;
-        self.inject_and_run_cell(tab, training_code, emitter)?;
+        self.inject_and_run_cell(tab, code, emitter)?;
 
-        emitter("Código de entrenamiento inyectado.");
+        emitter("Entrenamiento lanzado con la configuración del proyecto.");
         Ok(true)
     }
 

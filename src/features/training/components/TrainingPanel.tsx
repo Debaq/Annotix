@@ -33,7 +33,7 @@ const TrainingResult = lazy(() => import('./TrainingResult').then(m => ({ defaul
 const TrainingJobList = lazy(() => import('./TrainingJobList').then(m => ({ default: m.TrainingJobList })));
 const AutomationControlPanel = lazy(() => import('../../browser-automation/components/AutomationControlPanel').then(m => ({ default: m.AutomationControlPanel })));
 import { automationService } from '../../browser-automation/services/automationService';
-import type { TrainingPhase, PythonEnvStatus, ScenarioPresetId, TrainingJob, TrainingBackend, TrainingConfig, AugmentationConfig } from '../types';
+import type { TrainingPhase, PythonEnvStatus, ScenarioPresetId, TrainingJob, TrainingBackend, TrainingConfig, AugmentationConfig, BackendInfo } from '../types';
 import { getPresetById } from '../utils/presets';
 import type { GpuInfo } from '../types';
 import { useGlobalTrainingStatus } from '../hooks/useGlobalTrainingStatus';
@@ -147,10 +147,18 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
     setOpen(true);
   }, [openActiveSignal, globalStatus.active, globalStatus.jobId, globalStatus.projectId, project?.id]);
 
-  const handleBackendSelect = useCallback((selectedBackend: typeof backend) => {
+  // El mínimo de resolución lo publica el backend: sin esto la UI dejaba pedir
+  // 64 px a RT-DETR, que aborta con un error incomprensible.
+  const [minImageSize, setMinImageSize] = useState<number>(32);
+
+  const handleBackendSelect = useCallback((selectedBackend: typeof backend, info: BackendInfo) => {
     setBackend(selectedBackend);
+    setMinImageSize(info.minImageSize || 32);
+    if (commonParams.imageSize < (info.minImageSize || 32)) {
+      updateCommonParam('imageSize', info.minImageSize);
+    }
     setPhase('config');
-  }, [setBackend]);
+  }, [setBackend, commonParams.imageSize, updateCommonParam]);
 
   // When user picks "Train locally" → check Python env + backend packages first
   // Los errores de arranque (sin imágenes anotadas, entorno roto, etc.) llegan
@@ -252,16 +260,35 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
   const handleStartBrowserAutomation = useCallback(async () => {
     if (!project?.id) return;
     try {
+      // La automatización sube y ejecuta el paquete de entrenamiento, que lleva el
+      // `train.py` generado desde esta misma configuración. Antes se lanzaba sin
+      // paquete y el navegador inyectaba un YOLO fijo que ignoraba el panel.
+      const request = buildRequest();
+      const slug = (project.name || 'project')
+        .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 60) || 'project';
+      const packagePath = await save({
+        filters: [{ name: 'ZIP', extensions: ['zip'] }],
+        defaultPath: `annotix-${slug}-${backend}.zip`,
+      });
+      if (!packagePath) return;
+      await trainingService.generateTrainingPackage(project.id, request, packagePath);
+
       const sessionId = await automationService.startAutomation({
         provider: 'colab_free',
         projectId: project.id,
+        trainingParams: request as unknown as Record<string, unknown>,
+        datasetPath: packagePath,
       });
       setAutomationSessionId(sessionId);
     } catch (e) {
       console.error('Error starting browser automation:', e);
       showStartError(e, 'training.startFailed');
     }
-  }, [project, showStartError]);
+  }, [project, backend, buildRequest, showStartError]);
 
   const handleDownloadPackage = useCallback(async () => {
     if (!project?.id) return;
@@ -528,6 +555,7 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
                 {/* Config panel */}
                 <BackendConfigPanel
                   backend={backend}
+                  minImageSize={minImageSize}
                   commonParams={commonParams}
                   backendParams={backendParams}
                   yoloConfig={backend === 'yolo' ? yoloConfig : undefined}

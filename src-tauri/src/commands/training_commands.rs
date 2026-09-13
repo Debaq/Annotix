@@ -251,6 +251,7 @@ pub async fn start_training(
             progress: 0.0,
             logs: vec![],
             metrics: None,
+            test_metrics: None,
             metrics_history: Vec::new(),
             created_at: now,
             updated_at: now,
@@ -322,6 +323,84 @@ pub fn get_training_job(
     })
 }
 
+/// Rutas donde cada backend deja sus pesos, relativas al `result_dir` del job.
+///
+/// Antes esto buscaba sólo `weights/best.pt`, el layout de ultralytics: los otros
+/// catorce backends —que guardan `best.pth`, un directorio de HuggingFace, un
+/// `.joblib` o un `.pypots`— aparecían siempre sin modelo, y con ello sin botón de
+/// reanudar, de fine-tune ni de informe.
+const CANDIDATOS_BEST: &[&str] = &[
+    "weights/best.pt",
+    "train_output/best.pth",
+    "train_output/best",
+    "train_output/best_model.joblib",
+    "train_output/best_model",
+    "train_output/learner.pkl",
+    "train_output/model.pkl",
+];
+
+const CANDIDATOS_LAST: &[&str] = &[
+    "weights/last.pt",
+    "train_output/last.pth",
+    "train_output/last",
+];
+
+/// Primer candidato que exista bajo `raiz`, junto con su ruta absoluta.
+fn primer_artefacto(raiz: &std::path::Path, candidatos: &[&str]) -> Option<String> {
+    for rel in candidatos {
+        let ruta = raiz.join(rel);
+        if ruta.exists() {
+            return Some(ruta.to_string_lossy().to_string());
+        }
+    }
+    // pypots y otros añaden su propia extensión al guardar.
+    let dir = raiz.join("train_output");
+    let prefijos: Vec<&str> = candidatos
+        .iter()
+        .filter_map(|c| c.strip_prefix("train_output/"))
+        .collect();
+    let entradas = std::fs::read_dir(&dir).ok()?;
+    for entrada in entradas.flatten() {
+        let nombre = entrada.file_name().to_string_lossy().to_string();
+        if prefijos.iter().any(|p| nombre.starts_with(p)) {
+            return Some(entrada.path().to_string_lossy().to_string());
+        }
+    }
+    None
+}
+
+/// `(hay best, hay last, ruta best, ruta last)` para un job.
+pub fn localizar_artefactos(
+    job: &TrainingJobEntry,
+) -> (bool, bool, Option<String>, Option<String>) {
+    let en_disco = |ruta: &Option<String>| {
+        ruta.as_ref()
+            .map(|p| std::path::Path::new(p).exists())
+            .unwrap_or(false)
+    };
+
+    let (best_dir, last_dir) = match &job.result_dir {
+        Some(rd) => {
+            let raiz = std::path::Path::new(rd);
+            (
+                primer_artefacto(raiz, CANDIDATOS_BEST),
+                primer_artefacto(raiz, CANDIDATOS_LAST),
+            )
+        }
+        None => (None, None),
+    };
+
+    // Lo que el script reportó manda si sigue existiendo: es más preciso que
+    // adivinar por nombre (rfdetr, por ejemplo, usa checkpoint_best_total.pth).
+    let best = if en_disco(&job.best_model_path) {
+        job.best_model_path.clone()
+    } else {
+        best_dir
+    };
+
+    (best.is_some(), last_dir.is_some(), best, last_dir)
+}
+
 #[tauri::command]
 pub fn list_training_jobs(
     state: State<'_, AppState>,
@@ -331,40 +410,8 @@ pub fn list_training_jobs(
         pf.training_jobs
             .iter()
             .map(|job| {
-                let (has_best, has_last, best_path, last_path) = match &job.result_dir {
-                    Some(rd) => {
-                        let weights = std::path::Path::new(rd).join("weights");
-                        let best = weights.join("best.pt");
-                        let last = weights.join("last.pt");
-                        let best_on_disk = best.exists();
-                        let best_from_job = job
-                            .best_model_path
-                            .as_ref()
-                            .map(|p| std::path::Path::new(p).exists())
-                            .unwrap_or(false);
-                        let has_best = best_on_disk || best_from_job;
-                        let has_last = last.exists();
-                        let best_str = if best_on_disk {
-                            Some(best.to_string_lossy().to_string())
-                        } else {
-                            job.best_model_path.clone()
-                        };
-                        let last_str = if has_last {
-                            Some(last.to_string_lossy().to_string())
-                        } else {
-                            None
-                        };
-                        (has_best, has_last, best_str, last_str)
-                    }
-                    None => {
-                        let has_best = job
-                            .best_model_path
-                            .as_ref()
-                            .map(|p| std::path::Path::new(p).exists())
-                            .unwrap_or(false);
-                        (has_best, false, job.best_model_path.clone(), None)
-                    }
-                };
+                let (has_best, has_last, best_path, last_path) = localizar_artefactos(job);
+
                 let mut v = serde_json::to_value(job).unwrap_or(serde_json::Value::Null);
                 if let Some(obj) = v.as_object_mut() {
                     obj.insert("hasBest".into(), serde_json::Value::Bool(has_best));
@@ -621,6 +668,13 @@ pub async fn start_training_v2(
         return Err("Usa generate_training_package para modo descarga".to_string());
     }
 
+    // La automatización del navegador tiene su propio comando
+    // (`start_browser_automation`): si llegara aquí caería en la rama local y
+    // entrenaría en la máquina del usuario sin que lo haya pedido.
+    if request.execution_mode == ExecutionMode::BrowserAutomation {
+        return Err("Usa start_browser_automation para el modo navegador".to_string());
+    }
+
     // For cloud mode, delegate to CloudTrainingManager
     if request.execution_mode == ExecutionMode::Cloud {
         let cloud_config = request
@@ -646,6 +700,7 @@ pub async fn start_training_v2(
                 progress: 0.0,
                 logs: vec![],
                 metrics: None,
+                test_metrics: None,
                 metrics_history: Vec::new(),
                 created_at: now,
                 updated_at: now,
@@ -718,6 +773,7 @@ pub async fn start_training_v2(
                 progress: 0.0,
                 logs: vec![],
                 metrics: None,
+                test_metrics: None,
                 metrics_history: Vec::new(),
                 created_at: now,
                 updated_at: now,
@@ -750,6 +806,7 @@ pub async fn start_training_v2(
             progress: 0.0,
             logs: vec![],
             metrics: None,
+            test_metrics: None,
             metrics_history: Vec::new(),
             created_at: now,
             updated_at: now,

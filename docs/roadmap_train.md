@@ -29,11 +29,9 @@ destapó ocho bugs más que ninguna lectura habría encontrado, todos ya corregi
 | `rf_detr` | `resolution` por defecto 560, que no es múltiplo de 32 y la librería rechaza; y `resolution`/`gradient_checkpointing` se pasaban a `train()` cuando son del constructor | ✅ 576 por defecto, ajuste automático y argumentos en su sitio |
 | `rf_detr` | No se pasaba `output_dir`: los checkpoints caían en el directorio de trabajo | ✅ |
 
-Pendiente que salió de lo mismo, sin arreglar todavía:
-
-- **RT-DETR por debajo de ~320 px** muere con `RuntimeError: selected index k out of
-  range`, que no dice nada al usuario. Hace falta un mínimo de `imgsz` por backend,
-  validado en la UI.
+El mínimo de resolución por backend (`backends::min_image_size`) lo valida el runner
+y lo publica el catálogo, así que la UI ya no deja pedirle 64 px a RT-DETR, que
+abortaba con `RuntimeError: selected index k out of range`.
 
 ### Lo que salió al arreglar clasificación, series y el reemplazo de OpenMMLab
 

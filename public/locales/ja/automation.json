@@ -60,7 +60,8 @@
   },
   "instructions": {
     "login": "ブラウザウィンドウでログインしてください。ログイン後、自動化が自動的に続行されます。",
-    "captcha": "CAPTCHAが検出されました。ブラウザウィンドウで解決してください。"
+    "captcha": "CAPTCHAが検出されました。ブラウザウィンドウで解決してください。",
+    "uploadPackage": "Colab のファイル選択で、Annotix が生成した学習パッケージ（.zip）を選んでください。"
   },
   "result": {
     "modelDownloaded": "モデルダウンロード完了: {{path}}",

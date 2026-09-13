@@ -371,6 +371,13 @@ pub struct TrainingJobEntry {
     #[serde(default)]
     pub logs: Vec<String>,
     pub metrics: Option<serde_json::Value>,
+    /// Métricas sobre el split de test, si el entrenamiento lo evaluó.
+    #[serde(
+        default,
+        rename = "testMetrics",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub test_metrics: Option<serde_json::Value>,
     /// Historial por epoch (persistente): `{epoch, metrics, ts}`. Se append-ea en
     /// cada evento `on_fit_epoch_end` para no perder la curva si el proceso
     /// crashea o se cierra la app antes del `completed`.

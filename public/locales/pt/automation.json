@@ -60,7 +60,8 @@
   },
   "instructions": {
     "login": "Faça login na janela do navegador. A automação continuará automaticamente após o login.",
-    "captcha": "Um CAPTCHA foi detectado. Resolva-o na janela do navegador."
+    "captcha": "Um CAPTCHA foi detectado. Resolva-o na janela do navegador.",
+    "uploadPackage": "Selecione na janela do Colab o pacote de treinamento (.zip) gerado pelo Annotix."
   },
   "result": {
     "modelDownloaded": "Modelo baixado: {{path}}",

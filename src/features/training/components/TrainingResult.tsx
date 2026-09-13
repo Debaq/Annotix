@@ -250,7 +250,11 @@ export function TrainingResult({
 
       {/* Export model button */}
       {result.bestModelPath && (
-        <TrainingModelExport modelPath={result.bestModelPath} projectName={projectName} />
+        <TrainingModelExport
+          modelPath={result.bestModelPath}
+          projectName={projectName}
+          backend={backend}
+        />
       )}
 
       {/* Export PDF report */}
