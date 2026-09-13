@@ -32,5 +32,9 @@
   "cancelling": "Cancelling…",
   "extractionCancelled": "Extraction cancelled ({{count}} frames extracted)",
   "resumeExtraction": "Resume extraction",
-  "extractionFailed": "Extraction failed. Click to retry."
+  "extractionFailed": "Extraction failed. Click to retry.",
+  "newTrackHint": "Creates a track with the active class",
+  "filterCurrentFrame": "In this frame",
+  "filterAll": "All tracks",
+  "moveToClass": "Change to"
 }

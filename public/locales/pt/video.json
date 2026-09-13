@@ -32,5 +32,9 @@
   "cancelling": "Cancelando…",
   "extractionCancelled": "Extração cancelada ({{count}} quadros extraídos)",
   "resumeExtraction": "Retomar extração",
-  "extractionFailed": "A extração falhou. Clique para tentar novamente."
+  "extractionFailed": "A extração falhou. Clique para tentar novamente.",
+  "newTrackHint": "Cria um track com a classe ativa",
+  "filterCurrentFrame": "Neste quadro",
+  "filterAll": "Todos os tracks",
+  "moveToClass": "Mudar para"
 }

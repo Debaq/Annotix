@@ -32,5 +32,9 @@
   "cancelling": "Annullamento…",
   "extractionCancelled": "Estrazione annullata ({{count}} fotogrammi estratti)",
   "resumeExtraction": "Riprendi l'estrazione",
-  "extractionFailed": "L'estrazione è fallita. Fai clic per riprovare."
+  "extractionFailed": "L'estrazione è fallita. Fai clic per riprovare.",
+  "newTrackHint": "Crea un track con la classe attiva",
+  "filterCurrentFrame": "In questo fotogramma",
+  "filterAll": "Tutti i track",
+  "moveToClass": "Cambia in"
 }

@@ -31,6 +31,7 @@ import { ConfirmDialog } from './features/core/components/ConfirmDialog';
 import { useP2pSession } from './features/p2p/hooks/useP2pSession';
 import { TeamView } from './features/p2p/components/TeamView';
 import { useTranslation } from 'react-i18next';
+import { AnnotationPanelActions } from './features/core/components/AnnotationPanelActions';
 import { ManageClassesDialog } from './features/projects/components/ManageClassesDialog';
 import { CLASS_SHORTCUTS } from './features/core/constants';
 import { cn } from '@/lib/utils';
@@ -426,21 +427,7 @@ const ImageView = () => {
           </div>
         </div>
 
-        <div className="annotix-panel-section">
-          <h3 className="mb-3">{t('common.actions')}</h3>
-          <div className="space-y-2">
-            <Button
-              variant="outline"
-              className="w-full annotix-btn annotix-btn-outline"
-              onClick={() => {
-                navigate(`/projects/${projectId}`);
-              }}
-            >
-              <i className="fas fa-arrow-left mr-2"></i>
-              {t('gallery.backToGallery')}
-            </Button>
-          </div>
-        </div>
+        <AnnotationPanelActions onBack={() => navigate(`/projects/${projectId}`)} />
       </div>
       )}
     </div>

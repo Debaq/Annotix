@@ -32,5 +32,9 @@
   "cancelling": "Отмена…",
   "extractionCancelled": "Извлечение отменено (извлечено кадров: {{count}})",
   "resumeExtraction": "Продолжить извлечение",
-  "extractionFailed": "Извлечение не удалось. Нажмите, чтобы повторить."
+  "extractionFailed": "Извлечение не удалось. Нажмите, чтобы повторить.",
+  "newTrackHint": "Создаёт трек с активным классом",
+  "filterCurrentFrame": "В этом кадре",
+  "filterAll": "Все треки",
+  "moveToClass": "Изменить на"
 }

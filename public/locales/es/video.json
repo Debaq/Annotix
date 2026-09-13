@@ -32,5 +32,9 @@
   "cancelling": "Cancelando…",
   "extractionCancelled": "Extracción cancelada ({{count}} fotogramas extraídos)",
   "resumeExtraction": "Reanudar extracción",
-  "extractionFailed": "La extracción falló. Pulsa para reintentar."
+  "extractionFailed": "La extracción falló. Pulsa para reintentar.",
+  "newTrackHint": "Crea un track con la clase activa",
+  "filterCurrentFrame": "En este fotograma",
+  "filterAll": "Todos los tracks",
+  "moveToClass": "Cambiar a"
 }

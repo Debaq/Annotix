@@ -32,5 +32,9 @@
   "cancelling": "中止しています…",
   "extractionCancelled": "抽出を中止しました（{{count}} フレーム抽出済み）",
   "resumeExtraction": "抽出を再開",
-  "extractionFailed": "抽出に失敗しました。クリックで再試行します。"
+  "extractionFailed": "抽出に失敗しました。クリックで再試行します。",
+  "newTrackHint": "アクティブなクラスでトラックを作成",
+  "filterCurrentFrame": "このフレーム",
+  "filterAll": "すべてのトラック",
+  "moveToClass": "変更先"
 }

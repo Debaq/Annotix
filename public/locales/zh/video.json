@@ -32,5 +32,9 @@
   "cancelling": "正在取消…",
   "extractionCancelled": "抽帧已取消（已提取 {{count}} 帧）",
   "resumeExtraction": "继续抽帧",
-  "extractionFailed": "抽帧失败，点击重试。"
+  "extractionFailed": "抽帧失败，点击重试。",
+  "newTrackHint": "使用当前类别创建轨迹",
+  "filterCurrentFrame": "本帧",
+  "filterAll": "所有轨迹",
+  "moveToClass": "改为"
 }

@@ -32,5 +32,9 @@
   "cancelling": "Wird abgebrochen…",
   "extractionCancelled": "Extraktion abgebrochen ({{count}} Bilder extrahiert)",
   "resumeExtraction": "Extraktion fortsetzen",
-  "extractionFailed": "Extraktion fehlgeschlagen. Zum Wiederholen klicken."
+  "extractionFailed": "Extraktion fehlgeschlagen. Zum Wiederholen klicken.",
+  "newTrackHint": "Erstellt einen Track mit der aktiven Klasse",
+  "filterCurrentFrame": "In diesem Bild",
+  "filterAll": "Alle Tracks",
+  "moveToClass": "Wechseln zu"
 }

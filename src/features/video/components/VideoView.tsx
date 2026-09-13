@@ -9,7 +9,8 @@ import { useVideoTracks } from '../hooks/useVideoTracks';
 import { useInterpolation } from '../hooks/useInterpolation';
 import { VideoTimeline } from './VideoTimeline';
 import { VideoAnnotationCanvas } from './VideoAnnotationCanvas';
-import { VideoTrackList } from './VideoTrackList';
+import { VideoTrackPanel } from './VideoTrackPanel';
+import { AnnotationPanelActions } from '../../core/components/AnnotationPanelActions';
 import { AnnotationCanvas } from '../../canvas/components/AnnotationCanvas';
 import { Button } from '@/components/ui/button';
 import { ManageClassesDialog } from '../../projects/components/ManageClassesDialog';
@@ -65,6 +66,8 @@ export function VideoView() {
     return covered;
   }, [tracks, totalFrames, positionByFrameIndex]);
 
+  // Track seleccionado: lo comparten el panel y las pistas de la línea de tiempo.
+  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [isBaking, setIsBaking] = useState(false);
   const [bakeResult, setBakeResult] = useState<number | null>(null);
   const [bakeError, setBakeError] = useState<string | null>(null);
@@ -237,22 +240,9 @@ export function VideoView() {
             </div>
           </div>
 
-          {/* Tracks (bbox only) */}
-          {isBboxProject && (
-            <div className="annotix-panel-section flex-1">
-              <VideoTrackList
-                tracks={tracks}
-                classes={project.classes}
-                currentFrameIndex={currentFrameIndex}
-                onCreateTrack={createTrack}
-                onDeleteTrack={deleteTrack}
-                onUpdateTrack={updateTrack}
-              />
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="annotix-panel-section space-y-2">
+          {/* Acciones: mismo bloque y misma posición que en la vista de imágenes,
+              antes de cualquier contenido de altura variable. */}
+          <AnnotationPanelActions onBack={() => navigate(`/projects/${projectId}`)}>
             {isBboxProject && tracks.length > 0 && (
               <div className="space-y-1">
                 <Button
@@ -283,21 +273,34 @@ export function VideoView() {
                 )}
               </div>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => navigate(`/projects/${projectId}`)}
-            >
-              <i className="fas fa-arrow-left mr-2"></i>
-              {t('gallery.backToGallery', 'Volver')}
-            </Button>
-          </div>
+          </AnnotationPanelActions>
+
+          {/* Tracks (bbox only): al final y con altura acotada, para que no empuje
+              nada de lo anterior. */}
+          {isBboxProject && (
+            <div className="annotix-panel-section min-h-0">
+              <VideoTrackPanel
+                tracks={tracks}
+                classes={project.classes}
+                currentFrameIndex={currentFrameIndex}
+                selectedTrackId={selectedTrackId}
+                onSelectTrack={setSelectedTrackId}
+                onCreateTrack={createTrack}
+                onDeleteTrack={deleteTrack}
+                onUpdateTrack={updateTrack}
+              />
+            </div>
+          )}
         </div>
       </div>
 
       {/* Bottom: Timeline */}
-      <VideoTimeline tracks={isBboxProject ? tracks : []} classes={project.classes} />
+      <VideoTimeline
+        tracks={isBboxProject ? tracks : []}
+        classes={project.classes}
+        selectedTrackId={selectedTrackId}
+        onSelectTrack={setSelectedTrackId}
+      />
     </div>
   );
 }

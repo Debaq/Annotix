@@ -32,5 +32,9 @@
   "cancelling": "Annulation…",
   "extractionCancelled": "Extraction annulée ({{count}} images extraites)",
   "resumeExtraction": "Reprendre l'extraction",
-  "extractionFailed": "L'extraction a échoué. Cliquez pour réessayer."
+  "extractionFailed": "L'extraction a échoué. Cliquez pour réessayer.",
+  "newTrackHint": "Crée un track avec la classe active",
+  "filterCurrentFrame": "Dans cette image",
+  "filterAll": "Tous les tracks",
+  "moveToClass": "Changer en"
 }

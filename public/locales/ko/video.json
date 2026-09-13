@@ -32,5 +32,9 @@
   "cancelling": "취소 중…",
   "extractionCancelled": "추출을 취소했습니다({{count}} 프레임 추출됨)",
   "resumeExtraction": "추출 재개",
-  "extractionFailed": "추출에 실패했습니다. 클릭하여 다시 시도하세요."
+  "extractionFailed": "추출에 실패했습니다. 클릭하여 다시 시도하세요.",
+  "newTrackHint": "활성 클래스로 트랙 생성",
+  "filterCurrentFrame": "이 프레임",
+  "filterAll": "모든 트랙",
+  "moveToClass": "변경"
 }
