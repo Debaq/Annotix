@@ -534,6 +534,24 @@ pub fn get_available_backends(project_type: String) -> Result<Vec<BackendInfo>, 
     ))
 }
 
+/// Catálogo completo de backends, sin filtrar por tipo de proyecto. Lo usa la
+/// pantalla de referencia de Configuración, que muestra todo lo que existe.
+#[tauri::command]
+pub fn get_all_backends() -> Result<Vec<BackendInfo>, String> {
+    Ok(crate::training::backends::get_all_backends())
+}
+
+/// Vista previa del `train.py` de un backend, generada con el mismo código que
+/// ejecuta el entrenamiento. Reemplaza a las plantillas escritas a mano que la
+/// pantalla de Configuración traía duplicadas.
+#[tauri::command]
+pub fn preview_train_script(backend: String, task: String) -> Result<String, String> {
+    let backend: crate::training::TrainingBackend =
+        serde_json::from_value(serde_json::Value::String(backend.clone()))
+            .map_err(|_| format!("Backend desconocido: {backend}"))?;
+    crate::training::preview_script(&backend, &task)
+}
+
 /// Fichas de decisión de las familias de modelos: dominio, modalidad, coste,
 /// licencia y desempeño de referencia. Es lo que la UI necesita para que el
 /// usuario sepa cuál elegir; los textos de "cuándo usarlo" salen de i18n.

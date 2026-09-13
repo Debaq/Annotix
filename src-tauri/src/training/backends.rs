@@ -104,6 +104,73 @@ pub fn min_image_size(backend: &TrainingBackend) -> u32 {
     min_image_size_por_id(backend_id(backend))
 }
 
+/// Todos los backends del catálogo, una vez cada uno.
+///
+/// `get_available_backends` filtra por tipo de proyecto, que es lo que quiere el
+/// panel de entrenamiento. La pantalla de referencia de Configuración quiere lo
+/// contrario: el catálogo entero. Se barre por tipo de proyecto y se deduplica en
+/// vez de mantener otra lista, que es justo la duplicación que hizo derivar el
+/// catálogo del front (196 modelos contra 132 reales, 60 de backends retirados).
+///
+/// Los modelos de un backend dependen de la tarea (YOLO publica tamaños distintos
+/// según entrene detección o pose), así que se fusionan los modelos de todas las
+/// tareas donde aparece el backend.
+pub fn get_all_backends() -> Vec<BackendInfo> {
+    const TIPOS: &[&str] = &[
+        "bbox",
+        "mask",
+        "polygon",
+        "instance-segmentation",
+        "keypoints",
+        "landmarks",
+        "obb",
+        "classification",
+        "multi-label-classification",
+        "timeseries-classification",
+        "timeseries-forecasting",
+        "anomaly-detection",
+        "timeseries-segmentation",
+        "pattern-recognition",
+        "event-detection",
+        "timeseries-regression",
+        "clustering",
+        "imputation",
+        "tabular",
+    ];
+
+    let mut orden: Vec<String> = Vec::new();
+    let mut por_id: std::collections::HashMap<String, BackendInfo> =
+        std::collections::HashMap::new();
+
+    for tipo in TIPOS {
+        for backend in get_available_backends(tipo) {
+            match por_id.get_mut(&backend.id) {
+                Some(acumulado) => {
+                    for modelo in backend.models {
+                        if !acumulado.models.iter().any(|m| m.id == modelo.id) {
+                            acumulado.models.push(modelo);
+                        }
+                    }
+                    for tarea in backend.supported_tasks {
+                        if !acumulado.supported_tasks.contains(&tarea) {
+                            acumulado.supported_tasks.push(tarea);
+                        }
+                    }
+                }
+                None => {
+                    orden.push(backend.id.clone());
+                    por_id.insert(backend.id.clone(), backend);
+                }
+            }
+        }
+    }
+
+    orden
+        .into_iter()
+        .filter_map(|id| por_id.remove(&id))
+        .collect()
+}
+
 /// Returns available backends filtered by project type
 pub fn get_available_backends(project_type: &str) -> Vec<BackendInfo> {
     let task = project_type_to_task(project_type);

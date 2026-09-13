@@ -114,7 +114,9 @@
     "range": "Rango",
     "backTo": "Volver a",
     "filterByTask": "Filtrar por tarea",
-    "allModels": "Todos los modelos"
+    "allModels": "Todos los modelos",
+    "scriptNote": "Generado por el mismo código que ejecuta el entrenamiento, con rutas de ejemplo.",
+    "scriptError": "No se pudo generar el script: {{error}}"
   },
   "cloud": {
     "gcp": {

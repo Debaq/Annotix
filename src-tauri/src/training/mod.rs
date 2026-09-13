@@ -1,4 +1,6 @@
 use serde::{Deserialize, Serialize};
+
+use contract::PreparedDataset;
 use serde_json::Value as JsonValue;
 
 // ─── Training Config ────────────────────────────────────────────────────────
@@ -527,9 +529,9 @@ pub mod package;
 pub mod python_env;
 pub mod runner;
 pub mod scripts;
-pub mod study_hooks;
 #[cfg(test)]
 mod smoke_tests;
+pub mod study_hooks;
 #[cfg(test)]
 mod test_fixtures;
 
@@ -583,4 +585,70 @@ impl TrainingEnvCache {
             *cache = None;
         }
     }
+}
+
+// ─── Vista previa del script de un backend ──────────────────────────────────
+
+/// Genera el `train.py` de un backend con rutas de ejemplo, para mostrarlo como
+/// referencia sin haber preparado un dataset.
+///
+/// Es el **mismo generador** que ejecuta el entrenamiento, no una plantilla
+/// escrita a mano: la pantalla de Configuración mostraba plantillas propias que
+/// habían derivado del código real, y una referencia que miente es peor que no
+/// tener referencia.
+///
+/// El dataset de ejemplo declara todas las claves del contrato porque aquí no hay
+/// preparador que diga cuáles escribe; el generador pedirá las suyas y el resto se
+/// ignora. Las rutas son literales de ejemplo y se ven como tales.
+pub fn preview_script(backend: &TrainingBackend, task: &str) -> Result<String, String> {
+    let modelo = backends::get_all_backends()
+        .into_iter()
+        .find(|b| b.id == backends::backend_id(backend))
+        .and_then(|b| {
+            b.models
+                .iter()
+                .find(|m| m.recommended && m.tasks.iter().any(|t| t == task))
+                .or_else(|| b.models.iter().find(|m| m.tasks.iter().any(|t| t == task)))
+                .or_else(|| b.models.first())
+                .cloned()
+        })
+        .ok_or_else(|| format!("El backend {backend:?} no publica modelos"))?;
+
+    let mut ds = PreparedDataset::new(
+        std::path::Path::new("/ruta/al/dataset"),
+        DatasetFormat::YoloTxt,
+        vec!["clase_a".to_string(), "clase_b".to_string()],
+    );
+    for clave in contract::keys::ALL {
+        ds.declare(clave, format!("ejemplo/{clave}"));
+    }
+
+    let req = TrainingRequest {
+        backend: backend.clone(),
+        model_id: modelo.id,
+        task: task.to_string(),
+        execution_mode: ExecutionMode::Local,
+        epochs: 100,
+        batch_size: 8,
+        image_size: backends::min_image_size(backend).max(640),
+        device: "auto".into(),
+        lr: 0.001,
+        patience: 20,
+        val_split: 0.2,
+        test_split: 0.0,
+        workers: 4,
+        amp: true,
+        resume: false,
+        export_formats: vec![],
+        backend_params: serde_json::json!({}),
+        base_model_path: None,
+        cloud_config: None,
+    };
+
+    let archivos = scripts::generate_train_script_for_backend(&req, &ds)?;
+    archivos
+        .into_iter()
+        .find(|(nombre, _)| nombre == "train.py")
+        .map(|(_, contenido)| contenido)
+        .ok_or_else(|| "El generador no produjo train.py".to_string())
 }

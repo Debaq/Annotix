@@ -74,6 +74,16 @@ export const trainingService = {
     return invoke('get_model_families');
   },
 
+  /** Catálogo completo, sin filtrar por tipo de proyecto. */
+  getAllBackends(): Promise<BackendInfo[]> {
+    return invoke('get_all_backends');
+  },
+
+  /** `train.py` de un backend generado con el mismo código que entrena. */
+  previewTrainScript(backend: string, task: string): Promise<string> {
+    return invoke('preview_train_script', { backend, task });
+  },
+
   installBackendPackages(backend: string): Promise<void> {
     return invoke('install_backend_packages', { backend });
   },

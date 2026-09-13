@@ -1,9 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ALL_MODELS, TASK_LABELS,
-  getBackendById, getModelById, getModelsByBackend,
-} from '../data/backendsData';
+import { TASK_LABELS } from '../data/backendsData';
+import { useTrainingCatalog } from '../hooks/useTrainingCatalog';
 import { BackendSidebar } from './training-models/BackendSidebar';
 import { OverviewPanel } from './training-models/OverviewPanel';
 import { BackendDetailPanel } from './training-models/BackendDetailPanel';
@@ -36,7 +34,20 @@ export function TrainingModelsSection() {
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
   const [scriptBackendId, setScriptBackendId] = useState<string | null>(null);
 
-  const scriptBackend = scriptBackendId ? getBackendById(scriptBackendId) ?? null : null;
+  // Una sola fuente: el catálogo lo sirve Rust. Esta pantalla tenía su propia
+  // lista escrita a mano y derivó hasta listar backends retirados.
+  const { backends, models: allModels, families, loading, esBiomedica } = useTrainingCatalog();
+
+  const getBackendById = useCallback(
+    (id: string) => backends.find((b) => b.id === id) ?? null,
+    [backends],
+  );
+  const getModelById = useCallback(
+    (id: string) => allModels.find((m) => m.id === id) ?? null,
+    [allModels],
+  );
+
+  const scriptBackend = scriptBackendId ? getBackendById(scriptBackendId) : null;
 
   // All unique tasks for filtering
   const allTasks = useMemo(() => Object.keys(TASK_LABELS), []);
@@ -49,14 +60,14 @@ export function TrainingModelsSection() {
       if (view.type === 'backend' || view.type === 'model') {
         const backendId = view.backendId;
         const backend = getBackendById(backendId);
-        const hasMatch = ALL_MODELS.some(m =>
+        const hasMatch = allModels.some(m =>
           m.backend === backendId &&
           (m.name.toLowerCase().includes(q) || m.description.toLowerCase().includes(q) || (backend?.name.toLowerCase().includes(q) ?? false))
         );
         if (!hasMatch) setView({ type: 'overview' });
       }
     }
-  }, [view]);
+  }, [view, allModels, getBackendById]);
 
   const handleSelectBackend = useCallback((backendId: string) => {
     if (backendId === 'all') {
@@ -81,23 +92,36 @@ export function TrainingModelsSection() {
   };
 
   // Resolve current view data
-  const currentBackend = (view.type === 'backend' || view.type === 'model') ? getBackendById(view.backendId) : null;
+  const currentBackend =
+    view.type === 'backend' || view.type === 'model' ? getBackendById(view.backendId) : null;
   const currentModel = view.type === 'model' ? getModelById(view.modelId) : null;
+  const currentFamily = currentModel
+    ? families.find(f => f.backend === currentModel.backend && f.family === currentModel.family)
+    : undefined;
   
   const allFilteredModels = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return ALL_MODELS.filter(m => {
+    return allModels.filter(m => {
       const matchesSearch = !q || m.name.toLowerCase().includes(q) || m.description.toLowerCase().includes(q);
       const matchesTasks = selectedTasks.length === 0 || m.tasks.some(t => selectedTasks.includes(t));
       return matchesSearch && matchesTasks;
     });
-  }, [search, selectedTasks]);
+  }, [search, selectedTasks, allModels]);
 
   const backendModels = useMemo(() => {
     if (!currentBackend) return [];
-    const models = getModelsByBackend(currentBackend.id);
-    return models.filter(m => selectedTasks.length === 0 || m.tasks.some(t => selectedTasks.includes(t)));
-  }, [currentBackend, selectedTasks]);
+    const propios = allModels.filter(m => m.backend === currentBackend.id);
+    return propios.filter(m => selectedTasks.length === 0 || m.tasks.some(t => selectedTasks.includes(t)));
+  }, [currentBackend, selectedTasks, allModels]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64 text-sm text-muted-foreground">
+        <i className="fas fa-spinner fa-spin mr-2" />
+        {t('common.loading')}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-180px)] min-h-[500px]">
@@ -164,6 +188,8 @@ export function TrainingModelsSection() {
       <div className="flex-1 min-h-0 rounded-lg border border-[var(--annotix-border)] bg-[var(--annotix-white)] overflow-hidden flex transition-colors shadow-sm">
         {/* Sidebar */}
         <BackendSidebar
+          backends={backends}
+          models={allModels}
           selectedBackendId={
             view.type === 'all' ? 'all' : 
             (view.type === 'backend' || view.type === 'model') ? view.backendId : null
@@ -176,7 +202,12 @@ export function TrainingModelsSection() {
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
           {view.type === 'overview' && (
             <div className="flex-1 overflow-y-auto">
-              <OverviewPanel onSelectBackend={handleSelectBackend} />
+              <OverviewPanel
+                backends={backends}
+                models={allModels}
+                esBiomedica={esBiomedica}
+                onSelectBackend={handleSelectBackend}
+              />
             </div>
           )}
 
@@ -249,6 +280,7 @@ export function TrainingModelsSection() {
               <ModelDetailPanel
                 model={currentModel}
                 backend={currentBackend}
+                familyInfo={currentFamily}
                 onBack={() => handleBackToBackend(currentBackend.id)}
                 onViewScript={() => setScriptBackendId(currentBackend.id)}
               />

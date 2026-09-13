@@ -565,3 +565,76 @@ fn continuar_el_ajuste_no_descarga_pesos_que_va_a_sobrescribir() {
         "el backbone de hf_pose sigue pidiendo pesos que va a sobrescribir"
     );
 }
+
+// ─── Vista previa de scripts en Configuración ───────────────────────────────
+
+/// La pantalla de referencia tiene que mostrar el script que el entrenamiento
+/// ejecuta de verdad. Antes traía plantillas escritas a mano en el front, que
+/// habían derivado del código: listaban backends retirados y APIs que ya no se
+/// usaban. Este test es lo que impide que vuelva a pasar.
+#[test]
+fn la_vista_previa_genera_python_valido_para_todos_los_backends() {
+    use crate::training::preview_script;
+
+    let casos: &[(TrainingBackend, &str)] = &[
+        (TrainingBackend::Yolo, "detect"),
+        (TrainingBackend::RtDetr, "detect"),
+        (TrainingBackend::RfDetr, "detect"),
+        (TrainingBackend::HfDetection, "detect"),
+        (TrainingBackend::Smp, "segment"),
+        (TrainingBackend::HfSegmentation, "segment"),
+        (TrainingBackend::HfInstance, "instance_segment"),
+        (TrainingBackend::HfPose, "pose"),
+        (TrainingBackend::Timm, "classify"),
+        (TrainingBackend::HfClassification, "classify"),
+        (TrainingBackend::Tsai, "ts_classify"),
+        (TrainingBackend::PytorchForecasting, "ts_forecast"),
+        (TrainingBackend::Pyod, "ts_anomaly"),
+        (TrainingBackend::Tslearn, "ts_cluster"),
+        (TrainingBackend::Pypots, "ts_impute"),
+        (TrainingBackend::Stumpy, "ts_pattern"),
+        (TrainingBackend::Sklearn, "tabular"),
+    ];
+
+    for (backend, task) in casos {
+        let etiqueta = format!("preview {backend:?}/{task}");
+        let script = preview_script(backend, task)
+            .unwrap_or_else(|e| panic!("{etiqueta}: la vista previa falló: {e}"));
+        assert!(!script.trim().is_empty(), "{etiqueta}: script vacío");
+        assert_sin_booleanos_de_rust(&script, &etiqueta);
+        assert_python_valido(&script, &etiqueta);
+    }
+}
+
+/// El catálogo completo tiene que contener todos los backends una sola vez, y
+/// fusionar los modelos que dependen de la tarea. Es la fuente única que consume
+/// la pantalla de Configuración.
+#[test]
+fn el_catalogo_completo_no_duplica_backends_y_fusiona_modelos() {
+    use crate::training::backends;
+    use std::collections::BTreeSet;
+
+    let todos = backends::get_all_backends();
+    let ids: Vec<String> = todos.iter().map(|b| b.id.clone()).collect();
+    let unicos: BTreeSet<&String> = ids.iter().collect();
+    assert_eq!(
+        ids.len(),
+        unicos.len(),
+        "el catálogo repite backends: {ids:?}"
+    );
+    assert_eq!(ids.len(), 17, "se esperaban 17 backends, hay {}", ids.len());
+
+    // YOLO publica modelos distintos según la tarea; el catálogo completo los une.
+    let yolo = todos.iter().find(|b| b.id == "yolo").expect("yolo");
+    let solo_detect = backends::get_available_backends("bbox")
+        .into_iter()
+        .find(|b| b.id == "yolo")
+        .expect("yolo en detección");
+    assert!(
+        yolo.models.len() >= solo_detect.models.len(),
+        "el catálogo completo tiene menos modelos de YOLO que la vista de detección"
+    );
+    for b in &todos {
+        assert!(!b.models.is_empty(), "{}: backend sin modelos", b.id);
+    }
+}

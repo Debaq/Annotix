@@ -1,18 +1,20 @@
 import { useTranslation } from 'react-i18next';
-import {
-  TASK_COLORS, TASK_LABELS, SIZE_LABELS, BACKEND_COLORS,
-  type BackendMeta, type ModelEntry,
-} from '../../data/backendsData';
+import { TASK_COLORS, TASK_LABELS, SIZE_LABELS, BACKEND_COLORS } from '../../data/backendsData';
+import type { CatalogBackend, CatalogModel } from '../../hooks/useTrainingCatalog';
 import { ParamsTable } from './ParamsTable';
+import { ModelFamilyInfo } from '@/features/training/components/ModelFamilyInfo';
+import type { FamilyInfo } from '@/features/training/types';
 
 interface Props {
-  model: ModelEntry;
-  backend: BackendMeta;
+  model: CatalogModel;
+  backend: CatalogBackend;
+  /** Ficha de decisión de la familia del modelo, si el catálogo la trae. */
+  familyInfo?: FamilyInfo;
   onBack: () => void;
   onViewScript: () => void;
 }
 
-export function ModelDetailPanel({ model, backend, onBack, onViewScript }: Props) {
+export function ModelDetailPanel({ model, backend, familyInfo, onBack, onViewScript }: Props) {
   const { t } = useTranslation();
 
   return (
@@ -50,6 +52,9 @@ export function ModelDetailPanel({ model, backend, onBack, onViewScript }: Props
             </span>
           )}
         </div>
+
+        {/* Cómo elegir: la misma ficha que ve el panel de entrenamiento */}
+        {familyInfo && <ModelFamilyInfo info={familyInfo} />}
 
         {/* Tasks */}
         <div>

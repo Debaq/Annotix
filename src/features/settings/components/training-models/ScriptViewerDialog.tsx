@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -5,16 +6,43 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { BackendMeta } from '../../data/backendsData';
+import { trainingService } from '@/features/training/services/trainingService';
+import type { CatalogBackend } from '../../hooks/useTrainingCatalog';
 
 interface Props {
-  backend: BackendMeta | null;
+  backend: CatalogBackend | null;
   open: boolean;
   onClose: () => void;
 }
 
+/**
+ * Muestra el `train.py` del backend **generado por el mismo código que entrena**.
+ *
+ * Antes venía de una plantilla escrita a mano en el front, y había derivado: la
+ * mitad de los backends mostraban literalmente «See Rust backend for full
+ * script», y las que tenían contenido usaban APIs que el generador ya no emitía.
+ * Una referencia que miente es peor que no tener referencia.
+ */
 export function ScriptViewerDialog({ backend, open, onClose }: Props) {
   const { t } = useTranslation();
+  const [script, setScript] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || !backend) return;
+    setScript(null);
+    setError(null);
+    let vivo = true;
+    const task = backend.supportedTasks[0] ?? 'detect';
+    trainingService
+      .previewTrainScript(backend.id, task)
+      .then((s) => vivo && setScript(s))
+      .catch((e) => vivo && setError(String(e)));
+    return () => {
+      vivo = false;
+    };
+  }, [open, backend]);
+
   if (!backend) return null;
 
   return (
@@ -31,8 +59,17 @@ export function ScriptViewerDialog({ backend, open, onClose }: Props) {
           </div>
         </DialogHeader>
         <pre className="p-4 text-[12px] leading-relaxed overflow-auto max-h-[60vh] bg-muted/10">
-          <code className="text-foreground font-mono whitespace-pre">{backend.scriptTemplate}</code>
+          <code className="text-foreground font-mono whitespace-pre">
+            {error
+              ? t('settings.trainingModels.scriptError', { error })
+              : script ?? t('common.loading')}
+          </code>
         </pre>
+        {script && (
+          <div className="px-4 py-2 border-t border-border text-[10px] text-muted-foreground">
+            {t('settings.trainingModels.scriptNote')}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

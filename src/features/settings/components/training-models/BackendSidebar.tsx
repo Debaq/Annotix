@@ -1,13 +1,17 @@
 import { useTranslation } from 'react-i18next';
-import { BACKEND_META, BACKEND_COLORS, getModelCount, ALL_MODELS } from '../../data/backendsData';
+import { BACKEND_COLORS } from '../../data/backendsData';
+import type { CatalogBackend, CatalogModel } from '../../hooks/useTrainingCatalog';
 
 interface Props {
   selectedBackendId: string | null;
   search: string;
   onSelect: (backendId: string) => void;
+  /** Catálogo servido por Rust, ya ordenado con lo biomédico primero. */
+  backends: CatalogBackend[];
+  models: CatalogModel[];
 }
 
-export function BackendSidebar({ selectedBackendId, search, onSelect }: Props) {
+export function BackendSidebar({ selectedBackendId, search, onSelect, backends, models }: Props) {
   const { t } = useTranslation();
   const q = search.toLowerCase().trim();
 
@@ -32,15 +36,15 @@ export function BackendSidebar({ selectedBackendId, search, onSelect }: Props) {
             <span className="truncate">{t('common.all')}</span>
           </div>
           <span className={`text-[10px] shrink-0 ${selectedBackendId === 'all' ? 'opacity-70' : 'text-muted-foreground'}`}>
-            {ALL_MODELS.length}
+            {models.length}
           </span>
         </button>
       </div>
 
       <nav className="flex-1 overflow-y-auto min-h-0 py-1 px-2 space-y-0.5 scrollbar-thin scrollbar-thumb-[var(--annotix-border)]">
-        {BACKEND_META.map(b => {
-          const count = getModelCount(b.id);
-          const hasMatch = !q || ALL_MODELS.some(m =>
+        {backends.map(b => {
+          const count = models.filter(m => m.backend === b.id).length;
+          const hasMatch = !q || models.some(m =>
             m.backend === b.id &&
             (m.name.toLowerCase().includes(q) || m.description.toLowerCase().includes(q) || b.name.toLowerCase().includes(q))
           );
@@ -72,7 +76,7 @@ export function BackendSidebar({ selectedBackendId, search, onSelect }: Props) {
 
       <div className="mt-auto px-3 py-2 border-t border-[var(--annotix-border)] shrink-0">
         <span className="text-[10px] text-muted-foreground">
-          {ALL_MODELS.length} {t('settings.trainingModels.totalModels').toLowerCase()}
+          {models.length} {t('settings.trainingModels.totalModels').toLowerCase()}
         </span>
       </div>
     </div>

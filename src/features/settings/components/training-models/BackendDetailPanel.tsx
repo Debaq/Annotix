@@ -1,17 +1,15 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { listen } from '@tauri-apps/api/event';
-import {
-  TASK_COLORS, TASK_LABELS, BACKEND_COLORS,
-  type BackendMeta, type ModelEntry,
-} from '../../data/backendsData';
+import { TASK_COLORS, TASK_LABELS, BACKEND_COLORS } from '../../data/backendsData';
+import type { CatalogBackend, CatalogModel } from '../../hooks/useTrainingCatalog';
 import { trainingService } from '@/features/training/services/trainingService';
 import { TerminalConsole } from '../TerminalConsole';
 import { Progress } from '@/components/ui/progress';
 
 interface Props {
-  backend: BackendMeta;
-  models: ModelEntry[];
+  backend: CatalogBackend;
+  models: CatalogModel[];
   search: string;
   onSelectModel: (modelId: string) => void;
   onViewScript: () => void;

@@ -1,20 +1,26 @@
 import { useTranslation } from 'react-i18next';
-import { BACKEND_META, BACKEND_COLORS, TASK_COLORS, TASK_LABELS, getModelsByBackend } from '../../data/backendsData';
+import { BACKEND_COLORS, TASK_COLORS, TASK_LABELS } from '../../data/backendsData';
+import type { CatalogBackend, CatalogModel } from '../../hooks/useTrainingCatalog';
 
 interface Props {
   onSelectBackend: (backendId: string) => void;
+  backends: CatalogBackend[];
+  models: CatalogModel[];
+  /** `true` si esa familia está recomendada en biomedicina. */
+  esBiomedica: (backend: string, family: string) => boolean;
 }
 
-export function OverviewPanel({ onSelectBackend }: Props) {
+export function OverviewPanel({ onSelectBackend, backends, models, esBiomedica }: Props) {
   const { t } = useTranslation();
 
   return (
     <div className="p-4">
       <p className="text-sm text-muted-foreground mb-4">{t('settings.trainingModels.selectBackend')}</p>
       <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
-        {BACKEND_META.map(b => {
-          const models = getModelsByBackend(b.id);
-          const tasks = [...new Set(models.flatMap(m => m.tasks))];
+        {backends.map(b => {
+          const propios = models.filter(m => m.backend === b.id);
+          const tasks = [...new Set(propios.flatMap(m => m.tasks))];
+          const biomedico = propios.some(m => esBiomedica(b.id, m.family));
           return (
             <button
               key={b.id}
@@ -26,9 +32,18 @@ export function OverviewPanel({ onSelectBackend }: Props) {
                   <i className={`${b.icon} text-sm`} />
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-[var(--annotix-dark)] group-hover:text-[var(--annotix-primary)] transition-colors">{b.name}</div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-medium text-[var(--annotix-dark)] group-hover:text-[var(--annotix-primary)] transition-colors">
+                      {b.name}
+                    </span>
+                    {biomedico && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-700 font-medium">
+                        {t('training.families.axes.domain.biomedical')}
+                      </span>
+                    )}
+                  </div>
                   <div className="text-[10px] text-muted-foreground">
-                    {models.length} {t('settings.trainingModels.totalModels').toLowerCase()}
+                    {propios.length} {t('settings.trainingModels.totalModels').toLowerCase()}
                   </div>
                 </div>
               </div>

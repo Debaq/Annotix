@@ -43,7 +43,10 @@ fn peak_rss_mb(pid: u32) -> u64 {
     {
         if let Ok(status) = std::fs::read_to_string(format!("/proc/{}/status", pid)) {
             if let Some(line) = status.lines().find(|l| l.starts_with("VmHWM:")) {
-                if let Some(kb) = line.split_whitespace().nth(1).and_then(|v| v.parse::<u64>().ok())
+                if let Some(kb) = line
+                    .split_whitespace()
+                    .nth(1)
+                    .and_then(|v| v.parse::<u64>().ok())
                 {
                     return kb / 1024;
                 }

@@ -383,6 +383,8 @@ pub fn run() {
             commands::training_commands::export_trained_model,
             commands::training_commands::download_trained_model,
             commands::training_commands::get_available_backends,
+            commands::training_commands::get_all_backends,
+            commands::training_commands::preview_train_script,
             commands::training_commands::get_model_families,
             commands::training_commands::count_annotated_images,
             commands::training_commands::install_backend_packages,
