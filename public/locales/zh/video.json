@@ -36,5 +36,13 @@
   "newTrackHint": "使用当前类别创建轨迹",
   "filterCurrentFrame": "本帧",
   "filterAll": "所有轨迹",
-  "moveToClass": "改为"
+  "moveToClass": "改为",
+  "interpolation": "插值",
+  "interpLinear": "线性",
+  "interpEase": "缓动",
+  "interpSmooth": "样条",
+  "extend": "关键帧之外",
+  "extendNone": "无",
+  "extendAfter": "直到结尾",
+  "extendBoth": "整段视频"
 }

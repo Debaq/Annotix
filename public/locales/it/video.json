@@ -36,5 +36,13 @@
   "newTrackHint": "Crea un track con la classe attiva",
   "filterCurrentFrame": "In questo fotogramma",
   "filterAll": "Tutti i track",
-  "moveToClass": "Cambia in"
+  "moveToClass": "Cambia in",
+  "interpolation": "Interpolazione",
+  "interpLinear": "Lineare",
+  "interpEase": "Ammorbidita",
+  "interpSmooth": "Spline",
+  "extend": "Fuori dai keyframe",
+  "extendNone": "Niente",
+  "extendAfter": "Fino alla fine",
+  "extendBoth": "Tutto il video"
 }

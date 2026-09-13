@@ -28,6 +28,8 @@ pub struct UpdateTrackRequest {
     pub class_id: Option<i64>,
     pub label: Option<String>,
     pub enabled: Option<bool>,
+    pub interpolation: Option<String>,
+    pub extend: Option<String>,
 }
 
 /// Parámetros de `toggle_keyframe_enabled`.
@@ -82,6 +84,8 @@ pub struct TrackResponse {
     pub class_id: i64,
     pub label: Option<String>,
     pub enabled: bool,
+    pub interpolation: String,
+    pub extend: String,
     pub keyframes: Vec<KeyframeResponse>,
 }
 
@@ -115,24 +119,107 @@ pub struct VideoInfo {
 
 // ─── Interpolación ───────────────────────────────────────────────────────────
 
+/// Cómo se rellena el hueco entre dos keyframes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum InterpMode {
+    /// Recta entre las dos cajas.
+    #[default]
+    Linear,
+    /// Recta con arranque y frenada suaves (smoothstep sobre `t`).
+    Ease,
+    /// Spline de Catmull-Rom sobre los keyframes vecinos: sigue la curva del
+    /// movimiento en vez de quebrarse en cada keyframe.
+    Smooth,
+}
+
+/// Qué hace el track fuera del rango que cubren sus keyframes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Extend {
+    /// Nada: sin caja antes del primer keyframe ni después del último.
+    #[default]
+    None,
+    /// La última caja sigue hasta el final del video.
+    After,
+    /// Además, la primera caja se prolonga hacia atrás hasta el inicio.
+    Both,
+}
+
+impl Extend {
+    fn before(self) -> bool {
+        matches!(self, Extend::Both)
+    }
+    fn after(self) -> bool {
+        matches!(self, Extend::After | Extend::Both)
+    }
+}
+
+/// Ajustes de interpolación de un track, ya parseados.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct TrackInterp {
+    pub mode: InterpMode,
+    pub extend: Extend,
+}
+
+impl TrackInterp {
+    /// Lee los dos campos de texto de un `TrackEntry`. Un valor desconocido cae
+    /// al comportamiento por defecto en vez de fallar.
+    pub fn from_track(track: &TrackEntry) -> Self {
+        Self {
+            mode: match track.interpolation.as_str() {
+                "ease" => InterpMode::Ease,
+                "smooth" => InterpMode::Smooth,
+                _ => InterpMode::Linear,
+            },
+            extend: match track.extend.as_str() {
+                "after" => Extend::After,
+                "both" => Extend::Both,
+                _ => Extend::None,
+            },
+        }
+    }
+}
+
+/// Un track listo para consolidar: sus keyframes ordenados y sus ajustes.
+pub struct BakeTrack {
+    pub track_id: String,
+    pub class_id: i64,
+    pub keyframes: Vec<KeyframeEntry>,
+    pub interp: TrackInterp,
+}
+
+impl BakeTrack {
+    /// Ordena los keyframes por fotograma, que es lo que asume la interpolación.
+    /// `set_keyframe` ya los mantiene ordenados, pero un `project.json`
+    /// importado o editado a mano puede llegar desordenado.
+    pub fn from_track(track: &TrackEntry) -> Self {
+        let mut keyframes = track.keyframes.clone();
+        keyframes.sort_by_key(|k| k.frame_index);
+        Self {
+            track_id: track.id.clone(),
+            class_id: track.class_id,
+            keyframes,
+            interp: TrackInterp::from_track(track),
+        }
+    }
+}
+
 /// Anotaciones que producen los tracks sobre un fotograma concreto.
 ///
 /// Los keyframes viven en porcentaje 0-100 del fotograma y una `AnnotationEntry`
 /// de tipo bbox está en píxeles: sin la conversión, el dataset sale con todas
 /// las cajas colapsadas contra la esquina superior izquierda (factor ancho/100).
-///
-/// `track_kfs` son ternas (track_id, class_id, keyframes ordenados) de los
-/// tracks habilitados.
 pub fn bake_annotations_for_frame(
-    track_kfs: &[(String, i64, Vec<KeyframeEntry>)],
+    tracks: &[BakeTrack],
     frame_index: i64,
     img_width: u32,
     img_height: u32,
 ) -> Vec<crate::store::project_file::AnnotationEntry> {
     let mut out = Vec::new();
 
-    for (track_id, class_id, kfs) in track_kfs {
-        let Some((x_pct, y_pct, w_pct, h_pct, enabled)) = interpolate_bbox(kfs, frame_index) else {
+    for bt in tracks {
+        let Some((x_pct, y_pct, w_pct, h_pct, enabled)) =
+            interpolate_bbox(&bt.keyframes, frame_index, bt.interp)
+        else {
             continue;
         };
         if !enabled {
@@ -151,7 +238,7 @@ pub fn bake_annotations_for_frame(
         out.push(crate::store::project_file::AnnotationEntry {
             id: uuid::Uuid::new_v4().to_string(),
             annotation_type: "bbox".to_string(),
-            class_id: *class_id,
+            class_id: bt.class_id,
             data: serde_json::json!({
                 "x": x, "y": y, "width": w, "height": h,
             }),
@@ -159,7 +246,7 @@ pub fn bake_annotations_for_frame(
             confidence: None,
             model_class_name: None,
             created_by: None,
-            track_id: Some(track_id.clone()),
+            track_id: Some(bt.track_id.clone()),
         });
     }
 
@@ -183,15 +270,27 @@ pub fn pct_bbox_to_px(
     )
 }
 
-/// Retorna (x, y, width, height, enabled) interpolando entre keyframes, en la
-/// misma unidad en la que estén los keyframes (porcentaje 0-100).
+/// Retorna (x, y, width, height, enabled) para un fotograma, en la misma unidad
+/// en la que estén los keyframes (porcentaje 0-100). `keyframes` debe venir
+/// ordenado por `frame_index`.
 ///
-/// No extrapola: fuera del intervalo `[primer keyframe, último keyframe]` de un
-/// track no hay caja. El editor sigue el mismo criterio (`interpolation.ts`).
-/// `keyframes` debe venir ordenado por `frame_index`.
+/// Un keyframe deshabilitado marca que el objeto sale de escena **desde ese
+/// fotograma en adelante**, hasta el siguiente keyframe. Antes apagaba también
+/// el tramo anterior: borrar la caja de un fotograma interpolado hacía
+/// desaparecer el track entre sus dos keyframes vecinos, decenas de fotogramas
+/// que el usuario no había tocado.
+///
+/// Fuera del rango de keyframes manda `interp.extend`. La caja devuelta con
+/// `enabled == false` sigue existiendo para el editor —se dibuja en gris y se
+/// puede reactivar— pero la consolidación la descarta.
+///
+/// El editor calcula esto mismo en `src/features/video/utils/interpolation.ts`.
+/// Si los dos lados divergen, el editor muestra cajas que nunca llegan al
+/// dataset.
 pub fn interpolate_bbox(
     keyframes: &[KeyframeEntry],
     frame_index: i64,
+    interp: TrackInterp,
 ) -> Option<(f64, f64, f64, f64, bool)> {
     if keyframes.is_empty() {
         return None;
@@ -207,23 +306,120 @@ pub fn interpolate_bbox(
         ));
     }
 
-    let prev = keyframes.iter().rfind(|k| k.frame_index < frame_index);
-    let next = keyframes.iter().find(|k| k.frame_index > frame_index);
+    let prev_idx = keyframes.iter().rposition(|k| k.frame_index < frame_index);
+    let next_idx = keyframes.iter().position(|k| k.frame_index > frame_index);
 
-    match (prev, next) {
-        (Some(p), Some(n)) => {
-            if !p.enabled || !n.enabled {
-                return Some((0.0, 0.0, 0.0, 0.0, false));
-            }
-            let t = (frame_index - p.frame_index) as f64 / (n.frame_index - p.frame_index) as f64;
-            let x = p.bbox_x + (n.bbox_x - p.bbox_x) * t;
-            let y = p.bbox_y + (n.bbox_y - p.bbox_y) * t;
-            let w = p.bbox_width + (n.bbox_width - p.bbox_width) * t;
-            let h = p.bbox_height + (n.bbox_height - p.bbox_height) * t;
+    match (prev_idx, next_idx) {
+        // Fuera de escena desde el keyframe anterior: caja fantasma con su
+        // geometría, para poder reactivarla desde cualquier fotograma del tramo.
+        (Some(i), _) if !keyframes[i].enabled => {
+            let p = &keyframes[i];
+            Some((p.bbox_x, p.bbox_y, p.bbox_width, p.bbox_height, false))
+        }
+        (Some(i), Some(j)) => {
+            let (x, y, w, h) = sample_span(keyframes, i, j, frame_index, interp.mode);
             Some((x, y, w, h, true))
+        }
+        (Some(i), None) if interp.extend.after() => {
+            let p = &keyframes[i];
+            Some((p.bbox_x, p.bbox_y, p.bbox_width, p.bbox_height, true))
+        }
+        (None, Some(j)) if interp.extend.before() => {
+            let n = &keyframes[j];
+            Some((n.bbox_x, n.bbox_y, n.bbox_width, n.bbox_height, n.enabled))
         }
         _ => None,
     }
+}
+
+/// Muestrea el tramo entre los keyframes `i` y `j` (contiguos) en `frame_index`.
+fn sample_span(
+    keyframes: &[KeyframeEntry],
+    i: usize,
+    j: usize,
+    frame_index: i64,
+    mode: InterpMode,
+) -> (f64, f64, f64, f64) {
+    let p = &keyframes[i];
+    let n = &keyframes[j];
+    let span = (n.frame_index - p.frame_index) as f64;
+    let t = (frame_index - p.frame_index) as f64 / span;
+
+    match mode {
+        InterpMode::Linear => lerp_box(p, n, t),
+        InterpMode::Ease => lerp_box(p, n, t * t * (3.0 - 2.0 * t)),
+        InterpMode::Smooth => {
+            // Catmull-Rom con nodos no equiespaciados (Hermite con tangentes por
+            // diferencias finitas). Un keyframe deshabilitado no sirve de punto
+            // de control: su geometría es la que tenía al salir de escena.
+            let before = i
+                .checked_sub(1)
+                .map(|k| &keyframes[k])
+                .filter(|k| k.enabled);
+            let after = keyframes.get(j + 1).filter(|k| k.enabled);
+            let comp = |get: fn(&KeyframeEntry) -> f64| {
+                catmull_rom(
+                    before.map(|k| (k.frame_index as f64, get(k))),
+                    (p.frame_index as f64, get(p)),
+                    (n.frame_index as f64, get(n)),
+                    after.map(|k| (k.frame_index as f64, get(k))),
+                    t,
+                )
+            };
+            (
+                comp(|k| k.bbox_x),
+                comp(|k| k.bbox_y),
+                // Un spline sobrepasa los extremos: el ancho no puede salir
+                // negativo por un rebote entre dos keyframes.
+                comp(|k| k.bbox_width).max(0.0),
+                comp(|k| k.bbox_height).max(0.0),
+            )
+        }
+    }
+}
+
+fn lerp_box(p: &KeyframeEntry, n: &KeyframeEntry, t: f64) -> (f64, f64, f64, f64) {
+    (
+        p.bbox_x + (n.bbox_x - p.bbox_x) * t,
+        p.bbox_y + (n.bbox_y - p.bbox_y) * t,
+        p.bbox_width + (n.bbox_width - p.bbox_width) * t,
+        p.bbox_height + (n.bbox_height - p.bbox_height) * t,
+    )
+}
+
+/// Hermite cúbico sobre `[p1, p2]` con tangentes de Catmull-Rom. Los nodos son
+/// índices de fotograma, así que el espaciado es irregular y las tangentes se
+/// calculan con la diferencia dividida, no con `(v2 - v0) / 2`. Sin vecino, la
+/// tangente cae a la pendiente del propio tramo, que reproduce la recta.
+fn catmull_rom(
+    p0: Option<(f64, f64)>,
+    p1: (f64, f64),
+    p2: (f64, f64),
+    p3: Option<(f64, f64)>,
+    t: f64,
+) -> f64 {
+    let (f1, v1) = p1;
+    let (f2, v2) = p2;
+    let h = f2 - f1;
+    let slope = (v2 - v1) / h;
+
+    let m1 = match p0 {
+        Some((f0, v0)) if f2 - f0 != 0.0 => (v2 - v0) / (f2 - f0),
+        _ => slope,
+    };
+    let m2 = match p3 {
+        Some((f3, v3)) if f3 - f1 != 0.0 => (v3 - v1) / (f3 - f1),
+        _ => slope,
+    };
+
+    let t2 = t * t;
+    let t3 = t2 * t;
+    let h00 = 2.0 * t3 - 3.0 * t2 + 1.0;
+    let h10 = t3 - 2.0 * t2 + t;
+    let h01 = -2.0 * t3 + 3.0 * t2;
+    let h11 = t3 - t2;
+
+    h00 * v1 + h10 * h * m1 + h01 * v2 + h11 * h * m2
 }
 
 // ─── Conversores ─────────────────────────────────────────────────────────────
@@ -247,6 +443,8 @@ fn track_to_response(track: &TrackEntry, video_id: &str) -> TrackResponse {
         class_id: track.class_id,
         label: track.label.clone(),
         enabled: track.enabled,
+        interpolation: track.interpolation.clone(),
+        extend: track.extend.clone(),
         keyframes: track.keyframes.iter().map(keyframe_to_response).collect(),
     }
 }
@@ -480,11 +678,17 @@ impl AppState {
         let id = uuid::Uuid::new_v4().to_string();
         let now = js_timestamp();
 
+        // Los tracks nuevos prolongan su última caja hasta el final del video:
+        // el objeto sigue ahí hasta que se marca su salida de escena. Los tracks
+        // anteriores a este campo se quedan en `none` para no cambiarles el
+        // dataset por debajo.
         let entry = TrackEntry {
             id: id.clone(),
             class_id,
             label: label.map(|s| s.to_string()),
             enabled: true,
+            interpolation: "linear".to_string(),
+            extend: "after".to_string(),
             keyframes: vec![],
         };
 
@@ -534,6 +738,8 @@ impl AppState {
         class_id: Option<i64>,
         label: Option<Option<String>>,
         enabled: Option<bool>,
+        interpolation: Option<String>,
+        extend: Option<String>,
     ) -> Result<(), String> {
         let now = js_timestamp();
         let found = self.with_project_mut_ret(project_id, |pf| {
@@ -546,6 +752,12 @@ impl AppState {
                 }
                 if let Some(en) = enabled {
                     t.enabled = en;
+                }
+                if let Some(mode) = &interpolation {
+                    t.interpolation = mode.clone();
+                }
+                if let Some(ext) = &extend {
+                    t.extend = ext.clone();
                 }
             });
             pf.updated = now;

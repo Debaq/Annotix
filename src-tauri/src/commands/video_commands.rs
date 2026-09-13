@@ -4,10 +4,9 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use crate::p2p::node::P2pState;
 use crate::p2p::P2pPermission;
 use crate::store::images::ImageResponse;
-use crate::store::project_file::KeyframeEntry;
 use crate::store::videos::{
-    bake_annotations_for_frame, NewVideo, SetKeyframeRequest, ToggleKeyframeRequest, TrackResponse,
-    UpdateTrackRequest, VideoInfo, VideoResponse,
+    bake_annotations_for_frame, BakeTrack, NewVideo, SetKeyframeRequest, ToggleKeyframeRequest,
+    TrackResponse, UpdateTrackRequest, VideoInfo, VideoResponse,
 };
 use crate::store::AppState;
 
@@ -774,6 +773,8 @@ pub async fn update_track(
         class_id,
         label,
         enabled,
+        interpolation,
+        extend,
     } = request;
     p2p.check_permission(&project_id, P2pPermission::Annotate)
         .await?;
@@ -785,6 +786,8 @@ pub async fn update_track(
         class_id,
         label_update,
         enabled,
+        interpolation,
+        extend,
     )?;
     publish_tracks(&state, &p2p, &project_id, &video_id).await;
     let _ = app.emit("db:tracks-changed", &video_id);
@@ -883,17 +886,12 @@ pub async fn bake_video_tracks(
 
     let tracks = tracks.ok_or_else(|| format!("Video no encontrado: {}", video_id))?;
 
-    // Precomputar keyframes por track habilitado, ordenados por fotograma.
-    // El orden lo garantiza `set_keyframe`, pero un project.json importado o
-    // editado a mano puede llegar desordenado y la interpolación lo asume.
-    let track_kfs: Vec<(String, i64, Vec<KeyframeEntry>)> = tracks
+    // Precomputar los tracks habilitados con sus keyframes ordenados y sus
+    // ajustes de interpolación.
+    let bake_tracks: Vec<BakeTrack> = tracks
         .iter()
         .filter(|t| t.enabled && !t.keyframes.is_empty())
-        .map(|t| {
-            let mut kfs = t.keyframes.clone();
-            kfs.sort_by_key(|k| k.frame_index);
-            (t.id.clone(), t.class_id, kfs)
-        })
+        .map(BakeTrack::from_track)
         .collect();
 
     let now = crate::store::images::js_timestamp_pub();
@@ -909,7 +907,7 @@ pub async fn bake_video_tracks(
 
             // Calcular nuevas anotaciones de tracks para este frame
             let new_annotations =
-                bake_annotations_for_frame(&track_kfs, frame_index, img.width, img.height);
+                bake_annotations_for_frame(&bake_tracks, frame_index, img.width, img.height);
 
             // Quitar solo lo que puso un bake anterior. Lo anotado a mano o por
             // inferencia sobre el fotograma se conserva.

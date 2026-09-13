@@ -26,7 +26,7 @@ export function useVideoTracks() {
     await videoService.deleteTrack(currentProjectId, trackId, currentVideoId);
   }, [currentVideoId, currentProjectId]);
 
-  const updateTrack = useCallback(async (trackId: string, updates: { classId?: number; label?: string; enabled?: boolean }) => {
+  const updateTrack = useCallback(async (trackId: string, updates: { classId?: number; label?: string; enabled?: boolean; interpolation?: string; extend?: string }) => {
     if (!currentVideoId || !currentProjectId) return;
     await videoService.updateTrack(currentProjectId, trackId, currentVideoId, updates);
   }, [currentVideoId, currentProjectId]);

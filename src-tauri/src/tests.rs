@@ -1205,7 +1205,7 @@ fn polygon_area_is_orientation_independent() {
 use crate::store::project_file::{
     KeyframeEntry, TimeSeriesEntry, TrackEntry, TsAnnotationEntry, VideoEntry,
 };
-use crate::store::videos::{interpolate_bbox, pct_bbox_to_px};
+use crate::store::videos::{interpolate_bbox, pct_bbox_to_px, Extend, InterpMode, TrackInterp};
 
 fn kf(frame_index: i64, x: f64, y: f64, w: f64, h: f64) -> KeyframeEntry {
     KeyframeEntry {
@@ -1237,6 +1237,8 @@ fn video_with_track(video_id: &str, class_id: i64, keyframes: Vec<KeyframeEntry>
             class_id,
             label: None,
             enabled: true,
+            interpolation: "linear".into(),
+            extend: "none".into(),
             keyframes,
         }],
     }
@@ -1267,7 +1269,8 @@ fn interpolate_bbox_returns_exact_keyframe() {
         kf(0, 10.0, 20.0, 30.0, 40.0),
         kf(10, 50.0, 60.0, 30.0, 40.0),
     ];
-    let (x, y, w, h, enabled) = interpolate_bbox(&kfs, 0).expect("keyframe exacto");
+    let (x, y, w, h, enabled) =
+        interpolate_bbox(&kfs, 0, TrackInterp::default()).expect("keyframe exacto");
     assert_eq!((x, y, w, h), (10.0, 20.0, 30.0, 40.0));
     assert!(enabled);
 }
@@ -1275,7 +1278,8 @@ fn interpolate_bbox_returns_exact_keyframe() {
 #[test]
 fn interpolate_bbox_is_linear_between_keyframes() {
     let kfs = vec![kf(0, 0.0, 0.0, 10.0, 10.0), kf(10, 100.0, 50.0, 20.0, 30.0)];
-    let (x, y, w, h, _) = interpolate_bbox(&kfs, 5).expect("punto medio");
+    let (x, y, w, h, _) =
+        interpolate_bbox(&kfs, 5, TrackInterp::default()).expect("punto medio");
     assert!((x - 50.0).abs() < 1e-9);
     assert!((y - 25.0).abs() < 1e-9);
     assert!((w - 15.0).abs() < 1e-9);
@@ -1286,21 +1290,173 @@ fn interpolate_bbox_is_linear_between_keyframes() {
 fn interpolate_bbox_does_not_extrapolate() {
     let kfs = vec![kf(10, 0.0, 0.0, 10.0, 10.0), kf(20, 10.0, 10.0, 10.0, 10.0)];
     assert!(
-        interpolate_bbox(&kfs, 5).is_none(),
+        interpolate_bbox(&kfs, 5, TrackInterp::default()).is_none(),
         "antes del primer keyframe no hay caja"
     );
     assert!(
-        interpolate_bbox(&kfs, 25).is_none(),
+        interpolate_bbox(&kfs, 25, TrackInterp::default()).is_none(),
         "después del último keyframe no hay caja"
     );
 }
 
 #[test]
-fn interpolate_bbox_disabled_extreme_disables_span() {
+fn disabled_keyframe_only_hides_forward() {
+    // El keyframe deshabilitado marca la salida de escena: apaga de ese
+    // fotograma en adelante, no el tramo que viene antes. Antes lo apagaba en
+    // ambos sentidos y borrar la caja de un fotograma interpolado hacía
+    // desaparecer el track entre sus dos keyframes vecinos.
+    let mut kfs = vec![
+        kf(0, 0.0, 0.0, 10.0, 10.0),
+        kf(10, 10.0, 10.0, 10.0, 10.0),
+        kf(20, 20.0, 20.0, 10.0, 10.0),
+    ];
+    kfs[1].enabled = false;
+
+    let (x, _, _, _, enabled) =
+        interpolate_bbox(&kfs, 5, TrackInterp::default()).expect("tramo previo intacto");
+    assert!(enabled, "el tramo anterior a la salida sigue vivo");
+    assert!((x - 5.0).abs() < 1e-9, "e interpola hacia el keyframe");
+
+    let (_, _, _, _, enabled) =
+        interpolate_bbox(&kfs, 15, TrackInterp::default()).expect("caja fantasma");
+    assert!(!enabled, "tras la salida no hay caja hasta el siguiente kf");
+
+    let (_, _, _, _, enabled) =
+        interpolate_bbox(&kfs, 20, TrackInterp::default()).expect("reentrada");
+    assert!(enabled, "el siguiente keyframe habilitado reabre el track");
+}
+
+#[test]
+fn ghost_box_after_exit_keeps_last_geometry() {
+    // La caja del tramo apagado se dibuja en gris y debe poder reactivarse:
+    // conserva la geometría del keyframe de salida en vez de colapsar a cero.
+    let mut kfs = vec![
+        kf(0, 0.0, 0.0, 10.0, 10.0),
+        kf(10, 40.0, 30.0, 12.0, 14.0),
+        kf(20, 90.0, 80.0, 10.0, 10.0),
+    ];
+    kfs[1].enabled = false;
+    let (x, y, w, h, enabled) =
+        interpolate_bbox(&kfs, 15, TrackInterp::default()).expect("caja fantasma");
+    assert!(!enabled);
+    assert_eq!((x, y, w, h), (40.0, 30.0, 12.0, 14.0));
+}
+
+#[test]
+fn extend_after_holds_last_keyframe() {
+    let kfs = vec![kf(10, 1.0, 2.0, 3.0, 4.0), kf(20, 5.0, 6.0, 7.0, 8.0)];
+    let interp = TrackInterp {
+        mode: InterpMode::Linear,
+        extend: Extend::After,
+    };
+    let (x, y, w, h, enabled) = interpolate_bbox(&kfs, 999, interp).expect("caja prolongada");
+    assert_eq!((x, y, w, h), (5.0, 6.0, 7.0, 8.0));
+    assert!(enabled);
+    assert!(
+        interpolate_bbox(&kfs, 5, interp).is_none(),
+        "`after` no prolonga hacia atrás"
+    );
+}
+
+#[test]
+fn extend_both_holds_first_keyframe_backwards() {
+    let kfs = vec![kf(10, 1.0, 2.0, 3.0, 4.0), kf(20, 5.0, 6.0, 7.0, 8.0)];
+    let interp = TrackInterp {
+        mode: InterpMode::Linear,
+        extend: Extend::Both,
+    };
+    let (x, y, w, h, enabled) = interpolate_bbox(&kfs, 0, interp).expect("caja prolongada");
+    assert_eq!((x, y, w, h), (1.0, 2.0, 3.0, 4.0));
+    assert!(enabled);
+}
+
+#[test]
+fn extend_after_stops_at_an_exit_keyframe() {
+    // Prolongar no significa "para siempre": marcar la salida cierra el track.
     let mut kfs = vec![kf(0, 0.0, 0.0, 10.0, 10.0), kf(10, 10.0, 10.0, 10.0, 10.0)];
     kfs[1].enabled = false;
-    let (_, _, _, _, enabled) = interpolate_bbox(&kfs, 5).expect("devuelve caja marcada");
+    let interp = TrackInterp {
+        mode: InterpMode::Linear,
+        extend: Extend::After,
+    };
+    let (_, _, _, _, enabled) = interpolate_bbox(&kfs, 500, interp).expect("caja fantasma");
     assert!(!enabled);
+}
+
+#[test]
+fn ease_matches_linear_at_the_ends_and_lags_at_the_start() {
+    let kfs = vec![kf(0, 0.0, 0.0, 10.0, 10.0), kf(10, 100.0, 0.0, 10.0, 10.0)];
+    let interp = TrackInterp {
+        mode: InterpMode::Ease,
+        extend: Extend::None,
+    };
+    let (mid, _, _, _, _) = interpolate_bbox(&kfs, 5, interp).expect("punto medio");
+    assert!((mid - 50.0).abs() < 1e-9, "el centro coincide con la recta");
+
+    let (early, _, _, _, _) = interpolate_bbox(&kfs, 1, interp).expect("arranque");
+    assert!(early < 10.0, "el arranque es más lento que la recta");
+
+    let (late, _, _, _, _) = interpolate_bbox(&kfs, 9, interp).expect("frenada");
+    assert!(late > 90.0, "y la frenada, simétrica");
+}
+
+#[test]
+fn smooth_follows_the_curve_instead_of_the_chord() {
+    // Tres keyframes en curva: en el tramo central el spline se separa de la
+    // recta que une sus extremos, que es justo lo que la interpolación lineal
+    // no puede hacer.
+    let kfs = vec![
+        kf(0, 0.0, 0.0, 10.0, 10.0),
+        kf(10, 10.0, 40.0, 10.0, 10.0),
+        kf(20, 40.0, 50.0, 10.0, 10.0),
+    ];
+    let smooth = TrackInterp {
+        mode: InterpMode::Smooth,
+        extend: Extend::None,
+    };
+    let (sx, _, _, _, _) = interpolate_bbox(&kfs, 15, smooth).expect("spline");
+    let (lx, _, _, _, _) = interpolate_bbox(&kfs, 15, TrackInterp::default()).expect("recta");
+    assert!(
+        (sx - lx).abs() > 1e-6,
+        "smooth debe diferir de linear en un movimiento curvo"
+    );
+}
+
+#[test]
+fn smooth_reduces_to_linear_with_only_two_keyframes() {
+    // Sin vecinos que den curvatura, el spline no puede inventarse una: debe
+    // caer exactamente en la recta.
+    let kfs = vec![kf(0, 0.0, 0.0, 10.0, 20.0), kf(10, 100.0, 50.0, 30.0, 40.0)];
+    let smooth = TrackInterp {
+        mode: InterpMode::Smooth,
+        extend: Extend::None,
+    };
+    let (x, y, w, h, _) = interpolate_bbox(&kfs, 3, smooth).expect("spline");
+    let (lx, ly, lw, lh, _) = interpolate_bbox(&kfs, 3, TrackInterp::default()).expect("recta");
+    assert!((x - lx).abs() < 1e-9);
+    assert!((y - ly).abs() < 1e-9);
+    assert!((w - lw).abs() < 1e-9);
+    assert!((h - lh).abs() < 1e-9);
+}
+
+#[test]
+fn smooth_never_produces_a_negative_size() {
+    // Un spline sobrepasa los extremos. Con un tamaño que cae en picado el
+    // rebote podría cruzar el cero y escribir un ancho negativo en el dataset.
+    let kfs = vec![
+        kf(0, 0.0, 0.0, 80.0, 80.0),
+        kf(10, 0.0, 0.0, 2.0, 2.0),
+        kf(20, 0.0, 0.0, 1.0, 1.0),
+        kf(30, 0.0, 0.0, 1.0, 1.0),
+    ];
+    let smooth = TrackInterp {
+        mode: InterpMode::Smooth,
+        extend: Extend::None,
+    };
+    for frame in 1..30 {
+        let (_, _, w, h, _) = interpolate_bbox(&kfs, frame, smooth).expect("spline");
+        assert!(w >= 0.0 && h >= 0.0, "tamaño negativo en el fotograma {frame}");
+    }
 }
 
 #[test]
@@ -1641,12 +1797,20 @@ fn timeseries_export_rejects_project_without_series() {
 
 // ─── Tests: consolidación (bake) de tracks de video ─────────────────────────
 
-use crate::store::videos::bake_annotations_for_frame;
+use crate::store::videos::{bake_annotations_for_frame, BakeTrack};
 
-fn track_kfs_fixture() -> Vec<(String, i64, Vec<KeyframeEntry>)> {
-    vec![(
-        "track-1".to_string(),
-        0,
+fn bake_track(track_id: &str, keyframes: Vec<KeyframeEntry>) -> BakeTrack {
+    BakeTrack {
+        track_id: track_id.to_string(),
+        class_id: 0,
+        keyframes,
+        interp: TrackInterp::default(),
+    }
+}
+
+fn track_kfs_fixture() -> Vec<BakeTrack> {
+    vec![bake_track(
+        "track-1",
         vec![kf(0, 0.0, 0.0, 50.0, 50.0), kf(10, 50.0, 50.0, 50.0, 50.0)],
     )]
 }
@@ -1683,9 +1847,8 @@ fn bake_interpolates_midpoint_in_pixels() {
 
 #[test]
 fn bake_produces_nothing_outside_track_span() {
-    let kfs = vec![(
-        "t".to_string(),
-        0,
+    let kfs = vec![bake_track(
+        "t",
         vec![kf(10, 0.0, 0.0, 10.0, 10.0), kf(20, 0.0, 0.0, 10.0, 10.0)],
     )];
     assert!(bake_annotations_for_frame(&kfs, 5, 100, 100).is_empty());
@@ -1694,13 +1857,27 @@ fn bake_produces_nothing_outside_track_span() {
 }
 
 #[test]
-fn bake_skips_disabled_spans() {
+fn bake_skips_frames_after_an_exit_keyframe() {
     let mut kfs = track_kfs_fixture();
-    kfs[0].2[1].enabled = false;
-    assert!(
-        bake_annotations_for_frame(&kfs, 5, 100, 100).is_empty(),
-        "un tramo deshabilitado no produce anotación"
+    kfs[0].keyframes[1].enabled = false;
+    assert_eq!(
+        bake_annotations_for_frame(&kfs, 5, 100, 100).len(),
+        1,
+        "el tramo previo a la salida sí se consolida"
     );
+    assert!(
+        bake_annotations_for_frame(&kfs, 10, 100, 100).is_empty(),
+        "desde la salida no hay anotación"
+    );
+}
+
+#[test]
+fn bake_extends_the_last_keyframe_when_the_track_says_so() {
+    let mut kfs = track_kfs_fixture();
+    kfs[0].interp.extend = Extend::After;
+    let anns = bake_annotations_for_frame(&kfs, 500, 100, 100);
+    assert_eq!(anns.len(), 1, "la última caja sigue hasta el final del video");
+    assert_eq!(anns[0].data["x"].as_f64().unwrap(), 50.0);
 }
 
 #[test]

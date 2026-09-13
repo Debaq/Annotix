@@ -36,5 +36,13 @@
   "newTrackHint": "アクティブなクラスでトラックを作成",
   "filterCurrentFrame": "このフレーム",
   "filterAll": "すべてのトラック",
-  "moveToClass": "変更先"
+  "moveToClass": "変更先",
+  "interpolation": "補間",
+  "interpLinear": "線形",
+  "interpEase": "イージング",
+  "interpSmooth": "スプライン",
+  "extend": "キーフレーム外",
+  "extendNone": "なし",
+  "extendAfter": "最後まで",
+  "extendBoth": "動画全体"
 }

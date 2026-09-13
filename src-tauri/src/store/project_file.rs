@@ -242,8 +242,28 @@ pub struct TrackEntry {
     pub class_id: i64,
     pub label: Option<String>,
     pub enabled: bool,
+    /// Cómo se rellenan los fotogramas entre dos keyframes: `linear`, `ease`
+    /// (arranque y frenada suaves) o `smooth` (spline sobre los keyframes
+    /// vecinos). Texto y no enum: un `project.json` editado a mano con un valor
+    /// desconocido cae a `linear` en vez de romper la lectura del proyecto.
+    #[serde(default = "default_interpolation")]
+    pub interpolation: String,
+    /// Qué pasa fuera del rango de keyframes: `none` (nada), `after` (la última
+    /// caja sigue hasta el final del video) o `both` (también la primera hacia
+    /// atrás). Los tracks nuevos nacen en `after`; los proyectos anteriores a
+    /// este campo se leen como `none`, que es lo que hacían.
+    #[serde(default = "default_extend")]
+    pub extend: String,
     #[serde(default)]
     pub keyframes: Vec<KeyframeEntry>,
+}
+
+fn default_interpolation() -> String {
+    "linear".to_string()
+}
+
+fn default_extend() -> String {
+    "none".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

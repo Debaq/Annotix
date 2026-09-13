@@ -304,7 +304,7 @@ export async function updateTrack(
   projectId: string,
   trackId: string,
   videoId: string,
-  updates: { classId?: number; label?: string; enabled?: boolean }
+  updates: { classId?: number; label?: string; enabled?: boolean; interpolation?: string; extend?: string }
 ): Promise<void> {
   return invoke('update_track', { request: { projectId, trackId, videoId, ...updates } });
 }

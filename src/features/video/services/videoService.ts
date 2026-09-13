@@ -43,7 +43,7 @@ export const videoService = {
     return tauriDb.listTracksByVideo(projectId, videoId);
   },
 
-  async updateTrack(projectId: string, trackId: string, videoId: string, updates: { classId?: number; label?: string; enabled?: boolean }): Promise<void> {
+  async updateTrack(projectId: string, trackId: string, videoId: string, updates: { classId?: number; label?: string; enabled?: boolean; interpolation?: string; extend?: string }): Promise<void> {
     return tauriDb.updateTrack(projectId, trackId, videoId, updates);
   },
 

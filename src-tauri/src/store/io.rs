@@ -5,7 +5,7 @@ use serde::de::{Deserializer, IgnoredAny, SeqAccess, Visitor};
 use serde::Deserialize;
 
 use super::project_file::{ClassDef, P2pDownloadStatus, ProjectFile, CURRENT_VERSION};
-use super::videos::{interpolate_bbox, pct_bbox_to_px};
+use super::videos::{interpolate_bbox, pct_bbox_to_px, TrackInterp};
 
 // ─── Lectura ligera para listado de proyectos ───────────────────────────────
 //
@@ -178,7 +178,10 @@ fn migrate_v1_baked_bboxes_to_pixels(project: &mut ProjectFile) -> bool {
             if vid != &video_id {
                 continue;
             }
-            let Some((x_pct, y_pct, w_pct, h_pct, enabled)) = interpolate_bbox(kfs, frame_index)
+            // Ajustes por defecto (lineal, sin prolongar): reproduce lo que
+            // escribía el bake de la v1, que es lo que esta migración busca.
+            let Some((x_pct, y_pct, w_pct, h_pct, enabled)) =
+                interpolate_bbox(kfs, frame_index, TrackInterp::default())
             else {
                 continue;
             };

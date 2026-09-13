@@ -6,11 +6,22 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '../../core/store/uiStore';
+import {
+  EXTEND_MODES,
+  INTERP_MODES,
+  extendModeOf,
+  interpModeOf,
+} from '../utils/interpolation';
 
 interface VideoTrackPanelProps {
   tracks: VideoTrack[];
@@ -22,15 +33,32 @@ interface VideoTrackPanelProps {
   onDeleteTrack: (trackId: string) => Promise<void>;
   onUpdateTrack: (
     trackId: string,
-    updates: { classId?: number; label?: string; enabled?: boolean },
+    updates: {
+      classId?: number;
+      label?: string;
+      enabled?: boolean;
+      interpolation?: string;
+      extend?: string;
+    },
   ) => Promise<void>;
 }
 
-/** Extensión temporal de un track, en índices de fotograma reales. */
+/**
+ * Extensión temporal de un track, en índices de fotograma reales.
+ *
+ * Un track que prolonga su última caja no termina en su último keyframe, así que
+ * el rango se abre por ese lado (`Infinity`) y por el otro si prolonga hacia
+ * atrás. Sin esto el panel dice que el track no está en un fotograma en el que
+ * la consolidación sí va a escribir una caja.
+ */
 function rangoDeTrack(track: VideoTrack): { desde: number; hasta: number } | null {
   if (track.keyframes.length === 0) return null;
   const indices = track.keyframes.map(kf => kf.frameIndex);
-  return { desde: Math.min(...indices), hasta: Math.max(...indices) };
+  const extend = extendModeOf(track);
+  return {
+    desde: extend === 'both' ? -Infinity : Math.min(...indices),
+    hasta: extend === 'none' ? Math.max(...indices) : Infinity,
+  };
 }
 
 /**
@@ -239,6 +267,47 @@ export function VideoTrackPanel({
                             {t('video.moveToClass', 'Cambiar a')} {c.name}
                           </DropdownMenuItem>
                         ))}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                          <i className="fas fa-bezier-curve mr-2 w-3"></i>
+                          {t('video.interpolation')}
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                          <DropdownMenuRadioGroup
+                            value={interpModeOf(track)}
+                            onValueChange={modo =>
+                              track.id && onUpdateTrack(track.id, { interpolation: modo })
+                            }
+                          >
+                            {INTERP_MODES.map(modo => (
+                              <DropdownMenuRadioItem key={modo} value={modo}>
+                                {t(`video.interp${modo[0].toUpperCase()}${modo.slice(1)}`)}
+                              </DropdownMenuRadioItem>
+                            ))}
+                          </DropdownMenuRadioGroup>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                          <i className="fas fa-arrows-left-right-to-line mr-2 w-3"></i>
+                          {t('video.extend')}
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                          <DropdownMenuRadioGroup
+                            value={extendModeOf(track)}
+                            onValueChange={modo =>
+                              track.id && onUpdateTrack(track.id, { extend: modo })
+                            }
+                          >
+                            {EXTEND_MODES.map(modo => (
+                              <DropdownMenuRadioItem key={modo} value={modo}>
+                                {t(`video.extend${modo[0].toUpperCase()}${modo.slice(1)}`)}
+                              </DropdownMenuRadioItem>
+                            ))}
+                          </DropdownMenuRadioGroup>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-red-600 focus:text-red-600"

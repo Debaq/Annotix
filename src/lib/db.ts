@@ -409,6 +409,10 @@ export interface VideoTrack {
   classId: number;
   label: string | null;
   enabled: boolean;
+  /** `linear` | `ease` | `smooth`. Ver `features/video/utils/interpolation.ts`. */
+  interpolation?: string;
+  /** `none` | `after` | `both`: prolongación fuera del rango de keyframes. */
+  extend?: string;
   keyframes: VideoKeyframe[];
 }
 

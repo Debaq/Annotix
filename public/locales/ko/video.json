@@ -36,5 +36,13 @@
   "newTrackHint": "활성 클래스로 트랙 생성",
   "filterCurrentFrame": "이 프레임",
   "filterAll": "모든 트랙",
-  "moveToClass": "변경"
+  "moveToClass": "변경",
+  "interpolation": "보간",
+  "interpLinear": "선형",
+  "interpEase": "이징",
+  "interpSmooth": "스플라인",
+  "extend": "키프레임 밖",
+  "extendNone": "없음",
+  "extendAfter": "끝까지",
+  "extendBoth": "영상 전체"
 }

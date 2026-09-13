@@ -16,7 +16,7 @@ const VKF_PREFIX = 'vkf::';
  * Comportamiento:
  *  - Auto-crea keyframes al navegar a un frame nuevo
  *  - Todas las bboxes (keyframes + interpoladas + deshabilitadas) son editables
- *  - Toggle ojo: desactiva/activa la bbox en ese frame
+ *  - Toggle ojo: marca la salida de escena desde ese frame, o la revierte
  */
 export function useVideoAnnotationBridge(
   interpolatedBBoxes: InterpolatedBBox[],
@@ -172,7 +172,9 @@ export function useVideoAnnotationBridge(
   // pantalla. Ahora cada caso hace lo que el usuario ve:
   //  - keyframe y es el único del track → se borra el track entero
   //  - keyframe con más hermanos        → se borra ese keyframe
-  //  - caja interpolada                 → se deshabilita en este fotograma
+  //  - caja interpolada                 → el objeto sale de escena desde aquí
+  //    (keyframe deshabilitado: apaga de este fotograma en adelante, hasta el
+  //    siguiente keyframe, no el tramo que viene antes)
   const deleteAnnotation = useCallback(async (id: string) => {
     if (!id.startsWith(VKF_PREFIX)) return;
     const trackId = id.slice(VKF_PREFIX.length);

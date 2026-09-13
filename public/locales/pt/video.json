@@ -36,5 +36,13 @@
   "newTrackHint": "Cria um track com a classe ativa",
   "filterCurrentFrame": "Neste quadro",
   "filterAll": "Todos os tracks",
-  "moveToClass": "Mudar para"
+  "moveToClass": "Mudar para",
+  "interpolation": "Interpolação",
+  "interpLinear": "Linear",
+  "interpEase": "Suavizada",
+  "interpSmooth": "Spline",
+  "extend": "Fora dos keyframes",
+  "extendNone": "Nada",
+  "extendAfter": "Até o fim",
+  "extendBoth": "Vídeo inteiro"
 }

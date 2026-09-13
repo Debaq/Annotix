@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useVideoNavigation } from '../hooks/useVideoNavigation';
 import { VideoTrack } from '@/lib/db';
 import { cn } from '@/lib/utils';
+import { trackSpans } from '../utils/interpolation';
 
 const SPEEDS = [1, 2, 4, 8] as const;
 const BASE_INTERVAL = 200; // ms (~5 fps a 1x)
@@ -127,9 +128,23 @@ export function VideoTimeline({
 
   const porcentaje = (pos: number) => (totalFrames > 1 ? (pos / (totalFrames - 1)) * 100 : 0);
 
-  // Una pista por track: su extensión temporal y sus keyframes. Es lo que la lista
+  // Traduce un índice de fotograma real a posición en la barra. Los extremos
+  // abiertos de un track que se prolonga caen en el borde de la barra.
+  const posicionDe = (frameIndex: number, extremo: 'inicio' | 'fin') => {
+    if (frameIndex === -Infinity) return 0;
+    if (frameIndex === Infinity) return Math.max(totalFrames - 1, 0);
+    const pos = positionByFrameIndex.get(frameIndex);
+    if (pos !== undefined) return pos;
+    // Un keyframe sobre un fotograma que ya no existe (extraído de nuevo con
+    // otro fps): se ancla al extremo en vez de desaparecer del dibujo.
+    return extremo === 'inicio' ? 0 : Math.max(totalFrames - 1, 0);
+  };
+
+  // Una pista por track: sus tramos con caja y sus keyframes. Es lo que la lista
   // del panel no podía mostrar —cuándo existe cada track— y la razón de que fuera
-  // un listado poco útil.
+  // un listado poco útil. Los tramos vienen de la misma función que decide qué
+  // fotogramas reciben caja, así que un hueco por salida de escena se ve como
+  // hueco en vez de como bloque continuo.
   const pistas = tracks
     .filter(track => track.enabled && track.keyframes.length > 0)
     .map(track => {
@@ -138,13 +153,19 @@ export function VideoTimeline({
         .map(kf => ({
           pos: positionByFrameIndex.get(kf.frameIndex),
           esKeyframe: kf.isKeyframe,
+          habilitado: kf.enabled,
           frameIndex: kf.frameIndex,
         }))
-        .filter((kf): kf is { pos: number; esKeyframe: boolean; frameIndex: number } => kf.pos !== undefined);
-      if (posiciones.length === 0) return null;
-      const desde = Math.min(...posiciones.map(p => p.pos));
-      const hasta = Math.max(...posiciones.map(p => p.pos));
-      return { track, color, posiciones, desde, hasta };
+        .filter(
+          (kf): kf is { pos: number; esKeyframe: boolean; habilitado: boolean; frameIndex: number } =>
+            kf.pos !== undefined,
+        );
+      const tramos = trackSpans(track).map(({ desde, hasta }) => ({
+        desde: posicionDe(desde, 'inicio'),
+        hasta: posicionDe(hasta, 'fin'),
+      }));
+      if (posiciones.length === 0 && tramos.length === 0) return null;
+      return { track, color, posiciones, tramos };
     })
     .filter((p): p is NonNullable<typeof p> => p !== null);
 
@@ -231,7 +252,7 @@ export function VideoTimeline({
           vez de empujar el canvas. */}
       {pistas.length > 0 && (
         <div className="mt-1.5 max-h-24 space-y-1 overflow-y-auto pr-1">
-          {pistas.map(({ track, color, posiciones, desde, hasta }) => {
+          {pistas.map(({ track, color, posiciones, tramos }) => {
             const seleccionado = selectedTrackId === track.id;
             return (
               <div
@@ -243,16 +264,20 @@ export function VideoTimeline({
                 )}
                 title={track.label || `Track ${track.id}`}
               >
-                {/* Extensión: del primer al último keyframe (lo interpolado incluido) */}
-                <div
-                  className="absolute top-1/2 h-1 -translate-y-1/2 rounded"
-                  style={{
-                    left: `${porcentaje(desde)}%`,
-                    width: `${Math.max(porcentaje(hasta) - porcentaje(desde), 0.5)}%`,
-                    backgroundColor: color,
-                    opacity: seleccionado ? 0.9 : 0.45,
-                  }}
-                />
+                {/* Tramos con caja. Lo que queda entre dos tramos es un hueco
+                    real: ahí el track está fuera de escena. */}
+                {tramos.map(({ desde, hasta }, i) => (
+                  <div
+                    key={i}
+                    className="absolute top-1/2 h-1 -translate-y-1/2 rounded"
+                    style={{
+                      left: `${porcentaje(desde)}%`,
+                      width: `${Math.max(porcentaje(hasta) - porcentaje(desde), 0.5)}%`,
+                      backgroundColor: color,
+                      opacity: seleccionado ? 0.9 : 0.45,
+                    }}
+                  />
+                ))}
                 {posiciones
                   .filter(p => p.esKeyframe)
                   .map(p => (
@@ -262,8 +287,17 @@ export function VideoTimeline({
                         e.stopPropagation();
                         goToPosition(p.pos);
                       }}
-                      className="absolute top-1/2 h-2 w-2 -translate-y-1/2 rotate-45 hover:scale-125 transition-transform"
-                      style={{ left: `${porcentaje(p.pos)}%`, marginLeft: '-4px', backgroundColor: color }}
+                      className={cn(
+                        'absolute top-1/2 h-2 w-2 -translate-y-1/2 rotate-45 transition-transform hover:scale-125',
+                        // El keyframe de salida de escena se dibuja hueco: es el
+                        // que cierra el tramo, no uno más de la trayectoria.
+                        !p.habilitado && 'border bg-transparent',
+                      )}
+                      style={
+                        p.habilitado
+                          ? { left: `${porcentaje(p.pos)}%`, marginLeft: '-4px', backgroundColor: color }
+                          : { left: `${porcentaje(p.pos)}%`, marginLeft: '-4px', borderColor: color }
+                      }
                       title={`#${p.frameIndex}`}
                     />
                   ))}

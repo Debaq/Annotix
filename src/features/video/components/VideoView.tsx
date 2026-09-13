@@ -7,6 +7,7 @@ import { useCurrentVideo } from '../hooks/useCurrentVideo';
 import { useVideoNavigation } from '../hooks/useVideoNavigation';
 import { useVideoTracks } from '../hooks/useVideoTracks';
 import { useInterpolation } from '../hooks/useInterpolation';
+import { countCoveredFrames } from '../utils/interpolation';
 import { VideoTimeline } from './VideoTimeline';
 import { VideoAnnotationCanvas } from './VideoAnnotationCanvas';
 import { VideoTrackPanel } from './VideoTrackPanel';
@@ -47,24 +48,14 @@ export function VideoView() {
 
   const { interpolatedBBoxes } = useInterpolation(isBboxProject ? tracks : [], currentFrameIndex);
 
-  // Fotogramas que la consolidación va a tocar. Cuenta fotogramas que existen
-  // de verdad —sus `frameIndex` reales—, no un rango de enteros: si la
-  // secuencia tiene huecos, el rango los contaría y el número mentiría.
-  const bakeableCount = useMemo(() => {
-    const enabledTracks = tracks.filter(t => t.enabled && t.keyframes.length > 0);
-    if (enabledTracks.length === 0 || totalFrames === 0) return 0;
-
-    const ranges = enabledTracks.map(track => {
-      const indices = track.keyframes.map(kf => kf.frameIndex);
-      return { min: Math.min(...indices), max: Math.max(...indices) };
-    });
-
-    let covered = 0;
-    for (const frameIndex of positionByFrameIndex.keys()) {
-      if (ranges.some(r => frameIndex >= r.min && frameIndex <= r.max)) covered++;
-    }
-    return covered;
-  }, [tracks, totalFrames, positionByFrameIndex]);
+  // Fotogramas que la consolidación va a tocar, evaluando la interpolación real
+  // de cada track. Antes miraba solo el primer y último keyframe: con un track
+  // que prolonga su última caja, o con una salida de escena en medio, ese rango
+  // ya no dice qué fotogramas quedan cubiertos y el número del botón mentía.
+  const bakeableCount = useMemo(
+    () => (totalFrames === 0 ? 0 : countCoveredFrames(tracks, positionByFrameIndex.keys())),
+    [tracks, totalFrames, positionByFrameIndex],
+  );
 
   // Track seleccionado: lo comparten el panel y las pistas de la línea de tiempo.
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
