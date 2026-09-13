@@ -1,6 +1,8 @@
 // src/features/core/store/uiStore.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { markToolSelected } from '../../study/studySession';
+import { modalityForTool } from '../../study/modality';
 
 export type ToolType = 'pan' | 'bbox' | 'mask' | 'polygon' | 'keypoints' | 'landmarks' | 'obb';
 type GalleryFilterType = 'all' | 'annotated' | 'unannotated';
@@ -100,7 +102,15 @@ export const useUIStore = create<UIState>()(
 
       // Active tool
       activeTool: 'pan',
-      setActiveTool: (tool) => set({ activeTool: tool }),
+      setActiveTool: (tool) =>
+        set((state) => {
+          // Modo estudio: la herramienta activa marca el inicio del tiempo de
+          // anotación. Solo observa; no cambia el estado.
+          if (state.activeTool !== tool) {
+            markToolSelected(tool, modalityForTool(tool) ?? undefined);
+          }
+          return { activeTool: tool };
+        }),
 
       // Active class
       activeClassId: null,

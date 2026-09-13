@@ -68,7 +68,35 @@ pub struct P2pState {
     pub data_dir: PathBuf,
 }
 
+impl IrohNode {
+    /// Dominio del relay al que está conectado el nodo, para el registro de
+    /// tráfico del modo estudio. `None` si todavía no hay relay asignado.
+    pub fn relay_host(&self) -> Option<String> {
+        use iroh::Watcher;
+        let addr = self.endpoint.watch_addr().get();
+        let url = addr.relay_urls().next()?;
+        Some(crate::net::host_of(url.as_str()))
+    }
+}
+
 impl P2pState {
+    /// Registra tráfico de la capa P2P en el modo estudio. El transporte de
+    /// iroh no es HTTP y no pasa por `crate::net`, así que se instrumenta en
+    /// los puntos de sesión: crear, unirse y sincronizar.
+    pub async fn study_record(&self, bytes_out: u64, bytes_in: u64, ok: bool) {
+        if !crate::study::is_active() {
+            return;
+        }
+        let host = {
+            let guard = self.node.read().await;
+            guard
+                .as_ref()
+                .and_then(|n| n.relay_host())
+                .unwrap_or_else(|| "unknown".to_string())
+        };
+        crate::net::record(crate::net::Purpose::CollabP2p, &host, bytes_out, bytes_in, ok);
+    }
+
     pub fn new() -> Self {
         let base_dir = directories::ProjectDirs::from("com", "tecmedhub", "annotix")
             .expect("No se pudo determinar el directorio de datos");

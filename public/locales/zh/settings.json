@@ -8,7 +8,8 @@
     "cloudProviders": "云服务商",
     "keyboardShortcuts": "键盘快捷键",
     "browserAutomation": "浏览器自动化",
-    "network": "网络"
+    "network": "网络",
+    "study": "研究模式"
   },
   "general": {
     "colorMode": "外观",
@@ -182,5 +183,23 @@
     },
     "saved": "已保存",
     "saveError": "保存错误"
+  },
+  "study": {
+    "title": "研究模式",
+    "enable": "启用研究模式",
+    "disclaimer": "将使用事件和耗时记录到本地文件。不记录内容、文件名或截图。",
+    "sessionId": "会话 ID",
+    "sessionIdHint": "字母、数字、连字符和下划线（3–32）。",
+    "condition": "条件",
+    "conditionHint": "实验条件的可选标签（最多 32 个字符）。",
+    "export": "导出日志",
+    "exportTitle": "选择目标文件夹",
+    "openFolder": "打开文件夹",
+    "exported": "已将 {{count}} 个文件导出到 {{dir}}",
+    "active": "会话进行中：已记录 {{count}} 个事件。",
+    "errors": {
+      "sessionId": "会话 ID 长度须为 3–32 个字符，仅可使用字母、数字、连字符和下划线。",
+      "condition": "条件最多 32 个字符。"
+    }
   }
 }

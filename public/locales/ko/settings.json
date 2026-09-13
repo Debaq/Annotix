@@ -8,7 +8,8 @@
     "cloudProviders": "클라우드 제공업체",
     "keyboardShortcuts": "키보드 단축키",
     "browserAutomation": "브라우저 자동화",
-    "network": "네트워크"
+    "network": "네트워크",
+    "study": "연구 모드"
   },
   "shortcuts": {
     "description": "키 배지를 클릭하여 재할당하세요. Escape를 눌러 취소합니다.",
@@ -182,5 +183,23 @@
     "validating": "검증 중...",
     "valid": "유효",
     "invalid": "유효하지 않음"
+  },
+  "study": {
+    "title": "연구 모드",
+    "enable": "연구 모드 사용",
+    "disclaimer": "사용 이벤트와 소요 시간을 로컬 파일에 기록합니다. 내용, 파일 이름, 화면 캡처는 기록하지 않습니다.",
+    "sessionId": "세션 ID",
+    "sessionIdHint": "영문자, 숫자, 하이픈, 밑줄 (3~32자).",
+    "condition": "조건",
+    "conditionHint": "실험 조건의 선택적 레이블 (최대 32자).",
+    "export": "로그 내보내기",
+    "exportTitle": "대상 폴더 선택",
+    "openFolder": "폴더 열기",
+    "exported": "{{count}}개 파일을 {{dir}}(으)로 내보냈습니다",
+    "active": "세션 실행 중: {{count}}개 이벤트 기록됨.",
+    "errors": {
+      "sessionId": "세션 ID는 3~32자여야 하며 영문자, 숫자, 하이픈, 밑줄만 사용할 수 있습니다.",
+      "condition": "조건은 최대 32자까지 입력할 수 있습니다."
+    }
   }
 }

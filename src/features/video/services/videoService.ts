@@ -1,5 +1,6 @@
 import type { Video, VideoTrack, AnnotixImage, VideoInfo } from '@/lib/db';
 import * as tauriDb from '@/lib/tauriDb';
+import { emitConsolidate, emitKeyframeSet } from '@/features/study/videoStudy';
 
 export const videoService = {
   async getVideoInfo(path: string): Promise<VideoInfo> {
@@ -55,7 +56,8 @@ export const videoService = {
     projectId: string, trackId: string, videoId: string, frameIndex: number,
     bboxX: number, bboxY: number, bboxWidth: number, bboxHeight: number
   ): Promise<void> {
-    return tauriDb.setKeyframe(projectId, trackId, videoId, frameIndex, bboxX, bboxY, bboxWidth, bboxHeight);
+    await tauriDb.setKeyframe(projectId, trackId, videoId, frameIndex, bboxX, bboxY, bboxWidth, bboxHeight);
+    emitKeyframeSet(trackId, frameIndex);
   },
 
   async deleteKeyframe(projectId: string, trackId: string, videoId: string, frameIndex: number): Promise<void> {
@@ -67,7 +69,26 @@ export const videoService = {
   },
 
   async bake(projectId: string, videoId: string): Promise<number> {
-    return tauriDb.bakeVideoTracks(projectId, videoId);
+    // Los conteos del evento `video.consolidate` se leen justo antes de
+    // consolidar: después el bake ya escribió las anotaciones.
+    const [tracks, frames] = await Promise.all([
+      tauriDb.listTracksByVideo(projectId, videoId),
+      tauriDb.listFramesByVideo(projectId, videoId),
+    ]);
+    const keyed = new Set<number>();
+    for (const track of tracks) {
+      for (const kf of track.keyframes ?? []) {
+        if (kf.isKeyframe !== false) keyed.add(kf.frameIndex);
+      }
+    }
+    const baked = await tauriDb.bakeVideoTracks(projectId, videoId);
+    emitConsolidate({
+      videoId,
+      nTracks: tracks.length,
+      nFramesTotal: frames.length,
+      nFramesKeyed: keyed.size,
+    });
+    return baked;
   },
 
   async trackForward(

@@ -471,7 +471,42 @@ pub async fn delete_training_job(
 
 #[tauri::command]
 pub fn export_trained_model(model_path: String, format: String) -> Result<String, String> {
-    crate::training::model_export::export_model(&model_path, &format)
+    use crate::study::events;
+    study_emit_export(events::EXPORT_START, serde_json::json!({ "format": format }));
+
+    let t0 = std::time::Instant::now();
+    let res = crate::training::model_export::export_model(&model_path, &format);
+    let contract_valid = res
+        .as_deref()
+        .map(|p| crate::training::model_export::exported_artifact_is_valid(p, &format))
+        .unwrap_or(false);
+    study_emit_export(
+        events::EXPORT_END,
+        serde_json::json!({
+            "ok": res.is_ok(),
+            "format": format,
+            "contract_valid": contract_valid,
+            "duration_ms": t0.elapsed().as_millis() as u64,
+        }),
+    );
+    res
+}
+
+/// El formato llega desde la interfaz; se normaliza para que no viaje texto
+/// libre en el registro del estudio.
+fn study_emit_export(event: &str, mut payload: serde_json::Value) {
+    if let Some(f) = payload.get_mut("format") {
+        let norm = f
+            .as_str()
+            .unwrap_or("other")
+            .chars()
+            .filter(|c| c.is_ascii_alphanumeric() || *c == '_' || *c == '-')
+            .take(24)
+            .collect::<String>()
+            .to_lowercase();
+        *f = serde_json::Value::from(norm);
+    }
+    crate::study::emit_quiet(event, payload);
 }
 
 #[tauri::command]

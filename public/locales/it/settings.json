@@ -8,7 +8,8 @@
     "cloudProviders": "Fornitori Cloud",
     "keyboardShortcuts": "Scorciatoie da Tastiera",
     "browserAutomation": "Automazione del Browser",
-    "network": "Rete"
+    "network": "Rete",
+    "study": "Modalità studio"
   },
   "shortcuts": {
     "description": "Clicca su un badge tasto per riassegnarlo. Premi Escape per annullare.",
@@ -185,5 +186,23 @@
     "validating": "Validazione...",
     "valid": "Valido",
     "invalid": "Non valido"
+  },
+  "study": {
+    "title": "Modalità studio",
+    "enable": "Attiva la modalità studio",
+    "disclaimer": "Registra eventi d'uso e tempi in un file locale. Non registra contenuti, nomi di file né schermate.",
+    "sessionId": "ID sessione",
+    "sessionIdHint": "Lettere, cifre, trattino e trattino basso (3–32).",
+    "condition": "Condizione",
+    "conditionHint": "Etichetta facoltativa della condizione sperimentale (max 32).",
+    "export": "Esporta i registri",
+    "exportTitle": "Scegli la cartella di destinazione",
+    "openFolder": "Apri cartella",
+    "exported": "Esportati {{count}} file in {{dir}}",
+    "active": "Sessione attiva: {{count}} eventi registrati.",
+    "errors": {
+      "sessionId": "L'ID sessione deve avere da 3 a 32 caratteri: solo lettere, cifre, trattino e trattino basso.",
+      "condition": "La condizione accetta al massimo 32 caratteri."
+    }
   }
 }

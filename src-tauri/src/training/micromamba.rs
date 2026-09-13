@@ -82,7 +82,9 @@ impl Micromamba {
             os, arch
         );
 
-        let response = reqwest::get(&url)
+        let response = crate::net::client(crate::net::Purpose::ModelWeights)
+            .get(&url)
+            .send()
             .await
             .map_err(|e| format!("Fallo al descargar: {}", e))?;
         let bytes = response

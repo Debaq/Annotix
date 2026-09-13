@@ -18,8 +18,11 @@ pub async fn p2p_create_session(
     display_name: String,
     rules: SessionRules,
 ) -> Result<P2pSessionInfo, String> {
-    p2p.create_session(&app_state, &app_handle, &project_id, &display_name, rules)
-        .await
+    let res = p2p
+        .create_session(&app_state, &app_handle, &project_id, &display_name, rules)
+        .await;
+    p2p.study_record(0, 0, res.is_ok()).await;
+    res
 }
 
 #[tauri::command]
@@ -30,8 +33,11 @@ pub async fn p2p_join_session(
     share_code: String,
     display_name: String,
 ) -> Result<P2pSessionInfo, String> {
-    p2p.join_session(&app_state, &app_handle, &share_code, &display_name)
-        .await
+    let res = p2p
+        .join_session(&app_state, &app_handle, &share_code, &display_name)
+        .await;
+    p2p.study_record(0, 0, res.is_ok()).await;
+    res
 }
 
 #[tauri::command]
@@ -127,7 +133,11 @@ pub async fn p2p_sync_annotations(
 ) -> Result<(), String> {
     p2p.check_permission(&project_id, P2pPermission::Annotate)
         .await?;
-    crate::p2p::sync::sync_annotations_to_doc(&p2p, &project_id, &image_id, &annotations).await
+    let bytes_out = serde_json::to_vec(&annotations).map(|v| v.len() as u64).unwrap_or(0);
+    let res =
+        crate::p2p::sync::sync_annotations_to_doc(&p2p, &project_id, &image_id, &annotations).await;
+    p2p.study_record(bytes_out, 0, res.is_ok()).await;
+    res
 }
 
 #[tauri::command]

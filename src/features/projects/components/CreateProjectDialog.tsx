@@ -1,4 +1,5 @@
 import { ReactNode, useState, useMemo } from 'react';
+import { useStudyStep } from '../../study/useStudyStep';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useProjects } from '../hooks/useProjects';
@@ -90,6 +91,8 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
   const navigate = useNavigate();
   const { createProject } = useProjects();
   const [open, setOpen] = useState(false);
+  // Modo estudio: mientras el diálogo está abierto, el paso activo es este.
+  useStudyStep('create_project', open);
   const [step, setStep] = useState<1 | 2>(1);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');

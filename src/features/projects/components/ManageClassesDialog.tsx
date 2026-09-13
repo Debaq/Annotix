@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useStudyStep } from '../../study/useStudyStep';
 import { useTranslation } from 'react-i18next';
 import { useProjects } from '../hooks/useProjects';
 import { ClassManager } from './ClassManager';
@@ -23,6 +24,8 @@ export function ManageClassesDialog({ project, trigger }: ManageClassesDialogPro
   const { t } = useTranslation();
   const { saveClasses } = useProjects();
   const [open, setOpen] = useState(false);
+  // Modo estudio: mientras el diálogo está abierto, el paso activo es este.
+  useStudyStep('configure_classes', open);
   const [classes, setClasses] = useState<ClassDefinition[]>(project.classes);
   const [isUpdating, setIsUpdating] = useState(false);
 

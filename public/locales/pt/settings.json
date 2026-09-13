@@ -8,7 +8,8 @@
     "cloudProviders": "Provedores Cloud",
     "keyboardShortcuts": "Atalhos de Teclado",
     "browserAutomation": "Automação do Navegador",
-    "network": "Rede"
+    "network": "Rede",
+    "study": "Modo estudo"
   },
   "general": {
     "colorMode": "Aparência",
@@ -135,5 +136,23 @@
     "validating": "Validando...",
     "valid": "Válido",
     "invalid": "Inválido"
+  },
+  "study": {
+    "title": "Modo estudo",
+    "enable": "Ativar modo estudo",
+    "disclaimer": "Registra eventos de uso e tempos num ficheiro local. Não regista conteúdo, nomes de ficheiros nem capturas de ecrã.",
+    "sessionId": "ID de sessão",
+    "sessionIdHint": "Letras, números, hífen e sublinhado (3–32).",
+    "condition": "Condição",
+    "conditionHint": "Etiqueta opcional da condição experimental (máx. 32).",
+    "export": "Exportar registos",
+    "exportTitle": "Escolher pasta de destino",
+    "openFolder": "Abrir pasta",
+    "exported": "Exportados {{count}} ficheiro(s) para {{dir}}",
+    "active": "Sessão ativa: {{count}} eventos registados.",
+    "errors": {
+      "sessionId": "O ID de sessão deve ter entre 3 e 32 caracteres, apenas letras, números, hífen e sublinhado.",
+      "condition": "A condição aceita no máximo 32 caracteres."
+    }
   }
 }

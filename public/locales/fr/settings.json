@@ -8,7 +8,8 @@
     "cloudProviders": "Fournisseurs Cloud",
     "keyboardShortcuts": "Raccourcis Clavier",
     "browserAutomation": "Automatisation du Navigateur",
-    "network": "Réseau"
+    "network": "Réseau",
+    "study": "Mode étude"
   },
   "shortcuts": {
     "description": "Cliquez sur un badge de touche pour le réassigner. Appuyez sur Échap pour annuler.",
@@ -185,5 +186,23 @@
     "validating": "Validation...",
     "valid": "Valide",
     "invalid": "Invalide"
+  },
+  "study": {
+    "title": "Mode étude",
+    "enable": "Activer le mode étude",
+    "disclaimer": "Enregistre les événements d'usage et les durées dans un fichier local. N'enregistre ni contenu, ni noms de fichiers, ni captures d'écran.",
+    "sessionId": "ID de session",
+    "sessionIdHint": "Lettres, chiffres, tiret et tiret bas (3–32).",
+    "condition": "Condition",
+    "conditionHint": "Étiquette facultative de la condition expérimentale (max. 32).",
+    "export": "Exporter les journaux",
+    "exportTitle": "Choisir le dossier de destination",
+    "openFolder": "Ouvrir le dossier",
+    "exported": "{{count}} fichier(s) exporté(s) vers {{dir}}",
+    "active": "Session active : {{count}} événements enregistrés.",
+    "errors": {
+      "sessionId": "L'ID de session doit contenir de 3 à 32 caractères : lettres, chiffres, tiret et tiret bas uniquement.",
+      "condition": "La condition accepte 32 caractères au maximum."
+    }
   }
 }

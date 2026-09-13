@@ -521,6 +521,7 @@ pub mod package;
 pub mod python_env;
 pub mod runner;
 pub mod scripts;
+pub mod study_hooks;
 #[cfg(test)]
 mod smoke_tests;
 #[cfg(test)]

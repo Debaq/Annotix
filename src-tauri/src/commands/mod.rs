@@ -17,6 +17,7 @@ pub mod sam_commands;
 pub mod serve_commands;
 pub mod settings_commands;
 pub mod storage_commands;
+pub mod study_commands;
 pub mod tabular_commands;
 pub mod timeseries_commands;
 pub mod training_commands;

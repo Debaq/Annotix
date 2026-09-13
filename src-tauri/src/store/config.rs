@@ -157,6 +157,19 @@ impl Default for ServeConfig {
     }
 }
 
+/// Modo estudio (registro local de eventos de uso para un estudio experimental).
+/// Desactivado por defecto: sin `enabled` no se abre ningún archivo.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct StudyConfig {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub session_id: String,
+    #[serde(default)]
+    pub condition: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AppConfig {
     #[serde(default)]
@@ -176,6 +189,9 @@ pub struct AppConfig {
     /// Marca migración legacy de training (v1) ya ejecutada
     #[serde(default, rename = "trainingMigrationV1Done")]
     pub training_migration_v1_done: bool,
+    /// Modo estudio
+    #[serde(default)]
+    pub study: StudyConfig,
 }
 
 impl AppConfig {

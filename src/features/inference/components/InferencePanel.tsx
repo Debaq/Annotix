@@ -1,4 +1,5 @@
 import { ReactNode, useState, useCallback, useMemo } from 'react';
+import { useStudyStep } from '../../study/useStudyStep';
 import { useTranslation } from 'react-i18next';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -29,6 +30,8 @@ interface InferencePanelProps {
 export function InferencePanel({ trigger, project }: InferencePanelProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  // Modo estudio: mientras el diálogo está abierto, el paso activo es este.
+  useStudyStep('review_assisted', open);
 
   const projectId = project?.id || null;
 

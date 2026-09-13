@@ -8,7 +8,8 @@
     "cloudProviders": "Cloud-Anbieter",
     "keyboardShortcuts": "Tastaturkürzel",
     "browserAutomation": "Browser-Automatisierung",
-    "network": "Netzwerk"
+    "network": "Netzwerk",
+    "study": "Studienmodus"
   },
   "general": {
     "colorMode": "Erscheinungsbild",
@@ -185,5 +186,23 @@
     },
     "saved": "Gespeichert",
     "saveError": "Fehler beim Speichern"
+  },
+  "study": {
+    "title": "Studienmodus",
+    "enable": "Studienmodus aktivieren",
+    "disclaimer": "Zeichnet Nutzungsereignisse und Zeiten in einer lokalen Datei auf. Inhalte, Dateinamen und Screenshots werden nicht aufgezeichnet.",
+    "sessionId": "Sitzungs-ID",
+    "sessionIdHint": "Buchstaben, Ziffern, Bindestrich und Unterstrich (3–32).",
+    "condition": "Bedingung",
+    "conditionHint": "Optionale Bezeichnung der Versuchsbedingung (max. 32).",
+    "export": "Protokolle exportieren",
+    "exportTitle": "Zielordner wählen",
+    "openFolder": "Ordner öffnen",
+    "exported": "{{count}} Datei(en) nach {{dir}} exportiert",
+    "active": "Aktive Sitzung: {{count}} Ereignisse aufgezeichnet.",
+    "errors": {
+      "sessionId": "Die Sitzungs-ID muss 3–32 Zeichen lang sein und darf nur Buchstaben, Ziffern, Bindestrich und Unterstrich enthalten.",
+      "condition": "Die Bedingung erlaubt höchstens 32 Zeichen."
+    }
   }
 }

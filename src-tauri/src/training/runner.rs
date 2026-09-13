@@ -307,11 +307,25 @@ impl TrainingProcessManager {
 
         let stdout = child.stdout.take();
         let stderr = child.stderr.take();
+        let pid = Some(child.id());
 
         {
             let mut procs = self.processes.lock().map_err(|e| e.to_string())?;
             procs.insert(job_id.to_string(), child);
         }
+
+        // Modo estudio: la partición real la decide el script, así que aquí se
+        // registra la que pidió el usuario sobre las imágenes que entran.
+        let n_val = (images.len() as f64 * request.val_split).round() as usize;
+        super::study_hooks::train_started(
+            job_id,
+            &format!("{:?}", request.backend).to_lowercase(),
+            super::study_hooks::mode_name(&request.execution_mode),
+            images.len().saturating_sub(n_val),
+            n_val,
+            request.epochs,
+            pid,
+        );
 
         spawn_monitor_thread(
             app.clone(),
@@ -421,6 +435,7 @@ impl TrainingProcessManager {
             child
                 .kill()
                 .map_err(|e| format!("Error cancelando proceso: {}", e))?;
+            super::study_hooks::train_finished(job_id, false, "cancelled");
             Ok(())
         } else {
             Err("No se encontró proceso de entrenamiento activo".to_string())
@@ -734,6 +749,7 @@ fn handle_event(
                 }
                 job.updated_at = js_timestamp();
             });
+            crate::training::study_hooks::train_epoch(job_id, epoch_num);
             false
         }
         "completed" => {
@@ -791,6 +807,7 @@ fn handle_event(
                 }
                 job.updated_at = js_timestamp();
             });
+            crate::training::study_hooks::train_finished(job_id, true, "none");
             true
         }
         _ => false,
@@ -827,6 +844,7 @@ fn finalize_completed_fallback(app: &AppHandle, project_dir: &Path, job_id: &str
             "result": serde_json::Value::Null,
         }),
     );
+    crate::training::study_hooks::train_finished(job_id, true, "none");
 }
 
 fn parse_metrics(v: &serde_json::Value) -> Option<TrainingEpochMetrics> {
@@ -945,6 +963,11 @@ fn spawn_monitor_thread(
                         job.status = "failed".to_string();
                         job.updated_at = js_timestamp();
                     });
+                    crate::training::study_hooks::train_finished(
+                        &job_id,
+                        false,
+                        crate::training::study_hooks::classify_error(&error_msg),
+                    );
                 }
             }
         }

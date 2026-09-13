@@ -29,6 +29,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from '@/hooks/use-toast';
 import { ConfirmDialog } from './features/core/components/ConfirmDialog';
 import { useP2pSession } from './features/p2p/hooks/useP2pSession';
+import { useStudySession } from './features/study/useStudySession';
 import { TeamView } from './features/p2p/components/TeamView';
 import { useTranslation } from 'react-i18next';
 import { AnnotationPanelActions } from './features/core/components/AnnotationPanelActions';
@@ -543,6 +544,9 @@ function App() {
 
   // Initialize P2P event listeners
   useP2pSession();
+
+  // Modo estudio: reabre la sesión si quedó activada y sigue paso e inactividad
+  useStudySession();
 
   // Check if setup is complete
   useEffect(() => {

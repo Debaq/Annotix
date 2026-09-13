@@ -1,3 +1,4 @@
+import { studyFetch } from '@/features/study/netStudy';
 const REPO = 'Debaq/Annotix';
 const CACHE_KEY = 'annotix-changelog';
 const CACHE_TTL = 1000 * 60 * 30; // 30 minutos
@@ -35,8 +36,9 @@ export async function fetchChangelog(): Promise<ChangelogEntry[]> {
   } catch { /* ignore */ }
 
   try {
-    const res = await fetch(
+    const res = await studyFetch(
       `https://api.github.com/repos/${REPO}/commits?per_page=30`,
+      'update_check',
       { headers: { Accept: 'application/vnd.github.v3+json' } },
     );
 

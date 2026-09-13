@@ -41,6 +41,31 @@ pub fn export_model(model_path: &str, format: &str) -> Result<String, String> {
     ))
 }
 
+/// Validación del artefacto exportado: existe, no está vacío y la extensión
+/// corresponde al formato pedido. Es lo que el modo estudio registra como
+/// `contract_valid` en `export.end`.
+pub fn exported_artifact_is_valid(path: &str, format: &str) -> bool {
+    let p = Path::new(path);
+    let non_empty = if p.is_dir() {
+        std::fs::read_dir(p)
+            .map(|mut d| d.next().is_some())
+            .unwrap_or(false)
+    } else {
+        std::fs::metadata(p).map(|m| m.len() > 0).unwrap_or(false)
+    };
+    if !non_empty {
+        return false;
+    }
+    // Los formatos de directorio (saved_model, openvino) no llevan extensión.
+    if p.is_dir() {
+        return true;
+    }
+    p.extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.eq_ignore_ascii_case(format) || format.eq_ignore_ascii_case("torchscript"))
+        .unwrap_or(false)
+}
+
 /// `true` si el archivo es un checkpoint de ultralytics (`.pt`).
 fn es_ultralytics(ruta: &Path) -> bool {
     ruta.extension()

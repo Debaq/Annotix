@@ -9,6 +9,7 @@ import { useToast } from '@/components/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { useP2pStore } from '@/features/p2p/store/p2pStore';
 import { useUndoStore } from '../store/undoStore';
+import { emitAnnotCommit, emitAnnotDelete, markEdit } from '../../study/studySession';
 
 // Store global para control de guardado válido
 interface SaveGuardStore {
@@ -256,13 +257,22 @@ export function useAnnotations() {
     addAnnotationState(annotation);
     const latestAnns = useAnnotationStore.getState().annotations;
     await saveAnnotations(latestAnns);
+    emitAnnotCommit(annotation.type, annotation.source === 'ai' ? 'assisted_accepted' : 'manual');
   }, [addAnnotationState, saveAnnotations, image?.id, pushUndo]);
 
   const updateAnnotation = useCallback(async (id: string, updates: Partial<Annotation>) => {
     pushUndo();
+    const previous = useAnnotationStore.getState().annotations.find(a => a.id === id);
     updateAnnotationState(id, updates);
     const latestAnns = useAnnotationStore.getState().annotations;
     await saveAnnotations(latestAnns);
+    // Retocar una propuesta del asistente es una corrección asistida; retocar
+    // una anotación propia es un ajuste más antes de confirmar.
+    if (previous?.source === 'ai') {
+      emitAnnotCommit(previous.type, 'assisted_edited');
+    } else {
+      markEdit();
+    }
   }, [updateAnnotationState, saveAnnotations, pushUndo]);
 
   const updateAnnotationLocal = useCallback((id: string, updates: Partial<Annotation>) => {
@@ -278,10 +288,17 @@ export function useAnnotations() {
 
   const deleteAnnotation = useCallback(async (id: string) => {
     pushUndo();
+    const previous = useAnnotationStore.getState().annotations.find(a => a.id === id);
     deleteAnnotationState(id);
     const latestAnns = useAnnotationStore.getState().annotations;
     await saveAnnotations(latestAnns);
     await reload();
+    if (previous) {
+      emitAnnotDelete(
+        previous.type,
+        previous.source === 'ai' ? 'assisted_rejected' : 'manual',
+      );
+    }
   }, [deleteAnnotationState, saveAnnotations, reload, pushUndo]);
 
   // Compatibilidad: selectedAnnotationId devuelve el primero del set (o null)

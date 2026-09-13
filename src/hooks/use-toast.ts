@@ -7,6 +7,7 @@ import type {
   ToastActionElement,
   ToastProps,
 } from "@/components/ui/toast"
+import { emitErrorShown } from "@/features/study/friction"
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
@@ -145,6 +146,12 @@ type Toast = Omit<ToasterToast, "id">
 
 function toast({ ...props }: Toast) {
   const id = genId()
+
+  // Modo estudio: un aviso de error es fricción visible. Se registra la
+  // categoría y el paso activo, nunca el texto del mensaje.
+  if (props.variant === "destructive") {
+    emitErrorShown("operation_failed")
+  }
 
   const update = (props: ToasterToast) =>
     dispatch({

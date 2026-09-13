@@ -10,7 +10,8 @@
     "keyboardShortcuts": "Keyboard Shortcuts",
     "browserAutomation": "Browser Automation",
     "network": "Network",
-    "diagnostics": "Diagnostics"
+    "diagnostics": "Diagnostics",
+    "study": "Study mode"
   },
   "diagnostics": {
     "description": "Application error and warning log. Copy and paste it when reporting an issue.",
@@ -205,5 +206,23 @@
     },
     "saved": "Saved",
     "saveError": "Error saving"
+  },
+  "study": {
+    "title": "Study mode",
+    "enable": "Enable study mode",
+    "disclaimer": "Records usage events and timings in a local file. It does not record content, file names or screenshots.",
+    "sessionId": "Session ID",
+    "sessionIdHint": "Letters, digits, hyphen and underscore (3–32).",
+    "condition": "Condition",
+    "conditionHint": "Optional label for the experimental condition (max. 32).",
+    "export": "Export logs",
+    "exportTitle": "Choose destination folder",
+    "openFolder": "Open folder",
+    "exported": "Exported {{count}} file(s) to {{dir}}",
+    "active": "Active session: {{count}} events recorded.",
+    "errors": {
+      "sessionId": "The session ID must be 3–32 characters long and use only letters, digits, hyphen and underscore.",
+      "condition": "The condition accepts at most 32 characters."
+    }
   }
 }

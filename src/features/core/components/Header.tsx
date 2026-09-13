@@ -15,6 +15,7 @@ import { useTrainingModalStore } from '@/features/training/store/trainingModalSt
 import { P2pStatusIndicator } from '@/features/p2p/components/P2pStatusIndicator';
 import { P2pGuard } from '@/features/p2p/components/P2pGuard';
 import { ServeButton } from '@/features/serve/components/ServeButton';
+import { emitHelpOpen } from '../../study/friction';
 
 const appWindow = getCurrentWindow();
 
@@ -183,14 +184,14 @@ export const Header: React.FC = () => {
       <div className="flex items-center gap-1">
         <P2pStatusIndicator />
         <button
-          onClick={() => setShowShortcuts(true)}
+          onClick={() => { emitHelpOpen('shortcuts'); setShowShortcuts(true); }}
           className="window-header-btn"
           title={t('help.shortcuts')}
         >
           <i className="fas fa-keyboard text-[13px]"></i>
         </button>
         <button
-          onClick={() => openUrl('https://github.com/Debaq/Annotix')}
+          onClick={() => { emitHelpOpen('repository'); openUrl('https://github.com/Debaq/Annotix'); }}
           className="window-header-btn"
           title="GitHub"
         >

@@ -11,8 +11,8 @@ impl KaggleRunner {
         Self { username, api_key }
     }
 
-    fn client(&self) -> reqwest::blocking::Client {
-        reqwest::blocking::Client::new()
+    fn client(&self) -> crate::net::BlockingClient {
+        crate::net::blocking(crate::net::Purpose::RemoteTraining)
     }
 
     fn is_token_auth(&self) -> bool {
@@ -507,7 +507,7 @@ pub fn validate_credentials(username: &str, api_key: &str) -> Result<(), String>
         format!("Basic {}", credentials)
     };
 
-    let client = reqwest::blocking::Client::new();
+    let client = crate::net::blocking(crate::net::Purpose::RemoteTraining);
     let resp = client
         .get("https://www.kaggle.com/api/v1/datasets/list?page=1&pageSize=1")
         .header("Authorization", auth)

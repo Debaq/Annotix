@@ -10,8 +10,8 @@ impl SaturnCloudRunner {
         Self { api_token }
     }
 
-    fn client(&self) -> reqwest::blocking::Client {
-        reqwest::blocking::Client::new()
+    fn client(&self) -> crate::net::BlockingClient {
+        crate::net::blocking(crate::net::Purpose::RemoteTraining)
     }
 
     fn auth_header(&self) -> String {
@@ -281,7 +281,7 @@ impl CloudRunner for SaturnCloudRunner {
 
 /// Valida credenciales de Saturn Cloud consultando info de la cuenta
 pub fn validate_credentials(api_token: &str) -> Result<(), String> {
-    let client = reqwest::blocking::Client::new();
+    let client = crate::net::blocking(crate::net::Purpose::RemoteTraining);
     let resp = client
         .get("https://app.community.saturnenterprise.io/api/info")
         .header("Authorization", format!("token {}", api_token))

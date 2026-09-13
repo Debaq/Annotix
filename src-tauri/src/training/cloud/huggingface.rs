@@ -11,8 +11,8 @@ impl HuggingFaceRunner {
         Self { token, username }
     }
 
-    fn client(&self) -> reqwest::blocking::Client {
-        reqwest::blocking::Client::new()
+    fn client(&self) -> crate::net::BlockingClient {
+        crate::net::blocking(crate::net::Purpose::RemoteTraining)
     }
 
     fn auth_header(&self) -> String {
@@ -349,7 +349,7 @@ impl CloudRunner for HuggingFaceRunner {
 
 /// Valida credenciales de Hugging Face consultando el perfil del usuario
 pub fn validate_credentials(token: &str) -> Result<(), String> {
-    let client = reqwest::blocking::Client::new();
+    let client = crate::net::blocking(crate::net::Purpose::RemoteTraining);
     let resp = client
         .get("https://huggingface.co/api/whoami-v2")
         .header("Authorization", format!("Bearer {}", token))

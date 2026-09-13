@@ -17,6 +17,13 @@ pub fn create_project(
     image_format: Option<String>,
 ) -> Result<String, String> {
     let id = state.create_project(&name, &project_type, &classes, image_format.as_deref())?;
+    crate::study::emit_quiet(
+        crate::study::events::PROJECT_CREATE,
+        serde_json::json!({
+            "project_kind": project_type,
+            "modality": crate::study::events::modality_for_project_kind(&project_type),
+        }),
+    );
     let _ = app.emit("db:projects-changed", ());
     Ok(id)
 }

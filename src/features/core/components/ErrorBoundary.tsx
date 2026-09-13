@@ -1,5 +1,6 @@
 import React from 'react';
 import i18n from '@/lib/i18n';
+import { emitErrorShown } from '../../study/friction';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -17,6 +18,11 @@ export class ErrorBoundary extends React.Component<
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
+  }
+
+  componentDidCatch() {
+    // Modo estudio: una pantalla de error es la fricción más cara que hay.
+    emitErrorShown('render_crash');
   }
 
   handleReload = () => {

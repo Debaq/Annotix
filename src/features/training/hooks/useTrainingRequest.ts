@@ -9,6 +9,7 @@ import type {
 } from '../types';
 import { projectTypeToTask } from '../utils/modelMapping';
 import { trainingService } from '../services/trainingService';
+import { emitConfigChange } from '../../study/configChange';
 
 // ─── Persistencia en localStorage ──────────────────────────────────────────
 
@@ -229,18 +230,22 @@ export function useTrainingRequest(projectType: string) {
   const [executionMode, setExecutionMode] = useState<ExecutionMode>(persisted.current?.executionMode ?? 'local');
   const [backends, setBackends] = useState<BackendInfo[]>([]);
 
+  const DEFAULT_COMMON_PARAMS: Record<string, unknown> = {
+    epochs: 100,
+    batchSize: -1,
+    imageSize: 640,
+    lr: 0.01,
+    patience: 50,
+    valSplit: 0.2,
+    testSplit: 0,
+    workers: 4,
+    amp: true,
+  };
+
   const [commonParams, setCommonParams] = useState(() => {
     const persistedCommon = persisted.current?.commonParams;
     return {
-      epochs: 100,
-      batchSize: -1,
-      imageSize: 640,
-      lr: 0.01,
-      patience: 50,
-      valSplit: 0.2,
-      testSplit: 0,
-      workers: 4,
-      amp: true,
+      ...(DEFAULT_COMMON_PARAMS as PersistedConfig['commonParams']),
       ...(persistedCommon ?? {}),
     };
   });
@@ -294,12 +299,25 @@ export function useTrainingRequest(projectType: string) {
   }, [backends]);
 
   const updateCommonParam = useCallback((key: string, value: unknown) => {
-    setCommonParams((prev) => ({ ...prev, [key]: value }));
+    setCommonParams((prev) => {
+      emitConfigChange(
+        'training',
+        key,
+        (prev as Record<string, unknown>)[key],
+        value,
+        DEFAULT_COMMON_PARAMS[key],
+      );
+      return { ...prev, [key]: value };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateBackendParam = useCallback((key: string, value: unknown) => {
-    setBackendParams((prev) => ({ ...prev, [key]: value }));
-  }, []);
+    setBackendParams((prev) => {
+      emitConfigChange('training', key, prev[key], value, DEFAULT_BACKEND_PARAMS[backend]?.[key]);
+      return { ...prev, [key]: value };
+    });
+  }, [backend]);
 
   const currentBackendInfo = backends.find((b) => b.id === backend) || null;
   const currentModels = currentBackendInfo?.models || [];

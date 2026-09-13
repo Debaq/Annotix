@@ -38,6 +38,9 @@ import { getPresetById } from '../utils/presets';
 import type { GpuInfo } from '../types';
 import { useGlobalTrainingStatus } from '../hooks/useGlobalTrainingStatus';
 import { useTrainingModalStore } from '../store/trainingModalStore';
+import { popStep, pushStep } from '../../study/studySession';
+import { studyLog } from '../../study/studyLog';
+import type { StudyStep } from '../../study/studySteps';
 
 interface TrainingPanelProps {
   trigger?: ReactNode;
@@ -129,6 +132,24 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
       setPhase('completed');
     }
   }, [trainingPhase, result]);
+
+  // Modo estudio: el panel gobierna tres pasos del flujo. Solo observa.
+  const studyStep: StudyStep =
+    phase === 'training' ? 'train' : phase === 'completed' ? 'evaluate' : 'configure_training';
+  useEffect(() => {
+    if (!open) return;
+    pushStep(studyStep);
+    return () => popStep(studyStep);
+  }, [open, studyStep]);
+
+  // Iniciar un entrenamiento con anotaciones equivale a declarar el conjunto
+  // listo. Se registra una sola vez por sesión.
+  const completeEmitted = useRef(false);
+  useEffect(() => {
+    if (phase !== 'training' || completeEmitted.current || annotatedCount <= 0) return;
+    completeEmitted.current = true;
+    studyLog.emit('annot.complete', { n_items_annotated: annotatedCount });
+  }, [phase, annotatedCount]);
 
   // Sincronización con indicador global: al cambiar el contador de
   // `requestOpenActive` (p.ej. click en la barra del Header), auto-abrir este

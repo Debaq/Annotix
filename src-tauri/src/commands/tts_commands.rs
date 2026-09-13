@@ -140,7 +140,7 @@ pub async fn generate_tts_with_llm(
         }
     };
 
-    let client = reqwest::Client::new();
+    let client = crate::net::client(crate::net::Purpose::RemoteLlm);
     let mut req = client.post(&url).json(&body);
 
     if provider == "anthropic" {

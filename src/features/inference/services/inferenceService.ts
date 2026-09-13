@@ -1,4 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
+import { studyLog } from '../../study/studyLog';
+import { emitAnnotCommit, emitAnnotDelete } from '../../study/studySession';
 import type {
   InferenceModelEntry,
   ClassMapping,
@@ -108,18 +110,28 @@ export const inferenceService = {
     return invoke('cancel_inference', { jobId });
   },
 
-  runSingleInference(
+  async runSingleInference(
     projectId: string,
     modelId: string,
     imageId: string,
     config: InferenceConfig,
   ): Promise<string> {
-    return invoke('run_single_inference', {
+    const t0 = performance.now();
+    const jobId = await invoke<string>('run_single_inference', {
       projectId,
       modelId,
       imageId,
       config,
     });
+    // La propuesta asistida se mide de extremo a extremo: lo que el usuario
+    // espera, no solo lo que tarda el motor.
+    const proposals = await invoke<PredictionEntry[]>('get_predictions', { projectId, imageId })
+      .catch(() => [] as PredictionEntry[]);
+    studyLog.emit('assist.propose', {
+      n_proposals: proposals.length,
+      latency_ms: Math.round(performance.now() - t0),
+    });
+    return jobId;
   },
 
   // ─── Gestión de predicciones ─────────────────────────────────────────────
@@ -132,15 +144,21 @@ export const inferenceService = {
     return invoke('clear_predictions', { projectId, imageId: imageId ?? null });
   },
 
-  acceptPrediction(projectId: string, imageId: string, predictionId: string): Promise<void> {
-    return invoke('accept_prediction', { projectId, imageId, predictionId });
+  async acceptPrediction(projectId: string, imageId: string, predictionId: string): Promise<void> {
+    await invoke('accept_prediction', { projectId, imageId, predictionId });
+    emitAnnotCommit('assist', 'assisted_accepted');
   },
 
-  rejectPrediction(projectId: string, imageId: string, predictionId: string): Promise<void> {
-    return invoke('reject_prediction', { projectId, imageId, predictionId });
+  async rejectPrediction(projectId: string, imageId: string, predictionId: string): Promise<void> {
+    await invoke('reject_prediction', { projectId, imageId, predictionId });
+    emitAnnotDelete('assist', 'assisted_rejected');
   },
 
-  convertPredictions(projectId: string, imageId: string): Promise<number> {
-    return invoke('convert_predictions', { projectId, imageId });
+  async convertPredictions(projectId: string, imageId: string): Promise<number> {
+    const n = await invoke<number>('convert_predictions', { projectId, imageId });
+    for (let i = 0; i < n; i += 1) {
+      emitAnnotCommit('assist', 'assisted_accepted');
+    }
+    return n;
   },
 };

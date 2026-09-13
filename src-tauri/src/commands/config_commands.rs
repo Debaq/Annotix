@@ -17,10 +17,8 @@ pub struct UpdateInfo {
 pub async fn check_for_updates() -> Result<UpdateInfo, String> {
     let current = env!("CARGO_PKG_VERSION");
 
-    let client = reqwest::Client::builder()
-        .user_agent("Annotix")
-        .build()
-        .map_err(|e| e.to_string())?;
+    let client =
+        crate::net::client_with_user_agent(crate::net::Purpose::UpdateCheck, "Annotix")?;
 
     let resp = client
         .get("https://api.github.com/repos/Debaq/Annotix/releases/latest")

@@ -10,7 +10,8 @@
     "keyboardShortcuts": "Atajos de Teclado",
     "browserAutomation": "Automatización del Navegador",
     "network": "Red",
-    "diagnostics": "Diagnóstico"
+    "diagnostics": "Diagnóstico",
+    "study": "Modo estudio"
   },
   "diagnostics": {
     "description": "Registro de errores y advertencias de la aplicación. Cópialo y pégalo al reportar un problema.",
@@ -205,5 +206,23 @@
     },
     "saved": "Guardado",
     "saveError": "Error al guardar"
+  },
+  "study": {
+    "title": "Modo estudio",
+    "enable": "Activar modo estudio",
+    "disclaimer": "Registra eventos de uso y tiempos en un archivo local. No registra contenido, nombres de archivo ni capturas.",
+    "sessionId": "ID de sesión",
+    "sessionIdHint": "Letras, números, guion y guion bajo (3–32).",
+    "condition": "Condición",
+    "conditionHint": "Etiqueta opcional de la condición experimental (máx. 32).",
+    "export": "Exportar registros",
+    "exportTitle": "Elegir carpeta de destino",
+    "openFolder": "Abrir carpeta",
+    "exported": "Se exportaron {{count}} archivo(s) a {{dir}}",
+    "active": "Sesión activa: {{count}} eventos registrados.",
+    "errors": {
+      "sessionId": "El ID de sesión debe tener entre 3 y 32 caracteres, solo letras, números, guion y guion bajo.",
+      "condition": "La condición admite como máximo 32 caracteres."
+    }
   }
 }

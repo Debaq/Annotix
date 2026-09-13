@@ -152,7 +152,7 @@ impl CloudRunner for ColabEnterpriseRunner {
         }
 
         let url = format!("{}/notebookExecutionJobs", self.api_base());
-        let client = reqwest::blocking::Client::new();
+        let client = crate::net::blocking(crate::net::Purpose::RemoteTraining);
         let resp = client
             .post(&url)
             .header("Authorization", format!("Bearer {}", token))
@@ -185,7 +185,7 @@ impl CloudRunner for ColabEnterpriseRunner {
             self.region, handle.job_id
         );
 
-        let client = reqwest::blocking::Client::new();
+        let client = crate::net::blocking(crate::net::Purpose::RemoteTraining);
         let resp = client
             .get(&url)
             .header("Authorization", format!("Bearer {}", token))
@@ -224,7 +224,7 @@ impl CloudRunner for ColabEnterpriseRunner {
             self.region, handle.job_id
         );
 
-        let client = reqwest::blocking::Client::new();
+        let client = crate::net::blocking(crate::net::Purpose::RemoteTraining);
         let _ = client
             .post(&url)
             .header("Authorization", format!("Bearer {}", token))

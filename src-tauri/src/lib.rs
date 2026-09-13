@@ -3,9 +3,11 @@ mod commands;
 mod export;
 mod import;
 mod inference;
+mod net;
 mod p2p;
 mod serve;
 mod store;
+mod study;
 mod tracking;
 mod training;
 mod utils;
@@ -248,6 +250,15 @@ pub fn run() {
                 });
             }
 
+            // Modo estudio: fijar el directorio de registros y cerrar los
+            // archivos que quedaron abiertos por una muerte del proceso. La
+            // sesión nueva la abre la interfaz (necesita el tamaño de pantalla).
+            {
+                let state = app.state::<store::AppState>();
+                study::log::init(&state.data_dir);
+                study::log::close_orphan_sessions();
+            }
+
             // Reanudar extracciones de video interrumpidas
             commands::video_commands::resume_pending_extractions(app.handle().clone());
 
@@ -347,6 +358,16 @@ pub fn run() {
             commands::config_commands::restore_workspace,
             commands::config_commands::save_network_config,
             commands::config_commands::check_for_updates,
+            // Modo estudio
+            commands::study_commands::study_get_status,
+            commands::study_commands::study_set_config,
+            commands::study_commands::study_resume_session,
+            commands::study_commands::study_log_emit,
+            commands::study_commands::study_log_verify,
+            commands::study_commands::study_log_list,
+            commands::study_commands::study_log_export,
+            commands::study_commands::study_open_logs_dir,
+            commands::study_commands::study_get_taxonomy,
             // Training
             commands::training_commands::check_python_env,
             commands::training_commands::setup_python_env,
@@ -496,8 +517,14 @@ pub fn run() {
             commands::sam_commands::sam_upload_app_model,
             commands::sam_commands::sam_delete_app_model,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(|_app, event| {
+            // Cierre ordenado: `session.end` con motivo `app_close`.
+            if let tauri::RunEvent::Exit = event {
+                study::log::end_session("app_close");
+            }
+        });
 }
 
 /// Busca un proyecto con sesión P2P persistida y la reanuda en background

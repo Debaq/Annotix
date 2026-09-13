@@ -10,8 +10,8 @@ impl LightningRunner {
         Self { api_key }
     }
 
-    fn client(&self) -> reqwest::blocking::Client {
-        reqwest::blocking::Client::new()
+    fn client(&self) -> crate::net::BlockingClient {
+        crate::net::blocking(crate::net::Purpose::RemoteTraining)
     }
 
     fn auth_header(&self) -> String {
@@ -258,7 +258,7 @@ impl CloudRunner for LightningRunner {
 
 /// Valida credenciales de Lightning AI consultando el perfil del usuario
 pub fn validate_credentials(api_key: &str) -> Result<(), String> {
-    let client = reqwest::blocking::Client::new();
+    let client = crate::net::blocking(crate::net::Purpose::RemoteTraining);
     let resp = client
         .get("https://lightning.ai/api/v1/me")
         .header("Authorization", format!("Bearer {}", api_key))

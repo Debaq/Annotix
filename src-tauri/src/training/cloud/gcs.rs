@@ -18,7 +18,7 @@ pub fn upload_file(
 
     let content_type = mime_from_path(local_path);
 
-    let client = reqwest::blocking::Client::new();
+    let client = crate::net::blocking(crate::net::Purpose::RemoteTraining);
     let resp = client
         .post(&url)
         .header("Authorization", format!("Bearer {}", access_token))
@@ -48,7 +48,7 @@ pub fn download_file(
         urlencoded(object_name),
     );
 
-    let client = reqwest::blocking::Client::new();
+    let client = crate::net::blocking(crate::net::Purpose::RemoteTraining);
     let resp = client
         .get(&url)
         .header("Authorization", format!("Bearer {}", access_token))

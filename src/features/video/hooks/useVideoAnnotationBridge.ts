@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type { Annotation, InterpolatedBBox, BBoxData } from '@/lib/db';
 import { useVideoTracks } from './useVideoTracks';
 import { useUIStore } from '../../core/store/uiStore';
+import { emitKeyframeReview } from '../../study/videoStudy';
 
 const VKF_PREFIX = 'vkf::';
 
@@ -39,6 +40,16 @@ export function useVideoAnnotationBridge(
       prevFrameRef.current = frameIndex;
     }
   }, [frameIndex]);
+
+  // Modo estudio: pasar por un fotograma con cajas interpoladas cuenta como
+  // revisarlo. Solo observa; no cambia nada del lienzo.
+  const currentVideoId = useUIStore((s) => s.currentVideoId);
+  useEffect(() => {
+    if (!currentVideoId) return;
+    for (const b of interpolatedBBoxes) {
+      if (!b.isKeyframe) emitKeyframeReview(currentVideoId, b.trackId, frameIndex, false);
+    }
+  }, [currentVideoId, frameIndex, interpolatedBBoxes]);
 
   // Todas las bboxes del frame (incluyendo deshabilitadas)
   const allBBoxes = useMemo(() => interpolatedBBoxes, [interpolatedBBoxes]);
@@ -168,8 +179,15 @@ export function useVideoAnnotationBridge(
 
     const pct = pxToPct(merged);
     if (!pct) return;
+    // Corregir una caja interpolada es revisarla: queda registrado como tal.
+    const wasInterpolated = interpolatedBBoxes.some(
+      (b) => b.trackId === trackId && !b.isKeyframe,
+    );
     await setKeyframe(trackId, frameIndex, pct.x, pct.y, pct.width, pct.height);
-  }, [annotations, setKeyframe, frameIndex, pxToPct]);
+    if (wasInterpolated && currentVideoId) {
+      emitKeyframeReview(currentVideoId, trackId, frameIndex, true);
+    }
+  }, [annotations, currentVideoId, interpolatedBBoxes, setKeyframe, frameIndex, pxToPct]);
 
   // Update local (drag fluido sin persistir)
   const updateAnnotationLocal = useCallback((id: string, updates: Partial<Annotation>) => {

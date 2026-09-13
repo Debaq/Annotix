@@ -20,6 +20,7 @@ import { useToast } from '@/components/hooks/use-toast';
 import { useUIStore } from '@/features/core/store/uiStore';
 import { pickZipFile } from '@/lib/nativeDialogs';
 import { useProjects } from '@/features/projects/hooks/useProjects';
+import { studyLog } from '../../study/studyLog';
 
 interface DetectionResult {
   format: string;
@@ -150,6 +151,11 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
     setImportPhaseDetail('');
     setError(null);
 
+    // Modo estudio: `data.import.start` necesita el total de elementos, que el
+    // backend recién conoce al abrir el archivo. Se emite con el primer
+    // progreso que lo trae, una sola vez por importación.
+    let startEmitted = false;
+
     const unlisten = await listen<number | { phase?: string; percentage?: number; current?: number; total?: number }>(
       'import:progress',
       (event) => {
@@ -159,6 +165,10 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ trigger }) => {
           return;
         }
         if (p && typeof p === 'object') {
+          if (!startEmitted && typeof p.total === 'number' && p.total > 0) {
+            startEmitted = true;
+            studyLog.emit('data.import.start', { n_items: p.total });
+          }
           if (typeof p.percentage === 'number') setProgress(p.percentage);
           if (typeof p.phase === 'string') setImportPhase(p.phase);
           if (typeof p.current === 'number' && typeof p.total === 'number' && p.total > 0) {

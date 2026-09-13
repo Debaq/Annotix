@@ -109,7 +109,7 @@ impl CloudRunner for VertexCustomRunner {
         });
 
         let url = format!("{}/customJobs", self.api_base());
-        let client = reqwest::blocking::Client::new();
+        let client = crate::net::blocking(crate::net::Purpose::RemoteTraining);
         let resp = client
             .post(&url)
             .header("Authorization", format!("Bearer {}", token))
@@ -145,7 +145,7 @@ impl CloudRunner for VertexCustomRunner {
             self.region, handle.job_id
         );
 
-        let client = reqwest::blocking::Client::new();
+        let client = crate::net::blocking(crate::net::Purpose::RemoteTraining);
         let resp = client
             .get(&url)
             .header("Authorization", format!("Bearer {}", token))
@@ -186,7 +186,7 @@ impl CloudRunner for VertexCustomRunner {
             self.region, handle.job_id
         );
 
-        let client = reqwest::blocking::Client::new();
+        let client = crate::net::blocking(crate::net::Purpose::RemoteTraining);
         let resp = client
             .post(&url)
             .header("Authorization", format!("Bearer {}", token))

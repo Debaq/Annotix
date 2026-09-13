@@ -8,7 +8,8 @@
     "cloudProviders": "クラウドプロバイダー",
     "keyboardShortcuts": "キーボードショートカット",
     "browserAutomation": "ブラウザ自動化",
-    "network": "ネットワーク"
+    "network": "ネットワーク",
+    "study": "スタディモード"
   },
   "general": {
     "colorMode": "外観",
@@ -182,5 +183,23 @@
     },
     "saved": "保存しました",
     "saveError": "保存エラー"
+  },
+  "study": {
+    "title": "スタディモード",
+    "enable": "スタディモードを有効にする",
+    "disclaimer": "操作イベントと所要時間をローカルファイルに記録します。内容・ファイル名・スクリーンショットは記録しません。",
+    "sessionId": "セッションID",
+    "sessionIdHint": "英数字・ハイフン・アンダースコア（3〜32文字）。",
+    "condition": "条件",
+    "conditionHint": "実験条件の任意ラベル（最大32文字）。",
+    "export": "ログをエクスポート",
+    "exportTitle": "保存先フォルダーを選択",
+    "openFolder": "フォルダーを開く",
+    "exported": "{{count}} 件のファイルを {{dir}} にエクスポートしました",
+    "active": "セッション実行中：{{count}} 件のイベントを記録。",
+    "errors": {
+      "sessionId": "セッションIDは3〜32文字で、英数字・ハイフン・アンダースコアのみ使用できます。",
+      "condition": "条件は最大32文字です。"
+    }
   }
 }

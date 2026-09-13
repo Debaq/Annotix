@@ -456,7 +456,7 @@ pub fn open_log_dir(app: AppHandle) -> Result<(), String> {
     open_path_in_file_manager(&dir)
 }
 
-fn open_path_in_file_manager(path: &std::path::Path) -> Result<(), String> {
+pub fn open_path_in_file_manager(path: &std::path::Path) -> Result<(), String> {
     #[cfg(target_os = "linux")]
     let cmd = "xdg-open";
     #[cfg(target_os = "windows")]

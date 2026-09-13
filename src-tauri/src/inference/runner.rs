@@ -158,6 +158,8 @@ impl InferenceProcessManager {
         }
 
         let app_clone = app.clone();
+        let mut study_latencies =
+            super::StudyLatencies::new("onnx", std::path::PathBuf::from(model_path));
         let job_id_owned = job_id.to_string();
         let class_names_owned: Vec<String> = class_names.to_vec();
         let image_paths_owned: Vec<(String, String)> = image_paths.to_vec();
@@ -265,6 +267,7 @@ impl InferenceProcessManager {
 
                         let ann_count = ai_annotations.len();
                         let elapsed = start.elapsed().as_millis() as f64;
+                        study_latencies.push(elapsed);
 
                         log::info!(
                             "[ONNX Inference] image={} annotations={} time={:.0}ms",
@@ -323,6 +326,7 @@ impl InferenceProcessManager {
                 "inference:completed",
                 serde_json::json!({ "jobId": &job_id_owned }),
             );
+            study_latencies.finish();
 
             if let Ok(mut flags) = cancel_flags.lock() {
                 flags.remove(&job_id_owned);
@@ -393,6 +397,8 @@ impl InferenceProcessManager {
         let job_id_thread = job_id.to_string();
         let model_id_owned = model_info.id.clone();
         let project_id_owned = project_id.to_string();
+        let mut study_latencies =
+            super::StudyLatencies::new("torch", std::path::PathBuf::from(model_path));
 
         std::thread::spawn(move || {
             if let Some(stdout) = stdout {
@@ -400,6 +406,10 @@ impl InferenceProcessManager {
                 for line in reader.lines().map_while(Result::ok) {
                     if let Some(json_str) = line.strip_prefix("ANNOTIX_EVENT:") {
                         if let Ok(event) = serde_json::from_str::<serde_json::Value>(json_str) {
+                            if event["type"].as_str() == Some("result") {
+                                study_latencies
+                                    .push(event["inferenceTimeMs"].as_f64().unwrap_or(0.0));
+                            }
                             handle_python_event(
                                 &app_clone,
                                 &job_id_thread,
@@ -411,6 +421,7 @@ impl InferenceProcessManager {
                     }
                 }
             }
+            study_latencies.finish();
 
             // Esperar fin del proceso
             {

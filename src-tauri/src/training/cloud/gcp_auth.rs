@@ -39,7 +39,7 @@ pub fn get_access_token(sa_json_path: &str) -> Result<String, String> {
         .map_err(|e| format!("Error firmando JWT: {}", e))?;
 
     // Exchange JWT for access token
-    let client = reqwest::blocking::Client::new();
+    let client = crate::net::blocking(crate::net::Purpose::RemoteTraining);
     let resp = client
         .post(&sa.token_uri)
         .form(&[
@@ -97,7 +97,7 @@ pub fn fetch_annotix_events(
         "pageSize": 500,
     });
 
-    let client = reqwest::blocking::Client::new();
+    let client = crate::net::blocking(crate::net::Purpose::RemoteTraining);
     let resp = client
         .post("https://logging.googleapis.com/v2/entries:list")
         .header("Authorization", format!("Bearer {}", token))

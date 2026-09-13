@@ -20,7 +20,15 @@ pub async fn import_dataset(
 ) -> Result<ImportResult, String> {
     // Import creates a new project, not part of any P2P session — pass empty to allow
     p2p.check_permission("", P2pPermission::UploadData).await?;
-    crate::import::import_dataset(&state, &file_path, &project_name, &app)
+    let res = crate::import::import_dataset(&state, &file_path, &project_name, &app);
+    crate::study::emit_quiet(
+        crate::study::events::DATA_IMPORT_END,
+        serde_json::json!({
+            "n_items": res.as_ref().map(|r| r.stats.images_count).unwrap_or(0),
+            "ok": res.is_ok(),
+        }),
+    );
+    res
 }
 
 #[tauri::command]

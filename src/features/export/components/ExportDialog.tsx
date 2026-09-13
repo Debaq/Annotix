@@ -1,4 +1,5 @@
 import { ReactNode, useState } from 'react';
+import { useStudyStep } from '../../study/useStudyStep';
 import { useTranslation } from 'react-i18next';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
@@ -26,6 +27,8 @@ export function ExportDialog({ trigger }: ExportDialogProps) {
   const { t } = useTranslation();
   const { project } = useCurrentProject();
   const [open, setOpen] = useState(false);
+  // Modo estudio: mientras el diálogo está abierto, el paso activo es este.
+  useStudyStep('export', open);
 
   // Get valid formats for this project type
   const validFormats = getValidFormats(project?.type);
