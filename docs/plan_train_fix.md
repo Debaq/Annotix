@@ -44,6 +44,25 @@ tareas (y `landmarks` gana un backend que antes no tenía).
 
 ---
 
+## Progreso
+
+| Fase | Estado |
+|---|---|
+| 0 — contrato + arnés | ✅ hecho (commit `30ea9d0`) |
+| Backends verificables en verde | ✅ hecho (commit `acb14bd`): yolo detect/segment/classify, rt_detr, rf_detr, smp, hf_segmentation, sklearn |
+| 1 — split de test universal | pendiente |
+| 2 — clasificación y series temporales | pendiente |
+| 3 — reemplazo de OpenMMLab/Detectron2 por HF | pendiente |
+| 4 — cloud con el backend elegido | pendiente |
+| 5 — browser automation | pendiente |
+| 6 — coherencia de UI | pendiente |
+| 7 — verificación final | parcial: 8 smoke tests en verde |
+
+Los ocho bugs que el arnés destapó en los backends que la auditoría daba por
+buenos están en la sección 0 de `roadmap_train.md`.
+
+---
+
 # Fase 0 — Cimientos: contrato único de dataset + arnés de pruebas
 
 Esta fase no arregla ningún backend por sí sola, pero es la que hace imposible el bug que

@@ -45,6 +45,8 @@ fn python() -> Option<PathBuf> {
 
 struct Resultado {
     epocas: usize,
+    /// Épocas que además traían métricas: sin esto el gráfico dibuja una línea vacía.
+    epocas_con_metricas: usize,
     best: Option<String>,
     salida: Vec<String>,
 }
@@ -68,6 +70,7 @@ fn correr(script_dir: &Path, python: &Path) -> Result<Resultado, String> {
     });
 
     let mut epocas = 0usize;
+    let mut epocas_con_metricas = 0usize;
     let mut best = None;
     let mut salida = Vec::new();
     let inicio = Instant::now();
@@ -77,7 +80,16 @@ fn correr(script_dir: &Path, python: &Path) -> Result<Resultado, String> {
         if let Some(json) = linea.strip_prefix("ANNOTIX_EVENT:") {
             if let Ok(ev) = serde_json::from_str::<serde_json::Value>(json) {
                 match ev["type"].as_str().unwrap_or("") {
-                    "epoch" => epocas += 1,
+                    "epoch" => {
+                        epocas += 1;
+                        let con_valores = ev["metrics"]
+                            .as_object()
+                            .map(|m| m.values().any(|v| v.is_number()))
+                            .unwrap_or(false);
+                        if con_valores {
+                            epocas_con_metricas += 1;
+                        }
+                    }
                     "completed" => {
                         best = ev["bestModelPath"].as_str().map(|s| s.to_string());
                     }
@@ -110,6 +122,7 @@ fn correr(script_dir: &Path, python: &Path) -> Result<Resultado, String> {
 
     Ok(Resultado {
         epocas,
+        epocas_con_metricas,
         best,
         salida,
     })
@@ -157,6 +170,13 @@ fn smoke(backend: TrainingBackend, task: &str) {
         res.epocas > 0,
         "{etiqueta}: no emitió ningún evento de época, así que el gráfico en vivo \
          quedaría vacío. Salida:\n{}",
+        res.salida.join("\n")
+    );
+    assert!(
+        res.epocas_con_metricas > 0,
+        "{etiqueta}: emitió {} épocas pero ninguna con métricas numéricas, así que el \
+         gráfico quedaría en blanco. Salida:\n{}",
+        res.epocas,
         res.salida.join("\n")
     );
     let best = res.best.unwrap_or_else(|| {

@@ -681,7 +681,9 @@ def main():
     # envolviendo el `build_trainer` que usa rfdetr.detr, que es el punto por donde
     # pasa sí o sí.
     from pytorch_lightning.callbacks import Callback as _PLCallback
-    import rfdetr.detr as _rfdetr_detr
+    # `rfdetr.detr` importa `build_trainer` desde `rfdetr.training` dentro del propio
+    # método, así que hay que parchear el paquete, no el módulo que lo consume.
+    import rfdetr.training as _rfdetr_training
 
     def _num(v):
         try:
@@ -719,14 +721,14 @@ def main():
                 "metrics": metrics,
             }}), flush=True)
 
-    _build_original = _rfdetr_detr.build_trainer
+    _build_original = _rfdetr_training.build_trainer
 
     def _build_con_progreso(*args, **kwargs):
         trainer = _build_original(*args, **kwargs)
         trainer.callbacks.append(_AnnotixProgress())
         return trainer
 
-    _rfdetr_detr.build_trainer = _build_con_progreso
+    _rfdetr_training.build_trainer = _build_con_progreso
 
     model.train(
         dataset_dir=dataset_dir,
