@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { esUltralytics } from '../utils/backendEnv';
+import { esUltralytics, soportaFineTune } from '../utils/backendEnv';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/hooks/use-toast';
 import { exportTrainingReportFromJob } from '../services/trainingReportService';
-import type { TrainingJob, TrainingBackend } from '../types';
+import type { BackendInfo, TrainingJob, TrainingBackend } from '../types';
 
 interface TrainingJobCardProps {
   job: TrainingJob;
@@ -13,6 +13,8 @@ interface TrainingJobCardProps {
   onFineTune?: (job: TrainingJob) => void;
   onResume?: (job: TrainingJob) => void;
   projectName?: string;
+  /** Catálogo de backends, para saber cuál admite continuar el ajuste. */
+  backends?: BackendInfo[];
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -23,14 +25,18 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: 'bg-zinc-500',
 };
 
-export function TrainingJobCard({ job, onDelete, onFineTune, onResume, projectName }: TrainingJobCardProps) {
+export function TrainingJobCard({ job, onDelete, onFineTune, onResume, projectName, backends = [] }: TrainingJobCardProps) {
   const { t } = useTranslation();
   const [exporting, setExporting] = useState(false);
 
   const config = job.config as Record<string, unknown>;
   const model = `${config.yoloVersion || config.modelId || '?'}${config.modelSize || ''}`;
-  // Heredar pesos (`model = YOLO(best.pt)`) sólo existe en ultralytics.
-  const soportaFineTune = esUltralytics((config.backend as TrainingBackend) || 'yolo');
+  const jobBackend = (config.backend as TrainingBackend) || 'yolo';
+  // Continuar el ajuste desde este modelo: lo declara el catálogo por backend.
+  const puedeFineTune = soportaFineTune(jobBackend, backends);
+  // Reanudar de verdad (`resume=True`, con el estado del optimizador) es otra cosa
+  // y sigue siendo exclusivo de ultralytics.
+  const puedeReanudar = esUltralytics(jobBackend);
   const date = new Date(job.createdAt).toLocaleString();
   const canExportReport = job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled';
 
@@ -97,10 +103,10 @@ export function TrainingJobCard({ job, onDelete, onFineTune, onResume, projectNa
         {job.status === 'training' && (
           <span className="text-xs text-blue-500 font-mono">{job.progress.toFixed(0)}%</span>
         )}
-        {/* El fine-tune hereda pesos con `model = YOLO(best.pt)`: sólo existe en
-            ultralytics. Antes el botón aparecía para todos y al pulsarlo no pasaba
-            nada (handleFineTune salía con un return silencioso). */}
-        {job.status === 'completed' && job.bestModelPath && onFineTune && soportaFineTune && (
+        {/* El botón sólo aparece donde el backend sabe partir de un modelo propio.
+            Antes aparecía para todos y al pulsarlo no pasaba nada (handleFineTune
+            salía con un return silencioso). */}
+        {job.status === 'completed' && job.bestModelPath && onFineTune && puedeFineTune && (
           <Button
             variant="ghost"
             size="sm"
@@ -112,7 +118,7 @@ export function TrainingJobCard({ job, onDelete, onFineTune, onResume, projectNa
           </Button>
         )}
         {(job.status === 'cancelled' || job.status === 'failed') && (job.hasBest || job.hasLast) && (() => {
-          const canTrueResume = soportaFineTune && job.hasLast && !!onResume;
+          const canTrueResume = puedeReanudar && job.hasLast && !!onResume;
           if (canTrueResume) {
             return (
               <Button

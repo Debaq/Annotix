@@ -17,7 +17,7 @@ import { useAnnotatedCount } from '../hooks/useAnnotatedCount';
 import { useTrainingConfig } from '../hooks/useTrainingConfig';
 import { useTrainingProgress } from '../hooks/useTrainingProgress';
 import { useTrainingRequest } from '../hooks/useTrainingRequest';
-import { isBackendInstalled } from '../utils/backendEnv';
+import { isBackendInstalled, soportaFineTune } from '../utils/backendEnv';
 import { trainingService } from '../services/trainingService';
 import { toast } from '@/hooks/use-toast';
 import { BackendSelector } from './BackendSelector';
@@ -89,6 +89,7 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
 
   // Multi-backend request
   const {
+    backends,
     backend,
     setBackend,
     modelId,
@@ -381,8 +382,9 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
     if (!job.bestModelPath) return;
     const config = job.config as Record<string, unknown>;
     const jobBackend = (config.backend as TrainingBackend) || 'yolo';
-    // Solo soportado para YOLO y RT-DETR
-    if (jobBackend !== 'yolo' && jobBackend !== 'rt_detr') return;
+    // La capacidad la declara el catálogo por backend, no una lista aquí: el
+    // botón que llama a esto ya se oculta donde no aplica, y esto es la red.
+    if (!soportaFineTune(jobBackend, backends)) return;
     setBaseModelPath(job.bestModelPath);
     const model = config.yoloVersion || config.modelId || '?';
     const size = config.modelSize || '';
@@ -390,7 +392,7 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
     setFineTuneSource(`${String(model).toUpperCase()}${size} - ${date}`);
     setBackend(jobBackend);
     setPhase('config');
-  }, [setBaseModelPath, setBackend]);
+  }, [setBaseModelPath, setBackend, backends]);
 
   const syncYoloPartial = useCallback((partial: Partial<TrainingConfig>) => {
     for (const [k, v] of Object.entries(partial)) {
@@ -512,7 +514,7 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
                   onSelect={handleBackendSelect}
                 />
                 <Separator />
-                <TrainingJobList projectId={project.id!} projectName={project.name} onFineTune={handleFineTune} onResume={handleResume} />
+                <TrainingJobList projectId={project.id!} projectName={project.name} onFineTune={handleFineTune} onResume={handleResume} backends={backends} />
               </>
             )}
 

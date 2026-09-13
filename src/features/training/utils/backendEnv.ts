@@ -1,4 +1,4 @@
-import type { PythonEnvStatus, TrainingBackend } from '../types';
+import type { BackendInfo, PythonEnvStatus, TrainingBackend } from '../types';
 
 /**
  * Paquete que delata si un backend está instalado en el entorno Python.
@@ -50,4 +50,18 @@ export function isBackendInstalled(
  */
 export function esUltralytics(backend: TrainingBackend): boolean {
   return backend === 'yolo' || backend === 'rt_detr';
+}
+
+/**
+ * Si el backend sabe continuar el ajuste desde un modelo ya entrenado aquí.
+ *
+ * La respuesta la da el catálogo (`supportsFineTune`, declarado en
+ * `training/backends.rs`) para que no haya dos listas que se desincronicen. Con el
+ * catálogo todavía en vuelo se cae a lo que siempre fue cierto —ultralytics hereda
+ * pesos con `model = YOLO(best.pt)`— y así el botón no desaparece mientras la
+ * lista viaja desde el backend.
+ */
+export function soportaFineTune(backend: TrainingBackend, catalogo: BackendInfo[]): boolean {
+  const info = catalogo.find((b) => b.id === backend);
+  return info ? info.supportsFineTune : esUltralytics(backend);
 }

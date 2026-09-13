@@ -314,6 +314,8 @@ export interface BackendInfo {
   pipPackages: string[];
   /** Resolución mínima con la que el backend entrena. */
   minImageSize: number;
+  /** Si el backend sabe continuar el ajuste desde un modelo entrenado aquí. */
+  supportsFineTune: boolean;
 }
 
 export interface BackendModelInfo {

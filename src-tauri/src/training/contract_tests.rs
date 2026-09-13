@@ -328,3 +328,154 @@ fn pypots_ts_impute() {
 fn stumpy_ts_pattern() {
     caso(TrainingBackend::Stumpy, "ts_pattern", Expect::Genera);
 }
+
+// ─── Continuar el ajuste desde un modelo propio ──────────────────────────────
+
+/// Genera el `train.py` de un backend con y sin modelo de partida.
+fn scripts_con_y_sin_base(backend: &TrainingBackend, task: &str) -> (String, String, String) {
+    let (pf, proyecto, images_dir) = fixture(task);
+    let salida = proyecto.path().join("job");
+    std::fs::create_dir_all(&salida).unwrap();
+
+    let imagenes = dataset::select_trainable_images(pf.images.clone(), &pf.classes, true);
+    let ds = dataset::prepare_dataset_for_backend(
+        &images_dir,
+        &pf,
+        &imagenes,
+        &salida,
+        DatasetSpec {
+            ts: dataset::TsSpec::default(),
+            val_split: 0.25,
+            test_split: 0.0,
+            task,
+            backend,
+        },
+    )
+    .expect("preparar dataset");
+
+    let train_py = |req: &crate::training::TrainingRequest| -> String {
+        scripts::generate_train_script_for_backend(req, &ds)
+            .expect("generar script")
+            .into_iter()
+            .find(|(n, _)| n == "train.py")
+            .expect("train.py")
+            .1
+    };
+
+    let base = "/tmp/annotix_job_anterior/train_output/best";
+    let limpio = request(backend.clone(), task);
+    let model_id = limpio.model_id.clone();
+    let sin = train_py(&limpio);
+
+    let mut con_base = request(backend.clone(), task);
+    con_base.base_model_path = Some(base.to_string());
+    let con = train_py(&con_base);
+
+    (sin, con, model_id)
+}
+
+/// Los backends de HuggingFace tienen que cargar pesos **y processor** desde el
+/// directorio del modelo anterior. Cargar el processor del Hub mientras los pesos
+/// vienen del ajuste previo no falla: da métricas peores sin decir por qué.
+fn assert_hf_continua_desde_el_directorio(backend: &TrainingBackend, task: &str) {
+    let etiqueta = format!("{backend:?}/{task}");
+    let (sin, con, model_id) = scripts_con_y_sin_base(backend, task);
+    let base = "/tmp/annotix_job_anterior/train_output/best";
+
+    // Se cuenta el literal entre comillas, no `from_pretrained("…"`: la carga del
+    // modelo parte el argumento en otra línea y la del processor no.
+    let citado_id = format!("\"{model_id}\"");
+    let citada_base = format!("\"{base}\"");
+
+    assert!(
+        sin.contains(&citado_id),
+        "{etiqueta}: sin modelo de partida debería cargar del catálogo ({model_id})"
+    );
+    assert!(
+        !sin.contains(base),
+        "{etiqueta}: apareció una ruta de modelo base que no se pidió"
+    );
+
+    let cargas = con.matches(citada_base.as_str()).count();
+    assert!(
+        cargas >= 2,
+        "{etiqueta}: con modelo de partida se esperaban al menos dos cargas desde \
+         {base} (pesos y processor), hubo {cargas}"
+    );
+    assert!(
+        !con.contains(&citado_id),
+        "{etiqueta}: sigue cargando del Hub ({model_id}) pese al modelo de partida"
+    );
+    assert!(
+        con.contains("continuando el ajuste desde"),
+        "{etiqueta}: el encabezado del script no dice que parte de un modelo propio"
+    );
+    assert_python_valido(&con, &etiqueta);
+}
+
+#[test]
+fn hf_detection_continua_desde_un_modelo_propio() {
+    assert_hf_continua_desde_el_directorio(&TrainingBackend::HfDetection, "detect");
+}
+
+#[test]
+fn hf_instance_continua_desde_un_modelo_propio() {
+    assert_hf_continua_desde_el_directorio(&TrainingBackend::HfInstance, "instance_segment");
+}
+
+#[test]
+fn hf_segmentation_continua_desde_un_modelo_propio() {
+    assert_hf_continua_desde_el_directorio(&TrainingBackend::HfSegmentation, "segment");
+}
+
+#[test]
+fn hf_classification_continua_desde_un_modelo_propio() {
+    assert_hf_continua_desde_el_directorio(&TrainingBackend::HfClassification, "classify");
+}
+
+#[test]
+fn yolo_continua_desde_un_modelo_propio() {
+    // ultralytics ya lo hacía: la regresión a cuidar es que el `.pt` del trabajo
+    // anterior siga llegando como modelo de partida.
+    let (sin, con, _) = scripts_con_y_sin_base(&TrainingBackend::Yolo, "detect");
+    assert!(!sin.contains("/tmp/annotix_job_anterior"));
+    assert!(
+        con.contains("/tmp/annotix_job_anterior/train_output/best"),
+        "YOLO dejó de usar el modelo de partida"
+    );
+}
+
+/// El catálogo no puede ofrecer continuar el ajuste donde el generador lo ignora:
+/// sería un botón que no hace nada, que es el defecto que esto viene a cerrar.
+#[test]
+fn la_capacidad_declarada_coincide_con_lo_que_el_generador_usa() {
+    use crate::training::backends;
+
+    let casos: &[(TrainingBackend, &str)] = &[
+        (TrainingBackend::Yolo, "detect"),
+        (TrainingBackend::RtDetr, "detect"),
+        (TrainingBackend::HfDetection, "detect"),
+        (TrainingBackend::HfInstance, "instance_segment"),
+        (TrainingBackend::HfSegmentation, "segment"),
+        (TrainingBackend::HfClassification, "classify"),
+        (TrainingBackend::HfPose, "pose"),
+        (TrainingBackend::Smp, "segment"),
+        (TrainingBackend::Timm, "classify"),
+    ];
+
+    for (backend, task) in casos {
+        // Se lee la misma función con la que se construye el catálogo, no una
+        // copia: si divergieran, el test no serviría de nada.
+        let declarado = backends::supports_fine_tune_por_id(backends::backend_id(backend));
+        let (_, con, _) = scripts_con_y_sin_base(backend, task);
+        let usado = con.contains("/tmp/annotix_job_anterior/train_output/best");
+
+        assert_eq!(
+            declarado,
+            usado,
+            "{backend:?}: el catálogo declara supportsFineTune={declarado} pero el \
+             script generado {} el modelo de partida",
+            if usado { "sí usa" } else { "no usa" }
+        );
+    }
+}

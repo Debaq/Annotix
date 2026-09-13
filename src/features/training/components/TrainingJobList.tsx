@@ -2,16 +2,17 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTrainingJobs } from '../hooks/useTrainingJobs';
 import { TrainingJobCard } from './TrainingJobCard';
-import type { TrainingJob } from '../types';
+import type { BackendInfo, TrainingJob } from '../types';
 
 interface TrainingJobListProps {
   projectId: string;
   projectName?: string;
   onFineTune?: (job: TrainingJob) => void;
   onResume?: (job: TrainingJob) => void;
+  backends?: BackendInfo[];
 }
 
-export function TrainingJobList({ projectId, projectName, onFineTune, onResume }: TrainingJobListProps) {
+export function TrainingJobList({ projectId, projectName, onFineTune, onResume, backends }: TrainingJobListProps) {
   const { t } = useTranslation();
   const { jobs, loading, loadJobs, deleteJob } = useTrainingJobs(projectId);
 
@@ -44,6 +45,7 @@ export function TrainingJobList({ projectId, projectName, onFineTune, onResume }
           onFineTune={onFineTune}
           onResume={onResume}
           projectName={projectName}
+          backends={backends}
         />
       ))}
     </div>

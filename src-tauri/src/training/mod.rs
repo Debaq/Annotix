@@ -490,6 +490,11 @@ pub struct BackendInfo {
     /// `backends::min_image_size`). La UI la usa como tope inferior del control.
     #[serde(rename = "minImageSize")]
     pub min_image_size: u32,
+    /// Si el backend sabe continuar el ajuste desde un modelo entrenado aquí
+    /// (ver `backends::supports_fine_tune_por_id`). La UI ofrece la opción solo
+    /// donde es de verdad.
+    #[serde(rename = "supportsFineTune")]
+    pub supports_fine_tune: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

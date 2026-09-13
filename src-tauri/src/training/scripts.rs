@@ -413,6 +413,34 @@ print("ANNOTIX_EVENT:" + json.dumps(result), flush=True)
     )
 }
 
+/// De dónde carga sus pesos un backend de HuggingFace: el directorio de un
+/// modelo ya entrenado aquí cuando se pidió continuar el ajuste, o el id del Hub.
+///
+/// `from_pretrained()` acepta las dos cosas con la misma firma y el script guarda
+/// con `save_pretrained()`, así que el `best/` de un trabajo anterior se recarga
+/// tal cual. El processor sale del mismo sitio que los pesos a propósito: cargarlo
+/// del Hub mientras los pesos vienen del ajuste previo deja el preprocesamiento
+/// desalineado con el modelo, y eso no falla — da métricas peores sin decir por qué.
+fn hf_load_from(req: &TrainingRequest) -> String {
+    match &req.base_model_path {
+        Some(path) if !path.is_empty() => path.replace('\\', "/"),
+        _ => req.model_id.clone(),
+    }
+}
+
+/// Etiqueta del modelo para el encabezado del script: deja dicho cuándo el
+/// entrenamiento parte de un modelo propio en vez de los pesos del catálogo.
+fn hf_model_label(req: &TrainingRequest, load_from: &str) -> String {
+    if load_from == req.model_id {
+        req.model_id.clone()
+    } else {
+        format!(
+            "{} (continuando el ajuste desde {})",
+            req.model_id, load_from
+        )
+    }
+}
+
 fn build_model_name(config: &TrainingConfig) -> String {
     // Si hay un path a modelo base (fine-tune), usarlo directamente
     if let Some(ref path) = config.base_model_path {
@@ -813,6 +841,7 @@ def _emitir_epoca(epoch, total, metrics):
 
 pub fn generate_hf_detection_script(req: &TrainingRequest, sp: &ScriptPaths) -> String {
     let bp = &req.backend_params;
+    let load_from = hf_load_from(req);
     let weight_decay = bp
         .get("weight_decay")
         .and_then(|v| v.as_f64())
@@ -843,7 +872,7 @@ def main():
     output_dir = os.path.join(dataset_dir, "train_output")
     os.makedirs(output_dir, exist_ok=True)
 
-    processor = AutoImageProcessor.from_pretrained("{model_id}")
+    processor = AutoImageProcessor.from_pretrained("{load_from}")
 
     class CocoDetDataset(Dataset):
         def __init__(self, images_dir, ann_file):
@@ -886,7 +915,7 @@ def main():
     # Las categorías COCO que escribe Annotix son 1..N; el modelo indexa desde 0.
     id2label = {{i: n for i, n in enumerate(CLASS_NAMES)}}
     model = AutoModelForObjectDetection.from_pretrained(
-        "{model_id}",
+        "{load_from}",
         num_labels=NUM_CLASSES,
         id2label=id2label,
         label2id={{n: i for i, n in id2label.items()}},
@@ -977,7 +1006,8 @@ if __name__ == "__main__":
 "#,
         header = sp.header,
         preamble = hf_coco_preamble(),
-        model_id = req.model_id,
+        model_id = hf_model_label(req, &load_from),
+        load_from = load_from,
         device = device,
         epochs = req.epochs,
         batch = req.batch_size,
@@ -989,6 +1019,7 @@ if __name__ == "__main__":
 
 pub fn generate_hf_instance_script(req: &TrainingRequest, sp: &ScriptPaths) -> String {
     let bp = &req.backend_params;
+    let load_from = hf_load_from(req);
     let weight_decay = bp
         .get("weight_decay")
         .and_then(|v| v.as_f64())
@@ -1020,7 +1051,7 @@ def main():
     output_dir = os.path.join(dataset_dir, "train_output")
     os.makedirs(output_dir, exist_ok=True)
 
-    processor = AutoImageProcessor.from_pretrained("{model_id}")
+    processor = AutoImageProcessor.from_pretrained("{load_from}")
 
     class CocoInstanceDataset(Dataset):
         """Convierte los polígonos COCO en máscaras por instancia."""
@@ -1093,7 +1124,7 @@ def main():
 
     id2label = {{i: n for i, n in enumerate(CLASS_NAMES)}}
     model = AutoModelForUniversalSegmentation.from_pretrained(
-        "{model_id}",
+        "{load_from}",
         id2label=id2label,
         label2id={{n: i for i, n in id2label.items()}},
         ignore_mismatched_sizes=True,
@@ -1152,7 +1183,8 @@ if __name__ == "__main__":
 "#,
         header = sp.header,
         preamble = hf_coco_preamble(),
-        model_id = req.model_id,
+        model_id = hf_model_label(req, &load_from),
+        load_from = load_from,
         device = device,
         epochs = req.epochs,
         batch = req.batch_size,
@@ -1973,7 +2005,7 @@ if __name__ == "__main__":
 
 pub fn generate_hf_seg_script(req: &TrainingRequest, sp: &ScriptPaths) -> String {
     let bp = &req.backend_params;
-    let model_checkpoint = &req.model_id; // e.g. "nvidia/mit-b0"
+    let load_from = hf_load_from(req);
     let do_reduce_labels = bp
         .get("do_reduce_labels")
         .and_then(|v| v.as_bool())
@@ -2025,7 +2057,7 @@ def main():
     do_reduce_labels = {do_reduce_labels}
 
     # Load processor
-    processor = SegformerImageProcessor.from_pretrained("{model_checkpoint}", do_reduce_labels=do_reduce_labels)
+    processor = SegformerImageProcessor.from_pretrained("{load_from}", do_reduce_labels=do_reduce_labels)
 
     class SegDataset(Dataset):
         def __init__(self, images_dir, masks_dir, processor):
@@ -2075,7 +2107,7 @@ def main():
                         label2id[name] = idx
 
     model = SegformerForSemanticSegmentation.from_pretrained(
-        "{model_checkpoint}",
+        "{load_from}",
         num_labels=num_classes,
         id2label=id2label,
         label2id=label2id,
@@ -2210,7 +2242,8 @@ def main():
 if __name__ == "__main__":
     main()
 "#,
-        model_checkpoint = model_checkpoint,
+        model_checkpoint = hf_model_label(req, &load_from),
+        load_from = load_from,
         header = sp.header,
         hf_compat = hf_training_args_compat(),
         num_classes = sp.num_classes,
@@ -2510,7 +2543,7 @@ pub fn generate_hf_classification_script(req: &TrainingRequest, sp: &ScriptPaths
     // `false` de Rust no es válido en Python.
     let multi_label = py_bool(req.task == "multi_classify");
     let bp = &req.backend_params;
-    let model_checkpoint = &req.model_id; // e.g. "google/vit-base-patch16-224"
+    let load_from = hf_load_from(req);
     let warmup_ratio = bp
         .get("warmup_ratio")
         .and_then(|v| v.as_f64())
@@ -2558,7 +2591,7 @@ def main():
     num_classes = {num_classes}
 
     # Load processor
-    processor = AutoImageProcessor.from_pretrained("{model_checkpoint}")
+    processor = AutoImageProcessor.from_pretrained("{load_from}")
 
     MULTI_LABEL = {multi_label}
 
@@ -2620,7 +2653,7 @@ def main():
                         label2id[name] = idx
 
     model = AutoModelForImageClassification.from_pretrained(
-        "{model_checkpoint}",
+        "{load_from}",
         num_labels=num_classes,
         id2label=id2label,
         label2id=label2id,
@@ -2743,7 +2776,8 @@ def main():
 if __name__ == "__main__":
     main()
 "#,
-        model_checkpoint = model_checkpoint,
+        model_checkpoint = hf_model_label(req, &load_from),
+        load_from = load_from,
         header = sp.header,
         hf_compat = hf_training_args_compat(),
         num_classes = sp.num_classes,

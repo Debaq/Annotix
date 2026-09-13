@@ -38,7 +38,8 @@ construirlo, solo exponerlo:
 | Backend | Artefacto que ya escribe | Línea |
 |---|---|---|
 | `yolo`, `rt_detr` | `best.pt` / `last.pt` de ultralytics | `scripts.rs:315` + runs de ultralytics |
-| `hf_detection`, `hf_instance`, `hf_segmentation`, `hf_classification`, `hf_pose` | directorio `best/` y `last/` con `save_pretrained()` del modelo **y del processor** | `scripts.rs:961-964`, `1136-1139`, `2192`, `2725` |
+| `hf_detection`, `hf_instance`, `hf_segmentation`, `hf_classification` | directorio `best/` y `last/` con `save_pretrained()` del modelo **y del processor** | `scripts.rs:961-964`, `1136-1139`, `2192`, `2725` |
+| `hf_pose` | `best.pth` / `last.pth` (`state_dict`). **No es un modelo de HuggingFace** pese al nombre: es un backbone de timm con una cabeza de heatmaps propia (`scripts.rs:1272`), así que va con `smp` y `timm`, no con los de `from_pretrained` | `scripts.rs:1345-1358` |
 | `smp` | `best.pth` / `last.pth` (`state_dict`) + ONNX | `scripts.rs:1918-1934` |
 | `timm` | `best.pth` / `last.pth` (`state_dict`) + ONNX | `scripts.rs:2453-2469` |
 | `tsai` | `learner.pkl` (export de fastai) + `state_dict` | `scripts.rs:2877-2878` |
@@ -100,7 +101,7 @@ Tres operaciones distintas que hoy se confunden bajo una palabra:
 Lo que falta es que `base_model_path` se respete en los 15 backends restantes.
 Por familia, el cambio es distinto y en un caso es casi gratis:
 
-- **Backends HuggingFace (5): prácticamente resuelto.** Los scripts ya llaman
+- **Backends HuggingFace (4): prácticamente resuelto.** Los scripts ya llaman
   `AutoModelFor*.from_pretrained("{model_id}")` con un id del Hub
   (`scripts.rs:846`, `888`, `1023`, `1095`) y ya guardan con `save_pretrained()`.
   `from_pretrained` acepta un **directorio local** con la misma firma: basta pasar
@@ -112,6 +113,8 @@ Por familia, el cambio es distinto y en un caso es casi gratis:
   `model.load_state_dict(torch.load(base))` antes de mover a device. El punto
   delicado es la cabeza: si el número de clases cambió, hay que cargar con
   `strict=False` y decirlo, no fallar en silencio.
+- **`hf_pose` (1)**: mismo caso que `smp`/`timm` — `load_state_dict` sobre el
+  `best.pth`, no `from_pretrained`.
 - **`rf_detr` (1)**: el constructor de `rfdetr` acepta pesos de partida; hoy solo
   se le pasan `resolution` y `gradient_checkpointing` (`scripts.rs:670-673`).
 - **`tsai` (1)**: `load_learner()` sobre el `learner.pkl` que ya se exporta.
@@ -229,12 +232,14 @@ lugar de reventar con un error de tamaño de tensor que no le dice nada a nadie.
    licencia heredada. Es la base de todo lo demás.
 2. **Copiar artefacto nativo** desde la UI, con su receta de recarga y su
    contrato al lado. Cierra la mitad del pedido y no depende de ningún backend.
-3. **Quitar la guarda de `TrainingPanel.tsx:385`** y aceptar `base_model_path` en
-   los **5 backends HuggingFace** — el cambio más barato con más alcance, porque
-   `from_pretrained` ya acepta directorios locales y los scripts ya guardan con
-   `save_pretrained`.
-4. **`smp`, `timm`, `rf_detr`, `tsai`, `pytorch_forecasting`**: carga de
-   `state_dict`/checkpoint con manejo explícito del cambio de cabeza.
+3. ~~**Quitar la guarda de `TrainingPanel.tsx:385`** y aceptar `base_model_path`
+   en los **4 backends HuggingFace**~~ — **hecho**. La capacidad la declara el
+   catálogo (`supportsFineTune` en `training/backends.rs`) en vez de una lista
+   quemada en la UI, y un test comprueba que lo declarado coincide con lo que el
+   generador de script usa de verdad: un botón que no hace nada es justo el
+   defecto que esto venía a cerrar.
+4. **`smp`, `timm`, `hf_pose`, `rf_detr`, `tsai`, `pytorch_forecasting`**: carga
+   de `state_dict`/checkpoint con manejo explícito del cambio de cabeza.
 5. **Registrar modelo entrenado como modelo de inferencia** con un click,
    rellenando el mapeo de clases desde el registro.
 6. **Avisos de contaminación** (§4) en el contrato: split heredado por defecto,

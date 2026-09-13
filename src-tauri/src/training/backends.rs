@@ -58,6 +58,34 @@ fn min_image_size_por_id(id: &str) -> u32 {
     }
 }
 
+/// Si el backend sabe continuar el ajuste desde un modelo ya entrenado aquí.
+///
+/// No es lo mismo que reanudar un entrenamiento cortado: es partir de los pesos
+/// de un trabajo anterior con el optimizador reiniciado, para especializar el
+/// modelo en datos nuevos.
+///
+/// Los estimadores clásicos quedan fuera a propósito: un k-means de tslearn se
+/// reajusta desde cero y stumpy no entrena nada, así que ofrecer "continuar
+/// ajuste" y por debajo reentrenar de cero sería mentirle al usuario.
+pub(super) fn supports_fine_tune_por_id(id: &str) -> bool {
+    matches!(
+        id,
+        // ultralytics acepta la ruta de un .pt como modelo de partida.
+        "yolo" | "rt_detr"
+            // Estos guardan con `save_pretrained()` y `from_pretrained()` acepta
+            // ese directorio igual que un id del Hub.
+            //
+            // `hf_pose` queda fuera aunque lleve el prefijo: no es un modelo de
+            // HuggingFace, es un backbone de timm con una cabeza de heatmaps propia
+            // que se guarda como `state_dict`. Entra cuando se implemente la carga
+            // por `load_state_dict`, junto a `smp` y `timm`.
+            | "hf_detection"
+            | "hf_instance"
+            | "hf_segmentation"
+            | "hf_classification"
+    )
+}
+
 /// Resolución mínima con la que un backend puede entrenar.
 ///
 /// No es una preferencia estética: RT-DETR hace una selección top-k sobre los tokens
@@ -295,6 +323,7 @@ fn build_yolo_backend(task: &str) -> BackendInfo {
         dataset_format: DatasetFormat::YoloTxt,
         pip_packages: vec!["ultralytics".into()],
         min_image_size: min_image_size_por_id("yolo"),
+        supports_fine_tune: supports_fine_tune_por_id("yolo"),
     }
 }
 
@@ -371,6 +400,7 @@ fn build_rtdetr_backend() -> BackendInfo {
         dataset_format: DatasetFormat::YoloTxt,
         pip_packages: vec!["ultralytics".into()],
         min_image_size: min_image_size_por_id("rt_detr"),
+        supports_fine_tune: supports_fine_tune_por_id("rt_detr"),
     }
 }
 
@@ -457,6 +487,7 @@ fn build_rfdetr_backend(task: &str) -> BackendInfo {
         // es real: rfdetr 1.10 usa la API de la 5.x.
         pip_packages: vec!["rfdetr[train]".into(), "transformers>=5".into()],
         min_image_size: min_image_size_por_id("rf_detr"),
+        supports_fine_tune: supports_fine_tune_por_id("rf_detr"),
     }
 }
 
@@ -601,6 +632,7 @@ fn build_smp_backend() -> BackendInfo {
             "albumentations".into(),
         ],
         min_image_size: min_image_size_por_id("smp"),
+        supports_fine_tune: supports_fine_tune_por_id("smp"),
     }
 }
 
@@ -747,6 +779,7 @@ fn build_hf_seg_backend() -> BackendInfo {
             "torchvision".into(),
         ],
         min_image_size: min_image_size_por_id("hf_segmentation"),
+        supports_fine_tune: supports_fine_tune_por_id("hf_segmentation"),
     }
 }
 
@@ -835,6 +868,7 @@ fn build_hf_detection_backend() -> BackendInfo {
             "pycocotools".into(),
         ],
         min_image_size: min_image_size_por_id("hf_detection"),
+        supports_fine_tune: supports_fine_tune_por_id("hf_detection"),
     }
 }
 
@@ -890,6 +924,7 @@ fn build_hf_instance_backend() -> BackendInfo {
             "pycocotools".into(),
         ],
         min_image_size: min_image_size_por_id("hf_instance"),
+        supports_fine_tune: supports_fine_tune_por_id("hf_instance"),
     }
 }
 
@@ -945,6 +980,7 @@ fn build_hf_pose_backend(task: &str) -> BackendInfo {
         dataset_format: DatasetFormat::CocoKeypointsJson,
         pip_packages: vec!["timm".into(), "torch".into(), "torchvision".into()],
         min_image_size: min_image_size_por_id("hf_pose"),
+        supports_fine_tune: supports_fine_tune_por_id("hf_pose"),
     }
 }
 
@@ -1058,6 +1094,7 @@ fn build_timm_backend(task: &str) -> BackendInfo {
         dataset_format: ds_fmt,
         pip_packages: vec!["timm".into(), "torch".into(), "torchvision".into()],
         min_image_size: min_image_size_por_id("timm"),
+        supports_fine_tune: supports_fine_tune_por_id("timm"),
     }
 }
 
@@ -1160,6 +1197,7 @@ fn build_hf_classification_backend(task: &str) -> BackendInfo {
             "torchvision".into(),
         ],
         min_image_size: min_image_size_por_id("hf_classification"),
+        supports_fine_tune: supports_fine_tune_por_id("hf_classification"),
     }
 }
 
@@ -1320,6 +1358,7 @@ fn build_tsai_backend(task: &str) -> BackendInfo {
         dataset_format: DatasetFormat::TimeSeriesCsv,
         pip_packages: vec!["tsai".into()],
         min_image_size: min_image_size_por_id("tsai"),
+        supports_fine_tune: supports_fine_tune_por_id("tsai"),
     }
 }
 
@@ -1381,6 +1420,7 @@ fn build_pytorch_forecasting_backend() -> BackendInfo {
             "torch".into(),
         ],
         min_image_size: min_image_size_por_id("pytorch_forecasting"),
+        supports_fine_tune: supports_fine_tune_por_id("pytorch_forecasting"),
     }
 }
 
@@ -1448,6 +1488,7 @@ fn build_pyod_backend() -> BackendInfo {
         dataset_format: DatasetFormat::TimeSeriesCsv,
         pip_packages: vec!["pyod".into(), "torch".into()],
         min_image_size: min_image_size_por_id("pyod"),
+        supports_fine_tune: supports_fine_tune_por_id("pyod"),
     }
 }
 
@@ -1504,6 +1545,7 @@ fn build_tslearn_backend() -> BackendInfo {
         dataset_format: DatasetFormat::TimeSeriesCsv,
         pip_packages: vec!["tslearn".into(), "scikit-learn".into()],
         min_image_size: min_image_size_por_id("tslearn"),
+        supports_fine_tune: supports_fine_tune_por_id("tslearn"),
     }
 }
 
@@ -1550,6 +1592,7 @@ fn build_pypots_backend() -> BackendInfo {
         dataset_format: DatasetFormat::TimeSeriesCsv,
         pip_packages: vec!["pypots".into(), "torch".into()],
         min_image_size: min_image_size_por_id("pypots"),
+        supports_fine_tune: supports_fine_tune_por_id("pypots"),
     }
 }
 
@@ -1587,6 +1630,7 @@ fn build_stumpy_backend() -> BackendInfo {
         dataset_format: DatasetFormat::TimeSeriesCsv,
         pip_packages: vec!["stumpy".into(), "numpy".into()],
         min_image_size: min_image_size_por_id("stumpy"),
+        supports_fine_tune: supports_fine_tune_por_id("stumpy"),
     }
 }
 
@@ -1813,5 +1857,6 @@ fn build_sklearn_backend() -> BackendInfo {
             "onnxmltools".into(),
         ],
         min_image_size: min_image_size_por_id("sklearn"),
+        supports_fine_tune: supports_fine_tune_por_id("sklearn"),
     }
 }
