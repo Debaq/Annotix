@@ -14,7 +14,7 @@ const VKF_PREFIX = 'vkf::';
  *  - Annotations del canvas      → píxeles
  *
  * Comportamiento:
- *  - Auto-crea keyframes al navegar a un frame nuevo
+ *  - Los keyframes solo nacen al editar o mover una bbox, nunca al navegar
  *  - Todas las bboxes (keyframes + interpoladas + deshabilitadas) son editables
  *  - Toggle ojo: marca la salida de escena desde ese frame, o la revierte
  */
@@ -39,8 +39,6 @@ export function useVideoAnnotationBridge(
       prevFrameRef.current = frameIndex;
     }
   }, [frameIndex]);
-
-  // (Auto-keyframe eliminado: solo se crean keyframes al editar/mover una bbox)
 
   // Todas las bboxes del frame (incluyendo deshabilitadas)
   const allBBoxes = useMemo(() => interpolatedBBoxes, [interpolatedBBoxes]);

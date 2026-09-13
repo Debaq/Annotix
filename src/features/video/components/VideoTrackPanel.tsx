@@ -271,7 +271,13 @@ export function VideoTrackPanel({
                     {keyframes}kf
                   </span>
 
-                  <DropdownMenu>
+                  {/* `modal={false}`: en modo modal Radix bloquea el scroll y
+                      apaga los eventos del resto de la página al abrir, y con el
+                      disparador dentro de esta lista con scroll eso descartaba el
+                      menú en el mismo clic que lo abría. El menú no llegaba a
+                      verse con el ratón —solo con teclado— y todo lo que hay
+                      dentro quedaba fuera de alcance. */}
+                  <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
                       <button
                         onClick={e => e.stopPropagation()}
