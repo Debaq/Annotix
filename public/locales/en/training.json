@@ -594,6 +594,10 @@
     },
     "items": {
       "hf_classification": {
+        "radiography": {
+          "use": "Chest X-ray, especially with few labels: pretrained on 882,775 real films, which is exactly where an ImageNet backbone falls short.",
+          "avoid": "Other modalities, and any direct clinical use: the authors state it is not meant for clinical practice."
+        },
         "beit": {
           "use": "Strong self-supervised pretraining, useful when you have many images and few labels.",
           "avoid": "With a modest GPU: the slowest in this backend."
@@ -824,6 +828,14 @@
         }
       },
       "timm": {
+        "radimagenet": {
+          "use": "Little labelled data on CT, MRI or ultrasound: starts from a backbone trained on 1.35 million radiology images instead of ImageNet photos.",
+          "avoid": "Outside radiology. On histology or clinical photography its pretraining adds nothing, and a generic ConvNeXt does as well or better."
+        },
+        "pathology": {
+          "use": "Already-extracted histopathology tiles: pretraining on H&E captures tissue texture an ImageNet backbone does not see.",
+          "avoid": "Commercial use: both weights are non-commercial and that condition is inherited by the model you train. It also does not read whole slides — this takes tiles, not WSI."
+        },
         "convnext": {
           "use": "A modern CNN that matches transformers while needing less data than they do. A good middle ground.",
           "avoid": "If the corpus is genuinely small: ResNet or EfficientNet remain safer."

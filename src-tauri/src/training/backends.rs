@@ -1067,6 +1067,53 @@ fn build_timm_backend(task: &str) -> BackendInfo {
     };
 
     let models = vec![
+        // ── Backbones biomédicos ────────────────────────────────────────────
+        //
+        // Van primero por la orientación del producto, y entran sin tocar el
+        // generador: timm resuelve `hf_hub:` contra el Hub igual que un nombre de
+        // su propio catálogo. Su licencia se hereda al modelo entrenado, así que
+        // la ficha de familia la declara.
+        BackendModelInfo {
+            id: "hf_hub:Snarcy/RadioDino-s16".into(),
+            name: "RadioDINO-S/16".into(),
+            family: "radimagenet".into(),
+            description: "DINO sobre RadImageNet: 1.35M de TAC, resonancia y ecografía".into(),
+            params_count: Some("22M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: true,
+        },
+        BackendModelInfo {
+            id: "hf_hub:Snarcy/RadioDino-b16".into(),
+            name: "RadioDINO-B/16".into(),
+            family: "radimagenet".into(),
+            description: "Más capacidad sobre el mismo corpus radiológico".into(),
+            params_count: Some("86M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "hf_hub:1aurent/vit_small_patch16_224.lunit_dino".into(),
+            name: "Lunit DINO (ViT-S/16)".into(),
+            family: "pathology".into(),
+            description: "Self-supervised sobre teselas de histopatología".into(),
+            params_count: Some("22M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "hf_hub:1aurent/vit_base_patch16_224.owkin_pancancer".into(),
+            name: "Owkin Phikon (ViT-B/16)".into(),
+            family: "pathology".into(),
+            description: "Preentrenado sobre teselas pan-cáncer de TCGA".into(),
+            params_count: Some("86M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: false,
+        },
+        // ── Backbones generalistas ──────────────────────────────────────────
         BackendModelInfo {
             id: "mobilenetv3_large_100".into(),
             name: "MobileNetV3-Large".into(),
@@ -1183,6 +1230,19 @@ fn build_hf_classification_backend(task: &str) -> BackendInfo {
     };
 
     let models = vec![
+        // Backbone biomédico: va primero por la orientación del producto y entra
+        // sin tocar el generador, porque `AutoModelForImageClassification` le
+        // monta la cabeza igual que a cualquier checkpoint del Hub.
+        BackendModelInfo {
+            id: "microsoft/rad-dino".into(),
+            name: "RAD-DINO".into(),
+            family: "radiography".into(),
+            description: "DINOv2 sobre 882.775 radiografías de tórax (MIMIC-CXR, CheXpert, NIH, PadChest, BRAX)".into(),
+            params_count: Some("86M".into()),
+            tasks: tasks.clone(),
+            sizes: None,
+            recommended: true,
+        },
         BackendModelInfo {
             id: "google/vit-base-patch16-224".into(),
             name: "ViT-Base".into(),
@@ -1191,7 +1251,7 @@ fn build_hf_classification_backend(task: &str) -> BackendInfo {
             params_count: Some("86M".into()),
             tasks: tasks.clone(),
             sizes: None,
-            recommended: true,
+            recommended: false,
         },
         BackendModelInfo {
             id: "google/vit-large-patch16-224".into(),

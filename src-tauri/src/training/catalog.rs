@@ -121,6 +121,10 @@ const TABLA: &[Fila] = &[
     ("hf_pose", "resnet", "general", "any", "4to8gb", "fast", 150, "Apache-2.0", "open", "ImageNet-1k", None),
     ("hf_pose", "convnext", "general", "any", "4to8gb", "medium", 200, "Apache-2.0", "open", "ImageNet-1k", None),
     ("hf_pose", "hrnet", "general", "any", "4to8gb", "medium", 200, "Apache-2.0", "open", "ImageNet-1k", Some("COCO keypoints AP 75")),
+    // Backbones biomédicos: preentrenados con datos clínicos, no con ImageNet.
+    ("timm", "radimagenet", "biomedical", "ct,mri,ultrasound", "4to8gb", "medium", 100, "CC-BY-4.0", "open", "RadImageNet (1.35M)", None),
+    ("timm", "pathology", "biomedical", "wsi,microscopy", "4to8gb", "medium", 100, "owkin-non-commercial / lunit-non-commercial", "non_commercial", "TCGA / teselas H&E", None),
+    ("hf_classification", "radiography", "biomedical", "xray", "4to8gb", "medium", 100, "MIT", "open", "882k radiografias de torax", None),
     ("timm", "resnet", "general,biomedical", "any", "le4gb", "fast", 50, "Apache-2.0", "open", "ImageNet-1k", Some("ImageNet-1k top-1 76-82")),
     ("timm", "efficientnet", "general", "any", "le4gb", "fast", 50, "Apache-2.0", "open", "ImageNet-1k", Some("ImageNet-1k top-1 77-84")),
     ("timm", "mobilenet", "general", "any", "le4gb", "fast", 50, "Apache-2.0", "open", "ImageNet-1k", Some("ImageNet-1k top-1 71-76")),

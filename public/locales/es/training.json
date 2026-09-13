@@ -594,6 +594,10 @@
     },
     "items": {
       "hf_classification": {
+        "radiography": {
+          "use": "Radiografía de tórax, sobre todo con pocas etiquetas: preentrenado con 882.775 placas reales, que es justo donde un backbone de ImageNet se queda corto.",
+          "avoid": "Otras modalidades, y cualquier uso clínico directo: los autores lo declaran no apto para práctica clínica."
+        },
         "beit": {
           "use": "Preentrenamiento auto-supervisado fuerte, útil cuando tienes muchas imágenes y pocas etiquetas.",
           "avoid": "Con GPU modesta: es el más lento de este backend."
@@ -824,6 +828,14 @@
         }
       },
       "timm": {
+        "radimagenet": {
+          "use": "Poco dato etiquetado en TAC, resonancia o ecografía: parte de un backbone entrenado con 1.35 millones de imágenes radiológicas en vez de fotos de ImageNet.",
+          "avoid": "Fuera de radiología. En histología o fotografía clínica su preentrenamiento no aporta, y un ConvNeXt genérico rinde igual o más."
+        },
+        "pathology": {
+          "use": "Teselas de histopatología ya extraídas: el preentrenamiento sobre H&E capta textura de tejido que un backbone de ImageNet no ve.",
+          "avoid": "Uso comercial: ambos pesos son de licencia no comercial y esa condición se hereda al modelo que entrenes. Tampoco sirve para leer la lámina completa — aquí entran teselas, no WSI."
+        },
         "convnext": {
           "use": "CNN moderna que alcanza a los transformers necesitando menos datos que ellos. Buen punto medio.",
           "avoid": "Si el corpus es realmente pequeño: ResNet o EfficientNet siguen siendo más seguros."
