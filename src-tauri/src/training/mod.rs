@@ -518,6 +518,7 @@ pub mod micromamba;
 pub mod migrate;
 pub mod model_export;
 pub mod notebook;
+pub mod npy;
 pub mod package;
 pub mod python_env;
 pub mod runner;

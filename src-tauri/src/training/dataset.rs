@@ -4,6 +4,7 @@ use std::path::Path;
 use image::{GrayImage, Luma};
 
 use super::contract::{keys, PreparedDataset};
+use super::npy;
 use super::{DatasetFormat, TrainingBackend};
 use crate::export::{parse_bbox, parse_mask, parse_obb, parse_polygon};
 use crate::store::project_file::{ClassDef, ImageEntry, ProjectFile};
@@ -109,6 +110,57 @@ pub fn compute_split(total: usize, val_split: f64, test_split: f64) -> SplitCoun
     SplitCounts { train, val, test }
 }
 
+/// Reparto determinista de las imágenes en train/val/test.
+///
+/// El barajado se siembra con el id del proyecto, así que el mismo proyecto da
+/// siempre el mismo reparto: dos entrenamientos son comparables. Antes esta lógica
+/// estaba copiada en seis preparadores, y cinco de ellos ignoraban `test_split`.
+pub struct SplitPlan {
+    pub train: Vec<usize>,
+    pub val: Vec<usize>,
+    pub test: Vec<usize>,
+}
+
+impl SplitPlan {
+    pub fn has_test(&self) -> bool {
+        !self.test.is_empty()
+    }
+
+    /// Pares (nombre, índices), omitiendo test cuando está vacío.
+    pub fn splits(&self) -> Vec<(&'static str, &[usize])> {
+        let mut pairs: Vec<(&'static str, &[usize])> =
+            vec![("train", &self.train), ("val", &self.val)];
+        if self.has_test() {
+            pairs.push(("test", &self.test));
+        }
+        pairs
+    }
+}
+
+pub fn split_plan(
+    project: &ProjectFile,
+    total: usize,
+    val_split: f64,
+    test_split: f64,
+) -> SplitPlan {
+    let mut indices: Vec<usize> = (0..total).collect();
+    let seed = project.id.bytes().fold(42usize, |acc, b| {
+        acc.wrapping_mul(31).wrapping_add(b as usize)
+    });
+    for i in (1..indices.len()).rev() {
+        let j = (seed.wrapping_mul(i).wrapping_add(7)) % (i + 1);
+        indices.swap(i, j);
+    }
+
+    let counts = compute_split(total, val_split, test_split);
+    let val_end = counts.train + counts.val;
+    SplitPlan {
+        train: indices[..counts.train].to_vec(),
+        val: indices[counts.train..val_end].to_vec(),
+        test: indices[val_end..].to_vec(),
+    }
+}
+
 /// Prepara el dataset en disco con split train/val/test para entrenamiento YOLO
 pub fn prepare_dataset(
     images_dir: &Path,
@@ -124,28 +176,8 @@ pub fn prepare_dataset(
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    // Shuffle con seed determinístico para reproducibilidad
-    let mut indices: Vec<usize> = (0..total).collect();
-    let seed = project.id.bytes().fold(42usize, |acc, b| {
-        acc.wrapping_mul(31).wrapping_add(b as usize)
-    });
-    for i in (1..indices.len()).rev() {
-        let j = (seed.wrapping_mul(i).wrapping_add(7)) % (i + 1);
-        indices.swap(i, j);
-    }
-
-    let counts = compute_split(total, val_split, test_split);
-
-    let train_indices = &indices[..counts.train];
-    let val_indices = &indices[counts.train..counts.train + counts.val];
-    let test_indices = &indices[counts.train + counts.val..];
-    let has_test = !test_indices.is_empty();
-
-    let indices = SplitIndices {
-        train: train_indices,
-        val: val_indices,
-        test: test_indices,
-    };
+    let plan = split_plan(project, total, val_split, test_split);
+    let has_test = plan.has_test();
 
     let format = if task == "classify" {
         DatasetFormat::ImageFolder
@@ -155,7 +187,7 @@ pub fn prepare_dataset(
     let mut ds = PreparedDataset::new(output_dir, format, class_names(project));
 
     if task == "classify" {
-        prepare_classification_dataset(images_dir, project, images, output_dir, &indices)?;
+        prepare_classification_dataset(images_dir, project, images, output_dir, &plan)?;
         ds.declare(keys::IMAGEFOLDER_ROOT, ".")
             .declare(keys::IMAGEFOLDER_TRAIN, "train")
             .declare(keys::IMAGEFOLDER_VAL, "val");
@@ -163,7 +195,7 @@ pub fn prepare_dataset(
             ds.declare(keys::IMAGEFOLDER_TEST, "test");
         }
     } else {
-        prepare_detection_dataset(images_dir, project, images, output_dir, &indices, task)?;
+        prepare_detection_dataset(images_dir, project, images, output_dir, &plan, task)?;
         ds.declare(keys::IMAGES_TRAIN, "images/train")
             .declare(keys::IMAGES_VAL, "images/val")
             .declare(keys::LABELS_TRAIN, "labels/train")
@@ -184,34 +216,15 @@ pub fn prepare_dataset(
     Ok(ds)
 }
 
-/// Índices de `images` que van a cada split.
-struct SplitIndices<'a> {
-    train: &'a [usize],
-    val: &'a [usize],
-    test: &'a [usize],
-}
-
-impl SplitIndices<'_> {
-    /// Pares (nombre, índices) omitiendo test cuando está vacío.
-    fn as_pairs(&self) -> Vec<(&'static str, &[usize])> {
-        let mut pairs: Vec<(&'static str, &[usize])> =
-            vec![("train", self.train), ("val", self.val)];
-        if !self.test.is_empty() {
-            pairs.push(("test", self.test));
-        }
-        pairs
-    }
-}
-
 fn prepare_detection_dataset(
     images_dir: &Path,
     project: &ProjectFile,
     images: &[ImageEntry],
     output_dir: &Path,
-    indices: &SplitIndices<'_>,
+    plan: &SplitPlan,
     task: &str,
 ) -> Result<(), String> {
-    let splits = indices.as_pairs();
+    let splits = plan.splits();
 
     for (split, _) in &splits {
         std::fs::create_dir_all(output_dir.join("images").join(split))
@@ -234,9 +247,9 @@ fn prepare_classification_dataset(
     project: &ProjectFile,
     images: &[ImageEntry],
     output_dir: &Path,
-    indices: &SplitIndices<'_>,
+    plan: &SplitPlan,
 ) -> Result<(), String> {
-    let splits = indices.as_pairs();
+    let splits = plan.splits();
 
     for (split, _) in &splits {
         for cls in &project.classes {
@@ -501,6 +514,7 @@ pub fn prepare_coco_dataset(
     images: &[ImageEntry],
     output_dir: &Path,
     val_split: f64,
+    test_split: f64,
     layout: CocoLayout,
 ) -> Result<PreparedDataset, String> {
     let total = images.len();
@@ -508,22 +522,10 @@ pub fn prepare_coco_dataset(
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    // Shuffle (same as YOLO)
-    let mut indices: Vec<usize> = (0..total).collect();
-    let seed = project.id.bytes().fold(42usize, |acc, b| {
-        acc.wrapping_mul(31).wrapping_add(b as usize)
-    });
-    for i in (1..indices.len()).rev() {
-        let j = (seed.wrapping_mul(i).wrapping_add(7)) % (i + 1);
-        indices.swap(i, j);
-    }
-
-    let val_count = ((total as f64) * val_split).ceil() as usize;
-    let val_count = val_count.max(1).min(total - 1);
-    let train_count = total - val_count;
-
-    let train_indices = &indices[..train_count];
-    let val_indices = &indices[train_count..];
+    let plan = split_plan(project, total, val_split, test_split);
+    let train_indices: &[usize] = &plan.train;
+    let val_indices: &[usize] = &plan.val;
+    let test_indices: &[usize] = &plan.test;
 
     // Build categories (1-based for COCO)
     let categories: Vec<serde_json::Value> = project
@@ -577,6 +579,24 @@ pub fn prepare_coco_dataset(
                 .declare(keys::ANN_TRAIN, "train/_annotations.coco.json")
                 .declare(keys::IMAGES_VAL, "valid")
                 .declare(keys::ANN_VAL, "valid/_annotations.coco.json");
+
+            if !test_indices.is_empty() {
+                let test_dir = output_dir.join("test");
+                std::fs::create_dir_all(&test_dir)
+                    .map_err(|e| format!("Error creando test/: {}", e))?;
+                let test_json = build_coco_json(
+                    images_dir,
+                    project,
+                    images,
+                    test_indices,
+                    &categories,
+                    &test_dir,
+                )?;
+                std::fs::write(test_dir.join("_annotations.coco.json"), &test_json)
+                    .map_err(|e| format!("Error escribiendo test annotations: {}", e))?;
+                ds.declare(keys::IMAGES_TEST, "test")
+                    .declare(keys::ANN_TEST, "test/_annotations.coco.json");
+            }
         }
         CocoLayout::MmDetection => {
             let train_dir = output_dir.join("train");
@@ -614,6 +634,24 @@ pub fn prepare_coco_dataset(
                 .declare(keys::ANN_TRAIN, "annotations/instances_train.json")
                 .declare(keys::IMAGES_VAL, "val")
                 .declare(keys::ANN_VAL, "annotations/instances_val.json");
+
+            if !test_indices.is_empty() {
+                let test_dir = output_dir.join("test");
+                std::fs::create_dir_all(&test_dir)
+                    .map_err(|e| format!("Error creando test/: {}", e))?;
+                let test_json = build_coco_json(
+                    images_dir,
+                    project,
+                    images,
+                    test_indices,
+                    &categories,
+                    &test_dir,
+                )?;
+                std::fs::write(ann_dir.join("instances_test.json"), &test_json)
+                    .map_err(|e| format!("Error escribiendo instances_test.json: {}", e))?;
+                ds.declare(keys::IMAGES_TEST, "test")
+                    .declare(keys::ANN_TEST, "annotations/instances_test.json");
+            }
         }
     }
 
@@ -697,6 +735,7 @@ pub fn prepare_mask_dataset(
     images: &[ImageEntry],
     output_dir: &Path,
     val_split: f64,
+    test_split: f64,
 ) -> Result<PreparedDataset, String> {
     let total = images.len();
     if total == 0 {
@@ -704,38 +743,16 @@ pub fn prepare_mask_dataset(
     }
 
     // Shuffle (same seed as other prepare functions)
-    let mut indices: Vec<usize> = (0..total).collect();
-    let seed = project.id.bytes().fold(42usize, |acc, b| {
-        acc.wrapping_mul(31).wrapping_add(b as usize)
-    });
-    for i in (1..indices.len()).rev() {
-        let j = (seed.wrapping_mul(i).wrapping_add(7)) % (i + 1);
-        indices.swap(i, j);
-    }
+    let plan = split_plan(project, total, val_split, test_split);
 
-    let val_count = ((total as f64) * val_split).ceil() as usize;
-    let val_count = val_count.max(1).min(total - 1);
-    let train_count = total - val_count;
-
-    let train_indices = &indices[..train_count];
-    let val_indices = &indices[train_count..];
-
-    // Create directory structure
-    for split in &["train", "val"] {
+    for (split, idxs) in plan.splits() {
         std::fs::create_dir_all(output_dir.join("images").join(split))
             .map_err(|e| format!("Error creando directorio images/{}: {}", split, e))?;
         std::fs::create_dir_all(output_dir.join("masks").join(split))
             .map_err(|e| format!("Error creando directorio masks/{}: {}", split, e))?;
-    }
-
-    // Process train split
-    for &idx in train_indices {
-        copy_image_and_mask(images_dir, project, &images[idx], output_dir, "train")?;
-    }
-
-    // Process val split
-    for &idx in val_indices {
-        copy_image_and_mask(images_dir, project, &images[idx], output_dir, "val")?;
+        for &idx in idxs {
+            copy_image_and_mask(images_dir, project, &images[idx], output_dir, split)?;
+        }
     }
 
     // Generate classes.txt (sequential: 0=background, 1..N=classes)
@@ -752,6 +769,10 @@ pub fn prepare_mask_dataset(
         .declare(keys::MASKS_TRAIN, "masks/train")
         .declare(keys::MASKS_VAL, "masks/val")
         .declare(keys::CLASSES_FILE, "classes.txt");
+    if plan.has_test() {
+        ds.declare(keys::IMAGES_TEST, "images/test")
+            .declare(keys::MASKS_TEST, "masks/test");
+    }
     Ok(ds)
 }
 
@@ -925,6 +946,8 @@ fn draw_mask_on_target(
 
 /// Qué dataset construir: proporciones de split, tarea y backend destino.
 pub struct DatasetSpec<'a> {
+    /// Ventaneo de series temporales; irrelevante para los backends de imagen.
+    pub ts: TsSpec,
     pub val_split: f64,
     pub test_split: f64,
     pub task: &'a str,
@@ -940,6 +963,7 @@ pub fn prepare_dataset_for_backend(
     spec: DatasetSpec<'_>,
 ) -> Result<PreparedDataset, String> {
     let DatasetSpec {
+        ts,
         val_split,
         test_split,
         task,
@@ -958,6 +982,7 @@ pub fn prepare_dataset_for_backend(
             images,
             output_dir,
             val_split,
+            test_split,
             CocoLayout::RfDetr,
         ),
         TrainingBackend::MmDetection => prepare_coco_dataset(
@@ -966,27 +991,30 @@ pub fn prepare_dataset_for_backend(
             images,
             output_dir,
             val_split,
+            test_split,
             CocoLayout::MmDetection,
         ),
         TrainingBackend::Smp
         | TrainingBackend::HfSegmentation
-        | TrainingBackend::MmSegmentation => {
-            prepare_mask_dataset(images_dir, project, images, output_dir, val_split)
-        }
-        TrainingBackend::Detectron2 => {
-            prepare_coco_instance_dataset(images_dir, project, images, output_dir, val_split)
-        }
-        TrainingBackend::MmPose => {
-            prepare_coco_keypoints_dataset(images_dir, project, images, output_dir, val_split)
-        }
+        | TrainingBackend::MmSegmentation => prepare_mask_dataset(
+            images_dir, project, images, output_dir, val_split, test_split,
+        ),
+        TrainingBackend::Detectron2 => prepare_coco_instance_dataset(
+            images_dir, project, images, output_dir, val_split, test_split,
+        ),
+        TrainingBackend::MmPose => prepare_coco_keypoints_dataset(
+            images_dir, project, images, output_dir, val_split, test_split,
+        ),
         TrainingBackend::Timm | TrainingBackend::HfClassification => {
-            if task == "multi_classify" {
-                prepare_multilabel_dataset(images_dir, project, images, output_dir, val_split)
-            } else {
-                prepare_classification_dataset_imagefolder(
-                    images_dir, project, images, output_dir, val_split,
-                )
-            }
+            prepare_classification_dataset_labeled(
+                images_dir,
+                project,
+                images,
+                output_dir,
+                val_split,
+                test_split,
+                task == "multi_classify",
+            )
         }
         TrainingBackend::Tsai
         | TrainingBackend::PytorchForecasting
@@ -999,7 +1027,20 @@ pub fn prepare_dataset_for_backend(
             let project_dir = images_dir
                 .parent()
                 .ok_or("No se pudo determinar el directorio del proyecto")?;
-            prepare_timeseries_dataset(project, project_dir, output_dir, val_split)
+            if *backend == TrainingBackend::PytorchForecasting {
+                // pytorch-forecasting consume un CSV largo, no ventanas.
+                prepare_timeseries_long_csv(project, project_dir, output_dir, val_split, test_split)
+            } else {
+                prepare_timeseries_arrays(
+                    project,
+                    project_dir,
+                    output_dir,
+                    val_split,
+                    test_split,
+                    task,
+                    ts,
+                )
+            }
         }
         TrainingBackend::Sklearn => {
             let project_dir = images_dir
@@ -1062,26 +1103,17 @@ pub fn prepare_coco_instance_dataset(
     images: &[ImageEntry],
     output_dir: &Path,
     val_split: f64,
+    test_split: f64,
 ) -> Result<PreparedDataset, String> {
     let total = images.len();
     if total == 0 {
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    let mut indices: Vec<usize> = (0..total).collect();
-    let seed = project.id.bytes().fold(42usize, |acc, b| {
-        acc.wrapping_mul(31).wrapping_add(b as usize)
-    });
-    for i in (1..indices.len()).rev() {
-        let j = (seed.wrapping_mul(i).wrapping_add(7)) % (i + 1);
-        indices.swap(i, j);
-    }
-
-    let val_count = ((total as f64) * val_split).ceil() as usize;
-    let val_count = val_count.max(1).min(total - 1);
-    let train_count = total - val_count;
-    let train_indices = &indices[..train_count];
-    let val_indices = &indices[train_count..];
+    let plan = split_plan(project, total, val_split, test_split);
+    let train_indices: &[usize] = &plan.train;
+    let val_indices: &[usize] = &plan.val;
+    let test_indices: &[usize] = &plan.test;
 
     let categories: Vec<serde_json::Value> = project.classes.iter().enumerate().map(|(i, cls)| {
         serde_json::json!({ "id": i + 1, "name": cls.name, "supercategory": "none" })
@@ -1125,6 +1157,24 @@ pub fn prepare_coco_instance_dataset(
         .declare(keys::ANN_TRAIN, "annotations/instances_train.json")
         .declare(keys::IMAGES_VAL, "val")
         .declare(keys::ANN_VAL, "annotations/instances_val.json");
+
+    if !test_indices.is_empty() {
+        let test_dir = output_dir.join("test");
+        std::fs::create_dir_all(&test_dir).map_err(|e| format!("Error creando test/: {}", e))?;
+        let test_json = build_coco_instance_json(
+            images_dir,
+            project,
+            images,
+            test_indices,
+            &categories,
+            &test_dir,
+        )?;
+        std::fs::write(ann_dir.join("instances_test.json"), &test_json)
+            .map_err(|e| format!("Error escribiendo instances_test.json: {}", e))?;
+        ds.declare(keys::IMAGES_TEST, "test")
+            .declare(keys::ANN_TEST, "annotations/instances_test.json");
+    }
+
     Ok(ds)
 }
 
@@ -1237,26 +1287,17 @@ pub fn prepare_coco_keypoints_dataset(
     images: &[ImageEntry],
     output_dir: &Path,
     val_split: f64,
+    test_split: f64,
 ) -> Result<PreparedDataset, String> {
     let total = images.len();
     if total == 0 {
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    let mut indices: Vec<usize> = (0..total).collect();
-    let seed = project.id.bytes().fold(42usize, |acc, b| {
-        acc.wrapping_mul(31).wrapping_add(b as usize)
-    });
-    for i in (1..indices.len()).rev() {
-        let j = (seed.wrapping_mul(i).wrapping_add(7)) % (i + 1);
-        indices.swap(i, j);
-    }
-
-    let val_count = ((total as f64) * val_split).ceil() as usize;
-    let val_count = val_count.max(1).min(total - 1);
-    let train_count = total - val_count;
-    let train_indices = &indices[..train_count];
-    let val_indices = &indices[train_count..];
+    let plan = split_plan(project, total, val_split, test_split);
+    let train_indices: &[usize] = &plan.train;
+    let val_indices: &[usize] = &plan.val;
+    let test_indices: &[usize] = &plan.test;
 
     // Build categories with keypoints info from project classes
     let categories: Vec<serde_json::Value> = project
@@ -1313,6 +1354,23 @@ pub fn prepare_coco_keypoints_dataset(
         .map_err(|e| format!("Error escribiendo keypoints train: {}", e))?;
     std::fs::write(ann_dir.join("person_keypoints_val.json"), &val_json)
         .map_err(|e| format!("Error escribiendo keypoints val: {}", e))?;
+
+    if !test_indices.is_empty() {
+        let test_dir = output_dir.join("test");
+        std::fs::create_dir_all(&test_dir).map_err(|e| format!("Error creando test/: {}", e))?;
+        let test_json = build_coco_keypoints_json(
+            images_dir,
+            project,
+            images,
+            test_indices,
+            &categories,
+            &test_dir,
+        )?;
+        std::fs::write(ann_dir.join("person_keypoints_test.json"), &test_json)
+            .map_err(|e| format!("Error escribiendo keypoints test: {}", e))?;
+        ds.declare(keys::IMAGES_TEST, "test")
+            .declare(keys::ANN_TEST, "annotations/person_keypoints_test.json");
+    }
 
     Ok(ds)
 }
@@ -1406,193 +1464,659 @@ fn build_coco_keypoints_json(
 
 // ─── ImageFolder Dataset (Classification) ────────────────────────────────────
 
-pub fn prepare_classification_dataset_imagefolder(
+/// Dataset de clasificación para backends que no usan ImageFolder (timm, HF).
+///
+/// Escribe las imágenes planas por split y un JSON de etiquetas por split. Antes
+/// estos dos backends recibían el layout `{split}/{nombre_de_clase}/` de
+/// ultralytics y lo interpretaban con `int(nombre_carpeta)`, que para un nombre
+/// como "gato" da 0: **todas** las imágenes quedaban etiquetadas como la clase 0 y
+/// el entrenamiento salía adelante sin error, produciendo un modelo inútil.
+///
+/// El índice de clase es la posición en `project.classes`, el mismo criterio que
+/// usan el resto de los exportadores.
+pub fn prepare_classification_dataset_labeled(
     images_dir: &Path,
     project: &ProjectFile,
     images: &[ImageEntry],
     output_dir: &Path,
     val_split: f64,
-) -> Result<PreparedDataset, String> {
-    prepare_dataset(
-        images_dir, project, images, output_dir, val_split, 0.0, "classify",
-    )
-}
-
-// ─── MultiLabel CSV Dataset ──────────────────────────────────────────────────
-
-pub fn prepare_multilabel_dataset(
-    images_dir: &Path,
-    project: &ProjectFile,
-    images: &[ImageEntry],
-    output_dir: &Path,
-    val_split: f64,
+    test_split: f64,
+    multi_label: bool,
 ) -> Result<PreparedDataset, String> {
     let total = images.len();
     if total == 0 {
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    let mut indices: Vec<usize> = (0..total).collect();
-    let seed = project.id.bytes().fold(42usize, |acc, b| {
-        acc.wrapping_mul(31).wrapping_add(b as usize)
-    });
-    for i in (1..indices.len()).rev() {
-        let j = (seed.wrapping_mul(i).wrapping_add(7)) % (i + 1);
-        indices.swap(i, j);
-    }
+    let plan = split_plan(project, total, val_split, test_split);
 
-    let val_count = ((total as f64) * val_split).ceil() as usize;
-    let val_count = val_count.max(1).min(total - 1);
-    let train_count = total - val_count;
-    let train_indices = &indices[..train_count];
-    let val_indices = &indices[train_count..];
+    let indice_de_clase = |class_id: i64| project.classes.iter().position(|c| c.id == class_id);
 
-    let img_dir = output_dir.join("images");
-    std::fs::create_dir_all(&img_dir).map_err(|e| format!("Error: {}", e))?;
-
-    // Build CSV: image_path,class1,class2,...
-    let label_columns: Vec<&str> = project.classes.iter().map(|c| c.name.as_str()).collect();
-    let mut train_rows = Vec::new();
-    let mut val_rows = Vec::new();
-
-    for &idx in train_indices {
-        let image = &images[idx];
-        let src = images_dir.join(&image.file);
-        if !src.exists() {
-            continue;
-        }
-        let _ = std::fs::copy(&src, img_dir.join(&image.name));
-
-        let mut labels = vec![0u8; label_columns.len()];
-        for ann in &image.annotations {
-            if let Some(pos) = project.classes.iter().position(|c| c.id == ann.class_id) {
-                labels[pos] = 1;
-            }
-        }
-        let labels_str: Vec<String> = labels.iter().map(|l| l.to_string()).collect();
-        train_rows.push(format!("images/{},{}", image.name, labels_str.join(",")));
-    }
-
-    for &idx in val_indices {
-        let image = &images[idx];
-        let src = images_dir.join(&image.file);
-        if !src.exists() {
-            continue;
-        }
-        let _ = std::fs::copy(&src, img_dir.join(&image.name));
-
-        let mut labels = vec![0u8; label_columns.len()];
-        for ann in &image.annotations {
-            if let Some(pos) = project.classes.iter().position(|c| c.id == ann.class_id) {
-                labels[pos] = 1;
-            }
-        }
-        let labels_str: Vec<String> = labels.iter().map(|l| l.to_string()).collect();
-        val_rows.push(format!("images/{},{}", image.name, labels_str.join(",")));
-    }
-
-    let header = format!("image_path,{}", label_columns.join(","));
-    let train_csv = format!("{}\n{}", header, train_rows.join("\n"));
-    let val_csv = format!("{}\n{}", header, val_rows.join("\n"));
-
-    std::fs::write(output_dir.join("train.csv"), &train_csv)
-        .map_err(|e| format!("Error escribiendo train.csv: {}", e))?;
-    std::fs::write(output_dir.join("val.csv"), &val_csv)
-        .map_err(|e| format!("Error escribiendo val.csv: {}", e))?;
-
-    // NB: las imágenes de ambos splits viven en el mismo directorio; el split lo
-    // determinan los CSV. Falta declarar las etiquetas: este preparador todavía
-    // emite CSV y los scripts de clasificación consumen JSON (ver Fase 2 del plan
-    // en docs/plan_train_fix.md), así que el generador falla con un error explícito
-    // en vez de producir un script que no encuentra sus datos.
     let mut ds = PreparedDataset::new(
         output_dir,
-        DatasetFormat::MultiLabelCsv,
+        if multi_label {
+            DatasetFormat::MultiLabelCsv
+        } else {
+            DatasetFormat::ImageFolder
+        },
         class_names(project),
     );
-    ds.declare(keys::IMAGES_TRAIN, "images")
-        .declare(keys::IMAGES_VAL, "images");
+
+    for (split, idxs) in plan.splits() {
+        let split_dir = output_dir.join("images").join(split);
+        std::fs::create_dir_all(&split_dir)
+            .map_err(|e| format!("Error creando images/{}: {}", split, e))?;
+
+        let mut etiquetas = Vec::new();
+        for &idx in idxs {
+            let image = &images[idx];
+            let src = images_dir.join(&image.file);
+            if !src.exists() {
+                log::warn!("Imagen no encontrada: {:?}, se omite", src);
+                continue;
+            }
+            std::fs::copy(&src, split_dir.join(&image.name))
+                .map_err(|e| format!("Error copiando {}: {}", image.name, e))?;
+
+            if multi_label {
+                let mut vector = vec![0u8; project.classes.len()];
+                for ann in &image.annotations {
+                    if let Some(pos) = indice_de_clase(ann.class_id) {
+                        vector[pos] = 1;
+                    }
+                }
+                etiquetas.push(serde_json::json!({
+                    "filename": image.name,
+                    "labels": vector,
+                }));
+            } else {
+                // La clase de la imagen es la de su primera anotación: es el mismo
+                // criterio del preparador ImageFolder de ultralytics.
+                let Some(pos) = image
+                    .annotations
+                    .first()
+                    .and_then(|ann| indice_de_clase(ann.class_id))
+                else {
+                    continue;
+                };
+                etiquetas.push(serde_json::json!({
+                    "filename": image.name,
+                    "label": pos,
+                }));
+            }
+        }
+
+        let nombre = format!("labels_{}.json", split);
+        std::fs::write(
+            output_dir.join(&nombre),
+            serde_json::to_string_pretty(&etiquetas).unwrap_or_else(|_| "[]".into()),
+        )
+        .map_err(|e| format!("Error escribiendo {}: {}", nombre, e))?;
+
+        match split {
+            "train" => {
+                ds.declare(keys::IMAGES_TRAIN, format!("images/{split}"))
+                    .declare(keys::LABELS_JSON_TRAIN, &nombre);
+            }
+            "val" => {
+                ds.declare(keys::IMAGES_VAL, format!("images/{split}"))
+                    .declare(keys::LABELS_JSON_VAL, &nombre);
+            }
+            _ => {
+                ds.declare(keys::IMAGES_TEST, format!("images/{split}"))
+                    .declare(keys::LABELS_JSON_TEST, &nombre);
+            }
+        }
+    }
+
+    // Mismo formato "índice: nombre" que consume el resto de los scripts.
+    let mut clases = String::new();
+    for (i, cls) in project.classes.iter().enumerate() {
+        clases.push_str(&format!("{}: {}\n", i, cls.name));
+    }
+    std::fs::write(output_dir.join("classes.txt"), &clases)
+        .map_err(|e| format!("Error escribiendo classes.txt: {}", e))?;
+    ds.declare(keys::CLASSES_FILE, "classes.txt");
+
     Ok(ds)
 }
 
-// ─── TimeSeries CSV Dataset ──────────────────────────────────────────────────
+// ─── Series temporales: arrays ventaneados ───────────────────────────────────
 
-pub fn prepare_timeseries_dataset(
+/// Parámetros del ventaneo de series temporales.
+///
+/// Llegan de `backendParams` (la UI ya los expone) y antes se descartaban: los
+/// scripts los leían con `let _window_size = ...` y luego cargaban `.npy` que nadie
+/// generaba.
+#[derive(Debug, Clone, Copy)]
+pub struct TsSpec {
+    pub window_size: usize,
+    pub stride: usize,
+    /// Pasos a predecir en forecasting/regresión.
+    pub horizon: usize,
+}
+
+impl TsSpec {
+    /// Lee el ventaneo de `backendParams`, con los valores por defecto de la UI.
+    pub fn from_backend_params(bp: &serde_json::Value) -> Self {
+        let leer = |clave: &str, por_defecto: usize| {
+            bp.get(clave)
+                .and_then(|v| v.as_u64())
+                .map(|v| v as usize)
+                .unwrap_or(por_defecto)
+        };
+        Self {
+            window_size: leer("window_size", 100),
+            stride: leer("stride", 1),
+            horizon: leer("horizon", leer("prediction_length", 1)),
+        }
+    }
+}
+
+impl Default for TsSpec {
+    fn default() -> Self {
+        Self {
+            window_size: 100,
+            stride: 1,
+            horizon: 1,
+        }
+    }
+}
+
+/// Una serie leída del proyecto, ya en columnas de valores.
+struct Serie {
+    canales: Vec<Vec<f32>>,
+    /// Clase por paso temporal (`-1` = sin anotar), derivada de las anotaciones.
+    clase_por_paso: Vec<i64>,
+}
+
+/// Convierte los datos de una serie al formato interno.
+fn leer_serie(
+    project: &ProjectFile,
+    project_dir: &Path,
+    ts: &crate::store::project_file::TimeSeriesEntry,
+) -> Option<Serie> {
+    let data = read_series_data(project_dir, ts)?;
+    let timestamps: Vec<f64> = data
+        .get("timestamps")?
+        .as_array()?
+        .iter()
+        .map(|v| v.as_f64().unwrap_or(f64::NAN))
+        .collect();
+    let valores = data.get("values")?.as_array()?;
+    if timestamps.is_empty() || valores.is_empty() {
+        return None;
+    }
+
+    // Univariante: [v, v, …]; multivariante: [[c1, c2], [c1, c2], …]
+    let multivariante = valores.first().map(|v| v.is_array()).unwrap_or(false);
+    let canales: Vec<Vec<f32>> = if multivariante {
+        let n_canales = valores
+            .first()
+            .and_then(|v| v.as_array())
+            .map(|a| a.len())?;
+        (0..n_canales)
+            .map(|c| {
+                valores
+                    .iter()
+                    .map(|fila| {
+                        fila.as_array()
+                            .and_then(|a| a.get(c))
+                            .and_then(|v| v.as_f64())
+                            .unwrap_or(0.0) as f32
+                    })
+                    .collect()
+            })
+            .collect()
+    } else {
+        vec![valores
+            .iter()
+            .map(|v| v.as_f64().unwrap_or(0.0) as f32)
+            .collect()]
+    };
+
+    let pasos = canales.first().map(|c| c.len()).unwrap_or(0);
+    if pasos == 0 {
+        return None;
+    }
+
+    // Anotaciones → clase por paso. `point` marca un instante; `range`, un tramo.
+    let indice_de_clase = |class_id: i64| project.classes.iter().position(|c| c.id == class_id);
+    let indice_de_ts = |valor: f64| -> Option<usize> {
+        timestamps
+            .iter()
+            .enumerate()
+            .min_by(|(_, a), (_, b)| {
+                (*a - valor)
+                    .abs()
+                    .partial_cmp(&(*b - valor).abs())
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .map(|(i, _)| i)
+    };
+
+    let mut clase_por_paso = vec![-1i64; pasos];
+    for ann in &ts.annotations {
+        let Some(clase) = ann.class_id.and_then(indice_de_clase) else {
+            continue;
+        };
+        let clase = clase as i64;
+        match ann.annotation_type.as_str() {
+            "point" | "event" | "anomaly_point" => {
+                if let Some(i) = ann
+                    .data
+                    .get("timestamp")
+                    .and_then(|v| v.as_f64())
+                    .and_then(indice_de_ts)
+                {
+                    clase_por_paso[i] = clase;
+                }
+            }
+            _ => {
+                let inicio = ann
+                    .data
+                    .get("startTimestamp")
+                    .and_then(|v| v.as_f64())
+                    .and_then(indice_de_ts);
+                let fin = ann
+                    .data
+                    .get("endTimestamp")
+                    .and_then(|v| v.as_f64())
+                    .and_then(indice_de_ts);
+                if let (Some(a), Some(b)) = (inicio, fin) {
+                    let desde = a.min(b);
+                    let hasta = a.max(b).min(pasos - 1);
+                    for celda in &mut clase_por_paso[desde..=hasta] {
+                        *celda = clase;
+                    }
+                }
+            }
+        }
+    }
+
+    Some(Serie {
+        canales,
+        clase_por_paso,
+    })
+}
+
+/// Tramo temporal de una serie asignado a un split.
+struct Tramo {
+    serie: usize,
+    inicio: usize,
+    fin: usize,
+}
+
+/// Reparte cada serie en el tiempo: el split de series temporales **no** puede
+/// barajar, o el modelo valida con pasos anteriores a los que entrenó.
+fn tramos_por_split(
+    pasos: usize,
+    val_split: f64,
+    test_split: f64,
+    serie: usize,
+) -> Vec<(&'static str, Tramo)> {
+    let val = ((pasos as f64) * val_split).round() as usize;
+    let test = ((pasos as f64) * test_split).round() as usize;
+    let train = pasos.saturating_sub(val + test);
+    let mut out = Vec::new();
+    if train > 0 {
+        out.push((
+            "train",
+            Tramo {
+                serie,
+                inicio: 0,
+                fin: train,
+            },
+        ));
+    }
+    if val > 0 {
+        out.push((
+            "val",
+            Tramo {
+                serie,
+                inicio: train,
+                fin: train + val,
+            },
+        ));
+    }
+    if test > 0 {
+        out.push((
+            "test",
+            Tramo {
+                serie,
+                inicio: train + val,
+                fin: pasos,
+            },
+        ));
+    }
+    out
+}
+
+/// Prepara arrays `.npy` ventaneados para los backends de series temporales.
+pub fn prepare_timeseries_arrays(
     project: &ProjectFile,
     project_dir: &Path,
     output_dir: &Path,
     val_split: f64,
+    test_split: f64,
+    task: &str,
+    ts_spec: TsSpec,
 ) -> Result<PreparedDataset, String> {
-    let series = &project.timeseries;
-    if series.is_empty() {
+    if project.timeseries.is_empty() {
         return Err("No hay series temporales en el proyecto".to_string());
     }
-
     std::fs::create_dir_all(output_dir).map_err(|e| format!("Error: {}", e))?;
 
-    let mut all_files = Vec::new();
-    let mut exported = 0usize;
-
-    for ts in series {
-        // Los datos viven en timeseries/{id}.json desde la versión 3 del
-        // formato; en proyectos anteriores todavía pueden venir incrustados.
-        let data = match read_series_data(project_dir, ts) {
-            Some(d) => d,
+    let series: Vec<Serie> = project
+        .timeseries
+        .iter()
+        .filter_map(|ts| match leer_serie(project, project_dir, ts) {
+            Some(s) => Some(s),
             None => {
-                log::warn!("Serie {} sin datos legibles, se omite del dataset", ts.id);
-                continue;
+                log::warn!("Serie {} sin datos legibles, se omite", ts.id);
+                None
             }
-        };
-
-        let csv_content = series_to_csv(&data, ts)?;
-        let csv_name = format!("{}.csv", ts.id);
-        std::fs::write(output_dir.join(&csv_name), &csv_content)
-            .map_err(|e| format!("Error escribiendo {}: {}", csv_name, e))?;
-        all_files.push(csv_name);
-        exported += 1;
-    }
-
-    if exported == 0 {
+        })
+        .collect();
+    if series.is_empty() {
         return Err("Ninguna serie temporal del proyecto tiene datos legibles".to_string());
     }
 
-    // Write metadata.json
-    let annotations: Vec<serde_json::Value> = series
+    let n_canales = series[0].canales.len();
+    let stride = ts_spec.stride.max(1);
+    let horizonte = ts_spec.horizon.max(1);
+    let necesita_horizonte = matches!(task, "ts_forecast" | "ts_regress");
+
+    // La ventana se acota por el **tramo de split más corto**, no por la serie
+    // completa: con val_split=0.25 sobre 64 pasos, el tramo de validación tiene 16 y
+    // una ventana de 63 no cabría en ninguno.
+    let tramo_mas_corto = series
         .iter()
-        .flat_map(|ts| {
-            ts.annotations.iter().map(|a| {
-                serde_json::json!({
-                    "series_id": ts.id, "type": a.annotation_type,
-                    "class_id": a.class_id, "data": a.data
-                })
-            })
+        .enumerate()
+        .flat_map(|(i, serie)| {
+            tramos_por_split(serie.canales[0].len(), val_split, test_split, i)
+                .into_iter()
+                .map(|(_, tramo)| tramo.fin - tramo.inicio)
+                .collect::<Vec<_>>()
         })
-        .collect();
+        .min()
+        .unwrap_or(0);
 
-    let metadata = serde_json::json!({
-        "files": all_files,
-        "val_split": val_split,
-        "num_series": exported,
-        "classes": project.classes.iter().map(|c| &c.name).collect::<Vec<_>>(),
-        "annotations": annotations,
-    });
-    std::fs::write(
-        output_dir.join("metadata.json"),
-        serde_json::to_string_pretty(&metadata).unwrap_or_default(),
-    )
-    .map_err(|e| format!("Error escribiendo metadata.json: {}", e))?;
+    let margen = if necesita_horizonte { horizonte } else { 0 };
+    let ventana = ts_spec
+        .window_size
+        .min(tramo_mas_corto.saturating_sub(margen))
+        .max(2);
 
-    // NB: aquí sólo hay un CSV por serie. Los seis backends de series consumen
-    // arrays `.npy` ventaneados (`x_train`, `y_train`, …), que este preparador
-    // todavía no produce — es la Fase 2 del plan (docs/plan_train_fix.md). Al no
-    // declararlos, el generador del script falla con un error explícito en vez de
-    // emitir un `train.py` que muere con FileNotFoundError.
     let mut ds = PreparedDataset::new(
         output_dir,
         DatasetFormat::TimeSeriesCsv,
         class_names(project),
     );
-    ds.declare(keys::TS_META, "metadata.json");
+
+    // ── Caso especial: el perfil matricial trabaja sobre la serie completa ──
+    if task == "ts_pattern" {
+        let serie = &series[0];
+        let datos: Vec<f32> = serie.canales[0].clone();
+        let n = datos.len();
+        npy::write_f32(&output_dir.join("x_train.npy"), &datos, &[n])?;
+        ds.declare(keys::X_TRAIN, "x_train.npy");
+        let meta = serde_json::json!({
+            "task": task,
+            "series": 1,
+            "steps": n,
+            "note": "serie completa sin ventanear: el perfil matricial la recorre entera",
+        });
+        std::fs::write(
+            output_dir.join("ts_meta.json"),
+            serde_json::to_string_pretty(&meta).unwrap_or_default(),
+        )
+        .map_err(|e| format!("Error escribiendo ts_meta.json: {}", e))?;
+        ds.declare(keys::TS_META, "ts_meta.json");
+        return Ok(ds);
+    }
+
+    // ── Ventanas por split, sin cruzar la frontera temporal ──
+    let mut ventanas: std::collections::BTreeMap<&'static str, Vec<(usize, usize)>> =
+        std::collections::BTreeMap::new();
+    for (i, serie) in series.iter().enumerate() {
+        let pasos = serie.canales[0].len();
+        for (split, tramo) in tramos_por_split(pasos, val_split, test_split, i) {
+            let mut inicio = tramo.inicio;
+            while inicio + ventana + if necesita_horizonte { horizonte } else { 0 } <= tramo.fin {
+                ventanas
+                    .entry(split)
+                    .or_default()
+                    .push((tramo.serie, inicio));
+                inicio += stride;
+            }
+        }
+    }
+
+    if ventanas.get("train").map(|v| v.is_empty()).unwrap_or(true) {
+        return Err(format!(
+            "Las series son demasiado cortas para ventanas de {} pasos.              Reduce `window_size` o importa series más largas.",
+            ventana
+        ));
+    }
+
+    // ── Normalización con estadísticas del train ──
+    let mut medias = vec![0.0f64; n_canales];
+    let mut desvios = vec![1.0f64; n_canales];
+    if let Some(train) = ventanas.get("train") {
+        for c in 0..n_canales {
+            let mut suma = 0.0;
+            let mut cuenta = 0.0;
+            for (idx_serie, inicio) in train {
+                for paso in *inicio..*inicio + ventana {
+                    suma += series[*idx_serie].canales[c][paso] as f64;
+                    cuenta += 1.0;
+                }
+            }
+            let media = if cuenta > 0.0 { suma / cuenta } else { 0.0 };
+            let mut var = 0.0;
+            for (idx_serie, inicio) in train {
+                for paso in *inicio..*inicio + ventana {
+                    let d = series[*idx_serie].canales[c][paso] as f64 - media;
+                    var += d * d;
+                }
+            }
+            medias[c] = media;
+            desvios[c] = if cuenta > 1.0 {
+                (var / cuenta).sqrt().max(1e-8)
+            } else {
+                1.0
+            };
+        }
+    }
+
+    let normaliza = |valor: f32, canal: usize| -> f32 {
+        ((valor as f64 - medias[canal]) / desvios[canal]) as f32
+    };
+
+    // ── Escritura de cada split ──
+    for (split, lista) in &ventanas {
+        if lista.is_empty() {
+            continue;
+        }
+        let n = lista.len();
+
+        // X con forma (ventanas, canales, pasos): el layout nativo de tsai.
+        let mut x = Vec::with_capacity(n * n_canales * ventana);
+        for (idx_serie, inicio) in lista {
+            for c in 0..n_canales {
+                for paso in *inicio..*inicio + ventana {
+                    x.push(normaliza(series[*idx_serie].canales[c][paso], c));
+                }
+            }
+        }
+        let nombre_x = format!("x_{}.npy", split);
+        npy::write_f32(&output_dir.join(&nombre_x), &x, &[n, n_canales, ventana])?;
+
+        // Y según la tarea.
+        let nombre_y = format!("y_{}.npy", split);
+        match task {
+            "ts_forecast" | "ts_regress" => {
+                let mut y = Vec::with_capacity(n * horizonte);
+                for (idx_serie, inicio) in lista {
+                    for paso in *inicio + ventana..*inicio + ventana + horizonte {
+                        y.push(normaliza(series[*idx_serie].canales[0][paso], 0));
+                    }
+                }
+                npy::write_f32(&output_dir.join(&nombre_y), &y, &[n, horizonte])?;
+            }
+            "ts_segment" | "ts_event" => {
+                // Etiqueta por paso: 0 = sin anotar, 1..N = clase.
+                let mut y = Vec::with_capacity(n * ventana);
+                for (idx_serie, inicio) in lista {
+                    for paso in *inicio..*inicio + ventana {
+                        let clase = series[*idx_serie].clase_por_paso[paso];
+                        y.push(if clase < 0 { 0 } else { clase + 1 });
+                    }
+                }
+                npy::write_i64(&output_dir.join(&nombre_y), &y, &[n, ventana])?;
+            }
+            _ => {
+                // Clasificación y anomalía: la clase del centro de la ventana.
+                let mut y = Vec::with_capacity(n);
+                for (idx_serie, inicio) in lista {
+                    let centro = inicio + ventana / 2;
+                    let clase = series[*idx_serie].clase_por_paso[centro];
+                    y.push(if clase < 0 { 0 } else { clase + 1 });
+                }
+                npy::write_i64(&output_dir.join(&nombre_y), &y, &[n])?;
+            }
+        }
+
+        match *split {
+            "train" => {
+                ds.declare(keys::X_TRAIN, &nombre_x)
+                    .declare(keys::Y_TRAIN, &nombre_y);
+            }
+            "val" => {
+                ds.declare(keys::X_VAL, &nombre_x)
+                    .declare(keys::Y_VAL, &nombre_y);
+            }
+            _ => {
+                ds.declare(keys::X_TEST, &nombre_x)
+                    .declare(keys::Y_TEST, &nombre_y);
+            }
+        }
+    }
+
+    // Los backends que piden val pero no lo tienen (una sola serie muy corta)
+    // reciben el propio train: es mejor que fallar al generar el script.
+    if !ds.has(keys::X_VAL) {
+        if let Ok(x_train) = ds.input(keys::X_TRAIN).map(|s| s.to_string()) {
+            ds.declare(keys::X_VAL, &x_train);
+        }
+        if let Ok(y_train) = ds.input(keys::Y_TRAIN).map(|s| s.to_string()) {
+            ds.declare(keys::Y_VAL, &y_train);
+        }
+    }
+
+    let meta = serde_json::json!({
+        "task": task,
+        "window_size": ventana,
+        "stride": stride,
+        "horizon": horizonte,
+        "channels": n_canales,
+        "layout": "x: (ventanas, canales, pasos)",
+        "normalization": {"kind": "zscore-por-canal", "mean": medias, "std": desvios},
+        "classes": project.classes.iter().map(|c| &c.name).collect::<Vec<_>>(),
+        "label_offset": 1,
+        "series": series.len(),
+    });
+    std::fs::write(
+        output_dir.join("ts_meta.json"),
+        serde_json::to_string_pretty(&meta).unwrap_or_default(),
+    )
+    .map_err(|e| format!("Error escribiendo ts_meta.json: {}", e))?;
+    ds.declare(keys::TS_META, "ts_meta.json");
+
+    Ok(ds)
+}
+
+// ─── TimeSeries CSV Dataset ──────────────────────────────────────────────────
+
+/// CSV en formato largo para pytorch-forecasting: una fila por (serie, paso).
+///
+/// `TimeSeriesDataSet` exige exactamente esta forma —`series_id`, `time_idx`,
+/// `target`—. El preparador anterior escribía un CSV por serie más un
+/// `metadata.json`, que ningún script leía: el entrenamiento moría buscando
+/// `data.csv`.
+pub fn prepare_timeseries_long_csv(
+    project: &ProjectFile,
+    project_dir: &Path,
+    output_dir: &Path,
+    val_split: f64,
+    test_split: f64,
+) -> Result<PreparedDataset, String> {
+    if project.timeseries.is_empty() {
+        return Err("No hay series temporales en el proyecto".to_string());
+    }
+    std::fs::create_dir_all(output_dir).map_err(|e| format!("Error: {}", e))?;
+
+    let mut filas = Vec::new();
+    let mut columnas_extra = 0usize;
+    let mut exportadas = 0usize;
+
+    for ts in &project.timeseries {
+        let Some(serie) = leer_serie(project, project_dir, ts) else {
+            log::warn!("Serie {} sin datos legibles, se omite", ts.id);
+            continue;
+        };
+        columnas_extra = columnas_extra.max(serie.canales.len().saturating_sub(1));
+        let pasos = serie.canales[0].len();
+        for paso in 0..pasos {
+            let mut fila = vec![
+                ts.id.clone(),
+                paso.to_string(),
+                format!("{}", serie.canales[0][paso]),
+            ];
+            for canal in serie.canales.iter().skip(1) {
+                fila.push(format!("{}", canal[paso]));
+            }
+            filas.push(fila.join(","));
+        }
+        exportadas += 1;
+    }
+
+    if exportadas == 0 {
+        return Err("Ninguna serie temporal del proyecto tiene datos legibles".to_string());
+    }
+
+    let mut cabecera = vec![
+        "series_id".to_string(),
+        "time_idx".to_string(),
+        "target".to_string(),
+    ];
+    for i in 0..columnas_extra {
+        cabecera.push(format!("covariable_{}", i + 1));
+    }
+    let csv = format!("{}\n{}\n", cabecera.join(","), filas.join("\n"));
+    std::fs::write(output_dir.join("long.csv"), &csv)
+        .map_err(|e| format!("Error escribiendo long.csv: {}", e))?;
+
+    let meta = serde_json::json!({
+        "series": exportadas,
+        "val_split": val_split,
+        "test_split": test_split,
+        "columns": cabecera,
+    });
+    std::fs::write(
+        output_dir.join("ts_meta.json"),
+        serde_json::to_string_pretty(&meta).unwrap_or_default(),
+    )
+    .map_err(|e| format!("Error escribiendo ts_meta.json: {}", e))?;
+
+    let mut ds = PreparedDataset::new(
+        output_dir,
+        DatasetFormat::TimeSeriesCsv,
+        class_names(project),
+    );
+    ds.declare(keys::LONG_CSV, "long.csv")
+        .declare(keys::TS_META, "ts_meta.json");
     Ok(ds)
 }
 
@@ -1610,101 +2134,4 @@ fn read_series_data(
         .join(format!("{}.json", ts.id));
     let content = std::fs::read(path).ok()?;
     serde_json::from_slice(&content).ok()
-}
-
-/// Convierte una serie al CSV que consumen los backends de series temporales.
-///
-/// El formato de entrada es el que produce el importador:
-/// `{ timestamps: [...], values: [...] | [[...], ...], columns: [...] }`.
-/// La versión anterior esperaba `{columns, rows}` o un array de objetos —dos
-/// formas que el programa nunca genera—, así que el CSV salía vacío para
-/// cualquier serie real.
-fn series_to_csv(
-    data: &serde_json::Value,
-    ts: &crate::store::project_file::TimeSeriesEntry,
-) -> Result<String, String> {
-    let timestamps = data
-        .get("timestamps")
-        .and_then(|t| t.as_array())
-        .ok_or_else(|| format!("La serie {} no tiene marcas de tiempo", ts.id))?;
-
-    let values = data.get("values").and_then(|v| v.as_array());
-
-    // Univariante: values = [v, v, ...]; multivariante: values = [[...], [...]]
-    let multivariate = values
-        .and_then(|v| v.first())
-        .map(|f| f.is_array())
-        .unwrap_or(false);
-
-    let column_names: Vec<String> = match data.get("columns").and_then(|c| c.as_array()) {
-        Some(cols) => cols
-            .iter()
-            .map(|c| c.as_str().unwrap_or("value").to_string())
-            .collect(),
-        None if multivariate => (0..values.map(|v| v.len()).unwrap_or(0))
-            .map(|i| format!("value_{}", i + 1))
-            .collect(),
-        None => vec!["value".to_string()],
-    };
-
-    let mut header = vec!["timestamp".to_string()];
-    header.extend(column_names.iter().cloned());
-    header.push("label".to_string());
-    let mut lines = vec![header.join(",")];
-
-    // Etiqueta por punto a partir de las anotaciones de la serie: los puntos y
-    // eventos marcan su propia marca de tiempo, los rangos todo su intervalo.
-    let label_at = |timestamp: f64| -> String {
-        for ann in &ts.annotations {
-            let hit = match ann.annotation_type.as_str() {
-                "range" => {
-                    let start = ann.data.get("startTimestamp").and_then(|v| v.as_f64());
-                    let end = ann.data.get("endTimestamp").and_then(|v| v.as_f64());
-                    matches!((start, end), (Some(s), Some(e)) if timestamp >= s.min(e) && timestamp <= s.max(e))
-                }
-                "classification" => true,
-                _ => ann
-                    .data
-                    .get("timestamp")
-                    .and_then(|v| v.as_f64())
-                    .map(|t| (t - timestamp).abs() < f64::EPSILON)
-                    .unwrap_or(false),
-            };
-            if hit {
-                return ann
-                    .class_id
-                    .map(|c| c.to_string())
-                    .unwrap_or_else(|| ann.annotation_type.clone());
-            }
-        }
-        String::new()
-    };
-
-    let cell = |v: Option<&serde_json::Value>| -> String {
-        match v.and_then(|v| v.as_f64()) {
-            Some(f) => f.to_string(),
-            // null = hueco declarado por el importador; se deja vacío para que
-            // pandas lo lea como NaN en vez de como un cero real.
-            None => String::new(),
-        }
-    };
-
-    for (i, ts_value) in timestamps.iter().enumerate() {
-        let timestamp = ts_value.as_f64().unwrap_or(i as f64);
-        let mut row = vec![timestamp.to_string()];
-
-        if multivariate {
-            let series_arrays = values.unwrap();
-            for serie in series_arrays {
-                row.push(cell(serie.as_array().and_then(|a| a.get(i))));
-            }
-        } else {
-            row.push(cell(values.and_then(|a| a.get(i))));
-        }
-
-        row.push(label_at(timestamp));
-        lines.push(row.join(","));
-    }
-
-    Ok(lines.join("\n"))
 }

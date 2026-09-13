@@ -1484,7 +1484,7 @@ def main():
 
     scaler = torch.amp.GradScaler("cuda") if {amp} and device.type == "cuda" else None
 
-    best_miou = 0.0
+    best_miou = None
     patience_counter = 0
 
     for epoch in range(1, {epochs} + 1):
@@ -1558,8 +1558,10 @@ def main():
         }}
         print("ANNOTIX_EVENT:" + json.dumps(event), flush=True)
 
-        # Save best
-        if mean_iou > best_miou:
+        # Save best. `None` como valor inicial garantiza que la primera época
+        # guarde: si la métrica nunca "mejora" (datasets degenerados, métricas en 0)
+        # antes no se escribía ningún best.pth y el job terminaba sin modelo.
+        if best_miou is None or mean_iou > best_miou:
             best_miou = mean_iou
             torch.save(model.state_dict(), os.path.join(output_dir, "best.pth"))
             patience_counter = 0
@@ -1581,10 +1583,14 @@ def main():
     except Exception as e:
         print(f"ONNX export failed: {{e}}", file=sys.stderr)
 
+    _best = os.path.join(output_dir, "best.pth")
+    _last = os.path.join(output_dir, "last.pth")
     result = {{
         "type": "completed",
-        "bestModelPath": os.path.join(output_dir, "best.pth"),
-        "lastModelPath": os.path.join(output_dir, "last.pth"),
+        # Si no hubo best (early stopping en la primera época, métrica plana), vale
+        # el último: reportar una ruta inexistente dejaba el job sin modelo usable.
+        "bestModelPath": _best if os.path.exists(_best) else _last,
+        "lastModelPath": _last,
         "resultsDir": output_dir,
     }}
     print("ANNOTIX_EVENT:" + json.dumps(result), flush=True)
@@ -2646,6 +2652,9 @@ if __name__ == "__main__":
 // ─── timm Script ─────────────────────────────────────────────────────────────
 
 pub fn generate_timm_script(req: &TrainingRequest, sp: &ScriptPaths) -> String {
+    // Literal Python: `{multi_label}` se interpola tal cual en el script, y el
+    // `false` de Rust no es válido en Python.
+    let multi_label = py_bool(req.task == "multi_classify");
     let bp = &req.backend_params;
     let model_id = &req.model_id; // e.g. "resnet50", "efficientnet_b0"
     let pretrained = bp
@@ -2707,26 +2716,24 @@ def main():
     train_transform = create_transform(**data_config, is_training=True)
     val_transform = create_transform(**data_config, is_training=False)
 
-    # Dataset: expects dataset_dir/images/train/<class_id>/img.jpg structure
-    # or dataset_dir/images/train/ with a labels.json mapping
+    MULTI_LABEL = {multi_label}
+
+    # Las etiquetas vienen del JSON que declara el preparador (labels_{{split}}.json).
+    # El fallback por carpetas que había aquí interpretaba el nombre del directorio
+    # como índice de clase: con nombres reales daba 0 para todas las imágenes.
     class ClassificationDataset(Dataset):
         def __init__(self, images_dir, labels_file, transform=None):
             self.transform = transform
             self.samples = []
-            if os.path.exists(labels_file):
-                with open(labels_file) as f:
-                    labels_data = json.load(f)
-                for item in labels_data:
+            with open(labels_file) as f:
+                for item in json.load(f):
                     img_path = os.path.join(images_dir, item["filename"])
-                    if os.path.exists(img_path):
-                        self.samples.append((img_path, item["label"]))
-            else:
-                # Fallback: folder-based structure
-                for class_dir in sorted(Path(images_dir).iterdir()):
-                    if class_dir.is_dir():
-                        label = int(class_dir.name) if class_dir.name.isdigit() else 0
-                        for img_path in class_dir.glob("*"):
-                            self.samples.append((str(img_path), label))
+                    if not os.path.exists(img_path):
+                        continue
+                    etiqueta = item["labels"] if MULTI_LABEL else item["label"]
+                    self.samples.append((img_path, etiqueta))
+            if not self.samples:
+                raise RuntimeError(f"Sin muestras utilizables en {{labels_file}}")
 
         def __len__(self):
             return len(self.samples)
@@ -2736,18 +2743,27 @@ def main():
             image = Image.open(img_path).convert("RGB")
             if self.transform:
                 image = self.transform(image)
+            if MULTI_LABEL:
+                return image, torch.tensor(label, dtype=torch.float32)
             return image, label
 
-    train_ds = ClassificationDataset(
-        IMAGES_TRAIN,
-        LABELS_JSON_TRAIN,
-        train_transform,
-    )
-    val_ds = ClassificationDataset(
-        IMAGES_VAL,
-        LABELS_JSON_VAL,
-        val_transform,
-    )
+    def _resumen_clases(ds, nombre):
+        """Aviso temprano si el dataset quedó degenerado."""
+        if MULTI_LABEL:
+            return
+        from collections import Counter
+        conteo = Counter(l for _, l in ds.samples)
+        print(f"{{nombre}}: {{len(ds)}} muestras, clases {{dict(sorted(conteo.items()))}}", flush=True)
+        if len(conteo) < 2:
+            print(
+                f"Aviso: {{nombre}} tiene una sola clase; el modelo no puede aprender a distinguir.",
+                file=sys.stderr,
+            )
+
+    train_ds = ClassificationDataset(IMAGES_TRAIN, LABELS_JSON_TRAIN, train_transform)
+    val_ds = ClassificationDataset(IMAGES_VAL, LABELS_JSON_VAL, val_transform)
+    _resumen_clases(train_ds, "train")
+    _resumen_clases(val_ds, "val")
 
     # drop_last: si el último lote queda con una sola muestra, BatchNorm aborta con
     # "Expected more than 1 value per channel when training". Se descarta ese lote,
@@ -2757,7 +2773,18 @@ def main():
     val_loader = DataLoader(val_ds, batch_size={batch}, shuffle=False, num_workers={workers}, pin_memory=True)
 
     # Loss, optimizer, scheduler
-    criterion = nn.CrossEntropyLoss()
+    # Multi-etiqueta: cada clase es una decisión independiente, así que BCE sobre
+    # logits. CrossEntropy asumiría una sola clase correcta por imagen.
+    criterion = nn.BCEWithLogitsLoss() if MULTI_LABEL else nn.CrossEntropyLoss()
+
+    def _aciertos(outputs, labels):
+        """(aciertos, muestras). En multi-etiqueta cuenta etiquetas, no imágenes."""
+        if MULTI_LABEL:
+            predicho = (torch.sigmoid(outputs) > 0.5).float()
+            return predicho.eq(labels).sum().item(), labels.numel()
+        _, predicho = outputs.max(1)
+        return predicho.eq(labels).sum().item(), labels.size(0)
+
     optimizer = torch.optim.AdamW(model.parameters(), lr={lr}, weight_decay={weight_decay})
 
     scheduler_type = "{scheduler}"
@@ -2770,7 +2797,7 @@ def main():
 
     scaler = torch.amp.GradScaler("cuda") if {amp} and device.type == "cuda" else None
 
-    best_acc = 0.0
+    best_acc = None
     patience_counter = 0
 
     for epoch in range(1, {epochs} + 1):
@@ -2795,9 +2822,9 @@ def main():
                 loss.backward()
                 optimizer.step()
             train_loss += loss.item()
-            _, predicted = outputs.max(1)
-            train_total += labels.size(0)
-            train_correct += predicted.eq(labels).sum().item()
+            aciertos, muestras = _aciertos(outputs, labels)
+            train_correct += aciertos
+            train_total += muestras
         train_loss /= max(len(train_loader), 1)
         train_acc = train_correct / max(train_total, 1)
 
@@ -2812,9 +2839,9 @@ def main():
                 outputs = model(images)
                 loss = criterion(outputs, labels)
                 val_loss += loss.item()
-                _, predicted = outputs.max(1)
-                val_total += labels.size(0)
-                val_correct += predicted.eq(labels).sum().item()
+                aciertos, muestras = _aciertos(outputs, labels)
+                val_correct += aciertos
+                val_total += muestras
         val_loss /= max(len(val_loader), 1)
         val_acc = val_correct / max(val_total, 1)
 
@@ -2837,8 +2864,9 @@ def main():
         }}
         print("ANNOTIX_EVENT:" + json.dumps(event), flush=True)
 
-        # Save best
-        if val_acc > best_acc:
+        # Save best (ver nota en el script de SMP: `None` para que la primera
+        # época siempre deje un modelo en disco).
+        if best_acc is None or val_acc > best_acc:
             best_acc = val_acc
             torch.save(model.state_dict(), os.path.join(output_dir, "best.pth"))
             patience_counter = 0
@@ -2860,10 +2888,14 @@ def main():
     except Exception as e:
         print(f"ONNX export failed: {{e}}", file=sys.stderr)
 
+    _best = os.path.join(output_dir, "best.pth")
+    _last = os.path.join(output_dir, "last.pth")
     result = {{
         "type": "completed",
-        "bestModelPath": os.path.join(output_dir, "best.pth"),
-        "lastModelPath": os.path.join(output_dir, "last.pth"),
+        # Si no hubo best (early stopping en la primera época, métrica plana), vale
+        # el último: reportar una ruta inexistente dejaba el job sin modelo usable.
+        "bestModelPath": _best if os.path.exists(_best) else _last,
+        "lastModelPath": _last,
         "resultsDir": output_dir,
     }}
     print("ANNOTIX_EVENT:" + json.dumps(result), flush=True)
@@ -2892,6 +2924,9 @@ if __name__ == "__main__":
 // ─── HuggingFace Classification Script ───────────────────────────────────────
 
 pub fn generate_hf_classification_script(req: &TrainingRequest, sp: &ScriptPaths) -> String {
+    // Literal Python: `{multi_label}` se interpola tal cual en el script, y el
+    // `false` de Rust no es válido en Python.
+    let multi_label = py_bool(req.task == "multi_classify");
     let bp = &req.backend_params;
     let model_checkpoint = &req.model_id; // e.g. "google/vit-base-patch16-224"
     let warmup_ratio = bp
@@ -2943,23 +2978,25 @@ def main():
     # Load processor
     processor = AutoImageProcessor.from_pretrained("{model_checkpoint}")
 
+    MULTI_LABEL = {multi_label}
+
+    # Etiquetas desde el JSON declarado por el preparador. El fallback por carpetas
+    # que había aquí leía el nombre del directorio como índice de clase y, con
+    # nombres reales, etiquetaba todo como clase 0 sin dar ningún error.
     class ClassificationDataset(Dataset):
         def __init__(self, images_dir, labels_file, processor):
             self.processor = processor
             self.samples = []
-            if os.path.exists(labels_file):
-                with open(labels_file) as f:
-                    labels_data = json.load(f)
-                for item in labels_data:
+            with open(labels_file) as f:
+                for item in json.load(f):
                     img_path = os.path.join(images_dir, item["filename"])
-                    if os.path.exists(img_path):
-                        self.samples.append((img_path, item["label"]))
-            else:
-                for class_dir in sorted(Path(images_dir).iterdir()):
-                    if class_dir.is_dir():
-                        label = int(class_dir.name) if class_dir.name.isdigit() else 0
-                        for img_path in class_dir.glob("*"):
-                            self.samples.append((str(img_path), label))
+                    if not os.path.exists(img_path):
+                        continue
+                    self.samples.append(
+                        (img_path, item["labels"] if MULTI_LABEL else item["label"])
+                    )
+            if not self.samples:
+                raise RuntimeError(f"Sin muestras utilizables en {{labels_file}}")
 
         def __len__(self):
             return len(self.samples)
@@ -2969,19 +3006,21 @@ def main():
             image = Image.open(img_path).convert("RGB")
             encoded = self.processor(images=image, return_tensors="pt")
             encoded = {{k: v.squeeze(0) for k, v in encoded.items()}}
-            encoded["labels"] = torch.tensor(label, dtype=torch.long)
+            if MULTI_LABEL:
+                encoded["labels"] = torch.tensor(label, dtype=torch.float32)
+            else:
+                encoded["labels"] = torch.tensor(label, dtype=torch.long)
             return encoded
 
-    train_ds = ClassificationDataset(
-        IMAGES_TRAIN,
-        LABELS_JSON_TRAIN,
-        processor,
-    )
-    val_ds = ClassificationDataset(
-        IMAGES_VAL,
-        LABELS_JSON_VAL,
-        processor,
-    )
+    train_ds = ClassificationDataset(IMAGES_TRAIN, LABELS_JSON_TRAIN, processor)
+    val_ds = ClassificationDataset(IMAGES_VAL, LABELS_JSON_VAL, processor)
+
+    if not MULTI_LABEL:
+        from collections import Counter
+        _conteo = Counter(l for _, l in train_ds.samples)
+        print(f"train: {{len(train_ds)}} muestras, clases {{dict(sorted(_conteo.items()))}}", flush=True)
+        if len(_conteo) < 2:
+            print("Aviso: el split de train tiene una sola clase.", file=sys.stderr)
 
     # Label mappings
     id2label = {{i: f"class_{{i}}" for i in range(num_classes)}}
@@ -3004,14 +3043,28 @@ def main():
         id2label=id2label,
         label2id=label2id,
         ignore_mismatched_sizes=True,
+        # Con multi-etiqueta el modelo usa BCE en vez de CrossEntropy.
+        problem_type="multi_label_classification" if MULTI_LABEL else "single_label_classification",
     )
 
     # Metrics
     def compute_metrics(eval_pred):
         logits, labels = eval_pred
+        if MULTI_LABEL:
+            # Cada clase es independiente: se decide por umbral, no por argmax.
+            probs = 1.0 / (1.0 + np.exp(-logits))
+            preds = (probs > 0.5).astype(np.float32)
+            etiquetas = labels.astype(np.float32)
+            verdaderos_positivos = float((preds * etiquetas).sum())
+            precision = verdaderos_positivos / max(float(preds.sum()), 1.0)
+            recall = verdaderos_positivos / max(float(etiquetas.sum()), 1.0)
+            f1 = 2 * precision * recall / max(precision + recall, 1e-9)
+            return {{
+                "accuracy": float((preds == etiquetas).mean()),
+                "f1": float(f1),
+            }}
         preds = np.argmax(logits, axis=-1)
-        accuracy = (preds == labels).mean()
-        return {{"accuracy": float(accuracy)}}
+        return {{"accuracy": float((preds == labels).mean())}}
 
     # Annotix callback
     class AnnotixCallback(TrainerCallback):

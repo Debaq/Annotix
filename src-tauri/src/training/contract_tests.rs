@@ -60,6 +60,21 @@ fn assert_sin_rutas_inventadas(script: &str, etiqueta: &str) {
     }
 }
 
+/// Los literales booleanos de Rust son sintaxis válida en Python —un identificador—
+/// pero explotan al ejecutarse con `NameError: name 'false' is not defined`. Pasó de
+/// verdad: `{multi_label}` capturó el `bool` de Rust en vez del `py_bool`, y
+/// `py_compile` no lo ve porque es un error de ejecución, no de sintaxis.
+fn assert_sin_booleanos_de_rust(script: &str, etiqueta: &str) {
+    for linea in script.lines() {
+        let t = linea.trim_end();
+        assert!(
+            !(t.ends_with("= false") || t.ends_with("= true")),
+            "{etiqueta}: el script contiene un booleano de Rust sin convertir: {t:?}. \
+             Interpola con py_bool()."
+        );
+    }
+}
+
 /// Intérprete para `py_compile`. Sin él, la comprobación de sintaxis se salta.
 fn python_de_pruebas() -> Option<PathBuf> {
     if let Ok(p) = std::env::var("ANNOTIX_TEST_PYTHON") {
@@ -117,6 +132,7 @@ fn caso(backend: TrainingBackend, task: &str, espera: Expect) {
         &imagenes,
         &salida,
         DatasetSpec {
+            ts: dataset::TsSpec::default(),
             val_split: 0.25,
             test_split: 0.0,
             task,
@@ -143,6 +159,7 @@ fn caso(backend: TrainingBackend, task: &str, espera: Expect) {
                 assert!(!contenido.trim().is_empty(), "{et}: contenido vacío");
                 if nombre.ends_with(".py") {
                     assert_sin_rutas_inventadas(contenido, &et);
+                    assert_sin_booleanos_de_rust(contenido, &et);
                     assert_python_valido(contenido, &et);
                 }
             }
@@ -201,6 +218,34 @@ fn hf_segmentation_segment() {
 }
 
 #[test]
+fn timm_classify() {
+    caso(TrainingBackend::Timm, "classify", Expect::Genera);
+}
+
+#[test]
+fn timm_multi_classify() {
+    caso(TrainingBackend::Timm, "multi_classify", Expect::Genera);
+}
+
+#[test]
+fn hf_classification_classify() {
+    caso(
+        TrainingBackend::HfClassification,
+        "classify",
+        Expect::Genera,
+    );
+}
+
+#[test]
+fn hf_classification_multi_classify() {
+    caso(
+        TrainingBackend::HfClassification,
+        "multi_classify",
+        Expect::Genera,
+    );
+}
+
+#[test]
 fn sklearn_tabular() {
     caso(TrainingBackend::Sklearn, "tabular", Expect::Genera);
 }
@@ -235,7 +280,7 @@ fn detectron2_instance_genera_pero_no_entrena() {
     );
 }
 
-// ─── Backends rotos: contrato incumplido ────────────────────────────────────
+// ─── Series temporales ──────────────────────────────────────────────────────
 
 #[test]
 fn mmrotate_obb_recibe_layout_yolo() {
@@ -248,76 +293,45 @@ fn mmrotate_obb_recibe_layout_yolo() {
 }
 
 #[test]
-fn timm_classify_sin_labels_json() {
-    // El preparador deja `{split}/{clase}/img.png` (ImageFolder); el script pide
-    // imágenes planas + labels_*.json. Fase 2.1 del plan.
-    caso(
-        TrainingBackend::Timm,
-        "classify",
-        Expect::FaltaClave(keys::IMAGES_TRAIN),
-    );
+fn tsai_ts_classify() {
+    caso(TrainingBackend::Tsai, "ts_classify", Expect::Genera);
 }
 
 #[test]
-fn hf_classification_sin_labels_json() {
-    caso(
-        TrainingBackend::HfClassification,
-        "classify",
-        Expect::FaltaClave(keys::IMAGES_TRAIN),
-    );
+fn tsai_ts_forecast() {
+    caso(TrainingBackend::Tsai, "ts_forecast", Expect::Genera);
 }
 
 #[test]
-fn tsai_sin_arrays() {
-    // Los 6 backends de series esperan arrays ventaneados que nadie genera. Fase 2.2.
-    caso(
-        TrainingBackend::Tsai,
-        "ts_classify",
-        Expect::FaltaClave(keys::X_TRAIN),
-    );
+fn tsai_ts_segment() {
+    caso(TrainingBackend::Tsai, "ts_segment", Expect::Genera);
 }
 
 #[test]
-fn pytorch_forecasting_sin_csv_largo() {
+fn pytorch_forecasting_ts_forecast() {
     caso(
         TrainingBackend::PytorchForecasting,
         "ts_forecast",
-        Expect::FaltaClave(keys::LONG_CSV),
+        Expect::Genera,
     );
 }
 
 #[test]
-fn pyod_sin_arrays() {
-    caso(
-        TrainingBackend::Pyod,
-        "ts_anomaly",
-        Expect::FaltaClave(keys::X_TRAIN),
-    );
+fn pyod_ts_anomaly() {
+    caso(TrainingBackend::Pyod, "ts_anomaly", Expect::Genera);
 }
 
 #[test]
-fn tslearn_sin_arrays() {
-    caso(
-        TrainingBackend::Tslearn,
-        "ts_cluster",
-        Expect::FaltaClave(keys::X_TRAIN),
-    );
+fn tslearn_ts_cluster() {
+    caso(TrainingBackend::Tslearn, "ts_cluster", Expect::Genera);
 }
 
 #[test]
-fn pypots_sin_arrays() {
-    caso(
-        TrainingBackend::Pypots,
-        "ts_impute",
-        Expect::FaltaClave(keys::X_TRAIN),
-    );
+fn pypots_ts_impute() {
+    caso(TrainingBackend::Pypots, "ts_impute", Expect::Genera);
 }
 
 #[test]
-fn stumpy_sin_arrays() {
-    caso(
-        TrainingBackend::Stumpy,
-        "ts_pattern",
-        Expect::FaltaClave(keys::X_TRAIN),
-    );
+fn stumpy_ts_pattern() {
+    caso(TrainingBackend::Stumpy, "ts_pattern", Expect::Genera);
 }

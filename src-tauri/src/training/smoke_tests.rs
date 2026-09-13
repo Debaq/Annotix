@@ -149,6 +149,7 @@ fn smoke(backend: TrainingBackend, task: &str) {
         &imagenes,
         &job,
         DatasetSpec {
+            ts: dataset::TsSpec::default(),
             val_split: 0.25,
             test_split: 0.0,
             task,
@@ -236,12 +237,77 @@ fn smoke_hf_segmentation_segment() {
 }
 
 #[test]
+#[ignore = "requiere entorno Python con timm"]
+fn smoke_timm_classify() {
+    smoke(TrainingBackend::Timm, "classify");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con timm"]
+fn smoke_timm_multi_classify() {
+    smoke(TrainingBackend::Timm, "multi_classify");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con transformers"]
+fn smoke_hf_classification() {
+    smoke(TrainingBackend::HfClassification, "classify");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con transformers"]
+fn smoke_hf_classification_multi() {
+    smoke(TrainingBackend::HfClassification, "multi_classify");
+}
+
+#[test]
 #[ignore = "requiere entorno Python con scikit-learn"]
 fn smoke_sklearn_tabular() {
     smoke(TrainingBackend::Sklearn, "tabular");
 }
 
-// Los backends de clasificación, series temporales y OpenMMLab todavía no pasan
-// el contrato: sus smoke tests se añaden al arreglarlos (Fases 2 y 3 del plan en
-// docs/plan_train_fix.md). Añadirlos ahora sólo repetiría lo que ya afirman los
-// tests de contrato.
+#[test]
+#[ignore = "requiere entorno Python con tsai"]
+fn smoke_tsai_ts_classify() {
+    smoke(TrainingBackend::Tsai, "ts_classify");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con tsai"]
+fn smoke_tsai_ts_forecast() {
+    smoke(TrainingBackend::Tsai, "ts_forecast");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con pytorch-forecasting"]
+fn smoke_pytorch_forecasting() {
+    smoke(TrainingBackend::PytorchForecasting, "ts_forecast");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con pyod"]
+fn smoke_pyod_ts_anomaly() {
+    smoke(TrainingBackend::Pyod, "ts_anomaly");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con tslearn"]
+fn smoke_tslearn_ts_cluster() {
+    smoke(TrainingBackend::Tslearn, "ts_cluster");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con pypots"]
+fn smoke_pypots_ts_impute() {
+    smoke(TrainingBackend::Pypots, "ts_impute");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con stumpy"]
+fn smoke_stumpy_ts_pattern() {
+    smoke(TrainingBackend::Stumpy, "ts_pattern");
+}
+
+// Los backends OpenMMLab y Detectron2 se reemplazan por backends HuggingFace en la
+// Fase 3 del plan (docs/plan_train_fix.md): sus smoke tests llegan con el reemplazo,
+// porque su stack no es instalable sobre torch 2.x + numpy 2.

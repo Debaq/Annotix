@@ -256,6 +256,7 @@ impl TrainingProcessManager {
             &images,
             &dataset_dir,
             dataset::DatasetSpec {
+                ts: dataset::TsSpec::from_backend_params(&request.backend_params),
                 val_split: request.val_split,
                 test_split: request.test_split,
                 task: &request.task,
