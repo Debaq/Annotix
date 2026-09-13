@@ -391,8 +391,17 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
     const date = new Date(job.createdAt).toLocaleDateString();
     setFineTuneSource(`${String(model).toUpperCase()}${size} - ${date}`);
     setBackend(jobBackend);
+    // Cambiar de backend reelige el modelo recomendado, y eso rompe la herencia de
+    // pesos donde la arquitectura va en el id: un checkpoint de `UnetPlusPlus-resnet50`
+    // no entra en un `Unet-resnet34` y el script aborta por no cargar ni un tensor.
+    // Se restituye el modelo del trabajo padre después del cambio de backend.
+    const parentModelId = (config.modelId ?? config.yoloVersion) as string | undefined;
+    if (parentModelId) setModelId(parentModelId);
+    if (typeof config.modelSize === 'string' && config.modelSize) {
+      setModelSize(config.modelSize);
+    }
     setPhase('config');
-  }, [setBaseModelPath, setBackend, backends]);
+  }, [setBaseModelPath, setBackend, setModelId, setModelSize, backends]);
 
   const syncYoloPartial = useCallback((partial: Partial<TrainingConfig>) => {
     for (const [k, v] of Object.entries(partial)) {

@@ -109,16 +109,17 @@ Por familia, el cambio es distinto y en un caso es casi gratis:
   documento y el que más usuarios de HF va a servir. Cuidado con el
   `processor`: hay que recargar el del padre, no el del id del Hub, o el
   preprocesamiento deja de coincidir con los pesos.
-- **`smp` y `timm` (2)**: crear el modelo como hoy y, si hay modelo base,
-  `model.load_state_dict(torch.load(base))` antes de mover a device. El punto
-  delicado es la cabeza: si el número de clases cambió, hay que cargar con
-  `strict=False` y decirlo, no fallar en silencio.
-- **`hf_pose` (1)**: mismo caso que `smp`/`timm` — `load_state_dict` sobre el
-  `best.pth`, no `from_pretrained`.
+- **`smp`, `timm`, `hf_pose` (3): resuelto.** Se crea el modelo como antes y, si
+  hay modelo base, se carga el `state_dict` antes de mover a device. La cabeza se
+  maneja con `strict=False` y se informa qué no encajó.
 - **`rf_detr` (1)**: el constructor de `rfdetr` acepta pesos de partida; hoy solo
   se le pasan `resolution` y `gradient_checkpointing` (`scripts.rs:670-673`).
-- **`tsai` (1)**: `load_learner()` sobre el `learner.pkl` que ya se exporta.
-- **`pytorch_forecasting` (1)**: carga desde checkpoint de Lightning.
+- **`tsai` (1): resuelto.** Los pesos entran por `learner.model`, que es el
+  módulo de torch que el propio script guarda al terminar.
+- **`pytorch_forecasting` (1): resuelto.** El checkpoint de Lightning guarda los
+  pesos bajo `state_dict` y el cargador lo desenvuelve. `from_dataset` arma el
+  modelo según las covariables, así que un proyecto que cambió de forma produce
+  carga parcial informada en vez de un fallo mudo.
 - **`pyod`, `tslearn`, `pypots`, `stumpy`, `sklearn` (5)**: aquí hay que ser
   honesto — "reentrenar encima" mayormente **no existe** en estos estimadores.
   Un k-means de `tslearn` se reajusta desde cero, `stumpy` no entrena nada. Lo que
@@ -238,8 +239,20 @@ lugar de reventar con un error de tamaño de tensor que no le dice nada a nadie.
    quemada en la UI, y un test comprueba que lo declarado coincide con lo que el
    generador de script usa de verdad: un botón que no hace nada es justo el
    defecto que esto venía a cerrar.
-4. **`smp`, `timm`, `hf_pose`, `rf_detr`, `tsai`, `pytorch_forecasting`**: carga
-   de `state_dict`/checkpoint con manejo explícito del cambio de cabeza.
+4. ~~**`smp`, `timm`, `hf_pose`, `tsai`, `pytorch_forecasting`**: carga de
+   `state_dict`/checkpoint con manejo explícito del cambio de cabeza~~ —
+   **hecho**. Se carga con `strict=False` y se informa qué tensores quedaron
+   reinicializados; si no se cargó ninguno el script aborta, porque un "fine-tune"
+   que no heredó nada es un entrenamiento desde cero disfrazado. Partiendo de un
+   modelo propio ya no se descargan los pesos del catálogo que se iban a
+   sobrescribir. Y la UI restituye el modelo del trabajo padre al cambiar de
+   backend: sin eso, un checkpoint de `UnetPlusPlus-resnet50` caía en el
+   `Unet-resnet34` recomendado y abortaba.
+
+   **`rf_detr` queda pendiente**: su constructor acepta pesos de partida según la
+   librería, pero no se verificó contra la versión que el proyecto fija y rfdetr
+   aborta con un `ValidationError` de pydantic ante un argumento que no conoce.
+   Entra cuando se compruebe con un entrenamiento real.
 5. **Registrar modelo entrenado como modelo de inferencia** con un click,
    rellenando el mapeo de clases desde el registro.
 6. **Avisos de contaminación** (§4) en el contrato: split heredado por defecto,

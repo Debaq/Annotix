@@ -461,6 +461,10 @@ fn la_capacidad_declarada_coincide_con_lo_que_el_generador_usa() {
         (TrainingBackend::HfPose, "pose"),
         (TrainingBackend::Smp, "segment"),
         (TrainingBackend::Timm, "classify"),
+        (TrainingBackend::Tsai, "ts_classify"),
+        (TrainingBackend::PytorchForecasting, "ts_forecast"),
+        (TrainingBackend::RfDetr, "detect"),
+        (TrainingBackend::Sklearn, "tabular"),
     ];
 
     for (backend, task) in casos {
@@ -478,4 +482,86 @@ fn la_capacidad_declarada_coincide_con_lo_que_el_generador_usa() {
             if usado { "sí usa" } else { "no usa" }
         );
     }
+}
+
+/// Los backends que continúan por `state_dict` tienen que cargar con
+/// `strict=False` y avisar de lo que no encajó. Un checkpoint de otra arquitectura
+/// debe abortar, no entrenar un "fine-tune" que no heredó nada.
+fn assert_continua_por_state_dict(backend: &TrainingBackend, task: &str, var: &str) {
+    let etiqueta = format!("{backend:?}/{task}");
+    let (sin, con, _) = scripts_con_y_sin_base(backend, task);
+    let base = "/tmp/annotix_job_anterior/train_output/best";
+
+    assert!(
+        !sin.contains("load_state_dict"),
+        "{etiqueta}: sin modelo de partida no debería cargar ningún state_dict"
+    );
+    assert!(
+        con.contains(base),
+        "{etiqueta}: no llegó la ruta del modelo de partida"
+    );
+    assert!(
+        con.contains(&format!("{var}.load_state_dict(_ckpt, strict=False)")),
+        "{etiqueta}: se esperaba cargar sobre {var} con strict=False"
+    );
+    assert!(
+        con.contains("if _cargados == 0:") && con.contains("raise SystemExit"),
+        "{etiqueta}: falta el corte cuando el checkpoint no corresponde a la arquitectura"
+    );
+    assert!(
+        con.contains("quedan reinicializados"),
+        "{etiqueta}: no avisa de los tensores que no encajaron"
+    );
+    assert_python_valido(&con, &etiqueta);
+}
+
+#[test]
+fn smp_continua_por_state_dict() {
+    assert_continua_por_state_dict(&TrainingBackend::Smp, "segment", "model");
+}
+
+#[test]
+fn timm_continua_por_state_dict() {
+    assert_continua_por_state_dict(&TrainingBackend::Timm, "classify", "model");
+}
+
+#[test]
+fn hf_pose_continua_por_state_dict() {
+    assert_continua_por_state_dict(&TrainingBackend::HfPose, "pose", "model");
+}
+
+#[test]
+fn tsai_continua_por_state_dict() {
+    assert_continua_por_state_dict(&TrainingBackend::Tsai, "ts_classify", "learner.model");
+}
+
+#[test]
+fn pytorch_forecasting_continua_por_state_dict() {
+    assert_continua_por_state_dict(&TrainingBackend::PytorchForecasting, "ts_forecast", "model");
+}
+
+/// Partiendo de un modelo propio no se bajan los pesos del catálogo: se
+/// sobrescriben acto seguido, y la descarga sólo puede añadir un fallo sin red.
+#[test]
+fn continuar_el_ajuste_no_descarga_pesos_que_va_a_sobrescribir() {
+    let (sin, con, _) = scripts_con_y_sin_base(&TrainingBackend::Smp, "segment");
+    assert!(sin.contains("encoder_weights=\"imagenet\""));
+    assert!(
+        con.contains("encoder_weights=None"),
+        "smp sigue pidiendo los pesos de ImageNet al continuar un ajuste"
+    );
+
+    let (sin, con, _) = scripts_con_y_sin_base(&TrainingBackend::Timm, "classify");
+    assert!(sin.contains("pretrained=True"));
+    assert!(
+        con.contains("pretrained=False"),
+        "timm sigue pidiendo los pesos del catálogo al continuar un ajuste"
+    );
+
+    let (sin, con, _) = scripts_con_y_sin_base(&TrainingBackend::HfPose, "pose");
+    assert!(sin.contains("pretrained=True"));
+    assert!(
+        con.contains("pretrained=False"),
+        "el backbone de hf_pose sigue pidiendo pesos que va a sobrescribir"
+    );
 }

@@ -428,6 +428,60 @@ fn hf_load_from(req: &TrainingRequest) -> String {
     }
 }
 
+/// Código Python que carga sobre un modelo ya construido los pesos de un modelo
+/// entrenado aquí antes. Cadena vacía cuando no se pidió continuar el ajuste, así
+/// que el script generado queda exactamente igual que antes.
+///
+/// Se carga con `strict=False` a propósito: si entre el modelo padre y este
+/// proyecto cambió el número de clases, la cabeza no puede coincidir y tiene que
+/// quedar reinicializada. Lo que no puede pasar es que eso ocurra en silencio —un
+/// modelo con la cabeza nueva parece un ajuste continuado y es casi un
+/// entrenamiento desde cero—, así que se informa qué tensores no se cargaron. Si no
+/// se cargó ninguno, el checkpoint no corresponde a esta arquitectura y eso es un
+/// error, no un aviso: entrenar igual daría un "fine-tune" que no heredó nada.
+///
+/// El snippet no usa llaves ni f-strings: viaja como argumento de `format!` y así
+/// da igual cuántas veces se reformatee el texto que lo contiene.
+fn python_cargar_pesos(var: &str, load_from: &Option<String>) -> String {
+    let Some(ruta) = load_from.as_ref().filter(|p| !p.is_empty()) else {
+        return String::new();
+    };
+    let ruta = ruta.replace('\\', "/");
+    format!(
+        r#"
+    # Continuar el ajuste desde un modelo entrenado aquí antes.
+    _base_modelo = r"{ruta}"
+    try:
+        _ckpt = torch.load(_base_modelo, map_location="cpu", weights_only=False)
+    except TypeError:
+        # torch anterior al parámetro `weights_only`.
+        _ckpt = torch.load(_base_modelo, map_location="cpu")
+    if isinstance(_ckpt, dict) and "state_dict" in _ckpt:
+        _ckpt = _ckpt["state_dict"]
+    _faltan, _sobran = {var}.load_state_dict(_ckpt, strict=False)
+    _propios = list({var}.state_dict().keys())
+    _cargados = len(_propios) - len(_faltan)
+    if _cargados == 0:
+        raise SystemExit(
+            "El modelo de partida no corresponde a esta arquitectura: no se cargo "
+            "ningun tensor desde " + _base_modelo
+        )
+    print(
+        "Continuando el ajuste desde " + _base_modelo + ": "
+        + str(_cargados) + "/" + str(len(_propios)) + " tensores cargados",
+        flush=True,
+    )
+    if _faltan or _sobran:
+        print(
+            "Tensores que no coinciden y quedan reinicializados: faltan "
+            + str(len(_faltan)) + ", sobran " + str(len(_sobran))
+            + ". Primeros: " + ", ".join(list(_faltan)[:6]),
+            flush=True,
+        )
+"#
+    )
+}
+
 /// Etiqueta del modelo para el encabezado del script: deja dicho cuándo el
 /// entrenamiento parte de un modelo propio en vez de los pesos del catálogo.
 fn hf_model_label(req: &TrainingRequest, load_from: &str) -> String {
@@ -1196,6 +1250,15 @@ if __name__ == "__main__":
 
 pub fn generate_hf_pose_script(req: &TrainingRequest, sp: &ScriptPaths) -> String {
     let bp = &req.backend_params;
+    // Pese al prefijo `hf_`, esto no es un modelo de HuggingFace: es un backbone de
+    // timm con una cabeza de heatmaps propia, así que se continúa por `state_dict`
+    // y no por `from_pretrained`.
+    let carga_pesos = python_cargar_pesos("model", &req.base_model_path);
+    let pose_pretrained = if carga_pesos.is_empty() {
+        "True"
+    } else {
+        "False"
+    };
     let weight_decay = bp
         .get("weight_decay")
         .and_then(|v| v.as_f64())
@@ -1301,7 +1364,9 @@ def main():
 
     # Backbone de timm + cabeza de heatmaps: es el esquema top-down clásico, sin
     # depender de mmpose (incompatible con torch 2.x).
-    backbone = timm.create_model("{model_id}", pretrained=True, features_only=True)
+    backbone = timm.create_model(
+        "{model_id}", pretrained={pose_pretrained}, features_only=True
+    )
     canales = backbone.feature_info.channels()[-1]
 
     class PoseNet(nn.Module):
@@ -1322,7 +1387,9 @@ def main():
                 salida, size=(SALIDA, SALIDA), mode="bilinear", align_corners=False
             )
 
-    model = PoseNet().to(device)
+    model = PoseNet()
+{carga_pesos}
+    model = model.to(device)
     criterio = nn.MSELoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr={lr}, weight_decay={weight_decay})
 
@@ -1409,6 +1476,8 @@ if __name__ == "__main__":
         header = sp.header,
         preamble = hf_coco_preamble(),
         model_id = req.model_id,
+        carga_pesos = carga_pesos,
+        pose_pretrained = pose_pretrained,
         device = device,
         epochs = req.epochs,
         batch = req.batch_size,
@@ -1724,6 +1793,15 @@ pub fn get_requirements_for_backend(backend: &TrainingBackend) -> Vec<&'static s
 
 pub fn generate_smp_script(req: &TrainingRequest, sp: &ScriptPaths) -> String {
     let bp = &req.backend_params;
+    let carga_pesos = python_cargar_pesos("model", &req.base_model_path);
+    // Partiendo de un modelo propio no se bajan los pesos de ImageNet: se
+    // sobrescriben en la línea siguiente, y la descarga sólo sirve para fallar sin
+    // red.
+    let encoder_weights = if carga_pesos.is_empty() {
+        "\"imagenet\""
+    } else {
+        "None"
+    };
     let model_id = &req.model_id; // e.g. "Unet-resnet34"
     let parts: Vec<&str> = model_id.splitn(2, '-').collect();
     let arch = parts.first().unwrap_or(&"Unet");
@@ -1786,11 +1864,12 @@ def main():
     model = smp.create_model(
         arch="{arch}",
         encoder_name="{encoder}",
-        encoder_weights="imagenet",
+        encoder_weights={encoder_weights},
         in_channels=3,
         classes=num_classes,
         encoder_depth={encoder_depth},
     )
+{carga_pesos}
     if {freeze_encoder}:
         for param in model.encoder.parameters():
             param.requires_grad = False
@@ -1984,6 +2063,8 @@ if __name__ == "__main__":
 "#,
         arch = arch,
         encoder = encoder,
+        encoder_weights = encoder_weights,
+        carga_pesos = carga_pesos,
         header = sp.header,
         device = device,
         num_classes = sp.num_classes,
@@ -2272,10 +2353,16 @@ pub fn generate_timm_script(req: &TrainingRequest, sp: &ScriptPaths) -> String {
     let multi_label = py_bool(req.task == "multi_classify");
     let bp = &req.backend_params;
     let model_id = &req.model_id; // e.g. "resnet50", "efficientnet_b0"
-    let pretrained = bp
-        .get("pretrained")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(true);
+    let carga_pesos = python_cargar_pesos("model", &req.base_model_path);
+    // Igual que en smp: los pesos del catálogo se sobrescriben con los del modelo
+    // propio, así que pedirlos sólo añade una descarga que puede fallar.
+    let pretrained = if carga_pesos.is_empty() {
+        bp.get("pretrained")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(true)
+    } else {
+        false
+    };
     let scheduler = bp
         .get("scheduler")
         .and_then(|v| v.as_str())
@@ -2324,6 +2411,7 @@ def main():
         num_classes=num_classes,
         drop_rate={drop_rate},
     )
+{carga_pesos}
     model = model.to(device)
 
     # Data config from model
@@ -2523,6 +2611,7 @@ if __name__ == "__main__":
         device = device,
         num_classes = sp.num_classes,
         pretrained = py_bool(pretrained),
+        carga_pesos = carga_pesos,
         drop_rate = drop_rate,
         batch = req.batch_size,
         workers = req.workers,
@@ -2797,6 +2886,9 @@ if __name__ == "__main__":
 
 pub fn generate_tsai_script(req: &TrainingRequest, sp: &ScriptPaths) -> String {
     let bp = &req.backend_params;
+    // El learner de fastai construye el modelo por dentro; los pesos se cargan
+    // sobre `learner.model`, que es el módulo de torch que se guarda al terminar.
+    let carga_pesos = python_cargar_pesos("learner.model", &req.base_model_path);
     let model_id = &req.model_id; // e.g. "InceptionTime", "TST", "LSTM"
     let task_type = bp
         .get("task_type")
@@ -2902,6 +2994,7 @@ def main():
             cbs=[AnnotixCallback()],
         )
 
+{carga_pesos}
     # Sin barra de progreso: fastai la escribe con \r y ensucia el log del job.
     with learner.no_bar():
         learner.fit({epochs}, lr={lr})
@@ -2935,6 +3028,10 @@ if __name__ == "__main__":
 
 pub fn generate_pytorch_forecasting_script(req: &TrainingRequest, sp: &ScriptPaths) -> String {
     let bp = &req.backend_params;
+    // El checkpoint es de Lightning y guarda los pesos bajo `state_dict`; el helper
+    // lo desenvuelve. `from_dataset` arma el modelo según las covariables, así que
+    // si el proyecto cambió de forma la carga parcial se informa en vez de callar.
+    let carga_pesos = python_cargar_pesos("model", &req.base_model_path);
     let model_id = &req.model_id; // e.g. "TemporalFusionTransformer", "NBeats", "DeepAR"
     let max_prediction_length = bp
         .get("max_prediction_length")
@@ -3099,6 +3196,7 @@ def main():
             loss=QuantileLoss(),
         )
 
+{carga_pesos}
     checkpoint_callback = ModelCheckpoint(
         dirpath=output_dir,
         filename="best-{{epoch:02d}}-{{val_loss:.4f}}",

@@ -74,15 +74,23 @@ pub(super) fn supports_fine_tune_por_id(id: &str) -> bool {
         "yolo" | "rt_detr"
             // Estos guardan con `save_pretrained()` y `from_pretrained()` acepta
             // ese directorio igual que un id del Hub.
-            //
-            // `hf_pose` queda fuera aunque lleve el prefijo: no es un modelo de
-            // HuggingFace, es un backbone de timm con una cabeza de heatmaps propia
-            // que se guarda como `state_dict`. Entra cuando se implemente la carga
-            // por `load_state_dict`, junto a `smp` y `timm`.
             | "hf_detection"
             | "hf_instance"
             | "hf_segmentation"
             | "hf_classification"
+            // Estos guardan un `state_dict` y se continúan con `load_state_dict`.
+            // `hf_pose` está aquí y no arriba porque, pese al prefijo, no es un
+            // modelo de HuggingFace: es un backbone de timm con una cabeza de
+            // heatmaps propia.
+            | "smp"
+            | "timm"
+            | "hf_pose"
+            | "tsai"
+            | "pytorch_forecasting" // `rf_detr` queda fuera a propósito: su constructor acepta pesos de
+                                    // partida según la librería, pero no se verificó contra la versión que
+                                    // el proyecto fija, y rfdetr aborta con un ValidationError de pydantic
+                                    // ante un argumento que no conoce. Entra cuando se compruebe con un
+                                    // entrenamiento real.
     )
 }
 
