@@ -674,6 +674,7 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
                   backendParams={backendParams}
                   yoloConfig={backend === 'yolo' ? yoloConfig : undefined}
                   totalImages={annotatedCount}
+                  classes={project.classes ?? []}
                   onCommonChange={updateCommonParam}
                   onBackendParamChange={updateBackendParam}
                   onYoloConfigChange={backend === 'yolo' ? handleYoloConfigChange : undefined}

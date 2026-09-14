@@ -28,6 +28,8 @@ interface BackendConfigPanelProps {
   backendParams: Record<string, unknown>;
   yoloConfig?: TrainingConfig;
   totalImages?: number;
+  /** Clases del proyecto, para el factor por clase de la augmentación. */
+  classes?: { id: number; name: string }[];
   onCommonChange: (key: string, value: unknown) => void;
   onBackendParamChange: (key: string, value: unknown) => void;
   onYoloConfigChange?: (partial: Partial<TrainingConfig>) => void;
@@ -118,6 +120,7 @@ export function BackendConfigPanel({
   backendParams,
   yoloConfig,
   totalImages,
+  classes,
   onCommonChange,
   onBackendParamChange,
   onYoloConfigChange,
@@ -151,7 +154,7 @@ export function BackendConfigPanel({
       )}
       {/* La augmentación va junto al reparto porque el orden importa y es el
           mismo asunto: primero se reparte, y sólo train se aumenta. */}
-      {projectId && <AugmentationPanel projectId={projectId} />}
+      {projectId && <AugmentationPanel projectId={projectId} classes={classes} />}
       {projectId && (
         <SplitPolicyPanel
           projectId={projectId}

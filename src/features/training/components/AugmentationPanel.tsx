@@ -148,6 +148,8 @@ function Anotaciones({ previa }: { previa: AugmentationPreview }) {
 
 interface Props {
   projectId: string;
+  /** Clases del proyecto, para el factor por clase del modo manual. */
+  classes?: { id: number; name: string }[];
 }
 
 const BALANCES = ['uniform', 'balance', 'manual'] as const;
@@ -170,7 +172,7 @@ const TILING_POR_DEFECTO: TilingSpec = {
  * que valga para los diecisiete backends en vez de sólo para el que trae su
  * propia augmentación.
  */
-export function AugmentationPanel({ projectId }: Props) {
+export function AugmentationPanel({ projectId, classes = [] }: Props) {
   const { t } = useTranslation();
   const [plan, setPlan] = useState<AugmentationPlan | null>(null);
   // La modalidad la detecta el backend desde los DICOM del corpus; es la misma
@@ -375,6 +377,28 @@ export function AugmentationPanel({ projectId }: Props) {
                 <p className="text-[11px] text-muted-foreground">
                   {t(`training.augmentationPlan.balanceDesc.${plan.balance}`)}
                 </p>
+                {plan.balance === 'manual' && classes.length > 0 && (
+                  <div className="space-y-1 pt-1">
+                    {classes.map((c) => (
+                      <div key={c.id} className="flex items-center gap-2">
+                        <span className="text-[11px] text-muted-foreground flex-1 truncate">
+                          {c.name}
+                        </span>
+                        <Numero
+                          valor={plan.perClassFactor?.[String(c.id)] ?? plan.factor}
+                          min={0}
+                          max={100}
+                          step={1}
+                          onCommit={(v) =>
+                            guardar({
+                              perClassFactor: { ...(plan.perClassFactor ?? {}), [String(c.id)]: v },
+                            })
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {plan.balance === 'balance' && (
                   <div className="flex items-center gap-2 pt-1">
                     <Label className="text-xs flex-1">
