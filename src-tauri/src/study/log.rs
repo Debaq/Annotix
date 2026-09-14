@@ -302,7 +302,10 @@ pub fn close_orphan_sessions() {
 fn close_orphan_file(path: &Path) -> Result<(), String> {
     let content = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
     // Una cola truncada se descarta: solo se continúa desde una línea entera.
-    let Some(last) = content.lines().filter(|l| split_line(l).is_some()).last() else {
+    // Se busca desde el final porque la línea que interesa es la última: recorrer
+    // el archivo entero para quedarse con ella es trabajo tirado en un registro
+    // de miles de eventos.
+    let Some(last) = content.lines().rev().find(|l| split_line(l).is_some()) else {
         return Ok(());
     };
     let obj: Value = serde_json::from_str(last).map_err(|e| e.to_string())?;
