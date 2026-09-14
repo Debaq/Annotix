@@ -1019,5 +1019,89 @@
       "bio_radiology_transfer": "Transfer con poco dato (radiología)",
       "bio_pathology_tiles": "Histopatología por teselas"
     }
+  },
+  "augmentationPlan": {
+    "title": "Augmentación",
+    "off": "apagada",
+    "summaryOn": "×{{factor}} · {{n}} transformaciones",
+    "intro": "Cómo se aumenta el corpus antes de entrenar. Se materializa al preparar el dataset, no dentro del bucle: se pierde la variación por época y se gana que lo generado se pueda abrir y mirar, que salga igual con la misma semilla, y que valga para los diecisiete backends.",
+    "enable": "Aumentar el corpus",
+    "enableDesc": "Sólo el conjunto de entrenamiento. Validación y test no se aumentan nunca: medir sobre imágenes deformadas por uno mismo no mide cómo le irá con datos nuevos.",
+    "factor": "Variantes por imagen",
+    "minVisibility": "Visibilidad mínima",
+    "minVisibilityDesc": "Fracción de una anotación que tiene que sobrevivir al recorte para conservarla. Dejar el 5 % de una lesión enseña al modelo que ese fragmento es la lesión entera.",
+    "balance": "Reparto de las variantes",
+    "balanceMode": {
+      "uniform": "el mismo factor para todas",
+      "balance": "equilibrar las clases",
+      "manual": "factor por clase"
+    },
+    "balanceDesc": {
+      "uniform": "Cada imagen genera el mismo número de variantes.",
+      "balance": "Las clases raras generan más variantes para acercarse a la mayoritaria. Multiplicar una clase con dos ejemplos no crea casos nuevos: crea dos casos vistos muchas veces, y el modelo los memoriza.",
+      "manual": "El factor de cada clase lo fijas tú."
+    },
+    "maxFactor": "Tope por clase",
+    "transforms": "Transformaciones",
+    "lateralTag": "lateralidad",
+    "needsColor": "Sin efecto en esta modalidad: es monocroma y no tiene tono ni saturación.",
+    "tf": {
+      "flip_h": "Volteo horizontal",
+      "flip_v": "Volteo vertical",
+      "rotate": "Giro",
+      "shear": "Cizalla",
+      "zoom": "Zoom",
+      "translate": "Desplazamiento",
+      "brightness_contrast": "Brillo y contraste",
+      "hue": "Tono",
+      "saturation": "Saturación",
+      "grayscale": "Escala de grises",
+      "gaussian_noise": "Ruido gaussiano",
+      "motion_blur": "Desenfoque de movimiento",
+      "gaussian_blur": "Desenfoque gaussiano",
+      "sharpen": "Nitidez",
+      "random_erasing": "Borrado aleatorio"
+    },
+    "param": {
+      "degrees": "grados",
+      "xDegrees": "grados en X",
+      "yDegrees": "grados en Y",
+      "scale": "escala",
+      "center": "centro",
+      "x": "x (fracción)",
+      "y": "y (fracción)",
+      "brightness": "brillo",
+      "contrast": "contraste",
+      "factor": "factor",
+      "sigma": "sigma",
+      "kernel": "tamaño del kernel",
+      "angle": "ángulo",
+      "amount": "intensidad",
+      "area": "área",
+      "ratio": "proporción"
+    },
+    "zoomCenter": {
+      "central": "centrado",
+      "aleatorio": "aleatorio"
+    },
+    "tiling": "Partir en teselas",
+    "tilingDesc": "Para imágenes grandes con objetos pequeños: redimensionar una lámina de 4000 px a 640 convierte una mitosis de 30 píxeles en cinco.",
+    "rowsCols": "Filas × columnas",
+    "overlap": "Solape (fracción del lado)",
+    "emptyTiles": "Teselas sin anotaciones",
+    "emptyTile": {
+      "discard": "descartarlas",
+      "keep_all": "conservarlas todas",
+      "keep_fraction": "conservar una fracción"
+    },
+    "emptyKeepRatio": "Fracción que se conserva",
+    "tilingInference": "Un modelo entrenado por teselas hay que aplicarlo por teselas y recomponer las predicciones. Eso todavía no lo hace la app.",
+    "lateralWarning": "El corpus es de modalidad {{modality}}, donde izquierda y derecha son diagnósticas: con volteo horizontal el modelo no puede aprender lateralidad. No es un problema de documentación, es un error de entrenamiento.",
+    "preview": "Ver una variante",
+    "previewing": "Generando…",
+    "previewDesc": "La genera el mismo código que prepara el dataset, con la misma semilla: lo que se ve es lo que va a entrar al entrenamiento.",
+    "noTransforms": "Ninguna transformación llegó a aplicarse en esta variante.",
+    "previewTiles": "Esta imagen daría {{n}} teselas.",
+    "previewDropped": "{{n}} anotaciones se quedaron fuera del marco o por debajo de la visibilidad mínima."
   }
 }

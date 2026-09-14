@@ -17,6 +17,16 @@ use crate::contract::readiness::Aviso;
 use crate::store::project_file::AnnotationEntry;
 use crate::store::AppState;
 
+/// Las transformaciones que existen, con sus valores de partida.
+///
+/// El catálogo vive en Rust y la interfaz lo pide: una lista paralela en
+/// TypeScript se queda corta el día que alguien añade una transformación, y
+/// nadie se entera hasta que un usuario echa de menos algo que sí existe.
+#[tauri::command]
+pub fn get_augmentation_catalog() -> Vec<crate::augment::transforms::EntradaCatalogo> {
+    crate::augment::transforms::catalogo()
+}
+
 /// El plan declarado, o el de por defecto —apagado— si no hay ninguno.
 #[tauri::command]
 pub fn get_augmentation_plan(

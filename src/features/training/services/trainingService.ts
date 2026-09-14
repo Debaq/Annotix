@@ -13,6 +13,9 @@ import type {
   SplitPolicy,
   BiomedPreset,
   ReadinessReport,
+  AugmentationPlan,
+  AugmentationCatalogEntry,
+  AugmentationPreview,
 } from '../types';
 
 export const trainingService = {
@@ -95,6 +98,36 @@ export const trainingService = {
   /** `null` retira la política y vuelve al reparto de siempre. */
   setSplitPolicy(projectId: string, policy: SplitPolicy | null): Promise<void> {
     return invoke('set_split_policy', { projectId, policy });
+  },
+
+  /** El catálogo de transformaciones, servido desde Rust por lo mismo. */
+  getAugmentationCatalog(): Promise<AugmentationCatalogEntry[]> {
+    return invoke('get_augmentation_catalog');
+  },
+
+  getAugmentationPlan(projectId: string): Promise<AugmentationPlan> {
+    return invoke('get_augmentation_plan', { projectId });
+  },
+
+  /** `null` retira el plan y el dataset vuelve a ser el corpus tal cual. */
+  setAugmentationPlan(projectId: string, plan: AugmentationPlan | null): Promise<void> {
+    return invoke('set_augmentation_plan', { projectId, plan });
+  },
+
+  /**
+   * Genera una variante con el plan que se está editando.
+   *
+   * Corre el mismo materializador que el entrenamiento, así que lo que se ve es
+   * lo que va a entrar al dataset —no una aproximación dibujada aparte, que es
+   * como una vista previa acaba mintiendo—.
+   */
+  previewAugmentation(
+    projectId: string,
+    plan: AugmentationPlan,
+    imageId?: string | null,
+    variant?: number,
+  ): Promise<AugmentationPreview> {
+    return invoke('preview_augmentation', { projectId, plan, imageId: imageId ?? null, variant });
   },
 
   /** Presets biomédicos, servidos desde Rust para que no haya dos listas. */

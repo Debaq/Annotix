@@ -218,6 +218,131 @@ impl TransformSpec {
     }
 }
 
+// ─── El catálogo como dato ──────────────────────────────────────────────────
+
+/// Todas las transformaciones que existen, por identificador.
+///
+/// Es la lista que la interfaz pinta. Vive aquí y no en el front porque el dato
+/// tiene un solo dueño: una lista paralela en TypeScript se queda corta el día
+/// que alguien añade una transformación, y nadie se entera hasta que un usuario
+/// echa de menos algo que sí existe.
+pub const TODAS: &[&str] = &[
+    "flip_h",
+    "flip_v",
+    "rotate",
+    "shear",
+    "zoom",
+    "translate",
+    "brightness_contrast",
+    "hue",
+    "saturation",
+    "grayscale",
+    "gaussian_noise",
+    "motion_blur",
+    "gaussian_blur",
+    "sharpen",
+    "random_erasing",
+];
+
+/// Una transformación tal como se ofrece: con sus valores de partida y lo que
+/// hay que saber antes de encenderla.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EntradaCatalogo {
+    pub id: &'static str,
+    /// `geometric` — mueve píxeles, y con ellos las anotaciones.
+    /// `photometric` — cambia lo que se ve sin mover nada.
+    pub kind: &'static str,
+    /// La transformación con valores de partida razonables, lista para añadirse
+    /// al plan.
+    pub default: TransformSpec,
+    /// Invierte la lateralidad de la imagen: en radiografía, mamografía o retina
+    /// eso no es una variación, es un error.
+    pub lateral: bool,
+    /// No hace nada en escala de grises. Un CT no tiene tono ni saturación.
+    pub needs_color: bool,
+}
+
+/// El catálogo completo, con los valores de partida de cada transformación.
+pub fn catalogo() -> Vec<EntradaCatalogo> {
+    let por_defecto = [
+        TransformSpec::FlipH { p: 0.5 },
+        TransformSpec::FlipV { p: 0.5 },
+        TransformSpec::Rotate {
+            p: 0.5,
+            degrees: Rango::simetrico(10.0),
+        },
+        TransformSpec::Shear {
+            p: 0.3,
+            x_degrees: Rango::simetrico(5.0),
+            y_degrees: Rango::simetrico(5.0),
+        },
+        TransformSpec::Zoom {
+            p: 0.5,
+            scale: Rango::nuevo(0.9, 1.1),
+            center: CentroZoom::Central,
+        },
+        TransformSpec::Translate {
+            p: 0.5,
+            x: Rango::simetrico(0.1),
+            y: Rango::simetrico(0.1),
+        },
+        TransformSpec::BrightnessContrast {
+            p: 0.5,
+            brightness: Rango::simetrico(0.2),
+            contrast: Rango::simetrico(0.2),
+        },
+        TransformSpec::Hue {
+            p: 0.3,
+            degrees: Rango::simetrico(15.0),
+        },
+        TransformSpec::Saturation {
+            p: 0.3,
+            factor: Rango::nuevo(0.8, 1.2),
+        },
+        TransformSpec::Grayscale { p: 0.2 },
+        TransformSpec::GaussianNoise {
+            p: 0.3,
+            sigma: Rango::nuevo(0.01, 0.05),
+        },
+        TransformSpec::MotionBlur {
+            p: 0.2,
+            kernel: Rango::nuevo(3.0, 9.0),
+            angle: Rango::nuevo(0.0, 180.0),
+        },
+        TransformSpec::GaussianBlur {
+            p: 0.2,
+            sigma: Rango::nuevo(0.3, 1.5),
+        },
+        TransformSpec::Sharpen {
+            p: 0.2,
+            amount: Rango::nuevo(0.3, 1.0),
+        },
+        TransformSpec::RandomErasing {
+            p: 0.3,
+            area: Rango::nuevo(0.02, 0.1),
+            ratio: Rango::nuevo(0.5, 2.0),
+        },
+    ];
+    por_defecto
+        .into_iter()
+        .map(|spec| EntradaCatalogo {
+            id: spec.id(),
+            kind: if spec.es_geometrica() {
+                "geometric"
+            } else {
+                "photometric"
+            },
+            // La lateralidad de la entrada del catálogo no depende de la `p` con
+            // la que venga: describe lo que la transformación hace cuando se
+            // aplica, y por eso se pregunta con probabilidad 1.
+            lateral: matches!(spec, TransformSpec::FlipH { .. }),
+            needs_color: !spec.tiene_sentido_en_monocromo(),
+            default: spec,
+        })
+        .collect()
+}
+
 // ─── Lo que sale de sortear ─────────────────────────────────────────────────
 
 /// Una transformación ya concretada: sin rangos ni probabilidades, lista para

@@ -314,6 +314,7 @@ pub fn run() {
             commands::audit_commands::read_audit_tail,
             commands::project_commands::get_split_policy,
             commands::project_commands::set_split_policy,
+            commands::augmentation_commands::get_augmentation_catalog,
             commands::augmentation_commands::get_augmentation_plan,
             commands::augmentation_commands::set_augmentation_plan,
             commands::augmentation_commands::preview_augmentation,

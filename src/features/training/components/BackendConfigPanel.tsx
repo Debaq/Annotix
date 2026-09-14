@@ -3,6 +3,7 @@ import { TrainingAdvancedConfig } from './TrainingAdvancedConfig';
 import { TrainingAugmentation } from './TrainingAugmentation';
 import { DatasetSplitVisualizer } from './DatasetSplitVisualizer';
 import { SplitPolicyPanel } from './SplitPolicyPanel';
+import { AugmentationPanel } from './AugmentationPanel';
 import { ReadinessPanel } from './ReadinessPanel';
 import type { TrainingBackend, TrainingConfig } from '../types';
 import { OPTIMIZERS } from '../utils/presets';
@@ -148,6 +149,9 @@ export function BackendConfigPanel({
           fliplr={yoloConfig?.augmentation?.fliplr ?? 0}
         />
       )}
+      {/* La augmentación va junto al reparto porque el orden importa y es el
+          mismo asunto: primero se reparte, y sólo train se aumenta. */}
+      {projectId && <AugmentationPanel projectId={projectId} />}
       {projectId && (
         <SplitPolicyPanel
           projectId={projectId}

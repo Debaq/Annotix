@@ -407,3 +407,42 @@ fn el_plan_sobrevive_a_un_viaje_por_json() {
     assert!(texto.contains("xDegrees"), "{texto}");
     assert_eq!(serde_json::from_str::<TransformSpec>(&texto).unwrap(), spec);
 }
+
+// ─── El catálogo ────────────────────────────────────────────────────────────
+
+#[test]
+fn el_catalogo_ofrece_todas_las_transformaciones_y_ninguna_de_mas() {
+    // El tripwire: `id()` es un match exhaustivo, así que una transformación
+    // nueva obliga a darle identificador; si no se añade también a TODAS y al
+    // catálogo, este test lo dice.
+    let cat = catalogo();
+    let ids: Vec<&str> = cat.iter().map(|e| e.id).collect();
+    assert_eq!(ids, TODAS.to_vec());
+}
+
+#[test]
+fn los_valores_de_partida_del_catalogo_se_pueden_aplicar() {
+    let ctx = Contexto::sin_anotaciones(128.0, 128.0);
+    let mut g = rng(31);
+    for entrada in catalogo() {
+        // Con p > 0 y suficientes tiradas, cada una tiene que salir alguna vez:
+        // una entrada del catálogo que nunca se aplica es una casilla muerta.
+        let sale = (0..200).any(|_| entrada.default.muestrear(&mut g, &ctx).is_some());
+        assert!(sale, "{} nunca llegó a aplicarse", entrada.id);
+        assert!(entrada.default.probabilidad() > 0.0);
+    }
+}
+
+#[test]
+fn el_catalogo_marca_la_lateralidad_y_el_color() {
+    let cat = catalogo();
+    let de = |id: &str| cat.iter().find(|e| e.id == id).unwrap().clone();
+    assert!(de("flip_h").lateral);
+    assert!(!de("flip_v").lateral);
+    assert!(de("hue").needs_color);
+    assert!(de("saturation").needs_color);
+    assert!(de("grayscale").needs_color);
+    assert!(!de("gaussian_noise").needs_color);
+    assert_eq!(de("rotate").kind, "geometric");
+    assert_eq!(de("sharpen").kind, "photometric");
+}

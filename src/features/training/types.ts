@@ -259,6 +259,104 @@ export interface SplitPolicy {
   requireTest: boolean;
 }
 
+// ─── Plan de augmentación ───────────────────────────────────────────────────
+
+/** Intervalo del que se sortea un parámetro en cada variante. */
+export interface Rango {
+  min: number;
+  max: number;
+}
+
+/**
+ * Una transformación con sus parámetros.
+ *
+ * El discriminante es `kind` y los campos dependen de él; el catálogo que sirve
+ * Rust (`getAugmentationCatalog`) trae un ejemplar de cada una con sus valores
+ * de partida, así que la interfaz no tiene que saber construirlos.
+ */
+export interface TransformSpec {
+  kind: string;
+  p: number;
+  [param: string]: unknown;
+}
+
+export interface TilingSpec {
+  rows: number;
+  cols: number;
+  /** Solape entre teselas vecinas, en fracción del lado (0–0.5). */
+  overlap: number;
+  /** `discard` | `keep_all` | `keep_fraction`. */
+  emptyTiles: string;
+  emptyKeepRatio: number;
+}
+
+/**
+ * Cómo se aumenta el corpus al preparar el dataset.
+ *
+ * Se materializa fuera de línea: lo que se genera se puede abrir y mirar, y el
+ * contrato de modelo puede declarar exactamente qué se aplicó. Sólo sobre train.
+ */
+export interface AugmentationPlan {
+  enabled: boolean;
+  /** Variantes por imagen de train. 0 = sólo las originales. */
+  factor: number;
+  /** `uniform` | `balance` | `manual`. */
+  balance: string;
+  perClassFactor?: Record<string, number>;
+  /** Tope del modo `balance`. */
+  maxFactor: number;
+  /** Texto, como la semilla del reparto (ver `SplitPolicy.seed`). */
+  seed?: string | null;
+  transforms: TransformSpec[];
+  tiling?: TilingSpec | null;
+  /** Fracción de una anotación que tiene que sobrevivir al recorte. */
+  minVisibility: number;
+}
+
+/** Una transformación tal como se ofrece, servida por Rust. */
+export interface AugmentationCatalogEntry {
+  id: string;
+  /** `geometric` | `photometric`. */
+  kind: string;
+  default: TransformSpec;
+  /** Invierte la lateralidad: en radiografía eso es un error, no una variación. */
+  lateral: boolean;
+  /** No hace nada en escala de grises. */
+  needsColor: boolean;
+}
+
+/** Lo que la augmentación puso en el dataset. */
+export interface AugmentationReport {
+  generated: number;
+  trainImages: number;
+  trainSourceImages: number;
+  seed: string;
+  transforms: string[];
+  tiling?: TilingSpec | null;
+  warnings: ReadinessWarning[];
+}
+
+/** Una variante generada, tal como entraría al dataset. */
+export interface AugmentationPreview {
+  /** PNG en base64, sin prefijo `data:`. */
+  image: string;
+  width: number;
+  height: number;
+  annotations: PreviewAnnotation[];
+  transforms: string[];
+  source: string;
+  tiles: number;
+  droppedAnnotations: number;
+  warnings: ReadinessWarning[];
+}
+
+export interface PreviewAnnotation {
+  id: string;
+  type: string;
+  classId: number;
+  data: Record<string, unknown>;
+}
+
 export interface SplitReport {
   /** Unidad por la que se agrupó de verdad: `subject` | `video` | `item`. */
   unit: string;
@@ -272,6 +370,8 @@ export interface SplitReport {
   subjectsUndeclared?: number;
   perClass: ClassSplitCounts[];
   warnings: SplitWarning[];
+  /** Lo que se materializó encima de train. El resto del informe es del corpus. */
+  augmentation?: AugmentationReport | null;
 }
 
 export interface TrainingJob {
