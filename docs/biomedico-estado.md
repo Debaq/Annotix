@@ -4,7 +4,7 @@
 > cinco (`biomedico-fase1` … `fase4`) son el plan; éste dice qué está hecho, qué
 > falta, y qué decisiones ya se tomaron para no volver a discutirlas.
 >
-> Última actualización: 2026-09-14, sobre `2d49347`.
+> Última actualización: 2026-09-14, sobre `038c240`.
 
 ---
 
@@ -27,6 +27,7 @@
 | 10b · Pesos biomédicos | **empezado**: 5 modelos | `135553f` |
 | 10c · nnU-Net, MONAI, Cellpose, StarDist | pendiente | — |
 | 11 · Selector de dominio + presets | **hecho** con los backends que existen | `beebdc5`, `fb43624`, (esta tanda) |
+| 11b · Augmentación unificada + teselado | **planificado**, sin implementar | `038c240` (plan) |
 | 12 · Cifrado en reposo, opcional | pendiente (etapa nueva, no estaba en el plan) | — |
 
 Fuera del plan original, pedido sobre la marcha:
@@ -117,14 +118,18 @@ UNI (gated, CC-BY-NC-ND), RETFound (gated, `.pth` suelto sin metadatos de
 librería) y hibou (gated y con `trust_remote_code`, que el generador no pasa).
 Entran cuando haya soporte de token del Hub.
 
-**Etapa 11.** El eje `domains` existe y ordena, pero sólo marca arquitecturas
-generalistas usables en biomedicina. No hay presets biomédicos: la tabla de la
-Fase 3 sigue siendo diseño.
+**Etapa 11b.** Hay plan (`docs/plan-augmentacion.md`) y no hay código. Nace de
+lo que encontró la auditoría: la augmentación depende hoy del backend, y por eso
+los presets biomédicos **sólo se cumplen en YOLO y RT-DETR**. El generador de
+`smp` fija `HorizontalFlip(p=0.5)` en el propio script, así que `bio_unet_seg`
+—que declara `fliplr: 0` porque la lateralidad es diagnóstica— saca la mitad de
+las radiografías volteadas mientras la UI avisa de lo contrario. No es una
+mejora: es lo único que hace que lo que la app promete sea lo que ocurre.
 
 **Traducciones.** Todo lo nuevo está en `es` y `en`. Los otros ocho locales caen
-a inglés por `fallbackLng`. Son unas 200 frases nuevas
-(`training.families.*`, `training.splitReport.*`, `training.splitPolicy.*`,
-`annotations.provenance.*`, `subjects.*`).
+a inglés por `fallbackLng`. La auditoría las contó: **4104 claves**, no ~200, y
+cinco archivos de namespace (`subjects`, `agreement`, `contract`, `medical`,
+`sam`) que no existen en ninguno de los ocho.
 
 **Verificación en la app real.** Nada de la UI de esta tanda se vio corriendo
 dentro de Annotix: los componentes se verificaron en el dev server con datos
@@ -218,6 +223,14 @@ La **cadena de validez está cerrada**: de la etapa 1 a la 8, un modelo entrenad
 aquí sale con su contrato y su nivel de evidencia. Lo que queda son dos caminos
 independientes.
 
+La **etapa 11b** (augmentación unificada y teselado) es la que va primero, y no
+por ser la más vistosa: es la única de la lista que arregla algo que hoy hace
+que la app mienta. Además lleva el TILE por filas × columnas + solape, que es lo
+que permite entrenar sobre imágenes de alta resolución con modelos de kernel
+pequeño sin destruir lo que hay que detectar al redimensionar. Plan completo en
+`docs/plan-augmentacion.md`; la auditoría que lo motiva, en
+`docs/auditoria-etapas-1-11.md`.
+
 La **etapa 12** (cifrado en reposo, opcional por proyecto) es la que decidiste
 meter y no estaba en el plan. Es la que hace falta antes de que un corpus clínico
 real entre en la app: hoy el proyecto está en claro en disco. Lleva su propio
@@ -229,10 +242,6 @@ La **etapa 9b** (whole-slide imaging) desbloquea histopatología de lámina
 completa. Es cara y bastante autónoma: lectura piramidal, navegación por teselas
 y entrenamiento por teselas agrupando por lámina —que el reparto de la etapa 1 ya
 sabría respetar—.
-
-La **etapa 10a** (MedSAM / μSAM) es barata: entra por el camino SAM que ya existe,
-es cambio de pesos y no de arquitectura, y combinada con la procedencia deja cada
-máscara marcada como sugerida por modelo y revisada por una persona.
 
 La **etapa 10c** (nnU-Net, MONAI, Cellpose, StarDist) es cara y hay que hacerla de
 a uno: rige la regla dura del repo — ninguno se publica sin smoke test de
