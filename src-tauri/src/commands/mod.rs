@@ -1,3 +1,4 @@
+pub mod agreement_commands;
 pub mod audio_commands;
 pub mod audio_edit_commands;
 pub mod audit_commands;

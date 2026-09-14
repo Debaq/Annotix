@@ -3759,6 +3759,148 @@ fn un_proyecto_v6_migra_a_capas_sin_perder_nada() {
     );
 }
 
+// ─── Tests: acuerdo entre evaluadores (etapa 7) ─────────────────────────────
+
+fn con_lectura(
+    img: &mut ImageEntry,
+    autor: &str,
+    entregada: bool,
+    anns: Vec<AnnotationEntry>,
+) {
+    img.upsert_reading(autor, Some(autor), anns, 100.0);
+    if entregada {
+        if let Some(c) = img.readings.iter_mut().find(|r| r.author_id == autor) {
+            c.status = "submitted".into();
+        }
+    }
+}
+
+/// Sin dos lecturas entregadas no hay nada que comparar, y el informe tiene que
+/// decirlo en vez de devolver un acuerdo de cero — que significaría otra cosa.
+#[test]
+fn sin_dos_lecturas_entregadas_no_hay_acuerdo_que_calcular() {
+    let mut pf = make_project("p", "bbox", default_classes());
+    let mut img = image_entry("a.png", "a.png", 200, 100, vec![]);
+    con_lectura(&mut img, "ana", true, vec![bbox_ann(0, 0.0, 0.0, 10.0, 10.0)]);
+    con_lectura(&mut img, "beto", false, vec![bbox_ann(0, 0.0, 0.0, 10.0, 10.0)]);
+    pf.images.push(img);
+
+    let r = crate::store::agreement::calcular_acuerdo(&pf);
+    assert!(r.value.is_none());
+    assert_eq!(r.n_items, 0);
+    assert!(r.note.is_some(), "no se explicó por qué no hay número");
+}
+
+/// Dos personas que trazan la misma caja están de acuerdo del todo.
+#[test]
+fn dos_lecturas_identicas_dan_acuerdo_maximo() {
+    let mut pf = make_project("p", "bbox", default_classes());
+    for n in 0..3 {
+        let mut img = image_entry(&format!("i{n}.png"), &format!("i{n}.png"), 200, 100, vec![]);
+        con_lectura(&mut img, "ana", true, vec![bbox_ann(0, 10.0, 10.0, 20.0, 20.0)]);
+        con_lectura(&mut img, "beto", true, vec![bbox_ann(0, 10.0, 10.0, 20.0, 20.0)]);
+        pf.images.push(img);
+    }
+
+    let r = crate::store::agreement::calcular_acuerdo(&pf);
+    assert_eq!(r.statistic, "iou");
+    assert_eq!(r.n_items, 3);
+    assert_eq!(r.n_raters, 2);
+    assert!(
+        (r.value.unwrap() - 1.0).abs() < 1e-9,
+        "acuerdo = {:?}",
+        r.value
+    );
+}
+
+/// Lo que una vio y la otra no baja el acuerdo: es el desacuerdo más grande que
+/// hay y no puede quedarse fuera de la cuenta.
+#[test]
+fn una_marca_que_solo_vio_una_persona_baja_el_acuerdo() {
+    let mut pf = make_project("p", "bbox", default_classes());
+    for n in 0..4 {
+        let mut img = image_entry(&format!("i{n}.png"), &format!("i{n}.png"), 200, 100, vec![]);
+        con_lectura(&mut img, "ana", true, vec![
+            bbox_ann(0, 10.0, 10.0, 20.0, 20.0),
+            bbox_ann(0, 100.0, 100.0, 20.0, 20.0),
+        ]);
+        con_lectura(&mut img, "beto", true, vec![bbox_ann(0, 10.0, 10.0, 20.0, 20.0)]);
+        pf.images.push(img);
+    }
+
+    let r = crate::store::agreement::calcular_acuerdo(&pf);
+    // Una pareja perfecta y una marca huérfana por imagen: 1/2.
+    assert!((r.value.unwrap() - 0.5).abs() < 1e-9, "{:?}", r.value);
+    assert!(r.ci_low.is_some() && r.ci_high.is_some(), "sin intervalo");
+}
+
+/// En un proyecto de clasificación la métrica es κ, no solape: comparar cajas
+/// donde no hay geometría daría un número sin sentido.
+#[test]
+fn un_proyecto_de_clasificacion_usa_kappa() {
+    let mut pf = make_project("p", "classification", default_classes());
+    // Ocho de acuerdo, dos en desacuerdo, dos clases.
+    for n in 0..10 {
+        let mut img = image_entry(&format!("i{n}.png"), &format!("i{n}.png"), 200, 100, vec![]);
+        let clase_ana = (n % 2) as i64;
+        let clase_beto = if n < 2 { 1 - clase_ana } else { clase_ana };
+        con_lectura(&mut img, "ana", true, vec![bbox_ann(clase_ana, 0.0, 0.0, 1.0, 1.0)]);
+        con_lectura(&mut img, "beto", true, vec![bbox_ann(clase_beto, 0.0, 0.0, 1.0, 1.0)]);
+        pf.images.push(img);
+    }
+
+    let r = crate::store::agreement::calcular_acuerdo(&pf);
+    assert_eq!(r.statistic, "cohen_kappa");
+    assert!(r.value.unwrap() > 0.0);
+    assert!(r.reading.is_some(), "κ sin lectura orientativa");
+}
+
+/// La cola pone arriba lo peor: si ordenara por ruido, quien adjudica perdería
+/// el tiempo en lo fácil y se fiaría de que abajo no hay nada.
+#[test]
+fn la_cola_de_discrepancias_pone_lo_peor_arriba() {
+    let mut pf = make_project("p", "bbox", default_classes());
+
+    let mut igual = image_entry("igual.png", "igual.png", 200, 100, vec![]);
+    igual.id = "igual".into();
+    con_lectura(&mut igual, "ana", true, vec![bbox_ann(0, 10.0, 10.0, 20.0, 20.0)]);
+    con_lectura(&mut igual, "beto", true, vec![bbox_ann(0, 10.0, 10.0, 20.0, 20.0)]);
+
+    let mut roza = image_entry("roza.png", "roza.png", 200, 100, vec![]);
+    roza.id = "roza".into();
+    con_lectura(&mut roza, "ana", true, vec![bbox_ann(0, 10.0, 10.0, 20.0, 20.0)]);
+    con_lectura(&mut roza, "beto", true, vec![bbox_ann(0, 14.0, 14.0, 20.0, 20.0)]);
+
+    let mut nada = image_entry("nada.png", "nada.png", 200, 100, vec![]);
+    nada.id = "nada".into();
+    con_lectura(&mut nada, "ana", true, vec![bbox_ann(0, 10.0, 10.0, 20.0, 20.0)]);
+    con_lectura(&mut nada, "beto", true, vec![bbox_ann(0, 150.0, 150.0, 20.0, 20.0)]);
+
+    pf.images.extend([igual, roza, nada]);
+
+    let cola = crate::store::agreement::cola_de_discrepancias(&pf, 10);
+    assert_eq!(cola.len(), 2, "la imagen en la que coinciden no es discrepancia");
+    assert_eq!(cola[0].image_id, "nada", "arriba tiene que ir el peor caso");
+    assert_eq!(cola[0].only_one, 2, "dos marcas que vio sólo una persona");
+    assert!(cola[0].disagreement > cola[1].disagreement);
+}
+
+/// Un solape perfecto con clases distintas es desacuerdo, y tiene que aparecer en
+/// la cola aunque la geometría coincida.
+#[test]
+fn el_conflicto_de_clase_entra_en_la_cola() {
+    let mut pf = make_project("p", "bbox", default_classes());
+    let mut img = image_entry("i.png", "i.png", 200, 100, vec![]);
+    img.id = "i".into();
+    con_lectura(&mut img, "ana", true, vec![bbox_ann(0, 10.0, 10.0, 20.0, 20.0)]);
+    con_lectura(&mut img, "beto", true, vec![bbox_ann(1, 10.0, 10.0, 20.0, 20.0)]);
+    pf.images.push(img);
+
+    let cola = crate::store::agreement::cola_de_discrepancias(&pf, 10);
+    assert_eq!(cola.len(), 1);
+    assert_eq!(cola[0].class_conflicts, 1);
+}
+
 /// El registro de auditoría dice qué cambió, no que «se guardó». El cliente manda
 /// la lista entera y no declara qué tocó: hay que compararla con lo que había.
 #[test]

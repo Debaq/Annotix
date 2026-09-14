@@ -12,6 +12,7 @@ import { subjectService } from '../services/subjectService';
 import type { PatternPreview, ProvenanceSummary, SubjectSummary } from '../types';
 import { ProvenanceSection } from './ProvenanceSection';
 import { AuditSection } from './AuditSection';
+import { AgreementSection } from '@/features/agreement/components/AgreementSection';
 
 interface Props {
   projectId: string;
@@ -253,6 +254,8 @@ export function SubjectManagerDialog({ projectId, open, onClose, onChanged }: Pr
         </section>
 
         {provenance && <ProvenanceSection summary={provenance} />}
+
+        <AgreementSection projectId={projectId} />
 
         <AuditSection projectId={projectId} />
 

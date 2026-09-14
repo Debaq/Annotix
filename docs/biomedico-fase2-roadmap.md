@@ -238,7 +238,7 @@ feo: el host abre el proyecto mientras los tres anotan.
 
 ---
 
-## Etapa 7 — Acuerdo entre evaluadores y adjudicación
+## Etapa 7 — Acuerdo entre evaluadores y adjudicación ✅ **hecho**
 
 **Qué se construye.** Sobre las capas de la etapa 6:
 

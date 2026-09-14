@@ -31,6 +31,13 @@ pub enum PeerRole {
     #[serde(alias = "collaborator")]
     Annotator,
     DataCurator,
+    /// Resuelve las discrepancias entre lecturas y escribe la capa consolidada.
+    ///
+    /// Es un rol aparte de `LeadResearcher` porque adjudicar y dirigir la sesión
+    /// son cosas distintas: quien decide qué etiqueta queda debería poder ser
+    /// alguien con criterio clínico sobre el dominio, no necesariamente quien
+    /// administra el reparto.
+    Adjudicator,
 }
 
 impl PeerRole {
@@ -53,6 +60,14 @@ impl PeerRole {
     pub fn can_export(&self) -> bool {
         matches!(self, PeerRole::LeadResearcher | PeerRole::DataCurator)
     }
+
+    /// Puede resolver discrepancias y escribir la capa consolidada.
+    ///
+    /// El lead researcher lo puede porque si no, una sesión sin adjudicador
+    /// designado no tendría forma de cerrar sus discrepancias.
+    pub fn can_adjudicate(&self) -> bool {
+        matches!(self, PeerRole::LeadResearcher | PeerRole::Adjudicator)
+    }
 }
 
 impl std::fmt::Display for PeerRole {
@@ -61,6 +76,7 @@ impl std::fmt::Display for PeerRole {
             PeerRole::LeadResearcher => write!(f, "lead_researcher"),
             PeerRole::Annotator => write!(f, "annotator"),
             PeerRole::DataCurator => write!(f, "data_curator"),
+            PeerRole::Adjudicator => write!(f, "adjudicator"),
         }
     }
 }

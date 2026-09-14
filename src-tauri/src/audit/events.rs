@@ -24,6 +24,8 @@ pub const PREDICTIONS_ACCEPTED: &str = "predictions.accepted";
 pub const PREDICTIONS_REJECTED: &str = "predictions.rejected";
 /// Consolidación de los tracks de un video en etiquetas por fotograma.
 pub const VIDEO_CONSOLIDATED: &str = "video.consolidated";
+/// Discrepancia entre lecturas resuelta: alguien decidió qué etiqueta queda.
+pub const ADJUDICATED: &str = "annotations.adjudicated";
 
 // ─── Definiciones del proyecto ──────────────────────────────────────────────
 /// Alta, baja, renombrado o reordenado de clases. Reordenar no es cosmético: el
@@ -48,6 +50,7 @@ pub const EVENT_NAMES: &[&str] = &[
     PREDICTIONS_ACCEPTED,
     PREDICTIONS_REJECTED,
     VIDEO_CONSOLIDATED,
+    ADJUDICATED,
     CLASSES_CHANGED,
     SUBJECTS_ASSIGNED,
     SPLIT_POLICY_CHANGED,

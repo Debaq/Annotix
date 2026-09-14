@@ -1,0 +1,27 @@
+{
+  "title": "Inter-rater agreement",
+  "recalculate": "Recalculate",
+  "calculating": "Calculating…",
+  "ci": "95% CI [{{low}}, {{high}}]",
+  "basis": "Over {{items}} samples read by {{raters}} evaluators",
+  "queue": "Disagreements, worst first",
+  "queueHelp": "Click one to open and resolve it. The number is how far apart the readings are.",
+  "onlyOne": "{{count}} seen by only one",
+  "classConflicts": "{{count}} with a class conflict",
+  "blandAltman": "Bias {{bias}} px; 95% of differences fall between {{low}} and {{high}}.",
+  "statistic": {
+    "cohen_kappa": "Cohen's κ",
+    "fleiss_kappa": "Fleiss' κ",
+    "iou": "Mean IoU between readings",
+    "dice": "Mean Dice between readings",
+    "bland_altman": "Bland-Altman"
+  },
+  "reading": {
+    "peor_que_azar": "Worse than chance: the readings contradict each other systematically.",
+    "pobre": "Poor agreement: the criterion is not being applied consistently.",
+    "aceptable": "Fair agreement, with plenty of room to improve.",
+    "moderado": "Moderate agreement.",
+    "sustancial": "Substantial agreement.",
+    "casi_perfecto": "Almost perfect agreement."
+  }
+}

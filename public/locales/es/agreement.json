@@ -1,0 +1,27 @@
+{
+  "title": "Acuerdo entre evaluadores",
+  "recalculate": "Recalcular",
+  "calculating": "Calculando…",
+  "ci": "IC 95 % [{{low}}, {{high}}]",
+  "basis": "Sobre {{items}} muestras leídas por {{raters}} evaluadores",
+  "queue": "Discrepancias, la peor arriba",
+  "queueHelp": "Pulsa una para abrirla y resolverla. El número es cuánto se alejan las lecturas entre sí.",
+  "onlyOne": "{{count}} vistas por una sola",
+  "classConflicts": "{{count}} en conflicto de clase",
+  "blandAltman": "Sesgo {{bias}} px; el 95 % de las diferencias cae entre {{low}} y {{high}}.",
+  "statistic": {
+    "cohen_kappa": "κ de Cohen",
+    "fleiss_kappa": "κ de Fleiss",
+    "iou": "IoU medio entre lecturas",
+    "dice": "Dice medio entre lecturas",
+    "bland_altman": "Bland-Altman"
+  },
+  "reading": {
+    "peor_que_azar": "Peor que el azar: las lecturas se contradicen de forma sistemática.",
+    "pobre": "Acuerdo pobre: el criterio no se está aplicando igual.",
+    "aceptable": "Acuerdo aceptable, con margen amplio de mejora.",
+    "moderado": "Acuerdo moderado.",
+    "sustancial": "Acuerdo sustancial.",
+    "casi_perfecto": "Acuerdo casi perfecto."
+  }
+}

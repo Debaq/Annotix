@@ -4,7 +4,7 @@
 > cinco (`biomedico-fase1` … `fase4`) son el plan; éste dice qué está hecho, qué
 > falta, y qué decisiones ya se tomaron para no volver a discutirlas.
 >
-> Última actualización: 2026-09-13, sobre `93722b3`.
+> Última actualización: 2026-09-13, sobre `a01bc8e`.
 
 ---
 
@@ -18,7 +18,7 @@
 | 4 · Procedencia por etiqueta | **hecho** | `26261c2`, `f1b95eb`, `7b5d021` |
 | 5 · Auditoría encadenada | **hecho** | `93722b3` |
 | 6 · Lectura múltiple cegada | **hecho**, sin probar con gente real | (esta tanda) |
-| 7 · Acuerdo + adjudicación | pendiente | — |
+| 7 · Acuerdo + adjudicación | **hecho** | (esta tanda) |
 | 8 · Contrato de modelo | pendiente | — |
 | 9 · Ingesta DICOM / NIfTI / WSI / 3D | pendiente | — |
 | 10a · MedSAM / μSAM | pendiente | — |
@@ -63,6 +63,13 @@ El cegado es de la aplicación, no del sustrato: el documento replicado sigue
 llevando todas las capas y quien lo inspeccione a mano puede leerlas. Cegarlo de
 verdad exigiría cifrar cada capa con una clave que sólo tenga quien adjudica.
 
+**Etapa 7.** Los estadísticos están probados contra valores publicados (κ de
+Fleiss = 0.2099 del ejemplo canónico, κ de Cohen = 0.4 de la tabla 2×2), no contra
+una salida de R sobre datos propios — que es lo que pide el roadmap y sigue
+pendiente. Quedan fuera: el Dice real sobre píxeles de máscara (hoy se compara por
+la envolvente) y el acuerdo por clase (el informe da un global, y una clase rara
+con acuerdo pésimo puede esconderse detrás). Ver `docs/acuerdo-evaluadores.md`.
+
 **Etapa 10b.** Quedan fuera los modelos que no se pueden descargar sin token:
 UNI (gated, CC-BY-NC-ND), RETFound (gated, `.pth` suelto sin metadatos de
 librería) y hibou (gated y con `trust_remote_code`, que el generador no pasa).
@@ -98,6 +105,8 @@ sesión de trabajo. **Qué mirar al abrirla**:
   con los últimos eventos.
 - Compartir por P2P con «Lecturas por muestra» en 2: que aparezca el contador de
   lecturas en la barra de anotaciones y que el botón de entregar funcione.
+- Estado del corpus → «Acuerdo entre evaluadores»: con dos lecturas entregadas,
+  que salga el número con su intervalo y la cola de discrepancias ordenada.
 
 ---
 
@@ -146,15 +155,34 @@ sesión de trabajo. **Qué mirar al abrirla**:
 
 ## Lo siguiente, si hay que elegir
 
-La **etapa 7** (acuerdo + adjudicación) es la que sigue por dependencia: las capas
-de la etapa 6 ya están y no sirven de nada hasta que alguien las compare. Es
-trabajo de cálculo —κ de Cohen y Fleiss, Dice/IoU pareados, Bland-Altman— más una
-cola de discrepancias y el rol adjudicador. Lo caro es que cada tipo de anotación
-necesita su métrica.
+La **etapa 8** (contrato de modelo) es la que sigue, y ya tiene **todos** sus
+insumos: informe de reparto con semilla y unidad (etapa 3), política de partición
+declarada (`splitPolicy`), procedencia con tasa de rechazo
+(`get_provenance_summary`, etapa 4), población por sujeto (etapa 2), registro de
+auditoría con su hash (etapa 5) y acuerdo entre evaluadores con intervalo
+(etapa 7). Lo que falta escribir es el propio documento, los hashes de integridad
+y los intervalos de confianza de las métricas por bootstrap **agrupado por
+sujeto** — remuestrear imágenes de los mismos doce pacientes produce intervalos
+artificialmente estrechos, y es el error más común en este tipo de informe.
 
-La **etapa 8** (contrato de modelo) es la que más valor visible da, y ya tiene
-cinco de sus insumos: informe de reparto con semilla y unidad (etapa 3), política
-de partición declarada (`splitPolicy`), procedencia con tasa de rechazo
-(`get_provenance_summary`, etapa 4), población por sujeto (etapa 2) y el registro
-de auditoría con su hash (etapa 5). Le falta el acuerdo entre evaluadores
-(etapa 7) y los intervalos de confianza por bootstrap agrupado por sujeto.
+**Cifrado en reposo** no es una etapa del plan y probablemente debería serlo: hoy
+el corpus (`project.json`, imágenes, `audit.jsonl`) está en claro en disco. Lo
+único cifrado es el secreto del host P2P, con una clave local que vive en el
+directorio de datos — protege contra copiar la carpeta del proyecto, no contra
+copiar el directorio entero. Ver la pregunta abierta más abajo.
+
+---
+
+## Preguntas abiertas
+
+**Protección de datos a nivel clínico.** Lo que falta, en orden:
+
+1. Cifrado en reposo del proyecto entero con clave derivada de frase de paso
+   (Argon2id), no de un archivo de clave junto a los datos.
+2. Deidentificación al importar DICOM (etapa 9a): hoy nombre, fecha de nacimiento
+   y `PatientID` entrarían tal cual.
+3. Seudonimización del sujeto con tabla aparte — hoy el `subjectId` se exporta y
+   viaja con el proyecto (decisión 5).
+4. Auditoría de **accesos**, no sólo de cambios: la etapa 5 registra quién cambió
+   qué; un marco clínico suele exigir también quién leyó qué.
+5. Cifrado por capa en sesiones cegadas — hoy el cegado es de la aplicación.

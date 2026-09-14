@@ -1,3 +1,4 @@
+mod agreement;
 mod audit;
 mod browser_automation;
 mod commands;
@@ -293,6 +294,9 @@ pub fn run() {
             commands::project_commands::save_classes,
             commands::project_commands::delete_project,
             commands::project_commands::set_project_folder,
+            commands::agreement_commands::get_corpus_agreement,
+            commands::agreement_commands::get_discrepancy_queue,
+            commands::agreement_commands::adjudicate_image,
             commands::audit_commands::verify_audit_log,
             commands::audit_commands::read_audit_tail,
             commands::project_commands::get_split_policy,

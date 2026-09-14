@@ -61,6 +61,7 @@ Un evento que no esté en esta lista lo rechaza el escritor
 | `predictions.accepted` | predicciones convertidas en etiquetas | `image_id`, `annotation_ids[]`, `model_ids[]` |
 | `predictions.rejected` | una predicción refutada | `image_id`, `prediction_ids[]`, `model_id` |
 | `video.consolidated` | bake de los tracks de un video | `video_id`, `n_tracks`, `n_frames` |
+| `annotations.adjudicated` | discrepancia entre lecturas resuelta | `image_id`, `decided_by`, `n_annotations`, `over_readings[]` |
 | `classes.changed` | alta, baja, renombrado o reordenado de clases | `before[]`, `after[]` |
 | `subjects.assigned` | carga del sujeto | `via`, `subject`, `n_samples` |
 | `split_policy.changed` | declaración de la política de partición | `policy` |
