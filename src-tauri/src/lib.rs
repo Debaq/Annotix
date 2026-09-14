@@ -4,6 +4,7 @@ mod augment;
 mod browser_automation;
 mod commands;
 mod contract;
+mod crypto;
 mod export;
 mod hashchain;
 mod import;

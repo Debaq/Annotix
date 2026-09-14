@@ -59,6 +59,12 @@ axum = "0.8"
 rand = "0.8"
 subtle = "2"
 chacha20poly1305 = "0.10"
+# Cifrado en reposo (etapa 12): Argon2id para derivar la clave de la frase de
+# paso, HKDF para la clave por archivo, zeroize para no dejar la clave en la
+# memoria liberada.
+argon2 = "0.5"
+hkdf = "0.12"
+zeroize = { version = "1", features = ["zeroize_derive"] }
 # Modo estudio: cadena de hash del registro. Ambas ya estaban en el árbol de
 # dependencias (transitivas de jsonwebtoken/ort), no agregan compilación nueva.
 sha2 = "0.10"
@@ -81,3 +87,18 @@ cuda = ["ort/cuda"]
 tensorrt = ["ort/tensorrt"]
 directml = ["ort/directml"]
 coreml = ["ort/coreml"]
+
+# Argon2id en compilación de depuración es unas cien veces más lento: el coste
+# está pensado para código optimizado, y sin esto abrir un proyecto cifrado
+# desde `cargo run` tarda segundos y la batería de tests se va a un minuto.
+# Optimizar sólo estos paquetes deja el resto del árbol depurable.
+[profile.dev.package.argon2]
+opt-level = 3
+[profile.dev.package.blake2]
+opt-level = 3
+[profile.dev.package.chacha20]
+opt-level = 3
+[profile.dev.package.chacha20poly1305]
+opt-level = 3
+[profile.dev.package.poly1305]
+opt-level = 3
