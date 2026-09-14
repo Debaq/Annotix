@@ -24,6 +24,7 @@ import { BackendSelector } from './BackendSelector';
 import { BackendModelSelector } from './BackendModelSelector';
 import { ExecutionModeSelector } from './ExecutionModeSelector';
 import { TrainingPresets } from './TrainingPresets';
+import { BiomedPresets } from './BiomedPresets';
 import { GpuIndicator } from './GpuIndicator';
 import { TrainingClassSelector } from './TrainingClassSelector';
 // Lazy: solo se cargan cuando el usuario llega a esa fase del flujo.
@@ -36,6 +37,7 @@ const AutomationControlPanel = lazy(() => import('../../browser-automation/compo
 import { automationService } from '../../browser-automation/services/automationService';
 import type { TrainingPhase, PythonEnvStatus, ScenarioPresetId, TrainingJob, TrainingBackend, TrainingConfig, AugmentationConfig, BackendInfo } from '../types';
 import { getPresetById } from '../utils/presets';
+import { projectTypeToTask } from '../utils/modelMapping';
 import type { GpuInfo } from '../types';
 import { useGlobalTrainingStatus } from '../hooks/useGlobalTrainingStatus';
 import { useTrainingModalStore } from '../store/trainingModalStore';
@@ -452,6 +454,41 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
     updateBackendParam('augmentation', { ...yoloConfig.augmentation, ...partial });
   }, [updateYoloAug, updateBackendParam, backend, yoloConfig.augmentation]);
 
+  /// Aplica un preset biomédico: backend, modelo y augmentaciones.
+  ///
+  /// Las augmentaciones son lo que de verdad distingue a estos presets —un
+  /// preset que sólo cambiara el modelo sería el generalista con otro nombre—,
+  /// así que se aplican aunque el backend no sea YOLO: los demás las leen de
+  /// `backendParams`.
+  const handleBiomedApply = useCallback(
+    (p: import('../types').BiomedPreset) => {
+      setBackend(p.backend);
+      setModelId(p.modelId);
+      updateCommonParam('valSplit', p.split.valSplit);
+      updateCommonParam('testSplit', p.split.testSplit);
+
+      const aug = {
+        fliplr: p.augmentation.fliplr,
+        flipud: p.augmentation.flipud,
+        degrees: p.augmentation.degrees,
+        mosaic: p.augmentation.mosaic,
+        mixup: p.augmentation.mixup,
+        copy_paste: p.augmentation.copyPaste,
+        scale: p.augmentation.scale,
+      };
+      updateYoloAug(aug);
+      updateBackendParam('augmentation', { ...yoloConfig.augmentation, ...aug });
+    },
+    [
+      setBackend,
+      setModelId,
+      updateCommonParam,
+      updateYoloAug,
+      updateBackendParam,
+      yoloConfig.augmentation,
+    ],
+  );
+
   const handlePresetSelect = useCallback((presetId: ScenarioPresetId) => {
     setSelectedPreset(presetId);
     applyPreset(presetId);
@@ -582,6 +619,15 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
                     </Button>
                   </div>
                 )}
+
+                {/* Dominio y presets biomédicos. Van antes que los de YOLO
+                    porque el dominio decide qué tiene sentido ofrecer después. */}
+                <BiomedPresets
+                  projectId={project.id!}
+                  task={projectTypeToTask(projectType)}
+                  onApply={handleBiomedApply}
+                />
+                <Separator />
 
                 {/* YOLO Presets */}
                 {backend === 'yolo' && (

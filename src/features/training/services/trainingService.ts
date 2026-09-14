@@ -11,6 +11,8 @@ import type {
   CloudProviderConfig,
   FamilyInfo,
   SplitPolicy,
+  BiomedPreset,
+  ReadinessReport,
 } from '../types';
 
 export const trainingService = {
@@ -93,6 +95,24 @@ export const trainingService = {
   /** `null` retira la política y vuelve al reparto de siempre. */
   setSplitPolicy(projectId: string, policy: SplitPolicy | null): Promise<void> {
     return invoke('set_split_policy', { projectId, policy });
+  },
+
+  /** Presets biomédicos, servidos desde Rust para que no haya dos listas. */
+  getBiomedPresets(): Promise<BiomedPreset[]> {
+    return invoke('get_biomed_presets');
+  },
+
+  /** Qué nivel de evidencia saldría si se entrenara ahora. No bloquea nada. */
+  getReadiness(projectId: string, testSplit: number, fliplr: number): Promise<ReadinessReport> {
+    return invoke('get_training_readiness', { projectId, testSplit, fliplr });
+  },
+
+  getProjectDomain(projectId: string): Promise<string> {
+    return invoke('get_project_domain', { projectId });
+  },
+
+  setProjectDomain(projectId: string, domain: 'general' | 'biomedical'): Promise<void> {
+    return invoke('set_project_domain', { projectId, domain });
   },
 
   installBackendPackages(backend: string): Promise<void> {

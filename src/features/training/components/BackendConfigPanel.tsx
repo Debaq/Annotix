@@ -3,6 +3,7 @@ import { TrainingAdvancedConfig } from './TrainingAdvancedConfig';
 import { TrainingAugmentation } from './TrainingAugmentation';
 import { DatasetSplitVisualizer } from './DatasetSplitVisualizer';
 import { SplitPolicyPanel } from './SplitPolicyPanel';
+import { ReadinessPanel } from './ReadinessPanel';
 import type { TrainingBackend, TrainingConfig } from '../types';
 import { OPTIMIZERS } from '../utils/presets';
 
@@ -137,6 +138,16 @@ export function BackendConfigPanel({
         valSplit={commonParams.valSplit}
         testSplit={commonParams.testSplit}
       />
+      {/* Qué saldría si se entrenara ahora. Va aquí, pegado al reparto, porque
+          los dos avisos que más pesan —sin test, sin sujeto— se arreglan justo
+          en los controles de al lado. */}
+      {projectId && (
+        <ReadinessPanel
+          projectId={projectId}
+          testSplit={commonParams.testSplit}
+          fliplr={yoloConfig?.augmentation?.fliplr ?? 0}
+        />
+      )}
       {projectId && (
         <SplitPolicyPanel
           projectId={projectId}

@@ -39,6 +39,7 @@ fn proyecto() -> ProjectFile {
         webp_quality_preset: "high".into(),
         split_policy: None,
         study_protocol: None,
+        domain: None,
     }
 }
 
@@ -277,4 +278,152 @@ fn el_contrato_transcribe_la_semilla_del_reparto() {
     let p = c.population.expect("población");
     assert_eq!(p.seed.as_deref(), Some("13884088283711083410"));
     assert_eq!(p.split_unit, "subject");
+}
+
+// ─── Previsión antes de entrenar (etapa 11) ─────────────────────────────────
+
+use super::readiness::{es_lateralizada, evaluar};
+use crate::store::project_file::MedicalInfo;
+use crate::store::subjects::ProvenanceSummary;
+
+fn procedencia(total: usize, unknown: usize) -> ProvenanceSummary {
+    ProvenanceSummary {
+        total,
+        unknown,
+        ..Default::default()
+    }
+}
+
+fn codigos(r: &super::readiness::ReadinessReport) -> Vec<&str> {
+    r.warnings.iter().map(|a| a.code.as_str()).collect()
+}
+
+/// La previsión antes de entrenar tiene que dar **el mismo nivel** que el
+/// contrato después. Si no, el aviso previo mentiría: el usuario ajustaría el
+/// corpus creyendo que llega a un nivel y saldría otro.
+#[test]
+fn la_prevision_coincide_con_el_contrato() {
+    let mut pf = proyecto();
+    pf.images.push(imagen("i1", Some("PAC-1")));
+    pf.split_policy = Some(SplitPolicy {
+        unit: "subject".into(),
+        seed: Some(4242),
+        ..SplitPolicy::default()
+    });
+
+    // Antes de entrenar, con test pedido.
+    let previo = evaluar(&pf, 0.2, 0.0, &procedencia(100, 0), false);
+
+    // Después de entrenar, con test hecho.
+    let (nivel, _) = nivel_de_evidencia(&pf, &trabajo(true), &procedencia_limpia(), None);
+
+    assert_eq!(previo.level, nivel.como_texto());
+    assert_eq!(previo.level, "reproducible");
+    assert_eq!(previo.next_level.as_deref(), Some("verificable"));
+}
+
+/// Sin test pedido, la previsión ya avisa: es justo el momento en que todavía se
+/// puede cambiar, porque después el modelo ya se entrenó sin él.
+#[test]
+fn sin_test_la_prevision_avisa_antes_de_entrenar() {
+    let pf = proyecto();
+    let r = evaluar(&pf, 0.0, 0.0, &procedencia(10, 10), false);
+
+    assert_eq!(r.level, "declarativo");
+    assert!(codigos(&r).contains(&"sin_test"));
+    assert!(codigos(&r).contains(&"procedencia_desconocida"));
+    assert!(codigos(&r).contains(&"sin_sujetos"));
+}
+
+/// El aviso de lateralidad no es de evidencia: es de corrección. Un corpus de
+/// radiografías entrenado con volteo horizontal no está peor documentado, está
+/// mal entrenado — no puede aprender de qué lado estaba el hallazgo.
+#[test]
+fn el_volteo_en_radiografia_es_un_error_de_configuracion_no_de_evidencia() {
+    let mut pf = proyecto();
+    let mut img = imagen("i1", Some("PAC-1"));
+    img.medical = Some(MedicalInfo {
+        source_format: "dicom".into(),
+        modality: Some("CR".into()),
+        ..Default::default()
+    });
+    pf.images.push(img);
+
+    let r = evaluar(&pf, 0.2, 0.5, &procedencia(10, 0), false);
+
+    assert_eq!(r.detected_modality.as_deref(), Some("CR"));
+    assert!(r.lateralized);
+    let aviso = r
+        .warnings
+        .iter()
+        .find(|a| a.code == "volteo_en_modalidad_lateralizada")
+        .expect("el aviso de lateralidad");
+    assert_eq!(
+        aviso.kind, "correccion",
+        "se clasificó como falta de evidencia"
+    );
+}
+
+/// Sin volteo no hay aviso: el mismo corpus, bien configurado, no molesta.
+#[test]
+fn la_misma_radiografia_sin_volteo_no_avisa() {
+    let mut pf = proyecto();
+    let mut img = imagen("i1", Some("PAC-1"));
+    img.medical = Some(MedicalInfo {
+        source_format: "dicom".into(),
+        modality: Some("CR".into()),
+        ..Default::default()
+    });
+    pf.images.push(img);
+
+    let r = evaluar(&pf, 0.2, 0.0, &procedencia(10, 0), false);
+    assert!(!codigos(&r).contains(&"volteo_en_modalidad_lateralizada"));
+}
+
+/// En microscopía el volteo es legítimo: una célula no tiene izquierda. Avisar
+/// ahí sería enseñar a ignorar los avisos.
+#[test]
+fn en_microscopia_el_volteo_no_es_un_problema() {
+    let mut pf = proyecto();
+    let mut img = imagen("i1", Some("PLACA-1"));
+    img.medical = Some(MedicalInfo {
+        source_format: "dicom".into(),
+        modality: Some("SM".into()), // microscopía
+        ..Default::default()
+    });
+    pf.images.push(img);
+
+    let r = evaluar(&pf, 0.2, 0.5, &procedencia(10, 0), false);
+    assert!(!r.lateralized);
+    assert!(!codigos(&r).contains(&"volteo_en_modalidad_lateralizada"));
+}
+
+/// Un corpus a medio declarar es peor que uno sin declarar: media parte se
+/// agrupa por sujeto y la otra por imagen, sin que se note en ninguna cifra.
+#[test]
+fn el_sujeto_a_medias_se_avisa_aparte() {
+    let mut pf = proyecto();
+    pf.images.push(imagen("i1", Some("PAC-1")));
+    pf.images.push(imagen("i2", None));
+
+    let r = evaluar(&pf, 0.2, 0.0, &procedencia(10, 0), false);
+    assert_eq!(r.n_subjects, 1);
+    let aviso = r
+        .warnings
+        .iter()
+        .find(|a| a.code == "sujeto_a_medias")
+        .expect("aviso de sujeto a medias");
+    assert_eq!(aviso.detail.as_deref(), Some("1"));
+}
+
+/// La lista de modalidades lateralizadas es la que decide si el aviso aparece:
+/// si alguien quita CR de ahí, las radiografías dejan de avisar en silencio.
+#[test]
+fn las_modalidades_lateralizadas_son_las_que_tienen_lados() {
+    for m in ["CR", "DX", "MG", "CT", "MR", "cr", " ct "] {
+        assert!(es_lateralizada(m), "{m} debería estar lateralizada");
+    }
+    for m in ["SM", "GM", "US", ""] {
+        assert!(!es_lateralizada(m), "{m} no debería estarlo");
+    }
 }

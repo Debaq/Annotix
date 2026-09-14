@@ -127,6 +127,11 @@ pub fn migrate_project(project: &mut ProjectFile, dir: &Path) -> bool {
         changed = true;
     }
 
+    // v9 → v10: el dominio del proyecto es un campo opcional nuevo. Ausente
+    // significa `general`, que es lo que era todo proyecto hasta ahora: la
+    // migración no tiene nada que escribir, y marcar biomédico un proyecto por
+    // su contenido sería decidir por el usuario.
+
     // v8 → v9: los metadatos de imagen médica son un bloque opcional nuevo. Una
     // imagen que no vino de un DICOM ni de un NIfTI no los tiene, y no hay forma
     // de deducirlos de un PNG ya convertido: lo que se perdió al convertirlo se

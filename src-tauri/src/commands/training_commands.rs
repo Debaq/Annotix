@@ -537,6 +537,17 @@ pub fn get_available_backends(project_type: String) -> Result<Vec<BackendInfo>, 
 
 /// Catálogo completo de backends, sin filtrar por tipo de proyecto. Lo usa la
 /// pantalla de referencia de Configuración, que muestra todo lo que existe.
+/// Presets del dominio biomédico.
+///
+/// Se sirven desde el backend y no se duplican en el front: cada preset apunta a
+/// un backend y un modelo del catálogo, y una copia desincronizada ofrecería
+/// lanzar algo que ya no existe. Hay un test que comprueba que todos apuntan a
+/// algo real.
+#[tauri::command]
+pub fn get_biomed_presets() -> Vec<crate::training::biomed_presets::BiomedPreset> {
+    crate::training::biomed_presets::BIOMED_PRESETS.to_vec()
+}
+
 #[tauri::command]
 pub fn get_all_backends() -> Result<Vec<BackendInfo>, String> {
     Ok(crate::training::backends::get_all_backends())

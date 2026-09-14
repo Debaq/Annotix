@@ -521,6 +521,7 @@ pub struct BackendModelInfo {
 }
 
 pub mod backends;
+pub mod biomed_presets;
 pub mod catalog;
 pub mod cloud;
 pub mod contract;

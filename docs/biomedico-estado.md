@@ -4,7 +4,7 @@
 > cinco (`biomedico-fase1` … `fase4`) son el plan; éste dice qué está hecho, qué
 > falta, y qué decisiones ya se tomaron para no volver a discutirlas.
 >
-> Última actualización: 2026-09-14, sobre `a28f454`.
+> Última actualización: 2026-09-14, sobre `2d49347`.
 
 ---
 
@@ -26,7 +26,7 @@
 | 10a · MedSAM / μSAM | **hecho** para MedSAM, ejecutado contra los pesos reales; μSAM bloqueado (no hay ONNX) | (esta tanda) |
 | 10b · Pesos biomédicos | **empezado**: 5 modelos | `135553f` |
 | 10c · nnU-Net, MONAI, Cellpose, StarDist | pendiente | — |
-| 11 · Selector de dominio + presets | **a medias**: eje y catálogo sí, presets no | `beebdc5`, `fb43624` |
+| 11 · Selector de dominio + presets | **hecho** con los backends que existen | `beebdc5`, `fb43624`, (esta tanda) |
 | 12 · Cifrado en reposo, opcional | pendiente (etapa nueva, no estaba en el plan) | — |
 
 Fuera del plan original, pedido sobre la marcha:
@@ -88,6 +88,30 @@ imagen sigue ahí—. Los tests usan DICOM sintéticos construidos en la propia
 prueba; **falta validar con series reales de dos fabricantes distintos y verificar
 la deidentificación con una herramienta externa**. Ver `docs/ingesta-medica.md`.
 
+**Etapa 11.** Hecha con **los backends que existen de verdad**: seis presets
+biomédicos sobre `smp`, `yolo`, `timm` y `hf_classification`, con un test que
+comprueba contra el catálogo real que su backend y su modelo existen. Los de la
+tabla de la Fase 3 que dependen de backends nuevos —nnU-Net, TotalSegmentator,
+MONAI, StarDist, Cellpose— **no están**, y no se ofrecen: un preset que no se
+puede lanzar es peor que ninguno, porque se descubre al final.
+
+Lo que aporta de verdad no son los hiperparámetros sino dos cosas:
+
+1. **Augmentaciones por modalidad.** Sin volteo ni giros grandes donde la
+   orientación anatómica es información; con volteos y giros libres en
+   microscopía e histología, donde el campo es arbitrario. Hay tests que fallan
+   si alguien mete volteo horizontal en una modalidad lateralizada o mixup en
+   cualquiera.
+2. **La previsión antes de entrenar** (`contract/readiness.rs`): qué nivel de
+   evidencia saldría si se lanzara ahora y qué falta para el siguiente. El
+   contrato se emite después, cuando ya no se puede hacer nada; esto avisa
+   cuando todavía sirve. Un test ata la previsión al contrato: si dieran niveles
+   distintos, el aviso previo mentiría.
+
+El aviso de **lateralidad** es de corrección, no de evidencia: un corpus de
+radiografías con volteo horizontal no está peor documentado, está mal entrenado.
+Se detecta solo, desde la modalidad que trajo el DICOM.
+
 **Etapa 10b.** Quedan fuera los modelos que no se pueden descargar sin token:
 UNI (gated, CC-BY-NC-ND), RETFound (gated, `.pth` suelto sin metadatos de
 librería) y hibou (gated y con `trust_remote_code`, que el generador no pasa).
@@ -126,6 +150,12 @@ sesión de trabajo. **Qué mirar al abrirla**:
 - Estado del corpus → «Acuerdo entre evaluadores»: con dos lecturas entregadas,
   que salga el número con su intervalo y la cola de discrepancias ordenada.
 - Estado del corpus → «Protocolo del estudio»: rellenar inclusión y uso previsto.
+- Entrenamiento → «Dominio del proyecto» en biomédico: que aparezcan los presets
+  de la tarea del proyecto y que aplicar uno cambie backend, modelo, reparto y
+  augmentaciones.
+- Entrenamiento → «Si entrenas ahora, el contrato saldrá»: que el nivel cambie al
+  poner test, y que con un corpus de radiografías y volteo horizontal salga el
+  aviso rojo de corrección.
 - Galería → «Importar DICOM / NIfTI»: que al terminar salga el informe de
   deidentificación, y que el sujeto de las imágenes quede como `SUJ-…`.
 - Imagen médica abierta: el control de ventana arriba a la derecha, con los
@@ -168,7 +198,7 @@ sesión de trabajo. **Qué mirar al abrirla**:
 
 ## Formato de datos
 
-`project.json` va por la **versión 9**. Migraciones en `store/io.rs`:
+`project.json` va por la **versión 10**. Migraciones en `store/io.rs`:
 
 | | Cambio | Migración |
 |---|---|---|
@@ -178,6 +208,7 @@ sesión de trabajo. **Qué mirar al abrirla**:
 | v6 → v7 | capas de lectura por evaluador (`readings`) | sólo sube la versión: la única lectura de un proyecto viejo ya es la capa consolidada, y ponerle un autor sería inventarlo |
 | v7 → v8 | protocolo de estudio (`studyProtocol`) | sólo sube la versión: un criterio de inclusión no se deduce del corpus, así que no se rellena — el contrato nota la ausencia y la declara |
 | v8 → v9 | metadatos de imagen médica (`medical`) | sólo sube la versión: lo que se perdió al convertir un DICOM a PNG a mano no se puede deducir del PNG |
+| v9 → v10 | dominio del proyecto (`domain`) | sólo sube la versión: ausente significa `general`, y marcar biomédico un proyecto por su contenido sería decidir por el usuario |
 
 ---
 
@@ -194,9 +225,10 @@ punto de no retorno —una frase de paso perdida es un proyecto perdido— y una
 advertencia sobre lo que no promete: cifrar en reposo no es cumplimiento
 normativo.
 
-La **etapa 11** (presets biomédicos) es la que vuelve visible todo lo anterior
-para quien no leyó el plan: un primer paso «tipo de dominio» y presets que ya
-pueden rellenar la política de partición recomendada y el protocolo del estudio.
+La **etapa 9b** (whole-slide imaging) desbloquea histopatología de lámina
+completa. Es cara y bastante autónoma: lectura piramidal, navegación por teselas
+y entrenamiento por teselas agrupando por lámina —que el reparto de la etapa 1 ya
+sabría respetar—.
 
 La **etapa 10a** (MedSAM / μSAM) es barata: entra por el camino SAM que ya existe,
 es cambio de pesos y no de arquitectura, y combinada con la procedencia deja cada

@@ -69,3 +69,50 @@ pub fn set_study_protocol(
             .as_millis() as f64;
     })
 }
+
+/// Qué nivel de evidencia alcanzaría un entrenamiento lanzado ahora.
+///
+/// Se consulta **antes** de lanzar, que es cuando el aviso todavía sirve: el
+/// contrato se emite después, cuando ya no se puede hacer nada. Ninguno de sus
+/// avisos bloquea nada.
+#[tauri::command]
+pub fn get_training_readiness(
+    state: State<'_, AppState>,
+    project_id: String,
+    test_split: f64,
+    fliplr: Option<f64>,
+) -> Result<crate::contract::readiness::ReadinessReport, String> {
+    state.training_readiness(&project_id, test_split, fliplr.unwrap_or(0.0))
+}
+
+/// Dominio declarado del proyecto: `general` o `biomedical`.
+#[tauri::command]
+pub fn get_project_domain(
+    state: State<'_, AppState>,
+    project_id: String,
+) -> Result<String, String> {
+    state.with_project(&project_id, |pf| {
+        pf.domain.clone().unwrap_or_else(|| "general".to_string())
+    })
+}
+
+/// Declara el dominio. `general` retira la marca: un proyecto generalista no
+/// tiene por qué llevar un campo que no usa.
+#[tauri::command]
+pub fn set_project_domain(
+    state: State<'_, AppState>,
+    project_id: String,
+    domain: String,
+) -> Result<(), String> {
+    match domain.as_str() {
+        "general" | "biomedical" => {}
+        otro => return Err(format!("Dominio no soportado: {}", otro)),
+    }
+    state.with_project_mut(&project_id, |pf| {
+        pf.domain = (domain != "general").then(|| domain.clone());
+        pf.updated = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as f64;
+    })
+}

@@ -855,6 +855,7 @@ pub async fn doc_to_project_metadata(
         webp_quality_preset: "high".to_string(),
         split_policy: None,
         study_protocol: None,
+        domain: None,
     })
 }
 

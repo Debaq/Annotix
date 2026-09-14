@@ -981,5 +981,43 @@
     "seedDesc": "Declararla permite repetir el reparto fuera de la app.",
     "differs": "Este entrenamiento no usa las fracciones recomendadas ({{val}} / {{test}}).",
     "apply": "Aplicar"
+  },
+  "readiness": {
+    "title": "Si entrenas ahora, el contrato saldrá:",
+    "noBlock": "Nada de esto impide entrenar. Lo que baja cuando falta algo es lo que el contrato del modelo podrá afirmar.",
+    "correction": "Esto no es falta de documentación: probablemente saldrá mal entrenado",
+    "toReach": "Para llegar a «{{level}}» falta:",
+    "corpus": "{{images}} imágenes · {{subjects}} sujetos",
+    "warn": {
+      "sin_test": "Pedir un conjunto de test: sin él las métricas son de validación y están sesgadas por la selección del mejor epoch.",
+      "procedencia_desconocida": "La procedencia es desconocida en {{detail}} etiquetas: no se puede afirmar qué parte se trazó a mano.",
+      "reparto_sin_declarar": "Declarar la política de partición: hoy la unidad y la semilla se deciden solas y el reparto no se puede repetir fuera de la app.",
+      "sin_sujetos": "Cargar el sujeto de las muestras: sin él no se puede descartar que el mismo paciente esté en entrenamiento y en test.",
+      "sujeto_a_medias": "{{detail}} muestras sin sujeto: media parte se agrupa por sujeto y la otra por imagen, sin que se note.",
+      "lectura_unica": "Leer el corpus más de una vez: sin acuerdo entre evaluadores no se sabe cuánto de la etiqueta es criterio y cuánto es quien lo aplicó.",
+      "sin_criterios": "Declarar los criterios de inclusión y exclusión: el contrato no puede decir a quién representa el modelo.",
+      "sin_modalidad": "Las imágenes médicas no declaran modalidad: no se puede comprobar que el preprocesado corresponda al corpus.",
+      "volteo_en_modalidad_lateralizada": "El corpus es de modalidad {{detail}} y el preset voltea en horizontal. El modelo no podrá aprender lateralidad, y la lateralidad es diagnóstica."
+    }
+  },
+  "biomed": {
+    "domain": "Dominio del proyecto",
+    "domain_general": "General",
+    "domain_biomedical": "Biomédico",
+    "domainHint": "El dominio decide qué modelos y presets se ofrecen. Un proyecto general no ve ningún término clínico.",
+    "apply": "Aplicar",
+    "applied": "{{name}} aplicado, con su reparto recomendado",
+    "noneForTask": "No hay presets biomédicos para el tipo de este proyecto todavía.",
+    "anatomical": "Sin volteos ni giros grandes: la orientación anatómica es información, no ruido.",
+    "freeOrientation": "Volteos y giros libres: en esta modalidad la orientación es arbitraria.",
+    "modalities": "Modalidades: {{list}}",
+    "preset": {
+      "bio_unet_seg": "Segmentación biomédica (U-Net)",
+      "bio_microscopy_seg": "Segmentación en microscopía",
+      "bio_lesion_detect": "Detección de lesión",
+      "bio_xray_classify": "Radiografía de tórax",
+      "bio_radiology_transfer": "Transfer con poco dato (radiología)",
+      "bio_pathology_tiles": "Histopatología por teselas"
+    }
   }
 }

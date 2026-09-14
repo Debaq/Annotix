@@ -614,3 +614,64 @@ export interface SklearnBackendParams {
 // ─── Training Panel State ───────────────────────────────────────────────────
 
 export type TrainingPhase = 'setup' | 'backend' | 'config' | 'execution' | 'installing_backend' | 'training' | 'completed';
+
+// ─── Dominio biomédico (etapa 11) ────────────────────────────────────────────
+
+/**
+ * Un preset del dominio biomédico.
+ *
+ * Lo que lo distingue de uno generalista no son los hiperparámetros: son las
+ * augmentaciones que **no** usa —voltear una radiografía impide aprender
+ * lateralidad, y la lateralidad es diagnóstica— y el reparto que recomienda.
+ */
+export interface BiomedPreset {
+  id: string;
+  backend: TrainingBackend;
+  modelId: string;
+  task: string;
+  /** Modalidades para las que tiene sentido, en código DICOM o nombre corto. */
+  modalities: string[];
+  /** Si su modalidad tiene lados que el volteo destruiría. */
+  lateralized: boolean;
+  augmentation: {
+    fliplr: number;
+    flipud: number;
+    degrees: number;
+    mosaic: number;
+    mixup: number;
+    copyPaste: number;
+    scale: number;
+  };
+  split: {
+    unit: string;
+    valSplit: number;
+    testSplit: number;
+    requireTest: boolean;
+  };
+  notes: string[];
+}
+
+/** Un aviso previo al entrenamiento. */
+export interface ReadinessWarning {
+  code: string;
+  /** `evidencia` baja lo que el contrato puede afirmar; `correccion` significa
+   *  que el modelo probablemente saldrá mal entrenado. */
+  kind: 'evidencia' | 'correccion';
+  detail: string | null;
+}
+
+/**
+ * Qué nivel de evidencia alcanzaría un entrenamiento lanzado ahora.
+ *
+ * Ninguno de sus avisos bloquea nada: lo que baja cuando falta algo es lo que el
+ * contrato podrá afirmar del modelo. El coste cae en el papel, no en el trabajo.
+ */
+export interface ReadinessReport {
+  level: string;
+  nextLevel: string | null;
+  warnings: ReadinessWarning[];
+  detectedModality: string | null;
+  lateralized: boolean;
+  nSubjects: number;
+  nImages: number;
+}

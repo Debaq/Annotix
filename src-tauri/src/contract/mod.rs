@@ -20,6 +20,7 @@
 use serde::{Deserialize, Serialize};
 
 pub mod build;
+pub mod readiness;
 
 #[cfg(test)]
 mod tests;

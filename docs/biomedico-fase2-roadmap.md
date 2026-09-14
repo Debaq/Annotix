@@ -390,7 +390,7 @@ lo recomienda.
 
 ---
 
-## Etapa 11 — Selector de dominio y presets biomédicos
+## Etapa 11 — Selector de dominio y presets biomédicos ✅ **hecho** (con los backends que existen)
 
 **Qué se construye.** El diseño completo es la Fase 3. En términos de
 dependencia: un primer paso "tipo de dominio" (general / biomédico) que filtra

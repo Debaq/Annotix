@@ -33,7 +33,9 @@ use serde::{Deserialize, Serialize};
 /// - 9: una imagen puede venir de un archivo médico (`medical`): modalidad,
 ///   equipo, espaciado de píxel, ventana con la que se renderizó y la copia de
 ///   16 bits que permite volver a ventanearla. Bloque opcional.
-pub const CURRENT_VERSION: u32 = 9;
+/// - 10: el proyecto declara su **dominio** (`domain`): `general` o `biomedical`.
+///   Filtra modelos y presets. Ausente = general, que es lo que era todo antes.
+pub const CURRENT_VERSION: u32 = 10;
 
 // ─── ProjectFile: todo el contenido de project.json ─────────────────────────
 
@@ -86,6 +88,13 @@ pub struct ProjectFile {
         rename = "splitPolicy"
     )]
     pub split_policy: Option<SplitPolicy>,
+    /// `general` | `biomedical`. Decide qué modelos y presets se ofrecen.
+    ///
+    /// Se pregunta una vez y se puede cambiar. Ausente significa `general`, que
+    /// es lo que era todo proyecto antes de que esto existiera: un usuario
+    /// generalista no ve un solo término clínico.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub domain: Option<String>,
     /// Qué estudio es éste. Ausente en un proyecto generalista.
     #[serde(
         default,

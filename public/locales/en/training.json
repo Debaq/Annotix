@@ -981,5 +981,43 @@
     "seedDesc": "Declaring it lets the split be reproduced outside the app.",
     "differs": "This run does not use the recommended fractions ({{val}} / {{test}}).",
     "apply": "Apply"
+  },
+  "readiness": {
+    "title": "If you train now, the contract will read:",
+    "noBlock": "None of this blocks training. What drops when something is missing is what the model contract will be able to claim.",
+    "correction": "This is not missing documentation: the model will probably be badly trained",
+    "toReach": "To reach “{{level}}” you still need:",
+    "corpus": "{{images}} images · {{subjects}} subjects",
+    "warn": {
+      "sin_test": "Ask for a test set: without it the metrics are validation metrics, biased by best-epoch selection.",
+      "procedencia_desconocida": "Provenance is unknown for {{detail}} labels: there is no way to claim which part was drawn by hand.",
+      "reparto_sin_declarar": "Declare the split policy: today the unit and the seed decide themselves and the split cannot be reproduced outside the app.",
+      "sin_sujetos": "Load the samples' subject: without it there is no ruling out that the same patient is in both training and test.",
+      "sujeto_a_medias": "{{detail}} samples without a subject: half is grouped by subject and half by image, with nothing showing it.",
+      "lectura_unica": "Read the corpus more than once: without inter-rater agreement there is no telling how much of the label is criterion and how much is the person applying it.",
+      "sin_criterios": "Declare inclusion and exclusion criteria: the contract cannot say who this model represents.",
+      "sin_modalidad": "The medical images declare no modality: there is no checking that the preprocessing matches the corpus.",
+      "volteo_en_modalidad_lateralizada": "The corpus is {{detail}} and the preset flips horizontally. The model will not be able to learn laterality, and laterality is diagnostic."
+    }
+  },
+  "biomed": {
+    "domain": "Project domain",
+    "domain_general": "General",
+    "domain_biomedical": "Biomedical",
+    "domainHint": "The domain decides which models and presets are offered. A general project sees no clinical terms at all.",
+    "apply": "Apply",
+    "applied": "{{name}} applied, with its recommended split",
+    "noneForTask": "No biomedical presets for this project type yet.",
+    "anatomical": "No flips and no large rotations: anatomical orientation is information, not noise.",
+    "freeOrientation": "Free flips and rotations: in this modality orientation is arbitrary.",
+    "modalities": "Modalities: {{list}}",
+    "preset": {
+      "bio_unet_seg": "Biomedical segmentation (U-Net)",
+      "bio_microscopy_seg": "Microscopy segmentation",
+      "bio_lesion_detect": "Lesion detection",
+      "bio_xray_classify": "Chest X-ray",
+      "bio_radiology_transfer": "Low-data transfer (radiology)",
+      "bio_pathology_tiles": "Histopathology tiles"
+    }
   }
 }

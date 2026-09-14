@@ -108,6 +108,7 @@ fn make_project(name: &str, ptype: &str, classes: Vec<ClassDef>) -> ProjectFile 
         webp_quality_preset: "high".into(),
         split_policy: None,
         study_protocol: None,
+        domain: None,
     }
 }
 
