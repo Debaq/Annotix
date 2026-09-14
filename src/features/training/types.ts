@@ -248,8 +248,14 @@ export interface SplitPolicy {
   /** Fracciones recomendadas por el proyecto; la corrida usa las suyas. */
   valSplit?: number | null;
   testSplit?: number | null;
-  /** `null` = la semilla derivada del id del proyecto. */
-  seed?: number | null;
+  /**
+   * `null` = la semilla derivada del id del proyecto.
+   *
+   * Texto y no número: la derivada del id pasa de 2^53 y `JSON.parse` la
+   * redondearía, con lo que copiarla del informe a este campo guardaría otra
+   * semilla —y otro reparto— sin que nada avisara.
+   */
+  seed?: string | null;
   requireTest: boolean;
 }
 
@@ -258,8 +264,8 @@ export interface SplitReport {
   unit: string;
   /** La que se declaró, cuando se declaró alguna distinta de `auto`. */
   declaredUnit?: string | null;
-  /** Semilla del barajado: con ella el reparto se repite fuera de la app. */
-  seed: number;
+  /** Semilla del barajado, como texto (ver `SplitPolicy.seed`). */
+  seed: string;
   items: SplitCountsReport;
   groups: SplitCountsReport;
   subjects?: SplitCountsReport;

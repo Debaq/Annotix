@@ -49,6 +49,11 @@ geometría— y la barra de anotaciones tiene la ficha de procedencia de una
 etiqueta. Queda fuera, y a propósito: `review: "rejected"` no se escribe sobre
 una etiqueta viva, porque una etiqueta rechazada deja de estar en el corpus.
 
+Lo que sigue sin cubrir: el par que borra una etiqueta en una sesión P2P deja
+constancia en **su** proyecto y en el del que recibe el cambio, pero el resto de
+los pares no se entera hasta que les llega esa imagen. Deshacer eso de verdad es
+la etapa 6, que reescribe cómo viajan las anotaciones.
+
 **Etapa 10b.** Quedan fuera los modelos que no se pueden descargar sin token:
 UNI (gated, CC-BY-NC-ND), RETFound (gated, `.pth` suelto sin metadatos de
 librería) y hibou (gated y con `trust_remote_code`, que el generador no pasa).
@@ -98,7 +103,16 @@ sesión de trabajo. **Qué mirar al abrirla**:
 5. **El sujeto lo seudonimiza quien lo carga.** El campo se exporta y viaja con
    el proyecto; el sistema no transforma nada porque no sabe qué vínculo necesita
    conservar el estudio.
-6. **La etapa 9 no bloquea todo lo biomédico.** Teselas de histopatología, fondo
+6. **La semilla del reparto viaja como texto.** Es un entero de 64 bits y la
+   derivada del id del proyecto pasa de 2^53: como número, `JSON.parse` la
+   redondea y el informe enseñaría para reproducir el reparto una semilla que no
+   es la que se usó. No se acorta la semilla para que quepa: eso cambiaría el
+   reparto de todos los proyectos existentes.
+7. **Lo que se publica al P2P es lo que quedó escrito.** El payload del cliente
+   no trae los campos de procedencia y el par que lo recibe escribe lo que le
+   llega: publicar el payload borraba origen, modelo y revisión en el otro lado.
+   El receptor fusiona con la misma regla del guardado local, no reemplaza.
+8. **La etapa 9 no bloquea todo lo biomédico.** Teselas de histopatología, fondo
    de ojo y radiografías en PNG son imágenes 2D normales. Sólo la volumetría y la
    lámina completa dependen de ella. (Corrección al roadmap original.)
 

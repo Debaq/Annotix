@@ -429,6 +429,7 @@ async fn save_annotations(
     state
         .app_state()
         .save_annotations(&project_id, &image_id, &parsed.annotations)
+        .map(|_| ())
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
 
     match state.app_handle.emit(

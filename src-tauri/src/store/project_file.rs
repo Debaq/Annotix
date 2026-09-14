@@ -68,7 +68,11 @@ pub struct ProjectFile {
     #[serde(default = "default_webp_preset", rename = "webpQualityPreset")]
     pub webp_quality_preset: String,
     /// Cómo se reparte el corpus. Ausente = las decisiones por defecto.
-    #[serde(default, skip_serializing_if = "Option::is_none", rename = "splitPolicy")]
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        rename = "splitPolicy"
+    )]
     pub split_policy: Option<SplitPolicy>,
 }
 
@@ -104,7 +108,15 @@ pub struct SplitPolicy {
     pub test_split: Option<f64>,
     /// Semilla del barajado. `None` = la derivada del id del proyecto, que es la
     /// que se venía usando; declararla permite repetir el reparto fuera de la app.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    ///
+    /// Viaja como **texto**: la derivada del id pasa de 2^53 y JavaScript la
+    /// redondearía, así que el número que el informe enseña para reproducir el
+    /// reparto no sería el que se usó. Ver `serde_u64_texto`.
+    #[serde(
+        default,
+        with = "serde_u64_texto",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub seed: Option<u64>,
     /// El proyecto declara que sus entrenamientos deben tener conjunto de test.
     /// Entrenar sin él sigue permitido: queda anotado en el informe.
@@ -114,6 +126,39 @@ pub struct SplitPolicy {
 
 fn default_split_unit() -> String {
     "auto".to_string()
+}
+
+/// `Option<u64>` como texto en JSON.
+///
+/// Un `u64` por encima de 2^53 no sobrevive el viaje por JavaScript: `JSON.parse`
+/// lo convierte al doble más cercano y devuelve otro número. La semilla existe
+/// justamente para repetir un reparto, así que redondearla la vuelve inútil sin
+/// que nada avise. Acepta también un número al leer, por si algún proyecto ya
+/// guardó uno.
+pub mod serde_u64_texto {
+    use serde::{Deserialize, Deserializer, Serializer};
+
+    pub fn serialize<S: Serializer>(v: &Option<u64>, s: S) -> Result<S::Ok, S::Error> {
+        match v {
+            Some(n) => s.serialize_str(&n.to_string()),
+            None => s.serialize_none(),
+        }
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Option<u64>, D::Error> {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Entrada {
+            Texto(String),
+            Numero(u64),
+        }
+        Ok(match Option::<Entrada>::deserialize(d)? {
+            None => None,
+            Some(Entrada::Numero(n)) => Some(n),
+            Some(Entrada::Texto(t)) if t.trim().is_empty() => None,
+            Some(Entrada::Texto(t)) => Some(t.trim().parse().map_err(serde::de::Error::custom)?),
+        })
+    }
 }
 
 impl Default for SplitPolicy {

@@ -231,7 +231,11 @@ pub async fn save_annotations(
         }
     }
 
-    state.save_annotations(&project_id, &image_id, &annotations)?;
+    // Lo que se publica al P2P es lo que quedó escrito, con la procedencia que el
+    // guardado acaba de fusionar. El payload del cliente no la trae, y el par que
+    // lo recibe escribe lo que le llega: publicarlo borraba origen, modelo y
+    // revisión en el otro lado sin que nada avisara.
+    let escritas = state.save_annotations(&project_id, &image_id, &annotations)?;
     let _ = app.emit(
         "db:images-changed",
         serde_json::json!({
@@ -245,8 +249,7 @@ pub async fn save_annotations(
     let has_session = p2p.get_session_info(&project_id).await.is_some();
     if has_session {
         if let Err(e) =
-            crate::p2p::sync::sync_annotations_to_doc(&p2p, &project_id, &image_id, &annotations)
-                .await
+            crate::p2p::sync::sync_annotations_to_doc(&p2p, &project_id, &image_id, &escritas).await
         {
             log::warn!("Error sincronizando anotaciones al P2P: {}", e);
         }

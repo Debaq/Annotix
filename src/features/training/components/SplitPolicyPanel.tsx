@@ -13,6 +13,113 @@ import {
 import { trainingService } from '../services/trainingService';
 import type { SplitPolicy } from '../types';
 
+/**
+ * Campo de sólo dígitos que confirma al salir o con Enter.
+ *
+ * La semilla no puede ser un `<input type="number">`: es un entero de 64 bits y
+ * el valor numérico de JavaScript la redondearía por encima de 2^53, que es
+ * justo el rango en el que caen las semillas derivadas del id del proyecto.
+ */
+function CampoSemilla({
+  valor,
+  placeholder,
+  onCommit,
+}: {
+  valor: string | null | undefined;
+  placeholder: string;
+  onCommit: (v: string | null) => void;
+}) {
+  const [texto, setTexto] = useState(valor ?? '');
+
+  useEffect(() => {
+    setTexto(valor ?? '');
+  }, [valor]);
+
+  const confirmar = () => {
+    const limpio = texto.trim();
+    if (limpio !== '' && !/^\d+$/.test(limpio)) {
+      setTexto(valor ?? '');
+      return;
+    }
+    const siguiente = limpio === '' ? null : limpio;
+    if (siguiente !== (valor ?? null)) onCommit(siguiente);
+  };
+
+  return (
+    <Input
+      type="text"
+      inputMode="numeric"
+      className="h-8 text-xs font-mono"
+      value={texto}
+      placeholder={placeholder}
+      onChange={(e) => setTexto(e.target.value)}
+      onBlur={confirmar}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur();
+      }}
+    />
+  );
+}
+
+/**
+ * Campo numérico que confirma al salir o con Enter, nunca en cada tecla.
+ *
+ * Cada guardado reescribe `project.json` entero (`with_project_mut` hace flush
+ * inmediato): guardar por pulsación serializaría un archivo de megas cuatro veces
+ * para escribir una semilla de cuatro cifras.
+ */
+function CampoNumerico({
+  valor,
+  placeholder,
+  min,
+  max,
+  step,
+  onCommit,
+}: {
+  valor: number | null | undefined;
+  placeholder: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  onCommit: (v: number | null) => void;
+}) {
+  const externo = valor ?? '';
+  const [texto, setTexto] = useState(String(externo));
+
+  // El valor de fuera manda cuando cambia sin pasar por aquí (carga inicial, o
+  // un guardado que el backend rechazó y dejó la política como estaba).
+  useEffect(() => {
+    setTexto(String(valor ?? ''));
+  }, [valor]);
+
+  const confirmar = () => {
+    const limpio = texto.trim();
+    const n = limpio === '' ? null : Number(limpio);
+    if (n !== null && Number.isNaN(n)) {
+      setTexto(String(valor ?? ''));
+      return;
+    }
+    if (n !== (valor ?? null)) onCommit(n);
+  };
+
+  return (
+    <Input
+      type="number"
+      min={min}
+      max={max}
+      step={step}
+      className="h-8 text-xs"
+      value={texto}
+      placeholder={placeholder}
+      onChange={(e) => setTexto(e.target.value)}
+      onBlur={confirmar}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur();
+      }}
+    />
+  );
+}
+
 interface Props {
   projectId: string;
   /** Fracciones de la corrida que se está configurando. */
@@ -69,7 +176,14 @@ export function SplitPolicyPanel({ projectId, valSplit, testSplit, onApplyFracti
         trainingService
           .setSplitPolicy(projectId, siguiente)
           .then(() => setError(null))
-          .catch((e) => setError(String(e)));
+          // El backend valida y puede negarse (val + test sin dejar nada para
+          // entrenar, por ejemplo). Si se niega, la pantalla vuelve a lo que hay
+          // guardado: dejarla mostrando lo rechazado es enseñar una política que
+          // no rige.
+          .catch((e) => {
+            setError(String(e));
+            setPolicy(prev);
+          });
         return siguiente;
       });
     },
@@ -141,44 +255,31 @@ export function SplitPolicyPanel({ projectId, valSplit, testSplit, onApplyFracti
             <div className="space-y-1">
               <Label className="text-xs">{t('training.splitPolicy.recommended')}</Label>
               <div className="flex items-center gap-1">
-                <Input
-                  type="number"
-                  min={0}
-                  max={0.9}
-                  step={0.05}
-                  className="h-8 text-xs"
-                  value={policy.valSplit ?? ''}
+                <CampoNumerico
+                  valor={policy.valSplit}
                   placeholder="val"
-                  onChange={(e) =>
-                    guardar({ valSplit: e.target.value === '' ? null : Number(e.target.value) })
-                  }
-                />
-                <Input
-                  type="number"
                   min={0}
                   max={0.9}
                   step={0.05}
-                  className="h-8 text-xs"
-                  value={policy.testSplit ?? ''}
+                  onCommit={(v) => guardar({ valSplit: v })}
+                />
+                <CampoNumerico
+                  valor={policy.testSplit}
                   placeholder="test"
-                  onChange={(e) =>
-                    guardar({ testSplit: e.target.value === '' ? null : Number(e.target.value) })
-                  }
+                  min={0}
+                  max={0.9}
+                  step={0.05}
+                  onCommit={(v) => guardar({ testSplit: v })}
                 />
               </div>
             </div>
 
             <div className="space-y-1">
               <Label className="text-xs">{t('training.splitPolicy.seed')}</Label>
-              <Input
-                type="number"
-                min={0}
-                className="h-8 text-xs"
-                value={policy.seed ?? ''}
+              <CampoSemilla
+                valor={policy.seed}
                 placeholder={t('training.splitPolicy.seedDerived')}
-                onChange={(e) =>
-                  guardar({ seed: e.target.value === '' ? null : Number(e.target.value) })
-                }
+                onCommit={(v) => guardar({ seed: v })}
               />
               <p className="text-[11px] text-muted-foreground">
                 {t('training.splitPolicy.seedDesc')}

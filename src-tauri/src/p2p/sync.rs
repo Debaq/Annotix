@@ -1985,7 +1985,27 @@ pub fn start_doc_watcher(
                                                 if let Some(img) =
                                                     pf.images.iter_mut().find(|i| i.id == iid)
                                                 {
-                                                    img.annotations = annots.clone();
+                                                    // Fusionar, no reemplazar: lo que
+                                                    // llega de un par puede no traer la
+                                                    // procedencia que hay aquí, y
+                                                    // escribirla encima la borraba. La
+                                                    // regla es la misma del guardado
+                                                    // local, incluida la constancia de
+                                                    // lo que el par borró.
+                                                    let ahora = std::time::SystemTime::now()
+                                                        .duration_since(std::time::UNIX_EPOCH)
+                                                        .unwrap()
+                                                        .as_millis()
+                                                        as f64;
+                                                    let (fusionadas, rechazos) =
+                                                        crate::store::images::aplicar_guardado(
+                                                            &img.annotations,
+                                                            &img.rejected,
+                                                            &annots,
+                                                            ahora,
+                                                        );
+                                                    img.annotations = fusionadas;
+                                                    img.rejected = rechazos;
                                                     true
                                                 } else {
                                                     false

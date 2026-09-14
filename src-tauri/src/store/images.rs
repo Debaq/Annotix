@@ -497,7 +497,7 @@ impl AppState {
                     lock_expires: None,
                     download_status: None,
                     predictions: vec![],
-            rejected: vec![],
+                    rejected: vec![],
                 })
             })
             .collect();
@@ -688,17 +688,26 @@ impl AppState {
         }
     }
 
+    /// Guarda y devuelve **lo que quedó escrito**, no lo que mandó el cliente.
+    ///
+    /// La diferencia importa fuera de aquí: en sesión P2P lo que se publica al doc
+    /// tiene que ser esto. Publicando el payload del cliente —que no conoce los
+    /// campos de procedencia— el par receptor recibía etiquetas sin origen ni
+    /// modelo y las escribía encima de las suyas: la procedencia se perdía al
+    /// sincronizar, en silencio.
     pub fn save_annotations(
         &self,
         project_id: &str,
         image_id: &str,
         annotations: &[AnnotationEntry],
-    ) -> Result<(), String> {
+    ) -> Result<Vec<AnnotationEntry>, String> {
         let now = js_timestamp();
+        let mut escritas = Vec::new();
         self.with_project_mut(project_id, |pf| {
             if let Some(img) = pf.images.iter_mut().find(|i| i.id == image_id) {
                 let (fusionadas, rechazos) =
                     aplicar_guardado(&img.annotations, &img.rejected, annotations, now);
+                escritas = fusionadas.clone();
                 img.annotations = fusionadas;
                 img.rejected = rechazos;
                 img.status = if annotations.is_empty() {
@@ -713,7 +722,8 @@ impl AppState {
                 };
             }
             pf.updated = now;
-        })
+        })?;
+        Ok(escritas)
     }
 
     pub fn delete_image(&self, project_id: &str, image_id: &str) -> Result<(), String> {

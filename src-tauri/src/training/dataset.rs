@@ -216,9 +216,12 @@ pub struct SplitReport {
     /// agrupar por ella es justo lo que hay que poder ver.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub declared_unit: Option<String>,
-    /// Semilla del barajado. Con ella y la política, el reparto se repite fuera
-    /// de la app; sin ella, el informe describe un sorteo irrepetible.
-    pub seed: u64,
+    /// Semilla del barajado, como texto. Con ella y la política, el reparto se
+    /// repite fuera de la app; sin ella, el informe describe un sorteo
+    /// irrepetible. Es texto porque la derivada del id pasa de 2^53 y
+    /// JavaScript la redondearía: el informe enseñaría una semilla que no es la
+    /// que se usó.
+    pub seed: String,
     /// Imágenes por partición.
     pub items: SplitCountsReport,
     /// Grupos por partición.
@@ -393,7 +396,10 @@ impl SplitPlan {
         SplitReport {
             unit: unit.to_string(),
             declared_unit: Some(pol.unit.clone()).filter(|u| u != "auto"),
-            seed: pol.seed.unwrap_or_else(|| derive_seed(&project.id)),
+            seed: pol
+                .seed
+                .unwrap_or_else(|| derive_seed(&project.id))
+                .to_string(),
             items: SplitCounts {
                 train: self.train.len(),
                 val: self.val.len(),

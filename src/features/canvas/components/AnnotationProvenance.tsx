@@ -12,11 +12,20 @@ interface Props {
   modelName?: string;
 }
 
-/** Lo que el backend deduce cuando `origin` no está: ver `AnnotationEntry::origen`. */
+/**
+ * Procedencia de una etiqueta que todavía no volvió del backend.
+ *
+ * Toda etiqueta que llega desde disco trae `origin`: la migración v5 se lo puso a
+ * todas, y el guardado se lo pone a las nuevas. Si falta es porque se acaba de
+ * crear en el canvas y el store local aún tiene el objeto del cliente — así que
+ * es lo que `fusionar_procedencia` le pondrá al guardarla, no un dato ambiguo.
+ *
+ * `unknown` no se deduce aquí: lo escribe el backend para el corpus anterior al
+ * registro de procedencia, y es lo único que merece el aviso de abajo.
+ */
 function origen(a: Annotation): string {
   if (a.origin) return a.origin;
-  if (a.source === 'ai') return 'model';
-  return 'unknown';
+  return a.source === 'ai' ? 'model' : 'manual';
 }
 
 function fecha(ms?: number): string | null {
@@ -98,7 +107,7 @@ export function AnnotationProvenance({ annotation, modelName }: Props) {
             </div>
           ))}
         </div>
-        {o === 'unknown' && (
+        {annotation.origin === 'unknown' && (
           <p className="mt-1.5 text-[11px] text-amber-600">
             {t('annotations.provenance.unknownNote')}
           </p>

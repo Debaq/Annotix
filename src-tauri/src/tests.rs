@@ -129,7 +129,7 @@ fn image_entry(name: &str, file: &str, w: u32, h: u32, anns: Vec<AnnotationEntry
         lock_expires: None,
         download_status: None,
         predictions: vec![],
-            rejected: vec![],
+        rejected: vec![],
     }
 }
 
@@ -3287,14 +3287,41 @@ fn el_informe_declara_unidad_y_semilla() {
 
     let report = dataset::split_plan(&pf, &pf.images, 0.25, 0.25).report(&pf, &pf.images);
     assert_eq!(report.declared_unit.as_deref(), Some("subject"));
-    assert_eq!(report.seed, 4242);
+    assert_eq!(report.seed, "4242");
 
     // Sin política declarada, la semilla informada es la derivada del id: la que
     // se venía usando, ahora escrita en el informe en vez de sólo en el código.
     pf.split_policy = None;
     let report = dataset::split_plan(&pf, &pf.images, 0.25, 0.25).report(&pf, &pf.images);
     assert_eq!(report.declared_unit, None);
-    assert_eq!(report.seed, dataset::derive_seed(&pf.id));
+    assert_eq!(report.seed, dataset::derive_seed(&pf.id).to_string());
+    assert!(
+        report.seed.parse::<u64>().unwrap() > (1u64 << 53),
+        "la semilla derivada cabe en un doble: este test dejó de proteger nada"
+    );
+}
+
+/// La semilla derivada de un id pasa de 2^53, y JavaScript redondea ahí. Si
+/// viajara como número, el informe enseñaría para reproducir el reparto una
+/// semilla que no es la que se usó — y nada avisaría.
+#[test]
+fn la_semilla_viaja_como_texto_y_no_la_redondea_javascript() {
+    let pol = SplitPolicy {
+        seed: Some(13_884_088_283_711_083_410),
+        ..SplitPolicy::default()
+    };
+    let json = serde_json::to_value(&pol).expect("serializar");
+    assert_eq!(json["seed"], "13884088283711083410");
+
+    // Y vuelve entera.
+    let leida: SplitPolicy = serde_json::from_value(json).expect("deserializar");
+    assert_eq!(leida.seed, Some(13_884_088_283_711_083_410));
+
+    // Un proyecto que ya hubiera guardado un número se sigue leyendo.
+    let desde_numero: SplitPolicy =
+        serde_json::from_str(r#"{"unit":"auto","seed":4242,"requireTest":false}"#)
+            .expect("deserializar número");
+    assert_eq!(desde_numero.seed, Some(4242));
 }
 
 /// Exigir test y entrenar sin él no impide nada: cambia el aviso, para que el
