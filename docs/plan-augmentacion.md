@@ -105,8 +105,17 @@ detectar — una mitosis de 30 píxeles se convierte en cinco.
 filas: 3        columnas: 4        solape: 15 %
 ```
 
-Una imagen de 4000×3000 sale en 12 teselas de ~1176×1153 con 15 % de solape entre
+Una imagen de 4000×3000 sale en 12 teselas de ~1127×1111 con 15 % de solape entre
 vecinas. Cada tesela es una imagen del dataset, con las anotaciones que le tocan.
+
+El lado sale de exigir que la primera tesela empiece en el borde, la última acabe
+en el borde y cada una avance `lado·(1 − solape)`:
+
+```text
+ancho = lado + (columnas − 1)·lado·(1 − solape)
+```
+
+que para 4 columnas y 15 % da `4000 / (1 + 3·0,85) = 1126,8`.
 
 ### Por qué el solape no es un detalle
 
