@@ -288,13 +288,27 @@ impl AppState {
         image_id: &str,
         prediction_id: &str,
     ) -> Result<(), String> {
+        let mut modelo = None;
         self.with_project_mut(project_id, |pf| {
             if let Some(img) = pf.images.iter_mut().find(|i| i.id == image_id) {
                 if let Some(pred) = img.predictions.iter_mut().find(|p| p.id == prediction_id) {
                     pred.status = "rejected".to_string();
+                    modelo = Some(pred.model_id.clone());
                 }
             }
-        })
+        })?;
+        if let Some(model_id) = modelo {
+            self.audit(
+                project_id,
+                crate::audit::events::PREDICTIONS_REJECTED,
+                serde_json::json!({
+                    "image_id": image_id,
+                    "prediction_ids": [prediction_id],
+                    "model_id": model_id,
+                }),
+            );
+        }
+        Ok(())
     }
 
     /// Convierte predicciones aceptadas a anotaciones reales
@@ -306,6 +320,11 @@ impl AppState {
     ) -> Result<usize, String> {
         let now = js_timestamp();
         let mut converted = 0usize;
+        // Qué etiquetas nacieron de qué modelo: es la mitad del dato que el
+        // contrato de modelo necesita para declarar cuánto del corpus se
+        // autogeneró.
+        let mut aceptadas: Vec<String> = Vec::new();
+        let mut modelos: std::collections::BTreeSet<String> = Default::default();
 
         self.with_project_mut(project_id, |pf| {
             if let Some(img) = pf.images.iter_mut().find(|i| i.id == image_id) {
@@ -355,6 +374,8 @@ impl AppState {
                                 created_at: Some(now),
                                 updated_at: None,
                             };
+                            aceptadas.push(annotation.id.clone());
+                            modelos.insert(pred.model_id.clone());
                             img.annotations.push(annotation);
                             converted += 1;
                         }
@@ -375,6 +396,18 @@ impl AppState {
             }
             pf.updated = now;
         })?;
+
+        if !aceptadas.is_empty() {
+            self.audit(
+                project_id,
+                crate::audit::events::PREDICTIONS_ACCEPTED,
+                serde_json::json!({
+                    "image_id": image_id,
+                    "annotation_ids": aceptadas,
+                    "model_ids": modelos,
+                }),
+            );
+        }
 
         Ok(converted)
     }

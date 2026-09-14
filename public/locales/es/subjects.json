@@ -34,5 +34,18 @@
   },
   "modelBreakdown": "De lo sugerido por un modelo ({{pct}}% del corpus): {{accepted}} aceptadas sin cambios y {{corrected}} corregidas.",
   "unknownNote": "{{count}} etiquetas son anteriores al registro de procedencia: no se puede afirmar si se trazaron a mano o se aceptaron de un modelo.",
-  "rejectedNote": "{{count}} sugerencias de modelo se rechazaron ({{pct}} % de todo lo que el modelo propuso). No están en el corpus, pero sin ellas la tasa de acierto se calcularía sólo sobre lo que sobrevivió."
+  "rejectedNote": "{{count}} sugerencias de modelo se rechazaron ({{pct}} % de todo lo que el modelo propuso). No están en el corpus, pero sin ellas la tasa de acierto se calcularía sólo sobre lo que sobrevivió.",
+  "audit": {
+    "title": "Registro de auditoría",
+    "what": "Guarda cada cambio con efecto sobre las etiquetas —qué cambió, quién y cuándo— encadenado por hash, dentro de la carpeta del proyecto. No guarda geometrías ni máscaras.",
+    "verify": "Verificar",
+    "verifying": "Verificando…",
+    "valid": "Cadena íntegra",
+    "broken": "Cadena rota",
+    "events": "{{count}} eventos",
+    "actors": "Escrito por: {{actors}}",
+    "range": "Del {{from}} al {{to}}",
+    "truncated": "La última línea quedó a medio escribir por un cierre abrupto. No invalida lo anterior: se descarta al volver a abrir el registro.",
+    "empty": "Todavía no hay registro: el proyecto no ha cambiado desde que existe la auditoría."
+  }
 }

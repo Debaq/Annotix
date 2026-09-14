@@ -91,7 +91,10 @@ pub fn select_trainable_images(
 /// no exista —y con ella las imágenes que se quedan sin ninguna—. El dataset
 /// que llega al script no distingue esto de un proyecto que nunca tuvo esas
 /// clases.
-pub fn restrict_to_classes(project: &mut ProjectFile, selected: Option<&[i64]>) -> Result<(), String> {
+pub fn restrict_to_classes(
+    project: &mut ProjectFile,
+    selected: Option<&[i64]>,
+) -> Result<(), String> {
     let Some(ids) = selected.filter(|ids| !ids.is_empty()) else {
         return Ok(());
     };

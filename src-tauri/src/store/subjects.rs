@@ -163,6 +163,20 @@ impl AppState {
         })
     }
 
+    /// Deja en la auditoría qué sujeto se asignó, a cuántas muestras y por qué
+    /// vía. El sujeto decide cómo se reparte el corpus: quién lo cargó y de dónde
+    /// salió es parte de lo que un revisor externo necesita poder comprobar.
+    fn audit_sujetos(&self, project_id: &str, via: &str, sujeto: Option<&str>, cambiadas: usize) {
+        if cambiadas == 0 {
+            return;
+        }
+        self.audit(
+            project_id,
+            crate::audit::events::SUBJECTS_ASSIGNED,
+            serde_json::json!({ "via": via, "subject": sujeto, "n_samples": cambiadas }),
+        );
+    }
+
     /// Asigna un sujeto a las imágenes indicadas. `None` lo borra.
     ///
     /// Devuelve cuántas cambiaron de verdad, no cuántas se pidieron: asignar lo
@@ -174,7 +188,7 @@ impl AppState {
         subject_id: Option<&str>,
     ) -> Result<usize, String> {
         let nuevo = subject_id.filter(|s| !s.is_empty()).map(|s| s.to_string());
-        self.with_project_mut_ret(project_id, |pf| {
+        let cambiadas = self.with_project_mut_ret(project_id, |pf| {
             let mut cambiadas = 0usize;
             for img in pf.images.iter_mut() {
                 if image_ids.iter().any(|id| id == &img.id) && img.subject_id != nuevo {
@@ -183,7 +197,11 @@ impl AppState {
                 }
             }
             cambiadas
-        })
+        });
+        if let Ok(n) = cambiadas {
+            self.audit_sujetos(project_id, "selection", subject_id, n);
+        }
+        cambiadas
     }
 
     /// Asigna un sujeto a un video **y a sus fotogramas ya extraídos**.
@@ -197,7 +215,7 @@ impl AppState {
         subject_id: Option<&str>,
     ) -> Result<usize, String> {
         let nuevo = subject_id.filter(|s| !s.is_empty()).map(|s| s.to_string());
-        self.with_project_mut_ret(project_id, |pf| {
+        let cambiadas = self.with_project_mut_ret(project_id, |pf| {
             let mut cambiadas = 0usize;
             for v in pf.videos.iter_mut() {
                 if v.id == video_id && v.subject_id != nuevo {
@@ -212,7 +230,11 @@ impl AppState {
                 }
             }
             cambiadas
-        })
+        });
+        if let Ok(n) = cambiadas {
+            self.audit_sujetos(project_id, "video", subject_id, n);
+        }
+        cambiadas
     }
 
     /// Qué sujeto saldría de aplicar el patrón, sin aplicarlo.
@@ -240,7 +262,7 @@ impl AppState {
 
     /// Aplica el patrón a las imágenes que coinciden. Las que no, quedan intactas.
     pub fn apply_subject_pattern(&self, project_id: &str, pattern: &str) -> Result<usize, String> {
-        self.with_project_mut_ret(project_id, |pf| {
+        let cambiadas = self.with_project_mut_ret(project_id, |pf| {
             let mut cambiadas = 0usize;
             for img in pf.images.iter_mut() {
                 if let Some(s) = extract_subject(&img.name, pattern) {
@@ -252,7 +274,11 @@ impl AppState {
                 }
             }
             cambiadas
-        })
+        });
+        if let Ok(n) = cambiadas {
+            self.audit_sujetos(project_id, "pattern", None, n);
+        }
+        cambiadas
     }
 
     /// Asigna sujetos desde un mapeo `nombre de archivo → sujeto`.
@@ -263,7 +289,7 @@ impl AppState {
         project_id: &str,
         mapping: &BTreeMap<String, String>,
     ) -> Result<(usize, Vec<String>), String> {
-        self.with_project_mut_ret(project_id, |pf| {
+        let resultado = self.with_project_mut_ret(project_id, |pf| {
             let mut cambiadas = 0usize;
             let mut sin_uso: Vec<String> = Vec::new();
 
@@ -284,7 +310,11 @@ impl AppState {
                 }
             }
             (cambiadas, sin_uso)
-        })
+        });
+        if let Ok((n, _)) = &resultado {
+            self.audit_sujetos(project_id, "map", None, *n);
+        }
+        resultado
     }
 }
 

@@ -34,5 +34,18 @@
   },
   "modelBreakdown": "Of what a model suggested ({{pct}}% of the corpus): {{accepted}} accepted unchanged and {{corrected}} corrected.",
   "unknownNote": "{{count}} labels predate provenance tracking: it cannot be said whether they were drawn by hand or accepted from a model.",
-  "rejectedNote": "{{count}} model suggestions were rejected ({{pct}}% of everything the model proposed). They are not part of the corpus, but without them the hit rate would be computed only over what survived."
+  "rejectedNote": "{{count}} model suggestions were rejected ({{pct}}% of everything the model proposed). They are not part of the corpus, but without them the hit rate would be computed only over what survived.",
+  "audit": {
+    "title": "Audit log",
+    "what": "Records every change that affects the labels — what changed, who and when — hash-chained, inside the project folder. It does not store geometries or masks.",
+    "verify": "Verify",
+    "verifying": "Verifying…",
+    "valid": "Chain intact",
+    "broken": "Chain broken",
+    "events": "{{count}} events",
+    "actors": "Written by: {{actors}}",
+    "range": "From {{from}} to {{to}}",
+    "truncated": "The last line was left half-written by an abrupt shutdown. It does not invalidate anything before it: it is discarded when the log is reopened.",
+    "empty": "No log yet: the project has not changed since auditing exists."
+  }
 }

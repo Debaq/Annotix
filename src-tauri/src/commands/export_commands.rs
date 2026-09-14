@@ -22,6 +22,11 @@ pub async fn export_dataset(
         serde_json::json!({ "format": fmt }),
     );
     let t0 = std::time::Instant::now();
+    // El nombre del archivo destino, no la ruta: el registro dice qué salió del
+    // proyecto, no dónde lo guardó cada uno.
+    let destino = std::path::Path::new(&output_path)
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string());
     let res = crate::export::export_dataset(
         &state,
         &project_id,
@@ -29,6 +34,11 @@ pub async fn export_dataset(
         &output_path,
         normalize_to_jpg.unwrap_or(false),
         &app,
+    );
+    state.audit(
+        &project_id,
+        crate::audit::events::DATA_EXPORTED,
+        serde_json::json!({ "format": &format, "file": destino, "ok": res.is_ok() }),
     );
     crate::study::emit_quiet(
         crate::study::events::EXPORT_END,

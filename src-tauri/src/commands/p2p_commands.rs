@@ -21,6 +21,12 @@ pub async fn p2p_create_session(
     let res = p2p
         .create_session(&app_state, &app_handle, &project_id, &display_name, rules)
         .await;
+    // A partir de aquí lo que se registre en este proyecto lleva el nombre con el
+    // que se entró a la sesión: en un corpus anotado entre varios, «quién» es la
+    // mitad de la pregunta que el registro existe para responder.
+    if res.is_ok() {
+        crate::audit::set_actor(&project_id, Some(display_name.clone()));
+    }
     p2p.study_record(0, 0, res.is_ok()).await;
     res
 }
@@ -36,6 +42,9 @@ pub async fn p2p_join_session(
     let res = p2p
         .join_session(&app_state, &app_handle, &share_code, &display_name)
         .await;
+    if let Ok(info) = res.as_ref() {
+        crate::audit::set_actor(&info.project_id, Some(display_name.clone()));
+    }
     p2p.study_record(0, 0, res.is_ok()).await;
     res
 }
@@ -46,7 +55,11 @@ pub async fn p2p_leave_session(
     app_state: State<'_, AppState>,
     project_id: String,
 ) -> Result<(), String> {
-    p2p.leave_session(&project_id, &app_state).await
+    let res = p2p.leave_session(&project_id, &app_state).await;
+    // Fuera de la sesión se vuelve a registrar como `local`: seguir firmando con
+    // el nombre de la sesión diría que se anotó en compañía cuando ya no.
+    crate::audit::set_actor(&project_id, None);
+    res
 }
 
 #[tauri::command]
@@ -133,7 +146,9 @@ pub async fn p2p_sync_annotations(
 ) -> Result<(), String> {
     p2p.check_permission(&project_id, P2pPermission::Annotate)
         .await?;
-    let bytes_out = serde_json::to_vec(&annotations).map(|v| v.len() as u64).unwrap_or(0);
+    let bytes_out = serde_json::to_vec(&annotations)
+        .map(|v| v.len() as u64)
+        .unwrap_or(0);
     let res =
         crate::p2p::sync::sync_annotations_to_doc(&p2p, &project_id, &image_id, &annotations).await;
     p2p.study_record(bytes_out, 0, res.is_ok()).await;

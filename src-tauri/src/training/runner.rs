@@ -1072,11 +1072,34 @@ where
         None => return,
     };
     let state = app.state::<AppState>();
+    let mut terminal: Option<(String, bool)> = None;
     let _ = state.with_project_mut(&project_id, |pf| {
         if let Some(job) = pf.training_jobs.iter_mut().find(|j| j.id == job_id) {
+            let antes = job.status.clone();
             f(job);
+            // El fin de un entrenamiento entra en la auditoría desde aquí, que es
+            // el único sitio por el que pasan todos los caminos —éxito, fallo,
+            // cancelación y el rescate del proceso que salió bien sin avisar—.
+            // Instrumentar cada uno por separado dejaría alguno fuera, y un
+            // registro con huecos no sirve para el contrato de modelo.
+            if job.status != antes && matches!(job.status.as_str(), "completed" | "failed") {
+                terminal = Some((job.status.clone(), job.best_model_path.is_some()));
+            }
         }
     });
+
+    if let Some((status, hay_modelo)) = terminal {
+        crate::audit::record_quiet(
+            project_dir,
+            &project_id,
+            crate::audit::events::TRAINING_FINISHED,
+            serde_json::json!({
+                "job_id": job_id,
+                "status": status,
+                "has_model": hay_modelo,
+            }),
+        );
+    }
 }
 
 fn js_timestamp() -> f64 {

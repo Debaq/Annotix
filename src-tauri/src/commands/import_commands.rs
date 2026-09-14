@@ -21,6 +21,22 @@ pub async fn import_dataset(
     // Import creates a new project, not part of any P2P session — pass empty to allow
     p2p.check_permission("", P2pPermission::UploadData).await?;
     let res = crate::import::import_dataset(&state, &file_path, &project_name, &app);
+    // La importación crea el proyecto, así que su registro empieza por aquí: sin
+    // esta línea el corpus aparece de la nada y no se sabe de qué archivo salió.
+    if let Ok(r) = res.as_ref() {
+        let origen = std::path::Path::new(&file_path)
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string());
+        state.audit(
+            &r.project_id,
+            crate::audit::events::DATA_IMPORTED,
+            serde_json::json!({
+                "file": origen,
+                "n_images": r.stats.images_count,
+                "n_annotations": r.stats.annotations_count,
+            }),
+        );
+    }
     crate::study::emit_quiet(
         crate::study::events::DATA_IMPORT_END,
         serde_json::json!({

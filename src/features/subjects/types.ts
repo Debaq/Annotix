@@ -37,3 +37,34 @@ export interface ProvenanceSummary {
    */
   rejected: number;
 }
+
+/**
+ * Estado del registro de auditoría de un proyecto.
+ *
+ * `exists: false` no es un error: es un proyecto que no ha cambiado desde que el
+ * registro existe.
+ */
+export interface AuditReport {
+  exists: boolean;
+  valid: boolean;
+  nEvents: number;
+  byEvent: Record<string, number>;
+  actors: string[];
+  firstAt?: string | null;
+  lastAt?: string | null;
+  /** La última línea quedó a medio escribir; se descarta al reabrir el registro. */
+  truncatedTail: boolean;
+  errors: string[];
+}
+
+/** Una línea del registro, tal como está en el archivo. */
+export interface AuditEntry {
+  project_id: string;
+  seq: number;
+  t_wall: string;
+  event: string;
+  actor: string;
+  prev_hash: string;
+  payload: Record<string, unknown>;
+  hash: string;
+}

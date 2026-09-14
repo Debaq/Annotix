@@ -966,6 +966,20 @@ pub async fn bake_video_tracks(
         pf.updated = now;
     })?;
 
+    // La consolidación escribe etiquetas en cientos de fotogramas de una vez, y la
+    // mayoría son interpoladas: nadie las miró una por una. Que quede escrito
+    // cuántas salieron de cuántos tracks es la diferencia entre poder decir eso y
+    // tener que suponerlo.
+    state.audit(
+        &project_id,
+        crate::audit::events::VIDEO_CONSOLIDATED,
+        serde_json::json!({
+            "video_id": &video_id,
+            "n_tracks": bake_tracks.len(),
+            "n_frames": baked_count,
+        }),
+    );
+
     let _ = app.emit(
         "db:images-changed",
         serde_json::json!({

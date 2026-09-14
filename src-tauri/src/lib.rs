@@ -1,6 +1,8 @@
+mod audit;
 mod browser_automation;
 mod commands;
 mod export;
+mod hashchain;
 mod import;
 mod inference;
 mod net;
@@ -291,6 +293,8 @@ pub fn run() {
             commands::project_commands::save_classes,
             commands::project_commands::delete_project,
             commands::project_commands::set_project_folder,
+            commands::audit_commands::verify_audit_log,
+            commands::audit_commands::read_audit_tail,
             commands::project_commands::get_split_policy,
             commands::project_commands::set_split_policy,
             commands::project_commands::reveal_project_folder,

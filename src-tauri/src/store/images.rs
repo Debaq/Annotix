@@ -299,6 +299,48 @@ fn recoger_rechazadas(
         .collect()
 }
 
+/// Qué cambió en un guardado, para dejarlo en el registro de auditoría.
+///
+/// Se calcula comparando contra lo que había: el cliente manda la lista entera y
+/// no dice qué tocó. Sin esto el registro diría «guardó» y no «borró la caja a7».
+#[derive(Debug, Default)]
+pub struct CambioAnotaciones {
+    pub creadas: Vec<String>,
+    pub editadas: Vec<String>,
+    pub borradas: Vec<String>,
+}
+
+impl CambioAnotaciones {
+    pub fn hubo_cambio(&self) -> bool {
+        !self.creadas.is_empty() || !self.editadas.is_empty() || !self.borradas.is_empty()
+    }
+}
+
+/// Compara lo guardado con lo que llega. Una edición es un cambio de geometría o
+/// de clase: reordenar la lista o volver a guardar lo mismo no lo es, y un
+/// registro que anotara eso sería ruido que esconde los cambios de verdad.
+pub fn diff_anotaciones(
+    previas: &[AnnotationEntry],
+    entrantes: &[AnnotationEntry],
+) -> CambioAnotaciones {
+    let mut c = CambioAnotaciones::default();
+    for e in entrantes {
+        match previas.iter().find(|p| p.id == e.id) {
+            None => c.creadas.push(e.id.clone()),
+            Some(p) if p.data != e.data || p.class_id != e.class_id => {
+                c.editadas.push(e.id.clone())
+            }
+            Some(_) => {}
+        }
+    }
+    for p in previas {
+        if !entrantes.iter().any(|e| e.id == p.id) {
+            c.borradas.push(p.id.clone());
+        }
+    }
+    c
+}
+
 /// Lo que queda tras guardar: las anotaciones fusionadas y el historial de
 /// rechazos actualizado.
 ///
@@ -703,8 +745,10 @@ impl AppState {
     ) -> Result<Vec<AnnotationEntry>, String> {
         let now = js_timestamp();
         let mut escritas = Vec::new();
+        let mut cambio = CambioAnotaciones::default();
         self.with_project_mut(project_id, |pf| {
             if let Some(img) = pf.images.iter_mut().find(|i| i.id == image_id) {
+                cambio = diff_anotaciones(&img.annotations, annotations);
                 let (fusionadas, rechazos) =
                     aplicar_guardado(&img.annotations, &img.rejected, annotations, now);
                 escritas = fusionadas.clone();
@@ -723,6 +767,22 @@ impl AppState {
             }
             pf.updated = now;
         })?;
+
+        // Sólo cuando algo cambió de verdad: el guardado se dispara también al
+        // cambiar de imagen, y registrar eso llenaría la auditoría de líneas que
+        // no cuentan nada y esconden las que sí.
+        if cambio.hubo_cambio() {
+            self.audit(
+                project_id,
+                crate::audit::events::ANNOTATIONS_SAVED,
+                serde_json::json!({
+                    "image_id": image_id,
+                    "created": cambio.creadas,
+                    "edited": cambio.editadas,
+                    "deleted": cambio.borradas,
+                }),
+            );
+        }
         Ok(escritas)
     }
 

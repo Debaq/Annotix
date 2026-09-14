@@ -11,6 +11,7 @@ import { useToast } from '@/components/hooks/use-toast';
 import { subjectService } from '../services/subjectService';
 import type { PatternPreview, ProvenanceSummary, SubjectSummary } from '../types';
 import { ProvenanceSection } from './ProvenanceSection';
+import { AuditSection } from './AuditSection';
 
 interface Props {
   projectId: string;
@@ -252,6 +253,8 @@ export function SubjectManagerDialog({ projectId, open, onClose, onChanged }: Pr
         </section>
 
         {provenance && <ProvenanceSection summary={provenance} />}
+
+        <AuditSection projectId={projectId} />
 
         <p className="text-[11px] text-muted-foreground border-t border-border pt-3">
           {t('subjects.privacy')}

@@ -7,20 +7,10 @@
 //!
 //! ## Formato de línea
 //!
-//! Cada línea es el objeto del evento serializado en JSON canónico (claves
-//! ordenadas alfabéticamente, sin espacios) al que se le añade **al final** el
-//! campo `hash`:
-//!
-//! ```text
-//! {"app_version":...,"condition":...,...,"t_wall":...,"hash":"<sha256>"}
-//! ```
-//!
-//! `hash` = SHA-256 del texto de la línea **sin** el sufijo `,"hash":"…"` y
-//! cerrando con `}`. Como es una operación textual, cualquier lenguaje puede
-//! reproducirla sin depender de cómo serialice números u objetos.
-//!
-//! `prev_hash` = SHA-256 de la línea anterior completa (sin el salto de línea).
-//! En la primera línea es la cadena vacía.
+//! El de la cadena común: ver [`crate::hashchain`]. Aquí se añade la política de
+//! privacidad del modo estudio —ningún campo del payload puede parecer una ruta
+//! ni ser texto largo—, que es lo que lo distingue del registro de auditoría
+//! (`audit/`), construido sobre la misma cadena con la política contraria.
 
 use std::fs::{File, OpenOptions};
 use std::io::Write;
@@ -29,12 +19,8 @@ use std::sync::{Mutex, OnceLock};
 use std::time::Instant;
 
 use serde_json::{Map, Value};
-use sha2::{Digest, Sha256};
 
 use super::events;
-
-/// Sufijo textual con el que se cierra cada línea.
-const HASH_KEY: &str = ",\"hash\":\"";
 
 /// Longitud máxima admitida para un valor de texto dentro del payload. Ningún
 /// campo de la taxonomía es texto libre; el tope es una red de seguridad.
@@ -155,56 +141,10 @@ fn check_payload(value: &Value) -> Result<(), String> {
     }
 }
 
-// ─── JSON canónico ──────────────────────────────────────────────────────────
+// ─── Cadena ─────────────────────────────────────────────────────────────────
 
-/// Serializa en JSON compacto con las claves de cada objeto ordenadas.
-fn canonical(value: &Value) -> String {
-    match value {
-        Value::Object(map) => {
-            let mut keys: Vec<&String> = map.keys().collect();
-            keys.sort();
-            let body: Vec<String> = keys
-                .iter()
-                .map(|k| {
-                    format!(
-                        "{}:{}",
-                        Value::String((*k).clone()),
-                        canonical(map.get(*k).unwrap())
-                    )
-                })
-                .collect();
-            format!("{{{}}}", body.join(","))
-        }
-        Value::Array(items) => {
-            let body: Vec<String> = items.iter().map(canonical).collect();
-            format!("[{}]", body.join(","))
-        }
-        other => other.to_string(),
-    }
-}
-
-pub fn sha256_hex(data: &str) -> String {
-    let mut h = Sha256::new();
-    h.update(data.as_bytes());
-    hex::encode(h.finalize())
-}
-
-/// Construye la línea final a partir del objeto del evento (sin `hash`).
-fn seal(event_obj: &Value) -> (String, String) {
-    let base = canonical(event_obj);
-    let digest = sha256_hex(&base);
-    let line = format!("{}{}{}\"}}", &base[..base.len() - 1], HASH_KEY, digest);
-    (line, digest)
-}
-
-/// Separa una línea escrita en `(texto sin hash, hash declarado)`.
-pub fn split_line(line: &str) -> Option<(String, String)> {
-    let idx = line.rfind(HASH_KEY)?;
-    let base = format!("{}}}", &line[..idx]);
-    let rest = &line[idx + HASH_KEY.len()..];
-    let declared = rest.strip_suffix("\"}")?;
-    Some((base, declared.to_string()))
-}
+/// Reexportados para quien verifica: la cadena vive en [`crate::hashchain`].
+pub use crate::hashchain::{seal, sha256_hex, split_line};
 
 // ─── Sesión ─────────────────────────────────────────────────────────────────
 
@@ -224,12 +164,8 @@ pub fn start_session(
 
     {
         let mut g = logger().lock().map_err(|e| e.to_string())?;
-        let dir = g
-            .dir
-            .clone()
-            .ok_or("Registro de estudio sin inicializar")?;
-        std::fs::create_dir_all(&dir)
-            .map_err(|e| format!("No se pudo crear study_logs: {}", e))?;
+        let dir = g.dir.clone().ok_or("Registro de estudio sin inicializar")?;
+        std::fs::create_dir_all(&dir).map_err(|e| format!("No se pudo crear study_logs: {}", e))?;
 
         if g.session.is_some() {
             return Err("Ya hay una sesión de estudio abierta".into());
@@ -268,10 +204,7 @@ pub fn end_session(reason: &str) {
     if !is_active() {
         return;
     }
-    let _ = emit(
-        events::SESSION_END,
-        serde_json::json!({ "reason": reason }),
-    );
+    let _ = emit(events::SESSION_END, serde_json::json!({ "reason": reason }));
     if let Ok(mut g) = logger().lock() {
         if let Some(s) = g.session.as_mut() {
             let _ = s.file.flush();

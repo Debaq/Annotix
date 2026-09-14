@@ -1,5 +1,6 @@
 pub mod audio_commands;
 pub mod audio_edit_commands;
+pub mod audit_commands;
 pub mod automation_commands;
 pub mod config_commands;
 pub mod csv_commands;
@@ -18,9 +19,9 @@ pub mod serve_commands;
 pub mod settings_commands;
 pub mod storage_commands;
 pub mod study_commands;
+pub mod subject_commands;
 pub mod tabular_commands;
 pub mod timeseries_commands;
-pub mod subject_commands;
 pub mod training_commands;
 pub mod tts_commands;
 pub mod video_commands;

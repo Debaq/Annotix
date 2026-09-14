@@ -278,6 +278,18 @@ impl AppState {
         })
     }
 
+    /// Deja constancia de un cambio en el registro de auditoría del proyecto.
+    ///
+    /// Silencioso a propósito: el registro no puede tumbar la operación que
+    /// describe. Si el disco falla se pierde la constancia, no el cambio — y el
+    /// verificador lo delata después, porque `seq` salta.
+    pub fn audit(&self, project_id: &str, event: &str, payload: serde_json::Value) {
+        match self.project_dir(project_id) {
+            Ok(dir) => crate::audit::record_quiet(&dir, project_id, event, payload),
+            Err(e) => log::warn!("audit: sin directorio para {}: {}", project_id, e),
+        }
+    }
+
     /// Política de partición declarada, o la de siempre si el proyecto no declaró
     /// ninguna. Devuelve un valor siempre: la UI muestra lo que rige, no un hueco.
     pub fn get_split_policy(&self, project_id: &str) -> Result<SplitPolicy, String> {
@@ -293,10 +305,27 @@ impl AppState {
         if let Some(p) = policy.as_ref() {
             validate_split_policy(p)?;
         }
+        let resumen = policy.as_ref().map(|p| {
+            serde_json::json!({
+                "unit": p.unit,
+                "val_split": p.val_split,
+                "test_split": p.test_split,
+                "seed": p.seed.map(|s| s.to_string()),
+                "require_test": p.require_test,
+            })
+        });
         self.with_project_mut(project_id, |pf| {
             pf.split_policy = policy;
             pf.updated = js_timestamp();
-        })
+        })?;
+        // Cómo se reparte el corpus decide qué significan las métricas: el cambio
+        // es parte de la historia del proyecto, no una preferencia de pantalla.
+        self.audit(
+            project_id,
+            crate::audit::events::SPLIT_POLICY_CHANGED,
+            serde_json::json!({ "policy": resumen }),
+        );
+        Ok(())
     }
 
     pub fn set_project_folder(
@@ -314,6 +343,11 @@ impl AppState {
     /// Las anotaciones, tracks, eventos, etc., que referencian una clase existente se remapean.
     /// Las clases eliminadas dejan anotaciones huérfanas que son removidas.
     pub fn save_classes(&self, project_id: &str, classes: Vec<ClassDef>) -> Result<(), String> {
+        let antes: Vec<String> = self.with_project(project_id, |pf| {
+            pf.classes.iter().map(|c| c.name.clone()).collect()
+        })?;
+        let despues: Vec<String> = classes.iter().map(|c| c.name.clone()).collect();
+
         self.with_project_mut(project_id, |pf| {
             // Mapa old_id → new_id (solo para clases que existían antes)
             let existing_ids: std::collections::HashSet<i64> =
@@ -408,7 +442,20 @@ impl AppState {
             }
 
             pf.updated = js_timestamp();
-        })
+        })?;
+
+        // Redefinir las clases cambia lo que significan las etiquetas ya puestas:
+        // el índice de clase es la posición, así que reordenarlas tampoco es
+        // cosmético. Sin esto, un dataset exportado antes y otro después parecen
+        // el mismo y no lo son.
+        if antes != despues {
+            self.audit(
+                project_id,
+                crate::audit::events::CLASSES_CHANGED,
+                serde_json::json!({ "before": antes, "after": despues }),
+            );
+        }
+        Ok(())
     }
 
     pub fn update_project(
@@ -437,6 +484,10 @@ impl AppState {
         self.evict_from_cache(project_id);
 
         let project_dir = self.project_dir(project_id)?;
+        // Soltar el registro de auditoría antes de borrar la carpeta: dejar el
+        // archivo abierto sobre una ruta que ya no existe haría que el siguiente
+        // proyecto que reutilizara el id escribiera en el vacío.
+        crate::audit::log::close(&project_dir);
         if project_dir.exists() {
             std::fs::remove_dir_all(&project_dir)
                 .map_err(|e| format!("Error eliminando proyecto: {}", e))?;

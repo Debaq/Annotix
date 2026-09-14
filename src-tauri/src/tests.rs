@@ -3688,6 +3688,51 @@ fn una_caja_que_vuelve_deja_de_estar_rechazada() {
     );
 }
 
+/// El registro de auditoría dice qué cambió, no que «se guardó». El cliente manda
+/// la lista entera y no declara qué tocó: hay que compararla con lo que había.
+#[test]
+fn el_diff_de_un_guardado_distingue_crear_de_editar_y_de_borrar() {
+    use crate::store::images::diff_anotaciones;
+
+    let mut previa = bbox_ann(0, 10.0, 20.0, 50.0, 40.0);
+    previa.id = "queda".into();
+    let mut movida = bbox_ann(0, 10.0, 20.0, 50.0, 40.0);
+    movida.id = "movida".into();
+    let mut borrada = bbox_ann(0, 1.0, 1.0, 5.0, 5.0);
+    borrada.id = "borrada".into();
+
+    let mut movida_nueva = bbox_ann(0, 99.0, 20.0, 50.0, 40.0);
+    movida_nueva.id = "movida".into();
+    let mut nueva = bbox_ann(0, 2.0, 2.0, 8.0, 8.0);
+    nueva.id = "nueva".into();
+
+    let c = diff_anotaciones(
+        &[previa.clone(), movida, borrada],
+        &[previa, movida_nueva, nueva],
+    );
+    assert_eq!(c.creadas, vec!["nueva".to_string()]);
+    assert_eq!(c.editadas, vec!["movida".to_string()]);
+    assert_eq!(c.borradas, vec!["borrada".to_string()]);
+    assert!(c.hubo_cambio());
+}
+
+/// Guardar lo mismo no es un cambio. El guardado se dispara también al cambiar de
+/// imagen: registrar eso llenaría la auditoría de líneas que esconden las de
+/// verdad.
+#[test]
+fn guardar_lo_mismo_no_cuenta_como_cambio() {
+    use crate::store::images::diff_anotaciones;
+
+    let mut a = bbox_ann(0, 10.0, 20.0, 50.0, 40.0);
+    a.id = "a1".into();
+    let mut b = bbox_ann(1, 1.0, 1.0, 5.0, 5.0);
+    b.id = "b1".into();
+
+    // Misma lista, otro orden: tampoco es un cambio.
+    let c = diff_anotaciones(&[a.clone(), b.clone()], &[b, a]);
+    assert!(!c.hubo_cambio(), "un reordenamiento se contó como cambio");
+}
+
 /// Lo revisado en video deja de vivir en memoria de sesión: al consolidar, un
 /// fotograma que alguien miró sale como revisado y uno deducido no. Antes esto se
 /// perdía al cerrar la app, y el dataset no distinguía una caja validada de una

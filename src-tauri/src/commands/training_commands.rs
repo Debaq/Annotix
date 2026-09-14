@@ -741,6 +741,32 @@ fn detect_nvidia_hardware() -> bool {
         .unwrap_or(false)
 }
 
+/// Deja en la auditoría que se lanzó un entrenamiento.
+///
+/// Lo llaman las tres ramas de `start_training_v2` —nube, YOLO local y el resto—
+/// porque cada una crea su trabajo por su cuenta. El contrato de modelo (etapa 8)
+/// se apoya en esta línea para atar un modelo al estado del corpus del día que se
+/// entrenó.
+fn audit_training_started(
+    state: &AppState,
+    project_id: &str,
+    job_id: &str,
+    request: &TrainingRequest,
+) {
+    state.audit(
+        project_id,
+        crate::audit::events::TRAINING_STARTED,
+        serde_json::json!({
+            "job_id": job_id,
+            "backend": format!("{:?}", request.backend),
+            "model_id": request.model_id,
+            "task": request.task,
+            "execution_mode": format!("{:?}", request.execution_mode),
+            "class_ids": request.class_ids,
+        }),
+    );
+}
+
 #[tauri::command]
 pub async fn start_training_v2(
     state: State<'_, AppState>,
@@ -851,6 +877,7 @@ pub async fn start_training_v2(
             },
         )?;
 
+        audit_training_started(&state, &project_id, &job_id, &request);
         return Ok(job_id);
     }
 
@@ -886,6 +913,7 @@ pub async fn start_training_v2(
             pf.updated = now;
         })?;
 
+        audit_training_started(&state, &project_id, &job_id, &request);
         manager.start_training(&state, &app, &project_id, &job_id, yolo_config)?;
         return Ok(job_id);
     }
@@ -920,6 +948,7 @@ pub async fn start_training_v2(
         pf.updated = now;
     })?;
 
+    audit_training_started(&state, &project_id, &job_id, &request);
     manager.start_training_v2(&state, &app, &project_id, &job_id, request)?;
     Ok(job_id)
 }
