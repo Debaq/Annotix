@@ -4,7 +4,57 @@
 > cinco (`biomedico-fase1` … `fase4`) son el plan; éste dice qué está hecho, qué
 > falta, y qué decisiones ya se tomaron para no volver a discutirlas.
 >
-> Última actualización: 2026-09-14, sobre `038c240`.
+> Última actualización: 2026-09-14, sobre `884dcf0`.
+
+---
+
+## Punto de retomada
+
+Lo decidido el 2026-09-14, para no volver a discutir el orden:
+
+**11b (augmentación) → 12 (cifrado) → huecos de 1-11.**
+
+### Por qué en ese orden
+
+Los huecos de 1-11 son cosas que **faltan**; la augmentación es algo que **está
+mal**. Un modelo entrenado hoy con `bio_unet_seg` sobre radiografías sale
+volteado la mitad de las veces y con un contrato que declara nivel de evidencia.
+Lo que falta no empeora esperando; esto sí, porque se siguen pudiendo entrenar
+modelos rotos mientras tanto.
+
+### La sinergia que fija el orden
+
+Dos trabajos distintos obligan a tocar **los mismos 17 generadores**:
+
+- el paso 7 del plan de augmentación (quitarle a `smp` su `HorizontalFlip` fijo y
+  pasar los parámetros que no se pisen con lo ya materializado);
+- el hueco más caro de la etapa 8 (emitir un CSV de predicciones por muestra del
+  conjunto de test, que es lo que desbloquea los intervalos de confianza del
+  contrato).
+
+Van en el mismo repaso. Separarlos es pagar dos veces el mismo peaje, y cierra
+de golpe el defecto de la 11 y el hueco más visible de la 8.
+
+### Siguiente paso concreto
+
+`augment/geometry.rs` con sus tests — la matriz afín y cómo se le aplica a bbox,
+polígono, keypoints, OBB y máscara. Es donde vive la corrección y todo lo demás
+se apoya en ello. Orden completo en `docs/plan-augmentacion.md` §Orden de
+trabajo.
+
+### Lo que hay que decidir al llegar a la 12
+
+La augmentación escribe un dataset nuevo en disco, normalmente **más grande que
+el corpus**. Si el cifrado cubre sólo `project.json` e `images/`, el dataset
+preparado queda en claro al lado, con las mismas imágenes dentro. O se cubre, o
+se dice explícitamente que no se cubre.
+
+### Documentos de esta tanda
+
+- `docs/auditoria-etapas-1-11.md` — qué **no** está, leído del código y no del
+  roadmap. Origen de la 11b.
+- `docs/plan-augmentacion.md` — catálogo de transformaciones, TILE por filas ×
+  columnas + solape, factor por clase y el orden que evita la fuga.
 
 ---
 
