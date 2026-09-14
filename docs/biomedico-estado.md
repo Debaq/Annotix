@@ -4,57 +4,42 @@
 > cinco (`biomedico-fase1` … `fase4`) son el plan; éste dice qué está hecho, qué
 > falta, y qué decisiones ya se tomaron para no volver a discutirlas.
 >
-> Última actualización: 2026-09-14, sobre `884dcf0`.
+> Última actualización: 2026-09-14, sobre `d0d3604` (etapa 11b terminada).
 
 ---
 
 ## Punto de retomada
 
-Lo decidido el 2026-09-14, para no volver a discutir el orden:
+**La 11b está hecha.** Lo siguiente es la **etapa 12 (cifrado en reposo)**, y
+después los huecos de 1-11.
 
-**11b (augmentación) → 12 (cifrado) → huecos de 1-11.**
+### Lo que hay que decidir antes de empezar la 12
 
-### Por qué en ese orden
+Sigue en pie, y ahora con un dato más: la augmentación escribe un dataset
+preparado que normalmente es **varias veces el corpus**, y lo escribe en el
+directorio del trabajo de entrenamiento. Si el cifrado cubre sólo `project.json`
+e `images/`, ese dataset queda en claro al lado, con las mismas imágenes dentro
+—y ahora también con sus variantes—. O se cubre, o se dice explícitamente que no
+se cubre.
 
-Los huecos de 1-11 son cosas que **faltan**; la augmentación es algo que **está
-mal**. Un modelo entrenado hoy con `bio_unet_seg` sobre radiografías sale
-volteado la mitad de las veces y con un contrato que declara nivel de evidencia.
-Lo que falta no empeora esperando; esto sí, porque se siguen pudiendo entrenar
-modelos rotos mientras tanto.
+(Las imágenes generadas ya no se guardan dos veces: viven en un temporal que
+muere al terminar la preparación, y lo que queda es lo que el preparador copió a
+`images/train` más el manifiesto.)
 
-### La sinergia que fija el orden
+### Lo que quedó fuera de la 11b
 
-Dos trabajos distintos obligan a tocar **los mismos 17 generadores**:
-
-- el paso 7 del plan de augmentación (quitarle a `smp` su `HorizontalFlip` fijo y
-  pasar los parámetros que no se pisen con lo ya materializado);
-- el hueco más caro de la etapa 8 (emitir un CSV de predicciones por muestra del
-  conjunto de test, que es lo que desbloquea los intervalos de confianza del
-  contrato).
-
-Van en el mismo repaso. Separarlos es pagar dos veces el mismo peaje, y cierra
-de golpe el defecto de la 11 y el hueco más visible de la 8.
-
-### Siguiente paso concreto
-
-`augment/geometry.rs` con sus tests — la matriz afín y cómo se le aplica a bbox,
-polígono, keypoints, OBB y máscara. Es donde vive la corrección y todo lo demás
-se apoya en ello. Orden completo en `docs/plan-augmentacion.md` §Orden de
-trabajo.
-
-### Lo que hay que decidir al llegar a la 12
-
-La augmentación escribe un dataset nuevo en disco, normalmente **más grande que
-el corpus**. Si el cifrado cubre sólo `project.json` e `images/`, el dataset
-preparado queda en claro al lado, con las mismas imágenes dentro. O se cubre, o
-se dice explícitamente que no se cubre.
+En `docs/plan-augmentacion.md` §Lo que queda fuera. En corto: la perspectiva
+(es una homografía y la geometría sólo sabe de afines), RF-DETR (su `train()`
+valida con pydantic y no acepta parámetros nuevos), recomponer la inferencia por
+teselas, y que el **contrato de modelo transcriba el plan** — el informe del
+reparto ya lo lleva, el contrato todavía no.
 
 ### Documentos de esta tanda
 
 - `docs/auditoria-etapas-1-11.md` — qué **no** está, leído del código y no del
   roadmap. Origen de la 11b.
-- `docs/plan-augmentacion.md` — catálogo de transformaciones, TILE por filas ×
-  columnas + solape, factor por clase y el orden que evita la fuga.
+- `docs/plan-augmentacion.md` — el plan de la 11b, con lo hecho y lo que queda
+  fuera al final.
 
 ---
 
@@ -77,7 +62,7 @@ se dice explícitamente que no se cubre.
 | 10b · Pesos biomédicos | **empezado**: 5 modelos | `135553f` |
 | 10c · nnU-Net, MONAI, Cellpose, StarDist | pendiente | — |
 | 11 · Selector de dominio + presets | **hecho** con los backends que existen | `beebdc5`, `fb43624`, (esta tanda) |
-| 11b · Augmentación unificada + teselado | **planificado**, sin implementar | `038c240` (plan) |
+| 11b · Augmentación unificada + teselado | **hecho** | `72b9e5f` … `d0d3604` |
 | 12 · Cifrado en reposo, opcional | pendiente (etapa nueva, no estaba en el plan) | — |
 
 Fuera del plan original, pedido sobre la marcha:
@@ -168,13 +153,27 @@ UNI (gated, CC-BY-NC-ND), RETFound (gated, `.pth` suelto sin metadatos de
 librería) y hibou (gated y con `trust_remote_code`, que el generador no pasa).
 Entran cuando haya soporte de token del Hub.
 
-**Etapa 11b.** Hay plan (`docs/plan-augmentacion.md`) y no hay código. Nace de
-lo que encontró la auditoría: la augmentación depende hoy del backend, y por eso
-los presets biomédicos **sólo se cumplen en YOLO y RT-DETR**. El generador de
-`smp` fija `HorizontalFlip(p=0.5)` en el propio script, así que `bio_unet_seg`
-—que declara `fliplr: 0` porque la lateralidad es diagnóstica— saca la mitad de
-las radiografías volteadas mientras la UI avisa de lo contrario. No es una
-mejora: es lo único que hace que lo que la app promete sea lo que ocurre.
+**Etapa 11b.** Hecha. La augmentación se materializa al preparar el dataset
+—fuera del bucle de entrenamiento— y por eso vale para los diecisiete backends a
+la vez, se puede abrir y mirar, y sale igual con la misma semilla. El orden es
+parte del diseño: seleccionar clases → repartir → **sólo train** teselar y
+aumentar; `materializar()` ni siquiera recibe val y test.
+
+Lo que arregla el defecto que la motivó son los tres generadores que augmentaban
+por su cuenta, y sólo uno de los tres estaba a la vista:
+
+- `smp` tenía `HorizontalFlip(p=0.5)` fijo en el script.
+- `rt_detr` no pasaba **ningún** parámetro, así que ultralytics aplicaba los
+  suyos por defecto —`fliplr: 0.5` entre ellos—. El generador no dice nada, y
+  nadie mira lo que un script no dice.
+- `timm` voltea dentro de `create_transform(is_training=True)`: tampoco había una
+  línea culpable en el script generado.
+
+Queda fuera, a propósito, lo que está en `docs/plan-augmentacion.md` §Lo que
+queda fuera. El hueco que más pesa: **el contrato de modelo todavía no
+transcribe el plan** ni baja el nivel de evidencia cuando una clase con dos
+ejemplos se multiplica por veinte. El informe del reparto ya lleva el bloque y
+los avisos; falta el último salto.
 
 **Traducciones.** Todo lo nuevo está en `es` y `en`. Los otros ocho locales caen
 a inglés por `fallbackLng`. La auditoría las contó: **4104 claves**, no ~200, y
@@ -218,6 +217,14 @@ sesión de trabajo. **Qué mirar al abrirla**:
 - Lista de entrenamientos → informe de reparto de una corrida terminada: debajo
   aparece el contrato con su nivel de evidencia y sus limitaciones; «Emitir
   contrato» escribe `model_contract.json` junto al modelo.
+- Entrenamiento → «Augmentación»: encenderla, marcar un par de
+  transformaciones y pulsar «Ver una variante» — la imagen tiene que salir con
+  sus anotaciones encima y en su sitio. Con un corpus de radiografías, el volteo
+  horizontal tiene que salir en rojo; con una modalidad monocroma, el tono y la
+  saturación tienen que salir deshabilitados.
+- Entrenar con la augmentación encendida y comprobar en el directorio del
+  trabajo: `images/train` trae las variantes (`…__aug1.png`), `images/val` no
+  trae ninguna, y `augmentation_manifest.json` dice de qué imagen salió cada una.
 
 ---
 
@@ -253,7 +260,7 @@ sesión de trabajo. **Qué mirar al abrirla**:
 
 ## Formato de datos
 
-`project.json` va por la **versión 10**. Migraciones en `store/io.rs`:
+`project.json` va por la **versión 11**. Migraciones en `store/io.rs`:
 
 | | Cambio | Migración |
 |---|---|---|
@@ -264,6 +271,7 @@ sesión de trabajo. **Qué mirar al abrirla**:
 | v7 → v8 | protocolo de estudio (`studyProtocol`) | sólo sube la versión: un criterio de inclusión no se deduce del corpus, así que no se rellena — el contrato nota la ausencia y la declara |
 | v8 → v9 | metadatos de imagen médica (`medical`) | sólo sube la versión: lo que se perdió al convertir un DICOM a PNG a mano no se puede deducir del PNG |
 | v9 → v10 | dominio del proyecto (`domain`) | sólo sube la versión: ausente significa `general`, y marcar biomédico un proyecto por su contenido sería decidir por el usuario |
+| v10 → v11 | plan de augmentación (`augmentation`) | sólo sube la versión: ausente significa que no se aumenta, y encenderla sola multiplicaría el dataset de alguien sin que lo hubiera pedido |
 
 ---
 
@@ -273,13 +281,11 @@ La **cadena de validez está cerrada**: de la etapa 1 a la 8, un modelo entrenad
 aquí sale con su contrato y su nivel de evidencia. Lo que queda son dos caminos
 independientes.
 
-La **etapa 11b** (augmentación unificada y teselado) es la que va primero, y no
-por ser la más vistosa: es la única de la lista que arregla algo que hoy hace
-que la app mienta. Además lleva el TILE por filas × columnas + solape, que es lo
-que permite entrenar sobre imágenes de alta resolución con modelos de kernel
-pequeño sin destruir lo que hay que detectar al redimensionar. Plan completo en
-`docs/plan-augmentacion.md`; la auditoría que lo motiva, en
-`docs/auditoria-etapas-1-11.md`.
+La **etapa 11b** (augmentación unificada y teselado) está hecha: era la única de
+la lista que arreglaba algo que hacía que la app mintiera, y trajo además el
+teselado por filas × columnas con solape, que es lo que permite entrenar sobre
+imágenes de alta resolución sin destruir al redimensionar lo que hay que
+detectar.
 
 La **etapa 12** (cifrado en reposo, opcional por proyecto) es la que decidiste
 meter y no estaba en el plan. Es la que hace falta antes de que un corpus clínico

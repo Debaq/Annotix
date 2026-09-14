@@ -291,17 +291,61 @@ sigan encima de lo que marcan.
 
 ## Orden de trabajo
 
-1. `augment/geometry.rs` con sus tests — es donde vive la corrección y lo demás
-   se apoya en ello.
-2. Transformaciones fotométricas: no tocan anotaciones, son baratas.
-3. Teselado con filas × columnas + solape.
-4. El plan, la semilla y el enganche en `dataset.rs` tras el reparto.
-5. Factor por clase y modo equilibrar.
-6. UI: catálogo con vista previa sobre una imagen real del proyecto — sin ver el
-   resultado, nadie sabe si `shear 15°` es mucho o poco.
-7. **Pasar el plan a los generadores que hoy augmentan por su cuenta**, para que
-   no se pisen: `smp` deja de tener su `HorizontalFlip` fijo, y YOLO recibe los
-   parámetros que no se solapen con lo ya materializado.
+Los siete pasos están **hechos** (commits `72b9e5f` … `d0d3604`). Se dejan
+escritos porque el orden explica el diseño, y porque lo que quedó fuera sólo se
+entiende contra ellos.
 
-El punto 7 es el que arregla el defecto que abre este documento, y conviene no
-dejarlo para el final.
+1. `augment/geometry.rs` con sus tests — es donde vive la corrección y lo demás
+   se apoya en ello. **Hecho.**
+2. Transformaciones fotométricas: no tocan anotaciones, son baratas. **Hecho.**
+3. Teselado con filas × columnas + solape. **Hecho.**
+4. El plan, la semilla y el enganche en `dataset.rs` tras el reparto. **Hecho**,
+   con un cambio que no estaba previsto: el reparto se calcula ahora una sola
+   vez (`repartir_y_aumentar`) en vez de una por preparador. Con la llamada
+   repetida, las variantes se habrían repartido otra vez y habrían caído en test.
+5. Factor por clase y modo equilibrar. **Hecho.**
+6. UI: catálogo con vista previa sobre una imagen real del proyecto. **Hecho**,
+   y la vista previa llama al mismo materializador que el entrenamiento: una
+   previsualización escrita aparte acaba divergiendo del ejecutor.
+7. Pasar el plan a los generadores que augmentan por su cuenta. **Hecho**, y con
+   dos casos que la auditoría no había visto (abajo).
+
+---
+
+## Lo que se encontró por el camino
+
+El paso 7 iba a ser sólo `smp`. Resultaron ser tres:
+
+| Backend | Qué hacía | Por qué no se había visto |
+|---|---|---|
+| `smp` | `HorizontalFlip(p=0.5)` fijo en el script | Estaba a la vista; es el que abre este documento |
+| `rt_detr` | **Ningún** parámetro de augmentación, así que ultralytics aplicaba los suyos —`fliplr: 0.5` incluido— | El generador no dice nada, y nadie mira lo que un script no dice |
+| `timm` | El volteo vive dentro de `create_transform(is_training=True)` | No hay ninguna línea de augmentación en el script generado |
+
+Los tres cumplen ahora lo que declara la interfaz, y lo que ya está
+materializado se apaga en los tres con la misma tabla
+(`augment::plan::ejes_materializados`).
+
+---
+
+## Lo que queda fuera, y por qué
+
+- **Perspectiva (tilt).** Es una homografía y `augment::geometry` sólo sabe de
+  afines. Entra cuando haya matriz proyectiva con sus tests: una variante del
+  catálogo que no mueve bien las anotaciones es peor que no tener la variante.
+- **RF-DETR.** Su `train()` valida los argumentos con pydantic y aborta ante
+  cualquiera que no conozca, así que no hay forma de pasarle la augmentación. Lo
+  que haga por dentro se queda sin controlar; con augmentación materializada
+  encima, sus transformaciones internas se suman a las nuestras.
+- **Los backends HF.** Sus processors redimensionan y normalizan, y no voltean:
+  no hay nada que apagar hoy. Si alguno empieza a augmentar, el sitio es el
+  mismo que usan `smp`, `timm` y ultralytics.
+- **Recomponer la inferencia por teselas.** Un modelo entrenado por teselas hay
+  que aplicarlo por teselas y unir las predicciones con supresión de no-máximos
+  en el solape. Es trabajo del subsistema de inferencia; la UI lo avisa al
+  activar el teselado para que nadie entrene un modelo que no sabrá usar.
+- **El contrato de modelo todavía no transcribe el plan.** El informe del
+  reparto ya lleva el bloque (`AugmentationReport`: qué se generó, con qué
+  semilla y con qué transformaciones) y sus avisos; falta que el contrato lo
+  recoja y que la clase multiplicada con pocos ejemplos baje el nivel de
+  evidencia, como hace el resto.
