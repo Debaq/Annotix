@@ -4,42 +4,42 @@
 > cinco (`biomedico-fase1` … `fase4`) son el plan; éste dice qué está hecho, qué
 > falta, y qué decisiones ya se tomaron para no volver a discutirlas.
 >
-> Última actualización: 2026-09-14, sobre `d0d3604` (etapa 11b terminada).
+> Última actualización: 2026-09-14, sobre `a84e03c` (etapas 11b y 12 terminadas).
 
 ---
 
 ## Punto de retomada
 
-**La 11b está hecha.** Lo siguiente es la **etapa 12 (cifrado en reposo)**, y
-después los huecos de 1-11.
+**La 11b y la 12 están hechas.** Lo siguiente son los **huecos de las etapas
+1-11**, listados más abajo en «Lo que quedó abierto». Los tres que más pesan, en
+este orden:
 
-### Lo que hay que decidir antes de empezar la 12
+1. **El contrato de modelo no transcribe todavía el plan de augmentación** ni
+   baja el nivel de evidencia cuando una clase con dos ejemplos se multiplica
+   por veinte. El informe del reparto ya lleva el bloque y los avisos; falta el
+   último salto (etapa 11b).
+2. **El CSV de predicciones por muestra del conjunto de test** (etapa 8), que es
+   lo que desbloquea los intervalos de confianza del contrato. Toca los mismos
+   17 generadores que ya se repasaron en la 11b, así que ahora sale más barato.
+3. **La validación con datos reales**: DICOM de dos fabricantes distintos, la
+   deidentificación contra una herramienta externa, y la lectura múltiple con
+   tres anotadores en tres máquinas (etapas 9a y 6).
 
-Sigue en pie, y ahora con un dato más: la augmentación escribe un dataset
-preparado que normalmente es **varias veces el corpus**, y lo escribe en el
-directorio del trabajo de entrenamiento. Si el cifrado cubre sólo `project.json`
-e `images/`, ese dataset queda en claro al lado, con las mismas imágenes dentro
-—y ahora también con sus variantes—. O se cubre, o se dice explícitamente que no
-se cubre.
+### Lo que quedó fuera de la 12
 
-(Las imágenes generadas ya no se guardan dos veces: viven en un temporal que
-muere al terminar la preparación, y lo que queda es lo que el preparador copió a
-`images/train` más el manifiesto.)
+En `docs/cifrado-en-reposo.md` §Lo que queda fuera. En corto: los datasets
+preparados y los modelos siguen en claro dentro del proyecto, no se puede rotar
+la clave de proyecto —sólo cambiar frases y ranuras—, el cegado por capas de la
+etapa 6 sigue siendo de la aplicación, y el llavero sólo se ha ejecutado en
+Linux.
 
-### Lo que quedó fuera de la 11b
+### Documentos de estas dos tandas
 
-En `docs/plan-augmentacion.md` §Lo que queda fuera. En corto: la perspectiva
-(es una homografía y la geometría sólo sabe de afines), RF-DETR (su `train()`
-valida con pydantic y no acepta parámetros nuevos), recomponer la inferencia por
-teselas, y que el **contrato de modelo transcriba el plan** — el informe del
-reparto ya lo lleva, el contrato todavía no.
-
-### Documentos de esta tanda
-
-- `docs/auditoria-etapas-1-11.md` — qué **no** está, leído del código y no del
-  roadmap. Origen de la 11b.
+- `docs/auditoria-etapas-1-11.md` — qué **no** está, leído del código.
 - `docs/plan-augmentacion.md` — el plan de la 11b, con lo hecho y lo que queda
   fuera al final.
+- `docs/cifrado-en-reposo.md` — la 12: las dos claves, el formato de archivo y
+  lo que el cifrado **no** promete.
 
 ---
 
@@ -63,7 +63,7 @@ reparto ya lo lleva, el contrato todavía no.
 | 10c · nnU-Net, MONAI, Cellpose, StarDist | pendiente | — |
 | 11 · Selector de dominio + presets | **hecho** con los backends que existen | `beebdc5`, `fb43624`, (esta tanda) |
 | 11b · Augmentación unificada + teselado | **hecho** | `72b9e5f` … `d0d3604` |
-| 12 · Cifrado en reposo, opcional | pendiente (etapa nueva, no estaba en el plan) | — |
+| 12 · Cifrado en reposo, opcional | **hecho** | `dfb3534` … `a84e03c` |
 
 Fuera del plan original, pedido sobre la marcha:
 
@@ -175,6 +175,21 @@ transcribe el plan** ni baja el nivel de evidencia cuando una clase con dos
 ejemplos se multiplica por veinte. El informe del reparto ya lleva el bloque y
 los avisos; falta el último salto.
 
+**Etapa 12.** Hecha. Dos claves: la del proyecto cifra los datos, la frase sólo
+la envuelve. Eso es lo que permite cambiar la frase sin recifrar el corpus y que
+varias personas abran el mismo dataset con su propia frase —que fue la decisión
+que se pidió para compartirlo—.
+
+Lo que **no** promete está dicho en la propia pantalla y no sólo en el
+documento: no es cumplimiento normativo, no protege el proyecto abierto y no
+esconde los tamaños de archivo. Y hay una salida declarada del ámbito cifrado:
+los datasets preparados y los modelos se quedan en claro en `training/`, porque
+los lee Python.
+
+Ver `docs/cifrado-en-reposo.md`, incluida la lista de lo que queda fuera —rotar
+la clave, la tabla de seudónimos aparte, la auditoría de accesos— y qué mirar al
+probarlo en la app.
+
 **Traducciones.** Todo lo nuevo está en `es` y `en`. Los otros ocho locales caen
 a inglés por `fallbackLng`. La auditoría las contó: **4104 claves**, no ~200, y
 cinco archivos de namespace (`subjects`, `agreement`, `contract`, `medical`,
@@ -225,6 +240,8 @@ sesión de trabajo. **Qué mirar al abrirla**:
 - Entrenar con la augmentación encendida y comprobar en el directorio del
   trabajo: `images/train` trae las variantes (`…__aug1.png`), `images/val` no
   trae ninguna, y `augmentation_manifest.json` dice de qué imagen salió cada una.
+- Ajustes del proyecto → «Cifrado en reposo»: la lista completa de lo que hay
+  que mirar está en `docs/cifrado-en-reposo.md` §Qué mirar al abrirlo en la app.
 
 ---
 
@@ -260,7 +277,11 @@ sesión de trabajo. **Qué mirar al abrirla**:
 
 ## Formato de datos
 
-`project.json` va por la **versión 11**. Migraciones en `store/io.rs`:
+`project.json` va por la **versión 11**. Un proyecto cifrado guarda además un
+`vault.json` en claro a su lado: sales, parámetros del derivador y la clave
+envuelta. No es parte del formato del proyecto —el `project.json` no sabe que
+está cifrado— y eso es a propósito: si lo supiera, el dato estaría dentro del
+archivo que hay que descifrar para leerlo. Migraciones en `store/io.rs`:
 
 | | Cambio | Migración |
 |---|---|---|
@@ -287,12 +308,10 @@ teselado por filas × columnas con solape, que es lo que permite entrenar sobre
 imágenes de alta resolución sin destruir al redimensionar lo que hay que
 detectar.
 
-La **etapa 12** (cifrado en reposo, opcional por proyecto) es la que decidiste
-meter y no estaba en el plan. Es la que hace falta antes de que un corpus clínico
-real entre en la app: hoy el proyecto está en claro en disco. Lleva su propio
-punto de no retorno —una frase de paso perdida es un proyecto perdido— y una
-advertencia sobre lo que no promete: cifrar en reposo no es cumplimiento
-normativo.
+La **etapa 12** (cifrado en reposo) está hecha: era la que hacía falta antes de
+que un corpus clínico real entrara en la app. Su punto de no retorno —una frase
+perdida es un proyecto perdido— y lo que no promete están dichos donde se
+activa.
 
 La **etapa 9b** (whole-slide imaging) desbloquea histopatología de lámina
 completa. Es cara y bastante autónoma: lectura piramidal, navegación por teselas
