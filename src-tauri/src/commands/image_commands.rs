@@ -156,6 +156,11 @@ pub fn list_images_by_project(
     state.list_images(&project_id)
 }
 
+/// Los bytes de una imagen, ya descifrados.
+///
+/// Es el camino por el que la interfaz carga las imágenes de un proyecto
+/// cifrado: el webview lee del disco por su cuenta con `convertFileSrc`, y de un
+/// archivo cifrado sólo sacaría ruido.
 #[tauri::command]
 pub fn get_image_data(
     state: State<'_, AppState>,
@@ -163,7 +168,24 @@ pub fn get_image_data(
     id: String,
 ) -> Result<Vec<u8>, String> {
     let path = state.get_image_file_path(&project_id, &id)?;
-    std::fs::read(&path).map_err(|e| format!("Error leyendo imagen: {}", e))
+    crate::store::io::leer_ruta(&path)
+}
+
+/// Los bytes del thumbnail, ya descifrados. Devuelve `None` si no se ha
+/// generado todavía, que no es un error: la galería lo pide y lo encarga.
+#[tauri::command]
+pub fn get_thumbnail_data(
+    state: State<'_, AppState>,
+    project_id: String,
+    id: String,
+) -> Result<Option<Vec<u8>>, String> {
+    let ruta = state
+        .project_thumbnails_dir(&project_id)?
+        .join(format!("{id}.jpg"));
+    if !ruta.exists() {
+        return Ok(None);
+    }
+    crate::store::io::leer_ruta(&ruta).map(Some)
 }
 
 #[tauri::command]

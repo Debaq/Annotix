@@ -312,7 +312,7 @@ fn infer_nc_from_shape(shape: &[i64]) -> (Option<usize>, Option<String>) {
 /// Pensado para ejecutarse en thread productor (overlap con session.run).
 pub fn preprocess_image(image_path: &str, input_size: u32) -> Result<Vec<f32>, String> {
     let img =
-        image::open(image_path).map_err(|e| format!("Error abriendo imagen {image_path}: {e}"))?;
+        crate::store::io::abrir_imagen(std::path::Path::new(image_path))?;
     let isz = input_size as usize;
     let plane = isz * isz;
     let rgb_buf = fast_resize_to_rgb8(&img, input_size)?;

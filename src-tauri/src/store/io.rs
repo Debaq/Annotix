@@ -32,6 +32,96 @@ pub fn leer_archivo(dir: &Path, nombre: &str) -> Result<Vec<u8>, String> {
     cripto::descifrar(&clave, nombre, &bytes)
 }
 
+/// El directorio del proyecto al que pertenece una ruta, subiendo hasta
+/// encontrar un `project.json`.
+///
+/// Existe para que los treinta sitios que abren una imagen por su ruta absoluta
+/// —el canvas, el pincel, SAM, el preparador de datasets— no tengan que saber a
+/// qué proyecto pertenece ni arrastrar su identificador hasta ahí.
+pub fn raiz_del_proyecto(ruta: &Path) -> Option<&Path> {
+    let mut actual = ruta.parent()?;
+    loop {
+        if actual.join(PROJECT_JSON).exists() {
+            return Some(actual);
+        }
+        actual = actual.parent()?;
+    }
+}
+
+/// Lee un archivo por su ruta absoluta, descifrándolo si vive en un proyecto
+/// cifrado y abierto.
+pub fn leer_ruta(ruta: &Path) -> Result<Vec<u8>, String> {
+    let bytes = std::fs::read(ruta).map_err(|e| format!("Error leyendo {ruta:?}: {e}"))?;
+    if !cripto::es_cifrado(&bytes) {
+        return Ok(bytes);
+    }
+    let (raiz, rel) = ruta_relativa(ruta).ok_or(ERROR_BLOQUEADO)?;
+    let clave = sesion::clave(&raiz).ok_or(ERROR_BLOQUEADO)?;
+    cripto::descifrar(&clave, &rel, &bytes)
+}
+
+/// Escribe un archivo por su ruta absoluta, cifrándolo si vive en un proyecto
+/// cifrado y abierto.
+pub fn escribir_ruta(ruta: &Path, datos: &[u8]) -> Result<(), String> {
+    match ruta_relativa(ruta) {
+        Some((raiz, rel)) if sesion::hay_vault(&raiz) => {
+            let clave = sesion::clave(&raiz).ok_or(ERROR_BLOQUEADO)?;
+            let cifrado = cripto::cifrar(&clave, &rel, datos)?;
+            std::fs::write(ruta, cifrado)
+                .map_err(|e| format!("Error escribiendo {ruta:?}: {e}"))
+        }
+        _ => std::fs::write(ruta, datos).map_err(|e| format!("Error escribiendo {ruta:?}: {e}")),
+    }
+}
+
+/// Copia un archivo del proyecto a un destino de fuera **en claro**.
+///
+/// Es lo que usan los preparadores de dataset: Python no sabe descifrar, y un
+/// dataset con imágenes cifradas moriría con un error de formato de imagen a
+/// mitad del entrenamiento. Sale del ámbito cifrado a propósito, y eso está
+/// dicho donde se activa el cifrado.
+pub fn copiar_en_claro(origen: &Path, destino: &Path) -> Result<(), String> {
+    let datos = leer_ruta(origen)?;
+    std::fs::write(destino, datos).map_err(|e| format!("Error copiando a {destino:?}: {e}"))
+}
+
+/// Guarda una imagen del proyecto, cifrándola si hace falta.
+///
+/// El formato sale de la extensión del destino, igual que `DynamicImage::save`,
+/// que es lo que esto sustituye: `save` escribe en el disco por su cuenta y se
+/// saltaría el cifrado.
+pub fn guardar_imagen(
+    ruta: &Path,
+    img: &image::DynamicImage,
+    formato: image::ImageFormat,
+) -> Result<(), String> {
+    let mut bytes = Vec::new();
+    img.write_to(&mut std::io::Cursor::new(&mut bytes), formato)
+        .map_err(|e| format!("Error codificando {ruta:?}: {e}"))?;
+    escribir_ruta(ruta, &bytes)
+}
+
+/// Abre una imagen del proyecto, descifrándola si hace falta.
+pub fn abrir_imagen(ruta: &Path) -> Result<image::DynamicImage, String> {
+    let bytes = leer_ruta(ruta)?;
+    image::load_from_memory(&bytes).map_err(|e| format!("Error decodificando {ruta:?}: {e}"))
+}
+
+/// La raíz del proyecto y la ruta del archivo dentro de él, con `/` como
+/// separador para que un proyecto copiado de Windows a Linux siga descifrando:
+/// la ruta relativa entra en la derivación de la clave del archivo.
+fn ruta_relativa(ruta: &Path) -> Option<(std::path::PathBuf, String)> {
+    let raiz = raiz_del_proyecto(ruta)?;
+    let rel = ruta.strip_prefix(raiz).ok()?;
+    Some((
+        raiz.to_path_buf(),
+        rel.components()
+            .map(|c| c.as_os_str().to_string_lossy().to_string())
+            .collect::<Vec<_>>()
+            .join("/"),
+    ))
+}
+
 /// Escribe un archivo del proyecto, cifrándolo si el proyecto está cifrado.
 ///
 /// Escritura atómica: `.tmp` y renombrado. Un corte de luz a mitad no puede

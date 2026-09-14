@@ -4273,3 +4273,63 @@ fn un_proyecto_sin_cifrar_sigue_funcionando_igual() {
     assert_eq!(store_io::read_project(tmp.path()).unwrap().name, "normal");
     assert!(!store_io::read_project_summary(tmp.path()).unwrap().locked);
 }
+
+#[test]
+fn las_imagenes_de_un_proyecto_cifrado_tambien_lo_estan() {
+    let (tmp, _) = proyecto_cifrado();
+    let images_dir = tmp.path().join("images");
+    std::fs::create_dir_all(&images_dir).unwrap();
+
+    // Un PNG de verdad, para poder comprobar que vuelve decodificable.
+    let mut png = Vec::new();
+    image::DynamicImage::ImageRgb8(image::RgbImage::from_pixel(
+        8,
+        8,
+        image::Rgb([200, 30, 30]),
+    ))
+    .write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png)
+    .unwrap();
+
+    let ruta = images_dir.join("a.png");
+    store_io::escribir_ruta(&ruta, &png).unwrap();
+
+    let crudo = std::fs::read(&ruta).unwrap();
+    assert!(cripto::es_cifrado(&crudo), "la imagen quedó en claro");
+    assert!(
+        image::load_from_memory(&crudo).is_err(),
+        "un visor del sistema no debería poder abrirla"
+    );
+
+    let abierta = store_io::abrir_imagen(&ruta).unwrap();
+    assert_eq!(abierta.width(), 8);
+    assert_eq!(store_io::leer_ruta(&ruta).unwrap(), png);
+
+    // Y al preparar un dataset sale en claro, porque Python no sabe descifrar.
+    let fuera = tmp.path().join("copia.png");
+    store_io::copiar_en_claro(&ruta, &fuera).unwrap();
+    assert_eq!(std::fs::read(&fuera).unwrap(), png);
+
+    sesion::bloquear(tmp.path());
+    assert_eq!(
+        store_io::leer_ruta(&ruta).unwrap_err(),
+        store_io::ERROR_BLOQUEADO
+    );
+}
+
+#[test]
+fn la_raiz_del_proyecto_se_encuentra_subiendo() {
+    // Es lo que permite que treinta sitios abran una imagen por su ruta sin
+    // saber a qué proyecto pertenece.
+    let tmp = tempfile::tempdir().unwrap();
+    let pf = make_project("p", "detection", default_classes());
+    store_io::write_project(tmp.path(), &pf).unwrap();
+    let hondo = tmp.path().join("images").join("sub");
+    std::fs::create_dir_all(&hondo).unwrap();
+
+    assert_eq!(
+        store_io::raiz_del_proyecto(&hondo.join("x.png")),
+        Some(tmp.path())
+    );
+    let suelto = tempfile::tempdir().unwrap();
+    assert!(store_io::raiz_del_proyecto(&suelto.path().join("x.png")).is_none());
+}

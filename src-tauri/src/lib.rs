@@ -329,6 +329,7 @@ pub fn run() {
             commands::image_commands::get_image,
             commands::image_commands::list_images_by_project,
             commands::image_commands::get_image_data,
+            commands::image_commands::get_thumbnail_data,
             commands::image_commands::get_image_file_path,
             commands::image_commands::save_annotations,
             commands::image_commands::submit_reading,

@@ -77,12 +77,12 @@ pub fn generate_thumbnail_internal(
     }
 
     let original_path = state.get_image_file_path(project_id, image_id)?;
-    let img = image::open(&original_path).map_err(|e| format!("Error abriendo imagen: {}", e))?;
+    let img = crate::store::io::abrir_imagen(&original_path)?;
 
     let thumb = img.thumbnail(max_size, max_size);
-    thumb
-        .save(&thumb_path)
-        .map_err(|e| format!("Error guardando thumbnail: {}", e))?;
+    // Por `guardar_imagen` y no por `save`: el thumbnail de una radiografía es
+    // la misma radiografía en pequeño, y `save` escribiría en claro.
+    crate::store::io::guardar_imagen(&thumb_path, &thumb, image::ImageFormat::Jpeg)?;
 
     Ok(thumb_path.to_string_lossy().to_string())
 }

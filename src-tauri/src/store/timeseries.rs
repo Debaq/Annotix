@@ -111,8 +111,9 @@ impl AppState {
         let tmp = path.with_extension("json.tmp");
         let content = serde_json::to_vec(data)
             .map_err(|e| format!("Error serializando datos de serie: {}", e))?;
-        std::fs::write(&tmp, &content)
-            .map_err(|e| format!("Error escribiendo datos de serie: {}", e))?;
+        // Por `escribir_ruta`: en un proyecto cifrado, media hora de señal es
+        // tan identificable como una imagen.
+        crate::store::io::escribir_ruta(&tmp, &content)?;
         std::fs::rename(&tmp, &path)
             .map_err(|e| format!("Error renombrando datos de serie: {}", e))?;
         Ok(())
@@ -128,8 +129,7 @@ impl AppState {
         if !path.exists() {
             return Ok(None);
         }
-        let content =
-            std::fs::read(&path).map_err(|e| format!("Error leyendo datos de serie: {}", e))?;
+        let content = crate::store::io::leer_ruta(&path)?;
         let data = serde_json::from_slice(&content)
             .map_err(|e| format!("Error parseando datos de serie: {}", e))?;
         Ok(Some(data))

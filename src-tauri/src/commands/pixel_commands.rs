@@ -20,7 +20,7 @@ pub fn process_image_filters(
     }
 
     let path = state.get_image_file_path(&project_id, &image_id)?;
-    let img = image::open(&path).map_err(|e| format!("Error abriendo imagen: {}", e))?;
+    let img = crate::store::io::abrir_imagen(&path)?;
     let (orig_w, orig_h) = (img.width(), img.height());
 
     // Procesar a max 2048 por rendimiento; reescalar de vuelta al final

@@ -931,8 +931,10 @@ fn copy_image_and_label(
     }
 
     let dest = output_dir.join("images").join(split).join(&image.name);
-    std::fs::copy(&src_path, &dest)
-        .map_err(|e| format!("Error copiando imagen {}: {}", image.name, e))?;
+    // En claro: Python no sabe descifrar, y un dataset con imágenes cifradas
+    // moriría con un error de formato a mitad del entrenamiento. Que el dataset
+    // preparado salga del ámbito cifrado está dicho donde se activa el cifrado.
+    crate::store::io::copiar_en_claro(&src_path, &dest)?;
 
     // Generar label
     let label_content = generate_label(image, project, task);
@@ -972,8 +974,7 @@ fn copy_classification_image(
     let dest = dest_dir.join(&image.name);
 
     if src_path.exists() {
-        std::fs::copy(&src_path, &dest)
-            .map_err(|e| format!("Error copiando imagen {}: {}", image.name, e))?;
+        crate::store::io::copiar_en_claro(&src_path, &dest)?;
     } else {
         log::warn!("Imagen no encontrada: {:?}, omitiendo", src_path);
     }
@@ -1335,7 +1336,7 @@ fn build_coco_json(
             log::warn!("Imagen no encontrada: {:?}, omitiendo", src);
             continue;
         }
-        let _ = std::fs::copy(&src, dest_dir.join(&image.name));
+        let _ = crate::store::io::copiar_en_claro(&src, &dest_dir.join(&image.name));
 
         coco_images.push(serde_json::json!({
             "id": image_id,
@@ -1453,8 +1454,7 @@ fn copy_image_and_mask(
 
     // Copy image
     let dest = output_dir.join("images").join(split).join(&image.name);
-    std::fs::copy(&src_path, &dest)
-        .map_err(|e| format!("Error copiando imagen {}: {}", image.name, e))?;
+    crate::store::io::copiar_en_claro(&src_path, &dest)?;
 
     // Generate mask PNG
     let mask_png = generate_segmentation_mask(image, project)?;
@@ -1732,7 +1732,7 @@ pub fn prepare_tabular_dataset(
         return Err(format!("No se encontró el CSV tabular: {:?}", src));
     }
     let dest = output_dir.join("data.csv");
-    std::fs::copy(&src, &dest).map_err(|e| format!("Error copiando CSV tabular: {}", e))?;
+    crate::store::io::copiar_en_claro(&src, &dest)?;
 
     // La columna objetivo se eligió al importar el CSV y vive en el proyecto. Sin
     // esto el script depende de que la UI la reenvíe en `backendParams`, y no lo
@@ -1866,7 +1866,7 @@ fn build_coco_instance_json(
             log::warn!("Imagen no encontrada: {:?}, omitiendo", src);
             continue;
         }
-        let _ = std::fs::copy(&src, dest_dir.join(&image.name));
+        let _ = crate::store::io::copiar_en_claro(&src, &dest_dir.join(&image.name));
 
         coco_images.push(serde_json::json!({
             "id": image_id, "file_name": image.name,
@@ -2070,7 +2070,7 @@ fn build_coco_keypoints_json(
         if !src.exists() {
             continue;
         }
-        let _ = std::fs::copy(&src, dest_dir.join(&image.name));
+        let _ = crate::store::io::copiar_en_claro(&src, &dest_dir.join(&image.name));
 
         coco_images.push(serde_json::json!({
             "id": image_id, "file_name": image.name,
@@ -2205,8 +2205,7 @@ pub fn prepare_classification_dataset_labeled(
                 log::warn!("Imagen no encontrada: {:?}, se omite", src);
                 continue;
             }
-            std::fs::copy(&src, split_dir.join(&image.name))
-                .map_err(|e| format!("Error copiando {}: {}", image.name, e))?;
+            crate::store::io::copiar_en_claro(&src, &split_dir.join(&image.name))?;
 
             if multi_label {
                 let mut vector = vec![0u8; project.classes.len()];
@@ -2822,6 +2821,6 @@ fn read_series_data(
     let path = project_dir
         .join("timeseries")
         .join(format!("{}.json", ts.id));
-    let content = std::fs::read(path).ok()?;
+    let content = crate::store::io::leer_ruta(&path).ok()?;
     serde_json::from_slice(&content).ok()
 }

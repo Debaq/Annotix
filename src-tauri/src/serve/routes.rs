@@ -315,12 +315,10 @@ async fn get_image_file(
         .app_state()
         .get_image_file_path(&project_id, &image_id)
         .map_err(|e| (StatusCode::NOT_FOUND, e))?;
-    let bytes = tokio::fs::read(&path).await.map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Error leyendo imagen: {}", e),
-        )
-    })?;
+    // Descifrando si hace falta: el servidor web sirve las mismas imágenes que
+    // la app, y en un proyecto cifrado los bytes del disco son ruido.
+    let bytes = crate::store::io::leer_ruta(&path)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
     let mime = mime_from_path(&path);
     Ok((
         [
@@ -347,9 +345,8 @@ async fn get_image_thumbnail(
         .join(format!("{}.jpg", image_id));
 
     if thumb_path.exists() {
-        let bytes = tokio::fs::read(&thumb_path)
-            .await
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        let bytes = crate::store::io::leer_ruta(&thumb_path)
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
         return Ok((
             [
                 (header::CONTENT_TYPE, "image/jpeg".to_string()),
@@ -364,9 +361,8 @@ async fn get_image_thumbnail(
         .app_state()
         .get_image_file_path(&project_id, &image_id)
         .map_err(|e| (StatusCode::NOT_FOUND, e))?;
-    let bytes = tokio::fs::read(&path)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let bytes = crate::store::io::leer_ruta(&path)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
     Ok((
         [
             (header::CONTENT_TYPE, mime_from_path(&path)),

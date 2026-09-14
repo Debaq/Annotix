@@ -88,8 +88,7 @@ pub fn sam_encode_image(
     }
 
     let image_path = state.get_image_file_path(&project_id, &image_id)?;
-    let bytes = std::fs::read(&image_path)
-        .map_err(|e| format!("Error leyendo imagen {:?}: {e}", image_path))?;
+    let bytes = crate::store::io::leer_ruta(&image_path)?;
 
     let (tensor, orig_w, orig_h, new_w, new_h) = preprocess_image(&bytes)?;
 

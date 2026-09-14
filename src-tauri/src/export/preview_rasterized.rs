@@ -43,7 +43,7 @@ pub fn export<W: Write + Seek, F: Fn(f64)>(
     let total = images.len().max(1);
     for (idx, img_entry) in images.iter().enumerate() {
         let src = images_dir.join(&img_entry.file);
-        let img = match image::open(&src) {
+        let img = match crate::store::io::abrir_imagen(&src) {
             Ok(i) => i,
             Err(e) => {
                 log::warn!("preview_rasterized: saltando {} ({})", img_entry.file, e);

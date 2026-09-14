@@ -1130,7 +1130,7 @@ pub async fn track_object_forward(
         }];
 
         let load = |file: &str| -> Result<image::GrayImage, String> {
-            image::open(images_dir.join(file))
+            crate::store::io::abrir_imagen(&images_dir.join(file))
                 .map_err(|e| format!("No se pudo leer el fotograma {}: {}", file, e))
                 .map(|img| img.to_luma8())
         };

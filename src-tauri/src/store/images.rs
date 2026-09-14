@@ -443,7 +443,7 @@ impl AppState {
         let unique_name = format!("{}_{}", id, safe_file);
         let dest = images_dir.join(&unique_name);
 
-        std::fs::write(&dest, data).map_err(|e| format!("Error escribiendo imagen: {}", e))?;
+        crate::store::io::escribir_ruta(&dest, data)?;
 
         let now = js_timestamp();
 
@@ -537,7 +537,7 @@ impl AppState {
                 let (unique_name, width, height) = if target_format == "webp"
                     && !source_matches_target
                 {
-                    let img = image::open(&source)
+                    let img = crate::store::io::abrir_imagen(&source)
                         .map_err(|e| format!("Error decodificando imagen {}: {}", file_name, e))?;
                     let w = img.width();
                     let h = img.height();
@@ -545,14 +545,16 @@ impl AppState {
                     let unique = format!("{}_{}", id, target_name);
                     let dest = images_dir.join(&unique);
                     let data = encode_image_with_preset(&img, "webp", &webp_preset)?;
-                    std::fs::write(&dest, &data)
+                    crate::store::io::escribir_ruta(&dest, &data)
                         .map_err(|e| format!("Error escribiendo WebP {}: {}", file_name, e))?;
                     (unique, w, h)
                 } else {
                     let unique = format!("{}_{}", id, safe_file);
                     let dest = images_dir.join(&unique);
-                    std::fs::copy(&source, &dest)
-                        .map_err(|e| format!("Error copiando imagen {}: {}", file_name, e))?;
+                    // Entra al proyecto: si está cifrado, entra cifrada.
+                    let datos = std::fs::read(&source)
+                        .map_err(|e| format!("Error leyendo imagen {}: {}", file_name, e))?;
+                    crate::store::io::escribir_ruta(&dest, &datos)?;
                     let (w, h) = get_image_dimensions(&dest)?;
                     (unique, w, h)
                 };
@@ -642,13 +644,13 @@ impl AppState {
             let unique = format!("{}_{}", id, target_name);
             let dest = images_dir.join(&unique);
             let webp_data = encode_image_with_preset(&img, "webp", &webp_preset)?;
-            std::fs::write(&dest, &webp_data)
+            crate::store::io::escribir_ruta(&dest, &webp_data)
                 .map_err(|e| format!("Error escribiendo WebP: {}", e))?;
             (unique, w, h)
         } else {
             let unique = format!("{}_{}", id, safe_file);
             let dest = images_dir.join(&unique);
-            std::fs::write(&dest, data).map_err(|e| format!("Error escribiendo imagen: {}", e))?;
+            crate::store::io::escribir_ruta(&dest, data)?;
             let (w, h) = get_image_dimensions(&dest)?;
             (unique, w, h)
         };
@@ -939,7 +941,7 @@ fn get_image_dimensions(path: &PathBuf) -> Result<(u32, u32), String> {
     if let Ok(dims) = image::image_dimensions(path) {
         return Ok(dims);
     }
-    let img = image::open(path).map_err(|e| format!("Error leyendo dimensiones: {}", e))?;
+    let img = crate::store::io::abrir_imagen(path)?;
     Ok((img.width(), img.height()))
 }
 
@@ -1000,7 +1002,7 @@ impl AppState {
                     return ConvertOutcome::Skipped;
                 }
 
-                let img = match image::open(&current_path) {
+                let img = match crate::store::io::abrir_imagen(&current_path) {
                     Ok(i) => i,
                     Err(e) => {
                         return ConvertOutcome::Failed(format!(
@@ -1027,7 +1029,7 @@ impl AppState {
                     }
                 };
 
-                if let Err(e) = std::fs::write(&new_path, &encoded) {
+                if let Err(e) = crate::store::io::escribir_ruta(&new_path, &encoded) {
                     return ConvertOutcome::Failed(format!("{}: write fail ({})", file_name, e));
                 }
 
@@ -1035,7 +1037,11 @@ impl AppState {
 
                 let thumb = img.thumbnail(256, 256);
                 let thumb_path = thumbs_dir.join(format!("{}.jpg", image_id));
-                let _ = thumb.save(&thumb_path);
+                let _ = crate::store::io::guardar_imagen(
+                    &thumb_path,
+                    &thumb,
+                    image::ImageFormat::Jpeg,
+                );
 
                 ConvertOutcome::Converted(image_id.clone(), new_file_name)
             })

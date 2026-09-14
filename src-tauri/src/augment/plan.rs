@@ -392,7 +392,7 @@ pub fn materializar(
 
     for img in train {
         let ruta = entrada.images_dir.join(&img.file);
-        let bitmap = match image::open(&ruta) {
+        let bitmap = match crate::store::io::abrir_imagen(&ruta) {
             Ok(i) => i.to_rgba8(),
             Err(e) => {
                 // La misma decisión que toman los preparadores con una imagen
