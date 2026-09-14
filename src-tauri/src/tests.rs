@@ -904,6 +904,193 @@ fn training_prepare_dataset_creates_yolo_structure() {
     assert!(yaml.contains("train: images/train"));
 }
 
+// ─── Augmentación dentro de la preparación del dataset ──────────────────────
+
+/// Cuatro imágenes, para que un 0.5 de validación deje dos y dos.
+fn build_augmentable_fixture() -> (ProjectFile, TempDir) {
+    let tmp = tempfile::tempdir().expect("tmpdir");
+    let mut pf = make_project("aug", "detection", default_classes());
+    for i in 1..=4 {
+        let nombre = format!("img{i}.png");
+        write_png(tmp.path(), &nombre, 200, 100);
+        pf.images.push(image_entry(
+            &nombre,
+            &nombre,
+            200,
+            100,
+            vec![bbox_ann(0, 10.0, 20.0, 50.0, 40.0)],
+        ));
+    }
+    (pf, tmp)
+}
+
+fn plan_de_volteo(factor: u32) -> crate::augment::plan::AugmentationPlan {
+    crate::augment::plan::AugmentationPlan {
+        enabled: true,
+        factor,
+        seed: Some(4242),
+        transforms: vec![crate::augment::transforms::TransformSpec::FlipH { p: 1.0 }],
+        ..Default::default()
+    }
+}
+
+fn nombres_en(dir: &std::path::Path) -> Vec<String> {
+    let mut v: Vec<String> = std::fs::read_dir(dir)
+        .expect("directorio")
+        .filter_map(|e| e.ok())
+        .map(|e| e.file_name().to_string_lossy().to_string())
+        .collect();
+    v.sort();
+    v
+}
+
+#[test]
+fn training_augmentacion_solo_multiplica_train() {
+    // El test que justifica todo el orden del pipeline: medir sobre imágenes
+    // aumentadas mide cómo le va al modelo con las deformaciones que uno mismo
+    // eligió, no con datos nuevos.
+    let (mut pf, imgs_dir) = build_augmentable_fixture();
+    pf.augmentation = Some(plan_de_volteo(2));
+    let out = tempfile::tempdir().unwrap();
+
+    let _ = dataset::prepare_dataset(
+        imgs_dir.path(),
+        &pf,
+        &pf.images,
+        out.path(),
+        0.5,
+        0.0,
+        "detect",
+    )
+    .expect("prepare");
+
+    let train = nombres_en(&out.path().join("images/train"));
+    let val = nombres_en(&out.path().join("images/val"));
+
+    // Dos originales de train + dos variantes de cada una.
+    assert_eq!(train.len(), 6, "train: {train:?}");
+    assert_eq!(train.iter().filter(|n| n.contains("__aug")).count(), 4);
+    assert_eq!(val.len(), 2, "val: {val:?}");
+    assert!(
+        val.iter().all(|n| !n.contains("__aug")),
+        "val no se aumenta nunca: {val:?}"
+    );
+
+    // Cada imagen de train tiene su label: sin eso la variante entraría como
+    // fondo y enseñaría a no detectar.
+    let labels = nombres_en(&out.path().join("labels/train"));
+    assert_eq!(labels.len(), 6, "labels: {labels:?}");
+}
+
+#[test]
+fn training_la_variante_volteada_trae_su_label_movido() {
+    let (mut pf, imgs_dir) = build_augmentable_fixture();
+    pf.augmentation = Some(plan_de_volteo(1));
+    let out = tempfile::tempdir().unwrap();
+
+    dataset::prepare_dataset(
+        imgs_dir.path(),
+        &pf,
+        &pf.images,
+        out.path(),
+        0.5,
+        0.0,
+        "detect",
+    )
+    .expect("prepare");
+
+    let dir = out.path().join("labels/train");
+    let variante = nombres_en(&dir)
+        .into_iter()
+        .find(|n| n.contains("__aug"))
+        .expect("hay una variante");
+    let texto = std::fs::read_to_string(dir.join(&variante)).unwrap();
+    let x_centro: f64 = texto.split_whitespace().nth(1).unwrap().parse().unwrap();
+
+    // El original está en x 10..60 de 200 px: centro normalizado 0.175. Volteado,
+    // 1 − 0.175 = 0.825.
+    assert!(
+        (x_centro - 0.825).abs() < 1e-3,
+        "el label de la variante no siguió al píxel: {x_centro}"
+    );
+}
+
+#[test]
+fn training_la_augmentacion_deja_manifiesto_e_informe() {
+    let (mut pf, imgs_dir) = build_augmentable_fixture();
+    pf.augmentation = Some(plan_de_volteo(2));
+    let out = tempfile::tempdir().unwrap();
+
+    let prepared = dataset::prepare_dataset(
+        imgs_dir.path(),
+        &pf,
+        &pf.images,
+        out.path(),
+        0.5,
+        0.0,
+        "detect",
+    )
+    .expect("prepare");
+
+    // El manifiesto es la mitad del motivo de haber elegido augmentación fuera
+    // de línea: se puede abrir y mirar qué se generó.
+    let manifiesto = out.path().join("augmentation_manifest.json");
+    assert!(manifiesto.exists());
+    let json: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&manifiesto).unwrap()).unwrap();
+    let registros = json["records"].as_array().unwrap();
+    assert_eq!(registros.len(), 4);
+    for reg in registros {
+        // El manifiesto nombra las imágenes tal como quedaron en el dataset: el
+        // material generado no se guarda dos veces.
+        let archivo = reg["file"].as_str().unwrap();
+        assert!(
+            out.path().join("images/train").join(archivo).exists(),
+            "el manifiesto nombra {archivo}, que no está en images/train"
+        );
+        assert_eq!(reg["transforms"][0], "flip_h");
+    }
+    assert!(
+        !out.path().join("augmented").exists(),
+        "las variantes ya están en images/train: duplicarlas dobla el paquete"
+    );
+
+    let informe = prepared.split_report().expect("informe de reparto");
+    // El informe sigue describiendo el corpus: cuatro imágenes, dos en train.
+    assert_eq!(informe.items.train, 2);
+    let aug = informe.augmentation.as_ref().expect("bloque de augmentación");
+    assert_eq!(aug.generated, 4);
+    assert_eq!(aug.train_images, 6);
+    assert_eq!(aug.train_source_images, 2);
+    assert_eq!(aug.seed, "4242");
+    assert_eq!(aug.transforms, vec!["flip_h".to_string()]);
+}
+
+#[test]
+fn training_sin_plan_de_augmentacion_no_cambia_nada() {
+    let (pf, imgs_dir) = build_augmentable_fixture();
+    let out = tempfile::tempdir().unwrap();
+
+    let prepared = dataset::prepare_dataset(
+        imgs_dir.path(),
+        &pf,
+        &pf.images,
+        out.path(),
+        0.5,
+        0.0,
+        "detect",
+    )
+    .expect("prepare");
+
+    assert_eq!(nombres_en(&out.path().join("images/train")).len(), 2);
+    assert!(!out.path().join("augmented").exists());
+    assert!(!out.path().join("augmentation_manifest.json").exists());
+    assert!(prepared
+        .split_report()
+        .and_then(|r| r.augmentation.as_ref())
+        .is_none());
+}
+
 #[test]
 fn training_prepare_dataset_empty_images_errors() {
     let tmp = tempfile::tempdir().unwrap();

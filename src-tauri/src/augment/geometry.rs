@@ -405,6 +405,11 @@ pub fn transformar_obb(o: &Obb, t: &Afin) -> Option<ObbTransformado> {
 
 // ─── Recorte ────────────────────────────────────────────────────────────────
 
+/// Si un punto cae del lado bueno de un borde.
+type Dentro = fn(&(f64, f64), f64) -> bool;
+/// Dónde corta un segmento a un borde.
+type Corte = fn(&(f64, f64), &(f64, f64), f64) -> (f64, f64);
+
 /// Recorta un polígono contra un rectángulo (Sutherland–Hodgman).
 ///
 /// Devuelve vacío cuando no queda nada dentro. Con polígonos cóncavos el
@@ -417,8 +422,9 @@ pub fn recortar_poligono(puntos: &[(f64, f64)], marco: &Rect) -> Vec<(f64, f64)>
     let (x0, y0) = (marco.x, marco.y);
     let (x1, y1) = (marco.x + marco.ancho, marco.y + marco.alto);
 
-    // (dentro?, intersección con el borde) para cada uno de los cuatro lados.
-    let bordes: [(fn(&(f64, f64), f64) -> bool, fn(&(f64, f64), &(f64, f64), f64) -> (f64, f64), f64); 4] = [
+    // (dentro?, intersección con el borde, límite) para cada uno de los cuatro
+    // lados.
+    let bordes: [(Dentro, Corte, f64); 4] = [
         (|p, l| p.0 >= l, corte_vertical, x0),
         (|p, l| p.0 <= l, corte_vertical, x1),
         (|p, l| p.1 >= l, corte_horizontal, y0),
@@ -504,7 +510,7 @@ pub fn pareja_lateral(nombre: &str) -> Option<String> {
 
     let volcar = |token: &mut String, salida: &mut String, cambiado: &mut bool| {
         if let Some(op) = opuesto_lateral(token) {
-            salida.push_str(&aplicar_caja(token, &op));
+            salida.push_str(&aplicar_caja(token, op));
             *cambiado = true;
         } else {
             salida.push_str(token);
@@ -918,8 +924,7 @@ fn transformar_keypoints(
     let visibles_antes = kps.points.iter().filter(|p| p.visible).count();
     let mut salida = Vec::with_capacity(kps.points.len());
     let mut visibles_despues = 0usize;
-    for i in 0..kps.points.len() {
-        let origen = perm[i];
+    for &origen in &perm {
         let (x, y) = movidos[origen];
         let visible = kps.points[origen].visible && marco.contiene((x, y));
         if visible {

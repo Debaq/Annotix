@@ -5,6 +5,7 @@ use image::{GrayImage, Luma};
 use serde::{Deserialize, Serialize};
 
 use super::contract::{keys, PreparedDataset};
+use crate::augment::plan::{AugmentationPlan, EntradaPlan, Registro};
 use super::npy;
 use super::{DatasetFormat, TrainingBackend};
 use crate::export::{parse_bbox, parse_keypoints, parse_mask, parse_obb, parse_polygon};
@@ -237,6 +238,35 @@ pub struct SplitReport {
     pub subjects_undeclared: Option<usize>,
     pub per_class: Vec<ClassSplitCounts>,
     pub warnings: Vec<SplitWarning>,
+    /// Qué se materializó encima de train, cuando el proyecto aumenta.
+    ///
+    /// El resto del informe describe el **corpus**: cuántas imágenes hay, de
+    /// cuántos sujetos, qué clases faltan en test. Este bloque describe lo que
+    /// se le hizo al dataset, y va aparte porque mezclarlos haría que un train
+    /// de 200 imágenes sobre 40 originales se leyera como un corpus de 200.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub augmentation: Option<AugmentationReport>,
+}
+
+/// Lo que la augmentación puso en el dataset, para el informe y el contrato.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AugmentationReport {
+    /// Imágenes escritas que no estaban en el corpus.
+    pub generated: usize,
+    /// Imágenes de train después de aumentar.
+    pub train_images: usize,
+    /// Imágenes de train del corpus, antes de aumentar.
+    pub train_source_images: usize,
+    /// Semilla, como texto (ver `SplitReport::seed`).
+    pub seed: String,
+    /// Identificadores de las transformaciones declaradas, en orden.
+    pub transforms: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tiling: Option<crate::augment::tiling::TilingSpec>,
+    /// Avisos de corrección y de evidencia: volteo en modalidad lateralizada,
+    /// clases con pocos ejemplos multiplicadas, tipos sin augmentación.
+    pub warnings: Vec<crate::contract::readiness::Aviso>,
 }
 
 /// `SplitCounts` serializable. El original es `Copy` y sin `serde` a propósito:
@@ -426,6 +456,9 @@ impl SplitPlan {
             },
             per_class,
             warnings,
+            // El informe describe el corpus; lo rellena quien materializa la
+            // augmentación, que es el único que sabe qué se generó.
+            augmentation: None,
         }
     }
 
@@ -612,6 +645,161 @@ pub fn split_plan(
     }
 }
 
+/// El corpus ya repartido y, cuando el proyecto lo pide, aumentado.
+///
+/// Existe para que el reparto se calcule **una vez** y todo lo que viene después
+/// lo obedezca. Antes cada preparador llamaba a `split_plan` por su cuenta, lo
+/// que era inofensivo mientras la lista de imágenes fuese la misma en todos:
+/// deja de serlo en cuanto train tiene variantes que val y test no tienen.
+pub struct Repartido {
+    /// Las imágenes tal como van al dataset. Con augmentación, las de train son
+    /// las generadas y su `file` es una ruta absoluta (ver `augment::plan`).
+    pub images: Vec<ImageEntry>,
+    pub plan: SplitPlan,
+    /// El informe del **corpus**, no del dataset: los conteos, los sujetos y los
+    /// avisos son los de las imágenes que el usuario anotó. Lo que la
+    /// augmentación añadió va en su propio bloque.
+    pub report: SplitReport,
+    /// Dónde viven las imágenes generadas mientras el preparador las copia.
+    /// Se borra al soltar el `Repartido`, que es justo cuando el preparador
+    /// terminó de copiarlas.
+    _generadas: Option<tempfile::TempDir>,
+}
+
+/// Reparte el corpus y materializa la augmentación **sólo sobre train**.
+///
+/// El orden es el del diseño y no una casualidad: repartir, y después aumentar
+/// lo que quedó en train. Al revés, dos variantes de la misma foto caerían en
+/// particiones distintas y la métrica saldría inflada sin que nada lo delatara.
+///
+/// Las imágenes generadas se escriben en un directorio temporal que muere con
+/// el `Repartido`: el preparador las copia a `images/train` como a cualquier
+/// otra, y dejarlas además en el dataset duplicaría cada variante —y el peso del
+/// paquete de entrenamiento, que se comprime entero—.
+///
+/// Lo que sí se queda es el manifiesto, en
+/// `{output_dir}/augmentation_manifest.json`: qué salió de dónde, con qué
+/// transformaciones y con qué semilla. Poder abrirlo y mirar las imágenes que
+/// nombra —que están en `images/train`— es la mitad del motivo de haber elegido
+/// augmentación fuera de línea.
+pub fn repartir_y_aumentar(
+    images_dir: &Path,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    output_dir: &Path,
+    val_split: f64,
+    test_split: f64,
+) -> Result<Repartido, String> {
+    let plan = split_plan(project, images, val_split, test_split);
+    let mut report = plan.report(project, images);
+
+    let Some(aug) = project.augmentation.as_ref().filter(|a| a.hace_algo()) else {
+        return Ok(Repartido {
+            images: images.to_vec(),
+            plan,
+            report,
+            _generadas: None,
+        });
+    };
+
+    let train_origen: Vec<ImageEntry> = plan.train.iter().map(|&i| images[i].clone()).collect();
+    let staging = tempfile::tempdir()
+        .map_err(|e| format!("No se pudo crear el directorio de augmentación: {e}"))?;
+    let destino = staging.path().to_path_buf();
+    let modalidad = crate::contract::readiness::modalidad_dominante(project);
+    let materializado = crate::augment::plan::materializar(
+        aug,
+        &EntradaPlan {
+            project_id: &project.id,
+            images_dir,
+            destino: &destino,
+            modalidad: modalidad.as_deref(),
+        },
+        &train_origen,
+    )?;
+
+    // Los índices se rehacen sobre la lista nueva: train primero, y después val
+    // y test tal como estaban.
+    let mut nuevas = materializado.imagenes;
+    let train: Vec<usize> = (0..nuevas.len()).collect();
+    let mut val = Vec::with_capacity(plan.val.len());
+    let mut test = Vec::with_capacity(plan.test.len());
+    for &i in &plan.val {
+        val.push(nuevas.len());
+        nuevas.push(images[i].clone());
+    }
+    for &i in &plan.test {
+        test.push(nuevas.len());
+        nuevas.push(images[i].clone());
+    }
+
+    for aviso in &materializado.avisos {
+        log::warn!(
+            "augmentación: {} ({}){}",
+            aviso.code,
+            aviso.kind,
+            aviso
+                .detail
+                .as_deref()
+                .map(|d| format!(" [{d}]"))
+                .unwrap_or_default()
+        );
+    }
+
+    report.augmentation = Some(AugmentationReport {
+        generated: materializado.generadas,
+        train_images: train.len(),
+        train_source_images: train_origen.len(),
+        seed: aug
+            .seed
+            .unwrap_or_else(|| crate::augment::plan::derivar_semilla(&project.id))
+            .to_string(),
+        transforms: aug.transforms.iter().map(|t| t.id().to_string()).collect(),
+        tiling: aug.tiling,
+        warnings: materializado.avisos.clone(),
+    });
+
+    escribir_manifiesto(
+        output_dir,
+        aug,
+        &materializado.manifiesto,
+        &materializado.avisos,
+    )?;
+
+    Ok(Repartido {
+        images: nuevas,
+        plan: SplitPlan {
+            train,
+            val,
+            test,
+            groups: plan.groups,
+        },
+        report,
+        _generadas: Some(staging),
+    })
+}
+
+fn escribir_manifiesto(
+    output_dir: &Path,
+    plan: &AugmentationPlan,
+    registros: &[Registro],
+    avisos: &[crate::contract::readiness::Aviso],
+) -> Result<(), String> {
+    std::fs::create_dir_all(output_dir)
+        .map_err(|e| format!("Error creando {output_dir:?}: {e}"))?;
+    let contenido = serde_json::json!({
+        "plan": plan,
+        "warnings": avisos,
+        "records": registros,
+    });
+    let ruta = output_dir.join("augmentation_manifest.json");
+    std::fs::write(
+        &ruta,
+        serde_json::to_string_pretty(&contenido).map_err(|e| e.to_string())?,
+    )
+    .map_err(|e| format!("Error escribiendo {ruta:?}: {e}"))
+}
+
 /// Prepara el dataset en disco con split train/val/test para entrenamiento YOLO
 pub fn prepare_dataset(
     images_dir: &Path,
@@ -627,7 +815,13 @@ pub fn prepare_dataset(
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    let plan = split_plan(project, images, val_split, test_split);
+    let repartido = repartir_y_aumentar(
+        images_dir, project, images, output_dir, val_split, test_split,
+    )?;
+    // A partir de aquí, `images` es lo que va al dataset —con las variantes de
+    // train, si el proyecto aumenta— y no el corpus.
+    let images = &repartido.images[..];
+    let plan = &repartido.plan;
     let has_test = plan.has_test();
 
     let format = if task == "classify" {
@@ -637,10 +831,10 @@ pub fn prepare_dataset(
     };
     let mut ds = PreparedDataset::new(output_dir, format, class_names(project));
     ds.set_split(plan.composition());
-    ds.set_split_report(plan.report(project, images));
+    ds.set_split_report(repartido.report.clone());
 
     if task == "classify" {
-        prepare_classification_dataset(images_dir, project, images, output_dir, &plan)?;
+        prepare_classification_dataset(images_dir, project, images, output_dir, plan)?;
         ds.declare(keys::IMAGEFOLDER_ROOT, ".")
             .declare(keys::IMAGEFOLDER_TRAIN, "train")
             .declare(keys::IMAGEFOLDER_VAL, "val");
@@ -648,7 +842,7 @@ pub fn prepare_dataset(
             ds.declare(keys::IMAGEFOLDER_TEST, "test");
         }
     } else {
-        prepare_detection_dataset(images_dir, project, images, output_dir, &plan, task)?;
+        prepare_detection_dataset(images_dir, project, images, output_dir, plan, task)?;
         ds.declare(keys::IMAGES_TRAIN, "images/train")
             .declare(keys::IMAGES_VAL, "images/val")
             .declare(keys::LABELS_TRAIN, "labels/train")
@@ -975,7 +1169,13 @@ pub fn prepare_coco_dataset(
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    let plan = split_plan(project, images, val_split, test_split);
+    let repartido = repartir_y_aumentar(
+        images_dir, project, images, output_dir, val_split, test_split,
+    )?;
+    // A partir de aquí, `images` es lo que va al dataset —con las variantes de
+    // train, si el proyecto aumenta— y no el corpus.
+    let images = &repartido.images[..];
+    let plan = &repartido.plan;
     let train_indices: &[usize] = &plan.train;
     let val_indices: &[usize] = &plan.val;
     let test_indices: &[usize] = &plan.test;
@@ -996,7 +1196,7 @@ pub fn prepare_coco_dataset(
 
     let mut ds = PreparedDataset::new(output_dir, DatasetFormat::CocoJson, class_names(project));
     ds.set_split(plan.composition());
-    ds.set_split_report(plan.report(project, images));
+    ds.set_split_report(repartido.report.clone());
 
     match layout {
         CocoLayout::RfDetr => {
@@ -1197,8 +1397,13 @@ pub fn prepare_mask_dataset(
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    // Shuffle (same seed as other prepare functions)
-    let plan = split_plan(project, images, val_split, test_split);
+    let repartido = repartir_y_aumentar(
+        images_dir, project, images, output_dir, val_split, test_split,
+    )?;
+    // A partir de aquí, `images` es lo que va al dataset —con las variantes de
+    // train, si el proyecto aumenta— y no el corpus.
+    let images = &repartido.images[..];
+    let plan = &repartido.plan;
 
     for (split, idxs) in plan.splits() {
         std::fs::create_dir_all(output_dir.join("images").join(split))
@@ -1220,7 +1425,7 @@ pub fn prepare_mask_dataset(
 
     let mut ds = PreparedDataset::new(output_dir, DatasetFormat::MaskPng, class_names(project));
     ds.set_split(plan.composition());
-    ds.set_split_report(plan.report(project, images));
+    ds.set_split_report(repartido.report.clone());
     ds.declare(keys::IMAGES_TRAIN, "images/train")
         .declare(keys::IMAGES_VAL, "images/val")
         .declare(keys::MASKS_TRAIN, "masks/train")
@@ -1564,7 +1769,13 @@ pub fn prepare_coco_instance_dataset(
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    let plan = split_plan(project, images, val_split, test_split);
+    let repartido = repartir_y_aumentar(
+        images_dir, project, images, output_dir, val_split, test_split,
+    )?;
+    // A partir de aquí, `images` es lo que va al dataset —con las variantes de
+    // train, si el proyecto aumenta— y no el corpus.
+    let images = &repartido.images[..];
+    let plan = &repartido.plan;
     let train_indices: &[usize] = &plan.train;
     let val_indices: &[usize] = &plan.val;
     let test_indices: &[usize] = &plan.test;
@@ -1608,7 +1819,7 @@ pub fn prepare_coco_instance_dataset(
         class_names(project),
     );
     ds.set_split(plan.composition());
-    ds.set_split_report(plan.report(project, images));
+    ds.set_split_report(repartido.report.clone());
     ds.declare(keys::IMAGES_TRAIN, "train")
         .declare(keys::ANN_TRAIN, "annotations/instances_train.json")
         .declare(keys::IMAGES_VAL, "val")
@@ -1750,7 +1961,13 @@ pub fn prepare_coco_keypoints_dataset(
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    let plan = split_plan(project, images, val_split, test_split);
+    let repartido = repartir_y_aumentar(
+        images_dir, project, images, output_dir, val_split, test_split,
+    )?;
+    // A partir de aquí, `images` es lo que va al dataset —con las variantes de
+    // train, si el proyecto aumenta— y no el corpus.
+    let images = &repartido.images[..];
+    let plan = &repartido.plan;
     let train_indices: &[usize] = &plan.train;
     let val_indices: &[usize] = &plan.val;
     let test_indices: &[usize] = &plan.test;
@@ -1802,7 +2019,7 @@ pub fn prepare_coco_keypoints_dataset(
         class_names(project),
     );
     ds.set_split(plan.composition());
-    ds.set_split_report(plan.report(project, images));
+    ds.set_split_report(repartido.report.clone());
     ds.declare(keys::IMAGES_TRAIN, "train")
         .declare(keys::ANN_TRAIN, "annotations/person_keypoints_train.json")
         .declare(keys::IMAGES_VAL, "val")
@@ -1953,7 +2170,13 @@ pub fn prepare_classification_dataset_labeled(
         return Err("No hay imágenes en el proyecto".to_string());
     }
 
-    let plan = split_plan(project, images, val_split, test_split);
+    let repartido = repartir_y_aumentar(
+        images_dir, project, images, output_dir, val_split, test_split,
+    )?;
+    // A partir de aquí, `images` es lo que va al dataset —con las variantes de
+    // train, si el proyecto aumenta— y no el corpus.
+    let images = &repartido.images[..];
+    let plan = &repartido.plan;
 
     let indice_de_clase = |class_id: i64| project.classes.iter().position(|c| c.id == class_id);
 
@@ -1967,7 +2190,7 @@ pub fn prepare_classification_dataset_labeled(
         class_names(project),
     );
     ds.set_split(plan.composition());
-    ds.set_split_report(plan.report(project, images));
+    ds.set_split_report(repartido.report.clone());
 
     for (split, idxs) in plan.splits() {
         let split_dir = output_dir.join("images").join(split);

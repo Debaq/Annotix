@@ -23,13 +23,16 @@
 //! documentado: está mal entrenado, porque no puede aprender lateralidad y la
 //! lateralidad es diagnóstica. Se dice con otras palabras, y tampoco bloquea.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::store::project_file::ProjectFile;
 use crate::store::state::AppState;
 
 /// Un aviso previo al entrenamiento.
-#[derive(Debug, Clone, Serialize)]
+///
+/// `Deserialize` porque el informe del reparto —donde viajan los avisos de la
+/// augmentación— se guarda en el trabajo de entrenamiento y se vuelve a leer.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Aviso {
     /// Código estable; la UI lo traduce. No se manda la frase hecha porque el
@@ -89,7 +92,7 @@ pub fn es_lateralizada(modalidad: &str) -> bool {
 ///
 /// Se toma la más frecuente: un corpus mezclado existe —un estudio con CT y MR—
 /// y avisar por la minoritaria sería ruido.
-fn modalidad_dominante(pf: &ProjectFile) -> Option<String> {
+pub fn modalidad_dominante(pf: &ProjectFile) -> Option<String> {
     let mut cuenta: std::collections::BTreeMap<String, usize> = Default::default();
     for img in &pf.images {
         if let Some(m) = img.medical.as_ref().and_then(|m| m.modality.clone()) {
