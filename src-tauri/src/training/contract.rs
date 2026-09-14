@@ -295,15 +295,29 @@ pub struct ScriptPaths {
     /// constantes y nunca compone un path de entrada.
     pub header: String,
     pub num_classes: usize,
+    /// Ejes de augmentación que el dataset **ya trae aplicados**, con los
+    /// nombres de ultralytics (`fliplr`, `degrees`, `hsv_v`, …).
+    ///
+    /// Un generador que augmenta por su cuenta tiene que apagar estos ejes: si
+    /// vuelve a voltear lo ya volteado deshace la mitad de las variantes, y en
+    /// un corpus lateralizado reintroduce el volteo que el preset había puesto a
+    /// cero. Ver `augment::plan::ejes_materializados`.
+    pub ejes_materializados: std::collections::BTreeSet<&'static str>,
 }
 
 impl PreparedDataset {
     /// Resuelve y valida las claves que un backend necesita.
     pub fn script_paths(&self, needed: &[&str]) -> Result<ScriptPaths, String> {
         // `py_header` valida que cada clave pedida esté declarada.
+        let ids = self
+            .split_report()
+            .and_then(|r| r.augmentation.as_ref())
+            .map(|a| a.transforms.clone())
+            .unwrap_or_default();
         Ok(ScriptPaths {
             header: self.py_header(needed)?,
             num_classes: self.num_classes(),
+            ejes_materializados: crate::augment::plan::ejes_materializados(&ids),
         })
     }
 }

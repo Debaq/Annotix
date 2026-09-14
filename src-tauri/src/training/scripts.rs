@@ -551,7 +551,17 @@ fn format_device(device: &str) -> String {
 
 // ─── RT-DETR Script ──────────────────────────────────────────────────────────
 
-pub fn generate_rtdetr_script(req: &TrainingRequest, data_yaml_path: &str) -> String {
+/// Script de RT-DETR.
+///
+/// `aug` no estaba: el script no pasaba **ningún** parámetro de augmentación, así
+/// que ultralytics aplicaba los suyos por defecto —`fliplr: 0.5` entre ellos—. Un
+/// preset biomédico que pone el volteo a cero quedaba igual de incumplido que en
+/// `smp`, sólo que sin una línea visible en el generador que lo delatara.
+pub fn generate_rtdetr_script(
+    req: &TrainingRequest,
+    data_yaml_path: &str,
+    aug: &AugmentationConfig,
+) -> String {
     let bp = &req.backend_params;
     let model_name = match &req.base_model_path {
         Some(path) if !path.is_empty() => path.replace('\\', "/"),
@@ -612,6 +622,20 @@ def main():
         "warmup_epochs": {warmup_epochs},
         "weight_decay": {weight_decay},
         "amp": {amp},
+        # Augmentation
+        "mosaic": {mosaic},
+        "mixup": {mixup},
+        "hsv_h": {hsv_h},
+        "hsv_s": {hsv_s},
+        "hsv_v": {hsv_v},
+        "flipud": {flipud},
+        "fliplr": {fliplr},
+        "degrees": {degrees},
+        "scale": {scale},
+        "shear": {shear},
+        "perspective": {perspective},
+        "erasing": {erasing},
+        "translate": {translate},
 {freeze_line}
     }}
 
@@ -694,6 +718,19 @@ if __name__ == "__main__":
         weight_decay = weight_decay,
         amp = py_bool(req.amp),
         freeze_line = freeze_line,
+        mosaic = aug.mosaic,
+        mixup = aug.mixup,
+        hsv_h = aug.hsv_h,
+        hsv_s = aug.hsv_s,
+        hsv_v = aug.hsv_v,
+        flipud = aug.flipud,
+        fliplr = aug.fliplr,
+        degrees = aug.degrees,
+        scale = aug.scale,
+        shear = aug.shear,
+        perspective = aug.perspective,
+        erasing = aug.erasing,
+        translate = aug.translate,
     )
 }
 
@@ -1573,23 +1610,7 @@ fn yolo_config_from_request(req: &TrainingRequest) -> TrainingConfig {
         val_split: req.val_split,
         test_split: req.test_split,
         workers: req.workers,
-        augmentation: serde_json::from_value(bp.get("augmentation").cloned().unwrap_or_default())
-            .unwrap_or(AugmentationConfig {
-                mosaic: 1.0,
-                mixup: 0.0,
-                hsv_h: 0.015,
-                hsv_s: 0.7,
-                hsv_v: 0.4,
-                flipud: 0.0,
-                fliplr: 0.5,
-                degrees: 0.0,
-                scale: 0.5,
-                shear: 0.0,
-                perspective: 0.0,
-                copy_paste: 0.0,
-                erasing: 0.4,
-                translate: 0.1,
-            }),
+        augmentation: augmentacion_pedida(req),
         export_formats: req.export_formats.clone(),
         resume: req.resume,
         cos_lr: false,
@@ -1654,13 +1675,16 @@ pub fn generate_train_script_for_backend(
         // Ultralytics consume su data.yaml; el resto de rutas las resuelve el propio yaml.
         TrainingBackend::Yolo => {
             let data = ultralytics_data_arg(ds, &req.task)?;
-            let config = yolo_config_from_request(req);
+            let mut config = yolo_config_from_request(req);
+            apagar_ejes_materializados(&mut config.augmentation, &ejes_materializados_de(ds));
             one("train.py", generate_train_script(&config, &data))
         }
         TrainingBackend::RtDetr => {
             // RT-DETR sólo hace detección: siempre data.yaml.
             let data = ultralytics_data_arg(ds, &req.task)?;
-            one("train.py", generate_rtdetr_script(req, &data))
+            let mut aug = augmentacion_pedida(req);
+            apagar_ejes_materializados(&mut aug, &ejes_materializados_de(ds));
+            one("train.py", generate_rtdetr_script(req, &data, &aug))
         }
         TrainingBackend::RfDetr => {
             let sp = ds.script_paths(COCO)?;
@@ -1792,6 +1816,152 @@ pub fn get_requirements_for_backend(backend: &TrainingBackend) -> Vec<&'static s
 
 // ─── SMP Script ──────────────────────────────────────────────────────────────
 
+/// La augmentación por defecto de ultralytics, en un solo sitio.
+///
+/// La tenían copiada el constructor de `TrainingConfig` y ahora también la
+/// necesita `smp`: duplicarla es garantizar que un día digan cosas distintas.
+pub fn augmentacion_por_defecto() -> AugmentationConfig {
+    AugmentationConfig {
+        mosaic: 1.0,
+        mixup: 0.0,
+        hsv_h: 0.015,
+        hsv_s: 0.7,
+        hsv_v: 0.4,
+        flipud: 0.0,
+        fliplr: 0.5,
+        degrees: 0.0,
+        scale: 0.5,
+        shear: 0.0,
+        perspective: 0.0,
+        copy_paste: 0.0,
+        erasing: 0.4,
+        translate: 0.1,
+    }
+}
+
+/// La augmentación que pidió la interfaz para este entrenamiento.
+///
+/// La clave `augmentation` de `backendParams` la rellenan todos los backends —un
+/// preset biomédico la escribe aunque el backend no sea YOLO—, así que leerla es
+/// lo que hace que lo prometido y lo ejecutado coincidan.
+pub fn augmentacion_pedida(req: &TrainingRequest) -> AugmentationConfig {
+    serde_json::from_value(
+        req.backend_params
+            .get("augmentation")
+            .cloned()
+            .unwrap_or_default(),
+    )
+    .unwrap_or_else(|_| augmentacion_por_defecto())
+}
+
+/// Apaga los ejes que el dataset ya trae materializados.
+///
+/// Aplicarlos dos veces no es sólo trabajo repetido: un volteo con p=0.5 sobre
+/// variantes ya volteadas deshace la mitad de ellas, y en un corpus lateralizado
+/// reintroduce el volteo que el preset había puesto a cero.
+pub fn apagar_ejes_materializados(
+    aug: &mut AugmentationConfig,
+    ejes: &std::collections::BTreeSet<&'static str>,
+) {
+    for eje in ejes {
+        match *eje {
+            "fliplr" => aug.fliplr = 0.0,
+            "flipud" => aug.flipud = 0.0,
+            "degrees" => aug.degrees = 0.0,
+            "shear" => aug.shear = 0.0,
+            "scale" => aug.scale = 0.0,
+            "translate" => aug.translate = 0.0,
+            "hsv_h" => aug.hsv_h = 0.0,
+            "hsv_s" => aug.hsv_s = 0.0,
+            "hsv_v" => aug.hsv_v = 0.0,
+            "erasing" => aug.erasing = 0.0,
+            _ => {}
+        }
+    }
+}
+
+/// Los ejes ya materializados en un dataset preparado.
+pub fn ejes_materializados_de(ds: &PreparedDataset) -> std::collections::BTreeSet<&'static str> {
+    let ids = ds
+        .split_report()
+        .and_then(|r| r.augmentation.as_ref())
+        .map(|a| a.transforms.clone())
+        .unwrap_or_default();
+    crate::augment::plan::ejes_materializados(&ids)
+}
+
+/// Las transformaciones de entrenamiento de `smp`, en albumentations.
+///
+/// Antes eran tres líneas fijas en el script —`Resize`, `HorizontalFlip(p=0.5)`
+/// y `RandomBrightnessContrast(p=0.3)`—, y ahí estaba el defecto que abre la
+/// etapa 11b: `bio_unet_seg` declara `fliplr: 0` porque la lateralidad es
+/// diagnóstica, y el script volteaba igual la mitad de las radiografías mientras
+/// la interfaz avisaba de lo contrario.
+///
+/// Ahora salen de lo que pidió el usuario, y **lo que ya está materializado en el
+/// dataset no se vuelve a aplicar**: repetirlo deshace la mitad de las variantes.
+fn smp_train_transforms(aug: &AugmentationConfig, sp: &ScriptPaths) -> String {
+    let ya = &sp.ejes_materializados;
+    let mut lineas = vec!["A.Resize(img_size, img_size),".to_string()];
+
+    let mut apagadas: Vec<&str> = Vec::new();
+    let anotar = |eje: &'static str, apagadas: &mut Vec<&str>| {
+        if ya.contains(eje) {
+            apagadas.push(eje);
+            true
+        } else {
+            false
+        }
+    };
+
+    if aug.fliplr > 0.0 && !anotar("fliplr", &mut apagadas) {
+        lineas.push(format!("A.HorizontalFlip(p={}),", aug.fliplr));
+    }
+    if aug.flipud > 0.0 && !anotar("flipud", &mut apagadas) {
+        lineas.push(format!("A.VerticalFlip(p={}),", aug.flipud));
+    }
+    if aug.degrees > 0.0 && !anotar("degrees", &mut apagadas) {
+        lineas.push(format!(
+            "A.Rotate(limit={}, p=0.5, border_mode=0),",
+            aug.degrees
+        ));
+    }
+    if aug.scale > 0.0 && !anotar("scale", &mut apagadas) {
+        lineas.push(format!(
+            "A.RandomScale(scale_limit={}, p=0.5),",
+            aug.scale
+        ));
+        // RandomScale cambia el tamaño: sin volver a Resize, el batch no apila.
+        lineas.push("A.Resize(img_size, img_size),".to_string());
+    }
+    if aug.hsv_v > 0.0 && !anotar("hsv_v", &mut apagadas) {
+        lineas.push(format!(
+            "A.RandomBrightnessContrast(brightness_limit={v}, contrast_limit={v}, p=0.5),",
+            v = aug.hsv_v
+        ));
+    }
+    lineas.push("A.Normalize(),".to_string());
+    lineas.push("ToTensorV2(),".to_string());
+
+    let mut texto = String::new();
+    if !apagadas.is_empty() {
+        texto.push_str(&format!(
+            "        # Ya materializado al preparar el dataset, no se repite: {}\n",
+            apagadas.join(", ")
+        ));
+    }
+    for (i, l) in lineas.iter().enumerate() {
+        if i > 0 {
+            texto.push_str("        ");
+        }
+        texto.push_str(l);
+        if i + 1 < lineas.len() {
+            texto.push('\n');
+        }
+    }
+    texto
+}
+
 pub fn generate_smp_script(req: &TrainingRequest, sp: &ScriptPaths) -> String {
     let bp = &req.backend_params;
     let carga_pesos = python_cargar_pesos("model", &req.base_model_path);
@@ -1829,6 +1999,10 @@ pub fn generate_smp_script(req: &TrainingRequest, sp: &ScriptPaths) -> String {
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
     let device = format_device(&req.device);
+    // La misma clave que rellena la interfaz para todos los backends: los
+    // presets biomédicos la escriben aunque el backend no sea YOLO.
+    let aug = augmentacion_pedida(req);
+    let train_transforms = smp_train_transforms(&aug, sp);
 
     format!(
         r#"#!/usr/bin/env python3
@@ -1894,11 +2068,7 @@ def main():
     # Dataset
     img_size = {imgsz}
     train_transform = A.Compose([
-        A.Resize(img_size, img_size),
-        A.HorizontalFlip(p=0.5),
-        A.RandomBrightnessContrast(p=0.3),
-        A.Normalize(),
-        ToTensorV2(),
+        {train_transforms}
     ])
     val_transform = A.Compose([
         A.Resize(img_size, img_size),
@@ -2072,6 +2242,7 @@ if __name__ == "__main__":
         encoder_depth = encoder_depth,
         freeze_encoder = py_bool(freeze_encoder),
         loss_type = loss_type,
+        train_transforms = train_transforms,
         imgsz = req.image_size,
         batch = req.batch_size,
         workers = req.workers,

@@ -638,3 +638,172 @@ fn el_catalogo_completo_no_duplica_backends_y_fusiona_modelos() {
         assert!(!b.models.is_empty(), "{}: backend sin modelos", b.id);
     }
 }
+
+// ─── Lo que la interfaz promete es lo que el script ejecuta ──────────────────
+//
+// El defecto que abre la etapa 11b vivía aquí: `bio_unet_seg` declara
+// `fliplr: 0` porque la lateralidad es diagnóstica, y el generador de `smp`
+// llevaba un `HorizontalFlip(p=0.5)` fijo en el propio script. La app avisaba de
+// la lateralidad y hacía lo contrario de lo que decía. Estos tests son lo que
+// impide que vuelva.
+
+/// Genera el `train.py` de un backend sobre un proyecto dado.
+fn train_py_de(
+    pf: &crate::store::project_file::ProjectFile,
+    images_dir: &std::path::Path,
+    salida: &std::path::Path,
+    backend: TrainingBackend,
+    task: &str,
+    augmentation: serde_json::Value,
+) -> String {
+    let imagenes = dataset::select_trainable_images(pf.images.clone(), &pf.classes, true);
+    let ds = dataset::prepare_dataset_for_backend(
+        images_dir,
+        pf,
+        &imagenes,
+        salida,
+        DatasetSpec {
+            ts: dataset::TsSpec::default(),
+            val_split: 0.25,
+            test_split: 0.0,
+            task,
+            backend: &backend,
+        },
+    )
+    .expect("preparar dataset");
+
+    let mut req = request(backend, task);
+    req.backend_params = serde_json::json!({ "augmentation": augmentation });
+    scripts::generate_train_script_for_backend(&req, &ds)
+        .expect("generar script")
+        .into_iter()
+        .find(|(n, _)| n == "train.py")
+        .expect("train.py")
+        .1
+}
+
+/// La augmentación de un preset con lateralidad: el volteo a cero.
+fn aug_lateralizada() -> serde_json::Value {
+    serde_json::json!({
+        "mosaic": 0.0, "mixup": 0.0,
+        "hsv_h": 0.0, "hsv_s": 0.0, "hsv_v": 0.2,
+        "flipud": 0.0, "fliplr": 0.0,
+        "degrees": 8.0, "scale": 0.1, "shear": 0.0, "perspective": 0.0,
+        "copy_paste": 0.0, "erasing": 0.0, "translate": 0.1
+    })
+}
+
+fn plan_de_volteo() -> crate::augment::plan::AugmentationPlan {
+    crate::augment::plan::AugmentationPlan {
+        enabled: true,
+        factor: 1,
+        seed: Some(7),
+        transforms: vec![crate::augment::transforms::TransformSpec::FlipH { p: 1.0 }],
+        ..Default::default()
+    }
+}
+
+#[test]
+fn smp_no_voltea_cuando_el_preset_dice_que_no() {
+    let (pf, proyecto, images_dir) = fixture("segment");
+    let salida = proyecto.path().join("job");
+    let script = train_py_de(
+        &pf,
+        &images_dir,
+        &salida,
+        TrainingBackend::Smp,
+        "segment",
+        aug_lateralizada(),
+    );
+    assert!(
+        !script.contains("HorizontalFlip"),
+        "el generador de smp sigue volteando radiografías por su cuenta:\n{script}"
+    );
+    // Lo que sí pidió el preset se aplica.
+    assert!(script.contains("A.Rotate(limit=8"), "{script}");
+    assert_python_valido(&script, "smp sin volteo");
+}
+
+#[test]
+fn smp_voltea_cuando_se_le_pide() {
+    let (pf, proyecto, images_dir) = fixture("segment");
+    let salida = proyecto.path().join("job");
+    let mut aug = aug_lateralizada();
+    aug["fliplr"] = serde_json::json!(0.5);
+    let script = train_py_de(
+        &pf,
+        &images_dir,
+        &salida,
+        TrainingBackend::Smp,
+        "segment",
+        aug,
+    );
+    assert!(script.contains("A.HorizontalFlip(p=0.5)"), "{script}");
+    assert_python_valido(&script, "smp con volteo");
+}
+
+#[test]
+fn smp_no_repite_lo_que_ya_esta_materializado() {
+    // Volver a voltear con p=0.5 lo ya volteado deshace la mitad de las
+    // variantes: el eje se apaga y el script lo dice.
+    let (mut pf, proyecto, images_dir) = fixture("segment");
+    pf.augmentation = Some(plan_de_volteo());
+    let salida = proyecto.path().join("job");
+    let mut aug = aug_lateralizada();
+    aug["fliplr"] = serde_json::json!(0.5);
+    let script = train_py_de(
+        &pf,
+        &images_dir,
+        &salida,
+        TrainingBackend::Smp,
+        "segment",
+        aug,
+    );
+    assert!(!script.contains("HorizontalFlip"), "{script}");
+    assert!(
+        script.contains("Ya materializado al preparar el dataset"),
+        "{script}"
+    );
+    // El bloque de transformaciones se interpola dentro de una lista de Python:
+    // una línea mal indentada lo rompe sin que ningún assert de contenido lo vea.
+    assert_python_valido(&script, "smp con augmentación materializada");
+}
+
+#[test]
+fn yolo_apaga_los_ejes_ya_materializados() {
+    let (mut pf, proyecto, images_dir) = fixture("detect");
+    pf.augmentation = Some(plan_de_volteo());
+    let salida = proyecto.path().join("job");
+    let mut aug = aug_lateralizada();
+    aug["fliplr"] = serde_json::json!(0.5);
+    let script = train_py_de(
+        &pf,
+        &images_dir,
+        &salida,
+        TrainingBackend::Yolo,
+        "detect",
+        aug,
+    );
+    assert!(script.contains("\"fliplr\": 0,"), "{script}");
+    // Lo que no se materializó sigue llegando tal cual.
+    assert!(script.contains("\"degrees\": 8,"), "{script}");
+}
+
+#[test]
+fn rtdetr_recibe_la_augmentacion_pedida() {
+    // El script no pasaba ningún parámetro de augmentación, así que ultralytics
+    // aplicaba su fliplr: 0.5 por defecto y el preset quedaba incumplido sin
+    // que se viera una sola línea culpable en el generador.
+    let (pf, proyecto, images_dir) = fixture("detect");
+    let salida = proyecto.path().join("job");
+    let script = train_py_de(
+        &pf,
+        &images_dir,
+        &salida,
+        TrainingBackend::RtDetr,
+        "detect",
+        aug_lateralizada(),
+    );
+    assert!(script.contains("\"fliplr\": 0,"), "{script}");
+    assert!(script.contains("\"mosaic\": 0,"), "{script}");
+}

@@ -35,7 +35,7 @@
 //! entradas no vuelven nunca a `project.json` — describen el dataset, no el
 //! corpus.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
 use image::RgbaImage;
@@ -254,6 +254,62 @@ pub fn avisos_de_balance(plan: &AugmentationPlan, imagenes: &[ImageEntry]) -> Ve
         }
     }
     avisos
+}
+
+// ─── Lo que ya está materializado ───────────────────────────────────────────
+
+/// Qué ejes de augmentación **ya vienen aplicados** en el dataset, con los
+/// nombres que usa ultralytics.
+///
+/// Existe para que la augmentación en línea de un backend y la materializada no
+/// se pisen. Volver a voltear lo que ya se volteó no es sólo trabajo repetido:
+/// deshace la mitad de las variantes y, en un corpus lateralizado, vuelve a
+/// meter el volteo que el preset había puesto a cero.
+///
+/// Es **una sola verdad**: la traducción vive aquí y la leen tanto el generador
+/// de YOLO como el de `smp`. Dos tablas equivalentes en dos archivos se separan.
+pub fn ejes_materializados(ids: &[String]) -> BTreeSet<&'static str> {
+    let mut ejes = BTreeSet::new();
+    for id in ids {
+        match id.as_str() {
+            "flip_h" => {
+                ejes.insert("fliplr");
+            }
+            "flip_v" => {
+                ejes.insert("flipud");
+            }
+            "rotate" => {
+                ejes.insert("degrees");
+            }
+            "shear" => {
+                ejes.insert("shear");
+            }
+            "zoom" => {
+                ejes.insert("scale");
+            }
+            "translate" => {
+                ejes.insert("translate");
+            }
+            // El brillo y el contraste de ultralytics viajan en el canal V del
+            // HSV; el tono y la saturación tienen los suyos.
+            "brightness_contrast" => {
+                ejes.insert("hsv_v");
+            }
+            "hue" => {
+                ejes.insert("hsv_h");
+            }
+            "saturation" => {
+                ejes.insert("hsv_s");
+            }
+            "random_erasing" => {
+                ejes.insert("erasing");
+            }
+            // Escala de grises, ruido y desenfoques no tienen equivalente en la
+            // augmentación de ultralytics: no hay nada que apagar.
+            _ => {}
+        }
+    }
+    ejes
 }
 
 // ─── Ejecución ──────────────────────────────────────────────────────────────

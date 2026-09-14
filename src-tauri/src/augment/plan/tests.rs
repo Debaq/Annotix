@@ -494,3 +494,23 @@ fn una_configuracion_imposible_se_rechaza() {
     let tmp = TempDir::new().unwrap();
     assert!(materializar(&plan, &entrada(tmp.path(), tmp.path()), &[]).is_err());
 }
+
+// ─── Qué queda ya aplicado ──────────────────────────────────────────────────
+
+#[test]
+fn los_ejes_materializados_se_traducen_a_los_de_ultralytics() {
+    // La traducción vive en un solo sitio: la leen el generador de YOLO y el de
+    // smp. Dos tablas equivalentes en dos archivos se separan.
+    let ids: Vec<String> = ["flip_h", "rotate", "brightness_contrast", "grayscale"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+    let ejes = ejes_materializados(&ids);
+    assert!(ejes.contains("fliplr"));
+    assert!(ejes.contains("degrees"));
+    assert!(ejes.contains("hsv_v"));
+    // La escala de grises no tiene equivalente en ultralytics: no hay nada que
+    // apagar, y apagar algo «parecido» sería inventar.
+    assert_eq!(ejes.len(), 3, "{ejes:?}");
+    assert!(ejes_materializados(&[]).is_empty());
+}
