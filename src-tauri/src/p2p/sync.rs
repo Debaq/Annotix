@@ -849,6 +849,7 @@ pub async fn doc_to_project_metadata(
         image_format: "jpg".to_string(),
         webp_quality_preset: "high".to_string(),
         split_policy: None,
+        study_protocol: None,
     })
 }
 

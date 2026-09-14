@@ -2,6 +2,7 @@ mod agreement;
 mod audit;
 mod browser_automation;
 mod commands;
+mod contract;
 mod export;
 mod hashchain;
 mod import;
@@ -294,6 +295,10 @@ pub fn run() {
             commands::project_commands::save_classes,
             commands::project_commands::delete_project,
             commands::project_commands::set_project_folder,
+            commands::contract_commands::build_model_contract,
+            commands::contract_commands::write_model_contract,
+            commands::contract_commands::get_study_protocol,
+            commands::contract_commands::set_study_protocol,
             commands::agreement_commands::get_corpus_agreement,
             commands::agreement_commands::get_discrepancy_queue,
             commands::agreement_commands::adjudicate_image,

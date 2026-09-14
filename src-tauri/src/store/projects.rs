@@ -115,6 +115,7 @@ impl AppState {
             image_format,
             webp_quality_preset: "high".to_string(),
             split_policy: None,
+            study_protocol: None,
         };
 
         io::write_project(&project_dir, &project)?;

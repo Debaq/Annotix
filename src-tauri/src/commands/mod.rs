@@ -4,6 +4,7 @@ pub mod audio_edit_commands;
 pub mod audit_commands;
 pub mod automation_commands;
 pub mod config_commands;
+pub mod contract_commands;
 pub mod csv_commands;
 pub mod export_commands;
 pub mod fs_commands;

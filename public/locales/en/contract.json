@@ -1,0 +1,46 @@
+{
+  "title": "Model contract",
+  "evidenceLevel": "Evidence level",
+  "limitations": "What this model cannot claim",
+  "write": "Issue contract",
+  "writing": "Writing…",
+  "written": "Contract written next to the model",
+  "writeFailed": "Could not write the contract",
+  "splitUnit": "Split unit",
+  "declared": "declared",
+  "seed": "Seed",
+  "provenance": "Provenance",
+  "provenanceValue": "{{total}} labels · {{unknown}} unknown · {{rejected}} rejected",
+  "agreement": "Inter-rater agreement",
+  "modelHash": "Model hash",
+  "datasetHash": "Composition hash",
+  "auditChain": "Audit chain",
+  "auditValid": "intact, {{count}} events",
+  "auditBroken": "BROKEN: the log was tampered with or a write was lost",
+  "level": {
+    "declarativo": "Declarative",
+    "trazable": "Traceable",
+    "reproducible": "Reproducible",
+    "verificable": "Verifiable"
+  },
+  "levelDesc": {
+    "declarativo": "There is a model and little else. Good for trying an idea, not for deciding anything about anyone.",
+    "trazable": "It was measured on data the model had not seen, and the labels' origin is known.",
+    "reproducible": "On top of that, the split is declared and the population has subjects: the experiment can be repeated and there is no leakage between partitions.",
+    "verificable": "On top of that, the corpus was read more than once: it is known how much of the label is criterion and how much is the person applying it."
+  },
+  "protocol": {
+    "title": "Study protocol",
+    "intro": "Declared once; the model contract transcribes it. Whatever is left blank is not invented: it shows up as a limitation of the contract.",
+    "inclusion": "Inclusion criteria",
+    "inclusionHint": "Who was included: population, period, referral route…",
+    "exclusion": "Exclusion criteria",
+    "exclusionHint": "Who was left out, and why.",
+    "population": "Population and source",
+    "populationHint": "Where the samples came from: one site, several, which population.",
+    "modality": "Modality and acquisition",
+    "modalityHint": "Equipment, protocol, resolution.",
+    "intendedUse": "Intended use",
+    "intendedUseHint": "What the model is meant to be used for. A model trained for screening and used for diagnosis is not badly trained: it is badly used."
+  }
+}

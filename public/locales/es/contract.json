@@ -1,0 +1,46 @@
+{
+  "title": "Contrato de modelo",
+  "evidenceLevel": "Nivel de evidencia",
+  "limitations": "Lo que este modelo no puede afirmar",
+  "write": "Emitir contrato",
+  "writing": "Emitiendo…",
+  "written": "Contrato escrito junto al modelo",
+  "writeFailed": "No se pudo escribir el contrato",
+  "splitUnit": "Unidad del reparto",
+  "declared": "declarada",
+  "seed": "Semilla",
+  "provenance": "Procedencia",
+  "provenanceValue": "{{total}} etiquetas · {{unknown}} desconocidas · {{rejected}} rechazadas",
+  "agreement": "Acuerdo entre evaluadores",
+  "modelHash": "Hash del modelo",
+  "datasetHash": "Hash de la composición",
+  "auditChain": "Cadena de auditoría",
+  "auditValid": "íntegra, {{count}} eventos",
+  "auditBroken": "ROTA: el registro fue manipulado o se perdió una escritura",
+  "level": {
+    "declarativo": "Declarativo",
+    "trazable": "Trazable",
+    "reproducible": "Reproducible",
+    "verificable": "Verificable"
+  },
+  "levelDesc": {
+    "declarativo": "Hay un modelo y poco más. Sirve para probar una idea, no para decidir nada sobre nadie.",
+    "trazable": "Se midió sobre datos que el modelo no vio y se sabe de dónde salieron las etiquetas.",
+    "reproducible": "Además, el reparto está declarado y la población tiene sujetos: el experimento se puede repetir y no hay fuga entre particiones.",
+    "verificable": "Además, el corpus se leyó más de una vez: se sabe cuánto de la etiqueta es criterio y cuánto es la persona que lo aplicó."
+  },
+  "protocol": {
+    "title": "Protocolo del estudio",
+    "intro": "Se declara una vez y el contrato de modelo lo transcribe. Lo que se deje en blanco no se inventa: aparece como una limitación del contrato.",
+    "inclusion": "Criterios de inclusión",
+    "inclusionHint": "A quién se incluyó: población, periodo, vía de derivación…",
+    "exclusion": "Criterios de exclusión",
+    "exclusionHint": "A quién se dejó fuera, y por qué.",
+    "population": "Población y procedencia",
+    "populationHint": "De dónde salieron las muestras: un centro, varios, qué población.",
+    "modality": "Modalidad y adquisición",
+    "modalityHint": "Equipo, protocolo, resolución.",
+    "intendedUse": "Uso previsto",
+    "intendedUseHint": "Para qué se pretende usar el modelo. Un modelo entrenado para cribado y usado para diagnóstico no está mal entrenado: está mal usado."
+  }
+}

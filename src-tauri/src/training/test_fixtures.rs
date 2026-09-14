@@ -114,6 +114,7 @@ pub fn base_project() -> ProjectFile {
         image_format: "png".into(),
         webp_quality_preset: "high".into(),
         split_policy: None,
+        study_protocol: None,
     }
 }
 

@@ -271,7 +271,7 @@ ruido, la métrica de desacuerdo elegida es la equivocada.
 
 ---
 
-## Etapa 8 — Contrato de modelo autogenerado
+## Etapa 8 — Contrato de modelo autogenerado ✅ **hecho**
 
 **Qué se construye.** Un `model_contract.json` junto al modelo, y su
 representación en el informe PDF
@@ -416,6 +416,58 @@ uso del modelo.
 
 ---
 
+## Etapa 12 — Cifrado en reposo, opcional por proyecto
+
+**Por qué existe esta etapa.** No estaba en el plan original y debería haberlo
+estado. Hoy el corpus —`project.json`, imágenes, videos y el propio
+`audit.jsonl`— está **en claro en disco**. Lo único cifrado es el secreto del host
+P2P (`p2p/crypto.rs`, ChaCha20-Poly1305 con clave local en el directorio de datos
+de la app), y eso protege contra copiar *la carpeta del proyecto*, no contra
+copiar el directorio de datos entero, que es donde vive la clave. Esa distinción
+es la que decide si sirve ante un portátil perdido.
+
+**Opcional, y opcional de verdad.** Se activa por proyecto, no globalmente: un
+proyecto generalista no tiene por qué pagar el coste ni recordar una frase de
+paso. Al activarlo, el proyecto declara que está cifrado y la app pide la frase al
+abrirlo. Un proyecto sin cifrar sigue funcionando exactamente como hoy.
+
+**Qué se construye**, en orden de importancia:
+
+1. **Cifrado del proyecto con clave derivada de frase de paso** (Argon2id), no de
+   un archivo de clave junto a los datos. Cubre `project.json`, `audit.jsonl` y
+   los archivos de imagen y video. Sin la frase, la carpeta no dice nada.
+2. **Deidentificación al importar** (se solapa con la etapa 9a): DICOM trae
+   nombre, fecha de nacimiento y `PatientID` en sus etiquetas; hoy entrarían tal
+   cual. Con reporte de qué campos se eliminaron.
+3. **Seudonimización del sujeto con tabla aparte.** Hoy el `subjectId` se exporta
+   y viaja con el proyecto (decisión 5 del estado). La tabla que vincula
+   seudónimo con identidad real debe poder quedarse fuera.
+4. **Auditoría de accesos**, no sólo de cambios. La etapa 5 registra quién cambió
+   qué; un marco clínico suele exigir también quién **leyó** qué.
+5. **Cifrado por capa en sesiones cegadas.** Hoy el cegado es de la aplicación: el
+   documento replicado lleva todas las capas y quien inspeccione el sustrato puede
+   leerlas. Cegarlo de verdad exige cifrar cada capa con una clave que sólo tenga
+   quien adjudica.
+
+**Qué NO promete.** Cifrado en reposo no es cumplimiento normativo. HIPAA o el
+RGPD exigen además control de acceso, contratos de encargo de tratamiento,
+retención y notificación de brechas — cosas que una app de escritorio no puede
+garantizar por su cuenta. Lo que esta etapa da es que los datos en disco no se
+lean sin la frase; decirlo de otro modo sería vender lo que no hay.
+
+**Punto de no retorno.** Una frase de paso perdida es un proyecto perdido: no hay
+recuperación, y eso tiene que estar dicho al activarlo, no en la documentación.
+Conviene una vía de respaldo de la clave explícita y declarada antes de cifrar el
+primer proyecto.
+
+**Qué validar con datos reales.** Que un proyecto cifrado no revele nada con las
+herramientas del sistema operativo: ni nombres de archivo, ni tamaños que delaten
+el contenido, ni el `project.json`. Que abrir y anotar un corpus de miles de
+imágenes siga siendo usable con el cifrado activo — si el canvas se arrastra, se
+acaba desactivando.
+
+---
+
 ## Puntos de no retorno
 
 Cambios que, una vez hechos, no se revierten sin migración o sin romper
@@ -431,6 +483,7 @@ proyectos existentes. Cada uno merece decisión explícita antes de escribirse.
 | 6 | Cadena de hash del registro de auditoría | 5 | Una vez encadenado, cualquier migración futura que reescriba datos históricos rompe la verificación. Toda migración posterior debe re-anclar la cadena y dejar constancia de haberlo hecho, o el archivo pasa a reportar manipulación donde solo hubo mantenimiento. |
 | 7 | SAM3: AMG → predicción directa estilo DETR | 10a | No es cambio de pesos, es otro camino de inferencia. El pipeline actual (encode → grilla de puntos → decoder batched → NMS) no se adapta: se sustituye. Los sliders de granularidad/score/NMS de la UI pierden sentido. Convivir con ambos significa mantener dos caminos. |
 | 8 | Eje Z en `ImageEntry` | 9c | Convierte la unidad de anotación de imagen en volumen. Afecta canvas, esquema, exportación, entrenamiento y todo formato de export 2D existente. Es el cambio que más conviene no hacer hasta tener demanda demostrada. |
+| 10 | Frase de paso de un proyecto cifrado | 12 | Una frase perdida es un proyecto perdido: sin ella no hay forma de leer el corpus, ni con acceso al disco. La vía de respaldo tiene que existir y estar declarada **antes** de cifrar el primer proyecto, no después. |
 | 9 | Retirada de un backend biomédico ya publicado | 10c | Mismo aprendizaje de OpenMMLab/Detectron2 (`docs/roadmap_train.md`): un backend que no entrena de verdad cuesta más retirarlo que no haberlo agregado. Ninguno se publica sin smoke test en CPU real. |
 
 ---

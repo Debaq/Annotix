@@ -107,6 +107,7 @@ fn make_project(name: &str, ptype: &str, classes: Vec<ClassDef>) -> ProjectFile 
         image_format: "jpg".into(),
         webp_quality_preset: "high".into(),
         split_policy: None,
+        study_protocol: None,
     }
 }
 

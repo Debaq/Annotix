@@ -127,6 +127,11 @@ pub fn migrate_project(project: &mut ProjectFile, dir: &Path) -> bool {
         changed = true;
     }
 
+    // v7 → v8: el protocolo de estudio es un bloque opcional nuevo. Nadie puede
+    // rellenarlo por el usuario —un criterio de inclusión no se deduce del
+    // corpus—, así que la migración no inventa nada: sólo sube la versión, y el
+    // contrato de modelo nota la ausencia y la declara.
+
     // v6 → v7: las capas de lectura por evaluador (`readings`) son un campo nuevo
     // y opcional. Un proyecto anterior tiene una sola lectura, que ya vive en
     // `annotations` —ahora llamada capa consolidada—: no hay nada que mover, y

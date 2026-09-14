@@ -4,7 +4,7 @@
 > cinco (`biomedico-fase1` … `fase4`) son el plan; éste dice qué está hecho, qué
 > falta, y qué decisiones ya se tomaron para no volver a discutirlas.
 >
-> Última actualización: 2026-09-13, sobre `a01bc8e`.
+> Última actualización: 2026-09-14, sobre `f5add6f`.
 
 ---
 
@@ -19,12 +19,13 @@
 | 5 · Auditoría encadenada | **hecho** | `93722b3` |
 | 6 · Lectura múltiple cegada | **hecho**, sin probar con gente real | (esta tanda) |
 | 7 · Acuerdo + adjudicación | **hecho** | (esta tanda) |
-| 8 · Contrato de modelo | pendiente | — |
+| 8 · Contrato de modelo | **hecho** | (esta tanda) |
 | 9 · Ingesta DICOM / NIfTI / WSI / 3D | pendiente | — |
 | 10a · MedSAM / μSAM | pendiente | — |
 | 10b · Pesos biomédicos | **empezado**: 5 modelos | `135553f` |
 | 10c · nnU-Net, MONAI, Cellpose, StarDist | pendiente | — |
 | 11 · Selector de dominio + presets | **a medias**: eje y catálogo sí, presets no | `beebdc5`, `fb43624` |
+| 12 · Cifrado en reposo, opcional | pendiente (etapa nueva, no estaba en el plan) | — |
 
 Fuera del plan original, pedido sobre la marcha:
 
@@ -70,6 +71,14 @@ pendiente. Quedan fuera: el Dice real sobre píxeles de máscara (hoy se compara
 la envolvente) y el acuerdo por clase (el informe da un global, y una clase rara
 con acuerdo pésimo puede esconderse detrás). Ver `docs/acuerdo-evaluadores.md`.
 
+**Etapa 8.** El contrato sale solo y declara su nivel de evidencia y sus
+limitaciones. Lo que **no** lleva son intervalos de confianza en las métricas:
+calcularlos exige los resultados por muestra del conjunto de test y los backends
+informan sólo el agregado. El contrato lo dice en vez de omitirlo. La maquinaria
+de bootstrap agrupado ya existe (`agreement::kappa::ic_bootstrap`); falta el dato
+por muestra. Tampoco está incrustado todavía en el informe PDF. Ver
+`docs/contrato-de-modelo.md`.
+
 **Etapa 10b.** Quedan fuera los modelos que no se pueden descargar sin token:
 UNI (gated, CC-BY-NC-ND), RETFound (gated, `.pth` suelto sin metadatos de
 librería) y hibou (gated y con `trust_remote_code`, que el generador no pasa).
@@ -107,6 +116,10 @@ sesión de trabajo. **Qué mirar al abrirla**:
   lecturas en la barra de anotaciones y que el botón de entregar funcione.
 - Estado del corpus → «Acuerdo entre evaluadores»: con dos lecturas entregadas,
   que salga el número con su intervalo y la cola de discrepancias ordenada.
+- Estado del corpus → «Protocolo del estudio»: rellenar inclusión y uso previsto.
+- Lista de entrenamientos → informe de reparto de una corrida terminada: debajo
+  aparece el contrato con su nivel de evidencia y sus limitaciones; «Emitir
+  contrato» escribe `model_contract.json` junto al modelo.
 
 ---
 
@@ -142,7 +155,7 @@ sesión de trabajo. **Qué mirar al abrirla**:
 
 ## Formato de datos
 
-`project.json` va por la **versión 7**. Migraciones en `store/io.rs`:
+`project.json` va por la **versión 8**. Migraciones en `store/io.rs`:
 
 | | Cambio | Migración |
 |---|---|---|
@@ -150,39 +163,26 @@ sesión de trabajo. **Qué mirar al abrirla**:
 | v4 → v5 | procedencia por etiqueta | rellena `origin` desde `source` sólo donde no hay ambigüedad |
 | v5 → v6 | `splitPolicy` opcional en el proyecto | sólo sube la versión: declarar la política es decisión del usuario, y rellenarla sería declarar por él |
 | v6 → v7 | capas de lectura por evaluador (`readings`) | sólo sube la versión: la única lectura de un proyecto viejo ya es la capa consolidada, y ponerle un autor sería inventarlo |
+| v7 → v8 | protocolo de estudio (`studyProtocol`) | sólo sube la versión: un criterio de inclusión no se deduce del corpus, así que no se rellena — el contrato nota la ausencia y la declara |
 
 ---
 
 ## Lo siguiente, si hay que elegir
 
-La **etapa 8** (contrato de modelo) es la que sigue, y ya tiene **todos** sus
-insumos: informe de reparto con semilla y unidad (etapa 3), política de partición
-declarada (`splitPolicy`), procedencia con tasa de rechazo
-(`get_provenance_summary`, etapa 4), población por sujeto (etapa 2), registro de
-auditoría con su hash (etapa 5) y acuerdo entre evaluadores con intervalo
-(etapa 7). Lo que falta escribir es el propio documento, los hashes de integridad
-y los intervalos de confianza de las métricas por bootstrap **agrupado por
-sujeto** — remuestrear imágenes de los mismos doce pacientes produce intervalos
-artificialmente estrechos, y es el error más común en este tipo de informe.
+La **cadena de validez está cerrada**: de la etapa 1 a la 8, un modelo entrenado
+aquí sale con su contrato y su nivel de evidencia. Lo que queda son dos caminos
+independientes.
 
-**Cifrado en reposo** no es una etapa del plan y probablemente debería serlo: hoy
-el corpus (`project.json`, imágenes, `audit.jsonl`) está en claro en disco. Lo
-único cifrado es el secreto del host P2P, con una clave local que vive en el
-directorio de datos — protege contra copiar la carpeta del proyecto, no contra
-copiar el directorio entero. Ver la pregunta abierta más abajo.
+La **etapa 12** (cifrado en reposo, opcional por proyecto) es la que decidiste
+meter y no estaba en el plan. Es la que hace falta antes de que un corpus clínico
+real entre en la app: hoy el proyecto está en claro en disco. Lleva su propio
+punto de no retorno —una frase de paso perdida es un proyecto perdido— y una
+advertencia sobre lo que no promete: cifrar en reposo no es cumplimiento
+normativo.
 
----
+La **etapa 11** (presets biomédicos) es la que vuelve visible todo lo anterior
+para quien no leyó el plan: un primer paso «tipo de dominio» y presets que ya
+pueden rellenar la política de partición recomendada y el protocolo del estudio.
 
-## Preguntas abiertas
-
-**Protección de datos a nivel clínico.** Lo que falta, en orden:
-
-1. Cifrado en reposo del proyecto entero con clave derivada de frase de paso
-   (Argon2id), no de un archivo de clave junto a los datos.
-2. Deidentificación al importar DICOM (etapa 9a): hoy nombre, fecha de nacimiento
-   y `PatientID` entrarían tal cual.
-3. Seudonimización del sujeto con tabla aparte — hoy el `subjectId` se exporta y
-   viaja con el proyecto (decisión 5).
-4. Auditoría de **accesos**, no sólo de cambios: la etapa 5 registra quién cambió
-   qué; un marco clínico suele exigir también quién leyó qué.
-5. Cifrado por capa en sesiones cegadas — hoy el cegado es de la aplicación.
+La **etapa 9a** (DICOM/NIfTI) desbloquea las modalidades que hoy no entran, y se
+solapa con el punto 2 de la etapa 12: la deidentificación al importar.

@@ -26,7 +26,11 @@ use serde::{Deserialize, Serialize};
 ///   consolidada. La migración no reescribe nada: un proyecto con una sola
 ///   lectura tiene la consolidada y ninguna capa, que es exactamente lo que
 ///   había.
-pub const CURRENT_VERSION: u32 = 7;
+/// - 8: el proyecto puede declarar su protocolo de estudio (`studyProtocol`):
+///   criterios de inclusión y exclusión, modalidad, población y uso previsto. El
+///   contrato de modelo los transcribe en vez de que alguien los redacte a mano
+///   cada vez. Bloque opcional; la migración sólo sube la versión.
+pub const CURRENT_VERSION: u32 = 8;
 
 // ─── ProjectFile: todo el contenido de project.json ─────────────────────────
 
@@ -79,6 +83,47 @@ pub struct ProjectFile {
         rename = "splitPolicy"
     )]
     pub split_policy: Option<SplitPolicy>,
+    /// Qué estudio es éste. Ausente en un proyecto generalista.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        rename = "studyProtocol"
+    )]
+    pub study_protocol: Option<StudyProtocol>,
+}
+
+/// Lo que un proyecto declara sobre sí mismo, una vez, para que el contrato de
+/// modelo lo transcriba en vez de que alguien lo redacte cada vez.
+///
+/// Todo es texto libre y opcional a propósito: nadie puede validar por el usuario
+/// si un criterio de inclusión está bien escrito, y un formulario rígido acabaría
+/// rellenándose con lo que quepa. Lo que sí hace el sistema es **notar su
+/// ausencia**: un contrato sin criterios declarados baja el nivel de evidencia y
+/// lo dice.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StudyProtocol {
+    /// A quién se incluyó: «adultos con sospecha de X derivados entre 2024 y 2025».
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub inclusion: Option<String>,
+    /// A quién se dejó fuera, y por qué.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub exclusion: Option<String>,
+    /// Con qué se adquirió: equipo, protocolo, resolución.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub modality: Option<String>,
+    /// De dónde salió la gente: un centro, varios, qué población.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub population: Option<String>,
+    /// Para qué se pretende usar el modelo. Es el campo que decide si los
+    /// límites del contrato son los correctos: un modelo entrenado para cribado
+    /// y usado para diagnóstico no está mal entrenado, está mal usado.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        rename = "intendedUse"
+    )]
+    pub intended_use: Option<String>,
 }
 
 /// Política de partición declarada por el proyecto.
@@ -368,7 +413,10 @@ impl ImageEntry {
     /// Cuántas lecturas entregadas hay. Las que siguen en curso no cuentan: un
     /// borrador a medias no es una lectura independiente.
     pub fn submitted_readings(&self) -> usize {
-        self.readings.iter().filter(|r| r.status == "submitted").count()
+        self.readings
+            .iter()
+            .filter(|r| r.status == "submitted")
+            .count()
     }
 }
 

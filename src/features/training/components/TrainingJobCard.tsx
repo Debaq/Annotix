@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/components/hooks/use-toast';
 import { exportTrainingReportFromJob } from '../services/trainingReportService';
 import { SplitReportPanel } from './SplitReportPanel';
+import { ModelContractPanel } from '@/features/contract/components/ModelContractPanel';
 import type { BackendInfo, TrainingJob, TrainingBackend } from '../types';
 
 interface TrainingJobCardProps {
@@ -190,8 +191,14 @@ export function TrainingJobCard({ job, onDelete, onFineTune, onResume, projectNa
     {/* Cómo se repartió el corpus. El contador de avisos va en el botón para que
         una clase sin evaluar se vea sin tener que desplegar. */}
     {splitOpen && job.splitReport && (
-      <div className="px-3 pb-3 border-t border-border/60 pt-2">
+      <div className="px-3 pb-3 border-t border-border/60 pt-2 space-y-3">
         <SplitReportPanel report={job.splitReport} />
+        {/* El contrato del modelo, junto al reparto que lo sostiene: leer una
+            métrica sin saber qué se puede afirmar sobre ella es el problema que
+            este documento existe para resolver. */}
+        {job.status === 'completed' && job.id && job.projectId && (
+          <ModelContractPanel projectId={job.projectId} jobId={job.id} />
+        )}
       </div>
     )}
     </div>
