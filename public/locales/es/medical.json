@@ -1,0 +1,43 @@
+{
+  "import": {
+    "title": "Importar DICOM / NIfTI",
+    "pick": "Elegir archivos",
+    "axis": "Eje de corte (NIfTI)",
+    "axial": "Axial",
+    "coronal": "Coronal",
+    "sagital": "Sagital",
+    "threshold": "Señal mínima por corte",
+    "thresholdHint": "Los cortes que son casi todo aire no entran: serían imágenes negras que el entrenamiento cuenta como fondo puro.",
+    "importing": "Importando…",
+    "start": "Importar"
+  },
+  "report": {
+    "title": "Qué se importó y qué se quitó",
+    "files": "Archivos leídos",
+    "images": "Imágenes creadas",
+    "skipped": "Cortes sin señal descartados",
+    "subjects": "Sujetos (seudonimizados)",
+    "removed": "Identificadores eliminados ({{count}})",
+    "privateRemoved": "Más {{count}} etiquetas privadas del fabricante, descartadas en bloque.",
+    "kept": "Metadatos de adquisición conservados",
+    "reduced": "Conservados con reducción: {{tags}} — la edad va en años enteros, no la fecha de nacimiento.",
+    "notCovered": "Lo que esta deidentificación NO cubre",
+    "failed": "Archivos que no se pudieron leer ({{count}})"
+  },
+  "window": {
+    "title": "Ventana",
+    "center": "Centro",
+    "width": "Anchura",
+    "fromFile": "La ventana venía del archivo: es la que el equipo consideró adecuada para esta adquisición.",
+    "computed": "Ventana calculada de la propia imagen: el archivo no traía ninguna.",
+    "changesImage": "Cambiar la ventana cambia la imagen que se anota, no sólo cómo se ve. Una marca puesta con una ventana puede no tener sentido con otra.",
+    "preset": {
+      "pulmon": "Pulmón",
+      "mediastino": "Mediastino",
+      "hueso": "Hueso",
+      "cerebro": "Cerebro",
+      "higado": "Hígado",
+      "angio": "Angio"
+    }
+  }
+}

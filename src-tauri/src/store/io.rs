@@ -127,6 +127,11 @@ pub fn migrate_project(project: &mut ProjectFile, dir: &Path) -> bool {
         changed = true;
     }
 
+    // v8 → v9: los metadatos de imagen médica son un bloque opcional nuevo. Una
+    // imagen que no vino de un DICOM ni de un NIfTI no los tiene, y no hay forma
+    // de deducirlos de un PNG ya convertido: lo que se perdió al convertirlo se
+    // perdió. Sólo sube la versión.
+
     // v7 → v8: el protocolo de estudio es un bloque opcional nuevo. Nadie puede
     // rellenarlo por el usuario —un criterio de inclusión no se deduce del
     // corpus—, así que la migración no inventa nada: sólo sube la versión, y el

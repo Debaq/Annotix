@@ -4,7 +4,7 @@
 > cinco (`biomedico-fase1` … `fase4`) son el plan; éste dice qué está hecho, qué
 > falta, y qué decisiones ya se tomaron para no volver a discutirlas.
 >
-> Última actualización: 2026-09-14, sobre `f5add6f`.
+> Última actualización: 2026-09-14, sobre `a28f454`.
 
 ---
 
@@ -20,7 +20,9 @@
 | 6 · Lectura múltiple cegada | **hecho**, sin probar con gente real | (esta tanda) |
 | 7 · Acuerdo + adjudicación | **hecho** | (esta tanda) |
 | 8 · Contrato de modelo | **hecho** | (esta tanda) |
-| 9 · Ingesta DICOM / NIfTI / WSI / 3D | pendiente | — |
+| 9a · Ingesta DICOM / NIfTI 2D | **hecho** | (esta tanda) |
+| 9b · Whole-slide imaging | pendiente | — |
+| 9c · Volumetría 3D | pendiente, **fuera de alcance** hasta tener demanda | — |
 | 10a · MedSAM / μSAM | pendiente | — |
 | 10b · Pesos biomédicos | **empezado**: 5 modelos | `135553f` |
 | 10c · nnU-Net, MONAI, Cellpose, StarDist | pendiente | — |
@@ -79,6 +81,13 @@ de bootstrap agrupado ya existe (`agreement::kappa::ic_bootstrap`); falta el dat
 por muestra. Tampoco está incrustado todavía en el informe PDF. Ver
 `docs/contrato-de-modelo.md`.
 
+**Etapa 9a.** Hecha, con tres cosas fuera a propósito: las series multi-frame se
+leen sólo en su primer fotograma, los UID se eliminan en vez de reescribirse con
+un mapa consistente, y no se inspeccionan los píxeles —un nombre quemado en la
+imagen sigue ahí—. Los tests usan DICOM sintéticos construidos en la propia
+prueba; **falta validar con series reales de dos fabricantes distintos y verificar
+la deidentificación con una herramienta externa**. Ver `docs/ingesta-medica.md`.
+
 **Etapa 10b.** Quedan fuera los modelos que no se pueden descargar sin token:
 UNI (gated, CC-BY-NC-ND), RETFound (gated, `.pth` suelto sin metadatos de
 librería) y hibou (gated y con `trust_remote_code`, que el generador no pasa).
@@ -117,6 +126,10 @@ sesión de trabajo. **Qué mirar al abrirla**:
 - Estado del corpus → «Acuerdo entre evaluadores»: con dos lecturas entregadas,
   que salga el número con su intervalo y la cola de discrepancias ordenada.
 - Estado del corpus → «Protocolo del estudio»: rellenar inclusión y uso previsto.
+- Galería → «Importar DICOM / NIfTI»: que al terminar salga el informe de
+  deidentificación, y que el sujeto de las imágenes quede como `SUJ-…`.
+- Imagen médica abierta: el control de ventana arriba a la derecha, con los
+  presets. Cambiar a ventana de hueso y comprobar que la imagen cambia.
 - Lista de entrenamientos → informe de reparto de una corrida terminada: debajo
   aparece el contrato con su nivel de evidencia y sus limitaciones; «Emitir
   contrato» escribe `model_contract.json` junto al modelo.
@@ -155,7 +168,7 @@ sesión de trabajo. **Qué mirar al abrirla**:
 
 ## Formato de datos
 
-`project.json` va por la **versión 8**. Migraciones en `store/io.rs`:
+`project.json` va por la **versión 9**. Migraciones en `store/io.rs`:
 
 | | Cambio | Migración |
 |---|---|---|
@@ -164,6 +177,7 @@ sesión de trabajo. **Qué mirar al abrirla**:
 | v5 → v6 | `splitPolicy` opcional en el proyecto | sólo sube la versión: declarar la política es decisión del usuario, y rellenarla sería declarar por él |
 | v6 → v7 | capas de lectura por evaluador (`readings`) | sólo sube la versión: la única lectura de un proyecto viejo ya es la capa consolidada, y ponerle un autor sería inventarlo |
 | v7 → v8 | protocolo de estudio (`studyProtocol`) | sólo sube la versión: un criterio de inclusión no se deduce del corpus, así que no se rellena — el contrato nota la ausencia y la declara |
+| v8 → v9 | metadatos de imagen médica (`medical`) | sólo sube la versión: lo que se perdió al convertir un DICOM a PNG a mano no se puede deducir del PNG |
 
 ---
 
@@ -184,5 +198,10 @@ La **etapa 11** (presets biomédicos) es la que vuelve visible todo lo anterior
 para quien no leyó el plan: un primer paso «tipo de dominio» y presets que ya
 pueden rellenar la política de partición recomendada y el protocolo del estudio.
 
-La **etapa 9a** (DICOM/NIfTI) desbloquea las modalidades que hoy no entran, y se
-solapa con el punto 2 de la etapa 12: la deidentificación al importar.
+La **etapa 10a** (MedSAM / μSAM) es barata: entra por el camino SAM que ya existe,
+es cambio de pesos y no de arquitectura, y combinada con la procedencia deja cada
+máscara marcada como sugerida por modelo y revisada por una persona.
+
+La **etapa 10c** (nnU-Net, MONAI, Cellpose, StarDist) es cara y hay que hacerla de
+a uno: rige la regla dura del repo — ninguno se publica sin smoke test de
+entrenamiento real en CPU (`docs/roadmap_train.md`).

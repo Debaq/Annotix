@@ -319,7 +319,7 @@ modalidades, y sin ellas buena parte del catálogo de la Fase 3 es inalcanzable.
 > lámina completa** (9b) dependen de verdad de esta etapa. Por eso la 10b pudo
 > empezar antes que la 9.
 
-**9a — DICOM y NIfTI 2D.** Lectura de DICOM (corte único y series) y NIfTI con
+**9a — DICOM y NIfTI 2D. ✅ hecho.** Lectura de DICOM (corte único y series) y NIfTI con
 extracción de cortes, metadatos de adquisición (modalidad, equipo, kVp/TE/TR,
 espaciado de píxel), ventaneo window/level en el canvas, y **deidentificación al
 importar** con reporte de qué campos se eliminaron. El `subjectId` de la etapa 2

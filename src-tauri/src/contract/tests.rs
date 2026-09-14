@@ -63,6 +63,7 @@ fn imagen(id: &str, sujeto: Option<&str>) -> ImageEntry {
         predictions: vec![],
         rejected: vec![],
         readings: vec![],
+        medical: None,
     }
 }
 

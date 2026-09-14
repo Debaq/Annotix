@@ -30,7 +30,10 @@ use serde::{Deserialize, Serialize};
 ///   criterios de inclusión y exclusión, modalidad, población y uso previsto. El
 ///   contrato de modelo los transcribe en vez de que alguien los redacte a mano
 ///   cada vez. Bloque opcional; la migración sólo sube la versión.
-pub const CURRENT_VERSION: u32 = 8;
+/// - 9: una imagen puede venir de un archivo médico (`medical`): modalidad,
+///   equipo, espaciado de píxel, ventana con la que se renderizó y la copia de
+///   16 bits que permite volver a ventanearla. Bloque opcional.
+pub const CURRENT_VERSION: u32 = 9;
 
 // ─── ProjectFile: todo el contenido de project.json ─────────────────────────
 
@@ -322,6 +325,10 @@ pub struct ImageEntry {
     pub download_status: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub predictions: Vec<PredictionEntry>,
+    /// De dónde salió, cuando salió de un archivo médico. Ausente en una imagen
+    /// normal.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub medical: Option<MedicalInfo>,
     /// Una capa de anotaciones por evaluador, cuando el corpus se lee más de una
     /// vez (ver [`ReadingLayer`]). Vacío en el caso normal: una sola lectura vive
     /// en `annotations` y no necesita capa.
@@ -334,6 +341,74 @@ pub struct ImageEntry {
     /// dando trabajo—, y borrando la etiqueta esa mitad del dato se perdía.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub rejected: Vec<RejectedAnnotation>,
+}
+
+/// Lo que se conserva de un archivo médico tras importarlo.
+///
+/// Lo que **no** se conserva es el archivo original: lleva dentro los
+/// identificadores que la importación acaba de quitar, y guardarlo junto al
+/// corpus deidentificado los devolvería al disco. Lo que se guarda es la imagen
+/// renderizada, estos metadatos de adquisición, y una copia de 16 bits ya
+/// deidentificada que permite volver a ventanear sin el original.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MedicalInfo {
+    /// `dicom` | `nifti`.
+    pub source_format: String,
+    /// `CT`, `MR`, `CR`, `US`… Decide qué presets de ventana tienen sentido.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub modality: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub manufacturer: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub model_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub body_part: Option<String>,
+    /// Milímetros por píxel. Sin esto, una medida en píxeles no se convierte a
+    /// milímetros y dos equipos no son comparables.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pixel_spacing: Option<Vec<f64>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kvp: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub repetition_time: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub echo_time: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub protocol_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub patient_sex: Option<String>,
+    /// Edad en años enteros: la fecha de nacimiento exacta identifica.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub patient_age_years: Option<u32>,
+
+    /// Centro y anchura con los que se renderizó la imagen que se está anotando.
+    /// El renderizado es una interpretación: la misma adquisición con dos
+    /// ventanas son dos imágenes distintas.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub window_center: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub window_width: Option<f64>,
+    /// Si la ventana venía del archivo o se calculó de la propia imagen.
+    #[serde(default)]
+    pub window_from_file: bool,
+
+    /// Copia de 16 bits dentro de `medical/`, para volver a ventanear.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub raw_file: Option<String>,
+    /// Cómo se vuelve de los 16 bits sin signo a las unidades físicas:
+    /// `valor = guardado · slope + intercept`. Hace falta porque un CT tiene
+    /// valores negativos y un PNG de 16 bits no los admite.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub raw_slope: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub raw_intercept: Option<f64>,
+
+    /// De qué corte del volumen salió, en NIfTI.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub slice_index: Option<usize>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub slice_axis: Option<String>,
 }
 
 /// Lo que **un** evaluador anotó sobre una imagen.

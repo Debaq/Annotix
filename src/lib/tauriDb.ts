@@ -41,6 +41,9 @@ export interface TauriAnnotixImage {
     annotated?: number;
     status: 'pending' | 'annotated' | 'reviewed';
   };
+  /** De dónde salió, cuando salió de un DICOM o un NIfTI. */
+  medical?: import('@/features/medical/types').MedicalInfo | null;
+  subjectId?: string | null;
 }
 
 export interface TauriTimeSeriesRecord {

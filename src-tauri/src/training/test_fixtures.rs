@@ -154,6 +154,7 @@ pub fn fixture(task: &str) -> (ProjectFile, TempDir, PathBuf) {
             predictions: vec![],
             rejected: vec![],
             readings: vec![],
+            medical: None,
         });
     }
 

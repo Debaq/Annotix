@@ -722,6 +722,11 @@ pub async fn doc_to_project_metadata(
                 predictions: vec![],
                 rejected: vec![],
                 readings: lecturas.capas,
+                // Los metadatos médicos no viajan por P2P todavía: el par que
+                // recibe la imagen recibe el PNG renderizado, no la copia de 16
+                // bits, así que no podría volver a ventanearla y declararlo sería
+                // prometer una capacidad que no tiene.
+                medical: None,
             });
         }
     }
@@ -1830,6 +1835,7 @@ pub fn start_doc_watcher(
                                     predictions: vec![],
                                     rejected: vec![],
                                     readings: vec![],
+                                    medical: None,
                                 };
 
                                 let _ = app_state.with_project_mut(&pid, |pf| {

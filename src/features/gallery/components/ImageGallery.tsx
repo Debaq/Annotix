@@ -4,6 +4,7 @@ import { ImageGrid } from './ImageGrid';
 import { ImageUploader } from './ImageUploader';
 import { GalleryFilters } from './GalleryFilters';
 import { VideoUploader } from '../../video/components/VideoUploader';
+import { MedicalUploader } from '@/features/medical/components/MedicalUploader';
 import { VideoCard } from '../../video/components/VideoCard';
 import { useUIStore } from '../../core/store/uiStore';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
@@ -69,6 +70,16 @@ export function ImageGallery() {
           <div className="mt-2">
             <P2pGuard permission="upload_data">
               <VideoUploader />
+            </P2pGuard>
+          </div>
+        )}
+        {/* DICOM y NIfTI van aparte de la subida normal: aquí se deidentifica, se
+            seudonimiza el paciente y se ventanea. Mezclarlo haría que alguien
+            arrastrara un DICOM esperando que pasara lo de siempre. */}
+        {isCanvasImageProject && (
+          <div className="mt-2">
+            <P2pGuard permission="upload_data">
+              <MedicalUploader />
             </P2pGuard>
           </div>
         )}

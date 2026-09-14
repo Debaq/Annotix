@@ -165,6 +165,11 @@ pub struct ImageResponse {
     pub download_status: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub predictions: Vec<PredictionEntry>,
+    /// De dónde salió, cuando salió de un archivo médico. Su presencia es lo que
+    /// hace aparecer el control de ventana en el canvas: una foto normal no tiene
+    /// rango que repartir.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub medical: Option<crate::store::project_file::MedicalInfo>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -196,6 +201,7 @@ fn entry_to_response(entry: &ImageEntry, project_id: &str) -> ImageResponse {
         lock_expires: entry.lock_expires,
         download_status: entry.download_status.clone(),
         predictions: entry.predictions.clone(),
+        medical: entry.medical.clone(),
     }
 }
 
@@ -461,6 +467,7 @@ impl AppState {
             predictions: vec![],
             rejected: vec![],
             readings: vec![],
+            medical: None,
         };
 
         Ok((id, entry))
@@ -573,6 +580,7 @@ impl AppState {
                     predictions: vec![],
                     rejected: vec![],
                     readings: vec![],
+                    medical: None,
                 })
             })
             .collect();
@@ -675,6 +683,7 @@ impl AppState {
             predictions: vec![],
             rejected: vec![],
             readings: vec![],
+            medical: None,
         };
 
         self.with_project_mut(project_id, |pf| {
@@ -877,20 +886,17 @@ impl AppState {
                 total: img.map(|i| i.readings.len()).unwrap_or(0),
                 submitted: img.map(|i| i.submitted_readings()).unwrap_or(0),
                 mine_submitted: match (img, yo.as_deref()) {
-                    (Some(i), Some(a)) => {
-                        i.reading_of(a).map(|r| r.status == "submitted").unwrap_or(false)
-                    }
+                    (Some(i), Some(a)) => i
+                        .reading_of(a)
+                        .map(|r| r.status == "submitted")
+                        .unwrap_or(false),
                     _ => false,
                 },
                 authors: img
                     .map(|i| {
                         i.readings
                             .iter()
-                            .map(|r| {
-                                r.author_name
-                                    .clone()
-                                    .unwrap_or_else(|| r.author_id.clone())
-                            })
+                            .map(|r| r.author_name.clone().unwrap_or_else(|| r.author_id.clone()))
                             .collect()
                     })
                     .unwrap_or_default(),

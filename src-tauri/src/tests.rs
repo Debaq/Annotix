@@ -132,6 +132,7 @@ fn image_entry(name: &str, file: &str, w: u32, h: u32, anns: Vec<AnnotationEntry
         predictions: vec![],
         rejected: vec![],
         readings: vec![],
+        medical: None,
     }
 }
 

@@ -12,6 +12,7 @@ pub mod image_commands;
 pub mod image_processing_commands;
 pub mod import_commands;
 pub mod inference_commands;
+pub mod medical_commands;
 pub mod p2p_commands;
 pub mod pdf_commands;
 pub mod pixel_commands;

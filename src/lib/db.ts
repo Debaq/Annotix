@@ -356,6 +356,14 @@ export interface AnnotixImage {
    */
   isBackground?: boolean;
   downloadStatus?: string;
+  /**
+   * De dónde salió, cuando salió de un DICOM o un NIfTI: modalidad, equipo,
+   * espaciado de píxel y la ventana con la que se renderizó.
+   *
+   * Su presencia es lo que decide si la imagen se puede volver a ventanear: una
+   * foto normal no tiene rango que repartir.
+   */
+  medical?: import('@/features/medical/types').MedicalInfo | null;
 }
 
 // ============================================================================

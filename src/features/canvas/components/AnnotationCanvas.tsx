@@ -5,6 +5,7 @@ import type Konva from 'konva';
 import type { KonvaEventObject } from 'konva/lib/Node';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { useCurrentImage } from '../../gallery/hooks/useCurrentImage';
+import { WindowControl } from '@/features/medical/components/WindowControl';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
 import { useAnnotations, useAnnotationStore, captureSaveContext, invalidateSaveContext } from '../hooks/useAnnotations';
 import { useUIStore } from '../../core/store/uiStore';
@@ -1378,6 +1379,18 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
           </div>
         )}
       </div>
+
+      {/* Ventana de la imagen médica. Sólo aparece si la imagen vino de un DICOM
+          o un NIfTI: en una foto normal no hay rango que ventanear. */}
+      {image?.medical && project?.id && image.id && (
+        <div className="annotix-floating" style={{ top: '20px', right: '20px', width: '220px' }}>
+          <WindowControl
+            projectId={project.id}
+            imageId={image.id}
+            medical={image.medical}
+          />
+        </div>
+      )}
 
       {/* Image Navigation (Circular buttons) - hidden during video playback (timeline handles navigation) */}
       {!videoFrameInfo && (

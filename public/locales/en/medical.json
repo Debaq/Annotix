@@ -1,0 +1,43 @@
+{
+  "import": {
+    "title": "Import DICOM / NIfTI",
+    "pick": "Choose files",
+    "axis": "Slice axis (NIfTI)",
+    "axial": "Axial",
+    "coronal": "Coronal",
+    "sagital": "Sagittal",
+    "threshold": "Minimum signal per slice",
+    "thresholdHint": "Slices that are almost all air do not come in: they would be black images that training counts as pure background.",
+    "importing": "Importing…",
+    "start": "Import"
+  },
+  "report": {
+    "title": "What came in and what was stripped",
+    "files": "Files read",
+    "images": "Images created",
+    "skipped": "Empty slices skipped",
+    "subjects": "Subjects (pseudonymised)",
+    "removed": "Identifiers removed ({{count}})",
+    "privateRemoved": "Plus {{count}} vendor-private tags, discarded wholesale.",
+    "kept": "Acquisition metadata kept",
+    "reduced": "Kept with reduction: {{tags}} — age is in whole years, not the date of birth.",
+    "notCovered": "What this de-identification does NOT cover",
+    "failed": "Files that could not be read ({{count}})"
+  },
+  "window": {
+    "title": "Window",
+    "center": "Center",
+    "width": "Width",
+    "fromFile": "The window came from the file: it is what the scanner considered right for this acquisition.",
+    "computed": "Window computed from the image itself: the file carried none.",
+    "changesImage": "Changing the window changes the image being annotated, not just how it looks. A mark made under one window may not make sense under another.",
+    "preset": {
+      "pulmon": "Lung",
+      "mediastino": "Mediastinum",
+      "hueso": "Bone",
+      "cerebro": "Brain",
+      "higado": "Liver",
+      "angio": "Angio"
+    }
+  }
+}

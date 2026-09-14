@@ -63,6 +63,11 @@ chacha20poly1305 = "0.10"
 # dependencias (transitivas de jsonwebtoken/ort), no agregan compilación nueva.
 sha2 = "0.10"
 hex = "0.4"
+dicom-object = "0.10"
+dicom-dictionary-std = "0.10"
+dicom-pixeldata = { version = "0.10", features = ["image"] }
+nifti = "0.18"
+dicom-core = "0.10"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 webkit2gtk = "2.0"

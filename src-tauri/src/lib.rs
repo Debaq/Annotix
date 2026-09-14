@@ -7,6 +7,7 @@ mod export;
 mod hashchain;
 mod import;
 mod inference;
+mod medical;
 mod net;
 mod p2p;
 mod serve;
@@ -295,6 +296,9 @@ pub fn run() {
             commands::project_commands::save_classes,
             commands::project_commands::delete_project,
             commands::project_commands::set_project_folder,
+            commands::medical_commands::import_medical_files,
+            commands::medical_commands::rewindow_image,
+            commands::medical_commands::get_window_presets,
             commands::contract_commands::build_model_contract,
             commands::contract_commands::write_model_contract,
             commands::contract_commands::get_study_protocol,
