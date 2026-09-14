@@ -219,6 +219,35 @@ pub struct ImageEntry {
     pub download_status: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub predictions: Vec<PredictionEntry>,
+    /// Etiquetas que no trazó una persona y que alguien borró tras verlas.
+    ///
+    /// El rechazo dice del modelo tanto como la aceptación —un modelo cuyas
+    /// sugerencias se borran nueve de cada diez veces no está pre-anotando, está
+    /// dando trabajo—, y borrando la etiqueta esa mitad del dato se perdía.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub rejected: Vec<RejectedAnnotation>,
+}
+
+/// Constancia de una etiqueta rechazada. **Sin la geometría**: la pregunta que
+/// responde es cuánto se rechazó y de qué modelo venía, no cómo era la caja.
+/// Guardar el `data` metería una máscara en base64 por cada rechazo y engordaría
+/// `project.json` a cambio de nada que nadie vaya a leer.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RejectedAnnotation {
+    pub id: String,
+    #[serde(rename = "type")]
+    pub annotation_type: String,
+    pub class_id: i64,
+    /// Procedencia que tenía: `model`, `track` o `import`.
+    pub origin: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub model_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub confidence: Option<f64>,
+    pub rejected_at: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rejected_by: Option<String>,
 }
 
 fn is_false(v: &bool) -> bool {
@@ -278,6 +307,11 @@ pub struct AnnotationEntry {
     /// `accepted` y `corrected` son distintos a propósito: aceptar una sugerencia
     /// sin tocarla y corregirle la geometría dicen cosas distintas sobre el
     /// modelo que la propuso, y el contrato de modelo las reporta por separado.
+    ///
+    /// `rejected` no lo escribe el guardado y no es un olvido: una etiqueta
+    /// rechazada deja de estar en el corpus, así que su constancia vive en
+    /// `ImageEntry::rejected` y no como estado de una etiqueta viva. El valor se
+    /// sigue admitiendo porque una importación puede traerlo.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub review: Option<String>,
     #[serde(

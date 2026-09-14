@@ -129,6 +129,7 @@ fn image_entry(name: &str, file: &str, w: u32, h: u32, anns: Vec<AnnotationEntry
         lock_expires: None,
         download_status: None,
         predictions: vec![],
+            rejected: vec![],
     }
 }
 
@@ -3595,6 +3596,69 @@ fn una_anotacion_nueva_sin_origen_declarado_es_manual() {
     let fusionadas = fusionar(&[], &[nueva], 200.0);
     assert_eq!(fusionadas[0].origin.as_deref(), Some("manual"));
     assert_eq!(fusionadas[0].created_at, Some(200.0));
+}
+
+/// Borrar una caja que propuso un modelo es rechazarla, y eso dice del modelo
+/// tanto como aceptarla. Con la etiqueta borrada esa mitad del dato se perdía.
+#[test]
+fn borrar_una_caja_del_modelo_deja_constancia_del_rechazo() {
+    use crate::store::images::aplicar_guardado;
+
+    let mut previa = bbox_ann(0, 10.0, 20.0, 50.0, 40.0);
+    previa.id = "a1".into();
+    previa.origin = Some("model".into());
+    previa.model_id = Some("yolo11n".into());
+    previa.confidence = Some(0.42);
+
+    let (vivas, rechazadas) = aplicar_guardado(&[previa], &[], &[], 200.0);
+    assert!(vivas.is_empty());
+    assert_eq!(rechazadas.len(), 1);
+    assert_eq!(rechazadas[0].id, "a1");
+    assert_eq!(rechazadas[0].origin, "model");
+    assert_eq!(rechazadas[0].model_id.as_deref(), Some("yolo11n"));
+    assert_eq!(rechazadas[0].confidence, Some(0.42));
+    assert_eq!(rechazadas[0].rejected_at, 200.0);
+}
+
+/// Borrar lo que uno mismo trazó es seguir anotando. Y una etiqueta de
+/// procedencia desconocida no permite afirmar que alguien rechazara la sugerencia
+/// de un modelo: es lo mismo que la v5 se negó a adivinar.
+#[test]
+fn borrar_una_caja_propia_o_desconocida_no_es_un_rechazo() {
+    use crate::store::images::aplicar_guardado;
+
+    let mut manual = bbox_ann(0, 1.0, 1.0, 5.0, 5.0);
+    manual.id = "m".into();
+    manual.origin = Some("manual".into());
+
+    let mut vieja = bbox_ann(0, 1.0, 1.0, 5.0, 5.0);
+    vieja.id = "v".into();
+    vieja.origin = None; // `source: "user"` legado → `unknown`
+
+    let (_, rechazadas) = aplicar_guardado(&[manual, vieja], &[], &[], 200.0);
+    assert!(rechazadas.is_empty());
+}
+
+/// El historial describe lo que hay ahora: una etiqueta que vuelve —deshacer, o
+/// una reconsolidación que la repone— deja de contar como rechazada.
+#[test]
+fn una_caja_que_vuelve_deja_de_estar_rechazada() {
+    use crate::store::images::aplicar_guardado;
+
+    let mut del_modelo = bbox_ann(0, 10.0, 20.0, 50.0, 40.0);
+    del_modelo.id = "a1".into();
+    del_modelo.origin = Some("model".into());
+    del_modelo.model_id = Some("yolo11n".into());
+
+    let (_, rechazadas) = aplicar_guardado(&[del_modelo.clone()], &[], &[], 200.0);
+    assert_eq!(rechazadas.len(), 1, "el borrado no dejó constancia");
+
+    let (vivas, rechazadas) = aplicar_guardado(&[], &rechazadas, &[del_modelo], 300.0);
+    assert_eq!(vivas.len(), 1);
+    assert!(
+        rechazadas.is_empty(),
+        "la caja volvió y sigue contando como rechazada"
+    );
 }
 
 /// Lo revisado en video deja de vivir en memoria de sesión: al consolidar, un

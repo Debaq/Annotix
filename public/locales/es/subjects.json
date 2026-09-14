@@ -33,5 +33,6 @@
     "unknown": "Origen desconocido"
   },
   "modelBreakdown": "De lo sugerido por un modelo ({{pct}}% del corpus): {{accepted}} aceptadas sin cambios y {{corrected}} corregidas.",
-  "unknownNote": "{{count}} etiquetas son anteriores al registro de procedencia: no se puede afirmar si se trazaron a mano o se aceptaron de un modelo."
+  "unknownNote": "{{count}} etiquetas son anteriores al registro de procedencia: no se puede afirmar si se trazaron a mano o se aceptaron de un modelo.",
+  "rejectedNote": "{{count}} sugerencias de modelo se rechazaron ({{pct}} % de todo lo que el modelo propuso). No están en el corpus, pero sin ellas la tasa de acierto se calcularía sólo sobre lo que sobrevivió."
 }

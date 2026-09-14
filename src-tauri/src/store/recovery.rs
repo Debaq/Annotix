@@ -354,6 +354,7 @@ fn rebuild_project_file(dir: &Path, id: &str) -> Result<ProjectFile, String> {
                 lock_expires: None,
                 download_status: None,
                 predictions: vec![],
+            rejected: vec![],
             });
         }
     }

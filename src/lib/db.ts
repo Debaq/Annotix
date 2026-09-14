@@ -91,6 +91,23 @@ export interface Annotation {
   confidence?: number;         // Solo para source="ai"
   modelClassName?: string;     // Nombre de clase del modelo (solo AI)
   createdBy?: string;          // Nombre del peer que la creó (solo sesiones P2P)
+
+  // ─── Procedencia ──────────────────────────────────────────────────────────
+  // De dónde salió la etiqueta y qué pasó con ella. `source` se queda por
+  // compatibilidad pero es ambiguo: su valor "user" mezcla lo trazado a mano con
+  // lo que un modelo sugirió y alguien aceptó sin tocar. El backend rellena estos
+  // campos y los conserva cuando el cliente no los manda
+  // (`store/images.rs → fusionar_procedencia`).
+  /** `manual` | `model` | `track` | `import` | `adjudicated` | `unknown`. */
+  origin?: string;
+  /** Qué modelo la sugirió, cuando `origin` es `model`. */
+  modelId?: string;
+  /** `unreviewed` | `reviewed` | `corrected` | `accepted` | `rejected`. */
+  review?: string;
+  reviewedBy?: string;
+  reviewedAt?: number;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export type AnnotationData =

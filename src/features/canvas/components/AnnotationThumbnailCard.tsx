@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Annotation, BBoxData, MaskData, PolygonData, KeypointsData, LandmarksData, OBBData } from '@/lib/db';
 import { cn } from '@/lib/utils';
 import { skeletonPresets } from '../data/skeletonPresets';
+import { AnnotationProvenance } from './AnnotationProvenance';
 
 interface AnnotationThumbnailCardProps {
   annotation: Annotation;
@@ -13,6 +14,8 @@ interface AnnotationThumbnailCardProps {
   isSelected: boolean;
   /** Si true, oculta el badge de tipo (todos son iguales) */
   hideTypeBadge?: boolean;
+  /** Nombre del modelo que sugirió la anotación, para la ficha de procedencia. */
+  modelName?: string;
   onSelect: () => void;
   onDelete: () => void;
 }
@@ -25,6 +28,7 @@ export const AnnotationThumbnailCard: React.FC<AnnotationThumbnailCardProps> = (
   classShortcut: _classShortcut,
   isSelected,
   hideTypeBadge = false,
+  modelName,
   onSelect,
   onDelete,
 }) => {
@@ -384,6 +388,9 @@ export const AnnotationThumbnailCard: React.FC<AnnotationThumbnailCardProps> = (
             )}
           </div>
         </div>
+
+        {/* De dónde salió esta etiqueta */}
+        <AnnotationProvenance annotation={annotation} modelName={modelName} />
 
         {/* Delete button */}
         <button

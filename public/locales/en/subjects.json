@@ -33,5 +33,6 @@
     "unknown": "Unknown origin"
   },
   "modelBreakdown": "Of what a model suggested ({{pct}}% of the corpus): {{accepted}} accepted unchanged and {{corrected}} corrected.",
-  "unknownNote": "{{count}} labels predate provenance tracking: it cannot be said whether they were drawn by hand or accepted from a model."
+  "unknownNote": "{{count}} labels predate provenance tracking: it cannot be said whether they were drawn by hand or accepted from a model.",
+  "rejectedNote": "{{count}} model suggestions were rejected ({{pct}}% of everything the model proposed). They are not part of the corpus, but without them the hit rate would be computed only over what survived."
 }

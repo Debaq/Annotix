@@ -5,5 +5,34 @@
   "delete": "Delete",
   "confirmDelete": "Are you sure you want to delete this annotation?",
   "expand": "Expand",
-  "collapse": "Collapse"
+  "collapse": "Collapse",
+  "provenance": {
+    "title": "Provenance",
+    "origin": "Origin",
+    "origins": {
+      "manual": "drawn by hand",
+      "model": "suggested by a model",
+      "track": "consolidated from a track",
+      "import": "imported",
+      "adjudicated": "adjudicated",
+      "unknown": "unknown"
+    },
+    "model": "Model",
+    "modelGone": "the model is no longer in the project",
+    "confidence": "Confidence",
+    "review": "Review",
+    "reviews": {
+      "unreviewed": "unreviewed",
+      "reviewed": "reviewed",
+      "corrected": "corrected",
+      "accepted": "accepted unchanged",
+      "rejected": "rejected"
+    },
+    "author": "Author",
+    "reviewedBy": "Reviewed by",
+    "created": "Created",
+    "updated": "Edited",
+    "reviewed": "Reviewed on",
+    "unknownNote": "It predates provenance tracking: there is no way to tell whether a person drew it or a model proposed it."
+  }
 }

@@ -1,6 +1,8 @@
 use std::path::{Path, PathBuf};
 
-use crate::store::project_file::{AnnotationEntry, ImageEntry, PredictionEntry};
+use crate::store::project_file::{
+    AnnotationEntry, ImageEntry, PredictionEntry, RejectedAnnotation,
+};
 use crate::store::safe_path::sanitize_filename;
 use crate::store::state::AppState;
 
@@ -266,6 +268,61 @@ pub fn fusionar_procedencia(
         .collect()
 }
 
+/// Qué etiquetas desaparecieron en este guardado y hay que anotar como rechazadas.
+///
+/// Sólo lo que no trazó una persona: borrar algo propio es seguir anotando, y una
+/// etiqueta de procedencia desconocida no permite afirmar que alguien rechazara la
+/// sugerencia de un modelo —eso es lo que la v5 se negó a adivinar—.
+///
+/// El rechazo importa tanto como la aceptación: un modelo cuyas sugerencias se
+/// borran nueve de cada diez veces no está pre-anotando, está dando trabajo, y
+/// con la etiqueta borrada esa mitad del dato se perdía sin dejar rastro.
+fn recoger_rechazadas(
+    previas: &[AnnotationEntry],
+    entrantes: &[AnnotationEntry],
+    now: f64,
+) -> Vec<RejectedAnnotation> {
+    previas
+        .iter()
+        .filter(|p| !entrantes.iter().any(|e| e.id == p.id))
+        .filter(|p| matches!(p.origen(), "model" | "track" | "import"))
+        .map(|p| RejectedAnnotation {
+            id: p.id.clone(),
+            annotation_type: p.annotation_type.clone(),
+            class_id: p.class_id,
+            origin: p.origen().to_string(),
+            model_id: p.model_id.clone(),
+            confidence: p.confidence,
+            rejected_at: now,
+            rejected_by: p.created_by.clone(),
+        })
+        .collect()
+}
+
+/// Lo que queda tras guardar: las anotaciones fusionadas y el historial de
+/// rechazos actualizado.
+///
+/// Va en una función aparte para poder probar la regla sin montar un proyecto en
+/// disco: lo que importa verificar es qué cuenta como rechazo y cuándo deja de
+/// contar, no el almacenamiento.
+pub fn aplicar_guardado(
+    previas: &[AnnotationEntry],
+    rechazos_previos: &[RejectedAnnotation],
+    entrantes: &[AnnotationEntry],
+    now: f64,
+) -> (Vec<AnnotationEntry>, Vec<RejectedAnnotation>) {
+    let mut rechazos: Vec<RejectedAnnotation> = rechazos_previos
+        .iter()
+        // Una etiqueta que vuelve —deshacer, o una reconsolidación que la repone—
+        // deja de estar rechazada: el historial describe lo que hay ahora, no todo
+        // lo que alguna vez se borró.
+        .filter(|r| !entrantes.iter().any(|a| a.id == r.id))
+        .cloned()
+        .collect();
+    rechazos.extend(recoger_rechazadas(previas, entrantes, now));
+    (fusionar_procedencia(previas, entrantes, now), rechazos)
+}
+
 /// Imagen a escribir en disco: bytes, dimensiones ya conocidas y, si viene de
 /// un video, de qué fotograma sale.
 pub struct NewImage<'a> {
@@ -329,6 +386,7 @@ impl AppState {
             lock_expires: None,
             download_status: None,
             predictions: vec![],
+            rejected: vec![],
         };
 
         Ok((id, entry))
@@ -439,6 +497,7 @@ impl AppState {
                     lock_expires: None,
                     download_status: None,
                     predictions: vec![],
+            rejected: vec![],
                 })
             })
             .collect();
@@ -539,6 +598,7 @@ impl AppState {
             lock_expires: None,
             download_status: None,
             predictions: vec![],
+            rejected: vec![],
         };
 
         self.with_project_mut(project_id, |pf| {
@@ -637,7 +697,10 @@ impl AppState {
         let now = js_timestamp();
         self.with_project_mut(project_id, |pf| {
             if let Some(img) = pf.images.iter_mut().find(|i| i.id == image_id) {
-                img.annotations = fusionar_procedencia(&img.annotations, annotations, now);
+                let (fusionadas, rechazos) =
+                    aplicar_guardado(&img.annotations, &img.rejected, annotations, now);
+                img.annotations = fusionadas;
+                img.rejected = rechazos;
                 img.status = if annotations.is_empty() {
                     "pending".to_string()
                 } else {

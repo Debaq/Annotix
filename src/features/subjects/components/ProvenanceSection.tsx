@@ -68,6 +68,18 @@ export function ProvenanceSection({ summary }: Props) {
         </p>
       )}
 
+      {/* Lo rechazado no está en el corpus y por eso no sale en las barras de
+          arriba. Va igual: sin ello la tasa de acierto del modelo se calcula sólo
+          sobre lo que sobrevivió, y sale siempre buena. */}
+      {summary.rejected > 0 && (
+        <p className="text-[11px] text-muted-foreground">
+          {t('subjects.rejectedNote', {
+            count: summary.rejected,
+            pct: pct(summary.rejected, summary.rejected + delModelo),
+          })}
+        </p>
+      )}
+
       {summary.unknown > 0 && (
         <p className="text-[11px] text-amber-600">
           {t('subjects.unknownNote', { count: summary.unknown })}

@@ -30,4 +30,10 @@ export interface ProvenanceSummary {
   total: number;
   /** Etiquetas anteriores al registro de procedencia. */
   unknown: number;
+  /**
+   * Sugerencias de modelo que una persona refutó. No entran en `total` porque no
+   * son corpus: sin ellas la tasa de aceptación se calcula sólo sobre lo que
+   * sobrevivió y sale siempre buena.
+   */
+  rejected: number;
 }

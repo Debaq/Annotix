@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
 import { useAnnotations } from '../hooks/useAnnotations';
 import { AnnotationThumbnailCard } from './AnnotationThumbnailCard';
+import { inferenceService } from '@/features/inference/services/inferenceService';
 import { cn } from '@/lib/utils';
 import { CLASS_SHORTCUTS } from '@/features/core/constants';
 import {
@@ -29,6 +30,26 @@ export const AnnotationsBar: React.FC<AnnotationsBarProps> = ({ image }) => {
   const [filterOpen, setFilterOpen] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // Nombre del modelo que sugirió cada etiqueta, para la ficha de procedencia. Un
+  // `modelId` es un UUID y no le dice nada a nadie; se resuelve una vez por
+  // proyecto y sólo si alguna etiqueta de esta imagen viene de un modelo.
+  const [modelNames, setModelNames] = useState<Record<string, string>>({});
+  const hayModelos = annotations.some((a) => a.modelId);
+  useEffect(() => {
+    if (!hayModelos || !project?.id) return;
+    let vivo = true;
+    inferenceService
+      .listModels(project.id)
+      .then((models) => {
+        if (!vivo) return;
+        setModelNames(Object.fromEntries(models.map((m) => [m.id, m.name])));
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, [hayModelos, project?.id]);
 
   const presentClassIds = useMemo(() => {
     const s = new Set<number>();
@@ -246,6 +267,7 @@ export const AnnotationsBar: React.FC<AnnotationsBarProps> = ({ image }) => {
                       classShortcut={classShortcut}
                       isSelected={selectedAnnotationIds.has(ann.id)}
                       hideTypeBadge={hideTypeBadge}
+                      modelName={ann.modelId ? modelNames[ann.modelId] : undefined}
                       onSelect={() => selectAnnotation(ann.id)}
                       onDelete={() => deleteAnnotation(ann.id)}
                     />

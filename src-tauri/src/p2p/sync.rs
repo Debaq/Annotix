@@ -597,6 +597,7 @@ pub async fn doc_to_project_metadata(
                 lock_expires: None,
                 download_status: Some("pending".to_string()),
                 predictions: vec![],
+                rejected: vec![],
             });
         }
     }
@@ -1702,6 +1703,7 @@ pub fn start_doc_watcher(
                                     lock_expires: None,
                                     download_status: Some("pending".to_string()),
                                     predictions: vec![],
+                                    rejected: vec![],
                                 };
 
                                 let _ = app_state.with_project_mut(&pid, |pf| {

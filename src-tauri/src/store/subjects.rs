@@ -381,6 +381,12 @@ pub struct ProvenanceSummary {
     /// no son un origen más: son la parte del corpus sobre la que no se puede
     /// afirmar nada.
     pub unknown: usize,
+    /// Sugerencias de modelo que una persona refutó: etiquetas borradas tras
+    /// verlas, más predicciones rechazadas en la cola. No entran en `total`
+    /// porque no son corpus —no están etiquetando nada—, pero sin ellas la tasa
+    /// de aceptación del modelo se calcula sólo sobre lo que sobrevivió y sale
+    /// siempre buena.
+    pub rejected: usize,
 }
 
 impl AppState {
@@ -389,6 +395,12 @@ impl AppState {
         self.with_project(project_id, |pf| {
             let mut r = ProvenanceSummary::default();
             for img in &pf.images {
+                r.rejected += img.rejected.len()
+                    + img
+                        .predictions
+                        .iter()
+                        .filter(|p| p.status == "rejected")
+                        .count();
                 for ann in &img.annotations {
                     r.total += 1;
                     let origen = ann.origen().to_string();
@@ -403,6 +415,9 @@ impl AppState {
                         *r.by_model.entry(m.to_string()).or_insert(0) += 1;
                     }
                 }
+            }
+            if r.rejected > 0 {
+                *r.by_review.entry("rejected".to_string()).or_insert(0) += r.rejected;
             }
             r
         })

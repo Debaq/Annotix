@@ -5,5 +5,34 @@
   "delete": "Eliminar",
   "confirmDelete": "¿Estás seguro de que deseas eliminar esta anotación?",
   "expand": "Expandir",
-  "collapse": "Contraer"
+  "collapse": "Contraer",
+  "provenance": {
+    "title": "Procedencia",
+    "origin": "Origen",
+    "origins": {
+      "manual": "trazada a mano",
+      "model": "sugerida por un modelo",
+      "track": "consolidada de un track",
+      "import": "importada",
+      "adjudicated": "adjudicada",
+      "unknown": "desconocida"
+    },
+    "model": "Modelo",
+    "modelGone": "el modelo ya no está en el proyecto",
+    "confidence": "Confianza",
+    "review": "Revisión",
+    "reviews": {
+      "unreviewed": "sin revisar",
+      "reviewed": "revisada",
+      "corrected": "corregida",
+      "accepted": "aceptada sin cambios",
+      "rejected": "rechazada"
+    },
+    "author": "Autor",
+    "reviewedBy": "Revisada por",
+    "created": "Creada",
+    "updated": "Editada",
+    "reviewed": "Revisada el",
+    "unknownNote": "Es anterior al registro de procedencia: no se puede saber si la trazó una persona o si la propuso un modelo."
+  }
 }
