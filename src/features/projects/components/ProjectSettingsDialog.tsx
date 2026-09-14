@@ -2,6 +2,7 @@ import { ReactNode, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useProjects } from '../hooks/useProjects';
 import { projectService } from '../services/projectService';
+import { EncryptionPanel } from './EncryptionPanel';
 import { ClassManager } from './ClassManager';
 import { Button } from '@/components/ui/button';
 import {
@@ -229,6 +230,9 @@ export function ProjectSettingsDialog({ project, trigger }: ProjectSettingsDialo
               )}
             </div>
           )}
+          {/* Cifrado en reposo: va con lo demás del proyecto porque es una
+              propiedad suya, no una preferencia de la aplicación. */}
+          {project.id && <EncryptionPanel projectId={project.id} />}
         </div>
 
         <DialogFooter>

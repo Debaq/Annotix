@@ -6,6 +6,8 @@ import { confirm } from '@/lib/dialogs';
 import { useUIStore } from '../../core/store/uiStore';
 import { cn } from '@/lib/utils';
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
+// `thumbnailUrl` se renombra: el componente ya tiene un estado con ese nombre.
+import { needsDecryptedBytes, thumbnailUrl as cargarMiniatura } from '@/lib/projectEncryption';
 import { imageService } from '../services/imageService';
 import { ImageLockIndicator } from '@/features/p2p/components/ImageLockIndicator';
 import { useP2pStore } from '@/features/p2p/store/p2pStore';
@@ -51,6 +53,8 @@ export function ImageCard({ image }: ImageCardProps) {
     if (!inView || !image.id || !projectId) return;
 
     let cancelled = false;
+    let soltar: (() => void) | null = null;
+
     const trySetUrl = (path: string) => {
       const url = convertFileSrc(path);
       const testImg = new window.Image();
@@ -64,20 +68,43 @@ export function ImageCard({ image }: ImageCardProps) {
       testImg.src = url;
     };
 
-    invoke<string>('get_thumbnail_path', { projectId, imageId: image.id })
-      .then((p) => {
-        if (!cancelled) trySetUrl(p);
-      })
-      .catch(() => {
-        invoke<string>('get_image_file_path', { projectId, id: image.id })
+    // En un proyecto cifrado el asset protocol devuelve ruido, no una imagen:
+    // los bytes hay que pedirlos descifrados. En uno normal se sigue usando el
+    // camino de siempre, que no copia los píxeles por el puente.
+    needsDecryptedBytes(projectId)
+      .then(async (cifrado) => {
+        if (cancelled) return;
+        if (cifrado) {
+          const res = await cargarMiniatura(projectId, image.id!);
+          if (cancelled) {
+            res?.revoke();
+            return;
+          }
+          if (res) {
+            soltar = res.revoke;
+            setThumbnailUrl(res.url);
+          }
+          return;
+        }
+        invoke<string>('get_thumbnail_path', { projectId, imageId: image.id })
           .then((p) => {
             if (!cancelled) trySetUrl(p);
           })
-          .catch(() => {});
-      });
+          .catch(() => {
+            invoke<string>('get_image_file_path', { projectId, id: image.id })
+              .then((p) => {
+                if (!cancelled) trySetUrl(p);
+              })
+              .catch(() => {});
+          });
+      })
+      .catch(() => {});
 
     return () => {
       cancelled = true;
+      // Una URL de blob que nadie revoca es memoria que no vuelve, y una
+      // galería crea cientos.
+      soltar?.();
     };
   }, [inView, image.id, image.blobPath, projectId]);
 

@@ -4,6 +4,7 @@ import { Stage, Layer, Image as KonvaImage, Rect, Transformer, Line, Circle, Gro
 import type Konva from 'konva';
 import type { KonvaEventObject } from 'konva/lib/Node';
 import { convertFileSrc } from '@tauri-apps/api/core';
+import { needsDecryptedBytes } from '@/lib/projectEncryption';
 import { useCurrentImage } from '../../gallery/hooks/useCurrentImage';
 import { WindowControl } from '@/features/medical/components/WindowControl';
 import { useCurrentProject } from '../../projects/hooks/useCurrentProject';
@@ -504,7 +505,18 @@ export function AnnotationCanvas({ overrideAnnotations, videoFrameInfo }: Annota
       }).catch(err => console.error('Failed to load image bytes:', err));
     };
 
-    loadViaAssetProtocol();
+    // En un proyecto cifrado, el asset protocol devolvería los bytes cifrados y
+    // la imagen fallaría al decodificar; el camino de bytes ya existía como
+    // recurso para paths raros de Windows, y aquí es el camino bueno. Se
+    // pregunta antes en vez de dejar que falle: un error de decodificación por
+    // imagen es ruido en la consola y una carga tirada a la basura.
+    needsDecryptedBytes(loadProjectId)
+      .then((cifrado) => {
+        if (cancelled) return;
+        if (cifrado) loadViaBytes();
+        else loadViaAssetProtocol();
+      })
+      .catch(() => loadViaAssetProtocol());
 
     return () => {
       cancelled = true;

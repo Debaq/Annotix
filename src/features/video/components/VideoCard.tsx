@@ -6,6 +6,8 @@ import { Video } from '@/lib/db';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '../../core/store/uiStore';
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
+// `thumbnailUrl` se renombra: el componente ya tiene un estado con ese nombre.
+import { needsDecryptedBytes, thumbnailUrl as cargarMiniatura } from '@/lib/projectEncryption';
 import { videoService } from '../services/videoService';
 import { useP2pStore } from '@/features/p2p/store/p2pStore';
 import { useP2pPermission } from '@/features/p2p/hooks/useP2pCanEdit';
@@ -40,10 +42,22 @@ export function VideoCard({ video }: VideoCardProps) {
     if (!projectId || !video.id || !canOpen) return;
     if (video.totalFrames === 0) return;
 
-    videoService.listFrames(projectId, video.id).then((frames) => {
+    let soltar: (() => void) | null = null;
+    videoService.listFrames(projectId, video.id).then(async (frames) => {
       if (frames.length === 0) return;
       const firstFrame = frames[0];
       if (!firstFrame.id) return;
+
+      // En un proyecto cifrado los píxeles vienen descifrados de Rust; el
+      // asset protocol sólo sacaría ruido.
+      if (await needsDecryptedBytes(projectId)) {
+        const res = await cargarMiniatura(projectId, firstFrame.id);
+        if (res) {
+          soltar = res.revoke;
+          setThumbnailUrl(res.url);
+        }
+        return;
+      }
 
       invoke<string>('get_thumbnail_path', { projectId, imageId: firstFrame.id })
         .then((path) => setThumbnailUrl(convertFileSrc(path)))
@@ -52,6 +66,9 @@ export function VideoCard({ video }: VideoCardProps) {
             .then((path) => setThumbnailUrl(convertFileSrc(path)));
         });
     });
+    return () => {
+      soltar?.();
+    };
   }, [projectId, video.id, video.status, video.totalFrames, canOpen]);
 
   // Contar frames únicos con keyframes (marcados)
