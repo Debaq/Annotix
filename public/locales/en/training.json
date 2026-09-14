@@ -941,8 +941,12 @@
       "class_absent_in_test": "Class “{{class}}” does not appear in test: it is not evaluated, however good the overall metric looks.",
       "class_absent_in_val": "Class “{{class}}” does not appear in validation: its progress cannot be followed during training.",
       "single_group": "The whole corpus is a single group: there is no real split and validation measures on what it trains on.",
-      "subject_partially_declared": "Some samples have a subject and some do not: half groups by subject and half by image."
-    }
+      "subject_partially_declared": "Some samples have a subject and some do not: half groups by subject and half by image.",
+      "test_required_absent": "This project declares that its training runs must have a test set, and this one has none: the metrics are validation metrics.",
+      "unit_unavailable": "The split was declared by subject and no sample carries one: it was grouped by whatever was there, and no figure shows it."
+    },
+    "seed": "Seed {{seed}}",
+    "declared": "declared unit: {{unit}}"
   },
   "classes": {
     "title": "Classes to train",
@@ -951,5 +955,31 @@
     "selectNone": "None",
     "noneSelected": "Pick at least one class to train.",
     "summary": "{{selected}} of {{total}} classes. Unselected ones are dropped: their annotations never reach the dataset."
+  },
+  "splitPolicy": {
+    "title": "Split policy",
+    "intro": "How this project's corpus is split. None of this blocks training: whatever is not met shows up as a warning in the split report.",
+    "unitLabel": "Grouping unit",
+    "unit": {
+      "auto": "automatic",
+      "subject": "subject",
+      "video": "video",
+      "item": "sample"
+    },
+    "unitDesc": {
+      "auto": "The usual cascade: subject if there is one, otherwise video, otherwise each image on its own.",
+      "subject": "Groups by subject and warns about samples that carry none, instead of letting them through in silence.",
+      "video": "Groups by video and ignores the subject. For corpora where the subject is not the independent unit.",
+      "item": "Every sample on its own. Giving up grouping on purpose, not by oversight."
+    },
+    "requireTest": "Require a test set",
+    "requireTestDesc": "Training without a test set is still allowed; the report will say the declared policy was not met.",
+    "testShort": "with test",
+    "recommended": "Recommended fractions (val / test)",
+    "seed": "Seed",
+    "seedDerived": "derived from the project",
+    "seedDesc": "Declaring it lets the split be reproduced outside the app.",
+    "differs": "This run does not use the recommended fractions ({{val}} / {{test}}).",
+    "apply": "Apply"
   }
 }

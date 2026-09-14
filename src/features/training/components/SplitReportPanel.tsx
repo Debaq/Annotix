@@ -68,6 +68,19 @@ export function SplitReportPanel({ report }: Props) {
         )}
       </div>
 
+      {/* La semilla y la unidad declarada son lo que permite repetir este reparto
+          fuera de la app: sin ellas el informe describe un sorteo irrepetible. */}
+      <p className="text-[11px] text-muted-foreground font-mono">
+        {t('training.splitReport.seed', { seed: report.seed })}
+        {report.declaredUnit
+          ? ` · ${t('training.splitReport.declared', {
+              unit: t(`training.splitReport.unit.${report.declaredUnit}`, {
+                defaultValue: report.declaredUnit,
+              }),
+            })}`
+          : ''}
+      </p>
+
       {report.subjectsUndeclared !== undefined && report.subjectsUndeclared > 0 && (
         <p className="text-[11px] text-muted-foreground">
           {t('training.splitReport.undeclared', { count: report.subjectsUndeclared })}

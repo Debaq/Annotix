@@ -8,7 +8,7 @@ use super::contract::{keys, PreparedDataset};
 use super::npy;
 use super::{DatasetFormat, TrainingBackend};
 use crate::export::{parse_bbox, parse_keypoints, parse_mask, parse_obb, parse_polygon};
-use crate::store::project_file::{ClassDef, ImageEntry, ProjectFile};
+use crate::store::project_file::{ClassDef, ImageEntry, ProjectFile, SplitPolicy};
 use crate::utils::converters::normalize_coordinates;
 
 /// Nombres de clase en el orden en que los scripts los indexan (posición = índice).
@@ -209,8 +209,16 @@ pub struct SplitWarning {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SplitReport {
-    /// Unidad por la que se agrupó: `subject`, `video` o `item`.
+    /// Unidad por la que se agrupó de verdad: `subject`, `video` o `item`.
     pub unit: String,
+    /// Unidad que el proyecto declaró, cuando declaró alguna distinta de `auto`.
+    /// Va aparte de `unit` porque declarar una unidad y no tener el dato para
+    /// agrupar por ella es justo lo que hay que poder ver.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub declared_unit: Option<String>,
+    /// Semilla del barajado. Con ella y la política, el reparto se repite fuera
+    /// de la app; sin ella, el informe describe un sorteo irrepetible.
+    pub seed: u64,
     /// Imágenes por partición.
     pub items: SplitCountsReport,
     /// Grupos por partición.
@@ -267,18 +275,29 @@ impl SplitPlan {
     /// que no aparece en test: la métrica global sigue viéndose bien y esa clase
     /// simplemente no está evaluada, cosa que no se descubre mirando un mAP.
     pub fn report(&self, project: &ProjectFile, images: &[ImageEntry]) -> SplitReport {
-        let unit = if images
+        let pol = politica(project);
+        let hay_sujetos = images
             .iter()
-            .any(|i| i.subject_id.as_deref().is_some_and(|s| !s.is_empty()))
-        {
-            "subject"
-        } else if images
+            .any(|i| i.subject_id.as_deref().is_some_and(|s| !s.is_empty()));
+        let hay_videos = images
             .iter()
-            .any(|i| i.video_id.as_deref().is_some_and(|v| !v.is_empty()))
-        {
-            "video"
-        } else {
-            "item"
+            .any(|i| i.video_id.as_deref().is_some_and(|v| !v.is_empty()));
+
+        // La unidad que se informa es por la que se agrupó de verdad, no la que se
+        // pidió: declarar `subject` sobre un corpus sin sujetos agrupa por video o
+        // por imagen, y decir «sujeto» ahí sería mentir en el informe.
+        let unit = match pol.unit.as_str() {
+            "item" => "item",
+            "video" => {
+                if hay_videos {
+                    "video"
+                } else {
+                    "item"
+                }
+            }
+            _ if hay_sujetos => "subject",
+            _ if hay_videos => "video",
+            _ => "item",
         };
 
         // Sujetos y clases por partición.
@@ -323,8 +342,22 @@ impl SplitPlan {
         let mut warnings = Vec::new();
 
         if self.test.is_empty() {
+            // Incumplir la política declarada no es lo mismo que no haber pedido
+            // test: se dice cuál de las dos cosas pasó, y ninguna impide entrenar.
             warnings.push(SplitWarning {
-                code: "no_test".into(),
+                code: if pol.require_test {
+                    "test_required_absent".into()
+                } else {
+                    "no_test".into()
+                },
+                class: None,
+            });
+        }
+        // Se declaró una unidad y el corpus no trae el dato para agruparla: el
+        // reparto cayó a la siguiente de la cascada sin que se note en ninguna cifra.
+        if pol.unit == "subject" && !hay_sujetos {
+            warnings.push(SplitWarning {
+                code: "unit_unavailable".into(),
                 class: None,
             });
         }
@@ -359,6 +392,8 @@ impl SplitPlan {
 
         SplitReport {
             unit: unit.to_string(),
+            declared_unit: Some(pol.unit.clone()).filter(|u| u != "auto"),
+            seed: pol.seed.unwrap_or_else(|| derive_seed(&project.id)),
             items: SplitCounts {
                 train: self.train.len(),
                 val: self.val.len(),
@@ -404,20 +439,37 @@ impl SplitPlan {
 /// vez de generalización: la métrica sale alta sin que el modelo haya aprendido
 /// nada nuevo.
 ///
-/// La cascada es **sujeto → video → la propia imagen**. El sujeto manda sobre el
-/// video porque un mismo paciente puede tener varios estudios: agrupar sólo por
-/// video dejaría dos videos del mismo sujeto en particiones distintas, que es la
-/// misma fuga una escala más arriba.
-fn group_key(img: &ImageEntry) -> &str {
-    if let Some(sujeto) = img.subject_id.as_deref() {
-        if !sujeto.is_empty() {
-            return sujeto;
-        }
+/// La cascada por defecto es **sujeto → video → la propia imagen**. El sujeto
+/// manda sobre el video porque un mismo paciente puede tener varios estudios:
+/// agrupar sólo por video dejaría dos videos del mismo sujeto en particiones
+/// distintas, que es la misma fuga una escala más arriba.
+///
+/// `unidad` es lo que el proyecto declaró (`SplitPolicy::unit`). `item` renuncia
+/// al agrupamiento a propósito y `video` ignora el sujeto; `auto` y `subject`
+/// recorren la cascada entera —la diferencia entre esas dos no está aquí sino en
+/// el informe, que avisa cuando una muestra no trae el sujeto que se declaró—.
+fn group_key<'a>(img: &'a ImageEntry, unidad: &str) -> &'a str {
+    let sujeto = img.subject_id.as_deref().filter(|s| !s.is_empty());
+    let video = img.video_id.as_deref().filter(|v| !v.is_empty());
+    match unidad {
+        "item" => &img.id,
+        "video" => video.unwrap_or(&img.id),
+        _ => sujeto.or(video).unwrap_or(&img.id),
     }
-    match img.video_id.as_deref() {
-        Some(vid) if !vid.is_empty() => vid,
-        _ => &img.id,
-    }
+}
+
+/// Semilla del barajado derivada del id del proyecto: el reparto por defecto de
+/// siempre. Se declara aparte para poder informarla y para que una política que
+/// fija su propia semilla no tenga que reproducir esta cuenta.
+pub fn derive_seed(project_id: &str) -> u64 {
+    project_id
+        .bytes()
+        .fold(42u64, |acc, b| acc.wrapping_mul(31).wrapping_add(b as u64))
+}
+
+/// La política del proyecto, o la de siempre cuando no declaró ninguna.
+fn politica(project: &ProjectFile) -> SplitPolicy {
+    project.split_policy.clone().unwrap_or_default()
 }
 
 /// Agrupa índices por clave conservando el orden de primera aparición.
@@ -425,12 +477,12 @@ fn group_key(img: &ImageEntry) -> &str {
 /// El orden importa: es lo que hace el reparto reproducible. Iterar un `HashMap`
 /// daría un orden distinto en cada ejecución y el mismo proyecto dejaría de dar
 /// el mismo split.
-fn agrupar(images: &[ImageEntry]) -> Vec<Vec<usize>> {
+fn agrupar(images: &[ImageEntry], unidad: &str) -> Vec<Vec<usize>> {
     let mut orden: Vec<Vec<usize>> = Vec::new();
     let mut por_clave: std::collections::HashMap<&str, usize> = std::collections::HashMap::new();
 
     for (idx, img) in images.iter().enumerate() {
-        let clave = group_key(img);
+        let clave = group_key(img, unidad);
         match por_clave.get(clave) {
             Some(&pos) => orden[pos].push(idx),
             None => {
@@ -460,11 +512,13 @@ pub fn split_plan(
     test_split: f64,
 ) -> SplitPlan {
     let total = images.len();
-    let mut grupos = agrupar(images);
+    let pol = politica(project);
+    let mut grupos = agrupar(images, &pol.unit);
 
-    let seed = project.id.bytes().fold(42usize, |acc, b| {
-        acc.wrapping_mul(31).wrapping_add(b as usize)
-    });
+    // `as usize` en vez de hacer la cuenta en u64: es la aritmética que ya se
+    // venía usando, y cambiarla movería el reparto de todos los proyectos
+    // existentes sin que nadie lo hubiera pedido.
+    let seed = pol.seed.unwrap_or_else(|| derive_seed(&project.id)) as usize;
     for i in (1..grupos.len()).rev() {
         let j = (seed.wrapping_mul(i).wrapping_add(7)) % (i + 1);
         grupos.swap(i, j);

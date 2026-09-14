@@ -383,6 +383,7 @@ fn rebuild_project_file(dir: &Path, id: &str) -> Result<ProjectFile, String> {
             "jpg".to_string()
         },
         webp_quality_preset: "high".to_string(),
+        split_policy: None,
     })
 }
 

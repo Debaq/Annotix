@@ -235,9 +235,31 @@ export interface SplitWarning {
  * pacientes no son cuatrocientos casos, y una clase ausente en test no está
  * evaluada por mucho que el mAP se vea bien.
  */
-export interface SplitReport {
-  /** `subject` | `video` | `item`. */
+/**
+ * Cómo declara el proyecto que hay que repartir su corpus.
+ *
+ * Sin esto la unidad de agrupación y la semilla se decidían solas y no quedaban
+ * escritas: un reparto que nadie declaró no se repite fuera de la app. Nada de
+ * aquí bloquea un entrenamiento — lo que se incumple sale como aviso.
+ */
+export interface SplitPolicy {
+  /** `auto` | `subject` | `video` | `item`. */
   unit: string;
+  /** Fracciones recomendadas por el proyecto; la corrida usa las suyas. */
+  valSplit?: number | null;
+  testSplit?: number | null;
+  /** `null` = la semilla derivada del id del proyecto. */
+  seed?: number | null;
+  requireTest: boolean;
+}
+
+export interface SplitReport {
+  /** Unidad por la que se agrupó de verdad: `subject` | `video` | `item`. */
+  unit: string;
+  /** La que se declaró, cuando se declaró alguna distinta de `auto`. */
+  declaredUnit?: string | null;
+  /** Semilla del barajado: con ella el reparto se repite fuera de la app. */
+  seed: number;
   items: SplitCountsReport;
   groups: SplitCountsReport;
   subjects?: SplitCountsReport;

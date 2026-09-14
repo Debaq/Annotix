@@ -2,11 +2,14 @@ import { TrainingParamGroup, type ParamDefinition } from './TrainingParamGroup';
 import { TrainingAdvancedConfig } from './TrainingAdvancedConfig';
 import { TrainingAugmentation } from './TrainingAugmentation';
 import { DatasetSplitVisualizer } from './DatasetSplitVisualizer';
+import { SplitPolicyPanel } from './SplitPolicyPanel';
 import type { TrainingBackend, TrainingConfig } from '../types';
 import { OPTIMIZERS } from '../utils/presets';
 
 interface BackendConfigPanelProps {
   backend: TrainingBackend;
+  /** Proyecto cuya política de partición se declara junto al reparto. */
+  projectId?: string;
   /** Resolución mínima del backend, de `BackendInfo.minImageSize`. */
   minImageSize?: number;
   commonParams: {
@@ -107,6 +110,7 @@ const HF_POSE_PARAMS: ParamDefinition[] = [
 
 export function BackendConfigPanel({
   backend,
+  projectId,
   minImageSize,
   commonParams,
   backendParams,
@@ -124,12 +128,27 @@ export function BackendConfigPanel({
     p.key === 'imageSize' ? { ...p, min: minImageSize ?? p.min } : p,
   );
 
+  // La política va pegada al visor del reparto: describen lo mismo, una lo que se
+  // declaró y el otro lo que sale de aplicarlo a este corpus.
   const splitVisualizer = (
-    <DatasetSplitVisualizer
-      total={totalImages ?? 0}
-      valSplit={commonParams.valSplit}
-      testSplit={commonParams.testSplit}
-    />
+    <div className="space-y-2">
+      <DatasetSplitVisualizer
+        total={totalImages ?? 0}
+        valSplit={commonParams.valSplit}
+        testSplit={commonParams.testSplit}
+      />
+      {projectId && (
+        <SplitPolicyPanel
+          projectId={projectId}
+          valSplit={commonParams.valSplit}
+          testSplit={commonParams.testSplit}
+          onApplyFractions={(val, test) => {
+            onCommonChange('valSplit', val);
+            onCommonChange('testSplit', test);
+          }}
+        />
+      )}
+    </div>
   );
 
   // YOLO uses the existing advanced config UI

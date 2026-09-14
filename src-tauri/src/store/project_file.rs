@@ -17,7 +17,11 @@ use serde::{Deserialize, Serialize};
 ///   legado sólo donde no hay ambigüedad; lo que era `source: "user"` queda como
 ///   `unknown`, porque ese valor mezclaba lo trazado a mano con lo aceptado de un
 ///   modelo y adivinarlo sería inventar procedencia.
-pub const CURRENT_VERSION: u32 = 5;
+/// - 6: el proyecto puede declarar su política de partición (`splitPolicy`): por
+///   qué unidad se agrupa, con qué semilla y si sus entrenamientos exigen test.
+///   El bloque es opcional y los proyectos anteriores se leen sin él, así que la
+///   migración sólo sube el número de versión.
+pub const CURRENT_VERSION: u32 = 6;
 
 // ─── ProjectFile: todo el contenido de project.json ─────────────────────────
 
@@ -63,6 +67,65 @@ pub struct ProjectFile {
     /// Preset de calidad WebP: "lossless" | "max" | "high" | "balanced" | "fast"
     #[serde(default = "default_webp_preset", rename = "webpQualityPreset")]
     pub webp_quality_preset: String,
+    /// Cómo se reparte el corpus. Ausente = las decisiones por defecto.
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "splitPolicy")]
+    pub split_policy: Option<SplitPolicy>,
+}
+
+/// Política de partición declarada por el proyecto.
+///
+/// Existe porque hasta ahora la unidad de agrupación y la semilla del barajado se
+/// decidían solas: se deducían del dato presente y no quedaban escritas en ningún
+/// sitio. Un reparto que nadie declaró no se puede reproducir fuera de la app, y
+/// el contrato de modelo tiene que transcribir la política, no deducirla a
+/// posteriori del resultado.
+///
+/// Nada de esto bloquea un entrenamiento: lo que incumple la política sale como
+/// aviso en el informe del reparto. Ver `docs/biomedico-fase2-roadmap.md`, etapa 3.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SplitPolicy {
+    /// Unidad **mínima** que el reparto tiene que respetar:
+    ///
+    /// - `auto`: la cascada de siempre, sujeto → video → imagen, sin exigir nada.
+    /// - `subject`: la misma cascada, declarando que el corpus tiene sujetos; las
+    ///   muestras que no lo traigan salen avisadas en vez de pasar calladas.
+    /// - `video`: agrupa por video e ignora el sujeto. Para corpus donde el sujeto
+    ///   no es la unidad de independencia.
+    /// - `item`: cada muestra por su cuenta. Es renunciar al agrupamiento a
+    ///   propósito —muestras de verdad independientes—, no por descuido.
+    #[serde(default = "default_split_unit")]
+    pub unit: String,
+    /// Fracciones que el proyecto recomienda. La corrida usa las suyas; si difieren
+    /// se ve en la pantalla de entrenamiento.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub val_split: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub test_split: Option<f64>,
+    /// Semilla del barajado. `None` = la derivada del id del proyecto, que es la
+    /// que se venía usando; declararla permite repetir el reparto fuera de la app.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub seed: Option<u64>,
+    /// El proyecto declara que sus entrenamientos deben tener conjunto de test.
+    /// Entrenar sin él sigue permitido: queda anotado en el informe.
+    #[serde(default)]
+    pub require_test: bool,
+}
+
+fn default_split_unit() -> String {
+    "auto".to_string()
+}
+
+impl Default for SplitPolicy {
+    fn default() -> Self {
+        Self {
+            unit: default_split_unit(),
+            val_split: None,
+            test_split: None,
+            seed: None,
+            require_test: false,
+        }
+    }
 }
 
 fn default_image_format() -> String {

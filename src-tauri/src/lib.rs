@@ -291,6 +291,8 @@ pub fn run() {
             commands::project_commands::save_classes,
             commands::project_commands::delete_project,
             commands::project_commands::set_project_folder,
+            commands::project_commands::get_split_policy,
+            commands::project_commands::set_split_policy,
             commands::project_commands::reveal_project_folder,
             commands::project_commands::zip_project,
             commands::project_commands::update_project_image_format,

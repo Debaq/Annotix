@@ -622,6 +622,7 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
                 {/* Config panel */}
                 <BackendConfigPanel
                   backend={backend}
+                  projectId={project.id}
                   minImageSize={minImageSize}
                   commonParams={commonParams}
                   backendParams={backendParams}

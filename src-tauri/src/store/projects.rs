@@ -1,10 +1,32 @@
 use std::path::PathBuf;
 
 use crate::store::io;
-use crate::store::project_file::{ClassDef, P2pDownloadStatus, ProjectFile};
+use crate::store::project_file::{ClassDef, P2pDownloadStatus, ProjectFile, SplitPolicy};
 use crate::store::state::AppState;
 
 use super::project_file::ImageEntry;
+
+/// Qué política de partición se puede declarar.
+///
+/// Es función libre y no un método para poder probarla sin montar un `AppState`:
+/// lo que hay que verificar es la regla, no el almacenamiento.
+pub fn validate_split_policy(p: &SplitPolicy) -> Result<(), String> {
+    match p.unit.as_str() {
+        "auto" | "subject" | "video" | "item" => {}
+        otra => return Err(format!("Unidad de partición no soportada: {}", otra)),
+    }
+    for (nombre, valor) in [("valSplit", p.val_split), ("testSplit", p.test_split)] {
+        if let Some(v) = valor {
+            if !(0.0..=0.9).contains(&v) {
+                return Err(format!("{} fuera de rango (0 a 0.9): {}", nombre, v));
+            }
+        }
+    }
+    if p.val_split.unwrap_or(0.0) + p.test_split.unwrap_or(0.0) >= 1.0 {
+        return Err("val + test no deja nada para entrenar".to_string());
+    }
+    Ok(())
+}
 
 /// Timestamp compatible con JS Date.now()
 fn js_timestamp() -> f64 {
@@ -92,6 +114,7 @@ impl AppState {
             tts_sentences: vec![],
             image_format,
             webp_quality_preset: "high".to_string(),
+            split_policy: None,
         };
 
         io::write_project(&project_dir, &project)?;
@@ -251,6 +274,27 @@ impl AppState {
         }
         self.with_project_mut(project_id, |pf| {
             pf.webp_quality_preset = preset.to_string();
+            pf.updated = js_timestamp();
+        })
+    }
+
+    /// Política de partición declarada, o la de siempre si el proyecto no declaró
+    /// ninguna. Devuelve un valor siempre: la UI muestra lo que rige, no un hueco.
+    pub fn get_split_policy(&self, project_id: &str) -> Result<SplitPolicy, String> {
+        self.with_project(project_id, |pf| pf.split_policy.clone().unwrap_or_default())
+    }
+
+    /// Declara la política de partición. `None` la retira y vuelve a lo de siempre.
+    pub fn set_split_policy(
+        &self,
+        project_id: &str,
+        policy: Option<SplitPolicy>,
+    ) -> Result<(), String> {
+        if let Some(p) = policy.as_ref() {
+            validate_split_policy(p)?;
+        }
+        self.with_project_mut(project_id, |pf| {
+            pf.split_policy = policy;
             pf.updated = js_timestamp();
         })
     }

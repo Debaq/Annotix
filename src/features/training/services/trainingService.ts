@@ -10,6 +10,7 @@ import type {
   TrainingRequest,
   CloudProviderConfig,
   FamilyInfo,
+  SplitPolicy,
 } from '../types';
 
 export const trainingService = {
@@ -82,6 +83,16 @@ export const trainingService = {
   /** `train.py` de un backend generado con el mismo código que entrena. */
   previewTrainScript(backend: string, task: string): Promise<string> {
     return invoke('preview_train_script', { backend, task });
+  },
+
+  /** Siempre devuelve una política: la declarada o la de por defecto. */
+  getSplitPolicy(projectId: string): Promise<SplitPolicy> {
+    return invoke('get_split_policy', { projectId });
+  },
+
+  /** `null` retira la política y vuelve al reparto de siempre. */
+  setSplitPolicy(projectId: string, policy: SplitPolicy | null): Promise<void> {
+    return invoke('set_split_policy', { projectId, policy });
   },
 
   installBackendPackages(backend: string): Promise<void> {

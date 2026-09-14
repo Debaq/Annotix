@@ -113,6 +113,7 @@ pub fn base_project() -> ProjectFile {
         tts_sentences: vec![],
         image_format: "png".into(),
         webp_quality_preset: "high".into(),
+        split_policy: None,
     }
 }
 

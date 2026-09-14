@@ -127,6 +127,12 @@ pub fn migrate_project(project: &mut ProjectFile, dir: &Path) -> bool {
         changed = true;
     }
 
+    // v5 → v6: la política de partición es un bloque opcional nuevo. Un proyecto
+    // sin ella se reparte como antes —cascada sujeto → video → imagen y semilla
+    // derivada del id—, así que tampoco hay datos que reescribir: declararla es
+    // una decisión del usuario, y rellenarla aquí sería declarar por él una
+    // política que nunca eligió.
+
     // v3 → v4: el sujeto es un campo opcional nuevo. Los proyectos anteriores se
     // leen con `None` gracias a `#[serde(default)]`, así que no hay datos que
     // reescribir: sólo sube el número de versión, y eso lo hace el bloque de

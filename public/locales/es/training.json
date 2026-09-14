@@ -941,8 +941,12 @@
       "class_absent_in_test": "La clase «{{class}}» no aparece en test: no está evaluada, aunque la métrica global se vea bien.",
       "class_absent_in_val": "La clase «{{class}}» no aparece en validación: no se puede seguir su progreso durante el entrenamiento.",
       "single_group": "Todo el corpus es un solo grupo: no hay reparto real y la validación mide sobre lo mismo que entrena.",
-      "subject_partially_declared": "Hay muestras con sujeto y muestras sin él: media parte se agrupa por sujeto y la otra por imagen."
-    }
+      "subject_partially_declared": "Hay muestras con sujeto y muestras sin él: media parte se agrupa por sujeto y la otra por imagen.",
+      "test_required_absent": "El proyecto declara que sus entrenamientos deben tener test, y éste no lo tiene: las métricas son de validación.",
+      "unit_unavailable": "Se declaró repartir por sujeto y ninguna muestra lo trae: se agrupó por lo que había, y eso no se ve en ninguna cifra."
+    },
+    "seed": "Semilla {{seed}}",
+    "declared": "unidad declarada: {{unit}}"
   },
   "classes": {
     "title": "Clases a entrenar",
@@ -951,5 +955,31 @@
     "selectNone": "Ninguna",
     "noneSelected": "Elige al menos una clase para entrenar.",
     "summary": "{{selected}} de {{total}} clases. Las no seleccionadas se descartan: sus anotaciones no entran al dataset."
+  },
+  "splitPolicy": {
+    "title": "Política de partición",
+    "intro": "Cómo se reparte el corpus de este proyecto. Nada de esto impide entrenar: lo que se incumple sale como aviso en el informe del reparto.",
+    "unitLabel": "Unidad de agrupación",
+    "unit": {
+      "auto": "automática",
+      "subject": "sujeto",
+      "video": "video",
+      "item": "muestra"
+    },
+    "unitDesc": {
+      "auto": "La cascada de siempre: sujeto si lo hay, si no video, si no cada imagen por su cuenta.",
+      "subject": "Agrupa por sujeto y avisa de las muestras que no lo traen, en vez de dejarlas pasar calladas.",
+      "video": "Agrupa por video e ignora el sujeto. Para corpus donde el sujeto no es la unidad independiente.",
+      "item": "Cada muestra por su cuenta. Es renunciar al agrupamiento a propósito, no por descuido."
+    },
+    "requireTest": "Exigir conjunto de test",
+    "requireTestDesc": "Entrenar sin test sigue permitido; el informe dirá que se incumplió lo declarado.",
+    "testShort": "con test",
+    "recommended": "Fracciones recomendadas (val / test)",
+    "seed": "Semilla",
+    "seedDerived": "derivada del proyecto",
+    "seedDesc": "Declararla permite repetir el reparto fuera de la app.",
+    "differs": "Este entrenamiento no usa las fracciones recomendadas ({{val}} / {{test}}).",
+    "apply": "Aplicar"
   }
 }

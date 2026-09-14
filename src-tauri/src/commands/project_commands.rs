@@ -3,7 +3,7 @@ use tauri::{AppHandle, Emitter, State};
 
 use crate::p2p::node::P2pState;
 use crate::p2p::P2pPermission;
-use crate::store::project_file::ClassDef;
+use crate::store::project_file::{ClassDef, SplitPolicy};
 use crate::store::projects::ProjectSummary;
 use crate::store::AppState;
 
@@ -141,6 +141,26 @@ pub fn set_project_folder(
     state.set_project_folder(&project_id, folder)?;
     let _ = app.emit("db:projects-changed", ());
     Ok(())
+}
+
+/// Cómo declara el proyecto que hay que repartir su corpus. Devuelve siempre una
+/// política: la declarada, o la de por defecto cuando no declaró ninguna.
+#[tauri::command]
+pub fn get_split_policy(
+    state: State<'_, AppState>,
+    project_id: String,
+) -> Result<SplitPolicy, String> {
+    state.get_split_policy(&project_id)
+}
+
+/// Declara la política de partición del proyecto. `null` la retira.
+#[tauri::command]
+pub fn set_split_policy(
+    state: State<'_, AppState>,
+    project_id: String,
+    policy: Option<SplitPolicy>,
+) -> Result<(), String> {
+    state.set_split_policy(&project_id, policy)
 }
 
 #[tauri::command]

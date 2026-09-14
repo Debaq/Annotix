@@ -22,7 +22,7 @@ use zip::ZipArchive;
 use crate::export;
 use crate::import;
 use crate::store::io as store_io;
-use crate::store::project_file::{AnnotationEntry, ClassDef, ImageEntry, ProjectFile};
+use crate::store::project_file::{AnnotationEntry, ClassDef, ImageEntry, ProjectFile, SplitPolicy};
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -106,6 +106,7 @@ fn make_project(name: &str, ptype: &str, classes: Vec<ClassDef>) -> ProjectFile 
         tts_sentences: vec![],
         image_format: "jpg".into(),
         webp_quality_preset: "high".into(),
+        split_policy: None,
     }
 }
 
@@ -3160,6 +3161,225 @@ fn avisa_cuando_el_sujeto_esta_declarado_a_medias() {
     assert_eq!(report.unit, "subject");
     assert_eq!(report.subjects_undeclared, Some(4));
     assert!(codigos(&report).contains(&"subject_partially_declared"));
+}
+
+// ─── Tests: política de partición declarada ─────────────────────────────────
+
+fn con_politica(pf: &mut ProjectFile, unit: &str, seed: Option<u64>, require_test: bool) {
+    pf.split_policy = Some(SplitPolicy {
+        unit: unit.to_string(),
+        val_split: None,
+        test_split: None,
+        seed,
+        require_test,
+    });
+}
+
+/// Un proyecto sin política se reparte exactamente igual que antes de que la
+/// política existiera. Es la regresión que protege a todo corpus ya entrenado.
+#[test]
+fn sin_politica_el_reparto_no_cambia() {
+    let mut pf = make_project("p", "detection", default_classes());
+    for vid in ["a", "b", "c", "d"] {
+        for i in 0..4 {
+            pf.images.push(frame_entry(vid, i));
+        }
+    }
+    let sin = dataset::split_plan(&pf, &pf.images, 0.25, 0.25);
+
+    con_politica(&mut pf, "auto", None, false);
+    let con_auto = dataset::split_plan(&pf, &pf.images, 0.25, 0.25);
+
+    assert_eq!(sin.train, con_auto.train);
+    assert_eq!(sin.val, con_auto.val);
+    assert_eq!(sin.test, con_auto.test);
+}
+
+/// Declarar `item` es renunciar al agrupamiento a propósito: cada fotograma
+/// vuelve a ser independiente. Sirve cuando las muestras de verdad lo son.
+#[test]
+fn la_politica_item_desactiva_el_agrupamiento() {
+    let mut pf = make_project("p", "detection", default_classes());
+    for i in 0..12 {
+        pf.images.push(frame_entry("vidUnico", i));
+    }
+    con_politica(&mut pf, "item", None, false);
+
+    let plan = dataset::split_plan(&pf, &pf.images, 0.25, 0.25);
+    assert_eq!(
+        plan.groups.train + plan.groups.val + plan.groups.test,
+        12,
+        "con unidad `item` cada fotograma tiene que ser su propio grupo"
+    );
+    assert!(!plan.val.is_empty());
+    assert!(!plan.test.is_empty());
+}
+
+/// Declarar `video` ignora el sujeto: dos videos del mismo paciente pueden caer
+/// en particiones distintas, que es lo que el proyecto pidió al declararlo.
+#[test]
+fn la_politica_video_ignora_el_sujeto() {
+    let mut pf = make_project("p", "detection", default_classes());
+    for (paciente, videos) in [("PAC-1", ["v1a", "v1b"]), ("PAC-2", ["v2a", "v2b"])] {
+        for vid in videos {
+            for i in 0..3 {
+                pf.images.push(imagen_de_sujeto(
+                    &format!("{vid}_{i}.png"),
+                    Some(paciente),
+                    Some(vid),
+                ));
+            }
+        }
+    }
+    con_politica(&mut pf, "video", None, false);
+
+    let plan = dataset::split_plan(&pf, &pf.images, 0.25, 0.25);
+    assert_eq!(
+        plan.groups.train + plan.groups.val + plan.groups.test,
+        4,
+        "con unidad `video` los grupos son los cuatro videos, no los dos pacientes"
+    );
+    assert_eq!(plan.report(&pf, &pf.images).unit, "video");
+}
+
+/// La semilla declarada manda sobre la derivada del id, y sigue siendo
+/// determinista: es lo que permite repetir el reparto fuera de la app.
+#[test]
+fn la_semilla_declarada_manda_y_es_reproducible() {
+    let mut pf = make_project("p", "detection", default_classes());
+    for i in 0..12 {
+        pf.images.push(image_entry(
+            &format!("i{i}.png"),
+            &format!("i{i}.png"),
+            200,
+            100,
+            vec![bbox_ann(0, 1.0, 1.0, 5.0, 5.0)],
+        ));
+    }
+
+    con_politica(&mut pf, "auto", Some(7), false);
+    let a1 = dataset::split_plan(&pf, &pf.images, 0.25, 0.25);
+    let a2 = dataset::split_plan(&pf, &pf.images, 0.25, 0.25);
+    assert_eq!(a1.train, a2.train, "la misma semilla dio dos repartos");
+
+    con_politica(&mut pf, "auto", Some(999_331), false);
+    let b = dataset::split_plan(&pf, &pf.images, 0.25, 0.25);
+    assert_ne!(
+        a1.train, b.train,
+        "dos semillas distintas dieron el mismo reparto: la declarada no se usó"
+    );
+}
+
+/// El informe transcribe la política: sin la semilla y la unidad declarada, el
+/// reparto que describe no se puede repetir.
+#[test]
+fn el_informe_declara_unidad_y_semilla() {
+    let mut pf = make_project("p", "detection", default_classes());
+    for i in 0..8 {
+        pf.images.push(imagen_de_sujeto(
+            &format!("PAC-{}_{i}.png", i % 4),
+            Some(&format!("PAC-{}", i % 4)),
+            None,
+        ));
+    }
+    con_politica(&mut pf, "subject", Some(4242), true);
+
+    let report = dataset::split_plan(&pf, &pf.images, 0.25, 0.25).report(&pf, &pf.images);
+    assert_eq!(report.declared_unit.as_deref(), Some("subject"));
+    assert_eq!(report.seed, 4242);
+
+    // Sin política declarada, la semilla informada es la derivada del id: la que
+    // se venía usando, ahora escrita en el informe en vez de sólo en el código.
+    pf.split_policy = None;
+    let report = dataset::split_plan(&pf, &pf.images, 0.25, 0.25).report(&pf, &pf.images);
+    assert_eq!(report.declared_unit, None);
+    assert_eq!(report.seed, dataset::derive_seed(&pf.id));
+}
+
+/// Exigir test y entrenar sin él no impide nada: cambia el aviso, para que el
+/// informe distinga «no se pidió test» de «se declaró que hacía falta».
+#[test]
+fn avisa_distinto_cuando_la_politica_exige_test() {
+    let mut pf = make_project("p", "detection", default_classes());
+    for i in 0..6 {
+        pf.images.push(image_entry(
+            &format!("i{i}.png"),
+            &format!("i{i}.png"),
+            200,
+            100,
+            vec![bbox_ann(0, 1.0, 1.0, 5.0, 5.0)],
+        ));
+    }
+    con_politica(&mut pf, "auto", None, true);
+
+    let plan = dataset::split_plan(&pf, &pf.images, 0.25, 0.0);
+    let report = plan.report(&pf, &pf.images);
+    assert!(
+        codigos(&report).contains(&"test_required_absent"),
+        "se exigió test, no lo hay y el aviso no lo dice: {:?}",
+        report.warnings
+    );
+    assert!(!codigos(&report).contains(&"no_test"));
+    assert!(
+        !plan.train.is_empty() && !plan.val.is_empty(),
+        "la política bloqueó el entrenamiento en vez de avisarlo"
+    );
+}
+
+/// Declarar sujeto sobre un corpus que no lo trae no es un error, pero tampoco
+/// puede pasar callado: se agrupó por otra cosa y ninguna cifra lo delata.
+#[test]
+fn avisa_cuando_se_declaro_sujeto_y_el_corpus_no_lo_trae() {
+    let mut pf = make_project("p", "detection", default_classes());
+    for i in 0..6 {
+        pf.images.push(image_entry(
+            &format!("i{i}.png"),
+            &format!("i{i}.png"),
+            200,
+            100,
+            vec![bbox_ann(0, 1.0, 1.0, 5.0, 5.0)],
+        ));
+    }
+    con_politica(&mut pf, "subject", None, false);
+
+    let report = dataset::split_plan(&pf, &pf.images, 0.25, 0.0).report(&pf, &pf.images);
+    assert!(codigos(&report).contains(&"unit_unavailable"));
+    assert_eq!(report.unit, "item", "el informe dice sujeto sin haberlos");
+}
+
+/// La política que se puede declarar: unidad conocida y fracciones que dejan algo
+/// con lo que entrenar.
+#[test]
+fn la_politica_se_valida_antes_de_guardarla() {
+    use crate::store::projects::validate_split_policy;
+
+    let ok = SplitPolicy {
+        unit: "subject".into(),
+        val_split: Some(0.2),
+        test_split: Some(0.2),
+        seed: Some(1),
+        require_test: true,
+    };
+    assert!(validate_split_policy(&ok).is_ok());
+
+    let unidad_rara = SplitPolicy {
+        unit: "paciente".into(),
+        ..SplitPolicy::default()
+    };
+    assert!(validate_split_policy(&unidad_rara).is_err());
+
+    let sin_train = SplitPolicy {
+        val_split: Some(0.5),
+        test_split: Some(0.5),
+        ..SplitPolicy::default()
+    };
+    assert!(validate_split_policy(&sin_train).is_err());
+
+    let fuera_de_rango = SplitPolicy {
+        val_split: Some(-0.1),
+        ..SplitPolicy::default()
+    };
+    assert!(validate_split_policy(&fuera_de_rango).is_err());
 }
 
 /// El informe llega al dataset preparado, que es por donde viaja al trabajo.
