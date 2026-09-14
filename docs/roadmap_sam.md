@@ -311,3 +311,25 @@ src-tauri/src/lib.rs                    — manage(SamState) + generate_handler!
 src/lib/db.ts                           — tipos mirror
 src/lib/tauriDb.ts                      — wrappers invoke
 ```
+
+---
+
+## Dos firmas de decodificador (2026-09-14)
+
+Hay **dos exports de SAM en circulación y no son intercambiables**:
+
+| | Oficial (repo `segment-anything`) | Transformers.js |
+|---|---|---|
+| Encoder | 1 salida: `image_embeddings` | 2: `image_embeddings` + `image_positional_embeddings` |
+| Decoder | `point_coords` `[1,N,2]` f32, `point_labels` `[1,N]` f32, `mask_input`, `has_mask_input`, `orig_im_size` | `input_points` `[1,1,N,2]` f32, `input_labels` `[1,1,N]` i64, `image_positional_embeddings` |
+| Máscaras | rango 4, escaladas al tamaño original | rango 5 `[1,1,M,256,256]`, sin escalar |
+
+`detectar_variante()` lo decide por los nombres de las entradas: quien sube un
+`.onnx` no tiene por qué saber con qué herramienta lo exportaron.
+
+Importa porque **MedSAM sólo existe en ONNX con la firma de Transformers.js**
+(`Xenova/medsam-vit-base`). Sin esto no entra, y con esto entran además todos los
+demás exports de Transformers.js.
+
+**Sin probar con pesos reales todavía.** Ver `docs/biomedico-estado.md`, sección
+«Dónde quedó la etapa 10a».

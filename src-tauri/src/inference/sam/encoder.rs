@@ -36,12 +36,23 @@ pub fn load_encoder(model_path: &str) -> Result<Session, String> {
         .map_err(|e| format!("Error cargando encoder ONNX: {e}"))
 }
 
-/// Ejecuta el encoder sobre un tensor CHW `[3, 1024, 1024]` y devuelve el
-/// primer output f32 como embedding.
+/// Lo que produce el encoder.
+///
+/// Los exports oficiales de SAM devuelven sólo el embedding. Los generados con
+/// Transformers.js —que son los únicos que hay de MedSAM— devuelven además el
+/// **embedding posicional**, y su decodificador lo exige: sin él no se puede usar
+/// ese modelo. Por eso se recoge cuando está, en vez de quedarse con el primero.
+pub struct EncoderOutput {
+    pub embedding: Vec<f32>,
+    /// Embedding posicional, cuando el modelo lo produce.
+    pub positional: Option<Vec<f32>>,
+}
+
+/// Ejecuta el encoder sobre un tensor CHW `[3, 1024, 1024]`.
 ///
 /// Algunos exports ONNX de SAM esperan rank 4 `[1, 3, H, W]` y otros rank 3
 /// `[3, H, W]` (sin batch dim). Inspeccionamos el primer input para decidir.
-pub fn run_encoder(session: &mut Session, input_chw: Vec<f32>) -> Result<Vec<f32>, String> {
+pub fn run_encoder(session: &mut Session, input_chw: Vec<f32>) -> Result<EncoderOutput, String> {
     let side = SAM_INPUT_LONG_SIDE as i64;
 
     // Inspeccionar shape esperada para decidir layout (NCHW / CHW / HWC).
@@ -76,11 +87,28 @@ pub fn run_encoder(session: &mut Session, input_chw: Vec<f32>) -> Result<Vec<f32
         .run(ort::inputs![tensor])
         .map_err(|e| format!("Error ejecutando encoder: {e}"))?;
 
-    // Primer output f32 — embedding.
-    for (_name, value) in outputs.iter() {
-        if let Ok((_shape, slice)) = value.try_extract_tensor::<f32>() {
-            return Ok(slice.to_vec());
+    // El embedding es el primer output f32; el posicional se identifica por
+    // nombre, porque tiene exactamente la misma forma que el embedding y por
+    // posición serían indistinguibles.
+    let mut embedding: Option<Vec<f32>> = None;
+    let mut positional: Option<Vec<f32>> = None;
+
+    for (name, value) in outputs.iter() {
+        let Ok((_shape, slice)) = value.try_extract_tensor::<f32>() else {
+            continue;
+        };
+        if name.contains("positional") {
+            positional = Some(slice.to_vec());
+        } else if embedding.is_none() {
+            embedding = Some(slice.to_vec());
         }
     }
-    Err("Encoder no produjo output f32".to_string())
+
+    match embedding {
+        Some(embedding) => Ok(EncoderOutput {
+            embedding,
+            positional,
+        }),
+        None => Err("Encoder no produjo output f32".to_string()),
+    }
 }

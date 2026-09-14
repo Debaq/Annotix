@@ -93,7 +93,7 @@ pub fn sam_encode_image(
 
     let (tensor, orig_w, orig_h, new_w, new_h) = preprocess_image(&bytes)?;
 
-    let embedding = {
+    let salida = {
         let mut sessions_guard = sam.sessions.lock().map_err(|e| e.to_string())?;
         let sessions = sessions_guard
             .as_mut()
@@ -108,7 +108,8 @@ pub fn sam_encode_image(
             project_id: project_id.clone(),
             orig_size: (orig_w, orig_h),
             input_size: (new_w, new_h),
-            embedding,
+            embedding: salida.embedding,
+            positional: salida.positional,
         });
     }
     // Cambio de imagen invalida candidates viejos.
@@ -130,12 +131,17 @@ pub fn sam_encode_image(
 #[tauri::command]
 pub fn sam_predict(sam: State<'_, SamState>, prompts: SamPrompts) -> Result<SamPrediction, String> {
     // 1. Tomar embedding + sizes del cache.
-    let (embedding, orig_size, input_size) = {
+    let (embedding, positional, orig_size, input_size) = {
         let cache = sam.cache.lock().map_err(|e| e.to_string())?;
         let c = cache
             .as_ref()
             .ok_or_else(|| "SAM: no hay imagen encodeada (llamar sam_encode_image)".to_string())?;
-        (c.embedding.clone(), c.orig_size, c.input_size)
+        (
+            c.embedding.clone(),
+            c.positional.clone(),
+            c.orig_size,
+            c.input_size,
+        )
     };
 
     // 2. Construir arrays de prompts en coords ORIGINALES; transformar a SAM input space.
@@ -177,6 +183,7 @@ pub fn sam_predict(sam: State<'_, SamState>, prompts: SamPrompts) -> Result<SamP
         run_decoder(
             &mut sessions.decoder,
             &embedding,
+            positional.as_deref(),
             &coords_sam,
             &labels,
             labels.len(),
@@ -249,7 +256,7 @@ pub fn sam_auto_generate_masks(
     existing_bboxes: Option<Vec<[f32; 4]>>,
 ) -> Result<Vec<SamMask>, String> {
     // Validar cache pertenece a esta imagen.
-    let (embedding, orig_size, input_size) = {
+    let (embedding, positional, orig_size, input_size) = {
         let cache = sam.cache.lock().map_err(|e| e.to_string())?;
         let c = cache
             .as_ref()
@@ -260,7 +267,12 @@ pub fn sam_auto_generate_masks(
                 c.project_id, c.image_id, project_id, image_id
             ));
         }
-        (c.embedding.clone(), c.orig_size, c.input_size)
+        (
+            c.embedding.clone(),
+            c.positional.clone(),
+            c.orig_size,
+            c.input_size,
+        )
     };
 
     let existing = existing_bboxes.unwrap_or_default();
@@ -275,6 +287,7 @@ pub fn sam_auto_generate_masks(
         &sam.sessions,
         crate::inference::sam::amg::AmgImage {
             embedding: &embedding,
+            positional: positional.as_deref(),
             orig_size,
             input_size,
             image_id: &image_id,

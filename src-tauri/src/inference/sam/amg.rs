@@ -38,6 +38,9 @@ struct Candidate {
 /// Imagen ya codificada por el encoder, tal como la necesita el decoder.
 pub struct AmgImage<'a> {
     pub embedding: &'a [f32],
+    /// Embedding posicional, cuando el encoder lo produce. Lo exigen los
+    /// decodificadores exportados con Transformers.js.
+    pub positional: Option<&'a [f32]>,
     /// (w, h) originales.
     pub orig_size: (u32, u32),
     /// (w, h) tras resize 1024 (para `transform_points`).
@@ -54,6 +57,7 @@ pub fn run_amg(
 ) -> Result<Vec<SamMask>, String> {
     let AmgImage {
         embedding,
+        positional,
         orig_size,
         input_size,
         image_id,
@@ -104,6 +108,7 @@ pub fn run_amg(
             run_decoder(
                 &mut s.decoder,
                 embedding,
+                positional,
                 &coords_sam,
                 &labels,
                 2,

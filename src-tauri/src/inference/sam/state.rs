@@ -29,6 +29,10 @@ pub struct SamEmbeddingCache {
     pub orig_size: (u32, u32),
     pub input_size: (u32, u32),
     pub embedding: Vec<f32>,
+    /// Embedding posicional, cuando el encoder lo produce. Lo exigen los
+    /// decodificadores exportados con Transformers.js —los únicos que hay de
+    /// MedSAM—; los del export oficial de SAM no lo usan.
+    pub positional: Option<Vec<f32>>,
 }
 
 /// Estado global SAM. Se `.manage()` en `tauri::Builder`.
