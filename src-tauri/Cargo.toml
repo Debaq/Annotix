@@ -74,6 +74,7 @@ dicom-dictionary-std = "0.10"
 dicom-pixeldata = { version = "0.10", features = ["image"] }
 nifti = "0.18"
 dicom-core = "0.10"
+keyring = { version = "4.2.0", features = ["apple-native-keyring-store", "windows-native-keyring-store", "zbus-secret-service-keyring-store"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 webkit2gtk = "2.0"

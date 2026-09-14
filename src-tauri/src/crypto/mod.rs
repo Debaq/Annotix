@@ -39,6 +39,8 @@
 #![allow(dead_code, unused_imports)]
 
 pub mod archivo;
+pub mod conversion;
+pub mod llavero;
 pub mod sesion;
 pub mod vault;
 

@@ -6,6 +6,7 @@ pub mod augmentation_commands;
 pub mod automation_commands;
 pub mod config_commands;
 pub mod contract_commands;
+pub mod crypto_commands;
 pub mod csv_commands;
 pub mod export_commands;
 pub mod fs_commands;

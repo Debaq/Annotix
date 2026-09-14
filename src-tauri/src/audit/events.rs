@@ -36,6 +36,9 @@ pub const CLASSES_CHANGED: &str = "classes.changed";
 pub const SUBJECTS_ASSIGNED: &str = "subjects.assigned";
 /// Declaración de la política de partición.
 pub const SPLIT_POLICY_CHANGED: &str = "split_policy.changed";
+/// Se exportó la clave del proyecto cifrado. Quien la tenga puede leerlo
+/// entero, así que sacarla es un hecho del proyecto y no una preferencia.
+pub const PROJECT_KEY_EXPORTED: &str = "project_key.exported";
 /// Declaración del plan de augmentación. Qué se le hizo a las imágenes antes de
 /// entrenar decide qué significan las métricas tanto como el reparto: entra en
 /// la historia del proyecto, no en las preferencias de pantalla.
@@ -59,6 +62,7 @@ pub const EVENT_NAMES: &[&str] = &[
     SUBJECTS_ASSIGNED,
     SPLIT_POLICY_CHANGED,
     AUGMENTATION_PLAN_CHANGED,
+    PROJECT_KEY_EXPORTED,
     DATA_IMPORTED,
     DATA_EXPORTED,
     TRAINING_STARTED,
