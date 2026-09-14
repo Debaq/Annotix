@@ -65,6 +65,7 @@ Un evento que no esté en esta lista lo rechaza el escritor
 | `classes.changed` | alta, baja, renombrado o reordenado de clases | `before[]`, `after[]` |
 | `subjects.assigned` | carga del sujeto | `via`, `subject`, `n_samples` |
 | `split_policy.changed` | declaración de la política de partición | `policy` |
+| `augmentation_plan.changed` | declaración del plan de augmentación | `plan` |
 | `data.imported` | importación que creó el proyecto | `file`, `n_images`, `n_annotations` |
 | `data.exported` | exportación a cualquier formato | `format`, `file`, `ok` |
 | `training.started` | lanzamiento de un entrenamiento | `job_id`, `backend`, `model_id`, `task`, `execution_mode`, `class_ids` |
