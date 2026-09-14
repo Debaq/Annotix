@@ -1,5 +1,6 @@
 mod agreement;
 mod audit;
+mod augment;
 mod browser_automation;
 mod commands;
 mod contract;
