@@ -74,6 +74,23 @@ pub fn escribir_ruta(ruta: &Path, datos: &[u8]) -> Result<(), String> {
     }
 }
 
+/// Los bytes tal como deben quedar guardados en `ruta_final`.
+///
+/// Hay que pasarle la ruta **definitiva**, no la del `.tmp`: la clave de cada
+/// archivo se deriva de su ruta dentro del proyecto, así que cifrar contra
+/// `x.jpg.tmp` y renombrar a `x.jpg` produciría un archivo que ya no abre. Es
+/// el error fácil de cometer en cualquier escritura atómica, y por eso esto
+/// existe en vez de dejar que cada sitio lo resuelva.
+pub fn cifrar_para_ruta(ruta_final: &Path, datos: &[u8]) -> Result<Vec<u8>, String> {
+    match ruta_relativa(ruta_final) {
+        Some((raiz, rel)) if sesion::hay_vault(&raiz) => {
+            let clave = sesion::clave(&raiz).ok_or(ERROR_BLOQUEADO)?;
+            cripto::cifrar(&clave, &rel, datos)
+        }
+        _ => Ok(datos.to_vec()),
+    }
+}
+
 /// Copia un archivo del proyecto a un destino de fuera **en claro**.
 ///
 /// Es lo que usan los preparadores de dataset: Python no sabe descifrar, y un

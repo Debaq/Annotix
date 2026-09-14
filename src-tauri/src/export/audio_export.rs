@@ -13,8 +13,7 @@ fn add_audio_to_zip<W: Write + std::io::Seek>(
     audio_dir: &Path,
 ) -> Result<(), String> {
     let file_path = audio_dir.join(&audio.file);
-    let data = std::fs::read(&file_path)
-        .map_err(|e| format!("Error leyendo audio {}: {}", audio.name, e))?;
+    let data = crate::store::io::leer_ruta(&file_path)?;
 
     let options = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
     let path = format!("{}/{}", folder, audio.name);

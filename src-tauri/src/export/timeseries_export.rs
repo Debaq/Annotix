@@ -27,7 +27,7 @@ fn read_series_data(project_dir: &Path, ts: &TimeSeriesEntry) -> Option<serde_js
     let path = project_dir
         .join("timeseries")
         .join(format!("{}.json", ts.id));
-    let content = std::fs::read(path).ok()?;
+    let content = crate::store::io::leer_ruta(&path).ok()?;
     serde_json::from_slice(&content).ok()
 }
 

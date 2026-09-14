@@ -4333,3 +4333,33 @@ fn la_raiz_del_proyecto_se_encuentra_subiendo() {
     let suelto = tempfile::tempdir().unwrap();
     assert!(store_io::raiz_del_proyecto(&suelto.path().join("x.png")).is_none());
 }
+
+#[test]
+fn cifrar_contra_la_ruta_final_y_no_contra_el_tmp() {
+    // El error fácil de cometer en cualquier escritura atómica: la clave de
+    // cada archivo se deriva de su ruta, así que cifrar contra `x.json.tmp` y
+    // renombrar a `x.json` deja un archivo que ya no abre.
+    let (tmp, _) = proyecto_cifrado();
+    let dir = tmp.path().join("timeseries");
+    std::fs::create_dir_all(&dir).unwrap();
+    let final_ = dir.join("s.json");
+    let temporal = dir.join("s.json.tmp");
+
+    let datos = b"[1,2,3]";
+    let cifrado = store_io::cifrar_para_ruta(&final_, datos).unwrap();
+    std::fs::write(&temporal, &cifrado).unwrap();
+    std::fs::rename(&temporal, &final_).unwrap();
+
+    assert_eq!(store_io::leer_ruta(&final_).unwrap(), datos.to_vec());
+    sesion::bloquear(tmp.path());
+}
+
+#[test]
+fn en_un_proyecto_sin_cifrar_los_bytes_pasan_tal_cual() {
+    let tmp = tempfile::tempdir().unwrap();
+    let pf = make_project("normal", "detection", default_classes());
+    store_io::write_project(tmp.path(), &pf).unwrap();
+    let ruta = tmp.path().join("images").join("a.png");
+    std::fs::create_dir_all(ruta.parent().unwrap()).unwrap();
+    assert_eq!(store_io::cifrar_para_ruta(&ruta, b"hola").unwrap(), b"hola");
+}

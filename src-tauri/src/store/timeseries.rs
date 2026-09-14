@@ -111,9 +111,13 @@ impl AppState {
         let tmp = path.with_extension("json.tmp");
         let content = serde_json::to_vec(data)
             .map_err(|e| format!("Error serializando datos de serie: {}", e))?;
-        // Por `escribir_ruta`: en un proyecto cifrado, media hora de señal es
-        // tan identificable como una imagen.
-        crate::store::io::escribir_ruta(&tmp, &content)?;
+        // Cifrado contra la ruta **final**: la clave de cada archivo se deriva
+        // de su ruta, y cifrar contra el `.tmp` daría un archivo que ya no abre
+        // tras el renombrado. En un proyecto cifrado media hora de señal es tan
+        // identificable como una imagen.
+        let content = crate::store::io::cifrar_para_ruta(&path, &content)?;
+        std::fs::write(&tmp, &content)
+            .map_err(|e| format!("Error escribiendo datos de serie: {}", e))?;
         std::fs::rename(&tmp, &path)
             .map_err(|e| format!("Error renombrando datos de serie: {}", e))?;
         Ok(())

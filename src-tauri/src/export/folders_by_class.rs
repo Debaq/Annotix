@@ -63,8 +63,7 @@ fn add_image_to_folder<W: Write + Seek>(
     images_dir: &Path,
 ) -> Result<(), String> {
     let file_path = images_dir.join(&image.file);
-    let mut data = std::fs::read(&file_path)
-        .map_err(|e| format!("Error leyendo imagen {}: {}", image.name, e))?;
+    let mut data = crate::store::io::leer_ruta(&file_path)?;
 
     // Transcodificar WebP → JPG si el file_name destino ya no es .webp (normalizado)
     if super::has_webp_ext(&image.file) && !super::has_webp_ext(file_name) {

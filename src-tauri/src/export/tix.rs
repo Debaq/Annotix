@@ -36,8 +36,7 @@ pub fn export<F: Fn(f64)>(
             continue;
         }
 
-        let data =
-            std::fs::read(abs_path).map_err(|e| format!("Error leyendo {}: {}", rel_str, e))?;
+        let data = crate::store::io::leer_ruta(abs_path)?;
 
         // Usar Stored para binarios ya comprimidos (imágenes, videos, audio), Deflated para el resto
         let opts = if is_binary_media(&rel_str) {

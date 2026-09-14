@@ -419,7 +419,7 @@ pub async fn project_to_doc(
             Some(d) => d.clone(),
             None => {
                 let path = timeseries_dir.join(format!("{}.json", ts.id));
-                std::fs::read(&path)
+                crate::store::io::leer_ruta(&path)
                     .ok()
                     .and_then(|b| serde_json::from_slice(&b).ok())
                     .unwrap_or(serde_json::Value::Null)
@@ -1013,6 +1013,16 @@ pub async fn download_project_images(
                 Ok(blob_data) => {
                     let dest = images_dir.join(file_name);
                     let tmp_dest = images_dir.join(format!("{}.tmp", file_name));
+                    // Lo que llega del par entra al proyecto: si está cifrado,
+                    // entra cifrado. Se cifra contra la ruta final porque la
+                    // clave del archivo se deriva de ella.
+                    let blob_data = match crate::store::io::cifrar_para_ruta(&dest, &blob_data) {
+                        Ok(b) => b,
+                        Err(e) => {
+                            log::warn!("No se pudo cifrar la imagen {}: {}", img_id, e);
+                            continue;
+                        }
+                    };
                     if let Err(e) = std::fs::write(&tmp_dest, &blob_data) {
                         log::warn!("Error escribiendo imagen tmp {}: {}", img_id, e);
                         continue;
@@ -1461,6 +1471,10 @@ async fn download_single_image(
             Some(blob_data) => {
                 let dest = images_dir.join(&file_name);
                 let tmp_dest = images_dir.join(format!("{}.tmp", file_name));
+                // Cifrada contra la ruta final si el proyecto local lo está.
+                let Ok(blob_data) = crate::store::io::cifrar_para_ruta(&dest, &blob_data) else {
+                    continue;
+                };
                 if std::fs::write(&tmp_dest, &blob_data).is_err() {
                     continue;
                 }

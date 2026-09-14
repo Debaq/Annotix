@@ -263,8 +263,9 @@ pub fn add_image_to_zip<W: Write + Seek>(
     images_dir: &Path,
 ) -> Result<(), String> {
     let file_path = images_dir.join(&image.file);
-    let mut data = std::fs::read(&file_path)
-        .map_err(|e| format!("Error leyendo imagen {}: {}", image.name, e))?;
+    // Descifrando: exportar saca los datos del ámbito cifrado a propósito —eso
+    // es lo que es exportar—, pero tiene que salir una imagen y no ruido.
+    let mut data = crate::store::io::leer_ruta(&file_path)?;
 
     // Transcodificar WebP → JPG si el name destino es .jpg pero el file en disco es .webp
     if has_webp_ext(&image.file) && !has_webp_ext(&image.name) {
