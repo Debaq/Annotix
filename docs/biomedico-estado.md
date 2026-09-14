@@ -4,7 +4,7 @@
 > cinco (`biomedico-fase1` … `fase4`) son el plan; éste dice qué está hecho, qué
 > falta, y qué decisiones ya se tomaron para no volver a discutirlas.
 >
-> Última actualización: 2026-09-13, sobre `f1b95eb`.
+> Última actualización: 2026-09-13, sobre `7b5d021`.
 
 ---
 
@@ -14,8 +14,8 @@
 |---|---|---|
 | 1 · Split agrupado por unidad natural | **hecho** | `f61c7e5` |
 | 2 · `subjectId` de primer nivel | **hecho** | `7cc466a`, `958359e` |
-| 3 · Política de partición + informe | **hecho** (ver hueco abajo) | `2558bb9` |
-| 4 · Procedencia por etiqueta | **hecho** | `26261c2`, `f1b95eb` |
+| 3 · Política de partición + informe | **hecho** | `2558bb9`, `7a98ab8` |
+| 4 · Procedencia por etiqueta | **hecho** | `26261c2`, `f1b95eb`, `7b5d021` |
 | 5 · Auditoría encadenada | pendiente | — |
 | 6 · Lectura múltiple cegada | pendiente | — |
 | 7 · Acuerdo + adjudicación | pendiente | — |
@@ -38,15 +38,16 @@ Fuera del plan original, pedido sobre la marcha:
 
 ## Lo que quedó abierto, por si parece hecho y no lo está
 
-**Etapa 3.** El informe del reparto se persiste y se muestra, pero `testSplit`
-sigue en 0 por defecto (`presets.ts → getDefaultConfig`) y no hay bloque de
-política de partición a nivel de proyecto: la unidad de agrupación y la semilla
-se deciden solas, no se declaran. El aviso `no_test` cubre el caso mientras
-tanto.
+**Etapa 3.** El `testSplit` por defecto del formulario sigue en 0
+(`presets.ts → getDefaultConfig`). Ya no es el hueco que era: el proyecto declara
+su propia fracción recomendada en `splitPolicy` y la pantalla de entrenamiento
+avisa cuando la corrida no la usa. Falta que el dominio biomédico (etapa 11)
+rellene esa recomendación solo, en vez de que la ponga el usuario a mano.
 
-**Etapa 4.** Falta el estado `rejected` escrito desde algún sitio: el esquema lo
-admite y nada lo escribe. La UI de procedencia muestra el corpus entero; no hay
-forma de ver la procedencia de **una** anotación.
+**Etapa 4.** Cerrada. El rechazo se guarda en `ImageEntry.rejected` —sin
+geometría— y la barra de anotaciones tiene la ficha de procedencia de una
+etiqueta. Queda fuera, y a propósito: `review: "rejected"` no se escribe sobre
+una etiqueta viva, porque una etiqueta rechazada deja de estar en el corpus.
 
 **Etapa 10b.** Quedan fuera los modelos que no se pueden descargar sin token:
 UNI (gated, CC-BY-NC-ND), RETFound (gated, `.pth` suelto sin metadatos de
@@ -58,8 +59,9 @@ generalistas usables en biomedicina. No hay presets biomédicos: la tabla de la
 Fase 3 sigue siendo diseño.
 
 **Traducciones.** Todo lo nuevo está en `es` y `en`. Los otros ocho locales caen
-a inglés por `fallbackLng`. Son unas 160 frases nuevas
-(`training.families.*`, `training.splitReport.*`, `subjects.*`).
+a inglés por `fallbackLng`. Son unas 200 frases nuevas
+(`training.families.*`, `training.splitReport.*`, `training.splitPolicy.*`,
+`annotations.provenance.*`, `subjects.*`).
 
 **Verificación en la app real.** Nada de la UI de esta tanda se vio corriendo
 dentro de Annotix: los componentes se verificaron en el dev server con datos
@@ -71,7 +73,13 @@ sesión de trabajo. **Qué mirar al abrirla**:
 - Galería → botón «Gestionar sujetos»: debe abrir «Estado del corpus» con
   sujetos y procedencia.
 - Lista de entrenamientos: el botón del informe de reparto, con el número de
-  avisos encima cuando los hay.
+  avisos encima cuando los hay, y debajo la semilla del reparto.
+- Entrenamiento → «Política de partición», debajo del visor del reparto: cambiar
+  la unidad o la semilla y comprobar que el informe del entrenamiento siguiente
+  las transcribe.
+- Barra de anotaciones: el botón de información de cada tarjeta abre la ficha de
+  procedencia. Borrar una caja aceptada de un modelo y comprobar que «Estado del
+  corpus» cuenta el rechazo.
 
 ---
 
@@ -98,12 +106,13 @@ sesión de trabajo. **Qué mirar al abrirla**:
 
 ## Formato de datos
 
-`project.json` va por la **versión 5**. Migraciones en `store/io.rs`:
+`project.json` va por la **versión 6**. Migraciones en `store/io.rs`:
 
 | | Cambio | Migración |
 |---|---|---|
 | v3 → v4 | `subjectId` opcional en imagen, video, serie y tabular | sólo sube la versión: `serde(default)` lee lo viejo |
 | v4 → v5 | procedencia por etiqueta | rellena `origin` desde `source` sólo donde no hay ambigüedad |
+| v5 → v6 | `splitPolicy` opcional en el proyecto | sólo sube la versión: declarar la política es decisión del usuario, y rellenarla sería declarar por él |
 
 ---
 
@@ -116,7 +125,8 @@ con ids en claro dentro del proyecto — el modo estudio es anónimo por diseño
 sirve como procedencia.
 
 La **etapa 8** (contrato de modelo) es la que más valor visible da, y ya tiene
-tres de sus insumos: informe de reparto (etapa 3), procedencia
+cuatro de sus insumos: informe de reparto con semilla y unidad (etapa 3),
+política de partición declarada (`splitPolicy`), procedencia con tasa de rechazo
 (`get_provenance_summary`, etapa 4) y población por sujeto (etapa 2). Le falta
 el acuerdo entre evaluadores (etapa 7) y los intervalos de confianza por
 bootstrap agrupado por sujeto.

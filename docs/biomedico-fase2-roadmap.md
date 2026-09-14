@@ -93,7 +93,7 @@ corrompan al sincronizar.
 
 ---
 
-## Etapa 3 — Política de partición declarada y test obligatorio 🟡 **informe hecho**
+## Etapa 3 — Política de partición declarada y test obligatorio ✅ **hecho**
 
 **Qué se construye.** Un bloque de política de partición a nivel de proyecto:
 unidad de agrupación (ítem / video / sujeto), fracciones, semilla, y si el test
@@ -104,6 +104,16 @@ test queda permitido y anotado, no impedido. Se persiste un
 **reporte de composición**: nº de sujetos, ítems y anotaciones por clase en cada
 partición, más la advertencia cuando una clase no aparece en test. Ese reporte
 es el primer insumo que el contrato de modelo consumirá sin trabajo manual.
+
+**Qué quedó.** `ProjectFile.splitPolicy` (formato v6): unidad de agrupación
+(`auto` | `subject` | `video` | `item`), semilla, fracciones recomendadas y si el
+proyecto exige test. `split_plan` la aplica y el informe la transcribe —semilla
+siempre, unidad declarada cuando difiere de la efectiva—. Se incumple con aviso,
+nunca con bloqueo: `test_required_absent` distingue «se declaró que hacía falta»
+de `no_test`, y `unit_unavailable` avisa cuando se declaró repartir por sujeto y
+ninguna muestra lo trae. El `testSplit` por defecto del formulario sigue en 0; lo
+que cambia es que el proyecto puede recomendar el suyo y la pantalla de
+entrenamiento avisa cuando la corrida no lo usa.
 
 **Qué pilar cierra.** Cierra el pilar 2 y entrega la primera pieza del pilar 4.
 
@@ -139,6 +149,14 @@ Dos correcciones de comportamiento, no solo de esquema:
 Además, los exportadores emiten la procedencia donde el formato lo permite:
 COCO como campos extra por anotación, `.tix` completo, y un CSV lateral de
 procedencia para YOLO y Pascal VOC, que no tienen dónde alojarla.
+
+**Qué quedó del rechazo.** `review: "rejected"` no lo escribe el guardado y no es
+un olvido: una etiqueta rechazada deja de estar en el corpus, así que su
+constancia vive en `ImageEntry.rejected` —sin la geometría, que no responde
+ninguna pregunta y metería una máscara en base64 por rechazo—. Borrar lo propio
+no cuenta como rechazo, y lo de procedencia desconocida tampoco. El resumen de
+procedencia suma los rechazos aparte de `total`, y la barra de anotaciones tiene
+la ficha de procedencia de **una** etiqueta.
 
 **Qué pilar cierra.** Pilar 3 completo, salvo la parte multievaluador que
 depende de la etapa 6.
