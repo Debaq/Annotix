@@ -345,6 +345,12 @@ export interface TrainingRequest {
   backendParams: Record<string, unknown>;
   baseModelPath?: string | null;
   cloudConfig?: CloudTrainingConfig;
+  /**
+   * Clases con las que entrenar. Ausente o `null` = todas las del proyecto.
+   * Las no listadas se descartan al preparar el dataset: sus anotaciones no
+   * existen para el entrenamiento.
+   */
+  classIds?: number[] | null;
 }
 
 export interface BackendInfo {

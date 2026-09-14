@@ -132,6 +132,9 @@ pub struct TrainingConfig {
     pub freeze: Option<u32>,
     #[serde(default, rename = "baseModelPath")]
     pub base_model_path: Option<String>,
+    /// Ver `TrainingRequest::class_ids`.
+    #[serde(default, rename = "classIds")]
+    pub class_ids: Option<Vec<i64>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -472,6 +475,11 @@ pub struct TrainingRequest {
     pub base_model_path: Option<String>,
     #[serde(default, rename = "cloudConfig")]
     pub cloud_config: Option<CloudTrainingConfig>,
+    /// Clases con las que entrenar. `None` (o vacío) = todas las del proyecto.
+    /// Las no listadas se descartan antes de preparar el dataset: sus
+    /// anotaciones no existen para el entrenamiento ni para el índice de clase.
+    #[serde(default, rename = "classIds")]
+    pub class_ids: Option<Vec<i64>>,
 }
 
 // ─── Backend Catalog ─────────────────────────────────────────────────────────
@@ -624,6 +632,7 @@ pub fn preview_script(backend: &TrainingBackend, task: &str) -> Result<String, S
     }
 
     let req = TrainingRequest {
+        class_ids: None,
         backend: backend.clone(),
         model_id: modelo.id,
         task: task.to_string(),

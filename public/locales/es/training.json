@@ -943,5 +943,13 @@
       "single_group": "Todo el corpus es un solo grupo: no hay reparto real y la validación mide sobre lo mismo que entrena.",
       "subject_partially_declared": "Hay muestras con sujeto y muestras sin él: media parte se agrupa por sujeto y la otra por imagen."
     }
+  },
+  "classes": {
+    "title": "Clases a entrenar",
+    "all": "Entrenar con todas las clases ({{total}})",
+    "selectAll": "Seleccionar todas",
+    "selectNone": "Ninguna",
+    "noneSelected": "Elige al menos una clase para entrenar.",
+    "summary": "{{selected}} de {{total}} clases. Las no seleccionadas se descartan: sus anotaciones no entran al dataset."
   }
 }

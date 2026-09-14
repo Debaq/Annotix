@@ -25,6 +25,7 @@ import { BackendModelSelector } from './BackendModelSelector';
 import { ExecutionModeSelector } from './ExecutionModeSelector';
 import { TrainingPresets } from './TrainingPresets';
 import { GpuIndicator } from './GpuIndicator';
+import { TrainingClassSelector } from './TrainingClassSelector';
 // Lazy: solo se cargan cuando el usuario llega a esa fase del flujo.
 const PythonEnvSetup = lazy(() => import('./PythonEnvSetup').then(m => ({ default: m.PythonEnvSetup })));
 const BackendConfigPanel = lazy(() => import('./BackendConfigPanel').then(m => ({ default: m.BackendConfigPanel })));
@@ -82,7 +83,6 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
   const [trainingStartedAt, setTrainingStartedAt] = useState<number>(0);
 
   const projectType = project?.type || 'bbox';
-  const annotatedCount = useAnnotatedCount(project?.id ?? null, open);
 
   // Legacy YOLO config (for presets + backward compat)
   const { config: yoloConfig, updateConfig: updateYoloConfig, updateAugmentation: updateYoloAug, applyPreset } = useTrainingConfig(projectType);
@@ -110,7 +110,18 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
     setCloudProvider,
     cloudConfig,
     setCloudConfig,
+    classIds,
+    setClassIds,
   } = useTrainingRequest(projectType);
+
+  // El conteo que alimenta el visualizador del split respeta la selección de
+  // clases: con un subconjunto entran menos imágenes.
+  const annotatedCount = useAnnotatedCount(project?.id ?? null, open, classIds);
+
+  // Los ids de clase son de un proyecto: al cambiar de proyecto vuelve a "todas".
+  useEffect(() => {
+    setClassIds(null);
+  }, [project?.id, setClassIds]);
 
   const {
     progress,
@@ -195,8 +206,20 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
     });
   }, [t]);
 
+  // Sin clases no hay dataset: el backend leería la lista vacía como "todas" y
+  // entrenaría con lo que el usuario acaba de descartar.
+  const sinClases = classIds !== null && classIds.length === 0;
+  const avisarSinClases = useCallback(() => {
+    toast({
+      title: t('training.startFailed'),
+      description: t('training.classes.noneSelected'),
+      variant: 'destructive',
+    });
+  }, [t]);
+
   const handleStartLocal = useCallback(async () => {
     if (!project?.id) return;
+    if (sinClases) { avisarSinClases(); return; }
     if (activeJobId) {
       setPhase('training');
       return;
@@ -247,7 +270,7 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
       showStartError(e, 'training.startFailed');
       setPhase('config');
     }
-  }, [project, activeJobId, backend, buildRequest, showStartError]);
+  }, [project, activeJobId, backend, buildRequest, showStartError, sinClases, avisarSinClases]);
 
   // Python env setup completed → resume training start
   const handleEnvReady = useCallback((gpu: GpuInfo | null) => {
@@ -261,6 +284,7 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
 
   const handleStartCloud = useCallback(async () => {
     if (!project?.id || !cloudProvider || !cloudConfig) return;
+    if (sinClases) { avisarSinClases(); return; }
     if (activeJobId) {
       setPhase('training');
       return;
@@ -277,10 +301,11 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
       showStartError(e, 'training.startFailed');
       setPhase('config');
     }
-  }, [project, activeJobId, cloudProvider, cloudConfig, buildRequest, showStartError]);
+  }, [project, activeJobId, cloudProvider, cloudConfig, buildRequest, showStartError, sinClases, avisarSinClases]);
 
   const handleStartBrowserAutomation = useCallback(async () => {
     if (!project?.id) return;
+    if (sinClases) { avisarSinClases(); return; }
     try {
       // La automatización sube y ejecuta el paquete de entrenamiento, que lleva el
       // `train.py` generado desde esta misma configuración. Antes se lanzaba sin
@@ -310,10 +335,11 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
       console.error('Error starting browser automation:', e);
       showStartError(e, 'training.startFailed');
     }
-  }, [project, backend, buildRequest, showStartError]);
+  }, [project, backend, buildRequest, showStartError, sinClases, avisarSinClases]);
 
   const handleDownloadPackage = useCallback(async () => {
     if (!project?.id) return;
+    if (sinClases) { avisarSinClases(); return; }
     try {
       const slug = (project.name || 'project')
         .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
@@ -333,7 +359,7 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
       console.error('Error generating package:', e);
       showStartError(e, 'training.packageFailed');
     }
-  }, [project, backend, buildRequest, showStartError]);
+  }, [project, backend, buildRequest, showStartError, sinClases, avisarSinClases]);
 
   const handleCancel = useCallback(async () => {
     if (!activeJobId || !project?.id) return;
@@ -580,6 +606,15 @@ export function TrainingPanel({ trigger, defaultOpen = false }: TrainingPanelPro
                   selectedSize={backend === 'yolo' ? modelSize : null}
                   onModelChange={setModelId}
                   onSizeChange={setModelSize}
+                />
+
+                <Separator />
+
+                {/* Clases con las que entrenar */}
+                <TrainingClassSelector
+                  classes={project.classes ?? []}
+                  selected={classIds}
+                  onChange={setClassIds}
                 />
 
                 <Separator />

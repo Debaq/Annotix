@@ -478,5 +478,13 @@
     "tinyWarning": "数据集过小。请考虑禁用测试集划分（0）或标注更多图像。"
   },
   "startFailed": "无法开始训练",
-  "packageFailed": "无法生成软件包"
+  "packageFailed": "无法生成软件包",
+  "classes": {
+    "title": "参与训练的类别",
+    "all": "使用全部类别训练（{{total}}）",
+    "selectAll": "全选",
+    "selectNone": "全不选",
+    "noneSelected": "至少选择一个类别进行训练。",
+    "summary": "已选 {{selected}}/{{total}} 个类别。未选的类别会被丢弃：其标注不会进入数据集。"
+  }
 }

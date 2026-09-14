@@ -478,5 +478,13 @@
     "tinyWarning": "데이터셋이 매우 작습니다. 테스트 분할(0)을 비활성화하거나 이미지를 더 주석하세요."
   },
   "startFailed": "학습을 시작할 수 없습니다",
-  "packageFailed": "패키지를 생성할 수 없습니다"
+  "packageFailed": "패키지를 생성할 수 없습니다",
+  "classes": {
+    "title": "학습할 클래스",
+    "all": "모든 클래스로 학습 ({{total}})",
+    "selectAll": "전체 선택",
+    "selectNone": "선택 안 함",
+    "noneSelected": "학습할 클래스를 하나 이상 선택하세요.",
+    "summary": "{{total}}개 중 {{selected}}개 클래스. 선택하지 않은 클래스는 제외되어 주석이 데이터셋에 들어가지 않습니다."
+  }
 }

@@ -257,6 +257,7 @@ pub fn request(backend: TrainingBackend, task: &str) -> TrainingRequest {
     let model_id = model_id_real(&backend).into();
     let image_size = image_size_minima(&backend);
     TrainingRequest {
+        class_ids: None,
         model_id,
         image_size,
         backend,

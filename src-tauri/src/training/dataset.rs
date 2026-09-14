@@ -80,6 +80,33 @@ pub fn select_trainable_images(
         .collect()
 }
 
+/// Deja en el proyecto solo las clases elegidas para este entrenamiento.
+///
+/// `None` o lista vacía = entrenar con todas (el caso por defecto).
+///
+/// Restringir aquí, sobre la copia en memoria del proyecto, es lo que hace que
+/// las clases no elegidas desaparezcan de verdad: el índice de clase es la
+/// posición en `project.classes` en los quince preparadores, y
+/// `select_trainable_images` descarta después toda anotación cuyo `class_id` ya
+/// no exista —y con ella las imágenes que se quedan sin ninguna—. El dataset
+/// que llega al script no distingue esto de un proyecto que nunca tuvo esas
+/// clases.
+pub fn restrict_to_classes(project: &mut ProjectFile, selected: Option<&[i64]>) -> Result<(), String> {
+    let Some(ids) = selected.filter(|ids| !ids.is_empty()) else {
+        return Ok(());
+    };
+    let wanted: std::collections::HashSet<i64> = ids.iter().copied().collect();
+    project.classes.retain(|c| wanted.contains(&c.id));
+    if project.classes.is_empty() {
+        return Err(
+            "Ninguna de las clases seleccionadas existe en el proyecto. \
+             Elige al menos una clase para entrenar."
+                .to_string(),
+        );
+    }
+    Ok(())
+}
+
 /// Resultado del split: cuántas imágenes en cada partición.
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]

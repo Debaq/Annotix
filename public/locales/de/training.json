@@ -478,5 +478,13 @@
     "tinyWarning": "Sehr kleiner Datensatz. Test-Split (0) deaktivieren oder mehr Bilder annotieren."
   },
   "startFailed": "Training konnte nicht gestartet werden",
-  "packageFailed": "Paket konnte nicht erstellt werden"
+  "packageFailed": "Paket konnte nicht erstellt werden",
+  "classes": {
+    "title": "Zu trainierende Klassen",
+    "all": "Mit allen Klassen trainieren ({{total}})",
+    "selectAll": "Alle auswählen",
+    "selectNone": "Keine",
+    "noneSelected": "Wähle mindestens eine Klasse zum Trainieren.",
+    "summary": "{{selected}} von {{total}} Klassen. Nicht ausgewählte werden verworfen: Ihre Annotationen gelangen nicht in den Datensatz."
+  }
 }

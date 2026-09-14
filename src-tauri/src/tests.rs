@@ -1163,6 +1163,68 @@ fn split_agrupado_es_reproducible() {
     assert_eq!(p1.test, p2.test);
 }
 
+// ─── Tests: entrenar con un subconjunto de clases ───────────────────────────
+
+#[test]
+fn restrict_to_classes_sin_seleccion_deja_todo() {
+    let mut pf = make_project("p", "detection", default_classes());
+    dataset::restrict_to_classes(&mut pf, None).unwrap();
+    assert_eq!(pf.classes.len(), 2);
+    dataset::restrict_to_classes(&mut pf, Some(&[])).unwrap();
+    assert_eq!(pf.classes.len(), 2, "lista vacía significa «todas»");
+}
+
+#[test]
+fn restrict_to_classes_borra_clase_y_sus_anotaciones() {
+    let mut pf = make_project("p", "detection", default_classes());
+    pf.images = vec![
+        // Solo "dog" (id 1): al entrenar solo con "cat" se queda sin nada.
+        image_entry(
+            "solo_dog.png",
+            "solo_dog.png",
+            100,
+            100,
+            vec![bbox_ann(1, 1.0, 1.0, 5.0, 5.0)],
+        ),
+        image_entry(
+            "mixta.png",
+            "mixta.png",
+            100,
+            100,
+            vec![
+                bbox_ann(0, 1.0, 1.0, 5.0, 5.0),
+                bbox_ann(1, 2.0, 2.0, 5.0, 5.0),
+            ],
+        ),
+    ];
+
+    dataset::restrict_to_classes(&mut pf, Some(&[0])).unwrap();
+    assert_eq!(pf.classes.len(), 1);
+    assert_eq!(pf.classes[0].name, "cat");
+
+    // El dataset ve exactamente lo mismo que si "dog" no hubiera existido nunca.
+    let kept = dataset::select_trainable_images(pf.images.clone(), &pf.classes, false);
+    assert_eq!(kept.len(), 1);
+    assert_eq!(kept[0].name, "mixta.png");
+    assert_eq!(kept[0].annotations.len(), 1);
+    assert_eq!(kept[0].annotations[0].class_id, 0);
+}
+
+#[test]
+fn restrict_to_classes_renumera_los_indices() {
+    // El índice de clase es la posición en `classes`: al quitar la primera, la
+    // segunda pasa a ser el índice 0 en las labels que se escriben.
+    let mut pf = make_project("p", "detection", default_classes());
+    dataset::restrict_to_classes(&mut pf, Some(&[1])).unwrap();
+    assert_eq!(pf.classes.iter().position(|c| c.id == 1), Some(0));
+}
+
+#[test]
+fn restrict_to_classes_falla_si_no_queda_ninguna() {
+    let mut pf = make_project("p", "detection", default_classes());
+    assert!(dataset::restrict_to_classes(&mut pf, Some(&[99])).is_err());
+}
+
 // ─── Tests: selección de imágenes entrenables ───────────────────────────────
 
 #[test]

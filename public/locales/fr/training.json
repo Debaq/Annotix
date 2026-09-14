@@ -478,5 +478,13 @@
     "tinyWarning": "Jeu de données très petit. Désactivez le split de test (0) ou annotez plus d'images."
   },
   "startFailed": "Impossible de démarrer l'entraînement",
-  "packageFailed": "Impossible de générer le paquet"
+  "packageFailed": "Impossible de générer le paquet",
+  "classes": {
+    "title": "Classes à entraîner",
+    "all": "Entraîner avec toutes les classes ({{total}})",
+    "selectAll": "Tout sélectionner",
+    "selectNone": "Aucune",
+    "noneSelected": "Choisis au moins une classe pour entraîner.",
+    "summary": "{{selected}} sur {{total}} classes. Les non sélectionnées sont écartées : leurs annotations n'entrent pas dans le dataset."
+  }
 }

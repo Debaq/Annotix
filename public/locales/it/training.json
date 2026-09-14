@@ -478,5 +478,13 @@
     "tinyWarning": "Dataset molto piccolo. Disattiva lo split di test (0) o annota più immagini."
   },
   "startFailed": "Impossibile avviare l'addestramento",
-  "packageFailed": "Impossibile generare il pacchetto"
+  "packageFailed": "Impossibile generare il pacchetto",
+  "classes": {
+    "title": "Classi da addestrare",
+    "all": "Addestra con tutte le classi ({{total}})",
+    "selectAll": "Seleziona tutte",
+    "selectNone": "Nessuna",
+    "noneSelected": "Scegli almeno una classe per addestrare.",
+    "summary": "{{selected}} di {{total}} classi. Quelle non selezionate vengono scartate: le loro annotazioni non entrano nel dataset."
+  }
 }

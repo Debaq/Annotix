@@ -1550,6 +1550,7 @@ pub fn ultralytics_data_arg(ds: &PreparedDataset, task: &str) -> Result<String, 
 fn yolo_config_from_request(req: &TrainingRequest) -> TrainingConfig {
     let bp = &req.backend_params;
     TrainingConfig {
+        class_ids: req.class_ids.clone(),
         yolo_version: req.model_id.clone(),
         task: req.task.clone(),
         model_size: bp

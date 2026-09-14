@@ -255,6 +255,9 @@ export function useTrainingRequest(projectType: string) {
   );
 
   const [exportFormats, setExportFormats] = useState<string[]>(persisted.current?.exportFormats ?? []);
+  // Clases con las que entrenar. `null` = todas (por defecto). No se persiste:
+  // los ids son de este proyecto y la config guardada es global.
+  const [classIds, setClassIds] = useState<number[] | null>(null);
   const [baseModelPath, setBaseModelPath] = useState<string | null>(null);
   const [cloudProvider, setCloudProvider] = useState<CloudProvider | null>(null);
   const [cloudConfig, setCloudConfig] = useState<CloudTrainingConfig | null>(null);
@@ -354,6 +357,7 @@ export function useTrainingRequest(projectType: string) {
       exportFormats,
       backendParams: params,
       baseModelPath: baseModelPath || undefined,
+      classIds,
     };
 
     if (executionMode === 'cloud' && cloudConfig) {
@@ -361,7 +365,7 @@ export function useTrainingRequest(projectType: string) {
     }
 
     return req;
-  }, [backend, modelId, modelSize, task, executionMode, commonParams, backendParams, exportFormats, baseModelPath, cloudConfig]);
+  }, [backend, modelId, modelSize, task, executionMode, commonParams, backendParams, exportFormats, baseModelPath, cloudConfig, classIds]);
 
   return {
     backend,
@@ -378,6 +382,8 @@ export function useTrainingRequest(projectType: string) {
     updateBackendParam,
     exportFormats,
     setExportFormats,
+    classIds,
+    setClassIds,
     backends,
     currentBackendInfo,
     currentModels,

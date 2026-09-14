@@ -574,12 +574,25 @@ pub fn get_model_families() -> Result<Vec<crate::training::catalog::FamilyInfo>,
 ///
 /// Los fondos solo cuentan en proyectos que pueden usarlos: en clasificación
 /// una imagen sin clase no es un negativo, es una imagen sin etiquetar.
+///
+/// `class_ids` recorta el conteo a las clases elegidas para entrenar: una
+/// imagen anotada solo con clases descartadas no entra al dataset y tampoco
+/// debe contarse aquí.
 pub fn count_annotated_images(
     state: State<'_, AppState>,
     project_id: String,
+    class_ids: Option<Vec<i64>>,
 ) -> Result<usize, String> {
+    let seleccion: Option<std::collections::HashSet<i64>> = class_ids
+        .filter(|ids| !ids.is_empty())
+        .map(|ids| ids.into_iter().collect());
     state.with_project(&project_id, |pf| {
-        let class_ids: std::collections::HashSet<i64> = pf.classes.iter().map(|c| c.id).collect();
+        let class_ids: std::collections::HashSet<i64> = pf
+            .classes
+            .iter()
+            .map(|c| c.id)
+            .filter(|id| seleccion.as_ref().is_none_or(|s| s.contains(id)))
+            .collect();
         // Del tipo de proyecto sale la tarea, y de la tarea si un fondo cuenta.
         // Derivarlo en vez de repetir la lista evita que este contador y el
         // preparador del dataset se separen.
@@ -765,7 +778,10 @@ pub async fn start_training_v2(
         let job_id_clone = job_id.clone();
 
         // Read project for classes and dataset
-        let pf = state.read_project_file(&project_id)?;
+        let mut pf = state.read_project_file(&project_id)?;
+        // Mismo recorte que el runner local: las clases no elegidas no viajan
+        // a la nube (ver dataset::restrict_to_classes).
+        crate::training::dataset::restrict_to_classes(&mut pf, request.class_ids.as_deref())?;
         let classes: Vec<String> = pf.classes.iter().map(|c| c.name.clone()).collect();
 
         // Create job entry
@@ -915,8 +931,10 @@ pub fn generate_training_package(
     request: TrainingRequest,
     output_path: String,
 ) -> Result<String, String> {
-    let pf = state.read_project_file(&project_id)?;
+    let mut pf = state.read_project_file(&project_id)?;
     let images_dir = state.project_images_dir(&project_id)?;
+
+    crate::training::dataset::restrict_to_classes(&mut pf, request.class_ids.as_deref())?;
 
     // Mismo criterio que el runner local: solo imágenes anotadas.
     let images = crate::training::dataset::select_trainable_images(
@@ -1036,6 +1054,7 @@ fn convert_request_to_yolo_config(req: &TrainingRequest) -> TrainingConfig {
             .unwrap_or(true),
         freeze: bp.get("freeze").and_then(|v| v.as_u64()).map(|v| v as u32),
         base_model_path: req.base_model_path.clone(),
+        class_ids: req.class_ids.clone(),
     }
 }
 

@@ -48,6 +48,9 @@ impl TrainingProcessManager {
         let job_id_owned = job_id.to_string();
 
         let mut pf = state.read_project_file(project_id)?;
+        // Entrenar con un subconjunto de clases: las demás dejan de existir
+        // para este dataset (ver dataset::restrict_to_classes).
+        dataset::restrict_to_classes(&mut pf, config.class_ids.as_deref())?;
 
         // Preparar directorio del dataset (dentro del proyecto)
         let dataset_dir = project_dir.join("training").join(format!("job_{}", job_id));
@@ -209,7 +212,8 @@ impl TrainingProcessManager {
         let images_dir = state.project_images_dir(project_id)?;
         let job_id_owned = job_id.to_string();
 
-        let pf = state.read_project_file(project_id)?;
+        let mut pf = state.read_project_file(project_id)?;
+        dataset::restrict_to_classes(&mut pf, request.class_ids.as_deref())?;
 
         // NB: status="training" se setea recién antes del spawn (más abajo), no
         // aquí: si la preparación de dataset/scripts falla, el job no debe quedar

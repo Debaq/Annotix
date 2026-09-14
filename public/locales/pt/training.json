@@ -478,5 +478,13 @@
     "tinyWarning": "Dataset muito pequeno. Considere desativar o test split (0) ou anotar mais imagens."
   },
   "startFailed": "Não foi possível iniciar o treinamento",
-  "packageFailed": "Não foi possível gerar o pacote"
+  "packageFailed": "Não foi possível gerar o pacote",
+  "classes": {
+    "title": "Classes para treinar",
+    "all": "Treinar com todas as classes ({{total}})",
+    "selectAll": "Selecionar todas",
+    "selectNone": "Nenhuma",
+    "noneSelected": "Escolhe pelo menos uma classe para treinar.",
+    "summary": "{{selected}} de {{total}} classes. As não selecionadas são descartadas: as suas anotações não entram no dataset."
+  }
 }
