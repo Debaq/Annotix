@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::store::project_file::{
-    AnnotationEntry, ImageEntry, PredictionEntry, RejectedAnnotation,
+    AnnotationEntry, ImageEntry, PredictionEntry, ProjectFile, RejectedAnnotation,
 };
 use crate::store::safe_path::sanitize_filename;
 use crate::store::state::AppState;
@@ -341,6 +341,37 @@ pub fn diff_anotaciones(
     c
 }
 
+/// Estado de las lecturas de una imagen.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReadingsSummary {
+    /// Cuántas lecturas pide la sesión. 1 = lectura única, el caso normal.
+    pub replication: u32,
+    pub blind: bool,
+    /// Capas que hay, entregadas o no.
+    pub total: usize,
+    pub submitted: usize,
+    /// Si la propia ya está entregada.
+    pub mine_submitted: bool,
+    /// Quiénes leyeron. En modo cegado sólo llega la propia, que es lo único que
+    /// este par tiene en su `project.json`.
+    pub authors: Vec<String>,
+}
+
+/// Quién es este par en la sesión y si la sesión lee cada muestra más de una vez.
+///
+/// Sale de `pf.p2p`, que ya guarda las reglas y ahora también el id de autor. El
+/// guardado necesita las dos cosas para saber si lo que se está escribiendo es
+/// «la» anotación de la imagen o **una lectura** firmada por alguien.
+fn lectura_multiple_de(pf: &ProjectFile) -> Option<(String, String)> {
+    let cfg = pf.p2p.as_ref()?;
+    let reglas: crate::p2p::SessionRules = serde_json::from_value(cfg.rules.clone()).ok()?;
+    if !reglas.lectura_multiple() {
+        return None;
+    }
+    Some((cfg.author_id.clone()?, cfg.display_name.clone()))
+}
+
 /// Lo que queda tras guardar: las anotaciones fusionadas y el historial de
 /// rechazos actualizado.
 ///
@@ -429,6 +460,7 @@ impl AppState {
             download_status: None,
             predictions: vec![],
             rejected: vec![],
+            readings: vec![],
         };
 
         Ok((id, entry))
@@ -540,6 +572,7 @@ impl AppState {
                     download_status: None,
                     predictions: vec![],
                     rejected: vec![],
+                    readings: vec![],
                 })
             })
             .collect();
@@ -641,6 +674,7 @@ impl AppState {
             download_status: None,
             predictions: vec![],
             rejected: vec![],
+            readings: vec![],
         };
 
         self.with_project_mut(project_id, |pf| {
@@ -747,11 +781,18 @@ impl AppState {
         let mut escritas = Vec::new();
         let mut cambio = CambioAnotaciones::default();
         self.with_project_mut(project_id, |pf| {
+            // En una sesión de lectura múltiple, lo que uno anota es **su lectura**:
+            // queda firmada aunque el par esté desconectado, y así el acuerdo se
+            // puede calcular después sin depender de quién estaba en línea.
+            let firma = lectura_multiple_de(pf);
             if let Some(img) = pf.images.iter_mut().find(|i| i.id == image_id) {
                 cambio = diff_anotaciones(&img.annotations, annotations);
                 let (fusionadas, rechazos) =
                     aplicar_guardado(&img.annotations, &img.rejected, annotations, now);
                 escritas = fusionadas.clone();
+                if let Some((autor, nombre)) = firma {
+                    img.upsert_reading(&autor, Some(&nombre), fusionadas.clone(), now);
+                }
                 img.annotations = fusionadas;
                 img.rejected = rechazos;
                 img.status = if annotations.is_empty() {
@@ -784,6 +825,77 @@ impl AppState {
             );
         }
         Ok(escritas)
+    }
+
+    /// Entrega la propia lectura de una imagen.
+    ///
+    /// Entregar es un acto del evaluador: hasta que no lo hace, su capa es un
+    /// borrador. El acuerdo entre evaluadores (etapa 7) se calcula sólo sobre
+    /// capas entregadas, porque comparar contra un trabajo a medias mide prisa,
+    /// no desacuerdo.
+    pub fn submit_reading(&self, project_id: &str, image_id: &str) -> Result<(), String> {
+        let now = js_timestamp();
+        let mut hecho = false;
+        self.with_project_mut(project_id, |pf| {
+            let Some(autor) = pf.p2p.as_ref().and_then(|c| c.author_id.clone()) else {
+                return;
+            };
+            if let Some(img) = pf.images.iter_mut().find(|i| i.id == image_id) {
+                if let Some(capa) = img.readings.iter_mut().find(|r| r.author_id == autor) {
+                    capa.status = "submitted".to_string();
+                    capa.submitted_at = Some(now);
+                    hecho = true;
+                }
+            }
+            pf.updated = now;
+        })?;
+        if hecho {
+            Ok(())
+        } else {
+            Err("No hay una lectura propia que entregar en esta imagen".to_string())
+        }
+    }
+
+    /// Cuántas lecturas hay de una imagen y en qué estado, para que la UI pueda
+    /// decir «2 de 3, falta la tuya» sin recorrer el proyecto entero.
+    pub fn readings_summary(
+        &self,
+        project_id: &str,
+        image_id: &str,
+    ) -> Result<ReadingsSummary, String> {
+        self.with_project(project_id, |pf| {
+            let yo = pf.p2p.as_ref().and_then(|c| c.author_id.clone());
+            let reglas: Option<crate::p2p::SessionRules> = pf
+                .p2p
+                .as_ref()
+                .and_then(|c| serde_json::from_value(c.rules.clone()).ok());
+            let img = pf.images.iter().find(|i| i.id == image_id);
+
+            ReadingsSummary {
+                replication: reglas.as_ref().map(|r| r.replication).unwrap_or(1),
+                blind: reglas.map(|r| r.blind).unwrap_or(false),
+                total: img.map(|i| i.readings.len()).unwrap_or(0),
+                submitted: img.map(|i| i.submitted_readings()).unwrap_or(0),
+                mine_submitted: match (img, yo.as_deref()) {
+                    (Some(i), Some(a)) => {
+                        i.reading_of(a).map(|r| r.status == "submitted").unwrap_or(false)
+                    }
+                    _ => false,
+                },
+                authors: img
+                    .map(|i| {
+                        i.readings
+                            .iter()
+                            .map(|r| {
+                                r.author_name
+                                    .clone()
+                                    .unwrap_or_else(|| r.author_id.clone())
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_default(),
+            }
+        })
     }
 
     pub fn delete_image(&self, project_id: &str, image_id: &str) -> Result<(), String> {

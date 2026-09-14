@@ -4,6 +4,8 @@ import { useCurrentProject } from '@/features/projects/hooks/useCurrentProject';
 import { useAnnotations } from '../hooks/useAnnotations';
 import { AnnotationThumbnailCard } from './AnnotationThumbnailCard';
 import { inferenceService } from '@/features/inference/services/inferenceService';
+import { ReadingStatus } from '@/features/p2p/components/ReadingStatus';
+import { useUIStore } from '@/features/core/store/uiStore';
 import { cn } from '@/lib/utils';
 import { CLASS_SHORTCUTS } from '@/features/core/constants';
 import {
@@ -22,6 +24,7 @@ interface AnnotationsBarProps {
 export const AnnotationsBar: React.FC<AnnotationsBarProps> = ({ image }) => {
   const { t } = useTranslation();
   const { project } = useCurrentProject();
+  const currentImageId = useUIStore((s) => s.currentImageId);
   const { annotations, selectedAnnotationIds, selectAnnotation, deleteAnnotation } = useAnnotations();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [search, setSearch] = useState('');
@@ -148,6 +151,11 @@ export const AnnotationsBar: React.FC<AnnotationsBarProps> = ({ image }) => {
         >
           <i className={cn('fas', isCollapsed ? 'fa-chevron-up' : 'fa-chevron-down')}></i>
         </button>
+
+        {/* Estado de las lecturas: sólo en sesiones que leen más de una vez */}
+        {!isCollapsed && project?.id && currentImageId && (
+          <ReadingStatus projectId={project.id} imageId={currentImageId} />
+        )}
 
         {/* Filtros */}
         {!isCollapsed && annotations.length > 0 && (

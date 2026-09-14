@@ -130,6 +130,7 @@ fn image_entry(name: &str, file: &str, w: u32, h: u32, anns: Vec<AnnotationEntry
         download_status: None,
         predictions: vec![],
         rejected: vec![],
+        readings: vec![],
     }
 }
 
@@ -3685,6 +3686,76 @@ fn una_caja_que_vuelve_deja_de_estar_rechazada() {
     assert!(
         rechazadas.is_empty(),
         "la caja volvió y sigue contando como rechazada"
+    );
+}
+
+// ─── Tests: lecturas por evaluador (etapa 6) ────────────────────────────────
+
+/// La capa de cada evaluador se guarda aparte y se actualiza en su sitio. Sin
+/// esto, la segunda lectura pisaba a la primera y el desacuerdo desaparecía.
+#[test]
+fn cada_evaluador_tiene_su_capa_y_se_actualiza_en_su_sitio() {
+    let mut img = image_entry("a.png", "a.png", 200, 100, vec![]);
+
+    img.upsert_reading("ana", Some("Ana"), vec![bbox_ann(0, 1.0, 1.0, 5.0, 5.0)], 100.0);
+    img.upsert_reading("beto", Some("Beto"), vec![bbox_ann(1, 2.0, 2.0, 6.0, 6.0)], 110.0);
+    assert_eq!(img.readings.len(), 2);
+
+    // Volver a anotar no crea una capa nueva: sustituye la suya.
+    img.upsert_reading(
+        "ana",
+        Some("Ana"),
+        vec![
+            bbox_ann(0, 1.0, 1.0, 5.0, 5.0),
+            bbox_ann(0, 9.0, 9.0, 5.0, 5.0),
+        ],
+        200.0,
+    );
+    assert_eq!(img.readings.len(), 2, "se duplicó la capa de un evaluador");
+    let ana = img.reading_of("ana").expect("la capa de Ana");
+    assert_eq!(ana.annotations.len(), 2);
+    assert_eq!(ana.updated_at, Some(200.0));
+    assert_eq!(ana.author_name.as_deref(), Some("Ana"));
+}
+
+/// Entregar es un acto del evaluador: hasta que no pasa, la capa es un borrador y
+/// no entra en el cálculo de acuerdo.
+#[test]
+fn solo_cuentan_las_lecturas_entregadas() {
+    let mut img = image_entry("a.png", "a.png", 200, 100, vec![]);
+    img.upsert_reading("ana", None, vec![], 100.0);
+    img.upsert_reading("beto", None, vec![], 100.0);
+
+    assert_eq!(img.submitted_readings(), 0, "un borrador contó como lectura");
+
+    img.readings[0].status = "submitted".into();
+    assert_eq!(img.submitted_readings(), 1);
+}
+
+/// Un proyecto anterior a las capas migra sin perder ni una anotación: su única
+/// lectura ya vive en `annotations` y no hay nada que mover.
+#[test]
+fn un_proyecto_v6_migra_a_capas_sin_perder_nada() {
+    use crate::store::project_file::CURRENT_VERSION;
+
+    let tmp = tempfile::tempdir().unwrap();
+    let mut pf = make_project("viejo", "detection", default_classes());
+    pf.version = 6;
+    pf.images = vec![image_entry(
+        "a.png",
+        "a.png",
+        200,
+        100,
+        vec![bbox_ann(0, 10.0, 20.0, 50.0, 40.0)],
+    )];
+    store_io::write_project(tmp.path(), &pf).expect("escribir");
+
+    let leido = store_io::read_project(tmp.path()).expect("leer");
+    assert_eq!(leido.version, CURRENT_VERSION);
+    assert_eq!(leido.images[0].annotations.len(), 1);
+    assert!(
+        leido.images[0].readings.is_empty(),
+        "la migración inventó una capa con autor desconocido"
     );
 }
 

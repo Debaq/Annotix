@@ -125,6 +125,20 @@ pub async fn p2p_get_image_lock(
     p2p.get_image_lock(&project_id, &image_id).await
 }
 
+/// Todas las lecturas en marcha sobre una imagen.
+///
+/// Con lectura múltiple, «¿está tomada?» deja de ser la pregunta: lo que la UI
+/// necesita saber es cuántas de las lecturas que pide la sesión están en curso y
+/// quién las tiene.
+#[tauri::command]
+pub async fn p2p_get_image_locks(
+    p2p: State<'_, P2pState>,
+    project_id: String,
+    image_id: String,
+) -> Result<Vec<ImageLockInfo>, String> {
+    p2p.get_image_locks(&project_id, &image_id).await
+}
+
 #[tauri::command]
 pub async fn p2p_assign_batch(
     p2p: State<'_, P2pState>,

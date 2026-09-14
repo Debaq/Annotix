@@ -138,6 +138,7 @@ impl P2pState {
                 display_name: display_name.to_string(),
                 namespace_id: format!("{}", namespace_id),
                 rules: serde_json::to_value(&rules).unwrap_or_default(),
+                author_id: Some(author.to_string()),
             });
         })?;
 
@@ -251,6 +252,21 @@ impl P2pState {
         } else {
             (PeerRole::Annotator, None)
         };
+
+        // Qué versión de protocolo pide esta sesión. Unirse a una que no se
+        // entiende sería peor que no unirse: el par colapsaría las capas de los
+        // demás y no respetaría el cegado, sin que nadie se entere hasta que el
+        // acuerdo entre evaluadores salga sospechosamente alto.
+        let protocolo = sync::read_protocol_version(&node, namespace_id).await;
+        if protocolo > sync::PROTOCOL_VERSION {
+            return Err(format!(
+                "Esta sesión usa una versión del protocolo más nueva ({}) que la de esta app ({}). \
+                 Actualiza Annotix para unirte: con la versión actual se perderían las lecturas \
+                 de los demás.",
+                protocolo,
+                sync::PROTOCOL_VERSION
+            ));
+        }
 
         // Leer reglas del doc
         let rules = sync::read_rules_from_doc(&node, namespace_id)
@@ -403,6 +419,7 @@ impl P2pState {
                 display_name: display_name.to_string(),
                 namespace_id: format!("{}", namespace_id),
                 rules: serde_json::to_value(&rules).unwrap_or_default(),
+                author_id: Some(author.to_string()),
             });
         });
 

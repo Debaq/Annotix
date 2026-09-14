@@ -9,6 +9,31 @@ export interface SessionRules {
   canDelete: boolean;
   canExport: boolean;
   requireDataApproval: boolean;
+  /**
+   * Cuántas lecturas independientes se quieren de cada muestra.
+   *
+   * 1 es el comportamiento de siempre. Con 2 o más, la misma imagen se reparte a
+   * varios evaluadores y cada uno escribe su capa; el acuerdo entre ellas es lo
+   * que permite decir si una etiqueta es reproducible.
+   */
+  replication: number;
+  /**
+   * Lectura cegada: un evaluador no ve las capas de los demás.
+   *
+   * Es un cegado de la aplicación: las capas ajenas no llegan a la UI ni al
+   * `project.json` local, pero el documento replicado sigue conteniéndolas.
+   */
+  blind: boolean;
+}
+
+/** Estado de las lecturas de una imagen (`get_readings_summary`). */
+export interface ReadingsSummary {
+  replication: number;
+  blind: boolean;
+  total: number;
+  submitted: number;
+  mineSubmitted: boolean;
+  authors: string[];
 }
 
 export interface PeerInfo {

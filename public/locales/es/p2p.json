@@ -126,5 +126,18 @@
   "peerLeft": "{{name}} dejó la sesión",
   "downloadFailed": "Error al descargar imagen",
   "hostStoppedSession": "El host detuvo la sesión",
-  "hostStoppedBanner": "El host dejó de compartir. El proyecto es de solo lectura."
+  "hostStoppedBanner": "El host dejó de compartir. El proyecto es de solo lectura.",
+  "readings": {
+    "title": "Lectura múltiple",
+    "intro": "Leer cada muestra más de una vez, por personas distintas, es lo que permite saber si una etiqueta es reproducible o es la opinión de quien la puso.",
+    "replication": "Lecturas por muestra",
+    "blind": "Lectura cegada",
+    "blindDesc": "— cada evaluador no ve las capas de los demás. Sin esto, el acuerdo que se mida después no dice nada: dos personas que ven lo mismo coinciden porque lo vieron.",
+    "allMustUpdate": "Con más de una lectura, todos los pares necesitan esta versión de Annotix o una posterior. Los anteriores no entienden las capas y se unirán con un aviso de error.",
+    "status": "{{submitted}} de {{replication}} lecturas entregadas",
+    "submit": "Entregar mi lectura",
+    "submitted": "Lectura entregada",
+    "submitDesc": "Hasta entregarla, tu lectura es un borrador y no entra en el cálculo de acuerdo.",
+    "blindOn": "Sesión cegada: no ves las lecturas de los demás."
+  }
 }

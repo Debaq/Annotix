@@ -35,6 +35,10 @@ export function P2pDialog({ trigger, projectId, open: controlledOpen, onOpenChan
   const [canDelete, setCanDelete] = useState(false);
   const [canExport, setCanExport] = useState(true);
   const [requireDataApproval, setRequireDataApproval] = useState(false);
+  // Lectura múltiple: cuántas veces se lee cada muestra y si cada evaluador ve lo
+  // de los demás. Por defecto 1 y sin cegar — una sesión normal ni se entera.
+  const [replication, setReplication] = useState(1);
+  const [blind, setBlind] = useState(false);
   const [shareCode, setShareCode] = useState('');
   const [sessionInfo, setSessionInfo] = useState<P2pSessionInfo | null>(null);
   const [error, setError] = useState('');
@@ -84,6 +88,8 @@ export function P2pDialog({ trigger, projectId, open: controlledOpen, onOpenChan
         canDelete,
         canExport,
         requireDataApproval,
+        replication,
+        blind,
       };
       const session = await p2pService.createSession(projectId, displayName.trim(), rules);
       setSessionInfo(session);
@@ -243,6 +249,47 @@ export function P2pDialog({ trigger, projectId, open: controlledOpen, onOpenChan
                     </Label>
                   </div>
                 </div>
+              </div>
+
+              {/* Lectura múltiple: es lo que permite medir si una etiqueta es
+                  reproducible en vez de ser la opinión de una persona. */}
+              <div className="space-y-2 rounded-lg border border-border/60 p-3">
+                <Label className="text-sm font-medium">{t('p2p.readings.title')}</Label>
+                <p className="text-xs text-muted-foreground">{t('p2p.readings.intro')}</p>
+
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="replication" className="text-sm">
+                    {t('p2p.readings.replication')}
+                  </Label>
+                  <Input
+                    id="replication"
+                    type="number"
+                    min={1}
+                    max={10}
+                    className="h-8 w-20 text-sm"
+                    value={replication}
+                    onChange={(e) => {
+                      const n = Math.max(1, Math.min(10, Number(e.target.value) || 1));
+                      setReplication(n);
+                      if (n === 1) setBlind(false);
+                    }}
+                  />
+                </div>
+
+                {replication > 1 && (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <Checkbox id="blind" checked={blind} onCheckedChange={(v) => setBlind(v === true)} />
+                      <Label htmlFor="blind" className="text-sm cursor-pointer">
+                        {t('p2p.readings.blind')}
+                        <span className="text-xs text-muted-foreground ml-1">
+                          {t('p2p.readings.blindDesc')}
+                        </span>
+                      </Label>
+                    </div>
+                    <p className="text-xs text-amber-600">{t('p2p.readings.allMustUpdate')}</p>
+                  </>
+                )}
               </div>
 
               {error && <p className="text-sm text-destructive">{error}</p>}

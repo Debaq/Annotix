@@ -172,7 +172,7 @@ sobrevive el viaje de ida y vuelta.
 
 ---
 
-## Etapa 5 — Registro de auditoría encadenado por proyecto
+## Etapa 5 — Registro de auditoría encadenado por proyecto ✅ **hecho**
 
 **Qué se construye.** Un `audit.jsonl` dentro del directorio del proyecto que
 registra cada cambio con efecto sobre el ground truth: creación, edición y
@@ -202,7 +202,7 @@ canvas, la etapa no está cerrada.
 
 ---
 
-## Etapa 6 — Lectura múltiple: una capa de etiquetas por evaluador
+## Etapa 6 — Lectura múltiple: una capa de etiquetas por evaluador ✅ **hecho** (sin probar con gente real)
 
 **Qué se construye.** El cambio estructural del roadmap. `ImageEntry.annotations`
 deja de ser la única verdad y pasa a ser la **capa consolidada**; aparece

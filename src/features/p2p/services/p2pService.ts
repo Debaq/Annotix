@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { P2pSessionInfo, PeerInfo, PeerRole, ImageLockInfo, BatchInfo, SessionRules, WorkDistribution, PeerWorkStats, PendingApproval } from '../types';
+import type { P2pSessionInfo, PeerInfo, PeerRole, ImageLockInfo, BatchInfo, SessionRules, WorkDistribution, PeerWorkStats, PendingApproval, ReadingsSummary } from '../types';
 
 export const p2pService = {
   createSession(projectId: string, displayName: string, rules: SessionRules): Promise<P2pSessionInfo> {
@@ -40,6 +40,21 @@ export const p2pService = {
 
   getImageLock(projectId: string, imageId: string): Promise<ImageLockInfo | null> {
     return invoke('p2p_get_image_lock', { projectId, imageId });
+  },
+
+  /** Todas las lecturas en marcha sobre una imagen, no sólo la primera. */
+  getImageLocks(projectId: string, imageId: string): Promise<ImageLockInfo[]> {
+    return invoke('p2p_get_image_locks', { projectId, imageId });
+  },
+
+  /** Cuántas lecturas hay de una imagen y en qué estado. */
+  getReadingsSummary(projectId: string, imageId: string): Promise<ReadingsSummary> {
+    return invoke('get_readings_summary', { projectId, imageId });
+  },
+
+  /** Entrega la propia lectura: hasta entonces es un borrador. */
+  submitReading(projectId: string, imageId: string): Promise<void> {
+    return invoke('submit_reading', { projectId, imageId });
   },
 
   assignBatch(projectId: string, imageIds: string[], assignTo: string): Promise<BatchInfo> {

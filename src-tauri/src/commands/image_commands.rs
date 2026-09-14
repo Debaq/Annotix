@@ -258,6 +258,26 @@ pub async fn save_annotations(
     Ok(())
 }
 
+/// Entrega la propia lectura de una imagen (sesiones de lectura múltiple).
+#[tauri::command]
+pub fn submit_reading(
+    state: State<'_, AppState>,
+    project_id: String,
+    image_id: String,
+) -> Result<(), String> {
+    state.submit_reading(&project_id, &image_id)
+}
+
+/// Cuántas lecturas hay de una imagen y en qué estado.
+#[tauri::command]
+pub fn get_readings_summary(
+    state: State<'_, AppState>,
+    project_id: String,
+    image_id: String,
+) -> Result<crate::store::images::ReadingsSummary, String> {
+    state.readings_summary(&project_id, &image_id)
+}
+
 #[tauri::command]
 pub fn convert_project_images(
     state: State<'_, AppState>,

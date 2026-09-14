@@ -3,6 +3,7 @@ pub mod distribution;
 pub mod locks;
 pub mod node;
 pub mod protocol;
+pub mod readings;
 pub mod session;
 pub mod sync;
 pub mod ticket;
@@ -106,6 +107,30 @@ pub struct SessionRules {
     /// Datos subidos requieren aprobación del lead researcher
     #[serde(default)]
     pub require_data_approval: bool,
+    /// Cuántas lecturas independientes se quieren de cada muestra.
+    ///
+    /// 1 es el comportamiento de siempre: cada imagen la anota una persona. Con 2
+    /// o más, la misma imagen se reparte a varios evaluadores y cada uno escribe
+    /// **su** capa (`ImageEntry::readings`); el acuerdo entre ellas es lo que
+    /// permite decir si una etiqueta es reproducible o es la opinión de alguien.
+    #[serde(default = "default_replication")]
+    pub replication: u32,
+    /// Lectura cegada: un evaluador no ve las capas de los demás.
+    ///
+    /// Sin esto, la segunda lectura mira la primera y el acuerdo que se mida
+    /// después no significa nada — dos personas que ven lo mismo coinciden porque
+    /// lo vieron, no porque el criterio sea reproducible.
+    ///
+    /// Es un cegado **de la aplicación**: las capas ajenas no se entregan a la UI
+    /// ni se escriben en el `project.json` local. El documento replicado sigue
+    /// conteniéndolas, así que quien inspeccione el sustrato a mano puede leerlas.
+    /// Está dicho así a propósito: prometer más sería mentir.
+    #[serde(default)]
+    pub blind: bool,
+}
+
+fn default_replication() -> u32 {
+    1
 }
 
 impl Default for SessionRules {
@@ -117,7 +142,23 @@ impl Default for SessionRules {
             can_delete: false,
             can_export: true,
             require_data_approval: false,
+            replication: default_replication(),
+            blind: false,
         }
+    }
+}
+
+impl SessionRules {
+    /// Cuántas lecturas se piden de verdad: nunca menos de una, y nunca más de
+    /// las personas que hay para hacerlas. Pedir tres lecturas con dos
+    /// evaluadores dejaría ítems eternamente incompletos.
+    pub fn replicacion_efectiva(&self, n_evaluadores: usize) -> usize {
+        (self.replication.max(1) as usize).min(n_evaluadores.max(1))
+    }
+
+    /// ¿Se está leyendo el corpus más de una vez?
+    pub fn lectura_multiple(&self) -> bool {
+        self.replication > 1
     }
 }
 

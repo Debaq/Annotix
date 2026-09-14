@@ -27,6 +27,53 @@ async fn read_entry_bytes(
         .map_err(|e| format!("Error leyendo blob: {}", e))
 }
 
+/// Versión del protocolo P2P que habla esta app.
+///
+/// - 1: una anotación por imagen; la última escritura del stream ganaba.
+/// - 2: una capa por evaluador (`readings`), locks por (imagen, evaluador) y
+///   reparto replicado. Ver `docs/subsistema-p2p.md`.
+///
+/// Un par que hable una versión **menor** que la de la sesión no entiende lo que
+/// hay en el documento: colapsaría las capas al reconstruir el proyecto y no
+/// respetaría el cegado, porque ni siquiera sabe que existe. Por eso la sesión
+/// declara su versión y quien se une la comprueba. No se puede hacer al revés —el
+/// host no puede impedir que una app vieja abra el documento—, así que una sesión
+/// de lectura múltiple **exige que todos actualicen**, y así está dicho en la UI.
+pub const PROTOCOL_VERSION: u32 = 2;
+
+/// Qué versión de protocolo necesita una sesión con estas reglas.
+///
+/// Una sesión normal sigue siendo compatible con las apps anteriores: lo que
+/// rompe la compatibilidad es la lectura múltiple, no el hecho de actualizar.
+pub fn protocolo_requerido(rules: &SessionRules) -> u32 {
+    if rules.lectura_multiple() || rules.blind {
+        2
+    } else {
+        1
+    }
+}
+
+/// Lee la versión de protocolo que declara el documento. Sin la clave es una
+/// sesión anterior a que esto existiera, que por definición es la 1.
+pub async fn read_protocol_version(
+    node: &Arc<IrohNode>,
+    namespace_id: iroh_docs::NamespaceId,
+) -> u32 {
+    let Ok(Some(doc)) = node.docs.open(namespace_id).await else {
+        return 1;
+    };
+    let Ok(Some(entry)) = doc
+        .get_one(iroh_docs::store::Query::key_exact(b"meta/protocol_version"))
+        .await
+    else {
+        return 1;
+    };
+    match read_entry_bytes(&entry, &node.blobs_store).await {
+        Ok(bytes) => String::from_utf8_lossy(&bytes).trim().parse().unwrap_or(1),
+        Err(_) => 1,
+    }
+}
+
 /// Escribe metadatos del host al iroh-doc: hash del secreto, node_id del host, y reglas
 pub async fn write_host_meta(
     p2p: &P2pState,
@@ -68,6 +115,15 @@ pub async fn write_host_meta(
     )
     .await
     .map_err(|e| format!("Error escribiendo host_node_id: {}", e))?;
+
+    // meta/protocol_version — lo que un par necesita hablar para entender este doc
+    doc.set_bytes(
+        author,
+        b"meta/protocol_version".to_vec(),
+        protocolo_requerido(rules).to_string().into_bytes(),
+    )
+    .await
+    .map_err(|e| format!("Error escribiendo protocol_version: {}", e))?;
 
     // meta/rules
     let rules_json =
@@ -132,6 +188,38 @@ pub async fn read_rules_from_doc(
 
     let content = read_entry_bytes(&entry, blobs).await?;
     serde_json::from_slice(&content).map_err(|e| format!("Error deserializando rules: {}", e))
+}
+
+/// Nombre de cada autor del documento, sacado de las entradas de presencia.
+///
+/// Sirve sólo para que el informe de lecturas sea legible: un id de autor no le
+/// dice nada a nadie. Si falta, la capa se queda sin nombre y no pasa nada.
+async fn leer_nombres_de_autor(
+    doc: &iroh_docs::api::Doc,
+    blobs: &iroh_blobs::api::Store,
+) -> HashMap<String, String> {
+    use futures_lite::StreamExt;
+
+    let mut out = HashMap::new();
+    let Ok(entries) = doc
+        .get_many(iroh_docs::store::Query::key_prefix(b"meta/peers/"))
+        .await
+    else {
+        return out;
+    };
+
+    pin!(entries);
+    while let Some(Ok(entry)) = entries.next().await {
+        let Ok(content) = blobs.blobs().get_bytes(entry.content_hash()).await else {
+            continue;
+        };
+        if let Ok(info) = serde_json::from_slice::<serde_json::Value>(&content) {
+            if let Some(nombre) = info["display_name"].as_str() {
+                out.insert(entry.author().to_string(), nombre.to_string());
+            }
+        }
+    }
+    out
 }
 
 /// Escribe reglas actualizadas al doc (solo host)
@@ -430,7 +518,7 @@ pub async fn project_to_doc(
 pub async fn doc_to_project_metadata(
     node: &Arc<IrohNode>,
     namespace_id: iroh_docs::NamespaceId,
-    _author_id: iroh_docs::AuthorId,
+    author_id: iroh_docs::AuthorId,
     target_dir: &std::path::Path,
 ) -> Result<ProjectFile, String> {
     let doc = node
@@ -441,6 +529,18 @@ pub async fn doc_to_project_metadata(
         .ok_or("Documento no encontrado")?;
 
     let blobs: &iroh_blobs::api::Store = &node.blobs_store;
+
+    // Las reglas deciden si esta sesión es cegada, y con ello si las capas ajenas
+    // llegan siquiera a escribirse en el `project.json` local. Si no se pueden
+    // leer, se asume lo más prudente: no cegado, replicación 1 —el comportamiento
+    // de siempre— porque inventar un cegado que la sesión no pidió escondería
+    // trabajo real.
+    let reglas = read_rules_from_doc(node, namespace_id)
+        .await
+        .unwrap_or_default();
+
+    // Nombre de cada autor, para poder leer las capas sin traducir ids a mano.
+    let nombres_de_autor = leer_nombres_de_autor(&doc, blobs).await;
 
     // Leer meta/project
     let meta_entry = doc
@@ -486,6 +586,8 @@ pub async fn doc_to_project_metadata(
         .map_err(|e| format!("Error leyendo imágenes: {}", e))?;
 
     let mut img_data: HashMap<String, HashMap<String, Vec<u8>>> = HashMap::new();
+    // Anotaciones por imagen y por autor: la lectura múltiple vive aquí.
+    let mut annots_por_autor: HashMap<String, Vec<(String, Vec<u8>)>> = HashMap::new();
     pin!(img_entries);
     while let Some(entry) = img_entries.next().await {
         let entry = entry.map_err(|e| format!("Error en stream: {}", e))?;
@@ -502,6 +604,17 @@ pub async fn doc_to_project_metadata(
             }
 
             let content = read_entry_bytes(&entry, blobs).await?;
+
+            if field == "annots" {
+                // Una entrada por autor bajo la misma clave. Meterlas en el mapa
+                // por campo hacía que ganara la última del stream: la segunda
+                // lectura pisaba a la primera y el desacuerdo desaparecía.
+                annots_por_autor
+                    .entry(img_id)
+                    .or_default()
+                    .push((entry.author().to_string(), content.to_vec()));
+                continue;
+            }
 
             img_data
                 .entry(img_id)
@@ -563,10 +676,20 @@ pub async fn doc_to_project_metadata(
             let meta: serde_json::Value = serde_json::from_slice(meta_bytes)
                 .map_err(|e| format!("Error deserializando img meta: {}", e))?;
 
-            let annots: Vec<AnnotationEntry> = fields
-                .get("annots")
-                .and_then(|b| serde_json::from_slice(b).ok())
-                .unwrap_or_default();
+            let lecturas = crate::p2p::readings::agrupar_lecturas(
+                annots_por_autor
+                    .get(img_id)
+                    .map(|v| v.as_slice())
+                    .unwrap_or(&[]),
+                &nombres_de_autor,
+                &author_id.to_string(),
+                reglas.blind,
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis() as f64,
+            );
+            let annots = lecturas.consolidada;
 
             let raw_file = meta["file"]
                 .as_str()
@@ -598,6 +721,7 @@ pub async fn doc_to_project_metadata(
                 download_status: Some("pending".to_string()),
                 predictions: vec![],
                 rejected: vec![],
+                readings: lecturas.capas,
             });
         }
     }
@@ -1704,6 +1828,7 @@ pub fn start_doc_watcher(
                                     download_status: Some("pending".to_string()),
                                     predictions: vec![],
                                     rejected: vec![],
+                                    readings: vec![],
                                 };
 
                                 let _ = app_state.with_project_mut(&pid, |pf| {
@@ -1936,6 +2061,10 @@ pub fn start_doc_watcher(
                             let image_id = parts[1].to_string();
                             let content_hash = entry.content_hash();
                             let from_str = from.to_string();
+                            // Quién escribió esta capa. Con lectura múltiple no se
+                            // puede aplicar sin saberlo: lo de otro evaluador es
+                            // su capa, no una corrección de la mía.
+                            let autor = entry.author().to_string();
                             let pid = project_id.clone();
                             let ah = app_handle.clone();
                             let bs = blobs_store.clone();
@@ -1968,6 +2097,28 @@ pub fn start_doc_watcher(
                                 {
                                     let app_state = ah.state::<crate::store::state::AppState>();
                                     let iid = image_id.clone();
+
+                                    // Reglas y autor propio: deciden si lo que llega
+                                    // es una capa ajena o la continuación de lo mío.
+                                    let (reglas, yo) = {
+                                        let p2p = ah.state::<crate::p2p::node::P2pState>();
+                                        let sesiones = p2p.sessions.read().await;
+                                        match sesiones.get(&pid) {
+                                            Some(se) => {
+                                                (se.rules.clone(), se.author_id.to_string())
+                                            }
+                                            None => (Default::default(), String::new()),
+                                        }
+                                    };
+                                    let capa_ajena = reglas.lectura_multiple() && autor != yo;
+
+                                    // Cegado: la capa de otro no se escribe siquiera en
+                                    // el `project.json` local. Si se escribiera, la
+                                    // vería quien no debe verla y el acuerdo que se
+                                    // midiera después no diría nada.
+                                    if capa_ajena && reglas.blind {
+                                        return;
+                                    }
                                     // Aplicar reintentando: la imagen puede estar agregándose en
                                     // paralelo por el handler de `meta` (imagen nueva). Sin esto las
                                     // marcas de una imagen recién subida se descartaban (find = None)
@@ -1985,6 +2136,25 @@ pub fn start_doc_watcher(
                                                 if let Some(img) =
                                                     pf.images.iter_mut().find(|i| i.id == iid)
                                                 {
+                                                    if capa_ajena {
+                                                        // Su lectura va a su capa y no
+                                                        // toca la consolidada: pisarla
+                                                        // sería volver a perder el
+                                                        // desacuerdo que justifica leer
+                                                        // dos veces.
+                                                        let ahora = std::time::SystemTime::now()
+                                                            .duration_since(std::time::UNIX_EPOCH)
+                                                            .unwrap()
+                                                            .as_millis()
+                                                            as f64;
+                                                        img.upsert_reading(
+                                                            &autor,
+                                                            Some(&from_str),
+                                                            annots.clone(),
+                                                            ahora,
+                                                        );
+                                                        return true;
+                                                    }
                                                     // Fusionar, no reemplazar: lo que
                                                     // llega de un par puede no traer la
                                                     // procedencia que hay aquí, y

@@ -60,6 +60,10 @@ impl P2pState {
             return Err("No hay peers para distribuir".to_string());
         }
 
+        // Cuántas lecturas independientes pide la sesión, acotadas a la gente que
+        // hay: pedir tres con dos evaluadores dejaría ítems eternamente a medias.
+        let replicacion = session.rules.replicacion_efectiva(peer_list.len());
+
         // Leer distribución existente para detectar items ya asignados
         let existing = self
             .read_distribution_inner(node, session.namespace_id)
@@ -127,7 +131,7 @@ impl P2pState {
             let all_new_images: Vec<String> = orphan_images.into_iter().chain(new_images).collect();
 
             // Round-robin nuevos items
-            round_robin_assign(&mut kept, &all_new_videos, &all_new_images);
+            round_robin_replicado(&mut kept, &all_new_videos, &all_new_images, replicacion);
 
             kept
         } else {
@@ -143,7 +147,7 @@ impl P2pState {
                 })
                 .collect();
 
-            round_robin_assign(&mut assignments, &new_videos, &new_images);
+            round_robin_replicado(&mut assignments, &new_videos, &new_images, replicacion);
             assignments
         };
 
@@ -382,21 +386,48 @@ impl P2pState {
 }
 
 /// Asigna items en round-robin a los assignments existentes.
-fn round_robin_assign(assignments: &mut [WorkAssignment], videos: &[String], images: &[String]) {
+/// Reparte cada ítem a `replicacion` evaluadores **distintos**.
+///
+/// Con replicación 1 es el reparto de siempre: cada ítem a una persona. Con 2 o
+/// más, la misma imagen le toca a varias, que es lo que hace posible medir el
+/// acuerdo entre ellas — sin dos lecturas independientes no hay nada que comparar.
+///
+/// Un mismo par no puede recibir el ítem dos veces: leerlo dos veces uno mismo no
+/// es una lectura independiente, es la misma opinión contada dos veces. Si se
+/// piden más lecturas que evaluadores hay, se dan las que se pueden dar; decirlo
+/// es trabajo de quien configura la sesión (ver `SessionRules::replicacion_efectiva`).
+///
+/// El desplazamiento del arranque evita que las mismas parejas se repitan siempre:
+/// con dos lecturas y cuatro pares, repetir pareja concentraría todo el acuerdo
+/// medido en dos personas.
+fn round_robin_replicado(
+    assignments: &mut [WorkAssignment],
+    videos: &[String],
+    images: &[String],
+    replicacion: usize,
+) {
     if assignments.is_empty() {
         return;
     }
 
     let n = assignments.len();
+    let veces = replicacion.clamp(1, n);
 
-    // Videos primero (unidades indivisibles)
     for (i, vid) in videos.iter().enumerate() {
-        assignments[i % n].video_ids.push(vid.clone());
+        for k in 0..veces {
+            assignments[(i + k) % n].video_ids.push(vid.clone());
+        }
     }
 
-    // Imágenes sueltas después
+    // Las imágenes sueltas arrancan donde terminaron los videos, para no cargar
+    // siempre al primer par con el principio de las dos listas.
+    let desfase = videos.len();
     for (i, iid) in images.iter().enumerate() {
-        assignments[i % n].image_ids.push(iid.clone());
+        for k in 0..veces {
+            assignments[(desfase + i + k) % n]
+                .image_ids
+                .push(iid.clone());
+        }
     }
 }
 
@@ -417,7 +448,7 @@ mod tests {
     #[test]
     fn round_robin_assign_no_ops_when_empty_peers() {
         let mut empty: Vec<WorkAssignment> = vec![];
-        round_robin_assign(&mut empty, &["v".into()], &["i".into()]);
+        round_robin_replicado(&mut empty, &["v".into()], &["i".into()], 1);
         assert!(empty.is_empty());
     }
 
@@ -427,7 +458,7 @@ mod tests {
         let videos: Vec<String> = (0..6).map(|i| format!("v{}", i)).collect();
         let images: Vec<String> = (0..5).map(|i| format!("i{}", i)).collect();
 
-        round_robin_assign(&mut peers, &videos, &images);
+        round_robin_replicado(&mut peers, &videos, &images, 1);
 
         // Videos: 6 items / 3 peers = 2 c/u
         assert_eq!(peers[0].video_ids, vec!["v0", "v3"]);
@@ -446,10 +477,84 @@ mod tests {
         let videos: Vec<String> = vec!["v1".into(), "v2".into()];
         let images: Vec<String> = vec!["i1".into()];
 
-        round_robin_assign(&mut peers, &videos, &images);
+        round_robin_replicado(&mut peers, &videos, &images, 1);
 
         assert_eq!(peers[0].video_ids.len(), 2);
         assert_eq!(peers[0].image_ids.len(), 1);
+    }
+
+    /// Con dos lecturas por ítem, cada imagen tiene que llegar a dos personas
+    /// distintas: es lo que hace que haya algo que comparar.
+    #[test]
+    fn con_replicacion_cada_item_va_a_varios_evaluadores() {
+        let mut peers = vec![mk_assignment("a"), mk_assignment("b"), mk_assignment("c")];
+        let imagenes: Vec<String> = (0..3).map(|i| format!("i{}", i)).collect();
+
+        round_robin_replicado(&mut peers, &[], &imagenes, 2);
+
+        for img in &imagenes {
+            let quienes: Vec<&str> = peers
+                .iter()
+                .filter(|p| p.image_ids.contains(img))
+                .map(|p| p.node_id.as_str())
+                .collect();
+            assert_eq!(
+                quienes.len(),
+                2,
+                "{img} no llegó a dos evaluadores: {quienes:?}"
+            );
+        }
+        // Y el reparto sigue siendo parejo: 3 imágenes × 2 lecturas entre 3 pares.
+        for p in &peers {
+            assert_eq!(p.image_ids.len(), 2, "carga desigual: {:?}", p.image_ids);
+        }
+    }
+
+    /// Leer dos veces uno mismo no es una lectura independiente: es la misma
+    /// opinión contada dos veces.
+    #[test]
+    fn nadie_recibe_el_mismo_item_dos_veces() {
+        let mut peers = vec![mk_assignment("a"), mk_assignment("b")];
+        let imagenes: Vec<String> = (0..4).map(|i| format!("i{}", i)).collect();
+
+        round_robin_replicado(&mut peers, &[], &imagenes, 2);
+
+        for p in &peers {
+            let mut vistos = std::collections::HashSet::new();
+            for id in &p.image_ids {
+                assert!(vistos.insert(id), "{} recibió {} dos veces", p.node_id, id);
+            }
+        }
+    }
+
+    /// Pedir más lecturas que evaluadores no deja ítems a medias: se dan las que
+    /// se pueden dar.
+    #[test]
+    fn pedir_mas_lecturas_que_evaluadores_no_bloquea_el_reparto() {
+        let mut peers = vec![mk_assignment("a"), mk_assignment("b")];
+        round_robin_replicado(&mut peers, &[], &["i0".into()], 5);
+
+        let reparto: usize = peers.iter().filter(|p| !p.image_ids.is_empty()).count();
+        assert_eq!(reparto, 2, "se esperaban las dos lecturas posibles");
+    }
+
+    /// La replicación 1 tiene que dar exactamente el reparto de siempre, o cambia
+    /// el trabajo de toda sesión ya en curso.
+    #[test]
+    fn replicacion_uno_es_el_reparto_de_siempre() {
+        let mut peers = vec![mk_assignment("a"), mk_assignment("b"), mk_assignment("c")];
+        let videos: Vec<String> = (0..6).map(|i| format!("v{}", i)).collect();
+        let imagenes: Vec<String> = (0..5).map(|i| format!("i{}", i)).collect();
+
+        round_robin_replicado(&mut peers, &videos, &imagenes, 1);
+
+        // Videos: uno a cada par, por turno.
+        assert_eq!(peers[0].video_ids, vec!["v0", "v3"]);
+        assert_eq!(peers[1].video_ids, vec!["v1", "v4"]);
+        assert_eq!(peers[2].video_ids, vec!["v2", "v5"]);
+        // Cada imagen a una sola persona, y todas repartidas.
+        let total: usize = peers.iter().map(|p| p.image_ids.len()).sum();
+        assert_eq!(total, imagenes.len());
     }
 
     #[test]
@@ -457,7 +562,7 @@ mod tests {
         let mut peers = vec![mk_assignment("a"), mk_assignment("b")];
         peers[0].video_ids.push("existing".into());
 
-        round_robin_assign(&mut peers, &["new1".into()], &[]);
+        round_robin_replicado(&mut peers, &["new1".into()], &[], 1);
 
         assert_eq!(peers[0].video_ids, vec!["existing", "new1"]);
         assert!(peers[1].video_ids.is_empty());

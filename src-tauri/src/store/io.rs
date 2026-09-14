@@ -127,6 +127,11 @@ pub fn migrate_project(project: &mut ProjectFile, dir: &Path) -> bool {
         changed = true;
     }
 
+    // v6 → v7: las capas de lectura por evaluador (`readings`) son un campo nuevo
+    // y opcional. Un proyecto anterior tiene una sola lectura, que ya vive en
+    // `annotations` —ahora llamada capa consolidada—: no hay nada que mover, y
+    // convertirla en una capa con autor sería inventar quién la hizo.
+
     // v5 → v6: la política de partición es un bloque opcional nuevo. Un proyecto
     // sin ella se reparte como antes —cascada sujeto → video → imagen y semilla
     // derivada del id—, así que tampoco hay datos que reescribir: declararla es

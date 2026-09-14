@@ -21,7 +21,12 @@ use serde::{Deserialize, Serialize};
 ///   qué unidad se agrupa, con qué semilla y si sus entrenamientos exigen test.
 ///   El bloque es opcional y los proyectos anteriores se leen sin él, así que la
 ///   migración sólo sube el número de versión.
-pub const CURRENT_VERSION: u32 = 6;
+/// - 7: una imagen puede tener **una capa de anotaciones por evaluador**
+///   (`readings`). `annotations` deja de ser la única verdad y pasa a ser la capa
+///   consolidada. La migración no reescribe nada: un proyecto con una sola
+///   lectura tiene la consolidada y ninguna capa, que es exactamente lo que
+///   había.
+pub const CURRENT_VERSION: u32 = 7;
 
 // ─── ProjectFile: todo el contenido de project.json ─────────────────────────
 
@@ -204,6 +209,14 @@ pub struct P2pProjectConfig {
     /// Secreto del host (solo presente para rol host)
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub host_secret: Option<String>,
+    /// Id de autor de este par en el documento.
+    ///
+    /// Se guarda para que el guardado de anotaciones pueda declarar **de quién**
+    /// es la capa sin preguntarle al subsistema P2P: con lectura múltiple, lo que
+    /// uno anota es su lectura y tiene que quedar firmada aunque el par esté
+    /// desconectado en ese momento.
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "authorId")]
+    pub author_id: Option<String>,
 }
 
 // ─── Clases ─────────────────────────────────────────────────────────────────
@@ -264,6 +277,11 @@ pub struct ImageEntry {
     pub download_status: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub predictions: Vec<PredictionEntry>,
+    /// Una capa de anotaciones por evaluador, cuando el corpus se lee más de una
+    /// vez (ver [`ReadingLayer`]). Vacío en el caso normal: una sola lectura vive
+    /// en `annotations` y no necesita capa.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub readings: Vec<ReadingLayer>,
     /// Etiquetas que no trazó una persona y que alguien borró tras verlas.
     ///
     /// El rechazo dice del modelo tanto como la aceptación —un modelo cuyas
@@ -271,6 +289,87 @@ pub struct ImageEntry {
     /// dando trabajo—, y borrando la etiqueta esa mitad del dato se perdía.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub rejected: Vec<RejectedAnnotation>,
+}
+
+/// Lo que **un** evaluador anotó sobre una imagen.
+///
+/// Existe porque la lectura múltiple es la única forma de saber si una etiqueta
+/// es reproducible: dos personas leyendo lo mismo por separado producen un
+/// acuerdo medible, y una sola produce una opinión sin margen de error conocido.
+/// Sin capas, la segunda lectura pisaba a la primera y el desacuerdo —que es el
+/// dato— desaparecía.
+///
+/// `ImageEntry::annotations` se queda como la capa **consolidada**: la que sale de
+/// adjudicar las lecturas (etapa 7) y la que usan entrenamiento y exportación. Con
+/// una sola lectura, la consolidada es esa lectura y `readings` está vacío: un
+/// proyecto normal no ve nada de esto.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReadingLayer {
+    /// Identificador del evaluador. En una sesión P2P es el id del autor del
+    /// documento, que es lo que distingue las escrituras de cada par.
+    pub author_id: String,
+    /// Nombre con el que se unió a la sesión, para poder leer el informe sin
+    /// tener que traducir ids.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub author_name: Option<String>,
+    pub annotations: Vec<AnnotationEntry>,
+    /// `in_progress` | `submitted`. Entregar es un acto del evaluador: hasta que
+    /// no lo hace, su capa es un borrador y no entra en el cálculo de acuerdo.
+    #[serde(default = "default_reading_status")]
+    pub status: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub submitted_at: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub updated_at: Option<f64>,
+}
+
+fn default_reading_status() -> String {
+    "in_progress".to_string()
+}
+
+impl ImageEntry {
+    /// La capa de un evaluador, si existe.
+    pub fn reading_of(&self, author_id: &str) -> Option<&ReadingLayer> {
+        self.readings.iter().find(|r| r.author_id == author_id)
+    }
+
+    /// Escribe la capa de un evaluador, creándola si es la primera vez.
+    ///
+    /// No toca `annotations`: la capa consolidada no se deduce de una lectura
+    /// suelta. Con replicación 1 el guardado normal sigue escribiendo
+    /// `annotations` y no pasa por aquí.
+    pub fn upsert_reading(
+        &mut self,
+        author_id: &str,
+        author_name: Option<&str>,
+        annotations: Vec<AnnotationEntry>,
+        now: f64,
+    ) {
+        match self.readings.iter_mut().find(|r| r.author_id == author_id) {
+            Some(capa) => {
+                capa.annotations = annotations;
+                capa.updated_at = Some(now);
+                if let Some(n) = author_name {
+                    capa.author_name = Some(n.to_string());
+                }
+            }
+            None => self.readings.push(ReadingLayer {
+                author_id: author_id.to_string(),
+                author_name: author_name.map(|s| s.to_string()),
+                annotations,
+                status: default_reading_status(),
+                submitted_at: None,
+                updated_at: Some(now),
+            }),
+        }
+    }
+
+    /// Cuántas lecturas entregadas hay. Las que siguen en curso no cuentan: un
+    /// borrador a medias no es una lectura independiente.
+    pub fn submitted_readings(&self) -> usize {
+        self.readings.iter().filter(|r| r.status == "submitted").count()
+    }
 }
 
 /// Constancia de una etiqueta rechazada. **Sin la geometría**: la pregunta que

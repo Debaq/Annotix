@@ -126,5 +126,18 @@
   "peerLeft": "{{name}} left the session",
   "downloadFailed": "Failed to download image",
   "hostStoppedSession": "The host has stopped the session",
-  "hostStoppedBanner": "The host stopped sharing. The project is now read-only."
+  "hostStoppedBanner": "The host stopped sharing. The project is now read-only.",
+  "readings": {
+    "title": "Multiple reading",
+    "intro": "Reading each sample more than once, by different people, is what tells you whether a label is reproducible or just the opinion of whoever made it.",
+    "replication": "Readings per sample",
+    "blind": "Blind reading",
+    "blindDesc": "— each evaluator does not see the others' layers. Without this, any agreement measured later means nothing: two people who saw the same thing agree because they saw it.",
+    "allMustUpdate": "With more than one reading, every peer needs this version of Annotix or later. Older ones do not understand the layers and will be turned away with an error.",
+    "status": "{{submitted}} of {{replication}} readings submitted",
+    "submit": "Submit my reading",
+    "submitted": "Reading submitted",
+    "submitDesc": "Until you submit it, your reading is a draft and does not count towards agreement.",
+    "blindOn": "Blind session: you do not see the others' readings."
+  }
 }
