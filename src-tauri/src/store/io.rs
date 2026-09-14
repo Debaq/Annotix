@@ -6,6 +6,47 @@ use serde::Deserialize;
 
 use super::project_file::{ClassDef, P2pDownloadStatus, ProjectFile, CURRENT_VERSION};
 use super::videos::{interpolate_bbox, pct_bbox_to_px, TrackInterp};
+use crate::crypto::{archivo as cripto, sesion};
+
+/// Código estable del error de leer un proyecto cifrado sin haberlo abierto.
+///
+/// Va como código y no como frase porque la interfaz tiene que **reconocerlo**
+/// para pedir la frase de paso, no para enseñárselo al usuario: quien ve este
+/// texto es porque algo se nos escapó.
+pub const ERROR_BLOQUEADO: &str = "proyecto_cifrado_bloqueado";
+
+const PROJECT_JSON: &str = "project.json";
+
+/// Lee un archivo del proyecto, descifrándolo si hace falta.
+///
+/// La decisión de descifrar la toma **el propio archivo** —su marca de
+/// cabecera—, no una bandera guardada aparte: un proyecto a medio cifrar, o una
+/// copia de seguridad mezclada, se leen igual de bien.
+pub fn leer_archivo(dir: &Path, nombre: &str) -> Result<Vec<u8>, String> {
+    let ruta = dir.join(nombre);
+    let bytes = std::fs::read(&ruta).map_err(|e| format!("Error leyendo {nombre}: {e}"))?;
+    if !cripto::es_cifrado(&bytes) {
+        return Ok(bytes);
+    }
+    let clave = sesion::clave(dir).ok_or(ERROR_BLOQUEADO)?;
+    cripto::descifrar(&clave, nombre, &bytes)
+}
+
+/// Escribe un archivo del proyecto, cifrándolo si el proyecto está cifrado.
+///
+/// Escritura atómica: `.tmp` y renombrado. Un corte de luz a mitad no puede
+/// dejar medio archivo cifrado, que sería indistinguible de uno manipulado.
+pub fn escribir_archivo(dir: &Path, nombre: &str, datos: &[u8]) -> Result<(), String> {
+    let datos = match sesion::clave(dir) {
+        Some(clave) => cripto::cifrar(&clave, nombre, datos)?,
+        None if sesion::hay_vault(dir) => return Err(ERROR_BLOQUEADO.to_string()),
+        None => datos.to_vec(),
+    };
+    let ruta = dir.join(nombre);
+    let tmp = dir.join(format!("{nombre}.tmp"));
+    std::fs::write(&tmp, &datos).map_err(|e| format!("Error escribiendo {nombre}.tmp: {e}"))?;
+    std::fs::rename(&tmp, &ruta).map_err(|e| format!("Error renombrando {nombre}.tmp: {e}"))
+}
 
 // ─── Lectura ligera para listado de proyectos ───────────────────────────────
 //
@@ -64,6 +105,10 @@ pub struct ProjectSummaryRaw {
     pub image_format: String,
     #[serde(default = "default_webp_preset", rename = "webpQualityPreset")]
     pub webp_quality_preset: String,
+    /// Cifrado y sin abrir. No sale del JSON —de ahí no se puede leer nada—:
+    /// lo pone el lector cuando encuentra el proyecto bloqueado.
+    #[serde(skip)]
+    pub locked: bool,
 }
 
 fn default_image_format() -> String {
@@ -74,26 +119,69 @@ fn default_webp_preset() -> String {
 }
 
 pub fn read_project_summary(dir: &Path) -> Result<ProjectSummaryRaw, String> {
-    let path = dir.join("project.json");
+    let path = dir.join(PROJECT_JSON);
     if !path.exists() {
         return Err(format!("project.json no encontrado en {:?}", dir));
     }
-    let file =
-        std::fs::File::open(&path).map_err(|e| format!("Error abriendo project.json: {}", e))?;
-    let reader = std::io::BufReader::new(file);
-    let summary: ProjectSummaryRaw = serde_json::from_reader(reader)
+    // Un proyecto cifrado y sin abrir no tiene resumen que leer, y la lista de
+    // proyectos no puede quedarse en blanco por eso: se devuelve la tarjeta
+    // mínima que el vault publica a propósito.
+    if crate::crypto::sesion::esta_bloqueado(dir) {
+        return Ok(resumen_bloqueado(dir));
+    }
+    let content = leer_archivo(dir, PROJECT_JSON)?;
+    let summary: ProjectSummaryRaw = serde_json::from_slice(&content)
         .map_err(|e| format!("Error parseando summary project.json: {}", e))?;
     Ok(summary)
 }
 
+/// La tarjeta de un proyecto cifrado que todavía no se ha abierto.
+///
+/// Lleva lo que el `vault.json` publica en claro y nada más. El nombre sólo
+/// aparece si su dueño puso una **etiqueta pública**: «Sarcoma paciente Pérez»
+/// es un nombre de proyecto perfectamente normal y no puede quedar legible en
+/// un portátil perdido sólo para que la lista se vea bonita.
+fn resumen_bloqueado(dir: &Path) -> ProjectSummaryRaw {
+    let vault = crate::crypto::vault::Vault::leer(dir).ok().flatten();
+    let mtime = std::fs::metadata(dir.join(PROJECT_JSON))
+        .and_then(|m| m.modified())
+        .ok()
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|d| d.as_millis() as f64)
+        .unwrap_or(0.0);
+    ProjectSummaryRaw {
+        version: CURRENT_VERSION,
+        // El directorio se llama como el proyecto: no hace falta publicar el id.
+        id: dir
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_default(),
+        name: vault
+            .as_ref()
+            .and_then(|v| v.public_label.clone())
+            .unwrap_or_default(),
+        project_type: String::new(),
+        classes: Vec::new(),
+        created: mtime,
+        updated: mtime,
+        images: CountedSeq(0),
+        p2p_download: None,
+        p2p: None,
+        inference_models: CountedSeq(0),
+        folder: None,
+        image_format: default_image_format(),
+        webp_quality_preset: default_webp_preset(),
+        locked: true,
+    }
+}
+
 pub fn read_project(dir: &Path) -> Result<ProjectFile, String> {
-    let path = dir.join("project.json");
+    let path = dir.join(PROJECT_JSON);
     if !path.exists() {
         return Err(format!("project.json no encontrado en {:?}", dir));
     }
-    let content =
-        std::fs::read_to_string(&path).map_err(|e| format!("Error leyendo project.json: {}", e))?;
-    let mut project: ProjectFile = serde_json::from_str(&content)
+    let content = leer_archivo(dir, PROJECT_JSON)?;
+    let mut project: ProjectFile = serde_json::from_slice(&content)
         .map_err(|e| format!("Error parseando project.json: {}", e))?;
 
     if migrate_project(&mut project, dir) {
@@ -376,21 +464,10 @@ fn bbox_matches(data: &serde_json::Value, x: f64, y: f64, w: f64, h: f64) -> boo
 }
 
 pub fn write_project(dir: &Path, data: &ProjectFile) -> Result<(), String> {
-    let path = dir.join("project.json");
-    let tmp_path = dir.join("project.json.tmp");
-
     // JSON compacto en runtime: project.json puede tener miles de anotaciones,
     // y `to_string_pretty` añade ~30-40% de tamaño en saltos/indentación que el
     // usuario rara vez lee. Para debug/export usar `to_string_pretty` en otro sitio.
     let content = serde_json::to_string(data)
         .map_err(|e| format!("Error serializando project.json: {}", e))?;
-
-    // Escritura atómica: escribir a .tmp y luego renombrar
-    std::fs::write(&tmp_path, &content)
-        .map_err(|e| format!("Error escribiendo project.json.tmp: {}", e))?;
-
-    std::fs::rename(&tmp_path, &path)
-        .map_err(|e| format!("Error renombrando project.json.tmp: {}", e))?;
-
-    Ok(())
+    escribir_archivo(dir, PROJECT_JSON, content.as_bytes())
 }

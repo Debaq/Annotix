@@ -59,6 +59,11 @@ pub struct ProjectSummary {
     pub image_format: String,
     #[serde(rename = "webpQualityPreset")]
     pub webp_quality_preset: String,
+    /// Cifrado y todavía cerrado. La interfaz lo usa para pedir la frase antes
+    /// de abrirlo, y para no enseñar los huecos de un proyecto que no ha podido
+    /// leer como si estuviera vacío.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub locked: bool,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -217,6 +222,7 @@ impl AppState {
                 inference_model_count: summary_raw.inference_models.0,
                 image_format: summary_raw.image_format,
                 webp_quality_preset: summary_raw.webp_quality_preset,
+                locked: summary_raw.locked,
             });
         }
 
@@ -233,6 +239,31 @@ impl AppState {
         let project_dir = self.project_dir(project_id)?;
         if !project_dir.join("project.json").exists() {
             return Ok(None);
+        }
+        // Un proyecto cifrado y cerrado existe, pero no se puede leer. Devolver
+        // su tarjeta mínima en vez de un error deja que la pantalla lo muestre
+        // con su candado en lugar de decir que no existe.
+        if crate::crypto::sesion::esta_bloqueado(&project_dir) {
+            let raw = crate::store::io::read_project_summary(&project_dir)?;
+            return Ok(Some(ProjectSummary {
+                id: raw.id,
+                name: raw.name,
+                project_type: raw.project_type,
+                classes: Vec::new(),
+                image_count: 0,
+                metadata: ProjectMetadata {
+                    created: raw.created,
+                    updated: raw.updated,
+                    version: format!("{}", raw.version),
+                },
+                p2p_download: None,
+                has_p2p_config: false,
+                folder: None,
+                inference_model_count: 0,
+                image_format: raw.image_format,
+                webp_quality_preset: raw.webp_quality_preset,
+                locked: true,
+            }));
         }
 
         self.with_project(project_id, |pf| ProjectSummary {
@@ -252,6 +283,7 @@ impl AppState {
             inference_model_count: pf.inference_models.len(),
             image_format: pf.image_format.clone(),
             webp_quality_preset: pf.webp_quality_preset.clone(),
+            locked: false,
         })
         .map(Some)
     }

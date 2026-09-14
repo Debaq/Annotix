@@ -39,6 +39,7 @@
 #![allow(dead_code, unused_imports)]
 
 pub mod archivo;
+pub mod sesion;
 pub mod vault;
 
 pub use archivo::{cifrar, descifrar, es_cifrado, CABECERA};

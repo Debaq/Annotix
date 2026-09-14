@@ -4180,3 +4180,96 @@ fn la_consolidacion_distingue_el_fotograma_revisado_del_deducido() {
     let deducido = bake_annotations_for_frame(&[track2], 5, 200, 100);
     assert_eq!(deducido[0].review.as_deref(), Some("unreviewed"));
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// Cifrado en reposo — lectura y escritura del proyecto
+// ════════════════════════════════════════════════════════════════════════════
+
+use crate::crypto::{archivo as cripto, sesion, vault::Vault};
+
+const FRASE_TEST: &str = "una frase de paso suficientemente larga";
+
+/// Proyecto con nombre delator, cifrado y abierto, en un directorio temporal.
+fn proyecto_cifrado() -> (TempDir, ProjectFile) {
+    let tmp = tempfile::tempdir().expect("tmpdir");
+    let (vault, _) = Vault::crear(FRASE_TEST, "test").unwrap();
+    vault.escribir(tmp.path()).unwrap();
+    sesion::abrir_con_frase(tmp.path(), FRASE_TEST).unwrap();
+
+    let mut pf = make_project("Sarcoma paciente Pérez", "detection", default_classes());
+    pf.images = vec![image_entry(
+        "a.png",
+        "a.png",
+        64,
+        64,
+        vec![bbox_ann(0, 1.0, 2.0, 3.0, 4.0)],
+    )];
+    store_io::write_project(tmp.path(), &pf).unwrap();
+    (tmp, pf)
+}
+
+#[test]
+fn el_project_json_de_un_proyecto_cifrado_no_se_lee_con_un_editor() {
+    let (tmp, pf) = proyecto_cifrado();
+    let crudo = std::fs::read(tmp.path().join("project.json")).unwrap();
+    assert!(cripto::es_cifrado(&crudo));
+    assert!(
+        !crudo.windows(7).any(|w| w == b"Sarcoma"),
+        "el nombre del proyecto asoma en el archivo"
+    );
+
+    let leido = store_io::read_project(tmp.path()).unwrap();
+    assert_eq!(leido.name, pf.name);
+    assert_eq!(leido.images.len(), 1);
+    sesion::bloquear(tmp.path());
+}
+
+#[test]
+fn sin_la_frase_el_proyecto_no_se_lee_ni_se_escribe() {
+    let (tmp, pf) = proyecto_cifrado();
+    sesion::bloquear(tmp.path());
+
+    let e = store_io::read_project(tmp.path()).unwrap_err();
+    assert_eq!(e, store_io::ERROR_BLOQUEADO);
+
+    // Y escribir tampoco puede degradar a texto plano: eso dejaría el corpus en
+    // claro justo cuando el usuario cree que está cerrado.
+    let e = store_io::write_project(tmp.path(), &pf).unwrap_err();
+    assert_eq!(e, store_io::ERROR_BLOQUEADO);
+    let crudo = std::fs::read(tmp.path().join("project.json")).unwrap();
+    assert!(cripto::es_cifrado(&crudo));
+}
+
+#[test]
+fn la_lista_de_proyectos_ensena_el_candado_y_no_el_nombre() {
+    let (tmp, _) = proyecto_cifrado();
+    sesion::bloquear(tmp.path());
+
+    let resumen = store_io::read_project_summary(tmp.path()).unwrap();
+    assert!(resumen.locked);
+    assert_eq!(resumen.name, "", "el nombre no se publica si nadie lo pidió");
+    assert_eq!(resumen.images.0, 0);
+
+    // Con etiqueta pública sí, porque entonces es una decisión de su dueño.
+    let mut vault = Vault::leer(tmp.path()).unwrap().unwrap();
+    vault.public_label = Some("Estudio 4".into());
+    vault.escribir(tmp.path()).unwrap();
+    let resumen = store_io::read_project_summary(tmp.path()).unwrap();
+    assert_eq!(resumen.name, "Estudio 4");
+    assert!(resumen.locked);
+}
+
+#[test]
+fn un_proyecto_sin_cifrar_sigue_funcionando_igual() {
+    // El cifrado es opcional de verdad: un proyecto que no lo activó no cambia
+    // en nada, ni en el formato del archivo ni en el camino del código.
+    let tmp = tempfile::tempdir().unwrap();
+    let pf = make_project("normal", "detection", default_classes());
+    store_io::write_project(tmp.path(), &pf).unwrap();
+
+    let crudo = std::fs::read(tmp.path().join("project.json")).unwrap();
+    assert!(!cripto::es_cifrado(&crudo));
+    assert!(crudo.starts_with(b"{"));
+    assert_eq!(store_io::read_project(tmp.path()).unwrap().name, "normal");
+    assert!(!store_io::read_project_summary(tmp.path()).unwrap().locked);
+}

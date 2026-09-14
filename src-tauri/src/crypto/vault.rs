@@ -141,6 +141,15 @@ pub struct Vault {
     pub kdf: String,
     pub kdf_params: KdfParams,
     pub slots: Vec<Ranura>,
+    /// Cómo se llama el proyecto **en la lista**, mientras está cerrado.
+    ///
+    /// Opcional y vacío por defecto. «Sarcoma paciente Pérez» es un nombre de
+    /// proyecto perfectamente normal, y dejarlo legible en un portátil perdido
+    /// sólo para que la lista se vea bonita sería tirar por tierra la mitad de
+    /// esta etapa. Quien quiera reconocer el suyo de un vistazo pone aquí algo
+    /// que no diga nada de más.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub public_label: Option<String>,
 }
 
 impl Vault {
@@ -153,6 +162,7 @@ impl Vault {
             kdf: "argon2id".into(),
             kdf_params: KdfParams::default(),
             slots: Vec::new(),
+            public_label: None,
         };
         vault.anadir_ranura(&clave, frase, etiqueta)?;
         Ok((vault, clave))
@@ -173,6 +183,7 @@ impl Vault {
             kdf: "argon2id".into(),
             kdf_params: KdfParams::default(),
             slots: Vec::new(),
+            public_label: None,
         };
         vault.anadir_ranura(clave, frase, etiqueta)?;
         Ok(vault)
