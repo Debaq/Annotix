@@ -36,6 +36,10 @@ pub const CLASSES_CHANGED: &str = "classes.changed";
 pub const SUBJECTS_ASSIGNED: &str = "subjects.assigned";
 /// Declaración de la política de partición.
 pub const SPLIT_POLICY_CHANGED: &str = "split_policy.changed";
+/// Declaración del plan de augmentación. Qué se le hizo a las imágenes antes de
+/// entrenar decide qué significan las métricas tanto como el reparto: entra en
+/// la historia del proyecto, no en las preferencias de pantalla.
+pub const AUGMENTATION_PLAN_CHANGED: &str = "augmentation_plan.changed";
 
 // ─── Entradas y salidas ─────────────────────────────────────────────────────
 pub const DATA_IMPORTED: &str = "data.imported";
@@ -54,6 +58,7 @@ pub const EVENT_NAMES: &[&str] = &[
     CLASSES_CHANGED,
     SUBJECTS_ASSIGNED,
     SPLIT_POLICY_CHANGED,
+    AUGMENTATION_PLAN_CHANGED,
     DATA_IMPORTED,
     DATA_EXPORTED,
     TRAINING_STARTED,

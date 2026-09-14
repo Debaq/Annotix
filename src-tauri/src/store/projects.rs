@@ -331,6 +331,47 @@ impl AppState {
         Ok(())
     }
 
+    /// El plan de augmentación declarado, o el de por defecto —apagado— cuando
+    /// el proyecto no declaró ninguno.
+    pub fn get_augmentation_plan(
+        &self,
+        project_id: &str,
+    ) -> Result<crate::augment::plan::AugmentationPlan, String> {
+        self.with_project(project_id, |pf| pf.augmentation.clone().unwrap_or_default())
+    }
+
+    /// Declara el plan de augmentación. `None` lo retira.
+    pub fn set_augmentation_plan(
+        &self,
+        project_id: &str,
+        plan: Option<crate::augment::plan::AugmentationPlan>,
+    ) -> Result<(), String> {
+        if let Some(p) = plan.as_ref() {
+            p.validar()?;
+        }
+        let resumen = plan.as_ref().map(|p| {
+            serde_json::json!({
+                "enabled": p.enabled,
+                "factor": p.factor,
+                "balance": p.balance,
+                "transforms": p.transforms.iter().map(|t| t.id()).collect::<Vec<_>>(),
+                "tiling": p.tiling,
+                "seed": p.seed.map(|s| s.to_string()),
+                "min_visibility": p.min_visibility,
+            })
+        });
+        self.with_project_mut(project_id, |pf| {
+            pf.augmentation = plan;
+            pf.updated = js_timestamp();
+        })?;
+        self.audit(
+            project_id,
+            crate::audit::events::AUGMENTATION_PLAN_CHANGED,
+            serde_json::json!({ "plan": resumen }),
+        );
+        Ok(())
+    }
+
     pub fn set_project_folder(
         &self,
         project_id: &str,

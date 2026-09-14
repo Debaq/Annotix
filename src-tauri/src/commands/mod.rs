@@ -2,6 +2,7 @@ pub mod agreement_commands;
 pub mod audio_commands;
 pub mod audio_edit_commands;
 pub mod audit_commands;
+pub mod augmentation_commands;
 pub mod automation_commands;
 pub mod config_commands;
 pub mod contract_commands;
