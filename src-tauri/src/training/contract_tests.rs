@@ -807,3 +807,44 @@ fn rtdetr_recibe_la_augmentacion_pedida() {
     assert!(script.contains("\"fliplr\": 0,"), "{script}");
     assert!(script.contains("\"mosaic\": 0,"), "{script}");
 }
+
+#[test]
+fn timm_no_voltea_cuando_el_preset_dice_que_no() {
+    // timm voltea con p=0.5 dentro de create_transform(is_training=True) y no
+    // había forma de apagarlo: un clasificador de radiografías se entrenaba con
+    // la mitad de las imágenes en espejo.
+    let (pf, proyecto, images_dir) = fixture("classify");
+    let salida = proyecto.path().join("job");
+    let script = train_py_de(
+        &pf,
+        &images_dir,
+        &salida,
+        TrainingBackend::Timm,
+        "classify",
+        aug_lateralizada(),
+    );
+    assert!(script.contains("hflip=0"), "{script}");
+    assert_python_valido(&script, "timm sin volteo");
+}
+
+#[test]
+fn timm_apaga_el_volteo_ya_materializado() {
+    let (mut pf, proyecto, images_dir) = fixture("classify");
+    pf.augmentation = Some(plan_de_volteo());
+    let salida = proyecto.path().join("job");
+    let mut aug = aug_lateralizada();
+    aug["fliplr"] = serde_json::json!(0.5);
+    let script = train_py_de(
+        &pf,
+        &images_dir,
+        &salida,
+        TrainingBackend::Timm,
+        "classify",
+        aug,
+    );
+    assert!(script.contains("hflip=0"), "{script}");
+    assert!(
+        script.contains("Ya materializado al preparar el dataset: fliplr"),
+        "{script}"
+    );
+}

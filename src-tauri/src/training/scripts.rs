@@ -2524,6 +2524,18 @@ pub fn generate_timm_script(req: &TrainingRequest, sp: &ScriptPaths) -> String {
     // `false` de Rust no es válido en Python.
     let multi_label = py_bool(req.task == "multi_classify");
     let bp = &req.backend_params;
+    // timm voltea en horizontal con p=0.5 por defecto dentro de
+    // `create_transform(is_training=True)`. En una modalidad lateralizada eso es
+    // un error de entrenamiento, no una variación, y hasta ahora no había forma
+    // de apagarlo desde la app.
+    let mut aug = augmentacion_pedida(req);
+    let ejes_apagados: Vec<&str> = sp
+        .ejes_materializados
+        .iter()
+        .filter(|e| matches!(**e, "fliplr" | "flipud"))
+        .copied()
+        .collect();
+    apagar_ejes_materializados(&mut aug, &sp.ejes_materializados);
     let model_id = &req.model_id; // e.g. "resnet50", "efficientnet_b0"
     let carga_pesos = python_cargar_pesos("model", &req.base_model_path);
     // Igual que en smp: los pesos del catálogo se sobrescriben con los del modelo
@@ -2588,7 +2600,15 @@ def main():
 
     # Data config from model
     data_config = resolve_data_config({{}}, model=model)
-    train_transform = create_transform(**data_config, is_training=True)
+    # El volteo lo decide el proyecto, no la librería: timm voltea en horizontal
+    # con p=0.5 por defecto, y en una modalidad lateralizada eso es un error de
+    # entrenamiento, no una variación. {ejes_apagados}
+    train_transform = create_transform(
+        **data_config,
+        is_training=True,
+        hflip={hflip},
+        vflip={vflip},
+    )
     val_transform = create_transform(**data_config, is_training=False)
 
     MULTI_LABEL = {multi_label}
@@ -2782,6 +2802,13 @@ if __name__ == "__main__":
         header = sp.header,
         device = device,
         num_classes = sp.num_classes,
+        hflip = aug.fliplr,
+        vflip = aug.flipud,
+        ejes_apagados = if ejes_apagados.is_empty() {
+            String::new()
+        } else {
+            format!("Ya materializado al preparar el dataset: {}.", ejes_apagados.join(", "))
+        },
         pretrained = py_bool(pretrained),
         carga_pesos = carga_pesos,
         drop_rate = drop_rate,
