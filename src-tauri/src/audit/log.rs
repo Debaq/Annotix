@@ -40,6 +40,15 @@ struct Abierto {
     file: File,
     seq: u64,
     prev_hash: String,
+    /// Con qué cifrar cada línea, cuando el proyecto está cifrado: la clave, la
+    /// sal del archivo y el contador de la siguiente línea —que es su nonce—.
+    cifrado: Option<Cifrado>,
+}
+
+struct Cifrado {
+    clave: crate::crypto::vault::ClaveProyecto,
+    sal: Vec<u8>,
+    indice: u64,
 }
 
 #[derive(Default)]
@@ -74,6 +83,10 @@ fn actor_de(r: &Registro, project_id: &str) -> String {
         .unwrap_or_else(|| ACTOR_LOCAL.to_string())
 }
 
+fn tam_en_disco(path: &Path) -> usize {
+    std::fs::metadata(path).map(|m| m.len() as usize).unwrap_or(0)
+}
+
 /// Marca de tiempo de pared en ISO 8601. No hay reloj monótono de sesión: este
 /// registro sobrevive a los reinicios de la app, y un `t_mono_ms` que se reinicia
 /// con el proceso no ordenaría nada.
@@ -95,18 +108,58 @@ fn abrir(path: &Path, project_id: &str, actor: &str) -> Result<Abierto, String> 
             .map_err(|e| format!("No se pudo crear el directorio del registro: {}", e))?;
     }
 
-    let content = std::fs::read_to_string(path).unwrap_or_default();
-    let cont = continuacion(&content);
+    // La lectura descifra si el registro está cifrado y devuelve además hasta
+    // qué byte **del disco** llega lo entero, que con el cifrado ya no coincide
+    // con el largo del texto en claro.
+    let lectura = super::cifrado::leer(path)?;
+    let cont = continuacion(&lectura.plano);
+    let cola_truncada = cont.cola_truncada || lectura.bytes_validos < tam_en_disco(path);
 
-    if cont.cola_truncada {
+    if cola_truncada {
         let entera = OpenOptions::new()
             .write(true)
             .open(path)
             .map_err(|e| format!("No se pudo abrir el registro: {}", e))?;
+        let hasta = if lectura.sal.is_some() {
+            lectura.bytes_validos as u64
+        } else {
+            cont.bytes_validos as u64
+        };
         entera
-            .set_len(cont.bytes_validos as u64)
+            .set_len(hasta)
             .map_err(|e| format!("No se pudo descartar la cola truncada: {}", e))?;
     }
+
+    // Un proyecto cifrado estrena su registro con la cabecera y la sal.
+    let dir = path.parent().unwrap_or(path);
+    let mut cifrado = match (lectura.sal, crate::crypto::sesion::clave(dir)) {
+        (Some(sal), Some(clave)) => Some(Cifrado {
+            clave,
+            sal,
+            indice: lectura.lineas,
+        }),
+        (Some(_), None) => return Err(crate::store::io::ERROR_BLOQUEADO.to_string()),
+        (None, Some(clave)) if !path.exists() || tam_en_disco(path) == 0 => {
+            let (cabecera, sal) = super::cifrado::cabecera_nueva();
+            let mut f = OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(path)
+                .map_err(|e| format!("No se pudo abrir el registro: {}", e))?;
+            f.write_all(cabecera.as_bytes())
+                .map_err(|e| format!("Error escribiendo el registro: {}", e))?;
+            Some(Cifrado {
+                clave,
+                sal,
+                indice: 0,
+            })
+        }
+        // Un registro que ya existía en claro se queda en claro hasta que la
+        // conversión del proyecto lo pase: mezclar líneas cifradas y en claro
+        // rompería la lectura por los dos lados.
+        (None, _) => None,
+    };
+    let _ = &mut cifrado;
 
     let file = OpenOptions::new()
         .create(true)
@@ -118,6 +171,7 @@ fn abrir(path: &Path, project_id: &str, actor: &str) -> Result<Abierto, String> 
         file,
         seq: cont.last_seq.map(|s| s + 1).unwrap_or(0),
         prev_hash: cont.prev_hash,
+        cifrado,
     };
 
     escribir(
@@ -160,7 +214,21 @@ fn escribir(
 
     // Una sola escritura por evento: si el proceso muere, la última línea o está
     // entera o no está.
-    let mut buf = line.clone().into_bytes();
+    let en_disco = match abierto.cifrado.as_mut() {
+        Some(c) => {
+            let cifrada = super::cifrado::cifrar_linea(
+                &c.clave,
+                &c.sal,
+                super::log::FILE_NAME,
+                c.indice,
+                &line,
+            )?;
+            c.indice += 1;
+            cifrada
+        }
+        None => line.clone(),
+    };
+    let mut buf = en_disco.into_bytes();
     buf.push(b'\n');
     abierto
         .file

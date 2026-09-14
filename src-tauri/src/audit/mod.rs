@@ -23,6 +23,7 @@
 //! que la anotación `a1` de la imagen `img7` cambió de clase responde la pregunta;
 //! copiar su máscara en base64 haría del registro otra copia del proyecto.
 
+pub mod cifrado;
 pub mod events;
 pub mod log;
 pub mod verify;

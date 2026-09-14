@@ -52,7 +52,7 @@ pub fn es_cifrado(bytes: &[u8]) -> bool {
     bytes.len() >= CABECERA.len() && &bytes[..CABECERA.len()] == CABECERA
 }
 
-fn clave_de_archivo(
+pub fn clave_de_archivo(
     clave: &ClaveProyecto,
     ruta_rel: &str,
     sal: &[u8],
@@ -65,6 +65,14 @@ fn clave_de_archivo(
     )
     .map_err(|_| "No se pudo derivar la clave del archivo".to_string())?;
     Ok(salida)
+}
+
+/// Nonce con un contador al final, para los formatos que cifran por líneas en
+/// vez de por bloques (el registro de auditoría).
+pub fn nonce_con_contador(contador: u64) -> [u8; NONCE_LEN] {
+    let mut nonce = [0u8; NONCE_LEN];
+    nonce[16..24].copy_from_slice(&contador.to_be_bytes());
+    nonce
 }
 
 /// Nonce de un bloque: contador y marca de final.

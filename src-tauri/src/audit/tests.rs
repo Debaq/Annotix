@@ -333,3 +333,99 @@ fn todos_los_eventos_se_emiten_desde_algun_sitio() {
         );
     }
 }
+
+// ─── Registro de un proyecto cifrado ────────────────────────────────────────
+
+const FRASE: &str = "una frase de paso suficientemente larga";
+
+/// Directorio de proyecto cifrado y abierto.
+fn proyecto_cifrado() -> tempfile::TempDir {
+    let tmp = tempfile::tempdir().unwrap();
+    let (vault, _) = crate::crypto::vault::Vault::crear(FRASE, "test").unwrap();
+    vault.escribir(tmp.path()).unwrap();
+    // El registro sólo se estrena cifrado si el proyecto existe como tal.
+    std::fs::write(tmp.path().join("project.json"), b"{}").unwrap();
+    crate::crypto::sesion::abrir_con_frase(tmp.path(), FRASE).unwrap();
+    tmp
+}
+
+#[test]
+fn el_registro_de_un_proyecto_cifrado_no_se_lee_con_un_editor() {
+    let tmp = proyecto_cifrado();
+    registrar(
+        tmp.path(),
+        events::SUBJECTS_ASSIGNED,
+        serde_json::json!({ "via": "manual", "subject": "SUJ-007", "n_samples": 3 }),
+    );
+    let crudo = std::fs::read_to_string(tmp.path().join(log::FILE_NAME)).unwrap();
+    assert!(crudo.starts_with("#ANXLOG1"));
+    assert!(
+        !crudo.contains("SUJ-007"),
+        "el sujeto asoma en el registro:\n{crudo}"
+    );
+    crate::crypto::sesion::bloquear(tmp.path());
+}
+
+#[test]
+fn la_cadena_cifrada_se_verifica_y_continua_entre_arranques() {
+    let tmp = proyecto_cifrado();
+    registrar(tmp.path(), events::LOG_OPENED, serde_json::json!({}));
+    registrar(
+        tmp.path(),
+        events::CLASSES_CHANGED,
+        serde_json::json!({ "before": [], "after": ["a"] }),
+    );
+    // Cerrar el archivo obliga a releer la cadena en el siguiente evento, que es
+    // donde el contador del nonce se podía desincronizar.
+    log::close(tmp.path());
+    registrar(
+        tmp.path(),
+        events::CLASSES_CHANGED,
+        serde_json::json!({ "before": ["a"], "after": ["a", "b"] }),
+    );
+
+    let informe = verify::verify_project(tmp.path()).unwrap();
+    assert!(informe.valid, "{:?}", informe.errors);
+    // Los tres declarados más el `log.opened` que el propio registro anota al
+    // abrirse en cada arranque.
+    assert!(informe.n_events >= 3, "{informe:?}");
+    assert!(!informe.truncated_tail);
+    crate::crypto::sesion::bloquear(tmp.path());
+}
+
+#[test]
+fn una_linea_retocada_del_registro_cifrado_se_detecta() {
+    let tmp = proyecto_cifrado();
+    registrar(tmp.path(), events::LOG_OPENED, serde_json::json!({}));
+    registrar(tmp.path(), events::LOG_OPENED, serde_json::json!({}));
+    log::close(tmp.path());
+
+    let path = tmp.path().join(log::FILE_NAME);
+    let mut lineas: Vec<String> = std::fs::read_to_string(&path)
+        .unwrap()
+        .lines()
+        .map(String::from)
+        .collect();
+    // Cambiar un carácter del base64 rompe la autenticación de esa línea.
+    let ultima = lineas.len() - 1;
+    lineas[ultima] = lineas[ultima].chars().rev().collect();
+    std::fs::write(&path, lineas.join("\n") + "\n").unwrap();
+
+    let informe = verify::verify_project(tmp.path()).unwrap();
+    assert!(
+        informe.truncated_tail,
+        "una línea manipulada tiene que notarse: {informe:?}"
+    );
+    crate::crypto::sesion::bloquear(tmp.path());
+}
+
+#[test]
+fn sin_la_frase_el_registro_no_se_lee_ni_se_escribe() {
+    let tmp = proyecto_cifrado();
+    registrar(tmp.path(), events::LOG_OPENED, serde_json::json!({}));
+    log::close(tmp.path());
+    crate::crypto::sesion::bloquear(tmp.path());
+
+    assert!(verify::verify_project(tmp.path()).is_err());
+    assert!(log::record(tmp.path(), "proj-1", events::LOG_OPENED, serde_json::json!({})).is_err());
+}

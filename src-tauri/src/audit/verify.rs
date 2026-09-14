@@ -50,12 +50,18 @@ pub fn verify_project(project_dir: &Path) -> Result<AuditReport, String> {
 }
 
 pub fn verify_file(path: &Path) -> Result<AuditReport, String> {
-    let content = std::fs::read_to_string(path)
-        .map_err(|e| format!("No se pudo leer {}: {}", path.display(), e))?;
+    // Descifrando si hace falta: la cadena se calcula sobre el texto en claro,
+    // así que el verificador no cambia de criterio por estar cifrado.
+    let lectura = super::cifrado::leer(path)?;
+    let cola_ilegible = lectura.cola_ilegible;
+    let content = lectura.plano;
 
     let mut report = AuditReport {
         exists: true,
         valid: true,
+        // Una línea cifrada que no abre es indistinguible de una escritura a
+        // medias: se declara como cola truncada en vez de descartarla callando.
+        truncated_tail: cola_ilegible,
         ..Default::default()
     };
     let mut actores: std::collections::BTreeSet<String> = Default::default();
