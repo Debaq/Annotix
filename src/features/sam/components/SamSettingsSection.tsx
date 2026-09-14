@@ -11,6 +11,7 @@ import {
   type SamAppModel,
 } from '@/lib/tauriDb';
 import { useSamStore } from '../store/useSamStore';
+import { SamCatalogSection } from './SamCatalogSection';
 import { useToast } from '@/components/hooks/use-toast';
 
 export function SamSettingsSection() {
@@ -118,6 +119,12 @@ export function SamSettingsSection() {
         </div>
         <p className="text-xs text-muted-foreground">{t('sam.section.appLevelHint')}</p>
       </div>
+
+      {/* Catálogo: antes de esto había que saber qué modelo buscar y bajarlo por
+          fuera, lo que dejaba el asistente fuera del alcance de casi todo el
+          mundo. Va arriba porque es el camino que debería intentar primero quien
+          llega sin un .onnx en el disco. */}
+      <SamCatalogSection onDownloaded={refresh} />
 
       {/* Encoders */}
       <div className="space-y-2">

@@ -11,8 +11,10 @@
 //! PR1: solo esqueleto y tipos. Implementación en PRs siguientes.
 
 pub mod amg;
+pub mod catalog;
 pub mod conversion;
 pub mod decoder;
+pub mod download;
 pub mod encoder;
 pub mod postprocess;
 pub mod preprocess;
@@ -149,3 +151,6 @@ pub enum MaskTarget {
     Polygon,
     Mask,
 }
+
+#[cfg(test)]
+mod smoke_tests;

@@ -352,7 +352,7 @@ identificador — verificado con una herramienta externa, no con la propia.
 
 Tres niveles, otra vez de costo creciente:
 
-**10a — Asistencia de segmentación (barato).** MedSAM y μSAM entran por el
+**10a — Asistencia de segmentación. ✅ MedSAM hecho; μSAM bloqueado.** MedSAM y μSAM entran por el
 camino SAM ya construido: encoder + decoder ONNX en
 `{data_dir}/sam_models/`, AMG y refinamiento por clicks
 (`inference/sam/amg.rs`, `docs/roadmap_sam.md`). Es cambio de pesos, no de

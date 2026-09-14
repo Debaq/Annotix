@@ -33,5 +33,26 @@
     "refineExit": "Exit refine",
     "refineHelp": "Left click: + point. Shift+click: − point. Drag: bbox. Tab: change mask. Enter: accept. Esc: discard.",
     "refineRunning": "Computing mask..."
+  },
+  "catalog": {
+    "title": "Models available to download",
+    "verified": "tested",
+    "verifiedHelp": "Someone ran this model against the app's smoke test: it does not just load, it segments.",
+    "unverified": "untested",
+    "unverifiedHelp": "It can be downloaded, but nobody has checked that it works in this app.",
+    "license": "License: {{license}}",
+    "source": "source",
+    "downloading": "Downloading…",
+    "downloaded": "{{name}} downloaded and ready to use",
+    "progress": "{{part}}: {{pct}}%",
+    "part": {
+      "encoder": "Encoder",
+      "decoder": "Decoder"
+    },
+    "domain": {
+      "general": "General purpose",
+      "radiologia": "Radiology",
+      "microscopia": "Microscopy"
+    }
   }
 }

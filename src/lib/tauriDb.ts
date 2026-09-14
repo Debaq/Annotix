@@ -756,6 +756,46 @@ export function samListAppModels(): Promise<SamAppModel[]> {
   return invoke<SamAppModel[]>('sam_list_app_models');
 }
 
+/**
+ * Un modelo SAM que la app sabe descargar.
+ *
+ * `verified` dice si alguien lo ejecutó de verdad contra el smoke test. Un
+ * modelo sin verificar se puede bajar, pero nadie ha comprobado que funcione —
+ * y eso hay que enseñarlo antes de que alguien se baje cientos de megas.
+ */
+export interface SamCatalogEntry {
+  id: string;
+  name: string;
+  /** `general` | `radiologia` | `microscopia`. */
+  domain: string;
+  description: string;
+  license: string;
+  source: string;
+  encoderUrl: string;
+  decoderUrl: string;
+  encoderMb: number;
+  decoderMb: number;
+  verified: boolean;
+  caveats: string[];
+}
+
+/** Avance de una descarga, por el evento `sam:download-progress`. */
+export interface SamDownloadProgress {
+  modelId: string;
+  part: 'encoder' | 'decoder';
+  downloadedBytes: number;
+  totalBytes: number | null;
+}
+
+export function samCatalog(): Promise<SamCatalogEntry[]> {
+  return invoke<SamCatalogEntry[]>('sam_catalog');
+}
+
+/** Descarga el par del catálogo y lo registra. Devuelve [encoder, decoder]. */
+export function samDownloadFromCatalog(modelId: string): Promise<SamAppModel[]> {
+  return invoke<SamAppModel[]>('sam_download_from_catalog', { modelId });
+}
+
 export function samUploadAppModel(
   srcPath: string,
   name: string,

@@ -33,5 +33,26 @@
     "refineExit": "Salir de refine",
     "refineHelp": "Click izq: punto +. Shift+click: punto −. Arrastrar: bbox. Tab: cambiar máscara. Enter: aceptar. Esc: descartar.",
     "refineRunning": "Calculando máscara..."
+  },
+  "catalog": {
+    "title": "Modelos que se pueden descargar",
+    "verified": "probado",
+    "verifiedHelp": "Alguien ejecutó este modelo contra el smoke test de la app: no sólo carga, segmenta.",
+    "unverified": "sin probar",
+    "unverifiedHelp": "Se puede descargar, pero nadie ha comprobado que funcione en esta app.",
+    "license": "Licencia: {{license}}",
+    "source": "origen",
+    "downloading": "Descargando…",
+    "downloaded": "{{name}} descargado y listo para usar",
+    "progress": "{{part}}: {{pct}} %",
+    "part": {
+      "encoder": "Encoder",
+      "decoder": "Decodificador"
+    },
+    "domain": {
+      "general": "Uso general",
+      "radiologia": "Radiología",
+      "microscopia": "Microscopía"
+    }
   }
 }

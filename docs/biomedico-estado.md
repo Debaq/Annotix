@@ -23,7 +23,7 @@
 | 9a · Ingesta DICOM / NIfTI 2D | **hecho** | (esta tanda) |
 | 9b · Whole-slide imaging | pendiente | — |
 | 9c · Volumetría 3D | pendiente, **fuera de alcance** hasta tener demanda | — |
-| 10a · MedSAM / μSAM | **a medias**: segunda firma de decodificador hecha, sin probar con pesos; μSAM bloqueado (no hay ONNX) | (esta tanda) |
+| 10a · MedSAM / μSAM | **hecho** para MedSAM, ejecutado contra los pesos reales; μSAM bloqueado (no hay ONNX) | (esta tanda) |
 | 10b · Pesos biomédicos | **empezado**: 5 modelos | `135553f` |
 | 10c · nnU-Net, MONAI, Cellpose, StarDist | pendiente | — |
 | 11 · Selector de dominio + presets | **a medias**: eje y catálogo sí, presets no | `beebdc5`, `fb43624` |
@@ -208,64 +208,66 @@ entrenamiento real en CPU (`docs/roadmap_train.md`).
 
 ---
 
-## Dónde quedó la etapa 10a (sesión del 2026-09-14)
+## Etapa 10a: qué se hizo y qué quedó fuera
 
-**Estado: a medias, compila, sin probar con pesos reales.** Lo que hay committeado
-es soporte para una **segunda firma de decodificador SAM**; lo que falta es el
-catálogo y la descarga.
+**MedSAM entra y funciona.** No es una suposición: el smoke test lo ejecutó
+contra los pesos reales y segmentó.
 
-### Lo que se descubrió, y contradice al roadmap
+```
+variante detectada: Transformers
+máscaras: 3 de 256×256; puntuaciones: [1.007, 0.988, 0.866]
+logit en el punto marcado: 14.58
+logit en una esquina:      -12.73
+```
 
-El roadmap dice que la 10a es «cambio de pesos, no de arquitectura». **No lo es.**
-Verificado contra Hugging Face, no de memoria:
+### Lo que contradice al roadmap
 
-- **MedSAM** sólo existe en ONNX como `Xenova/medsam-vit-base`, exportado con
-  Transformers.js. Su firma no es la del export oficial de SAM, que es la que
-  hablaba el decodificador de Annotix:
+El roadmap decía que la 10a es «cambio de pesos, no de arquitectura». **No lo
+es.** MedSAM sólo existe en ONNX como `Xenova/medsam-vit-base`, exportado con
+Transformers.js, y su firma no es la del export oficial de SAM:
 
-  | | Annotix esperaba | MedSAM trae |
-  |---|---|---|
-  | Encoder | 1 salida (`image_embeddings`) | 2: `image_embeddings` + `image_positional_embeddings` |
-  | Decoder | `point_coords`, `point_labels`, `mask_input`, `has_mask_input`, `orig_im_size` | `input_points`, `input_labels`, `image_positional_embeddings` |
-  | Salida | máscaras rango 4, ya escaladas | máscaras rango 5, a 256×256 sin escalar |
+| | Annotix esperaba | MedSAM trae |
+|---|---|---|
+| Encoder | 1 salida (`image_embeddings`) | 2: `image_embeddings` + `image_positional_embeddings` |
+| Decoder | `point_coords`, `point_labels`, `mask_input`, `has_mask_input`, `orig_im_size` | `input_points`, `input_labels`, `image_positional_embeddings` |
+| Máscaras | rango 4, ya escaladas | rango 5, a 256×256 sin escalar |
 
-  Comprobado leyendo los primeros 300 KB del `.onnx` con un range request y
-  extrayendo los nombres: no hace falta descargar 400 MB para saberlo.
+Se detecta por los nombres de las entradas: quien sube un `.onnx` no tiene por
+qué saber con qué lo exportaron. Esto no desbloquea sólo MedSAM — entran todos
+los exports SAM de Transformers.js.
 
-- **μSAM** no tiene ONNX en ninguna parte. Se distribuye como checkpoints PyTorch
-  por BioImage.IO. `computational-cell-analytics/medico-sam` en HF sólo tiene el
-  README. Exportarlo exige una tubería Python que aquí no existe: **bloqueado**,
-  no pendiente.
+### Lo que hay
 
-### Lo que quedó escrito
+- Segunda firma de decodificador (`DecoderVariant`, `detectar_variante`).
+- Encoder que devuelve también el embedding posicional, identificado **por
+  nombre**: tiene la misma forma que el embedding y por posición serían
+  indistinguibles.
+- Catálogo con licencia, dominio y advertencias, servido desde Rust para que no
+  haya dos listas. **Regla: no entra un modelo que no se haya ejecutado**, y hay
+  un test que obliga a declararlo cuando `verified: false`.
+- Descarga desde la app con avance, a archivo temporal y renombrado al final: un
+  corte de red no deja un `.onnx` truncado que cargue con un error
+  incomprensible.
+- Smoke test `sam::smoke_tests`, con `#[ignore]` porque necesita los pesos. Se
+  corre así:
 
-- `inference/sam/decoder.rs`: `DecoderVariant` (`Oficial` | `Transformers`),
-  `detectar_variante()` por nombres de entrada —quien sube un `.onnx` no tiene por
-  qué saber con qué lo exportaron— y `run_decoder_transformers()`.
-- `inference/sam/encoder.rs`: `EncoderOutput` con `embedding` + `positional`. El
-  posicional se identifica **por nombre**, no por posición: tiene la misma forma
-  que el embedding y por posición serían indistinguibles.
-- `SamEmbeddingCache.positional`, y el dato hilado por `sam_predict` y AMG.
-- Si el decodificador pide el posicional y el encoder no lo produce, se falla con
-  un mensaje que dice el porqué: los dos modelos tienen que venir del mismo
-  export.
+  ```sh
+  ANNOTIX_SAM_ENCODER=/ruta/vision_encoder_quantized.onnx \
+  ANNOTIX_SAM_DECODER=/ruta/prompt_encoder_mask_decoder.onnx \
+    cargo test --lib sam::smoke -- --ignored --nocapture
+  ```
 
-### Lo que falta
+### Lo que queda fuera
 
-1. **Probarlo con MedSAM de verdad.** Nada de esto se ha ejecutado contra los
-   pesos: sólo compila. Es lo primero que hay que hacer, y puede que aparezcan
-   diferencias de preprocesado (el `preprocessor_config.json` de Xenova hay que
-   compararlo con `preprocess.rs`, que hoy hace 1024 lado largo + normalización
-   ImageNet).
-2. **Catálogo de modelos SAM biomédicos** con licencia, dominio (radiología,
-   microscopía) y para qué sirve cada uno.
-3. **Descarga desde la app** con verificación de hash y licencia a la vista antes
-   de bajar nada. Es la «PR8» que el roadmap de SAM dejó aparcada.
-4. **μSAM**: decidir si se monta una exportación a ONNX o se declara fuera de
-   alcance.
-
-### Aviso para quien siga
-
-No publicar MedSAM en un catálogo hasta haberlo ejecutado. Vale aquí la misma
-regla que en entrenamiento (`docs/roadmap_train.md`): un modelo que no funciona de
-verdad cuesta más retirarlo que no haberlo agregado.
+- **μSAM está bloqueado, no pendiente**: no hay ONNX en ninguna parte, se
+  distribuye como checkpoints PyTorch por BioImage.IO.
+  `computational-cell-analytics/medico-sam` en HF sólo tiene el README. Entraría
+  montando una exportación a ONNX, que es otro trabajo.
+- **MedSAM responde mejor a cajas que a puntos**: está entrenado así. El camino
+  AMG de Annotix usa puntos en grilla, así que sus máscaras automáticas serán
+  peores que marcando la región a mano. Queda declarado en las advertencias del
+  catálogo.
+- **El encoder del catálogo es el cuantizado** (96 MB en vez de 342). Corre en
+  CPU a cambio de algo de precisión en el borde.
+- **Sin probar dentro de la app**: el smoke test corre el par por fuera de la UI.
+  Falta descargar desde Configuración y segmentar una imagen de verdad.

@@ -430,6 +430,43 @@ pub fn sam_list_app_models(
     sam_models::list_models(&state.data_dir)
 }
 
+/// Modelos SAM que la app sabe descargar, con su licencia y sus advertencias.
+///
+/// El catálogo se sirve desde el backend y no se duplica en el front: una copia
+/// desincronizada ofrecería descargar un modelo que ya no está o callaría una
+/// advertencia nueva.
+#[tauri::command]
+pub fn sam_catalog() -> Vec<crate::inference::sam::catalog::SamCatalogEntry> {
+    crate::inference::sam::catalog::CATALOG.to_vec()
+}
+
+/// Descarga el par encoder/decodificador de un modelo del catálogo.
+///
+/// Va en un hilo aparte porque son cientos de megas: bloquear el hilo de la UI
+/// dejaría la app congelada varios minutos. El avance llega por el evento
+/// `sam:download-progress`.
+#[tauri::command]
+pub async fn sam_download_from_catalog(
+    state: State<'_, AppState>,
+    app: AppHandle,
+    model_id: String,
+) -> Result<Vec<sam_models::SamAppModel>, String> {
+    let data_dir = state.data_dir.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let emisor = app.clone();
+        let (enc, dec) = crate::inference::sam::download::descargar_del_catalogo(
+            &data_dir,
+            &model_id,
+            move |p| {
+                let _ = emisor.emit("sam:download-progress", &p);
+            },
+        )?;
+        Ok(vec![enc, dec])
+    })
+    .await
+    .map_err(|e| format!("La descarga se interrumpió: {}", e))?
+}
+
 /// Copia un .onnx al directorio app-level y lo registra.
 /// `kind` debe ser "encoder" o "decoder".
 #[tauri::command]

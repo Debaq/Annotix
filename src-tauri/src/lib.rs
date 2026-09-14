@@ -547,6 +547,8 @@ pub fn run() {
             commands::sam_commands::sam_clear_refine,
             commands::sam_commands::sam_clear_cache,
             commands::sam_commands::sam_list_app_models,
+            commands::sam_commands::sam_catalog,
+            commands::sam_commands::sam_download_from_catalog,
             commands::sam_commands::sam_upload_app_model,
             commands::sam_commands::sam_delete_app_model,
         ])

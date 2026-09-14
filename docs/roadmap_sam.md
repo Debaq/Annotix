@@ -331,5 +331,14 @@ Importa porque **MedSAM sólo existe en ONNX con la firma de Transformers.js**
 (`Xenova/medsam-vit-base`). Sin esto no entra, y con esto entran además todos los
 demás exports de Transformers.js.
 
-**Sin probar con pesos reales todavía.** Ver `docs/biomedico-estado.md`, sección
-«Dónde quedó la etapa 10a».
+**Verificado contra MedSAM real** con `sam::smoke_tests`: el modelo segmentó
+donde se le señaló (logit 14.58 en el punto, −12.73 en la esquina). Ver
+`docs/biomedico-estado.md`, sección «Etapa 10a».
+
+## Catálogo y descarga
+
+`inference/sam/catalog.rs` lista los modelos que la app sabe bajar, con licencia,
+dominio y advertencias. La regla: **no entra un modelo que no se haya ejecutado**,
+y un test obliga a declararlo cuando no se ha verificado. La descarga
+(`download.rs`) baja el par junto —encoder y decodificador tienen que venir del
+mismo export— a un archivo temporal que se renombra al terminar.
