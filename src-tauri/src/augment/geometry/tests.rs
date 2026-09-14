@@ -560,3 +560,24 @@ fn el_angulo_se_normaliza_sin_cambiar_la_caja() {
     assert!(cerca(env_real.x, env_obb.x, 1e-6) && cerca(env_real.y, env_obb.y, 1e-6));
     assert!(cerca(env_real.ancho, env_obb.ancho, 1e-6));
 }
+
+#[test]
+fn la_imagen_se_interpola_y_replica_el_borde() {
+    // Medio negro, medio blanco: al desplazar medio píxel aparece un valor
+    // intermedio, que es justo lo que el vecino más cercano no daría.
+    let mut img = RgbaImage::from_pixel(8, 8, Rgba([0, 0, 0, 255]));
+    for y in 0..8 {
+        for x in 4..8 {
+            img.put_pixel(x, y, Rgba([255, 255, 255, 255]));
+        }
+    }
+    let movida = warp_imagen(&img, &Afin::traslacion(0.5, 0.0), 8, 8).unwrap();
+    let borde = movida.get_pixel(4, 4)[0];
+    assert!(borde > 0 && borde < 255, "el borde quedó en {borde}");
+
+    // Un giro deja las esquinas con el color del borde, no con negro: unas
+    // esquinas negras le enseñan al modelo a esperar esquinas negras.
+    let plana = RgbaImage::from_pixel(8, 8, Rgba([200, 200, 200, 255]));
+    let girada = warp_imagen(&plana, &Afin::rotacion_en(10.0, 4.0, 4.0), 8, 8).unwrap();
+    assert_eq!(girada.get_pixel(0, 0).0, [200, 200, 200, 255]);
+}

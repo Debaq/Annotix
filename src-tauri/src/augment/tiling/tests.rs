@@ -241,6 +241,9 @@ fn la_tesela_hereda_el_sujeto_y_registra_de_donde_salio() {
     assert_eq!(proc.source_file, "lamina.jpg");
     assert_eq!((proc.row, proc.col), (1, 1));
     assert_eq!(entrada.file, "lamina__r1c1.png");
+    // `name` es el nombre del archivo porque es lo que los preparadores usan
+    // como destino dentro del dataset.
+    assert_eq!(entrada.name, entrada.file);
     assert_eq!(proc.tile_file, entrada.file);
     assert_eq!(entrada.width, tesela.rect.ancho.round() as u32);
 

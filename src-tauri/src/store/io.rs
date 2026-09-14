@@ -127,6 +127,11 @@ pub fn migrate_project(project: &mut ProjectFile, dir: &Path) -> bool {
         changed = true;
     }
 
+    // v10 → v11: el plan de augmentación es un bloque opcional nuevo. Ausente
+    // significa que no se aumenta, que es lo que hacían todos los proyectos
+    // hasta ahora; encenderlo por su cuenta multiplicaría el dataset de alguien
+    // sin que lo hubiera pedido. Sólo sube la versión.
+
     // v9 → v10: el dominio del proyecto es un campo opcional nuevo. Ausente
     // significa `general`, que es lo que era todo proyecto hasta ahora: la
     // migración no tiene nada que escribir, y marcar biomédico un proyecto por

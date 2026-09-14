@@ -29,5 +29,6 @@
 #![allow(dead_code)]
 
 pub mod geometry;
+pub mod plan;
 pub mod tiling;
 pub mod transforms;

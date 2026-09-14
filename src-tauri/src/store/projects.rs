@@ -116,6 +116,7 @@ impl AppState {
             webp_quality_preset: "high".to_string(),
             split_policy: None,
             study_protocol: None,
+            augmentation: None,
             domain: None,
         };
 

@@ -115,6 +115,7 @@ pub fn base_project() -> ProjectFile {
         webp_quality_preset: "high".into(),
         split_policy: None,
         study_protocol: None,
+        augmentation: None,
         domain: None,
     }
 }

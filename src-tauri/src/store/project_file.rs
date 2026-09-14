@@ -35,7 +35,12 @@ use serde::{Deserialize, Serialize};
 ///   16 bits que permite volver a ventanearla. Bloque opcional.
 /// - 10: el proyecto declara su **dominio** (`domain`): `general` o `biomedical`.
 ///   Filtra modelos y presets. Ausente = general, que es lo que era todo antes.
-pub const CURRENT_VERSION: u32 = 10;
+/// - 11: el proyecto puede declarar su plan de **augmentación** (`augmentation`):
+///   qué transformaciones, cuántas variantes, teselado y semilla. Bloque
+///   opcional; ausente = no se aumenta, que es lo que hacían todos los proyectos
+///   hasta ahora. La migración sólo sube la versión: encenderla por su cuenta
+///   multiplicaría el dataset de alguien sin que lo hubiera pedido.
+pub const CURRENT_VERSION: u32 = 11;
 
 // ─── ProjectFile: todo el contenido de project.json ─────────────────────────
 
@@ -102,6 +107,15 @@ pub struct ProjectFile {
         rename = "studyProtocol"
     )]
     pub study_protocol: Option<StudyProtocol>,
+    /// Cómo se aumenta el corpus al preparar el dataset de entrenamiento.
+    ///
+    /// Vive en el proyecto y no en la corrida por el mismo motivo que
+    /// `splitPolicy`: la configuración sobrevive entre entrenamientos y el
+    /// contrato de modelo puede transcribirla en vez de deducirla. Ausente
+    /// significa que no se aumenta, que es lo que hacía todo proyecto hasta
+    /// ahora.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub augmentation: Option<crate::augment::plan::AugmentationPlan>,
 }
 
 /// Lo que un proyecto declara sobre sí mismo, una vez, para que el contrato de

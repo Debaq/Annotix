@@ -607,6 +607,46 @@ pub fn warp_mascara(src: &RgbaImage, t: &Afin, ancho: u32, alto: u32) -> Option<
     Some(destino)
 }
 
+/// Remuestrea una **imagen** por el inverso de la transformación, con
+/// interpolación bilineal y bordes replicados.
+///
+/// La diferencia con [`warp_mascara`] no es de calidad sino de naturaleza: una
+/// máscara es categórica y hay que llevarla al vecino más cercano; una fotografía
+/// es continua y el vecino más cercano le deja los bordes dentados. Y el borde se
+/// replica en vez de dejarse transparente porque un giro de 8° con esquinas
+/// negras enseña al modelo a esperar esquinas negras.
+pub fn warp_imagen(src: &RgbaImage, t: &Afin, ancho: u32, alto: u32) -> Option<RgbaImage> {
+    let inv = t.inversa()?;
+    let (sw, sh) = (src.width() as i64, src.height() as i64);
+    if sw == 0 || sh == 0 {
+        return None;
+    }
+    let muestra = |x: i64, y: i64| *src.get_pixel(x.clamp(0, sw - 1) as u32, y.clamp(0, sh - 1) as u32);
+    let mut destino = RgbaImage::new(ancho, alto);
+    for y in 0..alto {
+        for x in 0..ancho {
+            let (sx, sy) = inv.aplicar((x as f64 + 0.5, y as f64 + 0.5));
+            let (fx, fy) = (sx - 0.5, sy - 0.5);
+            let (x0, y0) = (fx.floor() as i64, fy.floor() as i64);
+            let (tx, ty) = (fx - x0 as f64, fy - y0 as f64);
+            let (p00, p10, p01, p11) = (
+                muestra(x0, y0),
+                muestra(x0 + 1, y0),
+                muestra(x0, y0 + 1),
+                muestra(x0 + 1, y0 + 1),
+            );
+            let mut canales = [0u8; 4];
+            for c in 0..4 {
+                let arriba = p00[c] as f64 * (1.0 - tx) + p10[c] as f64 * tx;
+                let abajo = p01[c] as f64 * (1.0 - tx) + p11[c] as f64 * tx;
+                canales[c] = (arriba * (1.0 - ty) + abajo * ty).round().clamp(0.0, 255.0) as u8;
+            }
+            destino.put_pixel(x, y, Rgba(canales));
+        }
+    }
+    Some(destino)
+}
+
 /// Píxeles marcados de una máscara: el mismo umbral de alfa que usa el
 /// preparador de datasets (`draw_mask_on_target`).
 pub fn cobertura(m: &RgbaImage) -> u64 {
@@ -661,6 +701,46 @@ pub enum ResultadoAnotacion {
     /// exactamente el fallo silencioso que este módulo existe para evitar. Quien
     /// llama decide: normalmente, no aumentar esa imagen.
     NoSoportada,
+}
+
+/// Envolvente eje-alineada de una anotación, cuando se puede sacar sin decodificar
+/// nada.
+///
+/// Devuelve `None` para las máscaras: su envolvente exige decodificar el PNG, y
+/// quien la usa —el borrado aleatorio, para no tapar una anotación entera— la
+/// pide por cada variante de cada imagen. Una máscara sin envolvente queda sin
+/// proteger del borrado, y eso está dicho donde se usa.
+pub fn envolvente_anotacion(ann: &AnnotationEntry) -> Option<Rect> {
+    match ann.annotation_type.as_str() {
+        "bbox" => parse_bbox(&ann.data).map(|b| Rect::nuevo(b.x, b.y, b.width, b.height)),
+        "obb" => parse_obb(&ann.data).and_then(|o| {
+            Rect::envolvente(
+                &Obb {
+                    cx: o.x,
+                    cy: o.y,
+                    ancho: o.width,
+                    alto: o.height,
+                    rotacion_grados: o.rotation,
+                }
+                .esquinas(),
+            )
+        }),
+        "polygon" | "instance-segmentation" => {
+            puntos_de(&ann.data, "points").and_then(|p| Rect::envolvente(&p))
+        }
+        "keypoints" => parse_keypoints(&ann.data).and_then(|k| {
+            Rect::envolvente(
+                &k.points
+                    .iter()
+                    .filter(|p| p.visible)
+                    .map(|p| (p.x, p.y))
+                    .collect::<Vec<_>>(),
+            )
+        }),
+        "landmarks" => parse_landmarks(&ann.data)
+            .and_then(|l| Rect::envolvente(&l.points.iter().map(|p| (p.x, p.y)).collect::<Vec<_>>())),
+        _ => None,
+    }
 }
 
 /// `true` si `transformar_anotacion` sabe mover este tipo.

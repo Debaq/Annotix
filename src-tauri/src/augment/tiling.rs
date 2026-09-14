@@ -251,7 +251,11 @@ pub fn derivar_entrada(
 
     let entrada = ImageEntry {
         id: uuid::Uuid::new_v4().to_string(),
-        name: format!("{} [{}]", origen.name, sufijo),
+        // El nombre es el del archivo generado y no una etiqueta legible: los
+        // preparadores de dataset usan `name` como nombre del archivo destino,
+        // así que un "lámina [r1c1]" acabaría siendo un archivo con corchetes y
+        // espacios dentro del dataset.
+        name: archivo.clone(),
         file: archivo.clone(),
         width: tesela.rect.ancho.round().max(1.0) as u32,
         height: tesela.rect.alto.round().max(1.0) as u32,
