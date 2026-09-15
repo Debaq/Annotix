@@ -97,6 +97,11 @@ Cada script escribe junto al modelo un `test_predictions.csv` con una fila por
 muestra y las columnas que sabe calcular; una celda vacía es «no medido», no un
 cero.
 
+Los once están verificados con corridas reales en CPU —`cargo test --lib
+con_test -- --ignored`, 11 de 11 en 769 s—, no sólo con la comprobación de
+sintaxis: un test de contrato ve que el script menciona el CSV, y sólo una
+corrida dice que la librería llega hasta ahí.
+
 El PCK va en su propia columna y no como `correct`: es una proporción de
 keypoints, no un acierto, y confundirlos haría que una pose con la mitad de los
 puntos bien contara como media persona detectada.
