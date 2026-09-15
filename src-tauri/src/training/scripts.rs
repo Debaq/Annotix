@@ -1680,7 +1680,7 @@ pub fn generate_train_script_for_backend(
         TrainingBackend::HfSegmentation => {
             let mut needed = MASKS.to_vec();
             needed.push(keys::CLASSES_FILE);
-            let sp = ds.script_paths(&needed)?;
+            let sp = ds.script_paths_opt(&needed, &[keys::IMAGES_TEST, keys::MASKS_TEST])?;
             one("train.py", generate_hf_seg_script(req, &sp))
         }
         TrainingBackend::HfInstance => {
@@ -1701,7 +1701,10 @@ pub fn generate_train_script_for_backend(
         TrainingBackend::HfClassification => {
             let mut needed = CLASSIFY.to_vec();
             needed.push(keys::CLASSES_FILE);
-            let sp = ds.script_paths(&needed)?;
+            let sp = ds.script_paths_opt(
+                &needed,
+                &[keys::IMAGES_TEST, keys::LABELS_JSON_TEST],
+            )?;
             one("train.py", generate_hf_classification_script(req, &sp))
         }
         TrainingBackend::Tsai => {
@@ -2650,6 +2653,63 @@ def main():
         "lastModelPath": None,
         "resultsDir": output_dir,
     }}
+    # ── Conjunto de test, por muestra (Annotix) ───────────────────────────
+    #
+    # El IoU y el Dice se promedian sólo sobre las clases presentes en la
+    # máscara o en la predicción: promediar también sobre las ausentes regala un
+    # IoU de 1 por cada clase que no sale.
+    if IMAGES_TEST and MASKS_TEST:
+        try:
+            import csv as _csv
+            _test_ds = SegDataset(IMAGES_TEST, MASKS_TEST, processor)
+            model.eval()
+            _rows, _ious, _dices = [], [], []
+            with torch.no_grad():
+                for _i in range(len(_test_ds)):
+                    _item = _test_ds[_i]
+                    _px = _item["pixel_values"].unsqueeze(0).to(model.device)
+                    _gt = _item["labels"]
+                    _out = model(pixel_values=_px).logits
+                    _up = torch.nn.functional.interpolate(
+                        _out, size=_gt.shape[-2:], mode="bilinear", align_corners=False
+                    )
+                    _pr = _up.argmax(dim=1)[0].cpu()
+                    _clases = set(torch.unique(_gt).tolist()) | set(torch.unique(_pr).tolist())
+                    _clases.discard(0)
+                    _ci, _cd = [], []
+                    for _c in _clases:
+                        _pi, _gi = (_pr == _c), (_gt == _c)
+                        _inter = float((_pi & _gi).sum())
+                        _union = float((_pi | _gi).sum())
+                        _suma = float(_pi.sum()) + float(_gi.sum())
+                        if _union > 0:
+                            _ci.append(_inter / _union)
+                        if _suma > 0:
+                            _cd.append(2.0 * _inter / _suma)
+                    _iou = sum(_ci) / len(_ci) if _ci else None
+                    _dice = sum(_cd) / len(_cd) if _cd else None
+                    if _iou is not None:
+                        _ious.append(_iou)
+                    if _dice is not None:
+                        _dices.append(_dice)
+                    _rows.append({{
+                        "sample": os.path.basename(str(_test_ds.images[_i])),
+                        "iou": "" if _iou is None else round(_iou, 6),
+                        "dice": "" if _dice is None else round(_dice, 6),
+                    }})
+            if _rows:
+                with open(os.path.join(output_dir, "test_predictions.csv"), "w", newline="") as _f:
+                    _w = _csv.DictWriter(_f, fieldnames=["sample", "iou", "dice"])
+                    _w.writeheader()
+                    _w.writerows(_rows)
+            if _ious:
+                result["testMetrics"] = {{
+                    "meanIoU": sum(_ious) / len(_ious),
+                    "dice": (sum(_dices) / len(_dices)) if _dices else None,
+                }}
+        except Exception as _e:
+            print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": f"Test eval skipped: {{_e}}"}}), flush=True)
+
     print("ANNOTIX_EVENT:" + json.dumps(result), flush=True)
 
 if __name__ == "__main__":
@@ -3260,6 +3320,38 @@ def main():
         "lastModelPath": None,
         "resultsDir": output_dir,
     }}
+    # ── Conjunto de test, por muestra (Annotix) ───────────────────────────
+    if IMAGES_TEST and LABELS_JSON_TEST:
+        try:
+            import csv as _csv
+            _test_ds = ClassificationDataset(IMAGES_TEST, LABELS_JSON_TEST, processor)
+            _pred = trainer.predict(_test_ds)
+            _logits = _pred.predictions
+            _labels = _pred.label_ids
+            _rows, _aciertos = [], 0
+            for _i in range(len(_test_ds)):
+                if MULTI_LABEL:
+                    # Con varias etiquetas por imagen, «correcto» es que el
+                    # conjunto entero coincida: contar etiquetas sueltas
+                    # premiaría acertar las fáciles de una imagen difícil.
+                    _p = (1 / (1 + np.exp(-_logits[_i])) > 0.5).astype(float)
+                    _ok = int(bool((_p == np.asarray(_labels[_i], dtype=float)).all()))
+                else:
+                    _ok = int(int(np.argmax(_logits[_i])) == int(_labels[_i]))
+                _aciertos += _ok
+                _rows.append({{
+                    "sample": os.path.basename(_test_ds.samples[_i][0]),
+                    "correct": _ok,
+                }})
+            if _rows:
+                with open(os.path.join(output_dir, "test_predictions.csv"), "w", newline="") as _f:
+                    _w = _csv.DictWriter(_f, fieldnames=["sample", "correct"])
+                    _w.writeheader()
+                    _w.writerows(_rows)
+                result["testMetrics"] = {{"accuracy": _aciertos / len(_rows)}}
+        except Exception as _e:
+            print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": f"Test eval skipped: {{_e}}"}}), flush=True)
+
     print("ANNOTIX_EVENT:" + json.dumps(result), flush=True)
 
 if __name__ == "__main__":

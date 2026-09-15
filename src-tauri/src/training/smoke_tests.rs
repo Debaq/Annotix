@@ -444,3 +444,15 @@ fn smoke_smp_segment_con_test() {
 fn smoke_timm_classify_con_test() {
     smoke_con_test(TrainingBackend::Timm, "classify");
 }
+
+#[test]
+#[ignore = "requiere entorno Python con transformers"]
+fn smoke_hf_classification_con_test() {
+    smoke_con_test(TrainingBackend::HfClassification, "classify");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con transformers"]
+fn smoke_hf_segmentation_con_test() {
+    smoke_con_test(TrainingBackend::HfSegmentation, "segment");
+}
