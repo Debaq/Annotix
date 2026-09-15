@@ -36,6 +36,7 @@ pub fn backend_id(backend: &TrainingBackend) -> &'static str {
         TrainingBackend::HfSegmentation => "hf_segmentation",
         TrainingBackend::HfInstance => "hf_instance",
         TrainingBackend::HfPose => "hf_pose",
+        TrainingBackend::Cellpose => "cellpose",
         TrainingBackend::Timm => "timm",
         TrainingBackend::HfClassification => "hf_classification",
         TrainingBackend::Tsai => "tsai",
@@ -86,12 +87,37 @@ pub(super) fn supports_fine_tune_por_id(id: &str) -> bool {
             | "timm"
             | "hf_pose"
             | "tsai"
-            | "pytorch_forecasting" // `rf_detr` queda fuera a propósito: su constructor acepta pesos de
+            | "pytorch_forecasting"
+            // Cellpose entrena desde un modelo previo pasándole su ruta en
+            // `pretrained_model`, que es el mismo camino que usa para cargar
+            // los pesos de fábrica.
+            | "cellpose" // `rf_detr` queda fuera a propósito: su constructor acepta pesos de
                                     // partida según la librería, pero no se verificó contra la versión que
                                     // el proyecto fija, y rfdetr aborta con un ValidationError de pydantic
                                     // ante un argumento que no conoce. Entra cuando se compruebe con un
                                     // entrenamiento real.
     )
+}
+
+/// Qué acelerador necesita un backend, por enum.
+pub fn acelerador_requerido(backend: &TrainingBackend) -> &'static str {
+    acelerador_por_id(backend_id(backend))
+}
+
+/// Qué hace falta para entrenar este backend.
+///
+/// `required` no es una recomendación de rendimiento: es que en CPU el proceso
+/// se queda sin memoria y el sistema lo mata, que desde fuera parece un cuelgue
+/// sin causa. Decirlo antes vale más que un entrenamiento que muere a los diez
+/// minutos.
+pub(super) fn acelerador_por_id(id: &str) -> &'static str {
+    match id {
+        // Cellpose-SAM es un ViT grande y entrena sobre teselas de 256×256 —la
+        // librería no admite otro tamaño para cpsam—, así que cada muestra pasa
+        // por el modelo entero a esa resolución. En CPU no cabe.
+        "cellpose" => "required",
+        _ => "none",
+    }
 }
 
 /// Resolución mínima con la que un backend puede entrenar.
@@ -192,6 +218,7 @@ pub fn get_available_backends(project_type: &str) -> Vec<BackendInfo> {
         "instance_segment" => {
             backends.push(build_yolo_backend("segment"));
             backends.push(build_hf_instance_backend());
+            backends.push(build_cellpose_backend());
         }
         "classify" => {
             backends.push(build_yolo_backend(task));
@@ -399,6 +426,7 @@ fn build_yolo_backend(task: &str) -> BackendInfo {
         pip_packages: vec!["ultralytics".into()],
         min_image_size: min_image_size_por_id("yolo"),
         supports_fine_tune: supports_fine_tune_por_id("yolo"),
+        gpu_requirement: acelerador_por_id("yolo").into(),
     }
 }
 
@@ -476,6 +504,7 @@ fn build_rtdetr_backend() -> BackendInfo {
         pip_packages: vec!["ultralytics".into()],
         min_image_size: min_image_size_por_id("rt_detr"),
         supports_fine_tune: supports_fine_tune_por_id("rt_detr"),
+        gpu_requirement: acelerador_por_id("rt_detr").into(),
     }
 }
 
@@ -563,6 +592,7 @@ fn build_rfdetr_backend(task: &str) -> BackendInfo {
         pip_packages: vec!["rfdetr[train]".into(), "transformers>=5".into()],
         min_image_size: min_image_size_por_id("rf_detr"),
         supports_fine_tune: supports_fine_tune_por_id("rf_detr"),
+        gpu_requirement: acelerador_por_id("rf_detr").into(),
     }
 }
 
@@ -708,6 +738,69 @@ fn build_smp_backend() -> BackendInfo {
         ],
         min_image_size: min_image_size_por_id("smp"),
         supports_fine_tune: supports_fine_tune_por_id("smp"),
+        gpu_requirement: acelerador_por_id("smp").into(),
+    }
+}
+
+/// Cellpose-SAM y sus variantes.
+///
+/// Se ofrece sólo en segmentación de instancias, que es lo que hace: separar
+/// células, no pintar clases. Los tres modelos son los que la librería sabe
+/// descargar por nombre; no se inventa ninguno.
+fn build_cellpose_backend() -> BackendInfo {
+    let models = vec![
+        BackendModelInfo {
+            id: "cpsam_v2".into(),
+            name: "Cellpose-SAM v2".into(),
+            family: "cellpose".into(),
+            description:
+                "Modelo generalista de referencia para segmentar células: funciona sobre \
+                 microscopía muy distinta sin reentrenar, y ajustarlo con unas pocas imágenes \
+                 propias suele bastar"
+                    .into(),
+            params_count: Some("~300M".into()),
+            tasks: vec!["instance_segment".into()],
+            sizes: None,
+            recommended: true,
+        },
+        BackendModelInfo {
+            id: "cpsam".into(),
+            name: "Cellpose-SAM".into(),
+            family: "cellpose".into(),
+            description: "La primera versión con backbone SAM. Se mantiene para reproducir \
+                          resultados publicados con ella"
+                .into(),
+            params_count: Some("~300M".into()),
+            tasks: vec!["instance_segment".into()],
+            sizes: None,
+            recommended: false,
+        },
+        BackendModelInfo {
+            id: "cpdino".into(),
+            name: "Cellpose-DINO".into(),
+            family: "cellpose".into(),
+            description: "Variante con backbone DINO, más rápida en teselas grandes".into(),
+            params_count: Some("~300M".into()),
+            tasks: vec!["instance_segment".into()],
+            sizes: None,
+            recommended: false,
+        },
+    ];
+
+    BackendInfo {
+        id: "cellpose".into(),
+        name: "Cellpose".into(),
+        description:
+            "Segmentación de instancias celulares en microscopía. Separa células pegadas, que es \
+             lo que una máscara por clases no puede hacer"
+                .into(),
+        supported_tasks: vec!["instance_segment".into()],
+        models,
+        dataset_format: DatasetFormat::InstanceMaskPng,
+        pip_packages: vec!["cellpose".into(), "torch".into()],
+        min_image_size: min_image_size_por_id("cellpose"),
+        supports_fine_tune: supports_fine_tune_por_id("cellpose"),
+        gpu_requirement: acelerador_por_id("cellpose").into(),
     }
 }
 
@@ -855,6 +948,7 @@ fn build_hf_seg_backend() -> BackendInfo {
         ],
         min_image_size: min_image_size_por_id("hf_segmentation"),
         supports_fine_tune: supports_fine_tune_por_id("hf_segmentation"),
+        gpu_requirement: acelerador_por_id("hf_segmentation").into(),
     }
 }
 
@@ -944,6 +1038,7 @@ fn build_hf_detection_backend() -> BackendInfo {
         ],
         min_image_size: min_image_size_por_id("hf_detection"),
         supports_fine_tune: supports_fine_tune_por_id("hf_detection"),
+        gpu_requirement: acelerador_por_id("hf_detection").into(),
     }
 }
 
@@ -1000,6 +1095,7 @@ fn build_hf_instance_backend() -> BackendInfo {
         ],
         min_image_size: min_image_size_por_id("hf_instance"),
         supports_fine_tune: supports_fine_tune_por_id("hf_instance"),
+        gpu_requirement: acelerador_por_id("hf_instance").into(),
     }
 }
 
@@ -1056,6 +1152,7 @@ fn build_hf_pose_backend(task: &str) -> BackendInfo {
         pip_packages: vec!["timm".into(), "torch".into(), "torchvision".into()],
         min_image_size: min_image_size_por_id("hf_pose"),
         supports_fine_tune: supports_fine_tune_por_id("hf_pose"),
+        gpu_requirement: acelerador_por_id("hf_pose").into(),
     }
 }
 
@@ -1217,6 +1314,7 @@ fn build_timm_backend(task: &str) -> BackendInfo {
         pip_packages: vec!["timm".into(), "torch".into(), "torchvision".into()],
         min_image_size: min_image_size_por_id("timm"),
         supports_fine_tune: supports_fine_tune_por_id("timm"),
+        gpu_requirement: acelerador_por_id("timm").into(),
     }
 }
 
@@ -1333,6 +1431,7 @@ fn build_hf_classification_backend(task: &str) -> BackendInfo {
         ],
         min_image_size: min_image_size_por_id("hf_classification"),
         supports_fine_tune: supports_fine_tune_por_id("hf_classification"),
+        gpu_requirement: acelerador_por_id("hf_classification").into(),
     }
 }
 
@@ -1494,6 +1593,7 @@ fn build_tsai_backend(task: &str) -> BackendInfo {
         pip_packages: vec!["tsai".into()],
         min_image_size: min_image_size_por_id("tsai"),
         supports_fine_tune: supports_fine_tune_por_id("tsai"),
+        gpu_requirement: acelerador_por_id("tsai").into(),
     }
 }
 
@@ -1556,6 +1656,7 @@ fn build_pytorch_forecasting_backend() -> BackendInfo {
         ],
         min_image_size: min_image_size_por_id("pytorch_forecasting"),
         supports_fine_tune: supports_fine_tune_por_id("pytorch_forecasting"),
+        gpu_requirement: acelerador_por_id("pytorch_forecasting").into(),
     }
 }
 
@@ -1624,6 +1725,7 @@ fn build_pyod_backend() -> BackendInfo {
         pip_packages: vec!["pyod".into(), "torch".into()],
         min_image_size: min_image_size_por_id("pyod"),
         supports_fine_tune: supports_fine_tune_por_id("pyod"),
+        gpu_requirement: acelerador_por_id("pyod").into(),
     }
 }
 
@@ -1681,6 +1783,7 @@ fn build_tslearn_backend() -> BackendInfo {
         pip_packages: vec!["tslearn".into(), "scikit-learn".into()],
         min_image_size: min_image_size_por_id("tslearn"),
         supports_fine_tune: supports_fine_tune_por_id("tslearn"),
+        gpu_requirement: acelerador_por_id("tslearn").into(),
     }
 }
 
@@ -1728,6 +1831,7 @@ fn build_pypots_backend() -> BackendInfo {
         pip_packages: vec!["pypots".into(), "torch".into()],
         min_image_size: min_image_size_por_id("pypots"),
         supports_fine_tune: supports_fine_tune_por_id("pypots"),
+        gpu_requirement: acelerador_por_id("pypots").into(),
     }
 }
 
@@ -1766,6 +1870,7 @@ fn build_stumpy_backend() -> BackendInfo {
         pip_packages: vec!["stumpy".into(), "numpy".into()],
         min_image_size: min_image_size_por_id("stumpy"),
         supports_fine_tune: supports_fine_tune_por_id("stumpy"),
+        gpu_requirement: acelerador_por_id("stumpy").into(),
     }
 }
 
@@ -1993,5 +2098,6 @@ fn build_sklearn_backend() -> BackendInfo {
         ],
         min_image_size: min_image_size_por_id("sklearn"),
         supports_fine_tune: supports_fine_tune_por_id("sklearn"),
+        gpu_requirement: acelerador_por_id("sklearn").into(),
     }
 }

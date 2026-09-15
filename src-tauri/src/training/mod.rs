@@ -379,6 +379,12 @@ pub enum TrainingBackend {
     HfDetection,
     HfInstance,
     HfPose,
+    /// Cellpose-SAM: segmentación de **instancias celulares** en microscopía.
+    ///
+    /// Entra con su propio formato de dataset —máscaras de 16 bits con un
+    /// número por célula— porque contar células con una máscara semántica es
+    /// contar manchas: dos células pegadas comparten valor.
+    Cellpose,
     Timm,
     HfClassification,
     Tsai,
@@ -396,6 +402,10 @@ pub enum DatasetFormat {
     YoloTxt,
     CocoJson,
     MaskPng,
+    /// Máscara de 16 bits con **un número por objeto**, no por clase: lo que
+    /// pide Cellpose. Contar células con una máscara semántica es contar
+    /// manchas, porque dos células pegadas comparten valor.
+    InstanceMaskPng,
     CocoInstanceJson,
     CocoKeypointsJson,
     DotaTxt,
@@ -505,6 +515,18 @@ pub struct BackendInfo {
     /// donde es de verdad.
     #[serde(rename = "supportsFineTune")]
     pub supports_fine_tune: bool,
+    /// `none` | `required`: si entrenar en local exige acelerador.
+    ///
+    /// `required` significa que en CPU el proceso se queda sin memoria y lo mata
+    /// el sistema —un cuelgue sin causa aparente—, no que vaya lento. La UI lo
+    /// dice antes de dejar lanzar, y el runner lo rechaza salvo que el usuario
+    /// lo asuma a propósito.
+    #[serde(rename = "gpuRequirement", default = "default_gpu_requirement")]
+    pub gpu_requirement: String,
+}
+
+fn default_gpu_requirement() -> String {
+    "none".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

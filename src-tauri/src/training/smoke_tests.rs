@@ -238,7 +238,14 @@ fn smoke_con(
     )
     .unwrap_or_else(|e| panic!("{etiqueta}: preparar dataset falló: {e}"));
 
-    let req = request(backend, task);
+    let mut req = request(backend, task);
+    // Cellpose entrena sobre teselas de 256×256 completas: con lote 2 en CPU el
+    // sistema mata el proceso. El smoke usa lo mismo que usaría alguien que lo
+    // lanza en CPU a propósito.
+    if req.backend == TrainingBackend::Cellpose {
+        req.batch_size = 1;
+        req.backend_params = serde_json::json!({ "allowCpu": true });
+    }
     let archivos = scripts::generate_train_script_for_backend(&req, &ds)
         .unwrap_or_else(|e| panic!("{etiqueta}: generar script falló: {e}"));
     for (nombre, contenido) in &archivos {
@@ -393,6 +400,18 @@ fn smoke_stumpy_ts_pattern() {
 #[ignore = "requiere entorno Python con transformers"]
 fn smoke_hf_detection() {
     smoke(TrainingBackend::HfDetection, "detect");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con cellpose"]
+fn smoke_cellpose_instance() {
+    smoke(TrainingBackend::Cellpose, "instance_segment");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con cellpose"]
+fn smoke_cellpose_con_test() {
+    smoke_con_test(TrainingBackend::Cellpose, "instance_segment");
 }
 
 #[test]

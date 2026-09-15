@@ -626,7 +626,7 @@ fn el_catalogo_completo_no_duplica_backends_y_fusiona_modelos() {
         unicos.len(),
         "el catálogo repite backends: {ids:?}"
     );
-    assert_eq!(ids.len(), 17, "se esperaban 17 backends, hay {}", ids.len());
+    assert_eq!(ids.len(), 18, "se esperaban 18 backends, hay {}", ids.len());
 
     // YOLO publica modelos distintos según la tarea; el catálogo completo los une.
     let yolo = todos.iter().find(|b| b.id == "yolo").expect("yolo");
@@ -975,4 +975,96 @@ fn rtdetr_evalua_el_conjunto_de_test() {
     );
     assert!(script.contains("split=\"test\""), "{script}");
     assert!(script.contains("testMetrics"), "{script}");
+}
+
+// ─── Backends que no entran en memoria sin acelerador ───────────────────────
+
+/// Cellpose declara que necesita GPU, y el catálogo lo publica para que la
+/// interfaz lo diga **antes** de dejar lanzar.
+///
+/// No es una recomendación de rendimiento: en CPU el proceso se queda sin
+/// memoria y lo mata el sistema, que desde la app parece un cuelgue sin causa.
+#[test]
+fn el_catalogo_declara_que_cellpose_necesita_acelerador() {
+    let backends = crate::training::backends::get_all_backends();
+    let cellpose = backends
+        .iter()
+        .find(|b| b.id == "cellpose")
+        .expect("cellpose está en el catálogo");
+    assert_eq!(cellpose.gpu_requirement, "required");
+    assert_eq!(
+        cellpose.dataset_format,
+        crate::training::DatasetFormat::InstanceMaskPng
+    );
+
+    // El resto no exige acelerador: marcar de más convertiría el aviso en ruido
+    // y la gente dejaría de leerlo.
+    for b in backends.iter().filter(|b| b.id != "cellpose") {
+        assert_eq!(b.gpu_requirement, "none", "{} no debería exigir GPU", b.id);
+    }
+}
+
+/// La máscara de instancias es lo que separa a Cellpose del resto: el valor del
+/// píxel es el número de objeto, no la clase. Con una máscara semántica, dos
+/// células pegadas se leen como una.
+#[test]
+fn la_mascara_de_instancias_numera_objetos_y_no_clases() {
+    use crate::store::project_file::ImageEntry;
+    let (mut pf, proyecto, images_dir) = fixture("instance_segment");
+    // Dos objetos de la **misma** clase, uno al lado del otro.
+    let img: &mut ImageEntry = &mut pf.images[0];
+    img.annotations.clear();
+    for (i, x) in [4.0_f64, 40.0].iter().enumerate() {
+        img.annotations.push(crate::training::test_fixtures::ann(
+            "polygon",
+            10,
+            serde_json::json!({"points": [
+                {"x": x, "y": 4.0},
+                {"x": x + 20.0, "y": 4.0},
+                {"x": x + 20.0, "y": 30.0},
+                {"x": *x, "y": 30.0}
+            ]}),
+        ));
+        let _ = i;
+    }
+
+    let salida = proyecto.path().join("job");
+    let imagenes = dataset::select_trainable_images(pf.images.clone(), &pf.classes, true);
+    dataset::prepare_dataset_for_backend(
+        &images_dir,
+        &pf,
+        &imagenes,
+        &salida,
+        DatasetSpec {
+            ts: dataset::TsSpec::default(),
+            val_split: 0.25,
+            test_split: 0.0,
+            task: "instance_segment",
+            backend: &TrainingBackend::Cellpose,
+        },
+    )
+    .expect("preparar dataset");
+
+    // La máscara de la imagen que tiene dos objetos tiene que traer dos números
+    // distintos, y ninguno puede ser el de la clase.
+    let mut vistos: std::collections::BTreeSet<u16> = Default::default();
+    for split in ["train", "val"] {
+        let dir = salida.join("masks").join(split);
+        let Ok(entradas) = std::fs::read_dir(&dir) else {
+            continue;
+        };
+        for e in entradas.flatten() {
+            let m = image::open(e.path()).expect("máscara legible").to_luma16();
+            let ids: std::collections::BTreeSet<u16> =
+                m.pixels().map(|p| p[0]).filter(|v| *v != 0).collect();
+            if ids.len() > 1 {
+                vistos = ids;
+            }
+        }
+    }
+    assert_eq!(
+        vistos.iter().copied().collect::<Vec<_>>(),
+        vec![1, 2],
+        "dos objetos de la misma clase tienen que llevar números distintos"
+    );
 }

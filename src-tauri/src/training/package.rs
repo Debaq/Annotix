@@ -102,6 +102,7 @@ pub fn generate_training_package(
 
         TrainingBackend::HfInstance => "HuggingFace Instance Segmentation",
         TrainingBackend::HfPose => "HuggingFace Pose",
+        TrainingBackend::Cellpose => "Cellpose",
 
         TrainingBackend::Timm => "timm",
         TrainingBackend::HfClassification => "HuggingFace Classification",

@@ -242,6 +242,8 @@ pub fn model_id_real(backend: &TrainingBackend) -> &'static str {
         // Pose: backbone de timm con cabeza de heatmaps (ver generate_hf_pose_script).
         TrainingBackend::HfPose => "resnet18",
 
+        // Cellpose descarga sus pesos por nombre; `cpsam_v2` es el de fábrica.
+        TrainingBackend::Cellpose => "cpsam_v2",
         TrainingBackend::Timm => "resnet50",
         TrainingBackend::HfClassification => "google/vit-base-patch16-224",
         TrainingBackend::Tsai => "InceptionTimePlus",

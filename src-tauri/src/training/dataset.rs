@@ -1439,6 +1439,164 @@ pub fn prepare_mask_dataset(
     Ok(ds)
 }
 
+/// Dataset de **instancias por máscara**: una etiqueta por objeto, no por clase.
+///
+/// Es lo que pide Cellpose, y es una diferencia de fondo con
+/// `prepare_mask_dataset`: ahí el valor del píxel es la clase —dos células
+/// pegadas comparten valor y se leen como una sola mancha—, y aquí es el número
+/// de objeto. Contar células con una máscara semántica es contar manchas.
+///
+/// El PNG va en 16 bits porque una lámina con más de 255 objetos no es rara, y
+/// en 8 bits el objeto 256 se convertiría en el 0, que es el fondo.
+pub fn prepare_instance_mask_dataset(
+    images_dir: &Path,
+    project: &ProjectFile,
+    images: &[ImageEntry],
+    output_dir: &Path,
+    val_split: f64,
+    test_split: f64,
+) -> Result<PreparedDataset, String> {
+    if images.is_empty() {
+        return Err("No hay imágenes en el proyecto".to_string());
+    }
+
+    let repartido = repartir_y_aumentar(
+        images_dir, project, images, output_dir, val_split, test_split,
+    )?;
+    let images = &repartido.images[..];
+    let plan = &repartido.plan;
+
+    for (split, idxs) in plan.splits() {
+        std::fs::create_dir_all(output_dir.join("images").join(split))
+            .map_err(|e| format!("Error creando images/{}: {}", split, e))?;
+        std::fs::create_dir_all(output_dir.join("masks").join(split))
+            .map_err(|e| format!("Error creando masks/{}: {}", split, e))?;
+        for &idx in idxs {
+            let image = &images[idx];
+            let src = images_dir.join(&image.file);
+            if !src.exists() {
+                log::warn!("Imagen no encontrada: {:?}, omitiendo", src);
+                continue;
+            }
+            crate::store::io::copiar_en_claro(
+                &src,
+                &output_dir.join("images").join(split).join(&image.name),
+            )?;
+            let png = generate_instance_mask(image)?;
+            let nombre = replace_ext(&image.name, "png");
+            std::fs::write(output_dir.join("masks").join(split).join(&nombre), &png)
+                .map_err(|e| format!("Error escribiendo la máscara de {}: {}", image.name, e))?;
+        }
+    }
+
+    let mut ds = PreparedDataset::new(
+        output_dir,
+        DatasetFormat::InstanceMaskPng,
+        class_names(project),
+    );
+    ds.set_split(plan.composition());
+    ds.set_split_report(repartido.report.clone());
+    ds.declare(keys::IMAGES_TRAIN, "images/train")
+        .declare(keys::IMAGES_VAL, "images/val")
+        .declare(keys::MASKS_TRAIN, "masks/train")
+        .declare(keys::MASKS_VAL, "masks/val");
+    if plan.has_test() {
+        ds.declare(keys::IMAGES_TEST, "images/test")
+            .declare(keys::MASKS_TEST, "masks/test");
+    }
+    Ok(ds)
+}
+
+/// PNG de 16 bits donde cada objeto lleva su propio número, empezando en 1.
+///
+/// El orden es el de las anotaciones de la imagen: no significa nada y no tiene
+/// por qué — lo que importa es que dos objetos distintos no compartan número.
+fn generate_instance_mask(image: &ImageEntry) -> Result<Vec<u8>, String> {
+    use image::{ImageBuffer, Luma};
+    let mut mascara: ImageBuffer<Luma<u16>, Vec<u16>> =
+        ImageBuffer::new(image.width.max(1), image.height.max(1));
+    let (ancho, alto) = (mascara.width(), mascara.height());
+
+    let mut siguiente: u16 = 0;
+    for ann in &image.annotations {
+        // Un proyecto con más de 65 535 objetos en una imagen desbordaría el
+        // formato; se corta antes de que el objeto 65 536 se escriba como fondo.
+        let Some(id) = siguiente.checked_add(1) else {
+            log::warn!("{}: más de 65535 objetos, se ignoran los sobrantes", image.name);
+            break;
+        };
+        let pintado = match ann.annotation_type.as_str() {
+            "polygon" | "instance-segmentation" => parse_polygon(&ann.data)
+                .map(|p| {
+                    rellenar_poligono(&p.points, ancho, alto, |x, y| {
+                        mascara.put_pixel(x, y, Luma([id]))
+                    });
+                    true
+                })
+                .unwrap_or(false),
+            "bbox" => parse_bbox(&ann.data)
+                .map(|b| {
+                    let puntos = [
+                        (b.x, b.y),
+                        (b.x + b.width, b.y),
+                        (b.x + b.width, b.y + b.height),
+                        (b.x, b.y + b.height),
+                    ];
+                    rellenar_poligono(&puntos, ancho, alto, |x, y| {
+                        mascara.put_pixel(x, y, Luma([id]))
+                    });
+                    true
+                })
+                .unwrap_or(false),
+            "mask" => match parse_mask(&ann.data) {
+                Some(m) => dibujar_mascara_instancia(&mut mascara, &m.base64png, id)?,
+                None => false,
+            },
+            _ => false,
+        };
+        if pintado {
+            siguiente = id;
+        }
+    }
+
+    let mut png = Vec::new();
+    image::DynamicImage::ImageLuma16(mascara)
+        .write_to(&mut Cursor::new(&mut png), image::ImageFormat::Png)
+        .map_err(|e| format!("Error codificando la máscara de instancias: {}", e))?;
+    Ok(png)
+}
+
+/// Pinta una máscara dibujada a mano con el número de su objeto. `false` si no
+/// marcó ni un píxel: una anotación vacía no debe consumir un número.
+fn dibujar_mascara_instancia(
+    destino: &mut image::ImageBuffer<image::Luma<u16>, Vec<u16>>,
+    base64png: &str,
+    id: u16,
+) -> Result<bool, String> {
+    use base64::Engine;
+    use image::Luma;
+    let b64 = base64png.split(',').next_back().unwrap_or(base64png);
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(b64)
+        .map_err(|e| format!("Error decodificando la máscara: {}", e))?;
+    let rgba = image::load_from_memory(&bytes)
+        .map_err(|e| format!("Error cargando la máscara: {}", e))?
+        .to_rgba8();
+
+    let mut alguno = false;
+    let ancho = destino.width().min(rgba.width());
+    let alto = destino.height().min(rgba.height());
+    for y in 0..alto {
+        for x in 0..ancho {
+            if rgba.get_pixel(x, y)[3] > 128 {
+                destino.put_pixel(x, y, Luma([id]));
+                alguno = true;
+            }
+        }
+    }
+    Ok(alguno)
+}
+
 fn copy_image_and_mask(
     images_dir: &Path,
     project: &ProjectFile,
@@ -1520,12 +1678,27 @@ fn generate_segmentation_mask(
 
 /// Rasteriza un polígono sobre la máscara con scanline fill
 fn draw_polygon_on_target(target: &mut GrayImage, points: &[(f64, f64)], class_value: u8) {
+    let (w, h) = (target.width(), target.height());
+    rellenar_poligono(points, w, h, |x, y| {
+        target.put_pixel(x, y, Luma([class_value]))
+    });
+}
+
+/// Rasteriza un polígono por barrido de líneas y llama a `pintar` en cada píxel
+/// de dentro.
+///
+/// Está separado del pintado porque hay dos destinos con la misma geometría: la
+/// máscara **semántica** de 8 bits, donde el valor es la clase, y la de
+/// **instancias** de 16 bits, donde el valor es el número de objeto. Escribir el
+/// barrido dos veces era garantizar que un día difieran en un píxel de borde y
+/// nadie sepa por qué.
+fn rellenar_poligono(points: &[(f64, f64)], ancho: u32, alto: u32, mut pintar: impl FnMut(u32, u32)) {
     if points.len() < 3 {
         return;
     }
 
-    let w = target.width() as f64;
-    let h = target.height() as f64;
+    let w = ancho as f64;
+    let h = alto as f64;
 
     let min_y = points.iter().map(|p| p.1).fold(f64::MAX, f64::min).max(0.0) as u32;
     let max_y = points
@@ -1557,8 +1730,8 @@ fn draw_polygon_on_target(target: &mut GrayImage, points: &[(f64, f64)], class_v
                 let x_start = (pair[0].max(0.0)) as u32;
                 let x_end = (pair[1].min(w - 1.0)) as u32;
                 for x in x_start..=x_end {
-                    if x < target.width() {
-                        target.put_pixel(x, y, Luma([class_value]));
+                    if x < ancho {
+                        pintar(x, y);
                     }
                 }
             }
@@ -1656,6 +1829,10 @@ pub fn prepare_dataset_for_backend(
             CocoLayout::Coco,
         ),
         TrainingBackend::Smp | TrainingBackend::HfSegmentation => prepare_mask_dataset(
+            images_dir, project, images, output_dir, val_split, test_split,
+        ),
+        // Cellpose no consume COCO: quiere la máscara de instancias en disco.
+        TrainingBackend::Cellpose => prepare_instance_mask_dataset(
             images_dir, project, images, output_dir, val_split, test_split,
         ),
         TrainingBackend::HfInstance => prepare_coco_instance_dataset(

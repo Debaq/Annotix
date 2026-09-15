@@ -11,11 +11,59 @@ use super::dataset;
 use super::python_env;
 use super::scripts;
 use super::{
-    ExportedModel, TrainingConfig, TrainingEpochMetrics, TrainingProgressEvent, TrainingRequest,
-    TrainingResult,
+    ExecutionMode, ExportedModel, GpuInfo, TrainingConfig, TrainingEpochMetrics,
+    TrainingProgressEvent, TrainingRequest, TrainingResult,
 };
 use crate::store::project_file::ImageEntry;
 use crate::store::AppState;
+
+/// Rechaza un entrenamiento local que el equipo no puede sostener.
+///
+/// Sólo mira los backends que declaran `gpu_requirement: "required"`, y sólo en
+/// ejecución local: en la nube o en el paquete descargable el acelerador lo pone
+/// la otra máquina.
+///
+/// El usuario puede lanzarlo igual con `allowCpu: true` en los parámetros del
+/// backend. Esa puerta existe a propósito —alguien con mucha RAM y paciencia
+/// tiene derecho a intentarlo— y es explícita: lo que no puede pasar es que la
+/// app lo lance sola y el proceso muera sin decir por qué.
+fn comprobar_acelerador(request: &TrainingRequest) -> Result<(), String> {
+    if request.execution_mode != ExecutionMode::Local {
+        return Ok(());
+    }
+    if super::backends::acelerador_requerido(&request.backend) != "required" {
+        return Ok(());
+    }
+    if request
+        .backend_params
+        .get("allowCpu")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false)
+    {
+        log::warn!(
+            "{:?} pide acelerador y se lanza en CPU a petición explícita del usuario",
+            request.backend
+        );
+        return Ok(());
+    }
+
+    let gpu = super::gpu::detect_gpu().unwrap_or(GpuInfo {
+        cuda_available: false,
+        cuda_version: None,
+        gpus: vec![],
+        mps_available: false,
+    });
+    if gpu.cuda_available || gpu.mps_available {
+        return Ok(());
+    }
+
+    Err(format!(
+        "{:?} necesita GPU para entrenar aquí: procesa teselas de 256×256 completas y en \
+         CPU el sistema acaba matando el proceso. Puedes entrenarlo en la nube o \
+         descargando el paquete, o lanzarlo igual bajo tu responsabilidad.",
+        request.backend
+    ))
+}
 
 pub struct TrainingProcessManager {
     processes: Arc<Mutex<HashMap<String, Child>>>,
@@ -207,6 +255,11 @@ impl TrainingProcessManager {
                 request.backend, minima, request.image_size
             ));
         }
+
+        // Y el acelerador: hay backends que en CPU no fallan con un error, los
+        // mata el sistema por memoria, y desde la app eso parece un cuelgue sin
+        // causa.
+        comprobar_acelerador(&request)?;
 
         let project_dir = state.project_dir(project_id)?;
         let images_dir = state.project_images_dir(project_id)?;

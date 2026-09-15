@@ -116,6 +116,11 @@ const TABLA: &[Fila] = &[
     ("hf_detection", "detr", "general", "any", "8to16gb", "slow", 500, "varies", "open", "COCO", Some("COCO mAP 42 (R50)")),
     ("hf_detection", "deformable-detr", "general", "any", "8to16gb", "medium", 300, "varies", "open", "COCO", Some("COCO mAP 46")),
     ("hf_detection", "conditional-detr", "general", "any", "8to16gb", "medium", 300, "varies", "open", "COCO", Some("COCO mAP 43 (R50)")),
+    // Cellpose: el único del catálogo entrenado sobre microscopía y no sobre
+    // fotos. Su mínimo de muestras es bajo a propósito —ajustar cpsam con una
+    // decena de campos anotados suele bastar—, que es justo lo que lo hace útil
+    // en un laboratorio donde anotar cuesta horas de microscopio.
+    ("cellpose", "cellpose", "biomedical", "microscopy,wsi", "4to8gb", "medium", 10, "BSD-3-Clause", "open", "microscopia generalista (Cellpose-SAM)", Some("Cellpose-SAM AP50 0.8 en su propio banco")),
     ("hf_instance", "maskformer", "general", "any", "8to16gb", "slow", 300, "varies", "open", "COCO", Some("COCO mask AP 34-40")),
     ("hf_instance", "mask2former", "general", "any", "gt16gb", "slow", 300, "varies", "open", "COCO", Some("COCO mask AP 43-50")),
     ("hf_pose", "resnet", "general", "any", "4to8gb", "fast", 150, "Apache-2.0", "open", "ImageNet-1k", None),
