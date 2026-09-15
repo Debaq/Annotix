@@ -149,6 +149,70 @@ fn correr(script_dir: &Path, python: &Path) -> Result<Resultado, String> {
 
 /// Prepara dataset + genera script + entrena, y verifica el criterio de éxito.
 fn smoke(backend: TrainingBackend, task: &str) {
+    smoke_con(backend, task, 0.0);
+}
+
+/// Como `smoke`, pero pidiendo conjunto de test y comprobando que el backend lo
+/// evalúa **y deja los resultados por muestra**.
+///
+/// Es la única forma de saber que el CSV se escribe de verdad: el test de
+/// contrato ve que el script lo menciona, no que la librería llegue hasta ahí.
+fn smoke_con_test(backend: TrainingBackend, task: &str) {
+    let etiqueta = format!("{backend:?}/{task}");
+    let (job, _proyecto) = smoke_con(backend, task, 0.25);
+
+    let csv = buscar_csv(&job).unwrap_or_else(|| {
+        panic!("{etiqueta}: no escribió test_predictions.csv en ningún sitio bajo {job:?}")
+    });
+    let texto = std::fs::read_to_string(&csv).unwrap();
+    let muestras = crate::contract::muestras::parsear(&texto);
+    assert!(
+        !muestras.is_empty(),
+        "{etiqueta}: el CSV por muestra salió vacío:\n{texto}"
+    );
+    let estimaciones = crate::contract::muestras::estimaciones(&muestras);
+    assert!(
+        !estimaciones.is_empty(),
+        "{etiqueta}: el CSV no permite estimar ninguna métrica:\n{texto}"
+    );
+}
+
+/// El CSV lo escribe cada backend junto a su modelo, y cada librería llama a esa
+/// carpeta de una forma.
+fn buscar_csv(dir: &Path) -> Option<PathBuf> {
+    let nombre = crate::contract::muestras::FILE_NAME;
+    let directo = dir.join(nombre);
+    if directo.exists() {
+        return Some(directo);
+    }
+    for entrada in walkdir(dir) {
+        if entrada.file_name().is_some_and(|n| n == nombre) {
+            return Some(entrada);
+        }
+    }
+    None
+}
+
+fn walkdir(dir: &Path) -> Vec<PathBuf> {
+    let mut salida = Vec::new();
+    if let Ok(entradas) = std::fs::read_dir(dir) {
+        for e in entradas.flatten() {
+            let ruta = e.path();
+            if ruta.is_dir() {
+                salida.extend(walkdir(&ruta));
+            } else {
+                salida.push(ruta);
+            }
+        }
+    }
+    salida
+}
+
+fn smoke_con(
+    backend: TrainingBackend,
+    task: &str,
+    test_split: f64,
+) -> (PathBuf, tempfile::TempDir) {
     let Some(python) = python() else {
         panic!(
             "sin intérprete Python: instala el entorno de Annotix o exporta \
@@ -170,7 +234,7 @@ fn smoke(backend: TrainingBackend, task: &str) {
         DatasetSpec {
             ts: dataset::TsSpec::default(),
             val_split: 0.25,
-            test_split: 0.0,
+            test_split,
             task,
             backend: &backend,
         },
@@ -209,6 +273,7 @@ fn smoke(backend: TrainingBackend, task: &str) {
         Path::new(&best).exists(),
         "{etiqueta}: bestModelPath apunta a {best}, que no existe"
     );
+    (job, proyecto)
 }
 
 // ─── Un test por backend ────────────────────────────────────────────────────
@@ -349,4 +414,36 @@ fn smoke_hf_pose() {
 #[ignore = "requiere entorno Python con timm"]
 fn smoke_hf_pose_landmarks() {
     smoke(TrainingBackend::HfPose, "landmarks");
+}
+
+// ─── Resultados por muestra del conjunto de test ────────────────────────────
+//
+// Estos corren el entrenamiento **pidiendo test**: el resto lo pide en 0, así
+// que hasta ahora ninguna corrida real había pasado por el camino que evalúa el
+// conjunto de test. Lo que verifican es que el CSV por muestra existe y se puede
+// estimar algo de él — que es lo que el contrato de modelo necesita para dar
+// intervalos de confianza.
+
+#[test]
+#[ignore = "requiere entorno Python con ultralytics"]
+fn smoke_yolo_detect_con_test() {
+    smoke_con_test(TrainingBackend::Yolo, "detect");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con ultralytics"]
+fn smoke_rt_detr_detect_con_test() {
+    smoke_con_test(TrainingBackend::RtDetr, "detect");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con smp"]
+fn smoke_smp_segment_con_test() {
+    smoke_con_test(TrainingBackend::Smp, "segment");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con timm"]
+fn smoke_timm_classify_con_test() {
+    smoke_con_test(TrainingBackend::Timm, "classify");
 }
