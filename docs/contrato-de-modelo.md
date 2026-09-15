@@ -81,11 +81,25 @@ estudio**.
 
 ## Intervalos de confianza
 
-Están, en los backends que dejan los resultados **por muestra** del conjunto de
-test: `yolo`, `rt_detr`, `smp`, `timm`, `hf_classification` y `hf_segmentation`.
+Están, en los **once** backends que evalúan el conjunto de test y dejan sus
+resultados por muestra:
+
+| Familia | Backends | Qué escribe por muestra |
+|---|---|---|
+| Detección | `yolo`, `rt_detr`, `rf_detr`, `hf_detection` | `tp`, `fp`, `fn` por imagen |
+| Instancias | `hf_instance` | `tp`, `fp`, `fn`, emparejando **por máscara** |
+| Pose | `hf_pose` | `pck` y `abs_error` por **instancia** |
+| Segmentación | `smp`, `hf_segmentation` | `iou` y `dice` por imagen |
+| Clasificación | `timm`, `hf_classification` | `correct` por imagen |
+| Series | `tsai` | `correct` o `abs_error` por ventana |
+
 Cada script escribe junto al modelo un `test_predictions.csv` con una fila por
-muestra y las columnas que sabe calcular (`correct`, `iou`, `dice`,
-`tp`/`fp`/`fn`, `abs_error`); una celda vacía es «no medido», no un cero.
+muestra y las columnas que sabe calcular; una celda vacía es «no medido», no un
+cero.
+
+El PCK va en su propia columna y no como `correct`: es una proporción de
+keypoints, no un acierto, y confundirlos haría que una pose con la mitad de los
+puntos bien contara como media persona detectada.
 
 El intervalo sale de un bootstrap **agrupado por sujeto**: remuestrear imágenes
 de los mismos doce pacientes produce intervalos artificialmente estrechos, y es
@@ -108,10 +122,17 @@ es fija para que un contrato pueda compararse consigo mismo.
 
 ## Lo que falta
 
-**Los backends que siguen informando sólo el agregado**: los de COCO (`rf_detr`,
-`hf_detection`, `hf_instance`, `hf_pose`) y los de series y tabular. Mientras no
-dejen el CSV por muestra, su contrato lo dice con todas sus letras en
-`metricsCiNote` en vez de omitirlo en silencio.
+**Los seis backends que no dejan resultados por muestra**, y no por olvido:
+
+- `sklearn` y `pytorch_forecasting` evalúan sobre una **partición interna** de su
+  propio archivo, no sobre el conjunto de test del proyecto. Llamar «test» a eso
+  en el contrato sería sobrevender una evaluación más débil.
+- `pyod` (anomalía), `tslearn` (agrupamiento), `pypots` (imputación) y `stumpy`
+  (motivos) no son supervisados: no hay verdad contra la que medir muestra a
+  muestra.
+
+En los seis, el contrato dice con todas sus letras que el backend informa sólo
+el agregado, en vez de omitirlo en silencio.
 
 **Límites de uso derivados de la población.** Hoy el contrato transcribe el uso
 previsto que el usuario declara. Derivar una plantilla de límites a partir de la

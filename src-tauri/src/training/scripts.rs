@@ -858,6 +858,81 @@ def main():
         "lastModelPath": None,
         "resultsDir": output_dir,
     }}
+
+    # ── Conjunto de test, por muestra (Annotix) ───────────────────────────
+    #
+    # RF-DETR predice con su propia API y devuelve `supervision.Detections`. El
+    # criterio es el mismo que en los demás: caja a caja, IoU 0.5 y
+    # emparejamiento voraz dentro de cada clase, para que los números se puedan
+    # comparar entre backends.
+    if IMAGES_TEST and ANN_TEST:
+        try:
+            import csv as _csv
+            from PIL import Image as _Image
+
+            with open(ANN_TEST) as _f:
+                _coco = json.load(_f)
+            _por_imagen = {{}}
+            for _a in _coco.get("annotations", []):
+                _por_imagen.setdefault(_a["image_id"], []).append(_a)
+
+            def _iou(a, b):
+                ix1, iy1 = max(a[0], b[0]), max(a[1], b[1])
+                ix2, iy2 = min(a[2], b[2]), min(a[3], b[3])
+                iw, ih = max(0.0, ix2 - ix1), max(0.0, iy2 - iy1)
+                inter = iw * ih
+                ua = (a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - inter
+                return inter / ua if ua > 0 else 0.0
+
+            _rows = []
+            _tp_total = _fp_total = _fn_total = 0
+            for _info in _coco.get("images", []):
+                _ruta = os.path.join(IMAGES_TEST, _info["file_name"])
+                if not os.path.exists(_ruta):
+                    continue
+                _det = model.predict(_Image.open(_ruta).convert("RGB"), threshold=0.5)
+                _pb = []
+                _clases = getattr(_det, "class_id", None)
+                for _n, _caja in enumerate(getattr(_det, "xyxy", [])):
+                    _c = int(_clases[_n]) if _clases is not None else 0
+                    _pb.append((_c, [float(v) for v in _caja]))
+
+                _gt = []
+                for _a in _por_imagen.get(_info["id"], []):
+                    _x, _y, _w_, _h_ = _a["bbox"]
+                    # Las categorías COCO que escribe Annotix son 1..N.
+                    _gt.append((int(_a["category_id"]), [_x, _y, _x + _w_, _y + _h_]))
+
+                _usadas = set()
+                _tp = 0
+                for _c, _box in _pb:
+                    _mejor, _mejor_iou = None, 0.5
+                    for _j, (_gc, _gbox) in enumerate(_gt):
+                        if _j in _usadas or _gc != _c:
+                            continue
+                        _v = _iou(_box, _gbox)
+                        if _v >= _mejor_iou:
+                            _mejor, _mejor_iou = _j, _v
+                    if _mejor is not None:
+                        _usadas.add(_mejor)
+                        _tp += 1
+                _fp, _fneg = len(_pb) - _tp, len(_gt) - _tp
+                _tp_total += _tp
+                _fp_total += _fp
+                _fn_total += _fneg
+                _rows.append({{"sample": _info["file_name"], "tp": _tp, "fp": _fp, "fn": _fneg}})
+
+            if _rows:
+                with open(os.path.join(output_dir, "test_predictions.csv"), "w", newline="") as _f:
+                    _w2 = _csv.DictWriter(_f, fieldnames=["sample", "tp", "fp", "fn"])
+                    _w2.writeheader()
+                    _w2.writerows(_rows)
+                _p = _tp_total / (_tp_total + _fp_total) if (_tp_total + _fp_total) else None
+                _r = _tp_total / (_tp_total + _fn_total) if (_tp_total + _fn_total) else None
+                result["testMetrics"] = {{"precision": _p, "recall": _r}}
+        except Exception as _e:
+            print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": f"Test eval skipped: {{_e}}"}}), flush=True)
+
     print("ANNOTIX_EVENT:" + json.dumps(result), flush=True)
 
 if __name__ == "__main__":
@@ -1062,17 +1137,20 @@ def main():
 
     _mejor = os.path.join(output_dir, "best")
     _ultimo = os.path.join(output_dir, "last")
-    print("ANNOTIX_EVENT:" + json.dumps({{
+    result = {{
         "type": "completed",
         "bestModelPath": _mejor if os.path.isdir(_mejor) else _ultimo,
         "lastModelPath": _ultimo,
         "resultsDir": output_dir,
-    }}), flush=True)
+    }}
+{eval_test}
+    print("ANNOTIX_EVENT:" + json.dumps(result), flush=True)
 
 if __name__ == "__main__":
     main()
 "#,
         header = sp.header,
+        eval_test = eval_test_coco("CocoDetDataset", 0.5),
         preamble = hf_coco_preamble(),
         model_id = hf_model_label(req, &load_from),
         load_from = load_from,
@@ -1239,12 +1317,82 @@ def main():
 
     _mejor = os.path.join(output_dir, "best")
     _ultimo = os.path.join(output_dir, "last")
-    print("ANNOTIX_EVENT:" + json.dumps({{
+    result = {{
         "type": "completed",
         "bestModelPath": _mejor if os.path.isdir(_mejor) else _ultimo,
         "lastModelPath": _ultimo,
         "resultsDir": output_dir,
-    }}), flush=True)
+    }}
+
+    # ── Conjunto de test, por muestra (Annotix) ───────────────────────────
+    #
+    # Se empareja **por máscara**, no por caja: en segmentación de instancias lo
+    # que se promete es el contorno, y dos instancias con la misma caja pueden
+    # tener contornos completamente distintos. IoU 0.5 y emparejamiento voraz
+    # dentro de cada clase, igual que en detección, para que los números de los
+    # dos se puedan comparar.
+    if IMAGES_TEST and ANN_TEST:
+        try:
+            import csv as _csv
+            _test_ds = CocoInstanceDataset(IMAGES_TEST, ANN_TEST)
+            model.eval()
+            _rows = []
+            _tp_total = _fp_total = _fn_total = 0
+            with torch.no_grad():
+                for _i in range(len(_test_ds)):
+                    _item = _test_ds[_i]
+                    _px = _item["pixel_values"].unsqueeze(0).to(device)
+                    _gt_masks = _item["mask_labels"]
+                    _gt_clases = _item["class_labels"].tolist()
+                    _salida = model(pixel_values=_px)
+                    _alto, _ancho = _gt_masks.shape[-2:]
+                    _post = processor.post_process_instance_segmentation(
+                        _salida, target_sizes=[(_alto, _ancho)]
+                    )[0]
+                    _mapa = _post["segmentation"]
+                    _pred = []
+                    if _mapa is not None:
+                        _mapa = _mapa.cpu()
+                        for _seg in _post.get("segments_info", []):
+                            _pred.append((int(_seg["label_id"]), (_mapa == _seg["id"])))
+
+                    _usadas = set()
+                    _tp = 0
+                    for _c, _pm in _pred:
+                        _mejor_j, _mejor_iou = None, 0.5
+                        for _j, _gc in enumerate(_gt_clases):
+                            if _j in _usadas or int(_gc) != _c:
+                                continue
+                            _gm = _gt_masks[_j].bool()
+                            _inter = float((_pm & _gm).sum())
+                            _union = float((_pm | _gm).sum())
+                            _v = _inter / _union if _union > 0 else 0.0
+                            if _v >= _mejor_iou:
+                                _mejor_j, _mejor_iou = _j, _v
+                        if _mejor_j is not None:
+                            _usadas.add(_mejor_j)
+                            _tp += 1
+                    _fp, _fneg = len(_pred) - _tp, len(_gt_clases) - _tp
+                    _tp_total += _tp
+                    _fp_total += _fp
+                    _fn_total += _fneg
+                    _rows.append({{
+                        "sample": _test_ds.imagenes[_i]["file_name"],
+                        "tp": _tp, "fp": _fp, "fn": _fneg,
+                    }})
+
+            if _rows:
+                with open(os.path.join(output_dir, "test_predictions.csv"), "w", newline="") as _f:
+                    _w2 = _csv.DictWriter(_f, fieldnames=["sample", "tp", "fp", "fn"])
+                    _w2.writeheader()
+                    _w2.writerows(_rows)
+                _p = _tp_total / (_tp_total + _fp_total) if (_tp_total + _fp_total) else None
+                _r = _tp_total / (_tp_total + _fn_total) if (_tp_total + _fn_total) else None
+                result["testMetrics"] = {{"precision": _p, "recall": _r}}
+        except Exception as _e:
+            print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": f"Test eval skipped: {{_e}}"}}), flush=True)
+
+    print("ANNOTIX_EVENT:" + json.dumps(result), flush=True)
 
 if __name__ == "__main__":
     main()
@@ -1477,12 +1625,73 @@ def main():
 
     _mejor = os.path.join(output_dir, "best.pth")
     _ultimo = os.path.join(output_dir, "last.pth")
-    print("ANNOTIX_EVENT:" + json.dumps({{
+    result = {{
         "type": "completed",
         "bestModelPath": _mejor if os.path.exists(_mejor) else _ultimo,
         "lastModelPath": _ultimo,
         "resultsDir": output_dir,
-    }}), flush=True)
+    }}
+
+    # ── Conjunto de test, por instancia (Annotix) ─────────────────────────
+    #
+    # Una fila por **instancia** y no por imagen: una imagen con tres personas
+    # da tres poses, y promediarlas antes de tiempo escondería que dos salieron
+    # bien y una del todo mal. El sujeto lo pone Rust por el nombre de archivo,
+    # que es la parte antes del `#`.
+    #
+    # El PCK va en su propia columna y no como «acierto»: es una proporción de
+    # keypoints, no un cero o un uno.
+    if IMAGES_TEST and ANN_TEST:
+        try:
+            import csv as _csv
+            if os.path.exists(_mejor):
+                _ck = torch.load(_mejor, map_location=device)
+                model.load_state_dict(_ck["state_dict"] if "state_dict" in _ck else _ck)
+            model.eval()
+            _test_ds = CocoKeypointDataset(IMAGES_TEST, ANN_TEST)
+            _rows, _errores, _pcks = [], [], []
+            with torch.no_grad():
+                for _i in range(len(_test_ds)):
+                    _px, _obj = _test_ds[_i]
+                    _sal = model(_px.unsqueeze(0).to(device))
+                    _o = _obj.unsqueeze(0).to(device)
+                    _err = error_de_keypoints(_sal, _o)
+                    # PCK de esta instancia: fracción de keypoints visibles con
+                    # error por debajo del 5 % del lado, el mismo umbral que la
+                    # métrica por época.
+                    _b, _k, _h, _w = _sal.shape
+                    _pp = _sal.reshape(_b, _k, -1).argmax(-1)
+                    _tt = _o.reshape(_b, _k, -1).argmax(-1)
+                    _vis = _o.reshape(_b, _k, -1).max(-1).values > 0
+                    _d = torch.sqrt(
+                        ((_pp % _w).float() - (_tt % _w).float()) ** 2
+                        + ((_pp // _w).float() - (_tt // _w).float()) ** 2
+                    ) / float(_w)
+                    _pck = float((_d[_vis] < 0.05).float().mean()) if _vis.any() else None
+                    _image_id, _ = _test_ds.muestras[_i]
+                    _rows.append({{
+                        "sample": f"{{_test_ds.imagenes[_image_id]['file_name']}}#{{_i}}",
+                        "pck": "" if _pck is None else round(_pck, 6),
+                        "abs_error": "" if _err is None else round(_err, 6),
+                    }})
+                    if _err is not None:
+                        _errores.append(_err)
+                    if _pck is not None:
+                        _pcks.append(_pck)
+
+            if _rows:
+                with open(os.path.join(output_dir, "test_predictions.csv"), "w", newline="") as _f:
+                    _w2 = _csv.DictWriter(_f, fieldnames=["sample", "pck", "abs_error"])
+                    _w2.writeheader()
+                    _w2.writerows(_rows)
+                result["testMetrics"] = {{
+                    "keypointAP": (sum(_pcks) / len(_pcks)) if _pcks else None,
+                    "mae": (sum(_errores) / len(_errores)) if _errores else None,
+                }}
+        except Exception as _e:
+            print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": f"Test eval skipped: {{_e}}"}}), flush=True)
+
+    print("ANNOTIX_EVENT:" + json.dumps(result), flush=True)
 
 if __name__ == "__main__":
     main()
@@ -1664,11 +1873,11 @@ pub fn generate_train_script_for_backend(
             one("train.py", generate_rtdetr_script(req, &data, &aug))
         }
         TrainingBackend::RfDetr => {
-            let sp = ds.script_paths(COCO)?;
+            let sp = ds.script_paths_opt(COCO, &[keys::IMAGES_TEST, keys::ANN_TEST])?;
             one("train.py", generate_rfdetr_script(req, &sp))
         }
         TrainingBackend::HfDetection => {
-            let sp = ds.script_paths(COCO)?;
+            let sp = ds.script_paths_opt(COCO, &[keys::IMAGES_TEST, keys::ANN_TEST])?;
             one("train.py", generate_hf_detection_script(req, &sp))
         }
         TrainingBackend::Smp => {
@@ -1684,11 +1893,11 @@ pub fn generate_train_script_for_backend(
             one("train.py", generate_hf_seg_script(req, &sp))
         }
         TrainingBackend::HfInstance => {
-            let sp = ds.script_paths(COCO)?;
+            let sp = ds.script_paths_opt(COCO, &[keys::IMAGES_TEST, keys::ANN_TEST])?;
             one("train.py", generate_hf_instance_script(req, &sp))
         }
         TrainingBackend::HfPose => {
-            let sp = ds.script_paths(COCO)?;
+            let sp = ds.script_paths_opt(COCO, &[keys::IMAGES_TEST, keys::ANN_TEST])?;
             one("train.py", generate_hf_pose_script(req, &sp))
         }
         TrainingBackend::Timm => {
@@ -1708,7 +1917,10 @@ pub fn generate_train_script_for_backend(
             one("train.py", generate_hf_classification_script(req, &sp))
         }
         TrainingBackend::Tsai => {
-            let sp = ds.script_paths(TS_SUPERVISED)?;
+            let sp = ds.script_paths_opt(
+                TS_SUPERVISED,
+                &[keys::X_TEST, keys::Y_TEST, keys::TS_GROUPS_TEST],
+            )?;
             one("train.py", generate_tsai_script(req, &sp))
         }
         TrainingBackend::PytorchForecasting => {
@@ -1911,6 +2123,101 @@ fn eval_test_ultralytics(imgsz: u32, batch: i32, device_quoted: &str) -> String 
                     _w2.writerows(_rows)
     except Exception as _e:
         print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": f"Test eval skipped: {{_e}}"}}), flush=True)
+"#
+    )
+}
+
+/// Bloque Python que evalúa el conjunto de test de un backend COCO y deja los
+/// resultados por muestra.
+///
+/// Comparte criterio con el de ultralytics —caja a caja, IoU 0.5, emparejamiento
+/// voraz dentro de cada clase— para que dos backendsadistintos no den números
+/// que no se pueden comparar entre sí.
+///
+/// `clase_dataset` es el nombre de la clase de dataset del script, que cambia
+/// entre detección, instancias y pose pero expone la misma forma: `imagenes` con
+/// los `file_name` del COCO y `__getitem__` con `pixel_values`.
+fn eval_test_coco(clase_dataset: &str, umbral: f64) -> String {
+    format!(
+        r#"
+    # ── Conjunto de test, por muestra (Annotix) ───────────────────────────
+    #
+    # Cuenta por imagen cuántos objetos encontró, cuántos se inventó y cuántos
+    # se dejó. No calcula un «mAP por imagen»: el mAP integra sobre umbrales de
+    # confianza y no significa nada sobre una imagen sola.
+    if IMAGES_TEST and ANN_TEST:
+        try:
+            import csv as _csv
+
+            def _iou(a, b):
+                ix1, iy1 = max(a[0], b[0]), max(a[1], b[1])
+                ix2, iy2 = min(a[2], b[2]), min(a[3], b[3])
+                iw, ih = max(0.0, ix2 - ix1), max(0.0, iy2 - iy1)
+                inter = iw * ih
+                ua = (a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - inter
+                return inter / ua if ua > 0 else 0.0
+
+            _mejor_dir = os.path.join(output_dir, "best")
+            if os.path.exists(_mejor_dir):
+                model = type(model).from_pretrained(_mejor_dir).to(device)
+            model.eval()
+            _test_ds = {clase_dataset}(IMAGES_TEST, ANN_TEST)
+            _rows = []
+            _tp_total = _fp_total = _fn_total = 0
+            with torch.no_grad():
+                for _i in range(len(_test_ds)):
+                    _item = _test_ds[_i]
+                    _px = _item["pixel_values"].unsqueeze(0).to(device)
+                    _lab = _item["labels"]
+                    _salida = model(pixel_values=_px)
+                    _hw = torch.tensor([_px.shape[-2:]]).to(device)
+                    _post = processor.post_process_object_detection(
+                        _salida, threshold={umbral}, target_sizes=_hw
+                    )[0]
+                    _pb = [
+                        (int(_c), [float(v) for v in _b])
+                        for _b, _c in zip(_post["boxes"].tolist(), _post["labels"].tolist())
+                    ]
+
+                    _h, _w = float(_px.shape[-2]), float(_px.shape[-1])
+                    _gt = []
+                    for _caja, _c in zip(_lab["boxes"].tolist(), _lab["class_labels"].tolist()):
+                        _cx, _cy, _bw, _bh = _caja
+                        _gt.append((int(_c), [(_cx - _bw / 2) * _w, (_cy - _bh / 2) * _h,
+                                              (_cx + _bw / 2) * _w, (_cy + _bh / 2) * _h]))
+
+                    _usadas = set()
+                    _tp = 0
+                    for _c, _box in _pb:
+                        _mejor, _mejor_iou = None, 0.5
+                        for _j, (_gc, _gbox) in enumerate(_gt):
+                            if _j in _usadas or _gc != _c:
+                                continue
+                            _v = _iou(_box, _gbox)
+                            if _v >= _mejor_iou:
+                                _mejor, _mejor_iou = _j, _v
+                        if _mejor is not None:
+                            _usadas.add(_mejor)
+                            _tp += 1
+                    _fp, _fneg = len(_pb) - _tp, len(_gt) - _tp
+                    _tp_total += _tp
+                    _fp_total += _fp
+                    _fn_total += _fneg
+                    _rows.append({{
+                        "sample": _test_ds.imagenes[_i]["file_name"],
+                        "tp": _tp, "fp": _fp, "fn": _fneg,
+                    }})
+
+            if _rows:
+                with open(os.path.join(output_dir, "test_predictions.csv"), "w", newline="") as _f:
+                    _w2 = _csv.DictWriter(_f, fieldnames=["sample", "tp", "fp", "fn"])
+                    _w2.writeheader()
+                    _w2.writerows(_rows)
+                _p = _tp_total / (_tp_total + _fp_total) if (_tp_total + _fp_total) else None
+                _r = _tp_total / (_tp_total + _fn_total) if (_tp_total + _fn_total) else None
+                result["testMetrics"] = {{"precision": _p, "recall": _r}}
+        except Exception as _e:
+            print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": f"Test eval skipped: {{_e}}"}}), flush=True)
 "#
     )
 }
@@ -3502,6 +3809,58 @@ def main():
         "lastModelPath": best_path,
         "resultsDir": output_dir,
     }}
+
+    # ── Conjunto de test, por ventana (Annotix) ───────────────────────────
+    #
+    # La columna `subject` la escribe aquí el script y no Rust, porque una
+    # ventana no tiene nombre de archivo con el que cruzarla: el preparador deja
+    # en `groups_test.json` de qué serie —o de qué sujeto— salió cada una. Sin
+    # eso, el intervalo trataría cuarenta ventanas de la misma señal como
+    # cuarenta observaciones independientes, y dos ventanas consecutivas
+    # comparten casi todos sus puntos.
+    if X_TEST and Y_TEST:
+        try:
+            import csv as _csv
+            _X = np.load(X_TEST)
+            _y = np.load(Y_TEST)
+            _grupos = []
+            if TS_GROUPS_TEST and os.path.exists(TS_GROUPS_TEST):
+                with open(TS_GROUPS_TEST) as _f:
+                    _grupos = json.load(_f)
+
+            _probs, _, _preds = learner.get_X_preds(_X)
+            _preds = np.asarray(_preds)
+            _rows = []
+            _aciertos, _errores = 0, []
+            for _i in range(len(_X)):
+                _fila = {{
+                    "sample": f"ventana-{{_i}}",
+                    "subject": _grupos[_i] if _i < len(_grupos) else "",
+                }}
+                if task_type == "classification":
+                    _ok = int(int(np.asarray(_preds[_i]).reshape(-1)[0]) == int(np.asarray(_y[_i]).reshape(-1)[0]))
+                    _aciertos += _ok
+                    _fila["correct"] = _ok
+                else:
+                    _e = float(np.abs(np.asarray(_preds[_i], dtype=float) - np.asarray(_y[_i], dtype=float)).mean())
+                    _errores.append(_e)
+                    _fila["abs_error"] = round(_e, 6)
+                _rows.append(_fila)
+
+            if _rows:
+                _cols = ["sample", "subject"] + (["correct"] if task_type == "classification" else ["abs_error"])
+                with open(os.path.join(output_dir, "test_predictions.csv"), "w", newline="") as _f:
+                    _w = _csv.DictWriter(_f, fieldnames=_cols)
+                    _w.writeheader()
+                    _w.writerows(_rows)
+                result["testMetrics"] = (
+                    {{"accuracy": _aciertos / len(_rows)}}
+                    if task_type == "classification"
+                    else {{"mae": sum(_errores) / len(_errores)}}
+                )
+        except Exception as _e:
+            print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": f"Test eval skipped: {{_e}}"}}), flush=True)
+
     print("ANNOTIX_EVENT:" + json.dumps(result), flush=True)
 
 if __name__ == "__main__":

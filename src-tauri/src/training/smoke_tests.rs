@@ -434,6 +434,36 @@ fn smoke_rt_detr_detect_con_test() {
 }
 
 #[test]
+#[ignore = "requiere entorno Python con transformers"]
+fn smoke_hf_detection_con_test() {
+    smoke_con_test(TrainingBackend::HfDetection, "detect");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con transformers"]
+fn smoke_hf_pose_con_test() {
+    smoke_con_test(TrainingBackend::HfPose, "pose");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con transformers"]
+fn smoke_hf_instance_con_test() {
+    smoke_con_test(TrainingBackend::HfInstance, "instance_segment");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con rfdetr"]
+fn smoke_rf_detr_con_test() {
+    smoke_con_test(TrainingBackend::RfDetr, "detect");
+}
+
+#[test]
+#[ignore = "requiere entorno Python con tsai"]
+fn smoke_tsai_ts_classify_con_test() {
+    smoke_con_test(TrainingBackend::Tsai, "ts_classify");
+}
+
+#[test]
 #[ignore = "requiere entorno Python con smp"]
 fn smoke_smp_segment_con_test() {
     smoke_con_test(TrainingBackend::Smp, "segment");

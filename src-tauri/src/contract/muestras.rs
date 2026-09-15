@@ -50,6 +50,11 @@ pub struct Muestra {
     pub fn_: Option<f64>,
     /// Error absoluto, para regresión y series.
     pub abs_error: Option<f64>,
+    /// Fracción de keypoints dentro de la tolerancia (PCK). No es `correct`
+    /// porque no es un acierto sino una proporción: llamarlo igual haría que una
+    /// pose con la mitad de los puntos bien contara como media persona
+    /// detectada.
+    pub pck: Option<f64>,
 }
 
 /// Una métrica con su intervalo.
@@ -119,6 +124,7 @@ pub fn parsear(texto: &str) -> Vec<Muestra> {
                 "fp" => m.fp = numero(),
                 "fn" => m.fn_ = numero(),
                 "abs_error" | "error" => m.abs_error = numero(),
+                "pck" => m.pck = numero(),
                 _ => {}
             }
         }
@@ -150,7 +156,10 @@ pub fn con_sujetos(muestras: Vec<Muestra>, pf: &crate::store::project_file::Proj
         .into_iter()
         .map(|mut m| {
             if m.subject.is_none() {
-                if let Some(Some(s)) = por_nombre.get(m.sample.as_str()) {
+                // Una muestra puede ser una **instancia** dentro de una imagen
+                // («radiografia.png#2»): el sujeto es el de su imagen.
+                let clave = m.sample.split('#').next().unwrap_or(&m.sample);
+                if let Some(Some(s)) = por_nombre.get(clave) {
                     m.subject = Some(s.to_string());
                 }
             }
@@ -187,6 +196,7 @@ fn estimar(nombre: &str, grupos: &[Vec<Muestra>]) -> Option<f64> {
         "meanIoU" => media(planas().filter_map(|m| m.iou)),
         "dice" => media(planas().filter_map(|m| m.dice)),
         "mae" => media(planas().filter_map(|m| m.abs_error)),
+        "pck" => media(planas().filter_map(|m| m.pck)),
         // Precisión y recall son **razones de sumas**, no medias de razones: la
         // media de las precisiones por imagen le da el mismo peso a una imagen
         // con un objeto que a una con cuarenta.
@@ -218,6 +228,7 @@ fn cuenta(nombre: &str, muestras: &[Muestra]) -> usize {
             "meanIoU" => m.iou.is_some(),
             "dice" => m.dice.is_some(),
             "mae" => m.abs_error.is_some(),
+            "pck" => m.pck.is_some(),
             "precision" | "recall" | "f1" => {
                 m.tp.is_some() || m.fp.is_some() || m.fn_.is_some()
             }
@@ -233,7 +244,9 @@ fn cuenta(nombre: &str, muestras: &[Muestra]) -> usize {
 pub fn estimaciones(muestras: &[Muestra]) -> BTreeMap<String, MetricaConIC> {
     let gr = grupos(muestras);
     let mut salida = BTreeMap::new();
-    for nombre in ["accuracy", "meanIoU", "dice", "precision", "recall", "f1", "mae"] {
+    for nombre in [
+        "accuracy", "meanIoU", "dice", "precision", "recall", "f1", "mae", "pck",
+    ] {
         let n = cuenta(nombre, muestras);
         if n == 0 {
             continue;

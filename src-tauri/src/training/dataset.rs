@@ -2317,6 +2317,9 @@ struct Serie {
     canales: Vec<Vec<f32>>,
     /// Clase por paso temporal (`-1` = sin anotar), derivada de las anotaciones.
     clase_por_paso: Vec<i64>,
+    /// A qué se agrupa esta serie para el reparto y para el intervalo de
+    /// confianza: su sujeto si lo declara, su propio id si no.
+    grupo: String,
 }
 
 /// Convierte los datos de una serie al formato interno.
@@ -2424,6 +2427,11 @@ fn leer_serie(
     }
 
     Some(Serie {
+        grupo: ts
+            .subject_id
+            .clone()
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| ts.id.clone()),
         canales,
         clase_por_paso,
     })
@@ -2689,6 +2697,27 @@ pub fn prepare_timeseries_arrays(
             _ => {
                 ds.declare(keys::X_TEST, &nombre_x)
                     .declare(keys::Y_TEST, &nombre_y);
+                // De qué serie salió cada ventana de test.
+                //
+                // Sin esto, el intervalo de confianza del contrato trataría
+                // cuarenta ventanas de la misma señal como cuarenta
+                // observaciones independientes, y saldría absurdamente
+                // estrecho: dos ventanas consecutivas comparten casi todos sus
+                // puntos. El sujeto manda sobre el id de la serie cuando está
+                // declarado — dos registros del mismo paciente tampoco son
+                // independientes.
+                let grupos: Vec<&str> = lista
+                    .iter()
+                    .map(|(idx, _)| series[*idx].grupo.as_str())
+                    .collect();
+                if std::fs::write(
+                    output_dir.join("groups_test.json"),
+                    serde_json::to_string(&grupos).unwrap_or_default(),
+                )
+                .is_ok()
+                {
+                    ds.declare(keys::TS_GROUPS_TEST, "groups_test.json");
+                }
             }
         }
     }

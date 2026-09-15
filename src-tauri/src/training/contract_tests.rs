@@ -884,6 +884,48 @@ fn yolo_y_rtdetr_escriben_los_resultados_por_muestra() {
     }
 }
 
+/// Los once backends que evalúan el conjunto de test tienen que dejar su CSV
+/// por muestra. Los seis que faltan no lo hacen por un motivo declarado, no por
+/// olvido: su evaluación es una partición interna del propio archivo (sklearn,
+/// pytorch-forecasting) o no hay verdad contra la que medir (anomalía,
+/// agrupamiento, imputación, motivos).
+#[test]
+fn los_backends_con_test_dejan_su_csv_por_muestra() {
+    let con_csv = [
+        (TrainingBackend::Yolo, "detect"),
+        (TrainingBackend::RtDetr, "detect"),
+        (TrainingBackend::RfDetr, "detect"),
+        (TrainingBackend::HfDetection, "detect"),
+        (TrainingBackend::HfInstance, "instance_segment"),
+        (TrainingBackend::HfPose, "pose"),
+        (TrainingBackend::Smp, "segment"),
+        (TrainingBackend::HfSegmentation, "segment"),
+        (TrainingBackend::Timm, "classify"),
+        (TrainingBackend::HfClassification, "classify"),
+        (TrainingBackend::Tsai, "ts_classify"),
+    ];
+    for (backend, task) in con_csv {
+        let (pf, proyecto, images_dir) = fixture(task);
+        let salida = proyecto.path().join("job");
+        let script = train_py_de(
+            &pf,
+            &images_dir,
+            &salida,
+            backend.clone(),
+            task,
+            aug_lateralizada(),
+        );
+        assert!(
+            script.contains("test_predictions.csv"),
+            "{backend:?}/{task} no escribe los resultados por muestra"
+        );
+        assert!(
+            script.contains("testMetrics"),
+            "{backend:?}/{task} no evalúa el conjunto de test"
+        );
+    }
+}
+
 /// `smp` y `timm` tampoco evaluaban el conjunto de test: lo preparaban y no lo
 /// miraban. Ahora lo evalúan y dejan el resultado por muestra.
 #[test]

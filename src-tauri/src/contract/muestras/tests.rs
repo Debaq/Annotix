@@ -196,3 +196,17 @@ fn el_sujeto_lo_pone_el_corpus_y_no_el_script() {
     // Dos imágenes del mismo paciente son un solo grupo.
     assert_eq!(estimaciones(&m)["accuracy"].groups, 3);
 }
+
+#[test]
+fn el_pck_no_se_confunde_con_un_acierto() {
+    // Una pose con la mitad de los puntos bien no es media persona detectada:
+    // si el PCK entrara como `correct`, la exactitud del modelo saldría de
+    // promediar proporciones.
+    let m = csv("sample,subject,pck,abs_error\na.png#0,PAC-1,0.5,0.08\na.png#1,PAC-1,1.0,0.01\n");
+    let est = estimaciones(&m);
+    assert!((est["pck"].value - 0.75).abs() < 1e-9);
+    assert!(!est.contains_key("accuracy"));
+    assert!((est["mae"].value - 0.045).abs() < 1e-9);
+    // Las dos instancias son del mismo paciente: un solo grupo.
+    assert_eq!(est["pck"].groups, 1);
+}

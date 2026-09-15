@@ -64,6 +64,10 @@ pub mod keys {
     pub const Y_TRAIN: &str = "y_train";
     pub const X_VAL: &str = "x_val";
     pub const Y_VAL: &str = "y_val";
+    /// De qué serie —o de qué sujeto— salió cada ventana del conjunto de test.
+    /// Lo usa el intervalo de confianza del contrato para no tratar dos ventanas
+    /// solapadas de la misma señal como dos observaciones independientes.
+    pub const TS_GROUPS_TEST: &str = "ts_groups_test";
     pub const X_TEST: &str = "x_test";
     pub const Y_TEST: &str = "y_test";
     /// Metadatos del ventaneo y la normalización aplicada.
@@ -106,6 +110,7 @@ pub mod keys {
         Y_TRAIN,
         X_VAL,
         Y_VAL,
+        TS_GROUPS_TEST,
         X_TEST,
         Y_TEST,
         TS_META,

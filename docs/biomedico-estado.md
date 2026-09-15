@@ -19,23 +19,26 @@ Hechos en esta tanda:
    `trazable`, el volteo lateralizado se escribe sin bajar el nivel, y el
    teselado dice cómo hay que usar el modelo. La previsión hace la misma cuenta,
    atada por un test.
-2. **Intervalos de confianza** en seis backends (`yolo`, `rt_detr`, `smp`,
-   `timm`, `hf_classification`, `hf_segmentation`): cada uno evalúa el conjunto
-   de test —tres de ellos no lo evaluaban en absoluto— y deja un
-   `test_predictions.csv` por muestra. El bootstrap agrupa por sujeto. Los seis
-   verificados con corridas reales en CPU.
+2. **Intervalos de confianza** en los **once** backends que tienen conjunto de
+   test: los cuatro de detección, instancias, pose, los dos de segmentación,
+   los dos de clasificación y `tsai`. Varios no evaluaban el test en absoluto.
+   El bootstrap agrupa por sujeto —y en series, por serie: dos ventanas
+   consecutivas comparten casi todos sus puntos—. Todos verificados con
+   corridas reales en CPU.
+
+   Los seis que faltan no lo hacen por un motivo declarado: `sklearn` y
+   `pytorch_forecasting` evalúan sobre una partición interna de su propio
+   archivo, y `pyod`, `tslearn`, `pypots` y `stumpy` no son supervisados.
 
 Lo que sigue, por orden:
 
-1. **Los backends que aún informan sólo el agregado**: los de COCO (`rf_detr`,
-   `hf_detection`, `hf_instance`, `hf_pose`) y los de series y tabular. El
-   contrato lo dice mientras sea verdad, así que no urge tanto como parecía.
-2. **La validación con datos reales**: DICOM de dos fabricantes distintos, la
+1. **La validación con datos reales**: DICOM de dos fabricantes distintos, la
    deidentificación contra una herramienta externa, y la lectura múltiple con
    tres anotadores en tres máquinas (etapas 9a y 6). Es lo único que no se puede
    hacer sin salir de esta máquina.
-3. **El contrato dentro del informe PDF**, y el Dice real sobre píxeles en el
-   acuerdo entre evaluadores (etapa 7), que hoy se compara por la envolvente.
+2. **El contrato dentro del informe PDF**, y el Dice real sobre píxeles en el
+   acuerdo entre evaluadores (etapa 7), que hoy se compara por la envolvente e
+   infla el acuerdo en corpus de segmentación.
 
 ### Lo que quedó fuera de la 12
 
