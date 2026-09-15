@@ -1672,7 +1672,9 @@ pub fn generate_train_script_for_backend(
             one("train.py", generate_hf_detection_script(req, &sp))
         }
         TrainingBackend::Smp => {
-            let sp = ds.script_paths(MASKS)?;
+            // El test es opcional: sólo existe si el usuario lo pidió, y exigirlo
+            // dejaría sin script el caso más común.
+            let sp = ds.script_paths_opt(MASKS, &[keys::IMAGES_TEST, keys::MASKS_TEST])?;
             one("train.py", generate_smp_script(req, &sp))
         }
         TrainingBackend::HfSegmentation => {
@@ -1690,7 +1692,10 @@ pub fn generate_train_script_for_backend(
             one("train.py", generate_hf_pose_script(req, &sp))
         }
         TrainingBackend::Timm => {
-            let sp = ds.script_paths(CLASSIFY)?;
+            let sp = ds.script_paths_opt(
+                CLASSIFY,
+                &[keys::IMAGES_TEST, keys::LABELS_JSON_TEST],
+            )?;
             one("train.py", generate_timm_script(req, &sp))
         }
         TrainingBackend::HfClassification => {
@@ -2318,6 +2323,70 @@ def main():
         "lastModelPath": _last,
         "resultsDir": output_dir,
     }}
+
+    # ── Conjunto de test, por muestra (Annotix) ───────────────────────────
+    #
+    # Se evalúa imagen a imagen y no en lote acumulado: el IoU medio del
+    # conjunto no dice si el modelo falla en todas un poco o en dos del todo, y
+    # es lo por-muestra lo que permite darle un intervalo de confianza al
+    # número agregado.
+    if IMAGES_TEST and MASKS_TEST:
+        try:
+            import csv as _csv
+            _best_pth = os.path.join(output_dir, "best.pth")
+            if os.path.exists(_best_pth):
+                model.load_state_dict(torch.load(_best_pth, map_location=device))
+            model.eval()
+            _test_ds = SegDataset(IMAGES_TEST, MASKS_TEST, val_transform)
+            _rows = []
+            _ious, _dices = [], []
+            with torch.no_grad():
+                for _i in range(len(_test_ds)):
+                    _img, _mask = _test_ds[_i]
+                    _out = model(_img.unsqueeze(0).to(device))
+                    _pred = _out.argmax(1)[0].cpu()
+                    _m = _mask
+                    # Sobre las clases presentes en la imagen o en la predicción:
+                    # promediar sobre las ausentes daría un IoU de 1 gratis por
+                    # cada clase que no sale, y el número subiría solo.
+                    _clases = set(torch.unique(_m).tolist()) | set(torch.unique(_pred).tolist())
+                    _clases.discard(0)
+                    _ci, _cd = [], []
+                    for _c in _clases:
+                        _pi = (_pred == _c)
+                        _gi = (_m == _c)
+                        _inter = float((_pi & _gi).sum())
+                        _union = float((_pi | _gi).sum())
+                        _suma = float(_pi.sum()) + float(_gi.sum())
+                        if _union > 0:
+                            _ci.append(_inter / _union)
+                        if _suma > 0:
+                            _cd.append(2.0 * _inter / _suma)
+                    _iou = sum(_ci) / len(_ci) if _ci else None
+                    _dice = sum(_cd) / len(_cd) if _cd else None
+                    if _iou is not None:
+                        _ious.append(_iou)
+                    if _dice is not None:
+                        _dices.append(_dice)
+                    _rows.append({{
+                        "sample": os.path.basename(str(_test_ds.images[_i])),
+                        "iou": "" if _iou is None else round(_iou, 6),
+                        "dice": "" if _dice is None else round(_dice, 6),
+                    }})
+
+            if _rows:
+                with open(os.path.join(output_dir, "test_predictions.csv"), "w", newline="") as _f:
+                    _w = _csv.DictWriter(_f, fieldnames=["sample", "iou", "dice"])
+                    _w.writeheader()
+                    _w.writerows(_rows)
+            if _ious:
+                result["testMetrics"] = {{
+                    "meanIoU": sum(_ious) / len(_ious),
+                    "dice": (sum(_dices) / len(_dices)) if _dices else None,
+                }}
+        except Exception as _e:
+            print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": f"Test eval skipped: {{_e}}"}}), flush=True)
+
     print("ANNOTIX_EVENT:" + json.dumps(result), flush=True)
 
 if __name__ == "__main__":
@@ -2884,6 +2953,47 @@ def main():
         "lastModelPath": _last,
         "resultsDir": output_dir,
     }}
+    # ── Conjunto de test, por muestra (Annotix) ───────────────────────────
+    #
+    # Una exactitud suelta no dice si el modelo falla en un puñado de sujetos o
+    # repartido por todo el corpus. El acierto por muestra sí, y es lo que le da
+    # intervalo de confianza al número agregado.
+    if IMAGES_TEST and LABELS_JSON_TEST:
+        try:
+            import csv as _csv
+            _best_pth = os.path.join(output_dir, "best.pth")
+            if os.path.exists(_best_pth):
+                model.load_state_dict(torch.load(_best_pth, map_location=device))
+            model.eval()
+            _test_ds = ClassificationDataset(IMAGES_TEST, LABELS_JSON_TEST, val_transform)
+            _rows, _aciertos = [], 0
+            with torch.no_grad():
+                for _i in range(len(_test_ds)):
+                    _img, _lab = _test_ds[_i]
+                    _out = model(_img.unsqueeze(0).to(device))
+                    if MULTI_LABEL:
+                        # Con varias etiquetas por imagen, «correcto» es que el
+                        # conjunto entero coincida: contar etiquetas sueltas
+                        # premiaría acertar las fáciles de una imagen difícil.
+                        _pred = (torch.sigmoid(_out)[0].cpu() > 0.5).float()
+                        _ok = int(bool(torch.equal(_pred, _lab)))
+                    else:
+                        _ok = int(_out.argmax(1).item() == int(_lab))
+                    _aciertos += _ok
+                    _rows.append({{
+                        "sample": os.path.basename(_test_ds.samples[_i][0]),
+                        "correct": _ok,
+                    }})
+
+            if _rows:
+                with open(os.path.join(output_dir, "test_predictions.csv"), "w", newline="") as _f:
+                    _w = _csv.DictWriter(_f, fieldnames=["sample", "correct"])
+                    _w.writeheader()
+                    _w.writerows(_rows)
+                result["testMetrics"] = {{"accuracy": _aciertos / len(_rows)}}
+        except Exception as _e:
+            print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": f"Test eval skipped: {{_e}}"}}), flush=True)
+
     print("ANNOTIX_EVENT:" + json.dumps(result), flush=True)
 
 if __name__ == "__main__":

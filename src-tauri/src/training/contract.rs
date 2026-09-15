@@ -252,6 +252,29 @@ impl PreparedDataset {
     /// Es el **único** lugar donde un script recibe rutas del dataset: el cuerpo usa
     /// las constantes y nunca vuelve a componer un path a mano. El test de contrato
     /// verifica justamente eso.
+    /// Como `py_header`, pero con claves **opcionales**: las que no estén
+    /// declaradas salen como `None` en vez de fallar.
+    ///
+    /// Existe por el conjunto de test: sólo está cuando el usuario pidió
+    /// `testSplit > 0`, así que un backend que sabe evaluarlo no puede exigirlo
+    /// —dejaría de generar script en el caso más común— ni componer su ruta a
+    /// mano, que es lo que el contrato del dataset viene a evitar.
+    pub fn py_header_opt(&self, needed: &[&str], opcionales: &[&str]) -> Result<String, String> {
+        let mut out = self.py_header(needed)?;
+        for key in opcionales {
+            match self.input(key) {
+                Ok(rel) => out.push_str(&format!(
+                    "{} = os.path.join(DATASET_DIR, r\"{}\")\n",
+                    py_const_name(key),
+                    rel
+                )),
+                // `None` y no una ruta inventada: el script pregunta por ella.
+                Err(_) => out.push_str(&format!("{} = None\n", py_const_name(key))),
+            }
+        }
+        Ok(out)
+    }
+
     pub fn py_header(&self, needed: &[&str]) -> Result<String, String> {
         let mut out = String::new();
         out.push_str("import os\n\n");
@@ -308,6 +331,15 @@ pub struct ScriptPaths {
 impl PreparedDataset {
     /// Resuelve y valida las claves que un backend necesita.
     pub fn script_paths(&self, needed: &[&str]) -> Result<ScriptPaths, String> {
+        self.script_paths_opt(needed, &[])
+    }
+
+    /// Con claves opcionales: ver [`PreparedDataset::py_header_opt`].
+    pub fn script_paths_opt(
+        &self,
+        needed: &[&str],
+        opcionales: &[&str],
+    ) -> Result<ScriptPaths, String> {
         // `py_header` valida que cada clave pedida esté declarada.
         let ids = self
             .split_report()
@@ -315,7 +347,7 @@ impl PreparedDataset {
             .map(|a| a.transforms.clone())
             .unwrap_or_default();
         Ok(ScriptPaths {
-            header: self.py_header(needed)?,
+            header: self.py_header_opt(needed, opcionales)?,
             num_classes: self.num_classes(),
             ejes_materializados: crate::augment::plan::ejes_materializados(&ids),
         })

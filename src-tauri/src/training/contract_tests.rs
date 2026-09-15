@@ -492,9 +492,13 @@ fn assert_continua_por_state_dict(backend: &TrainingBackend, task: &str, var: &s
     let (sin, con, _) = scripts_con_y_sin_base(backend, task);
     let base = "/tmp/annotix_job_anterior/train_output/best";
 
+    // Lo que no puede haber sin modelo de partida es la carga del **modelo
+    // base**; `load_state_dict` a secas sí aparece por otros motivos legítimos
+    // —`smp` recarga su mejor checkpoint para evaluar el conjunto de test—, así
+    // que el marcador es la variable que sólo escribe `python_cargar_pesos`.
     assert!(
-        !sin.contains("load_state_dict"),
-        "{etiqueta}: sin modelo de partida no debería cargar ningún state_dict"
+        !sin.contains("_base_modelo"),
+        "{etiqueta}: sin modelo de partida no debería cargar pesos ajenos"
     );
     assert!(
         con.contains(base),
@@ -876,6 +880,39 @@ fn yolo_y_rtdetr_escriben_los_resultados_por_muestra() {
         // Y cuenta por caja con IoU 0.5, no un «mAP por imagen» —que no
         // significaría nada sobre una imagen sola—.
         assert!(script.contains("_mejor_iou = None, 0.5"), "{backend:?}");
+        assert_python_valido(&script, "eval de test por muestra");
+    }
+}
+
+/// `smp` y `timm` tampoco evaluaban el conjunto de test: lo preparaban y no lo
+/// miraban. Ahora lo evalúan y dejan el resultado por muestra.
+#[test]
+fn smp_y_timm_evaluan_el_test_por_muestra() {
+    for (backend, task) in [
+        (TrainingBackend::Smp, "segment"),
+        (TrainingBackend::Timm, "classify"),
+    ] {
+        let (pf, proyecto, images_dir) = fixture(task);
+        let salida = proyecto.path().join("job");
+        let script = train_py_de(
+            &pf,
+            &images_dir,
+            &salida,
+            backend.clone(),
+            task,
+            aug_lateralizada(),
+        );
+        assert!(
+            script.contains("test_predictions.csv"),
+            "{backend:?} no escribe los resultados por muestra"
+        );
+        assert!(script.contains("testMetrics"), "{backend:?} no evalúa el test");
+        // Sin conjunto de test, el script tiene que seguir corriendo: la clave
+        // llega como None y la evaluación se salta.
+        assert!(
+            script.contains("IMAGES_TEST = None"),
+            "{backend:?}: el test es opcional y este dataset no lo trae"
+        );
         assert_python_valido(&script, "eval de test por muestra");
     }
 }
