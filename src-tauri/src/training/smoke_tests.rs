@@ -185,12 +185,9 @@ fn buscar_csv(dir: &Path) -> Option<PathBuf> {
     if directo.exists() {
         return Some(directo);
     }
-    for entrada in walkdir(dir) {
-        if entrada.file_name().is_some_and(|n| n == nombre) {
-            return Some(entrada);
-        }
-    }
-    None
+    walkdir(dir)
+        .into_iter()
+        .find(|entrada| entrada.file_name().is_some_and(|n| n == nombre))
 }
 
 fn walkdir(dir: &Path) -> Vec<PathBuf> {
