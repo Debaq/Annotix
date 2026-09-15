@@ -262,6 +262,19 @@ pub fn armar(
     };
     integridad_auditoria(project_dir, &mut integrity);
 
+    // Los resultados por muestra viven junto al modelo, no en el proyecto: los
+    // escribe el script de entrenamiento.
+    let por_muestra = job
+        .result_dir
+        .as_ref()
+        .and_then(|d| super::muestras::leer(Path::new(d)))
+        // El sujeto lo pone el corpus: el script no lo sabe, y sin él el
+        // remuestreo trataría doce imágenes de un paciente como doce
+        // observaciones independientes.
+        .map(|m| super::muestras::con_sujetos(m, pf))
+        .map(|m| super::muestras::estimaciones(&m))
+        .filter(|e| !e.is_empty());
+
     ModelContract {
         contract_version: CONTRACT_VERSION,
         generated_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
@@ -282,14 +295,26 @@ pub fn armar(
 
         metrics: job.metrics.clone(),
         test_metrics: job.test_metrics.clone(),
-        metrics_ci_note:
-            "Las métricas van sin intervalo de confianza: calcularlo exige los resultados \
-             por muestra del conjunto de test, y los backends informan sólo el agregado. \
-             Un intervalo calculado sobre el agregado sería inventado. Cuando se recojan \
-             los resultados por muestra, el intervalo debe salir de un bootstrap agrupado \
-             por sujeto: remuestrear imágenes de los mismos pacientes produce intervalos \
-             artificialmente estrechos."
-                .to_string(),
+        metrics_ci_note: match por_muestra.as_ref() {
+            Some(e) => {
+                let grupos = e.values().map(|m| m.groups).max().unwrap_or(0);
+                let n = e.values().map(|m| m.n).max().unwrap_or(0);
+                format!(
+                    "Los intervalos son del 95 % y salen de un bootstrap sobre los \
+                     resultados por muestra del conjunto de test ({n} muestras en {grupos} \
+                     grupos independientes), remuestreando **sujetos** y no imágenes: \
+                     remuestrear imágenes de los mismos pacientes produce intervalos \
+                     artificialmente estrechos. Las métricas sin intervalo son las que el \
+                     backend informó sólo agregadas."
+                )
+            }
+            None =>
+                "Las métricas van sin intervalo de confianza: este backend informa sólo el \
+                 agregado y no deja los resultados por muestra del conjunto de test. Un \
+                 intervalo calculado sobre el agregado sería inventado."
+                    .to_string(),
+        },
+        test_metrics_ci: por_muestra,
 
         pipeline: serde_json::json!({
             "app_version": crate::study::log::app_version(),

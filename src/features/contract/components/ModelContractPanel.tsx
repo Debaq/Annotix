@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/hooks/use-toast';
@@ -171,6 +171,32 @@ export function ModelContractPanel({ projectId, jobId }: Props) {
               : t('contract.auditBroken')}
         </span>
       </div>
+
+      {contrato.testMetricsCi && (
+        <div className="space-y-1">
+          <p className="text-[11px] font-medium">{t('contract.testMetrics')}</p>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+            {Object.entries(contrato.testMetricsCi).map(([nombre, m]) => (
+              // Fragment con clave: las dos celdas son hermanas en la rejilla,
+              // así que no pueden ir en un div propio.
+              <Fragment key={nombre}>
+                <span className="text-muted-foreground">
+                  {nombre}
+                </span>
+                <span className="font-mono">
+                  {m.value.toFixed(3)}
+                  {m.ciLow != null && m.ciHigh != null
+                    ? ` [${m.ciLow.toFixed(3)}, ${m.ciHigh.toFixed(3)}]`
+                    : ''}
+                  <span className="text-muted-foreground">
+                    {` · ${t('contract.ciGroups', { n: m.n, groups: m.groups })}`}
+                  </span>
+                </span>
+              </Fragment>
+            ))}
+          </div>
+        </div>
+      )}
 
       <p className="text-[11px] text-muted-foreground">{contrato.metricsCiNote}</p>
     </div>

@@ -180,33 +180,7 @@ def main():
             "mAP50_95": rd.get("metrics/mAP50-95(B)", None),
         }}
 
-    # Evaluación final en split de test si existe en el data.yaml
-    try:
-        import yaml as _yaml
-        with open(data_yaml, "r") as _f:
-            _yaml_doc = _yaml.safe_load(_f)
-        if isinstance(_yaml_doc, dict) and _yaml_doc.get("test"):
-            print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": "Evaluating best.pt on test split..."}}), flush=True)
-            best_for_test = best_model if best_model and os.path.exists(best_model) else None
-            test_model = YOLO(best_for_test) if best_for_test else model
-            test_results = test_model.val(
-                data=data_yaml,
-                split="test",
-                imgsz={imgsz},
-                batch={batch},
-                device={device_quoted},
-                verbose=False,
-            )
-            if test_results and hasattr(test_results, "results_dict"):
-                trd = test_results.results_dict
-                result["testMetrics"] = {{
-                    "precision": trd.get("metrics/precision(B)", None),
-                    "recall": trd.get("metrics/recall(B)", None),
-                    "mAP50": trd.get("metrics/mAP50(B)", None),
-                    "mAP50_95": trd.get("metrics/mAP50-95(B)", None),
-                }}
-    except Exception as _e:
-        print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": f"Test eval skipped: {{_e}}"}}), flush=True)
+{eval_test}
 
     {export_section}
 
@@ -264,6 +238,7 @@ if __name__ == "__main__":
         erasing = config.augmentation.erasing,
         translate = config.augmentation.translate,
         task_line = task_line,
+        eval_test = eval_test_ultralytics(config.imgsz, config.batch_size, &device_quoted),
         export_section = export_section,
     )
 }
@@ -698,6 +673,7 @@ def main():
             "mAP50_95": rd.get("metrics/mAP50-95(B)", None),
         }}
 
+{eval_test}
     print("ANNOTIX_EVENT:" + json.dumps(result), flush=True)
 
 if __name__ == "__main__":
@@ -718,6 +694,7 @@ if __name__ == "__main__":
         weight_decay = weight_decay,
         amp = py_bool(req.amp),
         freeze_line = freeze_line,
+        eval_test = eval_test_ultralytics(req.image_size, req.batch_size, &device),
         mosaic = aug.mosaic,
         mixup = aug.mixup,
         hsv_h = aug.hsv_h,
@@ -1815,6 +1792,120 @@ pub fn get_requirements_for_backend(backend: &TrainingBackend) -> Vec<&'static s
 }
 
 // ─── SMP Script ──────────────────────────────────────────────────────────────
+
+/// Bloque Python de evaluación final sobre el conjunto de test, con resultados
+/// **por muestra**.
+///
+/// Lo comparten YOLO y RT-DETR porque los dos corren sobre ultralytics. RT-DETR
+/// no evaluaba test en absoluto: su contrato de modelo salía sin métricas de
+/// test aunque el dataset trajera la partición.
+///
+/// El CSV por muestra es lo que desbloquea los intervalos de confianza: con un
+/// mAP suelto no se puede decir cuánto de él es el modelo y cuánto es qué doce
+/// imágenes cayeron en test.
+///
+/// Cuenta por imagen a nivel de caja, con IoU 0.5 y emparejamiento voraz dentro
+/// de cada clase. No calcula un «mAP por imagen»: el mAP integra sobre umbrales
+/// de confianza y no significa nada sobre una imagen sola. Lo que sí significa
+/// algo es cuántos objetos encontró, cuántos se inventó y cuántos se dejó — de
+/// ahí salen precisión, recall y F1 con su intervalo.
+///
+/// El sujeto no lo escribe el script, que no lo sabe: lo añade Rust al leer el
+/// CSV, cruzando el nombre del archivo con el corpus.
+fn eval_test_ultralytics(imgsz: u32, batch: i32, device_quoted: &str) -> String {
+    format!(
+        r#"
+    # ── Evaluación sobre el conjunto de test, si el dataset lo trae ────────
+    try:
+        import yaml as _yaml
+        import csv as _csv
+        import glob as _glob
+
+        with open(data_yaml, "r") as _f:
+            _yaml_doc = _yaml.safe_load(_f)
+
+        if isinstance(_yaml_doc, dict) and _yaml_doc.get("test"):
+            print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": "Evaluating on test split..."}}), flush=True)
+            _best = result.get("bestModelPath")
+            test_model = type(model)(_best) if _best and os.path.exists(_best) else model
+            _tr = test_model.val(
+                data=data_yaml,
+                split="test",
+                imgsz={imgsz},
+                batch={batch},
+                device={device_quoted},
+                verbose=False,
+            )
+            if _tr is not None and hasattr(_tr, "results_dict"):
+                _trd = _tr.results_dict
+                result["testMetrics"] = {{
+                    "precision": _trd.get("metrics/precision(B)", None),
+                    "recall": _trd.get("metrics/recall(B)", None),
+                    "mAP50": _trd.get("metrics/mAP50(B)", None),
+                    "mAP50_95": _trd.get("metrics/mAP50-95(B)", None),
+                }}
+
+            # ── Resultados por muestra (Annotix) ───────────────────────────
+            _base = _yaml_doc.get("path") or os.path.dirname(data_yaml)
+            _img_dir = os.path.join(_base, _yaml_doc["test"])
+            _lbl_dir = _img_dir.replace(os.sep + "images" + os.sep, os.sep + "labels" + os.sep)
+            _rows = []
+
+            def _iou(a, b):
+                ix1, iy1 = max(a[0], b[0]), max(a[1], b[1])
+                ix2, iy2 = min(a[2], b[2]), min(a[3], b[3])
+                iw, ih = max(0.0, ix2 - ix1), max(0.0, iy2 - iy1)
+                inter = iw * ih
+                ua = (a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - inter
+                return inter / ua if ua > 0 else 0.0
+
+            for _img_path in sorted(_glob.glob(os.path.join(_img_dir, "*"))):
+                _name = os.path.basename(_img_path)
+                _pred = test_model.predict(_img_path, verbose=False)[0]
+                _h, _w = _pred.orig_shape
+                _pb = []
+                if _pred.boxes is not None and len(_pred.boxes) > 0:
+                    for _b, _c in zip(_pred.boxes.xyxy.tolist(), _pred.boxes.cls.tolist()):
+                        _pb.append((int(_c), _b))
+
+                _gt = []
+                _lbl = os.path.join(_lbl_dir, os.path.splitext(_name)[0] + ".txt")
+                if os.path.exists(_lbl):
+                    for _line in open(_lbl):
+                        _p = _line.split()
+                        if len(_p) < 5:
+                            continue
+                        _cx, _cy, _bw, _bh = (float(v) for v in _p[1:5])
+                        _gt.append((int(float(_p[0])),
+                                    [(_cx - _bw / 2) * _w, (_cy - _bh / 2) * _h,
+                                     (_cx + _bw / 2) * _w, (_cy + _bh / 2) * _h]))
+
+                _usadas = set()
+                _tp = 0
+                for _c, _box in _pb:
+                    _mejor, _mejor_iou = None, 0.5
+                    for _i, (_gc, _gbox) in enumerate(_gt):
+                        if _i in _usadas or _gc != _c:
+                            continue
+                        _v = _iou(_box, _gbox)
+                        if _v >= _mejor_iou:
+                            _mejor, _mejor_iou = _i, _v
+                    if _mejor is not None:
+                        _usadas.add(_mejor)
+                        _tp += 1
+                _rows.append({{"sample": _name, "tp": _tp,
+                               "fp": len(_pb) - _tp, "fn": len(_gt) - _tp}})
+
+            if _rows:
+                with open(os.path.join(train_dir, "test_predictions.csv"), "w", newline="") as _f:
+                    _w2 = _csv.DictWriter(_f, fieldnames=["sample", "tp", "fp", "fn"])
+                    _w2.writeheader()
+                    _w2.writerows(_rows)
+    except Exception as _e:
+        print("ANNOTIX_EVENT:" + json.dumps({{"type": "log", "message": f"Test eval skipped: {{_e}}"}}), flush=True)
+"#
+    )
+}
 
 /// La augmentación por defecto de ultralytics, en un solo sitio.
 ///

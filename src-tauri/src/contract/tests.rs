@@ -587,3 +587,53 @@ fn la_prevision_de_la_augmentacion_coincide_con_el_contrato() {
     assert_eq!(previo.level, "trazable");
     assert!(codigos(&previo).contains(&"clase_con_pocos_ejemplos_multiplicada"));
 }
+
+// ─── Intervalos de confianza desde los resultados por muestra ───────────────
+
+#[test]
+fn con_resultados_por_muestra_las_metricas_salen_con_intervalo() {
+    let tmp = tempfile::tempdir().unwrap();
+    let filas: String = (0..30)
+        .map(|i| format!("m{i}.png,PAC-{i},{}\n", u8::from(i % 5 != 0)))
+        .collect();
+    std::fs::write(
+        tmp.path().join(super::muestras::FILE_NAME),
+        format!("sample,subject,correct\n{filas}"),
+    )
+    .unwrap();
+
+    let mut job = trabajo(true);
+    job.result_dir = Some(tmp.path().to_string_lossy().to_string());
+
+    let contrato = armar(
+        &proyecto_reproducible(),
+        &job,
+        std::path::Path::new("/tmp/no-existe"),
+        procedencia_limpia(),
+        None,
+    );
+
+    let ci = contrato.test_metrics_ci.expect("intervalos");
+    let a = &ci["accuracy"];
+    assert!((a.value - 0.8).abs() < 1e-9);
+    assert!(a.ci_low.unwrap() < a.value && a.value < a.ci_high.unwrap());
+    // La nota explica de dónde salen, no por qué faltan.
+    assert!(contrato.metrics_ci_note.contains("bootstrap"), "{}", contrato.metrics_ci_note);
+    assert!(contrato.metrics_ci_note.contains("sujetos"), "{}", contrato.metrics_ci_note);
+}
+
+#[test]
+fn sin_resultados_por_muestra_el_contrato_dice_por_que_no_hay_intervalo() {
+    // Es lo que hacía antes, y sigue siendo lo correcto mientras haya backends
+    // que informen sólo el agregado: un intervalo sobre el agregado sería
+    // inventado.
+    let contrato = armar(
+        &proyecto_reproducible(),
+        &trabajo(true),
+        std::path::Path::new("/tmp/no-existe"),
+        procedencia_limpia(),
+        None,
+    );
+    assert!(contrato.test_metrics_ci.is_none());
+    assert!(contrato.metrics_ci_note.contains("sólo el"), "{}", contrato.metrics_ci_note);
+}

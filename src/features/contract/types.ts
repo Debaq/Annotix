@@ -30,6 +30,14 @@ export interface ModelContract {
     warnings: unknown[];
   } | null;
   /**
+   * Métricas de test con su intervalo del 95 %, cuando el backend dejó los
+   * resultados por muestra. `null` si informó sólo el agregado.
+   */
+  testMetricsCi: Record<
+    string,
+    { value: number; ciLow: number | null; ciHigh: number | null; n: number; groups: number }
+  > | null;
+  /**
    * Qué se le hizo al conjunto de entrenamiento. `null` si no se aumentó.
    *
    * Se transcribe tal cual del informe del reparto: el dueño del dato es el

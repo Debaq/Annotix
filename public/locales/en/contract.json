@@ -45,5 +45,7 @@
   },
   "augmentation": "Augmentation",
   "augmentationValue": "{{generated}} variants from {{from}} images ({{total}} in train)",
-  "augmentationWhat": "Transforms"
+  "augmentationWhat": "Transforms",
+  "testMetrics": "Test metrics with 95 % interval",
+  "ciGroups": "{{n}} samples in {{groups}} groups"
 }

@@ -20,6 +20,7 @@
 use serde::{Deserialize, Serialize};
 
 pub mod build;
+pub mod muestras;
 pub mod readiness;
 
 #[cfg(test)]
@@ -153,11 +154,20 @@ pub struct ModelContract {
     pub metrics: Option<serde_json::Value>,
     /// Métricas sobre el conjunto de test, si lo hubo.
     pub test_metrics: Option<serde_json::Value>,
-    /// Por qué las métricas no llevan intervalo de confianza.
+    /// Métricas del conjunto de test con su intervalo de confianza, cuando el
+    /// backend dejó los resultados **por muestra**.
     ///
-    /// Calcularlo exige los resultados **por muestra** del conjunto de test, y
-    /// hoy los backends informan sólo el agregado. Sin ellos, un intervalo sería
-    /// inventado; se dice en vez de omitirlo en silencio.
+    /// El intervalo sale de un bootstrap agrupado por sujeto: doce imágenes del
+    /// mismo paciente no son doce observaciones independientes. `null` cuando el
+    /// backend informó sólo el agregado, y entonces `metrics_ci_note` dice por
+    /// qué no hay intervalo.
+    pub test_metrics_ci: Option<std::collections::BTreeMap<String, muestras::MetricaConIC>>,
+
+    /// Qué se puede decir de los intervalos de confianza de las métricas.
+    ///
+    /// Con resultados por muestra dice de dónde salen; sin ellos, por qué no
+    /// están. Un intervalo calculado sobre el agregado sería inventado, y se
+    /// dice en vez de omitirlo en silencio.
     pub metrics_ci_note: String,
 
     /// Con qué se entrenó: app, backend, modelo base, y la configuración entera.

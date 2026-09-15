@@ -848,3 +848,52 @@ fn timm_apaga_el_volteo_ya_materializado() {
         "{script}"
     );
 }
+
+// ─── Resultados por muestra del conjunto de test ────────────────────────────
+
+/// Los backends de ultralytics tienen que dejar el CSV por muestra: es lo que
+/// desbloquea los intervalos de confianza del contrato.
+#[test]
+fn yolo_y_rtdetr_escriben_los_resultados_por_muestra() {
+    for (backend, task) in [
+        (TrainingBackend::Yolo, "detect"),
+        (TrainingBackend::RtDetr, "detect"),
+    ] {
+        let (pf, proyecto, images_dir) = fixture(task);
+        let salida = proyecto.path().join("job");
+        let script = train_py_de(
+            &pf,
+            &images_dir,
+            &salida,
+            backend.clone(),
+            task,
+            aug_lateralizada(),
+        );
+        assert!(
+            script.contains("test_predictions.csv"),
+            "{backend:?} no escribe los resultados por muestra"
+        );
+        // Y cuenta por caja con IoU 0.5, no un «mAP por imagen» —que no
+        // significaría nada sobre una imagen sola—.
+        assert!(script.contains("_mejor_iou = None, 0.5"), "{backend:?}");
+        assert_python_valido(&script, "eval de test por muestra");
+    }
+}
+
+/// RT-DETR no evaluaba el conjunto de test en absoluto: su contrato salía sin
+/// métricas de test aunque el dataset trajera la partición.
+#[test]
+fn rtdetr_evalua_el_conjunto_de_test() {
+    let (pf, proyecto, images_dir) = fixture("detect");
+    let salida = proyecto.path().join("job");
+    let script = train_py_de(
+        &pf,
+        &images_dir,
+        &salida,
+        TrainingBackend::RtDetr,
+        "detect",
+        aug_lateralizada(),
+    );
+    assert!(script.contains("split=\"test\""), "{script}");
+    assert!(script.contains("testMetrics"), "{script}");
+}
