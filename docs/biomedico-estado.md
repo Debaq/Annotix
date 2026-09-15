@@ -10,20 +10,32 @@
 
 ## Punto de retomada
 
-**La 11b y la 12 están hechas.** Lo siguiente son los **huecos de las etapas
-1-11**, listados más abajo en «Lo que quedó abierto». Los tres que más pesan, en
-este orden:
+**La 11b y la 12 están hechas, y dos de los tres huecos que más pesaban.**
 
-1. **El contrato de modelo no transcribe todavía el plan de augmentación** ni
-   baja el nivel de evidencia cuando una clase con dos ejemplos se multiplica
-   por veinte. El informe del reparto ya lleva el bloque y los avisos; falta el
-   último salto (etapa 11b).
-2. **El CSV de predicciones por muestra del conjunto de test** (etapa 8), que es
-   lo que desbloquea los intervalos de confianza del contrato. Toca los mismos
-   17 generadores que ya se repasaron en la 11b, así que ahora sale más barato.
-3. **La validación con datos reales**: DICOM de dos fabricantes distintos, la
+Hechos en esta tanda:
+
+1. **El contrato transcribe el plan de augmentación** y lo convierte en
+   limitaciones: una clase con pocos ejemplos multiplicada topa el nivel en
+   `trazable`, el volteo lateralizado se escribe sin bajar el nivel, y el
+   teselado dice cómo hay que usar el modelo. La previsión hace la misma cuenta,
+   atada por un test.
+2. **Intervalos de confianza** en seis backends (`yolo`, `rt_detr`, `smp`,
+   `timm`, `hf_classification`, `hf_segmentation`): cada uno evalúa el conjunto
+   de test —tres de ellos no lo evaluaban en absoluto— y deja un
+   `test_predictions.csv` por muestra. El bootstrap agrupa por sujeto. Los seis
+   verificados con corridas reales en CPU.
+
+Lo que sigue, por orden:
+
+1. **Los backends que aún informan sólo el agregado**: los de COCO (`rf_detr`,
+   `hf_detection`, `hf_instance`, `hf_pose`) y los de series y tabular. El
+   contrato lo dice mientras sea verdad, así que no urge tanto como parecía.
+2. **La validación con datos reales**: DICOM de dos fabricantes distintos, la
    deidentificación contra una herramienta externa, y la lectura múltiple con
-   tres anotadores en tres máquinas (etapas 9a y 6).
+   tres anotadores en tres máquinas (etapas 9a y 6). Es lo único que no se puede
+   hacer sin salir de esta máquina.
+3. **El contrato dentro del informe PDF**, y el Dice real sobre píxeles en el
+   acuerdo entre evaluadores (etapa 7), que hoy se compara por la envolvente.
 
 ### Lo que quedó fuera de la 12
 

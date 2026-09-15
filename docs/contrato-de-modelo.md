@@ -79,18 +79,39 @@ estudio**.
 
 ---
 
+## Intervalos de confianza
+
+Están, en los backends que dejan los resultados **por muestra** del conjunto de
+test: `yolo`, `rt_detr`, `smp`, `timm`, `hf_classification` y `hf_segmentation`.
+Cada script escribe junto al modelo un `test_predictions.csv` con una fila por
+muestra y las columnas que sabe calcular (`correct`, `iou`, `dice`,
+`tp`/`fp`/`fn`, `abs_error`); una celda vacía es «no medido», no un cero.
+
+El intervalo sale de un bootstrap **agrupado por sujeto**: remuestrear imágenes
+de los mismos doce pacientes produce intervalos artificialmente estrechos, y es
+el error estadístico más común en este tipo de informe. El sujeto no lo escribe
+el script —recibe carpetas de imágenes y no sabe de pacientes—: lo añade Rust
+cruzando el nombre del archivo con el corpus.
+
+Dos detalles de la cuenta, por si alguien los revisa:
+
+- **Precisión y recall son razones de sumas**, no medias de razones: la media de
+  las precisiones por imagen le daría el mismo peso a una imagen con un objeto
+  que a una con cuarenta.
+- **No hay «mAP por imagen»**: el mAP integra sobre umbrales de confianza y no
+  significa nada sobre una imagen sola. Lo que sí significa algo por imagen es
+  cuántos objetos encontró, se inventó y se dejó —con IoU 0.5 y emparejamiento
+  voraz por clase—, y de ahí salen precisión, recall y F1.
+
+Con una sola muestra sale el valor y no el intervalo, y la semilla del bootstrap
+es fija para que un contrato pueda compararse consigo mismo.
+
 ## Lo que falta
 
-**Intervalos de confianza en las métricas.** Calcularlos exige los resultados
-**por muestra** del conjunto de test, y los backends informan sólo el agregado.
-Un intervalo calculado sobre el agregado sería inventado, así que el contrato
-dice por qué no lo lleva en vez de omitirlo en silencio.
-
-Cuando se recojan los resultados por muestra, el intervalo debe salir de un
-bootstrap **agrupado por sujeto**: remuestrear imágenes de los mismos doce
-pacientes produce intervalos artificialmente estrechos, y es el error estadístico
-más común en este tipo de informe. La maquinaria de remuestreo agrupado ya existe
-(`agreement::kappa::ic_bootstrap`); lo que falta es el dato por muestra.
+**Los backends que siguen informando sólo el agregado**: los de COCO (`rf_detr`,
+`hf_detection`, `hf_instance`, `hf_pose`) y los de series y tabular. Mientras no
+dejen el CSV por muestra, su contrato lo dice con todas sus letras en
+`metricsCiNote` en vez de omitirlo en silencio.
 
 **Límites de uso derivados de la población.** Hoy el contrato transcribe el uso
 previsto que el usuario declara. Derivar una plantilla de límites a partir de la
