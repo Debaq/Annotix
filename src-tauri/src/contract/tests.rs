@@ -428,3 +428,162 @@ fn las_modalidades_lateralizadas_son_las_que_tienen_lados() {
         assert!(!es_lateralizada(m), "{m} no debería estarlo");
     }
 }
+
+// ─── La augmentación en el contrato ─────────────────────────────────────────
+
+/// Un trabajo cuyo informe de reparto trae el bloque de augmentación.
+fn trabajo_con_augmentacion(avisos: serde_json::Value) -> TrainingJobEntry {
+    let mut job = trabajo(true);
+    if let Some(reporte) = job.split_report.as_mut() {
+        reporte["augmentation"] = serde_json::json!({
+            "generated": 24,
+            "trainImages": 32,
+            "trainSourceImages": 8,
+            "seed": "4242",
+            "transforms": ["flip_h", "rotate"],
+            "warnings": avisos,
+        });
+    }
+    job
+}
+
+fn proyecto_reproducible() -> ProjectFile {
+    let mut pf = proyecto();
+    pf.images.push(imagen("i1", Some("PAC-1")));
+    pf.split_policy = Some(SplitPolicy {
+        unit: "subject".into(),
+        seed: Some(4242),
+        ..SplitPolicy::default()
+    });
+    pf
+}
+
+#[test]
+fn el_contrato_transcribe_lo_que_se_aumento() {
+    let pf = proyecto_reproducible();
+    let job = trabajo_con_augmentacion(serde_json::json!([]));
+    let contrato = armar(
+        &pf,
+        &job,
+        std::path::Path::new("/tmp/no-existe"),
+        procedencia_limpia(),
+        None,
+    );
+
+    let aug = contrato.augmentation.expect("el bloque de augmentación");
+    assert_eq!(aug["generated"], 24);
+    assert_eq!(aug["trainSourceImages"], 8);
+    // La semilla viaja como texto, igual que la del reparto: con ella y el plan,
+    // el dataset se vuelve a generar igual.
+    assert_eq!(aug["seed"], "4242");
+    assert_eq!(aug["transforms"][0], "flip_h");
+}
+
+#[test]
+fn sin_augmentacion_el_contrato_no_inventa_el_bloque() {
+    let pf = proyecto_reproducible();
+    let contrato = armar(
+        &pf,
+        &trabajo(true),
+        std::path::Path::new("/tmp/no-existe"),
+        procedencia_limpia(),
+        None,
+    );
+    assert!(contrato.augmentation.is_none());
+}
+
+#[test]
+fn multiplicar_una_clase_con_pocos_ejemplos_topa_el_nivel_en_trazable() {
+    // Sin augmentación este proyecto llega a `reproducible`. Dos casos vistos
+    // veinte veces no son veintidós casos, y su parte del test es demasiado
+    // pequeña para sostener nada.
+    let pf = proyecto_reproducible();
+    let (limpio, _) = nivel_de_evidencia(&pf, &trabajo(true), &procedencia_limpia(), None);
+    assert_eq!(limpio, EvidenceLevel::Reproducible);
+
+    let job = trabajo_con_augmentacion(serde_json::json!([
+        { "code": "clase_con_pocos_ejemplos_multiplicada", "kind": "evidencia", "detail": "3:2x20" }
+    ]));
+    let (nivel, faltas) = nivel_de_evidencia(&pf, &job, &procedencia_limpia(), None);
+    assert_eq!(nivel, EvidenceLevel::Trazable);
+    assert!(
+        faltas.iter().any(|f| f.contains("3:2x20")),
+        "la limitación tiene que decir qué clase: {faltas:?}"
+    );
+}
+
+#[test]
+fn el_volteo_lateralizado_se_escribe_pero_no_baja_el_nivel() {
+    // Es de corrección, no de evidencia: el modelo no está peor documentado,
+    // está mal entrenado. Justo por eso hay que poder leerlo en el contrato.
+    let pf = proyecto_reproducible();
+    let job = trabajo_con_augmentacion(serde_json::json!([
+        { "code": "volteo_en_modalidad_lateralizada", "kind": "correccion", "detail": "CR" }
+    ]));
+    let (nivel, faltas) = nivel_de_evidencia(&pf, &job, &procedencia_limpia(), None);
+    assert_eq!(nivel, EvidenceLevel::Reproducible);
+    assert!(faltas.iter().any(|f| f.contains("lateralidad")), "{faltas:?}");
+}
+
+#[test]
+fn el_teselado_avisa_de_como_hay_que_usar_el_modelo() {
+    let pf = proyecto_reproducible();
+    let job = trabajo_con_augmentacion(serde_json::json!([
+        { "code": "teselado_exige_inferencia_por_teselas", "kind": "correccion", "detail": null }
+    ]));
+    let (_, faltas) = nivel_de_evidencia(&pf, &job, &procedencia_limpia(), None);
+    assert!(
+        faltas.iter().any(|f| f.contains("teselas")),
+        "quien reciba el modelo tiene que saber cómo aplicarlo: {faltas:?}"
+    );
+}
+
+#[test]
+fn la_prevision_de_la_augmentacion_coincide_con_el_contrato() {
+    // La misma regla ata las dos mitades: si la previsión dijera `reproducible`
+    // y el contrato saliera `trazable`, el aviso previo mentiría.
+    use crate::augment::plan::{AugmentationPlan, BalanceMode};
+    use crate::augment::transforms::TransformSpec;
+
+    let mut pf = proyecto_reproducible();
+    // Dos ejemplos de una clase: el equilibrado la multiplicará.
+    for i in 0..2 {
+        let mut img = imagen(&format!("raro{i}"), Some("PAC-2"));
+        img.annotations.push(crate::store::project_file::AnnotationEntry {
+            id: format!("a{i}"),
+            annotation_type: "bbox".into(),
+            class_id: 0,
+            data: serde_json::json!({"x": 1.0, "y": 1.0, "width": 2.0, "height": 2.0}),
+            source: "user".into(),
+            confidence: None,
+            model_class_name: None,
+            created_by: None,
+            track_id: None,
+            origin: Some("manual".into()),
+            model_id: None,
+            review: None,
+            reviewed_by: None,
+            reviewed_at: None,
+            created_at: None,
+            updated_at: None,
+        });
+        pf.images.push(img);
+    }
+    pf.augmentation = Some(AugmentationPlan {
+        enabled: true,
+        factor: 20,
+        balance: BalanceMode::Uniform,
+        transforms: vec![TransformSpec::FlipH { p: 0.5 }],
+        ..Default::default()
+    });
+
+    let previo = evaluar(&pf, 0.2, 0.0, &procedencia(100, 0), false);
+    let job = trabajo_con_augmentacion(serde_json::json!([
+        { "code": "clase_con_pocos_ejemplos_multiplicada", "kind": "evidencia", "detail": "0:2x20" }
+    ]));
+    let (nivel, _) = nivel_de_evidencia(&pf, &job, &procedencia_limpia(), None);
+
+    assert_eq!(previo.level, nivel.como_texto());
+    assert_eq!(previo.level, "trazable");
+    assert!(codigos(&previo).contains(&"clase_con_pocos_ejemplos_multiplicada"));
+}

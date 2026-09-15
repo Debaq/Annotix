@@ -42,5 +42,8 @@
     "modalityHint": "Equipment, protocol, resolution.",
     "intendedUse": "Intended use",
     "intendedUseHint": "What the model is meant to be used for. A model trained for screening and used for diagnosis is not badly trained: it is badly used."
-  }
+  },
+  "augmentation": "Augmentation",
+  "augmentationValue": "{{generated}} variants from {{from}} images ({{total}} in train)",
+  "augmentationWhat": "Transforms"
 }

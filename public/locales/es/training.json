@@ -997,7 +997,10 @@
       "lectura_unica": "Leer el corpus más de una vez: sin acuerdo entre evaluadores no se sabe cuánto de la etiqueta es criterio y cuánto es quien lo aplicó.",
       "sin_criterios": "Declarar los criterios de inclusión y exclusión: el contrato no puede decir a quién representa el modelo.",
       "sin_modalidad": "Las imágenes médicas no declaran modalidad: no se puede comprobar que el preprocesado corresponda al corpus.",
-      "volteo_en_modalidad_lateralizada": "El corpus es de modalidad {{detail}} y el preset voltea en horizontal. El modelo no podrá aprender lateralidad, y la lateralidad es diagnóstica."
+      "volteo_en_modalidad_lateralizada": "El corpus es de modalidad {{detail}} y el preset voltea en horizontal. El modelo no podrá aprender lateralidad, y la lateralidad es diagnóstica.",
+      "clase_con_pocos_ejemplos_multiplicada": "Una clase con pocos ejemplos se multiplicará por augmentación ({{detail}}: clase, ejemplos y factor). Eso no crea casos nuevos: crea los mismos vistos muchas veces, y el modelo los memoriza.",
+      "teselado_exige_inferencia_por_teselas": "Con teselado, el modelo hay que aplicarlo por teselas y recomponer las predicciones. Aplicarlo a la imagen completa da resultados que no corresponden a lo medido.",
+      "tipo_de_anotacion_sin_augmentacion": "Las anotaciones de tipo «{{detail}}» no se pueden aumentar: esas imágenes entrarán sin variantes."
     }
   },
   "biomed": {

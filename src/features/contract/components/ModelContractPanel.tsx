@@ -134,6 +134,24 @@ export function ModelContractPanel({ projectId, jobId }: Props) {
           </>
         )}
 
+        {contrato.augmentation && (
+          <>
+            <span className="text-muted-foreground">{t('contract.augmentation')}</span>
+            <span className="font-mono">
+              {t('contract.augmentationValue', {
+                generated: contrato.augmentation.generated,
+                from: contrato.augmentation.trainSourceImages,
+                total: contrato.augmentation.trainImages,
+              })}
+            </span>
+            <span className="text-muted-foreground">{t('contract.augmentationWhat')}</span>
+            <span className="font-mono break-all">
+              {contrato.augmentation.transforms.join(', ') || '—'}
+              {` · ${t('contract.seed')} ${contrato.augmentation.seed}`}
+            </span>
+          </>
+        )}
+
         <span className="text-muted-foreground">{t('contract.modelHash')}</span>
         <span className="font-mono">{corto(contrato.integrity.modelSha256)}</span>
 

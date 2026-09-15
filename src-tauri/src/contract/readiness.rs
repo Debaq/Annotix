@@ -212,6 +212,34 @@ pub fn evaluar(
         });
     }
 
+    // ─── Lo que la augmentación declarada añade a la cuenta ─────────────────
+    //
+    // El plan vive en el proyecto, así que la previsión puede hacer la misma
+    // cuenta que hará el contrato: multiplicar una clase con dos ejemplos por
+    // veinte no crea veintidós casos, y el contrato se queda en `trazable` por
+    // eso. Avisarlo aquí es avisarlo cuando todavía se puede cambiar.
+    let mut tope_trazable = false;
+    if let Some(plan) = pf.augmentation.as_ref().filter(|p| p.hace_algo()) {
+        let de_balance = crate::augment::plan::avisos_de_balance(plan, &pf.images);
+        tope_trazable = !de_balance.is_empty();
+        avisos.extend(de_balance);
+        avisos.extend(plan.avisos_de_modalidad(modalidad_dominante(pf).as_deref()));
+        for tipo in pf
+            .images
+            .iter()
+            .flat_map(|i| i.annotations.iter())
+            .map(|a| a.annotation_type.as_str())
+            .filter(|t| !crate::augment::geometry::tipo_soportado(t))
+            .collect::<std::collections::BTreeSet<_>>()
+        {
+            avisos.push(Aviso {
+                code: "tipo_de_anotacion_sin_augmentacion".into(),
+                kind: "evidencia".into(),
+                detail: Some(tipo.to_string()),
+            });
+        }
+    }
+
     // ─── Lo que no es de evidencia sino de corrección ───────────────────────
     let modalidad = modalidad_dominante(pf);
     let lateralizada = modalidad.as_deref().is_some_and(es_lateralizada);
@@ -237,7 +265,9 @@ pub fn evaluar(
 
     let nivel = if hay_test && procedencia_conocida {
         if reparto_declarado && !sujetos.is_empty() {
-            if hay_acuerdo {
+            if tope_trazable {
+                "trazable"
+            } else if hay_acuerdo {
                 "verificable"
             } else {
                 "reproducible"

@@ -42,5 +42,8 @@
     "modalityHint": "Equipo, protocolo, resolución.",
     "intendedUse": "Uso previsto",
     "intendedUseHint": "Para qué se pretende usar el modelo. Un modelo entrenado para cribado y usado para diagnóstico no está mal entrenado: está mal usado."
-  }
+  },
+  "augmentation": "Augmentación",
+  "augmentationValue": "{{generated}} variantes de {{from}} imágenes ({{total}} en train)",
+  "augmentationWhat": "Transformaciones"
 }

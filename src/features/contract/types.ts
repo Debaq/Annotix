@@ -29,6 +29,21 @@ export interface ModelContract {
     perClass: unknown[];
     warnings: unknown[];
   } | null;
+  /**
+   * Qué se le hizo al conjunto de entrenamiento. `null` si no se aumentó.
+   *
+   * Se transcribe tal cual del informe del reparto: el dueño del dato es el
+   * preparador de datasets, y una copia con forma propia se separaría de él.
+   */
+  augmentation: {
+    generated: number;
+    trainImages: number;
+    trainSourceImages: number;
+    seed: string;
+    transforms: string[];
+    tiling?: unknown;
+    warnings: { code: string; kind: string; detail: string | null }[];
+  } | null;
   provenance: {
     byOrigin: Record<string, number>;
     byReview: Record<string, number>;

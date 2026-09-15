@@ -138,6 +138,17 @@ pub struct ModelContract {
     /// de una vez.
     pub agreement: Option<crate::agreement::AgreementReport>,
 
+    /// Qué se le hizo al conjunto de entrenamiento antes de entrenar.
+    ///
+    /// Se transcribe **tal cual** del informe del reparto en vez de copiarlo a
+    /// una estructura propia: el dueño del dato es
+    /// `training::dataset::AugmentationReport`, y una copia aquí sería una
+    /// segunda verdad que se separa a la primera vez que alguien añada un campo.
+    ///
+    /// `null` cuando el entrenamiento no aumentó nada, que es lo que hacían
+    /// todos los proyectos hasta la etapa 11b.
+    pub augmentation: Option<serde_json::Value>,
+
     /// Métricas tal como las informó la corrida.
     pub metrics: Option<serde_json::Value>,
     /// Métricas sobre el conjunto de test, si lo hubo.

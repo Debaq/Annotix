@@ -86,9 +86,59 @@ pub fn nivel_de_evidencia(
         );
     }
 
+    // ─ Lo que la augmentación añade a la cuenta ─
+    //
+    // Multiplicar una clase con dos ejemplos por veinte no crea veintidós
+    // casos: crea dos casos vistos veinte veces. El corpus no sostiene lo que
+    // la métrica sugiere de esa clase —y su parte del test son uno o dos
+    // ejemplos, que es ruido—, así que el contrato no puede pasar de
+    // `trazable` por mucho que el reparto esté declarado.
+    let mut tope_trazable = false;
+    for (codigo, detalle) in avisos_de_augmentacion(job) {
+        match codigo.as_str() {
+            "clase_con_pocos_ejemplos_multiplicada" => {
+                tope_trazable = true;
+                faltas.push(format!(
+                    "Una clase con pocos ejemplos se multiplicó por augmentación ({detalle}: \
+                     clase, ejemplos y factor): el modelo vio repeticiones, no casos nuevos. \
+                     La métrica de esa clase no dice cuánto generaliza, y su parte del \
+                     conjunto de test es demasiado pequeña para sostener nada."
+                ));
+            }
+            "volteo_en_modalidad_lateralizada" => {
+                // De corrección, no de evidencia: el modelo no está peor
+                // documentado, está mal entrenado. No baja el nivel y por eso
+                // hay que leerlo aquí.
+                faltas.push(format!(
+                    "El corpus es de modalidad {detalle}, donde izquierda y derecha son \
+                     diagnósticas, y se entrenó con volteo horizontal: el modelo no pudo \
+                     aprender lateralidad."
+                ));
+            }
+            "teselado_exige_inferencia_por_teselas" => {
+                faltas.push(
+                    "El entrenamiento fue por teselas: aplicar este modelo a la imagen \
+                     completa da resultados que no corresponden a lo medido. Hay que \
+                     inferir por teselas y recomponer."
+                        .into(),
+                );
+            }
+            "tipo_de_anotacion_sin_augmentacion" => {
+                faltas.push(format!(
+                    "Las imágenes con anotaciones de tipo «{detalle}» no se aumentaron: la \
+                     augmentación no sabe mover esa geometría, así que esas clases entraron \
+                     con menos ejemplos que el resto."
+                ));
+            }
+            _ => {}
+        }
+    }
+
     let nivel = if hay_test && procedencia_conocida {
         if reparto_declarado && hay_sujetos {
-            if acuerdo_medido {
+            if tope_trazable {
+                EvidenceLevel::Trazable
+            } else if acuerdo_medido {
                 EvidenceLevel::Verificable
             } else {
                 EvidenceLevel::Reproducible
@@ -101,6 +151,33 @@ pub fn nivel_de_evidencia(
     };
 
     (nivel, faltas)
+}
+
+/// Lo que la augmentación dejó dicho en el informe del reparto.
+fn augmentacion(job: &TrainingJobEntry) -> Option<&serde_json::Value> {
+    job.split_report
+        .as_ref()?
+        .get("augmentation")
+        .filter(|v| !v.is_null())
+}
+
+/// Códigos de aviso que la augmentación anotó al materializarse.
+fn avisos_de_augmentacion(job: &TrainingJobEntry) -> Vec<(String, String)> {
+    augmentacion(job)
+        .and_then(|a| a.get("warnings"))
+        .and_then(|w| w.as_array())
+        .map(|avisos| {
+            avisos
+                .iter()
+                .map(|a| {
+                    (
+                        a["code"].as_str().unwrap_or_default().to_string(),
+                        a["detail"].as_str().unwrap_or_default().to_string(),
+                    )
+                })
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 /// Población, tal como la dejó el informe de reparto del entrenamiento.
@@ -200,6 +277,8 @@ pub fn armar(
         population: poblacion(job, pf),
         provenance,
         agreement,
+
+        augmentation: augmentacion(job).cloned(),
 
         metrics: job.metrics.clone(),
         test_metrics: job.test_metrics.clone(),
