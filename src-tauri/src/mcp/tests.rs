@@ -148,6 +148,15 @@ fn prelabels_no_son_lecturas_y_no_se_duplican() {
             assert!(i.predictions.iter().all(|p| p.status == "prelabel" && p.model_id == "detection-v2.0.0"));
         }
     }).unwrap();
+    // filtros por clase y prefijo, y procedencia con sha256
+    let f = json!({"project":pid,"coco_json":coco.to_str().unwrap(),"origin":"ddr-official",
+        "model_version":"v1","class_ids":[1],"name_prefixes":["img1"],"model_sha256":"abc"});
+    let r3 = call(&e.state, "import_annotations", &f).unwrap();
+    assert_eq!(r3["imported"], 0, "img1 sólo tiene clase 2 y 99: nada pasa el filtro");
+    assert_eq!(r3["filtered_out"], 3);
+    let meta = crate::mcp::meta::McpMeta::load(&e.state.project_dir(&pid).unwrap()).unwrap();
+    assert_eq!(meta.prelabel_sources.len(), 2);
+    assert_eq!(meta.prelabel_sources[1]["sha256"], "abc");
     // y no se puede importar como otra cosa
     let mal = json!({"project":pid,"coco_json":coco.to_str().unwrap(),"origin":"x","model_version":"1","status":"submitted"});
     assert!(call(&e.state, "import_annotations", &mal).is_err());

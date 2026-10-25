@@ -210,7 +210,19 @@ pub fn annotations(state: &AppState, a: &Value) -> Result<Value, String> {
         .collect();
     let anns = coco["annotations"].as_array().ok_or("COCO sin 'annotations'")?;
 
-    let (mut nuevas, mut repetidas, mut sin_imagen, mut sin_clase) = (0, 0, 0, 0);
+    // Filtros opcionales: sólo estas clases, sólo imágenes cuyo nombre empiece así.
+    let solo_clases: Option<Vec<i64>> = a
+        .get("class_ids")
+        .and_then(|v| v.as_array())
+        .map(|v| v.iter().filter_map(|x| x.as_i64()).collect());
+    let prefijos: Vec<String> = a
+        .get("name_prefixes")
+        .and_then(|v| v.as_array())
+        .map(|v| v.iter().filter_map(|x| x.as_str().map(String::from)).collect())
+        .unwrap_or_default();
+    let sha = opt_str(a, "model_sha256");
+
+    let (mut nuevas, mut repetidas, mut sin_imagen, mut sin_clase, mut filtradas) = (0, 0, 0, 0, 0);
     state.with_project_mut(&id, |pf| {
         let clases: std::collections::HashMap<i64, String> =
             pf.classes.iter().map(|c| (c.id, c.name.clone())).collect();
@@ -219,8 +231,16 @@ pub fn annotations(state: &AppState, a: &Value) -> Result<Value, String> {
                 (an["image_id"].as_i64(), an["category_id"].as_i64(), an["bbox"].as_array())
             else { continue };
             if bb.len() < 4 { continue; }
+            if solo_clases.as_ref().map_or(false, |cs| !cs.contains(&cat)) {
+                filtradas += 1;
+                continue;
+            }
             let Some(cname) = clases.get(&cat) else { sin_clase += 1; continue };
             let Some(fname) = nombre_de.get(&iid) else { sin_imagen += 1; continue };
+            if !prefijos.is_empty() && !prefijos.iter().any(|p| fname.starts_with(p.as_str())) {
+                filtradas += 1;
+                continue;
+            }
             let base = Path::new(fname).file_name().and_then(|n| n.to_str()).unwrap_or(fname);
             let Some(img) = pf.images.iter_mut().find(|i| i.name == base || i.name == *fname) else {
                 sin_imagen += 1;
@@ -244,13 +264,33 @@ pub fn annotations(state: &AppState, a: &Value) -> Result<Value, String> {
         }
     })?;
 
+    // De qué modelo y de qué archivo vienen, con su sha256 si se declaró: el
+    // proyecto no tiene dónde guardarlo, así que va al estado del MCP.
+    let dir = state.project_dir(&id)?;
+    let mut meta = meta_de(state, &id)?;
+    let archivo = req_str(a, "coco_json")?.to_string();
+    match meta.prelabel_sources.iter_mut().find(|s| s["model_id"] == modelo) {
+        Some(src) => {
+            let files = src["files"].as_array_mut().unwrap();
+            if !files.iter().any(|f| f == &json!(archivo)) {
+                files.push(json!(archivo));
+            }
+            if let Some(h) = sha {
+                src["sha256"] = json!(h);
+            }
+        }
+        None => meta.prelabel_sources.push(json!({"model_id": modelo, "origin": origen,
+            "model_version": version, "sha256": sha, "files": [archivo]})),
+    }
+    meta.save(&dir)?;
+
     state.audit(
         &id,
         crate::audit::events::DATA_IMPORTED,
         json!({"file": a["coco_json"], "n_images": 0, "n_annotations": nuevas,
-               "kind": "prelabels", "origin": modelo}),
+               "kind": "prelabels", "origin": modelo, "model_sha256": sha}),
     );
     Ok(json!({"project_id": id, "imported": nuevas, "skipped_duplicates": repetidas,
-              "unmatched_images": sin_imagen, "unknown_class": sin_clase, "origin": modelo,
+              "filtered_out": filtradas, "unmatched_images": sin_imagen, "unknown_class": sin_clase, "origin": modelo,
               "status": "prelabel"}))
 }

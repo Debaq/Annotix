@@ -31,6 +31,9 @@ pub struct McpMeta {
     /// ya no es el del original.
     #[serde(default)]
     pub hashes: BTreeMap<String, String>,
+    /// Procedencia de las pre-etiquetas importadas: modelo, versión, sha256 y archivos.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub prelabel_sources: Vec<serde_json::Value>,
 }
 
 fn uno() -> u32 {
@@ -44,6 +47,7 @@ impl Default for McpMeta {
             blind: false,
             session: None,
             hashes: BTreeMap::new(),
+            prelabel_sources: Vec::new(),
         }
     }
 }

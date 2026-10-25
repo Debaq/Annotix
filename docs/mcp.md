@@ -43,7 +43,7 @@ Copia `.mcp.json.example` a `.mcp.json` (o `claude mcp add`) y ajusta las rutas:
 | `project_create(name, classes[{id,name,color}], replication, blind)` | Crea el proyecto (tipo `bbox`). Idempotente por nombre. |
 | `project_list` / `project_status(project)` | Progreso por lector, pendientes, conflictos abiertos. Sólo conteos. |
 | `import_images(project, dir \| manifest_csv, mode=copy\|symlink)` | Deduplica por sha256 del archivo original; devuelve importadas/omitidas. |
-| `import_annotations(project, coco_json, origin, model_version, status="prelabel")` | Cajas COCO como **pre-etiquetas** (`predictions`), con `model_id = origin-model_version`. No son anotaciones ni lecturas. |
+| `import_annotations(project, coco_json, origin, model_version, status="prelabel", class_ids, name_prefixes, model_sha256)` | Cajas COCO como **pre-etiquetas** (`predictions`), con `model_id = origin-model_version` (o `model_version` si ya lo contiene). `class_ids` y `name_prefixes` filtran; `model_sha256` queda en `mcp.json`. No son anotaciones ni lecturas. |
 | `session_create(project, readers[], assignment_seed)` | Reparte cada imagen a `replication` lectores, equilibrado y reproducible con la semilla. |
 | `agreement_report(project)` | Acuerdo global (el de la app) + IoU medio y κ de presencia por clase. |
 | `conflicts_list(project)` | Cola de desacuerdos. |
