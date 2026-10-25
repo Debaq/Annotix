@@ -50,6 +50,11 @@ pub const DATA_EXPORTED: &str = "data.exported";
 pub const TRAINING_STARTED: &str = "training.started";
 pub const TRAINING_FINISHED: &str = "training.finished";
 
+/// Acción del servidor MCP (`agent:mcp`): herramienta, argumentos y resultado.
+/// No sustituye al evento de dominio (`data.imported`, `data.exported`…): lo
+/// acompaña, para poder reconstruir qué pidió el agente y no sólo qué cambió.
+pub const MCP_ACTION: &str = "mcp.action";
+
 /// Todos los eventos válidos.
 pub const EVENT_NAMES: &[&str] = &[
     LOG_OPENED,
@@ -67,6 +72,7 @@ pub const EVENT_NAMES: &[&str] = &[
     DATA_EXPORTED,
     TRAINING_STARTED,
     TRAINING_FINISHED,
+    MCP_ACTION,
 ];
 
 pub fn is_valid_event(name: &str) -> bool {

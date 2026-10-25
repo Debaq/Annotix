@@ -39,7 +39,11 @@ impl AppState {
         let base_dir = directories::ProjectDirs::from("com", "tecmedhub", "annotix")
             .ok_or("No se pudo determinar el directorio de datos")?;
 
-        let data_dir = base_dir.data_dir().to_path_buf();
+        Self::with_data_dir(base_dir.data_dir().to_path_buf())
+    }
+
+    /// Estado sobre un directorio de datos explícito (tests y el servidor MCP).
+    pub fn with_data_dir(data_dir: PathBuf) -> Result<Self, String> {
         std::fs::create_dir_all(&data_dir)
             .map_err(|e| format!("No se pudo crear directorio de datos: {}", e))?;
 

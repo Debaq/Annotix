@@ -69,6 +69,7 @@ Un evento que no esté en esta lista lo rechaza el escritor
 | `project_key.exported` | se sacó la clave del proyecto cifrado | — |
 | `data.imported` | importación que creó el proyecto | `file`, `n_images`, `n_annotations` |
 | `data.exported` | exportación a cualquier formato | `format`, `file`, `ok` |
+| `mcp.action` | cualquier herramienta del servidor MCP (`actor` = `agent:mcp`) | `tool`, `args`, `ok`, `result` |
 | `training.started` | lanzamiento de un entrenamiento | `job_id`, `backend`, `model_id`, `task`, `execution_mode`, `class_ids` |
 | `training.finished` | fin del entrenamiento, salga como salga | `job_id`, `status`, `has_model` |
 
