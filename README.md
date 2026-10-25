@@ -627,6 +627,10 @@ annotix/
 
 ---
 
+## MCP server (AI agent access)
+
+`annotix-mcp` is a local stdio MCP server so an AI agent (e.g. Claude Code) can create projects, import images and COCO pre-labels, assign blind readings, check agreement and export — without opening the UI. It never annotates or adjudicates, and in a blind session it only returns aggregate counts. Every call is written to `audit.jsonl` as `agent:mcp`. See [`docs/mcp.md`](docs/mcp.md) and [`.mcp.json.example`](.mcp.json.example).
+
 ## Citation
 
 If you use Annotix in your research, please cite:

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "annotix": {
+      "command": "/RUTA/A/Annotix/src-tauri/target/release/annotix-mcp",
+      "args": [],
+      "env": {
+        "ANNOTIX_MCP_PROJECTS_DIR": "/RUTA/A/tus/proyectos"
+      }
+    }
+  }
+}
