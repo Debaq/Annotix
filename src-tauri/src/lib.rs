@@ -9,6 +9,7 @@ mod export;
 mod hashchain;
 mod import;
 mod inference;
+pub mod mcp;
 mod medical;
 mod net;
 mod p2p;

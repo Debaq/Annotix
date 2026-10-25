@@ -5,7 +5,16 @@ description = "Annotix - ML Dataset Annotation Tool"
 authors = ["TecMedHub"]
 license = "MIT"
 edition = "2021"
+default-run = "annotix"
 rust-version = "1.89"
+
+[[bin]]
+name = "annotix"
+path = "src/main.rs"
+
+[[bin]]
+name = "annotix-mcp"
+path = "src/bin/annotix_mcp.rs"
 
 [lib]
 name = "annotix_lib"
