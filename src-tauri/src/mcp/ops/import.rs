@@ -127,7 +127,9 @@ fn enlazar(
     let mut entradas = Vec::new();
     for (origen, _) in nuevas {
         let abs = std::fs::canonicalize(origen).map_err(|e| format!("{}: {}", origen.display(), e))?;
-        let nombre = abs.file_name().and_then(|n| n.to_str()).unwrap_or("img").to_string();
+        // El nombre es el del archivo listado (el enlace), no el de su destino: es el
+        // que citan los COCO del bundle (`ddr__007-….jpg`).
+        let nombre = origen.file_name().and_then(|n| n.to_str()).unwrap_or("img").to_string();
         let iid = uuid::Uuid::new_v4().to_string();
         let file = format!("{}_{}", iid, nombre);
         #[cfg(unix)]
@@ -242,7 +244,12 @@ pub fn annotations(state: &AppState, a: &Value) -> Result<Value, String> {
                 continue;
             }
             let base = Path::new(fname).file_name().and_then(|n| n.to_str()).unwrap_or(fname);
-            let Some(img) = pf.images.iter_mut().find(|i| i.name == base || i.name == *fname) else {
+            let sin_prefijo = base.split_once("__").map(|(_, r)| r);
+            let Some(img) = pf
+                .images
+                .iter_mut()
+                .find(|i| i.name == base || i.name == *fname || Some(i.name.as_str()) == sin_prefijo)
+            else {
                 sin_imagen += 1;
                 continue;
             };

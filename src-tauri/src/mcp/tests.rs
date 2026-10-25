@@ -351,3 +351,22 @@ fn protocolo_jsonrpc_basico() {
         "params":{"name":"project_list","arguments":{}}})).unwrap();
     assert_eq!(c["result"]["isError"], false);
 }
+
+/// El COCO del bundle cita `ddr__x.png`; la imagen puede llamarse `x.png` (importada
+/// antes) o `ddr__x.png` (importada por symlink): las dos casan.
+#[test]
+fn prelabels_casan_con_el_prefijo_dataset() {
+    let e = entorno(1);
+    let pid = crear(&e, 1, false);
+    let enlace = e.imgs.join("ddr__x.png");
+    std::os::unix::fs::symlink(e.imgs.join("img0.png"), &enlace).unwrap();
+    call(&e.state, "import_images", &json!({"project":pid,"dir":e.imgs.to_str().unwrap(),"mode":"symlink"})).unwrap();
+    let nombre = e.state.with_project(&pid, |pf| pf.images[0].name.clone()).unwrap();
+    assert_eq!(nombre, "ddr__x.png", "el nombre es el del enlace");
+    let coco = e.imgs.join("p.json");
+    std::fs::write(&coco, json!({"images":[{"id":1,"file_name":"ddr__x.png"}],
+        "annotations":[{"image_id":1,"category_id":1,"bbox":[1,1,4,4]}]}).to_string()).unwrap();
+    let r = call(&e.state, "import_annotations", &json!({"project":pid,"coco_json":coco.to_str().unwrap(),
+        "origin":"o","model_version":"v"})).unwrap();
+    assert_eq!(r["imported"], 1);
+}
